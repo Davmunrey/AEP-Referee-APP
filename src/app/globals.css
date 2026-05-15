@@ -1,0 +1,214 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-subtle: var(--subtle);
+  --color-subtle-muted: var(--subtle-muted);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-border: var(--primary-border);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-destructive-border: var(--destructive-border);
+
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-success-border: var(--success-border);
+
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-border: var(--warning-border);
+  --color-warning-subtle: var(--warning-subtle);
+
+  --color-info: var(--info);
+  --color-info-muted: var(--info-muted);
+  --color-info-border: var(--info-border);
+  --color-info-soft: var(--info-soft);
+
+  --color-border: var(--border);
+  --color-border-muted: var(--border-muted);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-aep-red: var(--primary);
+  --color-aep-amber: var(--aep-amber-500);
+  --color-aep-blue: var(--aep-blue-500);
+  --color-aep-emerald: var(--aep-emerald-500);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-card: var(--shadow-card);
+  --shadow-primary: var(--shadow-primary);
+  --shadow-primary-lg: var(--shadow-primary-lg);
+  --shadow-glow-primary: var(--shadow-glow-primary);
+  --shadow-glow-primary-lg: var(--shadow-glow-primary-lg);
+  --shadow-glow-warning: var(--shadow-glow-warning);
+  --shadow-glow-info: var(--shadow-glow-info);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply antialiased scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  ::selection {
+    background: var(--selection-bg);
+    color: var(--selection-fg);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: var(--radius-full);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+@layer utilities {
+  .app-mesh {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(ellipse 90% 60% at 10% -10%, var(--mesh-primary), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 95% 0%, var(--mesh-warning), transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 100%, var(--mesh-info), transparent 45%);
+  }
+
+  .glass-panel {
+    background: linear-gradient(145deg, var(--glass-from) 0%, var(--glass-to) 100%);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 0 0 1px var(--glass-shadow-ring), var(--shadow-md);
+  }
+
+  .glass-panel-soft {
+    background: var(--surface-raised);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-muted);
+  }
+
+  .surface-card {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--card) 90%, transparent) 0%,
+      color-mix(in srgb, var(--neutral-900) 95%, transparent) 100%
+    );
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-card);
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(
+      135deg,
+      var(--gradient-brand-from) 0%,
+      var(--gradient-brand-mid) 50%,
+      var(--gradient-brand-to) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .nav-glow-active {
+    box-shadow: var(--shadow-glow-primary);
+  }
+
+  .friendly-label {
+    @apply text-xs font-medium uppercase tracking-widest text-muted-foreground;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  .bg-role-nacional {
+    background: linear-gradient(
+      to right,
+      var(--role-nacional-bg-from),
+      var(--role-nacional-bg-to)
+    );
+  }
+
+  .bg-role-regional {
+    background: linear-gradient(
+      to right,
+      var(--role-regional-bg-from),
+      var(--role-regional-bg-to)
+    );
+  }
+
+  .bg-role-lectura {
+    background: linear-gradient(to right, var(--role-read-bg-from), var(--role-read-bg-to));
+  }
+
+  .ring-role-nacional {
+    @apply hover:ring-2 hover:ring-primary-border;
+  }
+
+  .ring-role-regional {
+    @apply hover:ring-2 hover:ring-warning-border;
+  }
+
+  .ring-role-lectura {
+    @apply hover:ring-2 hover:ring-border-strong;
+  }
+}
