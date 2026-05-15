@@ -5,11 +5,11 @@ import { redirect } from "next/navigation";
 
 export default async function PromotionsPage() {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
 
   return (
     <PromotionsBoard
-      initial={dataService.getPromotions(user)}
+      initial={await dataService.getPromotions(user)}
       canReview={canApprove(user)}
     />
   );

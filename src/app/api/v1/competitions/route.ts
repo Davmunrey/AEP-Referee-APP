@@ -6,7 +6,7 @@ import type { Competition } from "@/lib/types";
 export async function GET() {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  return jsonOk(dataService.getCompetitions(user));
+  return jsonOk(await dataService.getCompetitions(user));
 }
 
 export async function POST(request: Request) {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   if (!body.nombre || !body.tipo || !body.fecha || !body.fechaFin || !body.sede) {
     return jsonError("Faltan campos obligatorios", 400);
   }
-  const comp = dataService.createCompetition({
+  const comp = await dataService.createCompetition({
     nombre: body.nombre,
     tipo: body.tipo,
     fecha: body.fecha,

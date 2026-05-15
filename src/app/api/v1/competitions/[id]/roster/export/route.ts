@@ -11,7 +11,7 @@ export async function GET(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id } = await context.params;
-  const text = dataService.exportRoster(id);
+  const text = await dataService.exportRoster(id);
   if (!text) return jsonError("Competición no encontrada", 404);
 
   return new Response(text, {

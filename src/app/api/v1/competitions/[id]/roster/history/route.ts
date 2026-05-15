@@ -10,8 +10,8 @@ export async function GET(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { id } = await context.params;
-  if (!dataService.getCompetition(id)) {
+  if (!(await dataService.getCompetition(id))) {
     return jsonError("Competición no encontrada", 404);
   }
-  return jsonOk(dataService.getRosterHistory(id));
+  return jsonOk(await dataService.getRosterHistory(id));
 }

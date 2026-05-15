@@ -13,7 +13,7 @@ export async function POST(request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id: eventId } = await context.params;
-  const comp = dataService.getCompetition(eventId);
+  const comp = await dataService.getCompetition(eventId);
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
@@ -23,7 +23,7 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonError("Datos de slot inválidos", 400, parsed.error.flatten());
   }
 
-  const assignments = dataService.clearSlot(
+  const assignments = await dataService.clearSlot(
     parsed.data.eventId,
     parsed.data.slotKey,
     user.nombre,

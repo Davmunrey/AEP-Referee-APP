@@ -5,5 +5,5 @@ import { dataService } from "@/server/services";
 export async function GET() {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  return jsonOk(dataService.getMeta(user));
+  return jsonOk(await dataService.getMeta(user));
 }

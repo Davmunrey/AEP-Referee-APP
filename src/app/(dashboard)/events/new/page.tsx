@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 
 export default async function NewEventPage() {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
   if (user.role === "lectura") redirect("/events");
 
   return (

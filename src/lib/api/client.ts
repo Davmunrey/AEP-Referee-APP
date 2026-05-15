@@ -41,12 +41,6 @@ export const api = {
 
   logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
 
-  switchDemoPersona: (userId: string) =>
-    request<{ user: SessionUser }>("/auth/switch", {
-      method: "POST",
-      body: JSON.stringify({ userId }),
-    }),
-
   getMeta: () => request<AppMeta>("/meta"),
   getDashboard: () => request<DashboardPayload>("/dashboard"),
 

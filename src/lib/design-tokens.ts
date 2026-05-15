@@ -92,7 +92,7 @@ export const kpiAccentTokens: Record<
   },
 };
 
-export const demoRoleTokens: Record<
+export const roleTokens: Record<
   UserRole,
   { ring: string; bg: string; icon: string }
 > = {

@@ -17,10 +17,10 @@ interface RefereePageProps {
 
 export default async function RefereeDetailPage({ params }: RefereePageProps) {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
 
   const { id } = await params;
-  const referee = dataService.getReferee(id);
+  const referee = await dataService.getReferee(id);
   if (!referee) notFound();
 
   const zoneName = getZones().find((z) => z.code === referee.zona)?.name ?? referee.zona;

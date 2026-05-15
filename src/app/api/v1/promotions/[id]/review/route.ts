@@ -14,7 +14,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   const { id } = await context.params;
   const body = await request.json();
-  const result = dataService.reviewPromotion(id, Boolean(body.approve), user.nombre);
+  const result = await dataService.reviewPromotion(id, Boolean(body.approve), user.nombre);
   if (!result) return jsonError("Solicitud no encontrada", 404);
   return jsonOk(result);
 }
