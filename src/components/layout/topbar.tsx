@@ -9,13 +9,7 @@ import { Input } from "@/components/ui/input";
 import { getPageMeta } from "@/lib/navigation";
 import type { CurrentUser } from "@/lib/types";
 
-export function TopBar({
-  currentUser,
-  demoEnabled,
-}: {
-  currentUser: CurrentUser;
-  demoEnabled?: boolean;
-}) {
+export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
   const pathname = usePathname();
   const meta = getPageMeta(pathname);
   const hideSearch = pathname.startsWith("/events/");
@@ -48,11 +42,6 @@ export function TopBar({
       </div>
 
       <div className="flex items-center gap-2.5">
-        {demoEnabled && (
-          <span className="hidden rounded-full border border-success-border bg-success-muted px-2.5 py-1 font-mono text-[9px] font-medium uppercase tracking-wider text-success sm:inline">
-            Local · demo
-          </span>
-        )}
         {!hideSearch && (
           <div className="relative hidden max-w-xs md:block">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-subtle-muted" />

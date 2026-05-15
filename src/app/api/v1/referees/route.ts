@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   if (!isSessionUser(user)) return user;
   const { searchParams } = new URL(request.url);
   return jsonOk(
-    dataService.getReferees({
+    await dataService.getReferees({
       zona: searchParams.get("zona") ?? undefined,
       nivel: searchParams.get("nivel") ?? undefined,
       estado: searchParams.get("estado") ?? undefined,
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   if (!body.nombre || !body.zona || !body.nivel || !body.estado) {
     return jsonError("Faltan campos obligatorios", 400);
   }
-  const referee = dataService.createReferee({
+  const referee = await dataService.createReferee({
     nombre: body.nombre,
     zona: body.zona,
     nivel: body.nivel,

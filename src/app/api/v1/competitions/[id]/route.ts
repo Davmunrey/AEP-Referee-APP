@@ -10,7 +10,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { id } = await context.params;
-  const event = dataService.getCompetition(id);
+  const event = await dataService.getCompetition(id);
   if (!event) return jsonError("Competición no encontrada", 404);
   return jsonOk(event);
 }
@@ -22,7 +22,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id } = await context.params;
   const body = await request.json();
-  const updated = dataService.updateCompetition(id, body);
+  const updated = await dataService.updateCompetition(id, body);
   if (!updated) return jsonError("Competición no encontrada", 404);
   return jsonOk(updated);
 }

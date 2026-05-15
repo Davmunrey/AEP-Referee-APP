@@ -106,7 +106,7 @@ export interface SessionUser extends CurrentUser {
 export interface AppMeta {
   zones: Zone[];
   levels: RefereeLevel[];
-  currentUser: CurrentUser;
+  currentUser: SessionUser;
 }
 
 export interface DashboardPayload {

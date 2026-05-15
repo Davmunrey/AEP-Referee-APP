@@ -1,8 +1,8 @@
 "use client";
 
+import { SignOutButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { api } from "@/lib/api/client";
+import { usePathname } from "next/navigation";
 import {
   Award,
   BarChart3,
@@ -14,15 +14,15 @@ import {
   Layers,
   LayoutDashboard,
   LogOut,
+  UserCog,
   Users,
 } from "lucide-react";
 import { AepLogo } from "@/components/aep/logo";
 import { OrgSwitcher } from "@/components/aep/org-switcher";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_ROSTER_EVENT_ID } from "@/lib/constants";
-import type { DemoPersona } from "@/lib/auth/demo";
 import type { NavCounts } from "@/components/layout/app-shell";
-import type { CurrentUser } from "@/lib/types";
+import type { SessionUser } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -59,8 +59,8 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
   ];
 }
 
-function buildSecondaryNav(counts: NavCounts): NavItem[] {
-  return [
+function buildSecondaryNav(counts: NavCounts, isNacional: boolean): NavItem[] {
+  const items: NavItem[] = [
     {
       href: "/approvals",
       label: "Aprobaciones",
@@ -72,15 +72,23 @@ function buildSecondaryNav(counts: NavCounts): NavItem[] {
     { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
     { href: "/regulations", label: "Normativa IPF", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
   ];
+  if (isNacional) {
+    items.push({
+      href: "/admin/users",
+      label: "Usuarios",
+      icon: UserCog,
+      match: (p) => p.startsWith("/admin"),
+    });
+  }
+  return items;
 }
 
 interface SidebarProps {
   collapsed: boolean;
-  currentUser: CurrentUser;
+  currentUser: SessionUser;
   navCounts: NavCounts;
-  demoEnabled: boolean;
-  personas: DemoPersona[];
-  currentPersona: DemoPersona;
+  orgLabel: string;
+  orgSubtitle: string;
   onToggle: () => void;
 }
 
@@ -88,21 +96,13 @@ export function Sidebar({
   collapsed,
   currentUser,
   navCounts,
-  demoEnabled,
-  personas,
-  currentPersona,
+  orgLabel,
+  orgSubtitle,
   onToggle,
 }: SidebarProps) {
   const primaryNav = buildPrimaryNav(navCounts);
-  const secondaryNav = buildSecondaryNav(navCounts);
+  const secondaryNav = buildSecondaryNav(navCounts, currentUser.role === "nacional");
   const pathname = usePathname();
-  const router = useRouter();
-
-  const logout = async () => {
-    await api.logout();
-    router.push("/login");
-    router.refresh();
-  };
 
   const renderLink = (item: NavItem) => {
     const active = item.match(pathname);
@@ -163,12 +163,7 @@ export function Sidebar({
       </div>
 
       <div className={cn("px-3 pt-4", collapsed && "px-2")}>
-        <OrgSwitcher
-          collapsed={collapsed}
-          currentPersona={currentPersona}
-          personas={personas}
-          demoEnabled={demoEnabled}
-        />
+        <OrgSwitcher collapsed={collapsed} org={orgLabel} subtitle={orgSubtitle} />
       </div>
 
       <nav className="mt-6 flex flex-col gap-1 px-3">
@@ -204,15 +199,16 @@ export function Sidebar({
           </Avatar>
         )}
         {!collapsed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-foreground-secondary"
-            onClick={() => void logout()}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Cerrar sesión
-          </Button>
+          <SignOutButton signOutOptions={{ redirectUrl: "/sign-in" }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-foreground-secondary"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Cerrar sesión
+            </Button>
+          </SignOutButton>
         )}
         <Button
           variant="ghost"

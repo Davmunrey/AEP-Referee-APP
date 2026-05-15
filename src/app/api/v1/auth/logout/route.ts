@@ -1,7 +1,6 @@
-import { clearSessionCookie } from "@/lib/auth/session";
 import { jsonOk } from "@/lib/api/route-utils";
 
+/** Logout gestionado por Clerk en el cliente (SignOutButton). */
 export async function POST() {
-  await clearSessionCookie();
-  return jsonOk({ ok: true });
+  return jsonOk({ ok: true, message: "Usa el botón Cerrar sesión del panel" });
 }

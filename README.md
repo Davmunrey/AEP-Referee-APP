@@ -6,40 +6,62 @@ Plataforma B2B para la gestión de plantillas arbitrales de la AEP (Asociación 
 
 | Capa | Tecnología |
 |------|------------|
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 15 (App Router) en Vercel |
 | UI | React 19, Tailwind CSS v4, shadcn/ui |
-| Tipado | TypeScript 5 |
-| Datos (demo) | API REST en memoria (`/api/v1`) |
-| Auth | Cookie de sesión + RBAC por rol |
+| Datos | Supabase Postgres + Row Level Security |
+| Auth | Clerk (email/contraseña) + perfiles `profiles` en Supabase |
+| API | Route handlers `/api/v1/*` en el mismo repositorio |
 
-## Inicio rápido
+## Inicio rápido (producción)
+
+1. Crea proyectos en [Clerk](https://clerk.com) y [Supabase](https://supabase.com).
+2. Activa la integración Clerk ↔ Supabase (ver `docs/AUTH.md`).
+3. Ejecuta `supabase/migrations/001_initial_schema.sql` y `002_clerk_auth.sql` en el SQL Editor.
+4. Copia `.env.example` → `.env.local` y rellena las claves.
+3. Pobla datos y usuarios iniciales:
 
 ```bash
 npm install
+npm run db:seed
+```
+
+4. Arranca la app:
+
+```bash
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000).
+Abre [http://localhost:3000](http://localhost:3000) e inicia sesión con un usuario creado por el seed (ver salida de `db:seed` para la contraseña inicial).
 
-En desarrollo, `.env.development` activa modo local y demo automáticamente.
+## Despliegue en Vercel
+
+1. Conecta el repositorio en Vercel.
+2. Añade las variables de entorno del proyecto (ver [docs/DEPLOY.md](./docs/DEPLOY.md)).
+3. Ejecuta la migración SQL y `npm run db:seed` una vez contra el proyecto Supabase de producción.
+4. Despliega. La API y la UI comparten el mismo dominio.
+
+## Scripts
 
 | Script | Descripción |
 |--------|-------------|
-| `npm run dev` | Servidor de desarrollo en puerto 3000 |
+| `npm run dev` | Desarrollo en puerto 3000 |
 | `npm run build` | Build de producción |
 | `npm run start` | Servidor de producción |
+| `npm run db:seed` | Poblar Supabase (zonas, árbitros, usuarios) |
 | `npm run lint` | ESLint |
 
 ## Documentación
 
 | Documento | Contenido |
 |-----------|-----------|
-| [DEMO.md](./DEMO.md) | Guía de presentación, personas demo y flujos |
-| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Arquitectura, capas y RBAC |
-| [docs/DESIGN.md](./docs/DESIGN.md) | Sistema de diseño y tokens |
-| [docs/API.md](./docs/API.md) | Referencia de endpoints REST |
+| [docs/DEPLOY.md](./docs/DEPLOY.md) | Vercel, variables de entorno, checklist |
+| [docs/DATABASE.md](./docs/DATABASE.md) | Esquema Postgres, RLS, seed |
+| [docs/AUTH.md](./docs/AUTH.md) | Login, roles, gestión de usuarios |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Capas y RBAC |
+| [docs/DESIGN.md](./docs/DESIGN.md) | Tokens de diseño |
+| [docs/API.md](./docs/API.md) | Endpoints REST |
 | [docs/ROUTES.md](./docs/ROUTES.md) | Rutas de la aplicación |
-| [docs/COMPONENTS.md](./docs/COMPONENTS.md) | Inventario de componentes UI |
+| [docs/COMPONENTS.md](./docs/COMPONENTS.md) | Componentes UI |
 
 ## Módulos
 
@@ -50,35 +72,25 @@ En desarrollo, `.env.development` activa modo local y demo automáticamente.
 - **Ascensos** — Solicitudes de cambio de nivel
 - **Estadísticas** — Cobertura por zona y eventos críticos
 - **Normativa** — Matriz rol → nivel mínimo IPF/AEP
+- **Usuarios** (nacional) — Alta de representantes regionales
 
-## Demo
+## Roles
 
-Contraseña universal: `aep2026`
+| Rol | Alcance |
+|-----|---------|
+| `nacional` | Toda la federación, aprueba rosters, gestiona usuarios |
+| `regional` | Solo su zona, propone tarimas |
+| `lectura` | Consulta en su ámbito |
 
-Personas disponibles en login y en el selector lateral (ver [DEMO.md](./DEMO.md)).
-
-## Variables de entorno
-
-Copia `.env.example` a `.env.local` si necesitas personalizar:
-
-```env
-NEXT_PUBLIC_DEMO_MODE=true
-NEXT_PUBLIC_RUN_LOCAL=true
-NEXT_PUBLIC_LOCAL_API_URL=http://localhost:3000/api/v1
-```
-
-## Estructura del proyecto
+## Estructura
 
 ```
 src/
-  app/              # Rutas App Router + API /api/v1
-  components/       # UI, layout, módulos de dominio
-  lib/              # Auth, API client, design-tokens, tipos
-  server/           # dataService + store en memoria
-  styles/           # tokens.css (fuente de verdad de color)
+  app/              # UI + API /api/v1
+  components/       # UI y módulos de dominio
+  lib/              # Auth, Supabase, API client, tokens
+  server/           # dataService (Postgres o memoria en dev)
+supabase/migrations # SQL de esquema y RLS
+scripts/seed.ts     # Datos iniciales
 docs/               # Documentación técnica
 ```
-
-## Licencia
-
-Proyecto privado — uso interno AEP / FECHAP.

@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 
 export default async function ApprovalsPage() {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
 
-  const approvals = dataService.getApprovals(user);
+  const approvals = await dataService.getApprovals(user);
   return <ApprovalsBoard initial={approvals} canReview={canApprove(user)} />;
 }

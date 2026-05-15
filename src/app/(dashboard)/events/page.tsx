@@ -21,9 +21,9 @@ import { redirect } from "next/navigation";
 
 export default async function EventsPage() {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
 
-  const events = [...dataService.getCompetitions(user)].sort((a, b) =>
+  const events = [...(await dataService.getCompetitions(user))].sort((a, b) =>
     a.fecha.localeCompare(b.fecha),
   );
 

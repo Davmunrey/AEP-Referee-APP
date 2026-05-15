@@ -10,9 +10,9 @@ import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
 
-  const dashboard = dataService.getDashboard(user);
+  const dashboard = await dataService.getDashboard(user);
 
   return (
     <PageShell>

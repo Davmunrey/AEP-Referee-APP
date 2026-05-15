@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { DEMO_PERSONAS, isDemoMode, personaForSession } from "@/lib/auth/demo";
+import { orgLabelForUser } from "@/lib/auth/profile";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 
@@ -10,18 +10,17 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
 
-  const meta = dataService.getMeta(user);
-  const navCounts = dataService.getNavCounts(user);
+  const navCounts = await dataService.getNavCounts(user);
+  const { org, subtitle } = orgLabelForUser(user);
 
   return (
     <AppShell
-      currentUser={meta.currentUser}
+      currentUser={user}
       navCounts={navCounts}
-      demoEnabled={isDemoMode()}
-      personas={DEMO_PERSONAS}
-      currentPersona={personaForSession(user)}
+      orgLabel={org}
+      orgSubtitle={subtitle}
     >
       {children}
     </AppShell>

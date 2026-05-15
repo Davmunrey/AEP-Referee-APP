@@ -43,7 +43,9 @@ async function serverRequest<T>(path: string, init?: RequestInit): Promise<T> {
   return parsed.data;
 }
 
-async function withUser<T>(fn: (user: NonNullable<Awaited<ReturnType<typeof getSession>>>) => T): Promise<T> {
+async function withUser<T>(
+  fn: (user: NonNullable<Awaited<ReturnType<typeof getSession>>>) => Promise<T>,
+): Promise<T> {
   const user = await getSession();
   if (!user) throw new Error("No autenticado");
   if (shouldUseInternalServices()) {
@@ -56,42 +58,42 @@ export const serverApi = {
   getMeta: async (): Promise<AppMeta> => {
     const user = await getSession();
     if (!user) throw new Error("No autenticado");
-    if (shouldUseInternalServices()) return dataService.getMeta(user);
+    if (shouldUseInternalServices()) return await dataService.getMeta(user);
     return serverRequest<AppMeta>("/meta");
   },
 
   getDashboard: () =>
-    withUser((user) =>
+    withUser(async (user) =>
       shouldUseInternalServices()
-        ? dataService.getDashboard(user)
+        ? await dataService.getDashboard(user)
         : serverRequest<DashboardPayload>("/dashboard"),
     ),
 
   getReferees: () =>
-    withUser((user) =>
+    withUser(async (user) =>
       shouldUseInternalServices()
-        ? dataService.getReferees({ user })
+        ? await dataService.getReferees({ user })
         : serverRequest<Referee[]>("/referees"),
     ),
 
   getReferee: (id: string) =>
-    withUser(() =>
+    withUser(async () =>
       shouldUseInternalServices()
-        ? Promise.resolve(dataService.getReferee(id))
+        ? await dataService.getReferee(id)
         : serverRequest<Referee>(`/referees/${id}`),
     ),
 
   getCompetitions: () =>
-    withUser((user) =>
+    withUser(async (user) =>
       shouldUseInternalServices()
-        ? dataService.getCompetitions(user)
+        ? await dataService.getCompetitions(user)
         : serverRequest<Competition[]>("/competitions"),
     ),
 
   getCompetition: (id: string) =>
-    withUser(() => {
+    withUser(async () => {
       if (shouldUseInternalServices()) {
-        const event = dataService.getCompetition(id);
+        const event = await dataService.getCompetition(id);
         if (!event) throw new Error("Competición no encontrada");
         return event;
       }
@@ -99,9 +101,9 @@ export const serverApi = {
     }),
 
   getRoster: (eventId: string) =>
-    withUser(() => {
+    withUser(async () => {
       if (shouldUseInternalServices()) {
-        const roster = dataService.getRoster(eventId);
+        const roster = await dataService.getRoster(eventId);
         if (!roster) throw new Error("Competición no encontrada");
         return roster;
       }
@@ -111,28 +113,28 @@ export const serverApi = {
     }),
 
   getApprovals: () =>
-    withUser((user) =>
+    withUser(async (user) =>
       shouldUseInternalServices()
-        ? dataService.getApprovals(user)
+        ? await dataService.getApprovals(user)
         : serverRequest<ApprovalProposal[]>("/approvals"),
     ),
 
   getPromotions: () =>
-    withUser((user) =>
+    withUser(async (user) =>
       shouldUseInternalServices()
-        ? dataService.getPromotions(user)
+        ? await dataService.getPromotions(user)
         : serverRequest<PromotionRequest[]>("/promotions"),
     ),
 
   getAnalytics: () =>
-    withUser((user) =>
+    withUser(async (user) =>
       shouldUseInternalServices()
-        ? dataService.getAnalytics(user)
+        ? await dataService.getAnalytics(user)
         : serverRequest<AnalyticsPayload>("/analytics"),
     ),
 
-  getRegulations: () =>
+  getRegulations: async () =>
     shouldUseInternalServices()
-      ? Promise.resolve(dataService.getRegulations())
+      ? dataService.getRegulations()
       : serverRequest<RegulationRule[]>("/regulations"),
 };

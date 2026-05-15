@@ -2,15 +2,15 @@ import { RefereesDirectory } from "@/components/referees/referees-directory";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { getLevels, getZones } from "@/server/store";
 import { redirect } from "next/navigation";
 
 export default async function RefereesPage() {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
 
-  const referees = dataService.getReferees({ user });
-  const zones = getZones();
+  const meta = await dataService.getMeta(user);
+  const referees = await dataService.getReferees({ user });
+  const zones = meta.zones;
 
   return (
     <PageShell>
@@ -22,7 +22,7 @@ export default async function RefereesPage() {
       <RefereesDirectory
         initialReferees={referees}
         zones={zones}
-        levels={getLevels()}
+        levels={meta.levels}
         canEdit={user.role !== "lectura"}
       />
     </PageShell>

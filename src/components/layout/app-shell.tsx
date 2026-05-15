@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { DemoPersona } from "@/lib/auth/demo";
-import type { CurrentUser } from "@/lib/types";
+import type { SessionUser } from "@/lib/types";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 
@@ -15,16 +14,14 @@ export function AppShell({
   children,
   currentUser,
   navCounts,
-  demoEnabled,
-  personas,
-  currentPersona,
+  orgLabel,
+  orgSubtitle,
 }: {
   children: React.ReactNode;
-  currentUser: CurrentUser;
+  currentUser: SessionUser;
   navCounts: NavCounts;
-  demoEnabled: boolean;
-  personas: DemoPersona[];
-  currentPersona: DemoPersona;
+  orgLabel: string;
+  orgSubtitle: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -34,13 +31,12 @@ export function AppShell({
         collapsed={collapsed}
         currentUser={currentUser}
         navCounts={navCounts}
-        demoEnabled={demoEnabled}
-        personas={personas}
-        currentPersona={currentPersona}
+        orgLabel={orgLabel}
+        orgSubtitle={orgSubtitle}
         onToggle={() => setCollapsed((c) => !c)}
       />
       <div className="app-mesh relative flex min-w-0 flex-1 flex-col">
-        <TopBar currentUser={currentUser} demoEnabled={demoEnabled} />
+        <TopBar currentUser={currentUser} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>

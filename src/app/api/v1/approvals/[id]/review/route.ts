@@ -17,7 +17,7 @@ export async function POST(request: Request, context: RouteContext) {
   const approve = Boolean(body.approve);
   const comment = body.comment ? String(body.comment) : undefined;
 
-  const result = dataService.reviewApproval(id, approve, user.nombre, comment);
+  const result = await dataService.reviewApproval(id, approve, user.nombre, comment);
   if (!result) return jsonError("Propuesta no encontrada", 404);
   return jsonOk(result);
 }
