@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AEP × Tarima — Brand Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-base:    #0B0A09;
+    --bg-surface: #141210;
+    --bg-raised:  #1B1916;
+    --bg-hover:   #221F1B;
+    --bg-inset:   #0F0D0B;
+    --line:       #2A2522;
+    --line-strong:#3A332E;
+    --line-subtle:#1F1C19;
+    --ink-high:   #F5F0E8;
+    --ink-mid:    #B8B0A4;
+    --ink-low:    #7A7269;
+    --ink-faint:  #4A443E;
+    --aep-red:    #D43426;
+    --aep-red-deep:#8E1F16;
+    --aep-amber:  #E8A82C;
+    --aep-amber-deep:#8A6516;
+    --ok:         #3F9F6A;
+    --warn:       #E8A82C;
+    --bad:        #D43426;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-base);
+    color: var(--ink-high);
+    font-family: 'Geist', system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.4;
+  }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; font-feature-settings: 'tnum'; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; border: 2px solid var(--bg-base); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--line-strong); }
+
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+  .section {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--line-subtle);
+  }
+  .section-head {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 48px;
+    margin-bottom: 48px;
+  }
+  .section-num {
+    font-family: 'Geist Mono';
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .section-label {
+    font-family: 'Geist Mono';
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink-low);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .section-title {
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink-high);
+    max-width: 720px;
+  }
+  .section-desc {
+    font-size: 15px;
+    color: var(--ink-mid);
+    max-width: 560px;
+    margin-top: 18px;
+    line-height: 1.55;
+  }
+
+  /* ─────────── Top nav ─────────── */
+  .topnav {
+    position: sticky; top: 0; z-index: 50;
+    height: 56px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(11,10,9,0.85);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+  }
+  .topnav-brand {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .topnav-aep-logo {
+    height: 24px; width: auto;
+  }
+  .topnav-sep {
+    width: 1px; height: 18px; background: var(--line);
+  }
+  .topnav-product {
+    font-family: 'Geist Mono';
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--aep-amber);
+  }
+  .topnav-links {
+    display: flex; gap: 28px;
+    font-family: 'Geist Mono'; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-low);
+  }
+  .topnav-links a { color: var(--ink-low); text-decoration: none; transition: color 0.15s; }
+  .topnav-links a:hover { color: var(--ink-high); }
+  .topnav-meta {
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.16em; color: var(--ink-faint); text-transform: uppercase;
+  }
+
+  /* ─────────── Hero ─────────── */
+  .hero {
+    min-height: 92vh;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 64px 0 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 75% 25%, rgba(212,52,38,0.08), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 15% 80%, rgba(232,168,44,0.05), transparent 60%);
+    pointer-events: none;
+  }
+  .hero-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 24px;
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-low);
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+    position: relative; z-index: 1;
+  }
+  .hero-meta > div span { display: block; color: var(--ink-faint); margin-bottom: 4px; }
+
+  .hero-master {
+    display: flex; align-items: center; gap: 32px;
+    padding: 48px 0 36px;
+    border-bottom: 1px dashed var(--line);
+    position: relative; z-index: 1;
+  }
+  .hero-master img {
+    height: 96px;
+    flex-shrink: 0;
+  }
+  .hero-master-x {
+    font-family: 'Geist Mono';
+    font-size: 48px;
+    color: var(--ink-faint);
+    font-weight: 300;
+    line-height: 1;
+  }
+  .hero-product-mark {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-style: italic;
+    color: var(--ink-high);
+  }
+  .hero-product-mark .accent { color: var(--aep-red); }
+  .hero-product-sub {
+    font-family: 'Geist Mono';
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-low);
+    margin-top: 10px;
+  }
+
+  .hero-title {
+    font-size: clamp(60px, 10vw, 132px);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 0.9;
+    color: var(--ink-high);
+    margin-top: 56px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-title .accent { color: var(--aep-red); }
+  .hero-sub {
+    display: flex; align-items: baseline; gap: 24px;
+    margin-top: 24px;
+    color: var(--ink-mid);
+    max-width: 760px;
+    font-size: 16px;
+    line-height: 1.5;
+    position: relative; z-index: 1;
+  }
+  .hero-sub .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--aep-amber);
+    padding: 4px 8px;
+    border: 1px solid rgba(232,168,44,0.35);
+    background: rgba(232,168,44,0.06);
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .hero-stats {
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--line);
+    position: relative; z-index: 1;
+  }
+  .hero-stat {
+    padding: 20px 0;
+    border-right: 1px solid var(--line);
+    padding-right: 24px;
+  }
+  .hero-stat:last-child { border-right: 0; }
+  .hero-stat-label {
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-low);
+  }
+  .hero-stat-value {
+    font-size: 36px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin-top: 10px;
+    font-family: 'Geist Mono';
+    color: var(--ink-high);
+  }
+  .hero-stat-note {
+    font-size: 11px; color: var(--ink-low);
+    margin-top: 8px;
+  }
+
+  /* ─────────── Grid ─────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  .specimen {
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .specimen-label {
+    position: absolute; top: 12px; left: 14px;
+    font-family: 'Geist Mono'; font-size: 9.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-faint);
+    z-index: 2;
+  }
+  .specimen-meta {
+    position: absolute; top: 12px; right: 14px;
+    font-family: 'Geist Mono'; font-size: 9.5px;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    z-index: 2;
+  }
+  .specimen.light { background: var(--ink-high); color: var(--bg-base); }
+  .specimen.light .specimen-label, .specimen.light .specimen-meta { color: rgba(11,10,9,0.4); }
+  .specimen.red { background: var(--aep-red); }
+  .specimen.red .specimen-label, .specimen.red .specimen-meta { color: rgba(245,240,232,0.6); }
+  .specimen.amber { background: var(--aep-amber); color: var(--bg-base); }
+  .specimen.amber .specimen-label, .specimen.amber .specimen-meta { color: rgba(11,10,9,0.5); }
+
+  /* ─────────── Brand architecture ─────────── */
+  .arch {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .arch-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .arch-card.master {
+    border-color: rgba(212,52,38,0.4);
+    background: linear-gradient(180deg, rgba(212,52,38,0.04), transparent 40%), var(--bg-surface);
+  }
+  .arch-card-role {
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-low); margin-bottom: 24px;
+  }
+  .arch-card.master .arch-card-role { color: var(--aep-red); }
+  .arch-card-mark {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    margin: 24px 0;
+    min-height: 120px;
+  }
+  .arch-card-mark img { max-height: 80px; }
+  .arch-card-name {
+    font-size: 20px; font-weight: 600;
+    letter-spacing: -0.02em; color: var(--ink-high);
+    margin-bottom: 6px;
+  }
+  .arch-card-desc {
+    font-size: 12.5px; color: var(--ink-mid);
+    line-height: 1.5;
+  }
+  .arch-link {
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Geist Mono'; font-size: 11px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-faint);
+    position: relative;
+  }
+  .arch-link::before, .arch-link::after {
+    content: ''; flex: 1; height: 1px; background: var(--line);
+  }
+  .arch-link span {
+    padding: 0 8px;
+    background: var(--bg-base);
+    z-index: 1;
+  }
+  .arch-product {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .arch-product-cell {
+    border: 1px dashed var(--line);
+    border-radius: 5px;
+    padding: 14px 12px;
+    background: var(--bg-inset);
+  }
+  .arch-product-cell.active {
+    border-style: solid;
+    border-color: var(--line-strong);
+    background: var(--bg-surface);
+  }
+  .arch-product-name {
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-high);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+    font-style: italic;
+  }
+  .arch-product-cell:not(.active) .arch-product-name { color: var(--ink-faint); }
+  .arch-product-desc {
+    font-family: 'Geist Mono';
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--ink-low);
+    text-transform: uppercase;
+  }
+  .arch-product-cell:not(.active) .arch-product-desc { color: var(--ink-faint); }
+  .arch-product-cell .status {
+    display: inline-block;
+    font-family: 'Geist Mono';
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    padding: 2px 5px;
+    border-radius: 2px;
+    margin-top: 8px;
+  }
+  .arch-product-cell.active .status {
+    color: #7DD3A4; background: rgba(63,159,106,0.12); border: 1px solid rgba(63,159,106,0.35);
+  }
+  .arch-product-cell:not(.active) .status {
+    color: var(--ink-faint); background: var(--bg-inset); border: 1px solid var(--line-subtle);
+  }
+
+  /* ─────────── Logo specimens ─────────── */
+  .spec-mark {
+    height: 280px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 18px;
+  }
+  .spec-mark-tag {
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-low);
+  }
+  .spec-mark img { max-width: 70%; max-height: 110px; }
+
+  /* Product wordmark — italic AEP-style typography */
+  .tarima-mark {
+    display: inline-flex; align-items: center; gap: 16px;
+  }
+  .tarima-italic {
+    font-style: italic;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.85;
+  }
+  .tarima-product-stack {
+    display: flex; flex-direction: column;
+    line-height: 1;
+    border-left: 2px solid var(--aep-red);
+    padding-left: 14px;
+  }
+  .tarima-product-stack .top {
+    font-family: 'Geist Mono';
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-low);
+  }
+  .tarima-product-stack .bot {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--ink-high);
+    margin-top: 8px;
+  }
+
+  .light .tarima-product-stack { border-color: var(--aep-red); }
+  .light .tarima-product-stack .top { color: rgba(11,10,9,0.5); }
+  .light .tarima-product-stack .bot { color: var(--bg-base); }
+
+  /* Sub-mark — abbreviated TARIMA badge for app icons */
+  .tarima-badge {
+    width: 96px; height: 96px;
+    background: var(--aep-red);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .tarima-badge::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px; right: 8px;
+    height: 12px;
+    background: linear-gradient(90deg, var(--aep-amber) 60%, transparent 60%);
+  }
+  .tarima-badge-text {
+    color: var(--ink-high);
+    font-style: italic;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-top: 16px;
+  }
+  .tarima-badge-sub {
+    color: rgba(245,240,232,0.7);
+    font-family: 'Geist Mono';
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    margin-top: 6px;
+  }
+
+  /* ─────────── Clear space ─────────── */
+  .clearspace-box {
+    position: relative;
+    width: 420px;
+    height: 220px;
+    margin: 16px auto 0;
+    background:
+      repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(232,168,44,0.05) 4px, rgba(232,168,44,0.05) 8px);
+    border: 1px dashed rgba(232,168,44,0.35);
+  }
+  .clearspace-inner {
+    position: absolute;
+    top: 50px; left: 50px;
+    right: 50px; bottom: 50px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .clearspace-inner img { max-height: 60px; }
+  .clearspace-marker {
+    position: absolute;
+    font-family: 'Geist Mono'; font-size: 10px;
+    color: var(--aep-amber);
+  }
+
+  /* ─────────── Sizes ─────────── */
+  .size-row {
+    display: flex; align-items: flex-end; gap: 36px;
+    padding: 36px 32px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .size-cell { display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
+  .size-cell-label { font-family: 'Geist Mono'; font-size: 10px; color: var(--ink-low); letter-spacing: 0.1em; }
+
+  /* ─────────── Color ─────────── */
+  .swatch {
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .swatch-color {
+    height: 160px;
+    position: relative;
+    display: flex; align-items: flex-end;
+    padding: 16px;
+  }
+  .swatch-color .role {
+    font-family: 'Geist Mono';
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 3px;
+    color: rgba(255,255,255,0.9);
+  }
+  .swatch-color.light .role {
+    background: rgba(255,255,255,0.7);
+    color: rgba(0,0,0,0.7);
+  }
+  .swatch-meta {
+    padding: 14px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .swatch-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-high);
+    margin-bottom: 8px;
+  }
+  .swatch-vals {
+    display: flex; flex-direction: column; gap: 4px;
+    font-family: 'Geist Mono';
+    font-size: 10px;
+    color: var(--ink-low);
+  }
+  .swatch-vals span b { color: var(--ink-mid); font-weight: 500; margin-right: 6px; }
+
+  .scale {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .scale-step {
+    padding: 16px 8px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+    font-family: 'Geist Mono';
+    font-size: 9.5px;
+    min-height: 96px;
+    justify-content: flex-end;
+  }
+  .scale-step .stop { letter-spacing: 0.1em; }
+  .scale-step .hex { font-size: 10px; }
+  .scale-step.dark  .stop { color: rgba(255,255,255,0.55); }
+  .scale-step.dark  .hex  { color: rgba(255,255,255,0.9); }
+  .scale-step.light .stop { color: rgba(0,0,0,0.45); }
+  .scale-step.light .hex  { color: rgba(0,0,0,0.75); }
+
+  /* ─────────── Type ─────────── */
+  .type-spec {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 32px;
+    align-items: baseline;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--line-subtle);
+  }
+  .type-spec:last-child { border-bottom: 0; }
+  .type-info {
+    font-family: 'Geist Mono';
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-low);
+    line-height: 1.6;
+  }
+  .type-info b { display: block; color: var(--ink-high); font-weight: 500; margin-bottom: 4px; letter-spacing: 0.08em; }
+  .type-sample { color: var(--ink-high); line-height: 1; letter-spacing: -0.02em; }
+  .t-display  { font-size: 88px; font-weight: 800; font-style: italic; letter-spacing: -0.05em; }
+  .t-title    { font-size: 48px; font-weight: 600; letter-spacing: -0.025em; }
+  .t-h1       { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+  .t-h2       { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; line-height: 1.2; }
+  .t-body     { font-size: 15px; font-weight: 400; line-height: 1.55; color: var(--ink-mid); letter-spacing: -0.005em; }
+  .t-caption  { font-size: 12px; color: var(--ink-low); line-height: 1.4; }
+  .t-mono-big { font-family: 'Geist Mono'; font-size: 36px; font-weight: 500; letter-spacing: -0.03em; }
+  .t-mono-data{ font-family: 'Geist Mono'; font-size: 16px; font-weight: 500; }
+  .t-mono-label { font-family: 'Geist Mono'; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-low); }
+
+  .char-block {
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+  }
+  .char-row {
+    display: flex; flex-wrap: wrap; gap: 6px 14px;
+    font-family: 'Geist'; color: var(--ink-high);
+    line-height: 1;
+  }
+  .char-row.mono-row { font-family: 'Geist Mono'; }
+  .char-row.italic-row { font-style: italic; }
+
+  /* ─────────── Voice ─────────── */
+  .voice-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .voice-cell {
+    padding: 28px;
+    position: relative;
+  }
+  .voice-cell + .voice-cell { border-left: 1px solid var(--line); }
+  .voice-cell.yes { background: rgba(63,159,106,0.04); }
+  .voice-cell.no  { background: rgba(212,52,38,0.03); }
+  .voice-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 3px;
+    margin-bottom: 16px;
+  }
+  .voice-cell.yes .voice-tag {
+    color: #7DD3A4; background: rgba(63,159,106,0.1); border: 1px solid rgba(63,159,106,0.3);
+  }
+  .voice-cell.no .voice-tag {
+    color: #F08070; background: rgba(212,52,38,0.1); border: 1px solid rgba(212,52,38,0.3);
+  }
+  .voice-quote {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink-high);
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+  }
+  .voice-cell.no .voice-quote { color: var(--ink-mid); }
+  .voice-note {
+    font-size: 12px; color: var(--ink-low);
+    margin-top: 12px; line-height: 1.5;
+  }
+
+  /* ─────────── Principles ─────────── */
+  .principle {
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 24px;
+    position: relative;
+  }
+  .principle-num {
+    font-family: 'Geist Mono';
+    font-size: 10px;
+    color: var(--aep-amber);
+    letter-spacing: 0.2em;
+    margin-bottom: 16px;
+  }
+  .principle-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink-high);
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .principle-body {
+    font-size: 13px;
+    color: var(--ink-mid);
+    line-height: 1.55;
+  }
+
+  /* ─────────── Applications ─────────── */
+  .app-frame {
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .app-frame-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-low);
+  }
+  .app-frame-body {
+    aspect-ratio: 4/3;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* App icon */
+  .app-icon {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 30%, #1F1C19, var(--bg-base));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .app-icon-shape {
+    width: 40%;
+    aspect-ratio: 1;
+    background: linear-gradient(155deg, #D43426 0%, #8E1F16 100%);
+    border-radius: 22%;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 30px 60px -20px rgba(212,52,38,0.5),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -10px 30px rgba(0,0,0,0.4);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 14%;
+  }
+  .app-icon-shape::before {
+    content: '';
+    position: absolute;
+    top: 16%; left: 16%; right: 16%;
+    height: 8%;
+    background: linear-gradient(90deg, var(--aep-amber) 50%, transparent 50%);
+  }
+  .app-icon-shape-text {
+    color: var(--ink-high);
+    font-style: italic;
+    font-weight: 800;
+    font-size: clamp(20px, 4.5vw, 44px);
+    letter-spacing: -0.05em;
+    margin-top: 12%;
+  }
+  .app-icon-shape-sub {
+    color: rgba(245,240,232,0.6);
+    font-family: 'Geist Mono';
+    font-size: clamp(7px, 0.9vw, 9px);
+    letter-spacing: 0.22em;
+    margin-top: 6%;
+    text-transform: uppercase;
+  }
+
+  /* Business card */
+  .biz-card {
+    position: absolute;
+    inset: 12% 14%;
+    background: var(--bg-base);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    padding: 24px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .biz-card-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .biz-card-bot {
+    font-family: 'Geist Mono'; font-size: 9px;
+    color: var(--ink-low);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.6;
+  }
+  .biz-card-bot b { color: var(--ink-high); font-weight: 500; }
+  .biz-name {
+    font-size: 14px; font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--ink-high);
+  }
+  .biz-role { font-size: 10px; color: var(--ink-low); margin-top: 2px; font-family: 'Geist Mono'; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* Jersey */
+  .jersey {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      #0F0D0B 0px, #0F0D0B 60px,
+      #141210 60px, #141210 120px
+    );
+  }
+  .jersey-overlay {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(212,52,38,0.08), transparent 60%);
+  }
+  .jersey-patch {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 55%; aspect-ratio: 3/2;
+    background: var(--bg-base);
+    border: 2px solid var(--aep-red);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .jersey-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .jersey-num {
+    font-family: 'Geist Mono';
+    font-size: clamp(36px, 7vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    color: var(--aep-red);
+    line-height: 1;
+  }
+  .jersey-side {
+    text-align: right;
+    font-family: 'Geist Mono';
+    font-size: 9px;
+    color: var(--ink-low);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    line-height: 1.6;
+  }
+  .jersey-bot {
+    font-family: 'Geist Mono';
+    font-size: 10px;
+    color: var(--ink-mid);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+  }
+
+  /* Event banner */
+  .banner {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 100% at 20% 50%, rgba(212,52,38,0.15), transparent 60%),
+      var(--bg-base);
+    padding: 28px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .banner-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .banner-top img { height: 28px; }
+  .banner-tag {
+    font-family: 'Geist Mono'; font-size: 10px;
+    color: var(--aep-red); letter-spacing: 0.18em;
+    padding: 4px 8px;
+    border: 1px solid rgba(212,52,38,0.4);
+    background: rgba(212,52,38,0.08);
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .banner-title {
+    font-size: clamp(22px, 4.5vw, 44px);
+    font-weight: 700;
+    font-style: italic;
+    letter-spacing: -0.04em;
+    line-height: 0.92;
+    color: var(--ink-high);
+  }
+  .banner-title .accent { color: var(--aep-red); }
+  .banner-bot {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-family: 'Geist Mono'; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-mid);
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  .banner-bot b { color: var(--aep-amber); font-weight: 500; }
+
+  /* Social */
+  .social {
+    position: absolute; inset: 0;
+    background: var(--aep-red);
+    padding: 28px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    color: var(--ink-high);
+  }
+  .social-top {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .social-top img { height: 24px; filter: brightness(0) invert(1); }
+  .social-num {
+    font-family: 'Geist Mono';
+    font-size: clamp(60px, 12vw, 130px);
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    line-height: 0.85;
+  }
+  .social-label {
+    font-family: 'Geist Mono';
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-top: 6px;
+  }
+  .social-bot {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Geist Mono'; font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    opacity: 0.7;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 12px;
+  }
+
+  /* Certificate */
+  .cert {
+    position: absolute; inset: 0;
+    background: var(--ink-high);
+    padding: 24px;
+    color: var(--bg-base);
+    display: flex; flex-direction: column;
+  }
+  .cert-head {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(11,10,9,0.15);
+    padding-bottom: 12px;
+  }
+  .cert-head img { height: 28px; }
+  .cert-body {
+    flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .cert-overline {
+    font-family: 'Geist Mono'; font-size: 9px;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    color: rgba(11,10,9,0.5);
+    margin-bottom: 12px;
+  }
+  .cert-title {
+    font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--bg-base);
+    line-height: 1.1;
+  }
+  .cert-name {
+    font-size: 16px;
+    margin-top: 16px;
+    color: var(--bg-base);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--aep-red);
+    min-width: 60%;
+  }
+  .cert-foot {
+    display: flex; justify-content: space-between;
+    font-family: 'Geist Mono'; font-size: 9px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(11,10,9,0.55);
+    border-top: 1px solid rgba(11,10,9,0.15);
+    padding-top: 10px;
+  }
+
+  /* Iconography */
+  .icon-cell {
+    aspect-ratio: 1;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--ink-mid);
+    transition: all 0.15s;
+  }
+  .icon-cell:hover {
+    background: var(--bg-hover);
+    color: var(--aep-red);
+    border-color: var(--line-strong);
+  }
+  .icon-cell-label {
+    font-family: 'Geist Mono'; font-size: 9px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-low);
+  }
+
+  /* Data spec */
+  .data-spec {
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+  }
+  .data-spec-row {
+    display: grid;
+    grid-template-columns: 240px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-subtle);
+  }
+  .data-spec-row:last-child { border: 0; }
+  .data-spec-label { font-family: 'Geist Mono'; font-size: 10px; color: var(--ink-low); letter-spacing: 0.14em; text-transform: uppercase; }
+  .data-spec-value { font-family: 'Geist Mono'; color: var(--ink-high); }
+  .data-spec-note { font-size: 11px; color: var(--ink-low); }
+
+  /* Footer */
+  .footer {
+    padding: 64px 0;
+    text-align: center;
+    font-family: 'Geist Mono';
+    font-size: 11px;
+    color: var(--ink-low);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .footer-line {
+    width: 60px; height: 2px;
+    background: var(--aep-red);
+    margin: 0 auto 24px;
+  }
+
+  /* Helpers */
+  .row { display: flex; align-items: center; gap: 16px; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  .center { display: flex; align-items: center; justify-content: center; }
+  .mt-l { margin-top: 32px; }
+  .mt-m { margin-top: 20px; }
+  .mt-s { margin-top: 12px; }
+  .subhead {
+    font-family: 'Geist Mono';
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 11px;
+    color: var(--ink-low);
+    margin-top: 32px;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ─────────── TOP NAV ─────────── -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <img src="assets/aep-master-logo-light.png" alt="AEP" class="topnav-aep-logo" />
+    <div class="topnav-sep"></div>
+    <div class="topnav-product">Tarima — Brand Book</div>
+  </div>
+  <div class="topnav-links">
+    <a href="#identity">Identity</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#logo">Logo</a>
+    <a href="#color">Color</a>
+    <a href="#type">Type</a>
+    <a href="#voice">Voice</a>
+    <a href="#apps">Applications</a>
+  </div>
+  <div class="topnav-meta">v1.0 · 05/2026</div>
+</nav>
+
+<!-- ─────────── HERO ─────────── -->
+<section class="page hero" id="identity">
+  <div class="hero-meta">
+    <div><span>Documento</span>Brand Book · Master + Product</div>
+    <div><span>Marca matriz</span>Asociación Española de Powerlifting</div>
+    <div><span>Producto</span>Tarima — Gestión arbitral</div>
+    <div><span>Versión</span>1.0 · Mayo 2026</div>
+  </div>
+
+  <!-- Master + product lockup -->
+  <div class="hero-master">
+    <img src="assets/aep-master-logo-light.png" alt="AEP" />
+    <div class="hero-master-x">×</div>
+    <div>
+      <div class="hero-product-mark">Tarima<span class="accent">.</span></div>
+      <div class="hero-product-sub">SOFTWARE OFICIAL DE GESTIÓN ARBITRAL</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="hero-title">
+      Levantamos<br>el peso de la<br><span class="accent">gestión</span>.
+    </div>
+    <div class="hero-sub">
+      <span class="tag">●&nbsp;&nbsp;Brand book</span>
+      <span>La AEP federa el powerlifting español desde 1986. <b style="color:var(--ink-high);">Tarima</b> es la primera plataforma digital oficial: un sistema de operaciones arbitrales construido sobre la identidad histórica de la AEP. Este documento define cómo conviven ambas marcas.</span>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-label">AEP fundada</div>
+      <div class="hero-stat-value">1986</div>
+      <div class="hero-stat-note">Federación nacional</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">Comunidades</div>
+      <div class="hero-stat-value">17</div>
+      <div class="hero-stat-note">Delegaciones zonales</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">Árbitros federados</div>
+      <div class="hero-stat-value">156</div>
+      <div class="hero-stat-note">4 niveles · IPF &amp; nacional</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">Tarima v1</div>
+      <div class="hero-stat-value">2026</div>
+      <div class="hero-stat-note">Primer producto digital AEP</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── BRAND ARCHITECTURE ─────────── -->
+<section class="page section" id="architecture">
+  <div class="section-head">
+    <div>
+      <div class="section-num">01 / Arquitectura</div>
+      <div class="section-label">Master + product</div>
+    </div>
+    <div>
+      <h2 class="section-title">Una marca federa. Otra opera.</h2>
+      <p class="section-desc">AEP es la marca matriz histórica — la firma de la federación. <b style="color:var(--ink-high);">Tarima</b> es la primera de una familia de productos digitales bajo ese paraguas. Comparten ADN visual (rojo, ámbar, italic) pero ocupan roles distintos: AEP avala, Tarima ejecuta.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-card master">
+      <div class="arch-card-role">▲ Marca matriz</div>
+      <div class="arch-card-mark">
+        <img src="assets/aep-master-logo-light.png" alt="AEP" />
+      </div>
+      <div class="arch-card-name">Asociación Española de Powerlifting</div>
+      <div class="arch-card-desc">Avala oficialmente, valida normativa, comunica institucionalmente. Aparece en certificados, federaciones internacionales, contratos y comunicación pública.</div>
+    </div>
+
+    <div class="arch-link"><span>contiene</span></div>
+
+    <div class="arch-card">
+      <div class="arch-card-role">▼ Productos digitales</div>
+      <div class="arch-card-mark">
+        <div class="tarima-product-stack">
+          <span class="top">AEP / Producto 01</span>
+          <span class="bot" style="font-style:italic;">Tarima.</span>
+        </div>
+      </div>
+      <div class="arch-card-name" style="font-style:italic;">Tarima</div>
+      <div class="arch-card-desc">Sistema de gestión arbitral. Familia de productos que crecerá con el tiempo — la AEP comparte equity, los productos comparten interfaz.</div>
+
+      <div class="arch-product">
+        <div class="arch-product-cell active">
+          <div class="arch-product-name">Tarima</div>
+          <div class="arch-product-desc">Gestión arbitral</div>
+          <span class="status">● V1.0 ACTIVO</span>
+        </div>
+        <div class="arch-product-cell">
+          <div class="arch-product-name">Báscula</div>
+          <div class="arch-product-desc">Pesaje · iPad</div>
+          <span class="status">● ROADMAP</span>
+        </div>
+        <div class="arch-product-cell">
+          <div class="arch-product-name">Marcador</div>
+          <div class="arch-product-desc">Resultados live</div>
+          <span class="status">● ROADMAP</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── PRINCIPLES ─────────── -->
+<section class="page section">
+  <div class="section-head">
+    <div>
+      <div class="section-num">02 / Principios</div>
+      <div class="section-label">Fundamentos</div>
+    </div>
+    <div>
+      <h2 class="section-title">Tres principios. Una identidad coherente.</h2>
+      <p class="section-desc">La marca matriz tiene 40 años y un público (atletas, comunidad). El producto tiene meses y un público distinto (responsables de jueces). Estos principios garantizan que se reconozca como un solo sistema sin sacrificar la operatividad.</p>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="principle">
+      <div class="principle-num">P · 01</div>
+      <div class="principle-title">Heredar, no copiar</div>
+      <div class="principle-body">Tarima toma el rojo, el ámbar y el italic de la AEP. No toma su logo. El producto necesita su propia firma para ser identificable en pestañas, dock y favicons sin pelear con la marca matriz.</div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">P · 02</div>
+      <div class="principle-title">Densidad sin ruido</div>
+      <div class="principle-body">El logo AEP transmite peso, drama, comunidad. La UI de Tarima transmite control. Donde el banner de un campeonato grita, el dashboard susurra: tipografía monoespaciada, jerarquía estricta, cero adorno.</div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">P · 03</div>
+      <div class="principle-title">Vocabulario del deporte</div>
+      <div class="principle-body">Tarima, plantilla, sesión, jurado, pesaje. Usamos los términos exactos del reglamento IPF porque nuestros usuarios los usan. Cero metáforas genéricas de SaaS.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── LOGO ─────────── -->
+<section class="page section" id="logo">
+  <div class="section-head">
+    <div>
+      <div class="section-num">03 / Marca</div>
+      <div class="section-label">Lockups &amp; sistema</div>
+    </div>
+    <div>
+      <h2 class="section-title">Dos marcas. Un sistema de aplicación.</h2>
+      <p class="section-desc">El logo AEP existe — no se rediseña. El wordmark Tarima se construye respetando su ADN: italic bold, mismo color rojo, divisor vertical en lugar de superposición. Nunca se solapan; siempre dialogan.</p>
+    </div>
+  </div>
+
+  <!-- Master mark -->
+  <h3 class="subhead">Marca matriz · AEP</h3>
+  <div class="grid-3">
+    <div class="specimen spec-mark">
+      <div class="specimen-label">primary</div>
+      <div class="specimen-meta">01 · positivo</div>
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="max-width:80%;" />
+      <div class="spec-mark-tag">USE EN FONDO OSCURO</div>
+    </div>
+    <div class="specimen light spec-mark">
+      <div class="specimen-label">primary inv</div>
+      <div class="specimen-meta">02 · negativo</div>
+      <img src="assets/aep-master-logo.png" alt="AEP" style="max-width:80%;" />
+      <div class="spec-mark-tag" style="color:rgba(11,10,9,0.5);">USE EN FONDO CLARO</div>
+    </div>
+    <div class="specimen red spec-mark">
+      <div class="specimen-label">monochrome</div>
+      <div class="specimen-meta">03 · sobre marca</div>
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="max-width:80%;filter:brightness(0) invert(1);" />
+      <div class="spec-mark-tag" style="color:rgba(245,240,232,0.6);">USE EN FONDO ROJO AEP</div>
+    </div>
+  </div>
+
+  <!-- Product wordmark -->
+  <h3 class="subhead">Wordmark de producto · Tarima</h3>
+  <div class="grid-3">
+    <div class="specimen spec-mark">
+      <div class="specimen-label">word-mark</div>
+      <div class="specimen-meta">01 · standalone</div>
+      <div class="tarima-italic" style="font-size:84px;color:var(--ink-high);">Tarima<span style="color:var(--aep-red);">.</span></div>
+      <div class="spec-mark-tag">USO INDEPENDIENTE</div>
+    </div>
+    <div class="specimen spec-mark">
+      <div class="specimen-label">co-brand</div>
+      <div class="specimen-meta">02 · lockup horizontal</div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:48px;" />
+        <div style="width:1px;height:44px;background:var(--line-strong);"></div>
+        <div class="tarima-italic" style="font-size:36px;color:var(--ink-high);">Tarima</div>
+      </div>
+      <div class="spec-mark-tag">PRODUCT IN-APP</div>
+    </div>
+    <div class="specimen spec-mark">
+      <div class="specimen-label">stacked</div>
+      <div class="specimen-meta">03 · co-brand vertical</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:36px;" />
+        <div style="width:32px;height:1px;background:var(--line-strong);"></div>
+        <div class="tarima-italic" style="font-size:32px;color:var(--ink-high);">Tarima</div>
+        <div class="spec-mark-tag" style="margin-top:4px;">EVENTOS · OFICIALES</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App icon -->
+  <h3 class="subhead">App mark · marca compacta para favicons, dock, OS</h3>
+  <div class="grid-4">
+    <div class="specimen spec-mark" style="height:240px;">
+      <div class="specimen-label">app icon</div>
+      <div class="specimen-meta">256×256</div>
+      <div class="tarima-badge" style="width:120px;height:120px;">
+        <div class="tarima-badge-text" style="font-size:36px;">T</div>
+        <div class="tarima-badge-sub">TARIMA · AEP</div>
+      </div>
+    </div>
+    <div class="specimen spec-mark" style="height:240px;">
+      <div class="specimen-label">favicon</div>
+      <div class="specimen-meta">32×32 · 64×64</div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div class="tarima-badge" style="width:64px;height:64px;padding:8px;">
+          <div class="tarima-badge-text" style="font-size:22px;margin-top:10px;">T</div>
+        </div>
+        <div class="tarima-badge" style="width:32px;height:32px;padding:5px;border-radius:4px;">
+          <div class="tarima-badge-text" style="font-size:14px;margin-top:6px;">T</div>
+        </div>
+      </div>
+    </div>
+    <div class="specimen spec-mark" style="height:240px;">
+      <div class="specimen-label">sidebar</div>
+      <div class="specimen-meta">in product</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg-base);border:1px solid var(--line);border-radius:5px;">
+        <div class="tarima-badge" style="width:28px;height:28px;padding:4px;border-radius:3px;">
+          <div class="tarima-badge-text" style="font-size:11px;margin-top:5px;">T</div>
+        </div>
+        <div style="display:flex;flex-direction:column;line-height:1;">
+          <div style="font-size:13px;font-weight:600;font-style:italic;letter-spacing:-0.025em;">Tarima</div>
+          <div style="font-family:'Geist Mono';font-size:8.5px;letter-spacing:0.2em;color:var(--ink-low);text-transform:uppercase;margin-top:4px;">AEP · V1.0</div>
+        </div>
+      </div>
+    </div>
+    <div class="specimen spec-mark" style="height:240px;">
+      <div class="specimen-label">construction</div>
+      <div class="specimen-meta">anatomy</div>
+      <div class="tarima-badge" style="width:120px;height:120px;position:relative;">
+        <div class="tarima-badge-text" style="font-size:36px;">T</div>
+        <div class="tarima-badge-sub">TARIMA · AEP</div>
+        <div style="position:absolute;top:8px;left:130px;font-family:'Geist Mono';font-size:9px;color:var(--aep-amber);letter-spacing:0.1em;white-space:nowrap;">← banda ámbar</div>
+        <div style="position:absolute;top:50px;left:130px;font-family:'Geist Mono';font-size:9px;color:var(--ink-low);letter-spacing:0.1em;white-space:nowrap;">← italic 'T'</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear space -->
+  <h3 class="subhead">Espacio libre · cualquier marca</h3>
+  <div class="grid-2">
+    <div class="specimen" style="padding:32px;">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.16em;text-transform:uppercase;text-align:center;">AEP master · X = altura del wordmark</div>
+      <div class="clearspace-box">
+        <div class="clearspace-inner">
+          <img src="assets/aep-master-logo-light.png" alt="AEP" />
+        </div>
+        <div class="clearspace-marker" style="top:6px; left:50%; transform:translateX(-50%);">↕ X/2</div>
+        <div class="clearspace-marker" style="bottom:6px; left:50%; transform:translateX(-50%);">↕ X/2</div>
+        <div class="clearspace-marker" style="left:6px; top:50%; transform:translateY(-50%);">↔ X/2</div>
+        <div class="clearspace-marker" style="right:6px; top:50%; transform:translateY(-50%);">↔ X/2</div>
+      </div>
+    </div>
+    <div class="specimen" style="padding:32px;">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.16em;text-transform:uppercase;text-align:center;">Lockup co-brand · espacio entre marcas</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:50px 30px 30px;">
+        <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:48px;" />
+        <div style="position:relative;width:32px;height:48px;border-left:1px dashed rgba(232,168,44,0.4);border-right:1px dashed rgba(232,168,44,0.4);display:flex;align-items:center;justify-content:center;">
+          <div style="width:1px;height:44px;background:var(--line-strong);"></div>
+          <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-family:'Geist Mono';font-size:9px;color:var(--aep-amber);">X</div>
+        </div>
+        <div class="tarima-italic" style="font-size:36px;color:var(--ink-high);">Tarima</div>
+      </div>
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.14em;text-transform:uppercase;text-align:center;">divisor a X = altura de bar del barbell · nunca menos</div>
+    </div>
+  </div>
+
+  <!-- Sizes -->
+  <h3 class="subhead">Tamaños mínimos AEP master</h3>
+  <div class="size-row">
+    <div class="size-cell">
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:80px;" />
+      <div class="size-cell-label">XL · BANNER 80 PX</div>
+    </div>
+    <div class="size-cell">
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:48px;" />
+      <div class="size-cell-label">LG · WEB 48 PX</div>
+    </div>
+    <div class="size-cell">
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:32px;" />
+      <div class="size-cell-label">MD · UI 32 PX</div>
+    </div>
+    <div class="size-cell">
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:24px;" />
+      <div class="size-cell-label">SM · NAV 24 PX</div>
+    </div>
+    <div class="size-cell">
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:18px;" />
+      <div class="size-cell-label">XS · MIN ABSOLUTO</div>
+    </div>
+  </div>
+
+  <!-- Don'ts -->
+  <h3 class="subhead">Usos incorrectos</h3>
+  <div class="grid-4">
+    <div class="specimen" style="height:180px;display:flex;align-items:center;justify-content:center;position:relative;">
+      <div class="specimen-label" style="color:#F08070;">no estirar</div>
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:50px;transform:scaleX(1.5);" />
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#D43426;font-size:80px;opacity:0.15;font-weight:300;">✕</div>
+    </div>
+    <div class="specimen" style="height:180px;display:flex;align-items:center;justify-content:center;position:relative;">
+      <div class="specimen-label" style="color:#F08070;">no rotar</div>
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:50px;transform:rotate(8deg);" />
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#D43426;font-size:80px;opacity:0.15;font-weight:300;">✕</div>
+    </div>
+    <div class="specimen" style="height:180px;display:flex;align-items:center;justify-content:center;position:relative;">
+      <div class="specimen-label" style="color:#F08070;">no recolorear</div>
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:50px;filter:hue-rotate(180deg);" />
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#D43426;font-size:80px;opacity:0.15;font-weight:300;">✕</div>
+    </div>
+    <div class="specimen" style="height:180px;display:flex;align-items:center;justify-content:center;position:relative;">
+      <div class="specimen-label" style="color:#F08070;">no efectos</div>
+      <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:50px;filter:drop-shadow(0 0 12px #D43426);" />
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#D43426;font-size:80px;opacity:0.15;font-weight:300;">✕</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── COLOR ─────────── -->
+<section class="page section" id="color">
+  <div class="section-head">
+    <div>
+      <div class="section-num">04 / Color</div>
+      <div class="section-label">Sistema cromático</div>
+    </div>
+    <div>
+      <h2 class="section-title">Tres colores AEP. Una paleta de producto extendida.</h2>
+      <p class="section-desc">El rojo, el ámbar y el negro son los tres colores históricos de la AEP — directos del barbell del logo. Tarima los hereda íntegros y añade una escala de neutros cálidos para soportar UI densa en dark mode.</p>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top:0;">Colores AEP · heredados de la marca matriz</h3>
+  <div class="grid-3">
+    <div class="swatch">
+      <div class="swatch-color" style="background:var(--aep-red);">
+        <span class="role">Primary / Brand</span>
+      </div>
+      <div class="swatch-meta">
+        <div class="swatch-name">AEP Red</div>
+        <div class="swatch-vals">
+          <span><b>HEX</b> #D43426</span>
+          <span><b>RGB</b> 212 · 52 · 38</span>
+          <span><b>OKLCH</b> 56% 0.18 28</span>
+          <span><b>PMS</b> 7626 C</span>
+        </div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:var(--aep-amber);">
+        <span class="role light">Accent / Brand</span>
+      </div>
+      <div class="swatch-meta">
+        <div class="swatch-name">AEP Amber</div>
+        <div class="swatch-vals">
+          <span><b>HEX</b> #E8A82C</span>
+          <span><b>RGB</b> 232 · 168 · 44</span>
+          <span><b>OKLCH</b> 76% 0.16 75</span>
+          <span><b>PMS</b> 1235 C</span>
+        </div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#000000;">
+        <span class="role">Anchor / Brand</span>
+      </div>
+      <div class="swatch-meta">
+        <div class="swatch-name">AEP Black</div>
+        <div class="swatch-vals">
+          <span><b>HEX</b> #000000</span>
+          <span><b>RGB</b> 0 · 0 · 0</span>
+          <span><b>USE</b> wordmark only</span>
+          <span><b>PMS</b> Black 6 C</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="subhead">Neutros Tarima · escala de producto</h3>
+  <div class="grid-4">
+    <div class="swatch">
+      <div class="swatch-color" style="background:var(--bg-base);border-bottom:1px solid var(--line);">
+        <span class="role">UI / Ground</span>
+      </div>
+      <div class="swatch-meta">
+        <div class="swatch-name">Ground</div>
+        <div class="swatch-vals">
+          <span><b>HEX</b> #0B0A09</span>
+          <span><b>USE</b> backgrounds</span>
+        </div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:var(--bg-surface);border-bottom:1px solid var(--line);">
+        <span class="role">UI / Surface</span>
+      </div>
+      <div class="swatch-meta">
+        <div class="swatch-name">Surface</div>
+        <div class="swatch-vals">
+          <span><b>HEX</b> #141210</span>
+          <span><b>USE</b> cards · panels</span>
+        </div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:var(--line-strong);">
+        <span class="role">UI / Line</span>
+      </div>
+      <div class="swatch-meta">
+        <div class="swatch-name">Line</div>
+        <div class="swatch-vals">
+          <span><b>HEX</b> #3A332E</span>
+          <span><b>USE</b> borders · dividers</span>
+        </div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:var(--ink-high);">
+        <span class="role light">UI / Ink</span>
+      </div>
+      <div class="swatch-meta">
+        <div class="swatch-name">Bone Cream</div>
+        <div class="swatch-vals">
+          <span><b>HEX</b> #F5F0E8</span>
+          <span><b>USE</b> body text</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="subhead">Escala neutral (Bone)</h3>
+  <div class="scale">
+    <div class="scale-step light" style="background:#F5F0E8;"><span class="stop">50</span><span class="hex">F5F0E8</span></div>
+    <div class="scale-step light" style="background:#E8E0D2;"><span class="stop">100</span><span class="hex">E8E0D2</span></div>
+    <div class="scale-step light" style="background:#B8B0A4;"><span class="stop">200</span><span class="hex">B8B0A4</span></div>
+    <div class="scale-step light" style="background:#7A7269;"><span class="stop">300</span><span class="hex">7A7269</span></div>
+    <div class="scale-step dark"  style="background:#4A443E;"><span class="stop">400</span><span class="hex">4A443E</span></div>
+    <div class="scale-step dark"  style="background:#3A332E;"><span class="stop">500</span><span class="hex">3A332E</span></div>
+    <div class="scale-step dark"  style="background:#2A2522;"><span class="stop">600</span><span class="hex">2A2522</span></div>
+    <div class="scale-step dark"  style="background:#221F1B;"><span class="stop">700</span><span class="hex">221F1B</span></div>
+    <div class="scale-step dark"  style="background:#1B1916;"><span class="stop">800</span><span class="hex">1B1916</span></div>
+    <div class="scale-step dark"  style="background:#0B0A09;"><span class="stop">900</span><span class="hex">0B0A09</span></div>
+  </div>
+
+  <h3 class="subhead">Escala roja (AEP Red)</h3>
+  <div class="scale">
+    <div class="scale-step light" style="background:#FDEEEC;"><span class="stop">50</span><span class="hex">FDEEEC</span></div>
+    <div class="scale-step light" style="background:#F8CFC9;"><span class="stop">100</span><span class="hex">F8CFC9</span></div>
+    <div class="scale-step light" style="background:#F0958A;"><span class="stop">200</span><span class="hex">F0958A</span></div>
+    <div class="scale-step dark"  style="background:#E66256;"><span class="stop">300</span><span class="hex">E66256</span></div>
+    <div class="scale-step dark"  style="background:#D43426;"><span class="stop">400</span><span class="hex">D43426</span></div>
+    <div class="scale-step dark"  style="background:#B0291D;"><span class="stop">500</span><span class="hex">B0291D</span></div>
+    <div class="scale-step dark"  style="background:#8E1F16;"><span class="stop">600</span><span class="hex">8E1F16</span></div>
+    <div class="scale-step dark"  style="background:#6B1810;"><span class="stop">700</span><span class="hex">6B1810</span></div>
+    <div class="scale-step dark"  style="background:#4A100B;"><span class="stop">800</span><span class="hex">4A100B</span></div>
+    <div class="scale-step dark"  style="background:#2A0906;"><span class="stop">900</span><span class="hex">2A0906</span></div>
+  </div>
+
+  <h3 class="subhead">Escala ámbar (AEP Amber)</h3>
+  <div class="scale">
+    <div class="scale-step light" style="background:#FCF3DE;"><span class="stop">50</span><span class="hex">FCF3DE</span></div>
+    <div class="scale-step light" style="background:#F7DFA1;"><span class="stop">100</span><span class="hex">F7DFA1</span></div>
+    <div class="scale-step light" style="background:#F2C672;"><span class="stop">200</span><span class="hex">F2C672</span></div>
+    <div class="scale-step light" style="background:#EDB54B;"><span class="stop">300</span><span class="hex">EDB54B</span></div>
+    <div class="scale-step light" style="background:#E8A82C;"><span class="stop">400</span><span class="hex">E8A82C</span></div>
+    <div class="scale-step dark"  style="background:#BC8722;"><span class="stop">500</span><span class="hex">BC8722</span></div>
+    <div class="scale-step dark"  style="background:#8A6516;"><span class="stop">600</span><span class="hex">8A6516</span></div>
+    <div class="scale-step dark"  style="background:#5C440E;"><span class="stop">700</span><span class="hex">5C440E</span></div>
+    <div class="scale-step dark"  style="background:#3B2C08;"><span class="stop">800</span><span class="hex">3B2C08</span></div>
+    <div class="scale-step dark"  style="background:#1F1604;"><span class="stop">900</span><span class="hex">1F1604</span></div>
+  </div>
+
+  <h3 class="subhead">Semántica del color</h3>
+  <div class="grid-3">
+    <div class="specimen" style="padding:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="width:14px;height:14px;border-radius:3px;background:var(--aep-red);"></span>
+        <span class="mono" style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-mid);">AEP RED</span>
+      </div>
+      <div style="font-size:14px;color:var(--ink-mid);line-height:1.5;">Marca matriz, acción primaria, alertas críticas, falta de personal, asignación rechazada.</div>
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-faint);margin-top:12px;letter-spacing:0.14em;text-transform:uppercase;">No más del 8% de la pantalla</div>
+    </div>
+    <div class="specimen" style="padding:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="width:14px;height:14px;border-radius:3px;background:var(--aep-amber);"></span>
+        <span class="mono" style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-mid);">AEP AMBER</span>
+      </div>
+      <div style="font-size:14px;color:var(--ink-mid);line-height:1.5;">Acento secundario AEP, estado pendiente, propuestas por aprobar, atención sin urgencia, roster incompleto.</div>
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-faint);margin-top:12px;letter-spacing:0.14em;text-transform:uppercase;">Equilibra el rojo · usar moderado</div>
+    </div>
+    <div class="specimen" style="padding:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="width:14px;height:14px;border-radius:3px;background:#3F9F6A;"></span>
+        <span class="mono" style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-mid);">OK GREEN</span>
+      </div>
+      <div style="font-size:14px;color:var(--ink-mid);line-height:1.5;">Solo en producto Tarima. No es color AEP — semántico de UI: confirmación, roster completo, cuota cumplida.</div>
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-faint);margin-top:12px;letter-spacing:0.14em;text-transform:uppercase;">Solo semántico · nunca decorativo · nunca en master</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── TYPOGRAPHY ─────────── -->
+<section class="page section" id="type">
+  <div class="section-head">
+    <div>
+      <div class="section-num">05 / Tipografía</div>
+      <div class="section-label">Sistema tipográfico</div>
+    </div>
+    <div>
+      <h2 class="section-title">Italic para la marca. Roman para el producto. Mono para el dato.</h2>
+      <p class="section-desc">El AEP wordmark es italic bold — heredamos esa actitud para titulares de marca y wordmark de producto. El resto del producto usa Geist roman para densidad y legibilidad, y Geist Mono para cualquier número que cuente.</p>
+    </div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>Brand Display</b>
+      Geist 800 italic · 88/88 · -0.05em
+    </div>
+    <div class="type-sample t-display" style="color:var(--aep-red);">Tarima.</div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>Hero / Master</b>
+      Geist 700 italic · 64/64 · -0.04em
+    </div>
+    <div class="type-sample" style="font-style:italic;font-weight:700;font-size:64px;letter-spacing:-0.04em;line-height:0.95;">Levantamos el peso.</div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>Section title</b>
+      Geist 600 · 48/52 · -0.025em
+    </div>
+    <div class="type-sample t-title">Sistema oficial de gestión arbitral.</div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>H1 / Page</b>
+      Geist 600 · 32/38 · -0.02em
+    </div>
+    <div class="type-sample t-h1">Constructor de Tarima</div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>H2 / Card</b>
+      Geist 500 · 22/26 · -0.015em
+    </div>
+    <div class="type-sample t-h2">Plantillas arbitrales — próximos eventos</div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>Body</b>
+      Geist 400 · 15/24
+    </div>
+    <div class="type-sample t-body" style="max-width:640px;">El responsable de zona propone un roster para un evento AEP-3. El responsable nacional lo recibe, lo aprueba o lo modifica. Todo el flujo queda registrado y auditable.</div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>Mono · Data</b>
+      Geist Mono 500 · variable
+    </div>
+    <div>
+      <div class="t-mono-big tnum">142 / 156</div>
+      <div class="mono tnum" style="color:var(--ink-low);font-size:11px;margin-top:6px;letter-spacing:0.14em;text-transform:uppercase;">jueces activos · 2026</div>
+    </div>
+  </div>
+
+  <div class="type-spec">
+    <div class="type-info">
+      <b>Mono · Label</b>
+      Geist Mono 500 · 11px · 0.18em
+    </div>
+    <div class="t-mono-label">AEP / TARIMA · BRAND BOOK · V1.0</div>
+  </div>
+
+  <!-- Character specimens -->
+  <div class="grid-2 mt-l">
+    <div class="char-block">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:16px;">Geist Italic · brand voice</div>
+      <div class="char-row italic-row" style="font-size:28px;font-weight:700;color:var(--ink-high);">Tarima · Levanta · AEP</div>
+      <div class="char-row italic-row" style="font-size:22px;font-weight:600;color:var(--aep-red);margin-top:12px;">Campeonato · España · 2026</div>
+      <div class="char-row italic-row" style="font-size:18px;font-weight:500;color:var(--aep-amber);margin-top:10px;">jurado · pesaje · tarima</div>
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-faint);letter-spacing:0.12em;margin-top:18px;">700 · 600 · 500 italic — titulares y brand voice</div>
+    </div>
+    <div class="char-block">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:16px;">Geist Mono · data &amp; numerics</div>
+      <div class="char-row mono-row" style="font-size:22px;font-weight:500;color:var(--ink-high);">ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+      <div class="char-row mono-row tnum" style="font-size:22px;font-weight:500;color:var(--aep-amber);margin-top:8px;">0123456789</div>
+      <div class="char-row mono-row tnum" style="font-size:22px;font-weight:500;color:var(--ink-high);margin-top:8px;">AEP-1 · AEP-2 · AEP-3</div>
+      <div class="char-row mono-row tnum" style="font-size:22px;font-weight:600;color:var(--aep-red);margin-top:8px;">220.5 KG · -83 KG · IPF</div>
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-faint);letter-spacing:0.12em;margin-top:18px;">400 · 500 · 600 — tnum activado</div>
+    </div>
+  </div>
+
+  <h3 class="subhead">Tratamiento de números</h3>
+  <div class="data-spec">
+    <div class="data-spec-row">
+      <div class="data-spec-label">Pesos (kg)</div>
+      <div class="data-spec-value tnum">220.5<span style="color:var(--ink-low);font-size:0.7em;margin-left:6px;">KG</span></div>
+      <div class="data-spec-note">Geist Mono 500 · unidad en ink-low · separador decimal punto</div>
+    </div>
+    <div class="data-spec-row">
+      <div class="data-spec-label">Fechas</div>
+      <div class="data-spec-value tnum">2026-06-12 → 14</div>
+      <div class="data-spec-note">ISO 8601 · rangos con flecha de glifo único</div>
+    </div>
+    <div class="data-spec-row">
+      <div class="data-spec-label">Códigos de evento</div>
+      <div class="data-spec-value">AEP-1 / AEP-2 / AEP-3</div>
+      <div class="data-spec-note">Tipo en monoespacio · siempre con guion</div>
+    </div>
+    <div class="data-spec-row">
+      <div class="data-spec-label">Categorías de peso</div>
+      <div class="data-spec-value">-66 KG M · +120 KG M · -83 KG F</div>
+      <div class="data-spec-note">Signo · valor · unidad · género</div>
+    </div>
+    <div class="data-spec-row">
+      <div class="data-spec-label">Cobertura</div>
+      <div class="data-spec-value tnum"><span style="color:var(--ink-high);">12</span><span style="color:var(--ink-low);">/15</span></div>
+      <div class="data-spec-note">Confirmados / requeridos · separador slash</div>
+    </div>
+    <div class="data-spec-row">
+      <div class="data-spec-label">Identificadores</div>
+      <div class="data-spec-value">j001 · evt-005 · S1</div>
+      <div class="data-spec-note">Prefijo de tipo + número con leading zeros</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── VOICE ─────────── -->
+<section class="page section" id="voice">
+  <div class="section-head">
+    <div>
+      <div class="section-num">06 / Voz</div>
+      <div class="section-label">Tono &amp; copywriting</div>
+    </div>
+    <div>
+      <h2 class="section-title">Hablamos como un árbitro nacional. Directo. Técnico. Sin floritura.</h2>
+      <p class="section-desc">La AEP tiene 40 años hablando un idioma muy concreto: el de las federaciones y reglamentos IPF. Tarima continúa ese idioma — añade precisión técnica del UX sin perder gravedad institucional.</p>
+    </div>
+  </div>
+
+  <div class="stack" style="gap:12px;">
+    <div class="voice-pair">
+      <div class="voice-cell yes">
+        <span class="voice-tag">●&nbsp;&nbsp;Así sí</span>
+        <div class="voice-quote">"Open Internacional Cataluña — falta 1 jurado para completar Sesión 2."</div>
+        <div class="voice-note">Específico. Nombra el evento, la sesión y el rol. El responsable sabe qué hacer sin abrir nada.</div>
+      </div>
+      <div class="voice-cell no">
+        <span class="voice-tag">✕&nbsp;&nbsp;Así no</span>
+        <div class="voice-quote">"¡Vaya! Hay algo pendiente en uno de tus eventos. ¡Échale un vistazo!"</div>
+        <div class="voice-note">Vacío, infantil, exige clics extra. La marca AEP pierde credibilidad institucional.</div>
+      </div>
+    </div>
+
+    <div class="voice-pair">
+      <div class="voice-cell yes">
+        <span class="voice-tag">●&nbsp;&nbsp;Así sí</span>
+        <div class="voice-quote">"Propuesta enviada al Responsable Nacional · 17:42"</div>
+        <div class="voice-note">Pasiva impersonal, hora exacta, vocabulario federativo. Parece un registro oficial.</div>
+      </div>
+      <div class="voice-cell no">
+        <span class="voice-tag">✕&nbsp;&nbsp;Así no</span>
+        <div class="voice-quote">"¡Listo! Tu propuesta está en camino 🚀"</div>
+        <div class="voice-note">Emoji, hipérbole, falsa cercanía. Esto no es una app de viajes.</div>
+      </div>
+    </div>
+
+    <div class="voice-pair">
+      <div class="voice-cell yes">
+        <span class="voice-tag">●&nbsp;&nbsp;Así sí</span>
+        <div class="voice-quote">"Carlos Méndez cumplió 8 eventos en 2026 — mantiene categoría IPF Cat. 1."</div>
+        <div class="voice-note">Nombre, cifra, consecuencia. El dato es lo que importa.</div>
+      </div>
+      <div class="voice-cell no">
+        <span class="voice-tag">✕&nbsp;&nbsp;Así no</span>
+        <div class="voice-quote">"¡Carlos lo está haciendo genial este año! 💪"</div>
+        <div class="voice-note">Subjetivo, no accionable. No tenemos juicio de valor sobre los jueces.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="subhead">Léxico de la marca</h3>
+  <div class="grid-2">
+    <div class="specimen" style="padding:28px;">
+      <div style="font-family:'Geist Mono';font-size:10px;color:#7DD3A4;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:18px;">● Términos canónicos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 24px;font-size:13px;color:var(--ink-mid);">
+        <div><b style="color:var(--ink-high);">Tarima</b><br><span style="color:var(--ink-low);font-size:11px;">no plataforma, no escenario</span></div>
+        <div><b style="color:var(--ink-high);">Plantilla arbitral</b><br><span style="color:var(--ink-low);font-size:11px;">no equipo, no roster</span></div>
+        <div><b style="color:var(--ink-high);">Jurado</b><br><span style="color:var(--ink-low);font-size:11px;">no panel, no comité</span></div>
+        <div><b style="color:var(--ink-high);">Sesión</b><br><span style="color:var(--ink-low);font-size:11px;">no bloque, no turno</span></div>
+        <div><b style="color:var(--ink-high);">Pesaje</b><br><span style="color:var(--ink-low);font-size:11px;">no check-in</span></div>
+        <div><b style="color:var(--ink-high);">Control de material</b><br><span style="color:var(--ink-low);font-size:11px;">no equipment check</span></div>
+        <div><b style="color:var(--ink-high);">Asignación</b><br><span style="color:var(--ink-low);font-size:11px;">no booking, no slot</span></div>
+        <div><b style="color:var(--ink-high);">Cuota anual</b><br><span style="color:var(--ink-low);font-size:11px;">no quota, no target</span></div>
+      </div>
+    </div>
+    <div class="specimen" style="padding:28px;">
+      <div style="font-family:'Geist Mono';font-size:10px;color:#F08070;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:18px;">✕ Términos a evitar</div>
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:13px;color:var(--ink-low);">
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Workspace</span> · usar <b style="color:var(--ink-high);">Panel</b> o <b style="color:var(--ink-high);">Dashboard</b></div>
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Team</span> · usar <b style="color:var(--ink-high);">Plantilla arbitral</b></div>
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Onboarding</span> · usar <b style="color:var(--ink-high);">Alta de árbitro</b></div>
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Match</span> · usar <b style="color:var(--ink-high);">Asignar</b> o <b style="color:var(--ink-high);">Proponer</b></div>
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Streak / Racha</span> — irrelevante</div>
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Productividad</span> — no medimos esto</div>
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Emoji decorativos</span> — nunca en producto</div>
+        <div><span style="text-decoration:line-through;color:var(--ink-mid);">Exclamaciones múltiples</span> — un punto basta</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── APPLICATIONS ─────────── -->
+<section class="page section" id="apps">
+  <div class="section-head">
+    <div>
+      <div class="section-num">07 / Aplicaciones</div>
+      <div class="section-label">Sistema en uso</div>
+    </div>
+    <div>
+      <h2 class="section-title">Cómo conviven AEP y Tarima en el mundo real.</h2>
+      <p class="section-desc">En contextos institucionales (certificados, carnés, banners de evento) el AEP master manda. En contextos de producto (app icon, sidebar, login) Tarima manda. Siempre con la firma AEP en algún punto de la composición.</p>
+    </div>
+  </div>
+
+  <div class="grid-3" style="gap:16px;">
+    <!-- App icon -->
+    <div class="app-frame">
+      <div class="app-frame-head"><span>App Icon · iPad</span><span>1024 × 1024</span></div>
+      <div class="app-frame-body">
+        <div class="app-icon">
+          <div class="app-icon-shape">
+            <div class="app-icon-shape-text">T</div>
+            <div class="app-icon-shape-sub">TARIMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business card -->
+    <div class="app-frame">
+      <div class="app-frame-head"><span>Tarjeta de juez</span><span>85 × 55 mm</span></div>
+      <div class="app-frame-body" style="background:linear-gradient(135deg,#1B1916,#0B0A09);">
+        <div class="biz-card">
+          <div class="biz-card-top">
+            <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:24px;" />
+            <div style="text-align:right;">
+              <div class="biz-name">Carlos Méndez</div>
+              <div class="biz-role">Juez IPF · Cat. 1</div>
+            </div>
+          </div>
+          <div class="biz-card-bot">
+            <div><b>Lic.</b> J-001-MAD · <b>desde</b> 2014</div>
+            <div style="margin-top:4px;">tarima.aep.es</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jersey -->
+    <div class="app-frame">
+      <div class="app-frame-head"><span>Lanyard · pesaje</span><span>jersey patch</span></div>
+      <div class="app-frame-body">
+        <div class="jersey">
+          <div class="jersey-overlay"></div>
+          <div class="jersey-patch">
+            <div class="jersey-top">
+              <div class="jersey-num tnum">07</div>
+              <div class="jersey-side">JURADO<br/>SESIÓN 2</div>
+            </div>
+            <div class="jersey-bot">CTO. ESPAÑA · BARCELONA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event banner -->
+    <div class="app-frame" style="grid-column:span 2;">
+      <div class="app-frame-head"><span>Banner de campeonato</span><span>1920 × 1080</span></div>
+      <div class="app-frame-body" style="aspect-ratio:16/9;">
+        <div class="banner">
+          <div class="banner-top">
+            <div class="banner-tag">AEP-1 · Nivel nacional</div>
+            <img src="assets/aep-master-logo-light.png" alt="AEP" />
+          </div>
+          <div>
+            <div style="font-family:'Geist Mono';font-size:11px;color:var(--ink-low);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:14px;">12 — 14 JUN 2026 · MADRID</div>
+            <div class="banner-title">Campeonato de<br>España <span class="accent">Junior</span><br>&amp; Sub-23.</div>
+          </div>
+          <div class="banner-bot">
+            <div>15 categorías · 6 sesiones</div>
+            <div><b>tarima.aep.es</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Social -->
+    <div class="app-frame">
+      <div class="app-frame-head"><span>Social · key stat</span><span>1080 × 1080</span></div>
+      <div class="app-frame-body">
+        <div class="social">
+          <div class="social-top">
+            <img src="assets/aep-master-logo-light.png" alt="AEP" />
+            <div style="font-family:'Geist Mono';font-size:10px;letter-spacing:0.18em;opacity:0.7;text-transform:uppercase;">T2 / 2026</div>
+          </div>
+          <div>
+            <div class="social-num tnum">142</div>
+            <div class="social-label">árbitros activos</div>
+          </div>
+          <div class="social-bot">
+            <div>INFORME TRIMESTRAL</div>
+            <div>TARIMA.AEP.ES</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="gap:16px;margin-top:16px;">
+    <!-- Certificate -->
+    <div class="app-frame" style="grid-column:span 2;">
+      <div class="app-frame-head"><span>Certificado oficial</span><span>A4 export</span></div>
+      <div class="app-frame-body">
+        <div class="cert">
+          <div class="cert-head">
+            <img src="assets/aep-master-logo.png" alt="AEP" />
+            <div style="font-family:'Geist Mono';font-size:9px;letter-spacing:0.18em;color:rgba(11,10,9,0.5);text-transform:uppercase;">Doc · J-001-MAD-2026</div>
+          </div>
+          <div class="cert-body">
+            <div class="cert-overline">Certificado de arbitraje</div>
+            <div class="cert-title">Se acredita la participación de</div>
+            <div class="cert-name">Carlos Méndez Aguirre</div>
+            <div style="margin-top:14px;font-size:12px;color:rgba(11,10,9,0.7);max-width:78%;line-height:1.5;">como <b>Juez Central</b> en el <b>Campeonato de España Junior y Sub-23</b> celebrado del 12 al 14 de junio de 2026 en Madrid.</div>
+          </div>
+          <div class="cert-foot">
+            <div>Madrid · 14 · 06 · 2026</div>
+            <div>Verificación · tarima.aep.es</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticker -->
+    <div class="app-frame">
+      <div class="app-frame-head"><span>Sticker · tarima</span><span>200 × 80 mm</span></div>
+      <div class="app-frame-body" style="background:#1B1916;display:flex;align-items:center;justify-content:center;padding:24px;">
+        <div style="background:var(--bg-base);border:1px solid var(--line-strong);padding:14px 20px;border-radius:6px;display:flex;align-items:center;gap:14px;box-shadow:0 16px 40px -10px rgba(0,0,0,0.6);">
+          <img src="assets/aep-master-logo-light.png" alt="AEP" style="height:36px;" />
+          <div style="width:1px;height:32px;background:var(--line-strong);"></div>
+          <div style="display:flex;flex-direction:column;line-height:1;">
+            <div style="font-size:18px;font-weight:700;font-style:italic;letter-spacing:-0.025em;color:var(--ink-high);">Tarima</div>
+            <div style="font-family:'Geist Mono';font-size:8px;letter-spacing:0.2em;color:var(--aep-amber);text-transform:uppercase;margin-top:6px;">OFICIAL · 2026</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── ICONOGRAPHY ─────────── -->
+<section class="page section">
+  <div class="section-head">
+    <div>
+      <div class="section-num">08 / Iconografía</div>
+      <div class="section-label">Sistema de íconos</div>
+    </div>
+    <div>
+      <h2 class="section-title">Línea de 1.8 px. Esquinas redondeadas. 24×24.</h2>
+      <p class="section-desc">Trazo uniforme, sin relleno, sin colorido decorativo. Cada ícono debe poder leerse a 16 px sin perder claridad. Si un concepto no se entiende con cuatro líneas, mejor usar texto.</p>
+    </div>
+  </div>
+
+  <div class="grid-4" style="grid-template-columns:repeat(8, 1fr);">
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v9H3zM14 3h7v5h-7zM14 11h7v10h-7zM3 15h7v6H3z"/></svg><div class="icon-cell-label">DASHBOARD</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a4 4 0 100-8 4 4 0 000 8zm-7 9a7 7 0 0114 0M16 11a4 4 0 100-8 4 4 0 000 8zm6 9a7 7 0 00-7-7"/></svg><div class="icon-cell-label">JUECES</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM8 2v4M16 2v4"/></svg><div class="icon-cell-label">CALENDARIO</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 6-10 6L2 8zM2 14l10 6 10-6M2 11l10 6 10-6"/></svg><div class="icon-cell-label">TARIMA</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg><div class="icon-cell-label">APROBAR</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a6 6 0 100-12 6 6 0 000 12zm-3 0l-2 7 5-3 5 3-2-7"/></svg><div class="icon-cell-label">NIVEL IPF</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M7 16V8M12 16V4M17 16v-6"/></svg><div class="icon-cell-label">ESTADÍSTICA</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4h12l-2 4 2 4H4"/></svg><div class="icon-cell-label">ZONA</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 004 0"/></svg><div class="icon-cell-label">AVISO</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.7 3.86a2 2 0 00-3.4 0zM12 9v4m0 4h.01"/></svg><div class="icon-cell-label">SANCIÓN</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4v16h16v-7M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/></svg><div class="icon-cell-label">EDITAR</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5l5 5 5-5M4 21h16"/></svg><div class="icon-cell-label">DESCARGAR</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19a8 8 0 100-16 8 8 0 000 16zm10 2l-4.35-4.35"/></svg><div class="icon-cell-label">BUSCAR</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg><div class="icon-cell-label">FILTRO</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-7 3.3M3 4v5h5M12 7v5l3 3"/></svg><div class="icon-cell-label">HISTORIAL</div></div>
+    <div class="icon-cell"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4zM4 4v12a4 4 0 014 4"/></svg><div class="icon-cell-label">NORMATIVA</div></div>
+  </div>
+</section>
+
+<!-- ─────────── STATUS SYSTEM ─────────── -->
+<section class="page section">
+  <div class="section-head">
+    <div>
+      <div class="section-num">09 / Status</div>
+      <div class="section-label">Status pills</div>
+    </div>
+    <div>
+      <h2 class="section-title">Cada estado, una píldora. Color + punto + texto.</h2>
+      <p class="section-desc">La triple redundancia garantiza accesibilidad para usuarios con daltonismo y máxima legibilidad en escaneo rápido. Nunca color solo, nunca dot solo.</p>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="specimen" style="padding:24px;">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:18px;">Estado de evento</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#7DD3A4;background:rgba(63,159,106,0.12);border:1px solid rgba(63,159,106,0.35);min-width:120px;"><span style="width:6px;height:6px;border-radius:50%;background:#3F9F6A;"></span>Completo</span>
+          <span style="font-size:11px;color:var(--ink-low);">15/15 árbitros asignados</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#F2C672;background:rgba(232,168,44,0.12);border:1px solid rgba(232,168,44,0.35);min-width:120px;"><span style="width:6px;height:6px;border-radius:50%;background:#E8A82C;"></span>Incompleto</span>
+          <span style="font-size:11px;color:var(--ink-low);">cobertura 70-99%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#F08070;background:rgba(212,52,38,0.12);border:1px solid rgba(212,52,38,0.35);min-width:120px;"><span style="width:6px;height:6px;border-radius:50%;background:#D43426;"></span>Crítico</span>
+          <span style="font-size:11px;color:var(--ink-low);">cobertura &lt; 70%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#B8B0A4;background:rgba(122,114,105,0.10);border:1px solid rgba(122,114,105,0.30);min-width:120px;"><span style="width:6px;height:6px;border-radius:50%;background:#7A7269;"></span>Borrador</span>
+          <span style="font-size:11px;color:var(--ink-low);">sin propuesta enviada</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="specimen" style="padding:24px;">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:18px;">Estado de asignación</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#F2C672;background:rgba(232,168,44,0.12);border:1px solid rgba(232,168,44,0.35);min-width:130px;"><span style="width:6px;height:6px;border-radius:50%;background:#E8A82C;"></span>Propuesto</span>
+          <span style="font-size:11px;color:var(--ink-low);">enviado, sin respuesta</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#7DD3A4;background:rgba(63,159,106,0.12);border:1px solid rgba(63,159,106,0.35);min-width:130px;"><span style="width:6px;height:6px;border-radius:50%;background:#3F9F6A;"></span>Confirmado</span>
+          <span style="font-size:11px;color:var(--ink-low);">aceptado por el juez</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#F08070;background:rgba(212,52,38,0.12);border:1px solid rgba(212,52,38,0.35);min-width:130px;"><span style="width:6px;height:6px;border-radius:50%;background:#D43426;"></span>Rechazado</span>
+          <span style="font-size:11px;color:var(--ink-low);">declinado · requiere acción</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#F08070;background:rgba(212,52,38,0.18);border:1px solid rgba(212,52,38,0.5);min-width:130px;"><span style="width:6px;height:6px;border-radius:50%;background:#D43426;"></span>Falta personal</span>
+          <span style="font-size:11px;color:var(--ink-low);">slot vacío en evento</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="specimen" style="padding:24px;">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:18px;">Estado de árbitro</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#7DD3A4;background:rgba(63,159,106,0.10);border:1px solid rgba(63,159,106,0.30);min-width:120px;"><span style="width:6px;height:6px;border-radius:50%;background:#3F9F6A;"></span>Activo</span>
+          <span style="font-size:11px;color:var(--ink-low);">disponible &amp; en cuota</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#B8B0A4;background:rgba(122,114,105,0.10);border:1px solid rgba(122,114,105,0.30);min-width:120px;"><span style="width:6px;height:6px;border-radius:50%;background:#7A7269;"></span>Inactivo</span>
+          <span style="font-size:11px;color:var(--ink-low);">sin actividad &gt; 90 días</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#F08070;background:rgba(212,52,38,0.10);border:1px solid rgba(212,52,38,0.35);min-width:120px;"><span style="width:6px;height:6px;border-radius:50%;background:#D43426;"></span>Sancionado</span>
+          <span style="font-size:11px;color:var(--ink-low);">expediente abierto</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="subhead">Variantes de tamaño</h3>
+  <div class="specimen" style="padding:32px;display:flex;align-items:center;gap:32px;justify-content:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;padding:2px 6px;border-radius:2px;color:#7DD3A4;background:rgba(63,159,106,0.12);border:1px solid rgba(63,159,106,0.35);"><span style="width:5px;height:5px;border-radius:50%;background:#3F9F6A;"></span>Confirmado</span>
+      <span style="font-family:'Geist Mono';font-size:9px;color:var(--ink-low);letter-spacing:0.14em;">XS · 10/14</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:3px;color:#7DD3A4;background:rgba(63,159,106,0.12);border:1px solid rgba(63,159,106,0.35);"><span style="width:6px;height:6px;border-radius:50%;background:#3F9F6A;"></span>Confirmado</span>
+      <span style="font-family:'Geist Mono';font-size:9px;color:var(--ink-low);letter-spacing:0.14em;">SM · 11/16</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:4px;color:#7DD3A4;background:rgba(63,159,106,0.12);border:1px solid rgba(63,159,106,0.35);"><span style="width:7px;height:7px;border-radius:50%;background:#3F9F6A;"></span>Confirmado</span>
+      <span style="font-family:'Geist Mono';font-size:9px;color:var(--ink-low);letter-spacing:0.14em;">MD · 12/18</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── TOKENS ─────────── -->
+<section class="page section">
+  <div class="section-head">
+    <div>
+      <div class="section-num">10 / Tokens</div>
+      <div class="section-label">Design tokens</div>
+    </div>
+    <div>
+      <h2 class="section-title">Variables que viajan a producto.</h2>
+      <p class="section-desc">Variables CSS canónicas. Cualquier nueva pantalla del producto las hereda. Si necesitas un valor que no está aquí, primero pregunta — probablemente ya existe con otro nombre.</p>
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:16px;">
+    <div class="data-spec">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:16px;">Spacing</div>
+      <div class="data-spec-row"><div class="data-spec-label">space-1</div><div class="data-spec-value">4 px</div><div class="data-spec-note">icon gap</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">space-2</div><div class="data-spec-value">8 px</div><div class="data-spec-note">inline gap</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">space-3</div><div class="data-spec-value">12 px</div><div class="data-spec-note">field padding</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">space-4</div><div class="data-spec-value">16 px</div><div class="data-spec-note">card padding</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">space-6</div><div class="data-spec-value">24 px</div><div class="data-spec-note">section gap</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">space-8</div><div class="data-spec-value">32 px</div><div class="data-spec-note">view padding</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">space-12</div><div class="data-spec-value">48 px</div><div class="data-spec-note">page gutter</div></div>
+    </div>
+    <div class="data-spec">
+      <div style="font-family:'Geist Mono';font-size:10px;color:var(--ink-low);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:16px;">Radii &amp; borders</div>
+      <div class="data-spec-row"><div class="data-spec-label">radius-xs</div><div class="data-spec-value">2 px</div><div class="data-spec-note">pills, badges</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">radius-sm</div><div class="data-spec-value">3 px</div><div class="data-spec-note">chips</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">radius-md</div><div class="data-spec-value">5 px</div><div class="data-spec-note">buttons, fields</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">radius-lg</div><div class="data-spec-value">6 px</div><div class="data-spec-note">cards, panels</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">radius-xl</div><div class="data-spec-value">8 px</div><div class="data-spec-note">modals</div></div>
+      <div class="data-spec-row"><div class="data-spec-label">border-default</div><div class="data-spec-value">1 px solid #2A2522</div><div class="data-spec-note"></div></div>
+      <div class="data-spec-row"><div class="data-spec-label">border-strong</div><div class="data-spec-value">1 px solid #3A332E</div><div class="data-spec-note">hover</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── FOOTER ─────────── -->
+<footer class="page footer">
+  <div class="footer-line"></div>
+  AEP × Tarima · Brand Book v1.0<br>
+  <span style="color:var(--ink-faint);">Diseñado en Madrid · Mayo 2026</span>
+</footer>
+
+</body>
+</html>
