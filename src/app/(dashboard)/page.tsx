@@ -1,5 +1,6 @@
 import { PageShell } from "@/components/layout/page-shell";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { CoverageForecast } from "@/components/dashboard/coverage-forecast";
 import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import { DashboardLive } from "@/components/dashboard/dashboard-live";
 import { EventsTable } from "@/components/dashboard/events-table";
@@ -30,9 +31,14 @@ export default async function DashboardPage() {
         <div className="xl:col-span-2">
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>
+        <CoverageForecast coverage={dashboard.coverage} />
+      </div>
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <EventsTable competitions={dashboard.upcomingCompetitions} />
+        </div>
         <ActivityFeed activity={dashboard.activity} />
       </div>
-      <EventsTable competitions={dashboard.upcomingCompetitions} />
     </PageShell>
   );
 }

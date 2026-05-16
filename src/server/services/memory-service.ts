@@ -19,6 +19,9 @@ import type {
 } from "@/lib/types";
 import { REGULATION_RULES, getCalendarEvents, getLevels, getRosterTemplate, getStore, getZones, pushActivity, pushHistory } from "@/server/store";
 
+/** Bitácora de salud en memoria (modo dev sin Supabase). */
+const healthHistory: { score: number; at: number }[] = [];
+
 function parseSlotKey(slotKey: string): { session: string; roleKey: string } | null {
   const parts = slotKey.split("_");
   if (parts.length < 3) return null;
@@ -123,6 +126,14 @@ export const memoryDataService = {
       coverage,
       activity: store.activity,
     });
+    const last = healthHistory[healthHistory.length - 1];
+    if (last) {
+      health.previousScore = last.score;
+      health.delta = health.score - last.score;
+    }
+    if (!last || Date.now() - last.at > 6 * 60 * 60 * 1000) {
+      healthHistory.push({ score: health.score, at: Date.now() });
+    }
     return {
       kpis: buildKpis(),
       activity: store.activity,
@@ -131,6 +142,7 @@ export const memoryDataService = {
       currentUser: user,
       health,
       insights,
+      coverage,
       generatedAt: new Date().toISOString(),
     };
   },

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { HealthStatus, OperationalHealth } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 
 const STATUS_STYLE: Record<
   HealthStatus,
@@ -90,6 +91,28 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
             <span className="text-[10px] uppercase tracking-wider text-subtle-muted">
               / 100
             </span>
+            {typeof health.delta === "number" && (
+              <span
+                className={cn(
+                  "mt-1 flex items-center gap-0.5 text-[10.5px] font-semibold",
+                  health.delta > 0
+                    ? "text-success"
+                    : health.delta < 0
+                      ? "text-destructive"
+                      : "text-subtle-muted",
+                )}
+              >
+                {health.delta > 0 ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : health.delta < 0 ? (
+                  <TrendingDown className="h-3 w-3" />
+                ) : (
+                  <Minus className="h-3 w-3" />
+                )}
+                {health.delta > 0 ? "+" : ""}
+                {health.delta} vs. previo
+              </span>
+            )}
           </div>
         </div>
         <div className="flex-1 space-y-3">
