@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
+  GraduationCap,
   Layers,
   LayoutDashboard,
   LogOut,
@@ -69,6 +71,18 @@ function buildSecondaryNav(counts: NavCounts, isNacional: boolean): NavItem[] {
       match: (p) => p.startsWith("/approvals"),
     },
     { href: "/promotions", label: "Ascensos", icon: Award, match: (p) => p.startsWith("/promotions") },
+    {
+      href: "/exams",
+      label: "Exámenes",
+      icon: GraduationCap,
+      match: (p) => p.startsWith("/exams"),
+    },
+    {
+      href: "/reports",
+      label: "Informes",
+      icon: ClipboardList,
+      match: (p) => p.startsWith("/reports"),
+    },
     { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
     { href: "/regulations", label: "Normativa IPF", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
   ];

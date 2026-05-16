@@ -4,8 +4,8 @@
 
 - Repositorio en GitHub conectado a Vercel
 - Proyecto Supabase (región EU recomendada para datos federativos en España)
-- Migraciones `001_initial_schema.sql`, `003_supabase_auth.sql` y
-  `004_health_snapshots.sql` aplicadas
+- Migraciones `001_initial_schema.sql`, `003_supabase_auth.sql`,
+  `004_health_snapshots.sql` y `005_judge_management.sql` aplicadas
 
 ## Variables de entorno en Vercel
 
@@ -17,8 +17,9 @@
 
 ## Configuración Supabase
 
-1. SQL Editor → ejecutar `001_initial_schema.sql`, `003_supabase_auth.sql` y
-   `004_health_snapshots.sql` (bitácora de salud del panel).
+1. SQL Editor → ejecutar `001_initial_schema.sql`, `003_supabase_auth.sql`,
+   `004_health_snapshots.sql` (bitácora de salud) y `005_judge_management.sql`
+   (exámenes e informes de jueces).
 2. Authentication → URL Configuration → Site URL = dominio Vercel;
    Redirect URLs = `https://<dominio>/auth/callback` y `http://localhost:3000/auth/callback`.
 3. (Opcional) Authentication → Providers → Google: activar e introducir
