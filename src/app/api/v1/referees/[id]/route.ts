@@ -26,3 +26,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!updated) return jsonError("Árbitro no encontrado", 404);
   return jsonOk(updated);
 }
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const user = await requireApiUser();
+  if (!isSessionUser(user)) return user;
+  if (user.role !== "nacional") return jsonError("Sin permiso", 403);
+
+  const { id } = await context.params;
+  const ok = await dataService.deleteReferee(id);
+  if (!ok) return jsonError("Árbitro no encontrado", 404);
+  return jsonOk({ deleted: true });
+}

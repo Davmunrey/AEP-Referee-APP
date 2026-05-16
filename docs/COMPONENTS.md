@@ -1,56 +1,102 @@
-# Componentes UI compartidos
+# Componentes UI — AEP Tarima
 
 ## Layout
 
-| Componente | Ruta | Uso |
-|------------|------|-----|
-| `AppShell` | `components/layout/app-shell.tsx` | Sidebar + topbar + main con `app-mesh` |
-| `Sidebar` | `components/layout/sidebar.tsx` | Navegación, org switcher, usuario |
-| `TopBar` | `components/layout/topbar.tsx` | Breadcrumbs, búsqueda, notificaciones |
-| `PageShell` | `components/layout/page-shell.tsx` | Contenedor de página (`max-w-[1600px]`, padding) |
-| `PageHeader` | `components/layout/page-header.tsx` | Eyebrow + título + descripción + acciones |
+| Componente | Archivo | Uso |
+|------------|---------|-----|
+| `AppShell` | `layout/app-shell.tsx` | Sidebar + topbar + main |
+| `Sidebar` | `layout/sidebar.tsx` | Navegación, org switcher, usuario, collapse |
+| `TopBar` | `layout/topbar.tsx` | Breadcrumbs y título de página |
+| `PageShell` | `layout/page-shell.tsx` | Contenedor con `max-w` y padding unificado |
+| `PageHeader` | `layout/page-shell.tsx` | Eyebrow + título + descripción + slot de acciones |
 
-Todas las páginas operativas usan `PageShell` + `PageHeader` para tipografía unificada.
-
-## UI genéricos (shadcn)
+## UI genéricos (shadcn/ui)
 
 | Componente | Notas |
 |------------|-------|
-| `Button` | Variantes con `focus-ring`, `rounded-xl` |
-| `Card` | Base `surface-card`, hover shadow |
-| `Input` | Tokens semánticos |
-| `Badge` | Variantes IPF/regional/estado vía tokens |
-| `Progress` | Barra `bg-primary` |
-| `DataTable` | Tabla con thead uppercase unificado |
-| `StatCard` | KPI con acento (dashboard + analytics) |
-| `StatusPill` | Workflow pendiente/aprobado/rechazado |
-| `EmptyState` | Listas vacías con icono |
+| `Button` | Variantes: default, outline, ghost, destructive. `focus-ring` y `rounded-xl` |
+| `Card` | Superficie base. Variantes `glass-panel-soft` para destacados |
+| `Input` | `focus-visible:ring-2`, borde semántico |
+| `Badge` | Colores por tipo de nivel y estado |
+| `Progress` | Barra de progreso con color dinámico |
+| `DataTable` | Tabla estructurada con head, body, row, cell, headcell |
+| `StatCard` | Tarjeta KPI con acento de color (dashboard + analytics) |
+| `StatusPill` | Indicador de estado de workflow (pendiente/aprobado/rechazado) |
+| `EmptyState` | Estado vacío con icono, título y descripción opcionales |
+| `ScrollArea` | Área scrollable con scrollbar personalizado |
+| `Avatar` | Avatar con fallback de iniciales |
+| `DropdownMenu` | Menú desplegable (Radix) |
 
-## Dominio AEP
+## Badges de dominio AEP (`components/aep/badges.tsx`)
 
-| Componente | Ruta |
-|------------|------|
-| `AepLogo` | `components/aep/logo.tsx` |
-| `OrgSwitcher` | `components/aep/org-switcher.tsx` |
-| `LevelBadge`, `StatusBadge`, `EventStatusBadge`, `EventTypeBadge` | `components/aep/badges.tsx` |
+| Componente | Descripción |
+|------------|-------------|
+| `LevelBadge` | Nivel arbitral (Regional / Nacional / IPF Cat. 2 / IPF Cat. 1) |
+| `StatusBadge` | Estado de árbitro (Activo / Inactivo / Sancionado) |
+| `EventTypeBadge` | Tipo de campeonato (AEP-1 / AEP-2 / AEP-3) |
+| `EventStatusBadge` | Estado de campeonato (Completo / Incompleto / Crítico / Borrador) |
+| `ActivityTypeBadge` | Tipo de actividad en el feed (propuesta / aprobación / ascenso…) |
 
-## Módulos
+## Componentes de módulo
 
-| Módulo | Componente principal |
-|--------|---------------------|
-| Dashboard | `dashboard-hero`, `kpi-cards`, `operational-calendar`, `activity-feed`, `events-table` |
-| Campeonatos | `roster-builder`, `new-competition-form`, `roster-header-actions` |
-| Árbitros | `referees-directory`, `referee-edit-form`, `new-referee-dialog` |
-| Aprobaciones | `approvals-board` |
-| Ascensos | `promotions-board` |
-| Analytics | `analytics-dashboard` |
-| Normativa | `regulations-view` |
-| Auth | `login-form`, `demo-persona-picker` |
+### Dashboard
+| Componente | Descripción |
+|------------|-------------|
+| `DashboardHero` | Saludo personalizado, acciones rápidas (exportar, nuevo campeonato) |
+| `KpiCards` | Grid de 4 KPIs con tendencia y acento de color |
+| `OperationalCalendar` | Calendario mensual navegable, eventos marcados por estado |
+| `ActivityFeed` | Feed de últimas acciones (asignaciones, aprobaciones, ascensos) |
+| `EventsTable` (dashboard) | Tabla de próximos eventos con cobertura |
 
-## Clases de formulario (`design-tokens.ts`)
+### Campeonatos
+| Componente | Descripción |
+|------------|-------------|
+| `EventsTable` (events) | Tabla completa con filtros, paginación y borrado |
+| `NewCompetitionForm` | Formulario de creación con validación de fechas y guard de unload |
+| `RosterBuilder` | Constructor de tarima: drag & drop, validación normativa, historial. Modo lectura para rol `lectura` |
+| `RosterHeaderActions` | Cabecera de tarima: cobertura, guardar borrador, exportar, enviar |
+| `RosterHistoryPanel` | Panel flotante de historial de cambios (fetch lazy) |
+| `SessionBlock` | Bloque de sesión con slots y progreso |
 
-- `selectFieldClass` — selects altura 9
-- `selectFieldClassSm` — filtros compactos
-- `textareaFieldClass` — comentarios en aprobaciones
+### Árbitros
+| Componente | Descripción |
+|------------|-------------|
+| `RefereesDirectory` | Directorio con filtros (zona/nivel/estado/búsqueda) y paginación |
+| `NewRefereeDialog` | Modal de alta de árbitro (Escape/backdrop para cerrar) |
+| `RefereeEditForm` | Formulario de edición de ficha arbitral |
+| `RefereePromotionButton` | Botón + modal para solicitar ascenso (valida nivel superior) |
 
-Siempre importar desde `@/lib/design-tokens`, no duplicar strings de clases.
+### Aprobaciones
+| Componente | Descripción |
+|------------|-------------|
+| `ApprovalsBoard` | Cola de propuestas + diff de asignaciones + revisión |
+
+### Ascensos
+| Componente | Descripción |
+|------------|-------------|
+| `PromotionsBoard` | Lista de solicitudes con acciones de revisión |
+| `NewPromotionDialog` | Modal de nueva solicitud de ascenso |
+
+### Normativa
+| Componente | Descripción |
+|------------|-------------|
+| `RegulationsView` | Dos pestañas: (1) Matriz AEP filtrable por tipo evento, (2) Reglamento IPF artículo por artículo (caps. 7 y 8) |
+| `IpfArticleList` | Lista acordeón de artículos de un capítulo IPF con expand/collapse por artículo |
+
+### Estadísticas
+| Componente | Descripción |
+|------------|-------------|
+| `AnalyticsDashboard` | Cobertura por zona, top árbitros, críticos, totales + exportar |
+
+### Administración
+| Componente | Descripción |
+|------------|-------------|
+| `UsersAdmin` | Alta/baja/activación de usuarios (solo rol `nacional`) |
+
+## Accesibilidad
+
+- Todos los modales tienen `role="dialog"`, `aria-modal="true"` y `aria-labelledby`
+- Escape y click en backdrop cierran todos los modales
+- `focus-ring` en todos los elementos interactivos (inputs, selects, botones)
+- `aria-label` en botones sin texto visible (iconos)
+- `Empty states` descriptivos que distinguen "lista vacía" de "sin resultados con filtro"

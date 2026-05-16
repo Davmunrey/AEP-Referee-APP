@@ -3,77 +3,111 @@
 ## Visión general
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
-│  Browser    │────▶│  Next.js App │────▶│  /api/v1/*      │
-│  (React)    │     │  Middleware  │     │  Route Handlers │
-└─────────────┘     └──────────────┘     └────────┬────────┘
-                                                   │
-                                          ┌────────▼────────┐
-                                          │  dataService    │
-                                          │  store (memoria)│
-                                          └─────────────────┘
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Browser    │────▶│  Next.js 15 App  │────▶│  /api/v1/*      │
+│  (React 19) │     │ Supabase Middlew.│     │  Route Handlers │
+└─────────────┘     └──────────────────┘     └────────┬────────┘
+                                                       │
+                                              ┌────────▼────────┐
+                                              │  dataService    │
+                                              │ (abstracción)   │
+                                              └────────┬────────┘
+                                                       │
+                              ┌────────────────────────┴──────────────┐
+                              │                                        │
+                     ┌────────▼────────┐                    ┌─────────▼───────┐
+                     │  Supabase       │                    │  memory-service │
+                     │  (producción)   │                    │  (desarrollo)   │
+                     └─────────────────┘                    └─────────────────┘
 ```
-
-La aplicación es un **monolito Next.js** con datos en memoria para demo y desarrollo local. No hay Supabase ni base de datos externa en esta versión.
 
 ## Capas
 
 ### 1. Presentación (`src/app`, `src/components`)
 
-- **App Router** — rutas en `src/app/(dashboard)/*` y `src/app/login`
+- **App Router** — rutas en `src/app/(dashboard)/*`
 - **Server Components** — páginas cargan datos vía `dataService` en servidor
-- **Client Components** — formularios, tarima, aprobaciones (`"use client"`)
+- **Client Components** — formularios, tarima, aprobaciones, filtros (`"use client"`)
+- **Layout** — `src/app/(dashboard)/layout.tsx` hace la comprobación de sesión para todas las rutas protegidas
 
 ### 2. API (`src/app/api/v1`)
 
-Handlers REST que delegan en `dataService`. Respuestas JSON tipadas con `src/lib/types`.
+Handlers REST que delegan en `dataService`. Respuestas JSON tipadas con `src/lib/types`:
 
-### 3. Dominio (`src/server`)
+| Ruta | Métodos |
+|------|---------|
+| `/referees` | GET, POST |
+| `/referees/[id]` | GET, PATCH, DELETE |
+| `/competitions` | GET, POST |
+| `/competitions/[id]` | GET, PATCH, DELETE |
+| `/competitions/[id]/roster` | GET |
+| `/competitions/[id]/roster/assign` | POST |
+| `/competitions/[id]/roster/clear` | POST |
+| `/competitions/[id]/roster/draft` | POST |
+| `/competitions/[id]/roster/submit` | POST |
+| `/competitions/[id]/roster/export` | GET |
+| `/competitions/[id]/roster/history` | GET |
+| `/approvals` | GET |
+| `/approvals/[id]/review` | POST |
+| `/promotions` | GET, POST |
+| `/promotions/[id]/review` | POST |
+| `/analytics` | GET |
+| `/analytics/export` | GET (CSV) |
+| `/regulations` | GET |
+| `/meta` | GET |
+| `/dashboard` | GET |
+| `/admin/users` | GET, POST |
+| `/admin/users/[id]` | PATCH, DELETE |
 
-- **`store.ts`** — estado mutable en memoria (árbitros, campeonatos, propuestas, etc.)
-- **`services/index.ts`** — `dataService` con reglas de negocio y filtrado RBAC
+### 3. Servicio de datos (`src/server`)
+
+- **`services/index.ts`** — selecciona `supabaseDataService` (prod) o `memoryDataService` (dev) según variables de entorno
+- **`services/supabase-service.ts`** — implementación Postgres con cliente admin (service role, bypass RLS)
+- **`services/memory-service.ts`** — implementación en memoria para desarrollo sin Supabase
+- **`store.ts`** — datos de fixture para desarrollo (árbitros, campeonatos, normativa)
+- **`db/mappers.ts`** — conversión filas Postgres → tipos TypeScript
 
 ### 4. Infraestructura (`src/lib`)
 
-- **`auth/`** — sesión cookie, usuarios demo, middleware RBAC
-- **`api/client.ts`** — cliente fetch para componentes cliente
+- **`auth/session.ts`** — `getSession()`, `requireApiUser()`, helpers RBAC (`canEditRoster`, `canManageUsers`)
+- **`api/client.ts`** — cliente fetch tipado para componentes cliente
+- **`api/config.ts`** — URL base de la API
 - **`design-tokens.ts`** — clases semánticas Tailwind
-- **`navigation.ts`** — metadatos de rutas para sidebar/topbar
+- **`types.ts`** — tipos TypeScript compartidos
 
-## Autenticación y RBAC
+## Autenticación y RBAC (Supabase Auth)
 
 | Rol | Alcance | Permisos |
 |-----|---------|----------|
-| `nacional` | Todas las zonas | CRUD completo, aprobar propuestas y ascensos |
-| `regional` | Su zona (`user.zona`) | CRUD en su zona, enviar propuestas |
-| `lectura` | Filtrado lectura | Sin crear/editar |
+| `nacional` | Toda la federación | CRUD completo, aprueba rosters y ascensos, gestiona usuarios |
+| `regional` | Su zona (`user.zona`) | CRUD en su zona, propone tarimas, solicita ascensos |
+| `lectura` | Sin restricción geográfica | Solo lectura, sin crear/editar |
 
-- Cookie: `aep_session`
-- Middleware: `src/middleware.ts` redirige a `/login` si no hay sesión
-- Demo: `POST /api/v1/auth/switch` cambia persona sin re-login
+- Auth con Supabase Auth: Google OAuth + email/contraseña, sesión por cookies (`@supabase/ssr`)
+- Perfiles federativos en tabla `profiles` (1:1 con `auth.users`)
+- Primer usuario registrado → rol `nacional`; resto → `lectura` (promoción manual)
+- Service role admin client bypassa RLS para operaciones del servidor
+- Detalle completo en [`docs/AUTH.md`](./AUTH.md)
 
-## Flujo de tarima
+## Flujo completo de una tarima
 
-1. Regional asigna árbitros en `/events/[id]` (drag & drop o clic)
-2. Asignaciones persisten vía `POST .../roster/assign`
-3. Envío a nacional: `POST .../roster/submit` crea `ApprovalProposal`
-4. Nacional revisa en `/approvals` con diff
-5. Aprobar/rechazar actualiza estado del campeonato
+1. **Regional** abre `/events/[id]` y ve la plantilla vacía
+2. Arrastra árbitros o selecciona slot + árbitro por clic
+3. Cada asignación se persiste inmediatamente vía `POST .../roster/assign`
+4. El sistema valida nivel mínimo por rol (normativa IPF/AEP) y muestra alertas
+5. **Regional** pulsa "Guardar borrador" o "Enviar a aprobación"
+6. El envío crea una `ApprovalProposal` con estado `pendiente`
+7. **Nacional** revisa en `/approvals`: ve el diff slot→árbitro
+8. Aprueba (sin comentario) o rechaza (con comentario obligatorio)
+9. El estado del campeonato se actualiza en tiempo real
 
-## Validaciones de negocio (resumen)
+## Validaciones de negocio clave
 
-- Nivel mínimo por rol según normativa (`RegulationRule`)
-- Un árbitro no puede ocupar dos slots simultáneos en el mismo evento
-- Solo árbitros `Activo` y `disp: true` en pool de tarima
-- RBAC filtra listados por zona según rol regional
-
-## Extensión futura
-
-Para producción se sustituiría `store.ts` por:
-
-- PostgreSQL / Supabase con migraciones
-- Persistencia de sesiones y auditoría
-- Storage para PDFs de normativa
-- Notificaciones (email) en aprobaciones
-
-La capa `dataService` actúa como frontera para minimizar cambios en UI y API routes.
+- Nivel mínimo por rol y tipo de campeonato (`RegulationRule`) — alerta visual en tarima
+- Un árbitro no puede ocupar dos slots simultáneos (la asignación anterior se libera)
+- Solo árbitros `Activo` y `disp: true` aparecen en el pool de la tarima
+- RBAC filtra listados y operaciones por zona para rol `regional`
+- Nivel destino en ascenso debe ser superior al nivel actual
+- Rechazo de aprobación requiere comentario obligatorio
+- Confirmación al enviar roster incompleto (< 100%)
+- Validación de fecha fin ≥ fecha inicio en creación de campeonato

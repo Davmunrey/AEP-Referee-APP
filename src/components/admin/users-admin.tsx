@@ -15,8 +15,9 @@ import {
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { getApiBaseUrl } from "@/lib/api/config";
+import { api } from "@/lib/api/client";
 import type { UserRole } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface ProfileRow {
   id: string;
@@ -36,6 +37,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
   const [users, setUsers] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     email: "",
@@ -64,6 +66,33 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const toggleActive = async (id: string, current: boolean) => {
+    setActionId(id);
+    setError(null);
+    try {
+      await api.toggleUserActive(id, !current);
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, activo: !current } : u)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al actualizar");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const deleteUser = async (id: string, nombre: string) => {
+    if (!confirm(`¿Eliminar al usuario "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    setActionId(id);
+    setError(null);
+    try {
+      await api.deleteUser(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al eliminar");
+    } finally {
+      setActionId(null);
+    }
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,6 +211,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
               <DataTableHeadCell>Rol</DataTableHeadCell>
               <DataTableHeadCell>Zona</DataTableHeadCell>
               <DataTableHeadCell>Estado</DataTableHeadCell>
+              <DataTableHeadCell>Acciones</DataTableHeadCell>
             </DataTableHeaderRow>
           </DataTableHead>
           <DataTableBody>
@@ -191,7 +221,38 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
                 <DataTableCell className="font-mono text-xs">{u.email}</DataTableCell>
                 <DataTableCell>{u.rol_label}</DataTableCell>
                 <DataTableCell>{u.zona ?? "—"}</DataTableCell>
-                <DataTableCell>{u.activo ? "Activo" : "Inactivo"}</DataTableCell>
+                <DataTableCell>
+                  <span className={u.activo ? "text-success" : "text-muted-foreground"}>
+                    {u.activo ? "Activo" : "Inactivo"}
+                  </span>
+                </DataTableCell>
+                <DataTableCell>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={actionId === u.id}
+                      onClick={() => void toggleActive(u.id, u.activo)}
+                    >
+                      {actionId === u.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : u.activo ? (
+                        "Desactivar"
+                      ) : (
+                        "Activar"
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      disabled={actionId === u.id}
+                      onClick={() => void deleteUser(u.id, u.nombre)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </DataTableCell>
               </DataTableRow>
             ))}
           </DataTableBody>

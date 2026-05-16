@@ -103,7 +103,24 @@ export const api = {
       body: JSON.stringify({ approve, comment }),
     }),
 
+  deleteReferee: (id: string) =>
+    request<{ deleted: boolean }>(`/referees/${id}`, { method: "DELETE" }),
+
+  deleteCompetition: (id: string) =>
+    request<{ deleted: boolean }>(`/competitions/${id}`, { method: "DELETE" }),
+
   getPromotions: () => request<PromotionRequest[]>("/promotions"),
+
+  createPromotion: (body: {
+    refereeId: string;
+    toLevel: string;
+    zona: string;
+    motivo?: string;
+  }) =>
+    request<PromotionRequest>("/promotions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   reviewPromotion: (id: string, approve: boolean) =>
     request<PromotionRequest>(`/promotions/${id}/review`, {
@@ -113,5 +130,16 @@ export const api = {
 
   getAnalytics: () => request<AnalyticsPayload>("/analytics"),
 
+  analyticsExportUrl: () => `${getApiBaseUrl()}/analytics/export`,
+
   getRegulations: () => request<RegulationRule[]>("/regulations"),
+
+  toggleUserActive: (id: string, activo: boolean) =>
+    request<{ id: string; activo: boolean }>(`/admin/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ activo }),
+    }),
+
+  deleteUser: (id: string) =>
+    request<{ deleted: boolean }>(`/admin/users/${id}`, { method: "DELETE" }),
 };

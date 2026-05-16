@@ -7,10 +7,20 @@ export default async function PromotionsPage() {
   const user = await getSession();
   if (!user) redirect("/sign-in");
 
+  const [promotions, meta, referees] = await Promise.all([
+    dataService.getPromotions(user),
+    dataService.getMeta(user),
+    dataService.getReferees({ user }),
+  ]);
+
   return (
     <PromotionsBoard
-      initial={await dataService.getPromotions(user)}
+      initial={promotions}
       canReview={canApprove(user)}
+      canCreate={user.role !== "lectura"}
+      referees={referees}
+      zones={meta.zones}
+      userZona={user.zona}
     />
   );
 }

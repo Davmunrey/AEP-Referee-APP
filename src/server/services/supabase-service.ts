@@ -18,7 +18,7 @@ import type {
   RosterSession,
   SessionUser,
 } from "@/lib/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assignmentsFromRows,
   mapActivity,
@@ -30,8 +30,8 @@ import {
   mapRegulation,
 } from "@/server/db/mappers";
 
-async function db() {
-  return createClient();
+function db() {
+  return createAdminClient();
 }
 
 function parseSlotKey(slotKey: string): { session: string; roleKey: string } | null {
@@ -41,27 +41,27 @@ function parseSlotKey(slotKey: string): { session: string; roleKey: string } | n
 }
 
 async function getRosterTemplate(): Promise<RosterSession[]> {
-  const supabase = await db();
+  const supabase = db();
   const { data } = await supabase.from("app_config").select("value").eq("key", "roster_template").single();
   if (data?.value) return data.value as RosterSession[];
   return ROSTER_TEMPLATE;
 }
 
 async function getCalendarEvents(): Promise<Record<string, CalendarDayEvent>> {
-  const supabase = await db();
+  const supabase = db();
   const { data } = await supabase.from("app_config").select("value").eq("key", "calendar_events").single();
   if (data?.value) return data.value as Record<string, CalendarDayEvent>;
   return CALENDAR_EVENTS;
 }
 
 async function getZones() {
-  const supabase = await db();
+  const supabase = db();
   const { data } = await supabase.from("zones").select("code, name").order("code");
   return (data ?? []).map((z) => ({ code: z.code, name: z.name }));
 }
 
 async function loadAssignments(eventId: string): Promise<AssignmentsMap> {
-  const supabase = await db();
+  const supabase = db();
   const { data } = await supabase
     .from("roster_assignments")
     .select("slot_key, referee_id")
@@ -70,7 +70,7 @@ async function loadAssignments(eventId: string): Promise<AssignmentsMap> {
 }
 
 async function syncCompetitionCoverage(eventId: string) {
-  const supabase = await db();
+  const supabase = db();
   const template = await getRosterTemplate();
   const assignments = await loadAssignments(eventId);
   const filled = Object.values(assignments).filter(Boolean).length;
@@ -83,7 +83,7 @@ async function syncCompetitionCoverage(eventId: string) {
 }
 
 async function pushActivity(item: Omit<import("@/lib/types").ActivityItem, never>) {
-  const supabase = await db();
+  const supabase = db();
   await supabase.from("activity_log").insert({
     tipo: item.tipo,
     actor: item.actor,
@@ -94,7 +94,7 @@ async function pushActivity(item: Omit<import("@/lib/types").ActivityItem, never
 }
 
 async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
-  const supabase = await db();
+  const supabase = db();
   await supabase.from("roster_history").insert({
     id: `hist-${Date.now()}`,
     event_id: entry.eventId,
@@ -106,7 +106,7 @@ async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
 }
 
 async function buildKpis(): Promise<DashboardKpi[]> {
-  const supabase = await db();
+  const supabase = db();
   const template = await getRosterTemplate();
   const [{ data: referees }, { data: competitions }, { data: approvals }] = await Promise.all([
     supabase.from("referees").select("estado"),
@@ -167,7 +167,7 @@ export const supabaseDataService = {
   }),
 
   getDashboard: async (user: SessionUser): Promise<DashboardPayload> => {
-    const supabase = await db();
+    const supabase = db();
     let query = supabase.from("competitions").select("*").order("fecha", { ascending: true });
     if (user.role === "regional" && user.zona) {
       query = query.eq("zona", user.zona);
@@ -197,7 +197,7 @@ export const supabaseDataService = {
     q?: string;
     user?: SessionUser;
   }): Promise<Referee[]> => {
-    const supabase = await db();
+    const supabase = db();
     const { data } = await supabase.from("referees").select("*").order("nombre");
     return (data ?? [])
       .map((r) => mapReferee(r as Record<string, unknown>))
@@ -214,13 +214,13 @@ export const supabaseDataService = {
   },
 
   getReferee: async (id: string) => {
-    const supabase = await db();
+    const supabase = db();
     const { data } = await supabase.from("referees").select("*").eq("id", id).single();
     return data ? mapReferee(data as Record<string, unknown>) : undefined;
   },
 
   createReferee: async (input: Omit<Referee, "id" | "iniciales">): Promise<Referee> => {
-    const supabase = await db();
+    const supabase = db();
     const { count } = await supabase.from("referees").select("*", { count: "exact", head: true });
     const id = `j${String((count ?? 0) + 1).padStart(3, "0")}`;
     const iniciales = input.nombre
@@ -243,7 +243,7 @@ export const supabaseDataService = {
   },
 
   updateReferee: async (id: string, patch: Partial<Referee>): Promise<Referee | undefined> => {
-    const supabase = await db();
+    const supabase = db();
     const { data, error } = await supabase
       .from("referees")
       .update(patch)
@@ -255,7 +255,7 @@ export const supabaseDataService = {
   },
 
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
-    const supabase = await db();
+    const supabase = db();
     let query = supabase.from("competitions").select("*").order("fecha");
     if (user?.role === "regional" && user.zona) query = query.eq("zona", user.zona);
     const { data } = await query;
@@ -263,7 +263,7 @@ export const supabaseDataService = {
   },
 
   getCompetition: async (id: string) => {
-    const supabase = await db();
+    const supabase = db();
     const { data } = await supabase.from("competitions").select("*").eq("id", id).single();
     return data ? mapCompetition(data as Record<string, unknown>) : undefined;
   },
@@ -271,7 +271,7 @@ export const supabaseDataService = {
   createCompetition: async (
     input: Omit<Competition, "id" | "confirmados" | "estado" | "aprobacion">,
   ): Promise<Competition> => {
-    const supabase = await db();
+    const supabase = db();
     const { count } = await supabase.from("competitions").select("*", { count: "exact", head: true });
     const id = `evt-${String((count ?? 0) + 1).padStart(3, "0")}`;
     const row = {
@@ -294,7 +294,7 @@ export const supabaseDataService = {
   },
 
   updateCompetition: async (id: string, patch: Partial<Competition>): Promise<Competition | undefined> => {
-    const supabase = await db();
+    const supabase = db();
     const dbPatch: Record<string, unknown> = { ...patch };
     if (patch.fechaFin) {
       dbPatch.fecha_fin = patch.fechaFin;
@@ -340,7 +340,7 @@ export const supabaseDataService = {
     const validation = await supabaseDataService.validateAssign(eventId, slotKey, refereeId);
     if (!validation.ok) return { error: validation.error };
 
-    const supabase = await db();
+    const supabase = db();
     const assignments = await loadAssignments(eventId);
     for (const key of Object.keys(assignments)) {
       if (assignments[key] === refereeId) {
@@ -370,7 +370,7 @@ export const supabaseDataService = {
   },
 
   clearSlot: async (eventId: string, slotKey: string, actor: string) => {
-    const supabase = await db();
+    const supabase = db();
     await supabase
       .from("roster_assignments")
       .delete()
@@ -392,7 +392,7 @@ export const supabaseDataService = {
     const comp = await supabaseDataService.getCompetition(eventId);
     if (!comp) return undefined;
     const assignments = await loadAssignments(eventId);
-    const supabase = await db();
+    const supabase = db();
     const { data: existing } = await supabase
       .from("approval_proposals")
       .select("*")
@@ -441,7 +441,7 @@ export const supabaseDataService = {
   saveDraft: async (eventId: string, actor: string) => {
     const comp = await supabaseDataService.getCompetition(eventId);
     if (comp?.estado === "Borrador") {
-      const supabase = await db();
+      const supabase = db();
       await supabase.from("competitions").update({ estado: "Incompleto" }).eq("id", eventId);
     }
     await pushHistory({
@@ -453,7 +453,7 @@ export const supabaseDataService = {
   },
 
   getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
-    const supabase = await db();
+    const supabase = db();
     let query = supabase.from("approval_proposals").select("*").order("submitted_at", { ascending: false });
     if (user?.role === "regional" && user.zona) query = query.eq("zona", user.zona);
     const { data } = await query;
@@ -466,7 +466,7 @@ export const supabaseDataService = {
     reviewer: string,
     comment?: string,
   ): Promise<ApprovalProposal | undefined> => {
-    const supabase = await db();
+    const supabase = db();
     const { data: proposal } = await supabase
       .from("approval_proposals")
       .select("*")
@@ -526,7 +526,7 @@ export const supabaseDataService = {
   },
 
   getPromotions: async (user?: SessionUser): Promise<PromotionRequest[]> => {
-    const supabase = await db();
+    const supabase = db();
     let query = supabase.from("promotion_requests").select("*");
     if (user?.role === "regional" && user.zona) query = query.eq("zona", user.zona);
     const { data } = await query;
@@ -534,7 +534,7 @@ export const supabaseDataService = {
   },
 
   reviewPromotion: async (id: string, approve: boolean, reviewer: string) => {
-    const supabase = await db();
+    const supabase = db();
     const { data: req } = await supabase.from("promotion_requests").select("*").eq("id", id).single();
     if (!req || req.status !== "pendiente") return undefined;
 
@@ -555,7 +555,7 @@ export const supabaseDataService = {
   },
 
   getRegulations: async (): Promise<RegulationRule[]> => {
-    const supabase = await db();
+    const supabase = db();
     const { data } = await supabase.from("regulation_rules").select("*");
     return (data ?? []).map((r) => mapRegulation(r as Record<string, unknown>));
   },
@@ -567,7 +567,7 @@ export const supabaseDataService = {
     for (const c of competitions) {
       openSlots += countOpenSlots(template, await loadAssignments(c.id));
     }
-    const supabase = await db();
+    const supabase = db();
     const { data: referees } = await supabase.from("referees").select("*");
     const zones = await getZones();
     const coverageByZone = zones.map((z) => {
@@ -584,10 +584,14 @@ export const supabaseDataService = {
       .map((r) => ({ id: r.id, nombre: r.nombre, eventos: r.eventos, nivel: r.nivel }));
     const { data: approvals } = await supabase.from("approval_proposals").select("status");
 
+    const reviewed = (approvals ?? []).filter((a) => a.status !== "pendiente").length;
+    const rejected = (approvals ?? []).filter((a) => a.status === "rechazado").length;
+    const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : 0;
+
     return {
       coverageByZone,
       topReferees,
-      rejectionRate: 8,
+      rejectionRate,
       criticalEvents: competitions.filter((c) => c.estado === "Crítico"),
       totals: {
         activeReferees: (referees ?? []).filter((r) => r.estado === "Activo").length,
@@ -599,7 +603,7 @@ export const supabaseDataService = {
   },
 
   getRosterHistory: async (eventId: string): Promise<RosterHistoryEntry[]> => {
-    const supabase = await db();
+    const supabase = db();
     const { data } = await supabase
       .from("roster_history")
       .select("*")
@@ -612,7 +616,7 @@ export const supabaseDataService = {
     const roster = await supabaseDataService.getRoster(eventId);
     const comp = await supabaseDataService.getCompetition(eventId);
     if (!roster || !comp) return null;
-    const supabase = await db();
+    const supabase = db();
     const { data: referees } = await supabase.from("referees").select("id, nombre, nivel");
     const refMap = new Map((referees ?? []).map((r) => [r.id, r]));
 
@@ -637,6 +641,53 @@ export const supabaseDataService = {
       lines.push("");
     }
     return lines.join("\n");
+  },
+
+  deleteReferee: async (id: string): Promise<boolean> => {
+    const supabase = db();
+    const { error } = await supabase.from("referees").delete().eq("id", id);
+    return !error;
+  },
+
+  deleteCompetition: async (id: string): Promise<boolean> => {
+    const supabase = db();
+    const { error } = await supabase.from("competitions").delete().eq("id", id);
+    return !error;
+  },
+
+  createPromotion: async (input: {
+    refereeId: string;
+    toLevel: import("@/lib/types").RefereeLevel;
+    zona: string;
+    motivo?: string;
+  }): Promise<import("@/lib/types").PromotionRequest> => {
+    const supabase = db();
+    const { data: referee } = await supabase
+      .from("referees")
+      .select("nombre, nivel, eventos")
+      .eq("id", input.refereeId)
+      .single();
+    if (!referee) throw new Error("Árbitro no encontrado");
+    const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
+    const fromIdx = LEVEL_ORDER.indexOf(referee.nivel as string);
+    const toIdx = LEVEL_ORDER.indexOf(input.toLevel);
+    if (toIdx <= fromIdx) throw new Error(`El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`);
+    const id = `pro-${Date.now()}`;
+    const row = {
+      id,
+      referee_id: input.refereeId,
+      referee_name: referee.nombre,
+      from_level: referee.nivel,
+      to_level: input.toLevel,
+      zona: input.zona,
+      status: "pendiente",
+      submitted_at: new Date().toISOString().split("T")[0],
+      eventos_completados: referee.eventos,
+      motivo: input.motivo ?? null,
+    };
+    const { data, error } = await supabase.from("promotion_requests").insert(row).select().single();
+    if (error) throw error;
+    return mapPromotion(data as Record<string, unknown>);
   },
 
   getNavCounts: async (user?: SessionUser) => {

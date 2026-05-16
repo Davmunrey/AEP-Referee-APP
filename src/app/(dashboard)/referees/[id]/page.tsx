@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { LevelBadge, StatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { RefereeEditForm } from "@/components/referees/referee-edit-form";
+import { RefereePromotionButton } from "@/components/referees/referee-promotion-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { getLevels, getZones } from "@/server/store";
 import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -20,10 +20,13 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!user) redirect("/sign-in");
 
   const { id } = await params;
-  const referee = await dataService.getReferee(id);
+  const [referee, meta] = await Promise.all([
+    dataService.getReferee(id),
+    dataService.getMeta(user),
+  ]);
   if (!referee) notFound();
 
-  const zoneName = getZones().find((z) => z.code === referee.zona)?.name ?? referee.zona;
+  const zoneName = meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
 
   return (
     <PageShell className="max-w-3xl">
@@ -76,7 +79,17 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       </Card>
 
       {user.role !== "lectura" && (
-        <RefereeEditForm referee={referee} zones={getZones()} levels={getLevels()} />
+        <div className="flex flex-wrap gap-3">
+          <RefereePromotionButton
+            refereeId={referee.id}
+            currentLevel={referee.nivel}
+            zona={referee.zona}
+          />
+        </div>
+      )}
+
+      {user.role !== "lectura" && (
+        <RefereeEditForm referee={referee} zones={meta.zones} levels={meta.levels} />
       )}
     </PageShell>
   );

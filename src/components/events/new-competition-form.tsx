@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
 import type { EventType, Zone } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -26,14 +26,26 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
   const [sede, setSede] = useState("");
   const [sesiones, setSesiones] = useState("3");
   const [requeridos, setRequeridos] = useState("9");
-  const [zona, setZona] = useState(defaultZona ?? zones[0]?.code ?? "MAD");
+  const [zona, setZona] = useState(defaultZona ?? zones[0]?.code ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const isDirty = nombre !== "" || sede !== "";
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    if (fechaFin && fechaFin < fecha) {
+      setError("La fecha de fin no puede ser anterior a la fecha de inicio");
+      return;
+    }
+    setLoading(true);
     try {
       const comp = await api.createCompetition({
         nombre,

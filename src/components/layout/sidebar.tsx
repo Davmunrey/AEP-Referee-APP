@@ -1,8 +1,8 @@
 "use client";
 
-import { SignOutButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   Award,
   BarChart3,
@@ -20,7 +20,7 @@ import {
 import { AepLogo } from "@/components/aep/logo";
 import { OrgSwitcher } from "@/components/aep/org-switcher";
 import { Button } from "@/components/ui/button";
-import { DEFAULT_ROSTER_EVENT_ID } from "@/lib/constants";
+
 import type { NavCounts } from "@/components/layout/app-shell";
 import type { SessionUser } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -51,7 +51,7 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
       match: (p) => p.startsWith("/referees"),
     },
     {
-      href: `/events/${DEFAULT_ROSTER_EVENT_ID}`,
+      href: "/events",
       label: "Constructor Tarima",
       icon: Layers,
       match: (p) => p.startsWith("/events/") && p !== "/events",
@@ -103,13 +103,20 @@ export function Sidebar({
   const primaryNav = buildPrimaryNav(navCounts);
   const secondaryNav = buildSecondaryNav(navCounts, currentUser.role === "nacional");
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/sign-in");
+  };
 
   const renderLink = (item: NavItem) => {
     const active = item.match(pathname);
     const Icon = item.icon;
     return (
       <Link
-        key={item.href}
+        key={item.label}
         href={item.href}
         className={cn(
           "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
@@ -199,16 +206,15 @@ export function Sidebar({
           </Avatar>
         )}
         {!collapsed && (
-          <SignOutButton signOutOptions={{ redirectUrl: "/sign-in" }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-foreground-secondary"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Cerrar sesión
-            </Button>
-          </SignOutButton>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-foreground-secondary"
+            onClick={() => void handleSignOut()}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Cerrar sesión
+          </Button>
         )}
         <Button
           variant="ghost"

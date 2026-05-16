@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { LevelBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,55 +13,252 @@ import {
   DataTableHeadCell,
   DataTableRow,
 } from "@/components/ui/data-table";
-import type { RegulationRule } from "@/lib/types";
-import { BookOpen } from "lucide-react";
+import { selectFieldClassSm } from "@/lib/design-tokens";
+import type { EventType, IpfChapter, RegulationRule } from "@/lib/types";
+import { IPF_CHAPTERS } from "@/lib/ipf-chapters";
+import { BookOpen, FileText, ChevronDown, ChevronRight } from "lucide-react";
+
+const EVENT_TYPES: EventType[] = ["AEP-1", "AEP-2", "AEP-3"];
+
+type Tab = "matrix" | "ipf";
+
+function IpfArticleList({ chapter }: { chapter: IpfChapter }) {
+  const [openArticles, setOpenArticles] = useState<Set<string>>(new Set());
+
+  const toggle = (num: string) => {
+    setOpenArticles((prev) => {
+      const next = new Set(prev);
+      if (next.has(num)) next.delete(num);
+      else next.add(num);
+      return next;
+    });
+  };
+
+  return (
+    <div className="divide-y divide-border-muted">
+      {chapter.articles.map((art) => {
+        const isOpen = openArticles.has(art.num);
+        const label = art.title
+          ? `Art. ${chapter.num}.${art.num} — ${art.title}`
+          : `Art. ${chapter.num}.${art.num}`;
+        return (
+          <div key={art.num}>
+            <button
+              type="button"
+              onClick={() => toggle(art.num)}
+              className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors"
+              aria-expanded={isOpen}
+            >
+              <span className="mt-0.5 shrink-0 text-primary">
+                {isOpen ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+              </span>
+              <span className="text-sm font-medium text-foreground">{label}</span>
+            </button>
+            {isOpen && (
+              <div className="px-4 pb-4 pl-10">
+                <p className="whitespace-pre-line text-sm leading-relaxed text-foreground-secondary">
+                  {art.text}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
+  const [tab, setTab] = useState<Tab>("matrix");
+  const [filterTipo, setFilterTipo] = useState<EventType | "TODOS">("TODOS");
+  const [openChapters, setOpenChapters] = useState<Set<string>>(
+    new Set(IPF_CHAPTERS.map((c) => c.num))
+  );
+
+  const filtered =
+    filterTipo === "TODOS"
+      ? rules
+      : rules.filter((r) => r.eventTypes.includes(filterTipo));
+
+  const toggleChapter = (num: string) => {
+    setOpenChapters((prev) => {
+      const next = new Set(prev);
+      if (next.has(num)) next.delete(num);
+      else next.add(num);
+      return next;
+    });
+  };
+
   return (
     <PageShell>
       <PageHeader
         eyebrow="Gestión"
         title="Normativa IPF / AEP"
-        description="Requisitos mínimos de nivel por rol y tipo de campeonato"
+        description="Requisitos mínimos por rol y reglamento técnico IPF completo"
       />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-2 border-b border-border-muted pb-4">
-          <BookOpen className="h-4 w-4 text-primary" />
-          <CardTitle>Matriz rol → nivel mínimo</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <DataTable>
-            <DataTableHead>
-              <DataTableHeaderRow>
-                <DataTableHeadCell>Rol</DataTableHeadCell>
-                <DataTableHeadCell>Nivel mínimo</DataTableHeadCell>
-                <DataTableHeadCell>Tipos evento</DataTableHeadCell>
-                <DataTableHeadCell>Notas</DataTableHeadCell>
-              </DataTableHeaderRow>
-            </DataTableHead>
-            <DataTableBody>
-              {rules.map((r) => (
-                <DataTableRow key={r.id}>
-                  <DataTableCell className="font-medium text-foreground">{r.rol}</DataTableCell>
-                  <DataTableCell>
-                    <LevelBadge level={r.minLevel} />
-                  </DataTableCell>
-                  <DataTableCell className="font-mono text-xs text-muted-foreground">
-                    {r.eventTypes.join(", ")}
-                  </DataTableCell>
-                  <DataTableCell className="text-subtle-muted">{r.note}</DataTableCell>
-                </DataTableRow>
-              ))}
-            </DataTableBody>
-          </DataTable>
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border-muted">
+        <button
+          type="button"
+          onClick={() => setTab("matrix")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            tab === "matrix"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          Matriz AEP
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("ipf")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            tab === "ipf"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Reglamento IPF
+        </button>
+      </div>
 
-      <p className="rounded-xl border border-border-muted bg-surface/50 px-4 py-3 text-xs leading-relaxed text-subtle-muted">
-        Referencia: IPF Technical Rules · AEP Reglamento de competición 2026. Los PDF oficiales se
-        integrarán cuando el backend documental esté conectado.
-      </p>
+      {tab === "matrix" && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-border-muted pb-4">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <CardTitle>Matriz rol → nivel mínimo</CardTitle>
+            </div>
+            <select
+              value={filterTipo}
+              onChange={(e) => setFilterTipo(e.target.value as EventType | "TODOS")}
+              className={selectFieldClassSm}
+              aria-label="Filtrar por tipo de evento"
+            >
+              <option value="TODOS">Todos los tipos</option>
+              {EVENT_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </CardHeader>
+          <CardContent className="p-0">
+            <DataTable>
+              <DataTableHead>
+                <DataTableHeaderRow>
+                  <DataTableHeadCell>Rol</DataTableHeadCell>
+                  <DataTableHeadCell>Nivel mínimo</DataTableHeadCell>
+                  <DataTableHeadCell>Tipos evento</DataTableHeadCell>
+                  <DataTableHeadCell>Notas</DataTableHeadCell>
+                </DataTableHeaderRow>
+              </DataTableHead>
+              <DataTableBody>
+                {filtered.map((r) => (
+                  <DataTableRow key={r.id}>
+                    <DataTableCell className="font-medium text-foreground">{r.rol}</DataTableCell>
+                    <DataTableCell>
+                      <LevelBadge level={r.minLevel} />
+                    </DataTableCell>
+                    <DataTableCell className="font-mono text-xs text-muted-foreground">
+                      {r.eventTypes.join(", ")}
+                    </DataTableCell>
+                    <DataTableCell className="text-subtle-muted">{r.note}</DataTableCell>
+                  </DataTableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <DataTableRow>
+                    <DataTableCell colSpan={4} className="py-8 text-center text-xs text-subtle-muted">
+                      Sin reglas para este tipo de evento.
+                    </DataTableCell>
+                  </DataTableRow>
+                )}
+              </DataTableBody>
+            </DataTable>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === "ipf" && (
+        <div className="space-y-4">
+          <p className="text-xs text-subtle-muted">
+            Capítulos 7 y 8 del{" "}
+            <strong className="text-foreground-secondary">IPF Technical Rulebook (vigente 01/03/2026)</strong>.
+            Haz clic en un artículo para expandirlo.
+          </p>
+
+          {IPF_CHAPTERS.map((chapter) => {
+            const isOpen = openChapters.has(chapter.num);
+            return (
+              <Card key={chapter.num}>
+                <CardHeader className="p-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleChapter(chapter.num)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                    aria-expanded={isOpen}
+                  >
+                    <span className="text-primary">
+                      {isOpen ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </span>
+                    <CardTitle className="text-sm">
+                      Capítulo {chapter.num} — {chapter.title}
+                    </CardTitle>
+                    <span className="ml-auto text-xs text-subtle-muted">
+                      {chapter.articles.length} artículos
+                    </span>
+                  </button>
+                </CardHeader>
+                {isOpen && (
+                  <CardContent className="p-0 border-t border-border-muted">
+                    <IpfArticleList chapter={chapter} />
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-border-muted bg-surface/50 px-4 py-3 text-xs leading-relaxed text-subtle-muted space-y-1">
+        <p>
+          Fuente:{" "}
+          <strong className="text-foreground-secondary">IPF Technical Rules (01/03/2026)</strong>
+          {" · "}
+          <strong className="text-foreground-secondary">AEP Reglamento de Competición 2026</strong>.
+        </p>
+        <p>
+          <a
+            href="https://www.powerlifting.sport/rules/codes/info/technical-rules"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            powerlifting.sport → Rules → Technical Rules
+          </a>
+          {" · "}
+          <a
+            href="https://www.powerlifting.sport/federation/referees"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Referees IPF
+          </a>
+        </p>
+        <p className="italic">
+          Los niveles AEP (Regional, Nacional, IPF Cat. 2, IPF Cat. 1) corresponden a Nacional, Cat. II y Cat. I del sistema internacional IPF.
+        </p>
+      </div>
     </PageShell>
   );
 }

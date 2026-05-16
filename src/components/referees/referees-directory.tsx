@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { MoreHorizontal, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, MoreHorizontal, Trash2, UserPlus } from "lucide-react";
 import { NewRefereeDialog } from "@/components/referees/new-referee-dialog";
 import { LevelBadge, StatusBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { selectFieldClassSm } from "@/lib/design-tokens";
+import { api } from "@/lib/api/client";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 
 function zoneName(zones: Zone[], code: string) {
@@ -28,28 +29,52 @@ export function RefereesDirectory({
   levels,
   canEdit = false,
 }: RefereesDirectoryProps) {
+  const [referees, setReferees] = useState(initialReferees);
   const [showNew, setShowNew] = useState(false);
   const [search, setSearch] = useState("");
   const [filterZona, setFilterZona] = useState("TODAS");
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [filterEstado, setFilterEstado] = useState("TODOS");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
 
-  const rows = useMemo(() => {
-    return initialReferees.filter((a) => {
+  const deleteReferee = async (id: string, nombre: string) => {
+    if (!confirm(`¿Eliminar al árbitro "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(id);
+    try {
+      await api.deleteReferee(id);
+      setReferees((prev) => prev.filter((r) => r.id !== id));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const filtered = useMemo(() => {
+    return referees.filter((a) => {
       if (filterZona !== "TODAS" && a.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && a.nivel !== filterNivel) return false;
       if (filterEstado !== "TODOS" && a.estado !== filterEstado) return false;
       if (search && !a.nombre.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [initialReferees, filterZona, filterNivel, filterEstado, search]);
+  }, [referees, filterZona, filterNivel, filterEstado, search]);
+
+  useEffect(() => { setPage(1); }, [filterZona, filterNivel, filterEstado, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(page, totalPages);
+  const rows = filtered.slice((safeCurrentPage - 1) * PAGE_SIZE, safeCurrentPage * PAGE_SIZE);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs text-subtle-muted">
-            Mostrando {rows.length} de {initialReferees.length} árbitros
+            {filtered.length < referees.length
+              ? `${filtered.length} coincidencias · `
+              : ""}
+            {referees.length} árbitros en total
           </p>
         </div>
         <div className="flex gap-2">
@@ -163,11 +188,29 @@ export function RefereesDirectory({
                       {referee.ultimo}
                     </td>
                     <td className="px-4 py-2.5 text-right opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                        <Link href={`/referees/${referee.id}`} aria-label={`Ver ficha de ${referee.nombre}`}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                          <Link href={`/referees/${referee.id}`} aria-label={`Ver ficha de ${referee.nombre}`}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            disabled={deletingId === referee.id}
+                            onClick={() => void deleteReferee(referee.id, referee.nombre)}
+                            aria-label={`Eliminar ${referee.nombre}`}
+                          >
+                            {deletingId === referee.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -175,12 +218,39 @@ export function RefereesDirectory({
             </table>
             {rows.length === 0 && (
               <p className="px-4 py-12 text-center text-sm text-subtle-muted">
-                Sin coincidencias. Ajusta los filtros.
+                {referees.length === 0
+                  ? "No hay árbitros registrados aún."
+                  : "Sin coincidencias. Ajusta los filtros."}
               </p>
             )}
           </div>
         </CardContent>
       </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Anterior
+          </Button>
+          <span className="text-xs text-subtle-muted">
+            {safeCurrentPage} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Siguiente
+          </Button>
+        </div>
+      )}
+
       <NewRefereeDialog
         zones={zones}
         levels={levels}

@@ -18,21 +18,28 @@ import { ClipboardList } from "lucide-react";
 interface ApprovalsBoardProps {
   initial: ApprovalProposal[];
   canReview: boolean;
+  refNames?: Record<string, string>;
 }
 
-export function ApprovalsBoard({ initial, canReview }: ApprovalsBoardProps) {
+export function ApprovalsBoard({ initial, canReview, refNames = {} }: ApprovalsBoardProps) {
   const [items, setItems] = useState(initial);
   const [selected, setSelected] = useState<ApprovalProposal | null>(
     initial.find((a) => a.status === "pendiente") ?? initial[0] ?? null,
   );
   const [comment, setComment] = useState("");
   const [pending, startTransition] = useTransition();
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const router = useRouter();
 
   const pendingCount = items.filter((a) => a.status === "pendiente").length;
 
   const review = (approve: boolean) => {
     if (!selected || !canReview) return;
+    if (!approve && !comment.trim()) {
+      setReviewError("El rechazo requiere un comentario explicativo.");
+      return;
+    }
+    setReviewError(null);
     startTransition(async () => {
       try {
         const updated = await api.reviewApproval(selected.id, approve, comment || undefined);
@@ -44,8 +51,8 @@ export function ApprovalsBoard({ initial, canReview }: ApprovalsBoardProps) {
         });
         setComment("");
         router.refresh();
-      } catch {
-        /* ignore */
+      } catch (err) {
+        setReviewError(err instanceof Error ? err.message : "Error al revisar la propuesta");
       }
     });
   };
@@ -116,10 +123,13 @@ export function ApprovalsBoard({ initial, canReview }: ApprovalsBoardProps) {
                   <span className="font-mono text-xs text-subtle-muted">{selected.submittedAt}</span>
                 </div>
                 <div className="max-h-72 overflow-y-auto rounded-xl border border-border bg-background/80 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
-                  {Object.entries(selected.assignments).map(([slot, ref]) => (
+                  {Object.entries(selected.assignments).map(([slot, refId]) => (
                     <p key={slot} className="border-b border-border-muted/60 py-1.5 last:border-0">
                       <span className="text-subtle-muted">{slot}</span>
-                      <span className="text-foreground-secondary"> → {ref}</span>
+                      <span className="text-foreground-secondary">
+                        {" → "}
+                        {refNames[refId] ?? refId}
+                      </span>
                     </p>
                   ))}
                 </div>
@@ -127,17 +137,22 @@ export function ApprovalsBoard({ initial, canReview }: ApprovalsBoardProps) {
                   <>
                     <textarea
                       value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Comentario opcional al rechazar…"
+                      onChange={(e) => { setComment(e.target.value); setReviewError(null); }}
+                      placeholder="Comentario (obligatorio al rechazar)…"
                       className={textareaFieldClass}
                     />
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" disabled={pending} onClick={() => review(false)}>
-                        Rechazar
-                      </Button>
-                      <Button disabled={pending} onClick={() => review(true)}>
-                        Aprobar propuesta
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" disabled={pending} onClick={() => review(false)}>
+                          Rechazar
+                        </Button>
+                        <Button disabled={pending} onClick={() => review(true)}>
+                          Aprobar propuesta
+                        </Button>
+                      </div>
+                      {reviewError && (
+                        <p className="text-xs text-destructive">{reviewError}</p>
+                      )}
                     </div>
                   </>
                 )}

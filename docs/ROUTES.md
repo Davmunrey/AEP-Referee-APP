@@ -1,41 +1,55 @@
 # Rutas de la aplicación
 
-## Públicas
+## Autenticación (Supabase Auth)
 
 | Ruta | Descripción |
 |------|-------------|
-| `/login` | Acceso + selector de personas demo |
+| `/sign-in` | Login: Google OAuth + email/contraseña (Supabase Auth) |
+| `/sign-up` | Redirección a `/sign-in` (registro unificado) |
+| `/auth/callback` | Callback OAuth: intercambia el código por sesión |
+| `/login` | Redirección legacy a `/sign-in` |
 
 ## Dashboard (autenticadas)
 
-Layout: `AppShell` (sidebar + topbar + `app-mesh`).
+Layout: `AppShell` (sidebar colapsable + `app-mesh`). Protegidas por el middleware Supabase y por `(dashboard)/layout.tsx` → redirige a `/sign-in` si no hay sesión.
 
-| Ruta | Módulo | Componente principal |
-|------|--------|-------------------|
-| `/` | Inicio | `DashboardHero`, `KpiCards`, `OperationalCalendar`, `ActivityFeed`, `EventsTable` |
-| `/events` | Campeonatos | Tabla con cobertura y enlace a tarima |
-| `/events/new` | Nuevo campeonato | `NewCompetitionForm` |
-| `/events/[id]` | Tarima | `RosterBuilder` (pantalla completa) |
-| `/referees` | Directorio | `RefereesDirectory` |
-| `/referees/[id]` | Ficha árbitro | Resumen + `RefereeEditForm` |
-| `/approvals` | Aprobaciones | `ApprovalsBoard` |
-| `/promotions` | Ascensos | `PromotionsBoard` |
-| `/analytics` | Estadísticas | `AnalyticsDashboard` |
-| `/regulations` | Normativa | `RegulationsView` |
+| Ruta | Módulo | Componentes principales |
+|------|--------|------------------------|
+| `/` | Dashboard | `DashboardHero`, `KpiCards`, `OperationalCalendar`, `ActivityFeed`, `EventsTable` |
+| `/events` | Campeonatos | `EventsTable` (filtros + paginación + eliminar) |
+| `/events/new` | Nuevo campeonato | `NewCompetitionForm` (guard unload si hay datos) |
+| `/events/[id]` | Tarima | `RosterBuilder` (pantalla completa — drag & drop, validación normativa, historial) |
+| `/referees` | Directorio | `RefereesDirectory` (filtros, paginación, nueva alta) |
+| `/referees/[id]` | Ficha árbitro | Resumen + `RefereeEditForm` + `RefereePromotionButton` |
+| `/approvals` | Aprobaciones | `ApprovalsBoard` (cola + diff + comentario obligatorio al rechazar) |
+| `/promotions` | Ascensos | `PromotionsBoard` + `NewPromotionDialog` |
+| `/analytics` | Estadísticas | `AnalyticsDashboard` (cobertura, top árbitros, críticos) |
+| `/regulations` | Normativa IPF | `RegulationsView` (filtro por tipo, referencias IPF TR) |
+| `/admin/users` | Usuarios | `UsersAdmin` — solo accesible para rol `nacional` |
 
-## Navegación lateral
+## Navegación lateral (sidebar)
 
-Grupos definidos en `src/components/layout/sidebar.tsx`:
+**Operaciones** (todos los roles):
+- Dashboard (`/`)
+- Campeonatos (`/events`)
+- Directorio (`/referees`)
+- Constructor Tarima → enlace a `/events` (se activa al navegar a `/events/[id]`)
 
-- **Operaciones** — Inicio, Campeonatos, Árbitros
-- **Gestión** — Aprobaciones, Ascensos, Estadísticas, Normativa
-
-Badges de contador en Aprobaciones (pendientes) según rol.
+**Gestión** (todos los roles, con restricciones por RBAC):
+- Aprobaciones (`/approvals`) — badge contador de pendientes
+- Ascensos (`/promotions`)
+- Estadísticas (`/analytics`)
+- Normativa IPF (`/regulations`)
+- Usuarios (`/admin/users`) — solo rol `nacional`
 
 ## Middleware
 
-`src/middleware.ts` protege rutas del dashboard y redirige a `/login` sin sesión válida.
+`src/middleware.ts` — middleware Supabase (`updateSession`) activo en todas las rutas: refresca la sesión por cookies, redirige a `/sign-in` las rutas privadas sin sesión y devuelve 401 en `/api/*`. El layout `(dashboard)/layout.tsx` repite la comprobación en servidor.
 
-## Metadatos de página
+## Páginas especiales
 
-`src/lib/navigation.ts` — títulos y breadcrumbs para `TopBar` según `pathname`.
+| Ruta | Componente | Descripción |
+|------|-----------|-------------|
+| `/` (loading) | `loading.tsx` | Spinner mientras carga el dashboard |
+| 404 | `not-found.tsx` | Página genérica de recurso no encontrado |
+| Error | `error.tsx` | Boundary de error global con botón de reintento |

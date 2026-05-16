@@ -114,7 +114,7 @@ export interface DashboardPayload {
   activity: ActivityItem[];
   calendar: Record<string, CalendarDayEvent>;
   upcomingCompetitions: Competition[];
-  currentUser: CurrentUser;
+  currentUser: SessionUser;
 }
 
 export interface ApprovalProposal {
@@ -178,4 +178,16 @@ export interface AnalyticsPayload {
 export interface AssignValidation {
   ok: boolean;
   error?: string;
+}
+
+export interface IpfArticle {
+  num: string;
+  title?: string;
+  text: string;
+}
+
+export interface IpfChapter {
+  num: string;
+  title: string;
+  articles: IpfArticle[];
 }

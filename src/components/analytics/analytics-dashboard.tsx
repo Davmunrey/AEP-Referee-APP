@@ -78,6 +78,9 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
             <CardTitle>Árbitros más activos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-0 divide-y divide-border-muted p-0 pt-0">
+            {data.topReferees.length === 0 && (
+              <p className="px-6 py-8 text-center text-xs text-subtle-muted">Sin datos aún.</p>
+            )}
             {data.topReferees.map((r, i) => (
               <div
                 key={r.id}

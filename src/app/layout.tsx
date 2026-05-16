@@ -1,4 +1,3 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
@@ -27,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="dark">
+    <html lang="es">
       <body className={`${dmSans.variable} ${ibmMono.variable} antialiased`}>
-        <ClerkProvider>{children}</ClerkProvider>
+        {children}
       </body>
     </html>
   );

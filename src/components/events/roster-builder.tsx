@@ -13,12 +13,36 @@ import type {
   Competition,
   Referee,
   RefereeLevel,
+  RegulationRule,
+  RoleKey,
   RosterSession,
+  UserRole,
   Zone,
 } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Check, GripVertical, Info, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, GripVertical, Info, X } from "lucide-react";
+import { RosterHistoryPanel } from "@/components/events/roster-history-panel";
+
+const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
+
+function meetsMinLevel(actual: RefereeLevel, min: RefereeLevel): boolean {
+  return LEVEL_ORDER.indexOf(actual) >= LEVEL_ORDER.indexOf(min);
+}
+
+function violatesRegulation(
+  roleKey: RoleKey,
+  eventType: string,
+  nivel: RefereeLevel,
+  regulations: RegulationRule[],
+): RegulationRule | undefined {
+  return regulations.find(
+    (r) =>
+      r.roleKey === roleKey &&
+      r.eventTypes.includes(eventType as Competition["tipo"]) &&
+      !meetsMinLevel(nivel, r.minLevel),
+  );
+}
 
 interface RosterBuilderProps {
   event: Competition;
@@ -27,6 +51,8 @@ interface RosterBuilderProps {
   referees: Referee[];
   zones: Zone[];
   levels: RefereeLevel[];
+  regulations?: RegulationRule[];
+  userRole?: UserRole;
 }
 
 function zoneName(zones: Zone[], code: string) {
@@ -40,7 +66,10 @@ export function RosterBuilder({
   referees,
   zones,
   levels,
+  regulations = [],
+  userRole,
 }: RosterBuilderProps) {
+  const readOnly = userRole === "lectura";
   const [assignments, setAssignments] = useState(initialAssignments);
   const [filterZona, setFilterZona] = useState("TODAS");
   const [filterNivel, setFilterNivel] = useState("TODOS");
@@ -48,6 +77,7 @@ export function RosterBuilder({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [statusIsError, setStatusIsError] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const assignedIds = useMemo(
@@ -55,24 +85,61 @@ export function RosterBuilder({
     [assignments],
   );
 
+  const getReferee = (id: string) => referees.find((r) => r.id === id);
+
+  const checkViolation = (roleKey: RoleKey, refereeId: string) => {
+    const referee = getReferee(refereeId);
+    if (!referee) return undefined;
+    return violatesRegulation(roleKey, event.tipo, referee.nivel, regulations);
+  };
+
+  const violationCount = useMemo(() => {
+    let count = 0;
+    for (const session of template) {
+      for (const role of session.roles) {
+        for (let i = 0; i < role.slots; i++) {
+          const key = `${session.sesion}_${role.key}_${i}`;
+          const refId = assignments[key];
+          if (refId && violatesRegulation(role.key, event.tipo, getReferee(refId)?.nivel ?? "Regional", regulations)) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignments, template, regulations, event.tipo]);
+
   const totalSlots = template.reduce(
     (acc, s) => acc + s.roles.reduce((a, r) => a + r.slots, 0),
     0,
   );
   const filledSlots = Object.values(assignments).filter(Boolean).length;
-  const fillPct = Math.round((filledSlots / totalSlots) * 100);
+  const fillPct = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
+
+  const selectedRoleKey = selectedSlot
+    ? (selectedSlot.split("_")[1] as RoleKey | undefined)
+    : undefined;
 
   const availableReferees = useMemo(() => {
-    return referees.filter((r) => {
+    const list = referees.filter((r) => {
       if (r.estado !== "Activo" || !r.disp) return false;
       if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
       if (search && !r.nombre.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [filterZona, filterNivel, search, referees]);
-
-  const getReferee = (id: string) => referees.find((r) => r.id === id);
+    if (selectedRoleKey) {
+      list.sort((a, b) => {
+        const aOk = !violatesRegulation(selectedRoleKey, event.tipo, a.nivel, regulations);
+        const bOk = !violatesRegulation(selectedRoleKey, event.tipo, b.nivel, regulations);
+        if (aOk && !bOk) return -1;
+        if (!aOk && bOk) return 1;
+        return 0;
+      });
+    }
+    return list;
+  }, [filterZona, filterNivel, search, referees, selectedRoleKey, regulations, event.tipo]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
     setAssignments((prev) => {
@@ -88,8 +155,10 @@ export function RosterBuilder({
         const res = await api.assignReferee(event.id, slotKey, refereeId);
         setAssignments(res.assignments);
         setStatusMsg(null);
+        setStatusIsError(false);
       } catch (err) {
         setStatusMsg(err instanceof Error ? err.message : "No se pudo guardar la asignación");
+        setStatusIsError(true);
       }
     });
   };
@@ -106,18 +175,20 @@ export function RosterBuilder({
         setAssignments(res.assignments);
       } catch {
         setStatusMsg("No se pudo quitar la asignación");
+        setStatusIsError(true);
       }
     });
   };
 
   const onDrop = (slotKey: string, refereeId: string) => {
+    if (readOnly) return;
     persistAssign(slotKey, refereeId);
     setDraggedId(null);
     setSelectedSlot(null);
   };
 
   const onQuickAssign = (refereeId: string) => {
-    if (!selectedSlot) return;
+    if (!selectedSlot || readOnly) return;
     persistAssign(selectedSlot, refereeId);
   };
 
@@ -143,16 +214,30 @@ export function RosterBuilder({
               </p>
             </div>
           </div>
-          <RosterHeaderActions
-            eventId={event.id}
-            filledSlots={filledSlots}
-            totalSlots={totalSlots}
-            fillPct={fillPct}
-            pending={pending}
-            statusMsg={statusMsg}
-            onStatus={setStatusMsg}
-            startTransition={startTransition}
-          />
+          <div className="flex flex-col items-end gap-2">
+            {violationCount > 0 && (
+              <p className="flex items-center gap-1.5 rounded-lg border border-warning-border bg-warning-subtle px-3 py-1.5 text-xs font-medium text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                {violationCount} violación{violationCount > 1 ? "es" : ""} normativa
+              </p>
+            )}
+            <div className="flex items-center gap-2">
+              <RosterHistoryPanel eventId={event.id} />
+              {!readOnly && (
+                <RosterHeaderActions
+                  eventId={event.id}
+                  filledSlots={filledSlots}
+                  totalSlots={totalSlots}
+                  fillPct={fillPct}
+                  pending={pending}
+                  statusMsg={statusMsg}
+                  statusIsError={statusIsError}
+                  onStatus={(msg, isError) => { setStatusMsg(msg); setStatusIsError(isError ?? false); }}
+                  startTransition={startTransition}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -246,6 +331,7 @@ export function RosterBuilder({
                   onSelectSlot={setSelectedSlot}
                   onDrop={onDrop}
                   onClear={persistClear}
+                  checkViolation={checkViolation}
                 />
               ))}
             </div>
@@ -327,6 +413,7 @@ function SessionBlock({
   onSelectSlot,
   onDrop,
   onClear,
+  checkViolation,
 }: {
   session: RosterSession;
   assignments: AssignmentsMap;
@@ -335,6 +422,7 @@ function SessionBlock({
   onSelectSlot: (key: string | null) => void;
   onDrop: (slotKey: string, refereeId: string) => void;
   onClear: (slotKey: string) => void;
+  checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
 }) {
   const { filled, slots, pct } = sessionProgress(session, assignments);
   const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
@@ -369,6 +457,7 @@ function SessionBlock({
                 const refereeId = assignments[slotKey];
                 const referee = refereeId ? getReferee(refereeId) : undefined;
                 const isSelected = selectedSlot === slotKey;
+                const violation = refereeId ? checkViolation(role.key, refereeId) : undefined;
 
                 return (
                   <div
@@ -384,15 +473,28 @@ function SessionBlock({
                       "relative min-h-[72px] rounded-lg border border-dashed p-3 transition-colors",
                       isSelected
                         ? "border-primary-border bg-primary-muted"
-                        : referee
-                          ? "border-border-strong bg-muted/50"
-                          : "border-border-strong bg-background/50 hover:border-border-strong",
+                        : violation
+                          ? "border-warning-border bg-warning-subtle"
+                          : referee
+                            ? "border-border-strong bg-muted/50"
+                            : "border-border-strong bg-background/50 hover:border-border-strong",
                     )}
                   >
                     {referee ? (
                       <>
                         <p className="text-sm font-medium text-foreground">{referee.nombre}</p>
-                        <LevelBadge level={referee.nivel} />
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <LevelBadge level={referee.nivel} />
+                          {violation && (
+                            <span
+                              title={`Mínimo ${violation.minLevel} para ${violation.rol}`}
+                              className="flex items-center gap-1 text-[10px] text-warning"
+                            >
+                              <AlertTriangle className="h-3 w-3" />
+                              min. {violation.minLevel}
+                            </span>
+                          )}
+                        </div>
                         <Button
                           type="button"
                           variant="ghost"
