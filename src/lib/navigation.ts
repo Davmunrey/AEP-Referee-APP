@@ -58,6 +58,18 @@ export function getPageMeta(pathname: string): PageMeta {
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Estadísticas" }],
     };
   }
+  if (pathname === "/exams") {
+    return {
+      title: "Exámenes arbitrales",
+      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Exámenes" }],
+    };
+  }
+  if (pathname === "/reports") {
+    return {
+      title: "Sandbox de informes",
+      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Informes" }],
+    };
+  }
   if (pathname === "/regulations") {
     return {
       title: "Normativa IPF",

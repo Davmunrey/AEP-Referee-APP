@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LevelBadge, StatusBadge } from "@/components/aep/badges";
+import { ExamsManager } from "@/components/judge/exams-manager";
+import { ReportsManager } from "@/components/judge/reports-manager";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { RefereeEditForm } from "@/components/referees/referee-edit-form";
 import { RefereePromotionButton } from "@/components/referees/referee-promotion-button";
@@ -20,16 +22,27 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!user) redirect("/sign-in");
 
   const { id } = await params;
-  const [referee, meta] = await Promise.all([
-    dataService.getReferee(id),
+  const [profile, meta] = await Promise.all([
+    dataService.getJudgeProfile(id),
     dataService.getMeta(user),
   ]);
-  if (!referee) notFound();
+  if (!profile) notFound();
 
-  const zoneName = meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
+  const { referee, exams, reports, examsPassed, examsTotal, avgScore } = profile;
+  const zoneName =
+    meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
+  const canEdit = user.role !== "lectura";
+  const canDelete = user.role === "nacional";
+
+  const trayectoria = [
+    { label: "Exámenes", value: examsTotal },
+    { label: "Aprobados", value: examsPassed },
+    { label: "Nota media", value: avgScore != null ? `${avgScore}/100` : "—" },
+    { label: "Informes", value: reports.length },
+  ];
 
   return (
-    <PageShell className="max-w-3xl">
+    <PageShell className="max-w-4xl">
       <Button variant="outline" size="sm" className="w-fit" asChild>
         <Link href="/referees">
           <ArrowLeft className="mr-1 h-4 w-4" />
@@ -37,7 +50,11 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         </Link>
       </Button>
 
-      <PageHeader eyebrow="Operaciones" title={referee.nombre} description={`Ficha arbitral · ${zoneName}`} />
+      <PageHeader
+        eyebrow="Gestión de jueces"
+        title={referee.nombre}
+        description={`Ficha arbitral · ${zoneName}`}
+      />
 
       <Card className="glass-panel-soft">
         <CardHeader>
@@ -73,12 +90,27 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
           </div>
           <div>
             <p className="friendly-label mb-1">Disponibilidad</p>
-            <p className="text-sm text-foreground">{referee.disp ? "Disponible" : "No disponible"}</p>
+            <p className="text-sm text-foreground">
+              {referee.disp ? "Disponible" : "No disponible"}
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      {user.role !== "lectura" && (
+      <div className="grid gap-3 sm:grid-cols-4">
+        {trayectoria.map((t) => (
+          <Card key={t.label}>
+            <CardContent className="py-3.5">
+              <p className="friendly-label mb-1">{t.label}</p>
+              <p className="text-xl font-bold tracking-tight text-foreground">
+                {t.value}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {canEdit && (
         <div className="flex flex-wrap gap-3">
           <RefereePromotionButton
             refereeId={referee.id}
@@ -88,7 +120,23 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         </div>
       )}
 
-      {user.role !== "lectura" && (
+      <ExamsManager
+        exams={exams}
+        referees={[{ id: referee.id, nombre: referee.nombre }]}
+        lockedRefereeId={referee.id}
+        canEdit={canEdit}
+        canDelete={canDelete}
+      />
+
+      <ReportsManager
+        reports={reports}
+        referees={[{ id: referee.id, nombre: referee.nombre }]}
+        lockedRefereeId={referee.id}
+        canEdit={canEdit}
+        canDelete={canDelete}
+      />
+
+      {canEdit && (
         <RefereeEditForm referee={referee} zones={meta.zones} levels={meta.levels} />
       )}
     </PageShell>
