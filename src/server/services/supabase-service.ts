@@ -11,24 +11,34 @@ import type {
   Competition,
   DashboardKpi,
   DashboardPayload,
+  ExamResult,
+  ExamType,
+  JudgeProfile,
   PromotionRequest,
   Referee,
+  RefereeExam,
+  RefereeLevel,
+  RefereeReport,
   RegulationRule,
+  ReportType,
   RoleKey,
   RosterHistoryEntry,
   RosterSession,
   SessionUser,
 } from "@/lib/types";
+import { computeJudgeProfile } from "@/lib/judge-stats";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assignmentsFromRows,
   mapActivity,
   mapApproval,
   mapCompetition,
+  mapExam,
   mapHistory,
   mapPromotion,
   mapReferee,
   mapRegulation,
+  mapReport,
 } from "@/server/db/mappers";
 
 function db() {
@@ -774,5 +784,170 @@ export const supabaseDataService = {
       (a) => a.status === "pendiente",
     ).length;
     return { events, approvals };
+  },
+
+  getExams: async (refereeId?: string): Promise<RefereeExam[]> => {
+    const supabase = db();
+    let query = supabase
+      .from("referee_exams")
+      .select("*")
+      .order("fecha", { ascending: false });
+    if (refereeId) query = query.eq("referee_id", refereeId);
+    const { data } = await query;
+    return (data ?? []).map((r) => mapExam(r as Record<string, unknown>));
+  },
+
+  createExam: async (input: {
+    refereeId: string;
+    tipo: ExamType;
+    nivelObjetivo: RefereeLevel;
+    fecha: string;
+    examinador: string;
+    puntuacion?: number;
+    puntuacionMaxima?: number;
+    resultado?: ExamResult;
+    notas?: string;
+  }): Promise<RefereeExam> => {
+    const supabase = db();
+    const { data: ref } = await supabase
+      .from("referees")
+      .select("nombre")
+      .eq("id", input.refereeId)
+      .single();
+    if (!ref) throw new Error("Árbitro no encontrado");
+    const row = {
+      id: `exam-${Date.now()}`,
+      referee_id: input.refereeId,
+      referee_name: ref.nombre,
+      tipo: input.tipo,
+      nivel_objetivo: input.nivelObjetivo,
+      fecha: input.fecha,
+      examinador: input.examinador,
+      puntuacion: input.puntuacion ?? null,
+      puntuacion_maxima: input.puntuacionMaxima ?? 100,
+      resultado: input.resultado ?? "Pendiente",
+      notas: input.notas ?? null,
+    };
+    const { data, error } = await supabase
+      .from("referee_exams")
+      .insert(row)
+      .select()
+      .single();
+    if (error) throw error;
+    await pushActivity({
+      tipo: "cambio",
+      actor: input.examinador,
+      accion: `registró examen ${input.tipo} de`,
+      evento: ref.nombre,
+      hace: "ahora",
+    });
+    return mapExam(data as Record<string, unknown>);
+  },
+
+  updateExam: async (
+    id: string,
+    patch: Partial<
+      Pick<
+        RefereeExam,
+        "resultado" | "puntuacion" | "notas" | "fecha" | "examinador"
+      >
+    >,
+  ): Promise<RefereeExam | undefined> => {
+    const supabase = db();
+    const dbPatch: Record<string, unknown> = {};
+    if (patch.resultado !== undefined) dbPatch.resultado = patch.resultado;
+    if (patch.puntuacion !== undefined) dbPatch.puntuacion = patch.puntuacion;
+    if (patch.notas !== undefined) dbPatch.notas = patch.notas;
+    if (patch.fecha !== undefined) dbPatch.fecha = patch.fecha;
+    if (patch.examinador !== undefined) dbPatch.examinador = patch.examinador;
+    const { data, error } = await supabase
+      .from("referee_exams")
+      .update(dbPatch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) return undefined;
+    return mapExam(data as Record<string, unknown>);
+  },
+
+  deleteExam: async (id: string): Promise<boolean> => {
+    const supabase = db();
+    const { error } = await supabase.from("referee_exams").delete().eq("id", id);
+    return !error;
+  },
+
+  getReports: async (refereeId?: string): Promise<RefereeReport[]> => {
+    const supabase = db();
+    let query = supabase
+      .from("referee_reports")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (refereeId) query = query.eq("referee_id", refereeId);
+    const { data } = await query;
+    return (data ?? []).map((r) => mapReport(r as Record<string, unknown>));
+  },
+
+  createReport: async (input: {
+    refereeId: string;
+    titulo: string;
+    tipo: ReportType;
+    evento?: string;
+    contenido: string;
+    adjuntoUrl?: string;
+    autor: string;
+  }): Promise<RefereeReport> => {
+    const supabase = db();
+    const { data: ref } = await supabase
+      .from("referees")
+      .select("nombre")
+      .eq("id", input.refereeId)
+      .single();
+    if (!ref) throw new Error("Árbitro no encontrado");
+    const row = {
+      id: `rep-${Date.now()}`,
+      referee_id: input.refereeId,
+      referee_name: ref.nombre,
+      titulo: input.titulo,
+      tipo: input.tipo,
+      evento: input.evento ?? null,
+      contenido: input.contenido,
+      adjunto_url: input.adjuntoUrl ?? null,
+      autor: input.autor,
+    };
+    const { data, error } = await supabase
+      .from("referee_reports")
+      .insert(row)
+      .select()
+      .single();
+    if (error) throw error;
+    await pushActivity({
+      tipo: "cambio",
+      actor: input.autor,
+      accion: `subió el informe «${input.titulo}» de`,
+      evento: ref.nombre,
+      hace: "ahora",
+    });
+    return mapReport(data as Record<string, unknown>);
+  },
+
+  deleteReport: async (id: string): Promise<boolean> => {
+    const supabase = db();
+    const { error } = await supabase
+      .from("referee_reports")
+      .delete()
+      .eq("id", id);
+    return !error;
+  },
+
+  getJudgeProfile: async (
+    refereeId: string,
+  ): Promise<JudgeProfile | undefined> => {
+    const referee = await supabaseDataService.getReferee(refereeId);
+    if (!referee) return undefined;
+    const [exams, reports] = await Promise.all([
+      supabaseDataService.getExams(refereeId),
+      supabaseDataService.getReports(refereeId),
+    ]);
+    return computeJudgeProfile(referee, exams, reports);
   },
 };

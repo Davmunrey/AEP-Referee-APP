@@ -1,5 +1,6 @@
 import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
+import { computeJudgeProfile } from "@/lib/judge-stats";
 import type {
   AnalyticsPayload,
   AppMeta,
@@ -9,9 +10,16 @@ import type {
   Competition,
   DashboardKpi,
   DashboardPayload,
+  ExamResult,
+  ExamType,
+  JudgeProfile,
   PromotionRequest,
   Referee,
+  RefereeExam,
+  RefereeLevel,
+  RefereeReport,
   RegulationRule,
+  ReportType,
   RoleKey,
   RosterHistoryEntry,
   RosterSession,
@@ -551,5 +559,122 @@ export const memoryDataService = {
       (a) => a.status === "pendiente",
     ).length;
     return { events, approvals };
+  },
+
+  getExams: async (refereeId?: string): Promise<RefereeExam[]> => {
+    const exams = getStore().exams;
+    return (refereeId ? exams.filter((e) => e.refereeId === refereeId) : exams)
+      .slice()
+      .sort((a, b) => b.fecha.localeCompare(a.fecha));
+  },
+
+  createExam: async (input: {
+    refereeId: string;
+    tipo: ExamType;
+    nivelObjetivo: RefereeLevel;
+    fecha: string;
+    examinador: string;
+    puntuacion?: number;
+    puntuacionMaxima?: number;
+    resultado?: ExamResult;
+    notas?: string;
+  }): Promise<RefereeExam> => {
+    const store = getStore();
+    const referee = store.referees.find((r) => r.id === input.refereeId);
+    if (!referee) throw new Error("Árbitro no encontrado");
+    const exam: RefereeExam = {
+      id: `exam-${Date.now()}`,
+      refereeId: input.refereeId,
+      refereeName: referee.nombre,
+      tipo: input.tipo,
+      nivelObjetivo: input.nivelObjetivo,
+      fecha: input.fecha,
+      examinador: input.examinador,
+      puntuacion: input.puntuacion,
+      puntuacionMaxima: input.puntuacionMaxima ?? 100,
+      resultado: input.resultado ?? "Pendiente",
+      notas: input.notas,
+      createdAt: new Date().toISOString(),
+    };
+    store.exams.unshift(exam);
+    return exam;
+  },
+
+  updateExam: async (
+    id: string,
+    patch: Partial<
+      Pick<
+        RefereeExam,
+        "resultado" | "puntuacion" | "notas" | "fecha" | "examinador"
+      >
+    >,
+  ): Promise<RefereeExam | undefined> => {
+    const exam = getStore().exams.find((e) => e.id === id);
+    if (!exam) return undefined;
+    Object.assign(exam, patch);
+    return exam;
+  },
+
+  deleteExam: async (id: string): Promise<boolean> => {
+    const store = getStore();
+    const idx = store.exams.findIndex((e) => e.id === id);
+    if (idx === -1) return false;
+    store.exams.splice(idx, 1);
+    return true;
+  },
+
+  getReports: async (refereeId?: string): Promise<RefereeReport[]> => {
+    const reports = getStore().reports;
+    return (refereeId ? reports.filter((r) => r.refereeId === refereeId) : reports)
+      .slice()
+      .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  },
+
+  createReport: async (input: {
+    refereeId: string;
+    titulo: string;
+    tipo: ReportType;
+    evento?: string;
+    contenido: string;
+    adjuntoUrl?: string;
+    autor: string;
+  }): Promise<RefereeReport> => {
+    const store = getStore();
+    const referee = store.referees.find((r) => r.id === input.refereeId);
+    if (!referee) throw new Error("Árbitro no encontrado");
+    const report: RefereeReport = {
+      id: `rep-${Date.now()}`,
+      refereeId: input.refereeId,
+      refereeName: referee.nombre,
+      titulo: input.titulo,
+      tipo: input.tipo,
+      evento: input.evento,
+      contenido: input.contenido,
+      adjuntoUrl: input.adjuntoUrl,
+      autor: input.autor,
+      createdAt: new Date().toISOString(),
+    };
+    store.reports.unshift(report);
+    return report;
+  },
+
+  deleteReport: async (id: string): Promise<boolean> => {
+    const store = getStore();
+    const idx = store.reports.findIndex((r) => r.id === id);
+    if (idx === -1) return false;
+    store.reports.splice(idx, 1);
+    return true;
+  },
+
+  getJudgeProfile: async (
+    refereeId: string,
+  ): Promise<JudgeProfile | undefined> => {
+    const referee = await memoryDataService.getReferee(refereeId);
+    if (!referee) return undefined;
+    const [exams, reports] = await Promise.all([
+      memoryDataService.getExams(refereeId),
+      memoryDataService.getReports(refereeId),
+    ]);
+    return computeJudgeProfile(referee, exams, reports);
   },
 };

@@ -7,9 +7,15 @@ import type {
   AssignmentsMap,
   Competition,
   DashboardPayload,
+  ExamResult,
+  ExamType,
   PromotionRequest,
   Referee,
+  RefereeExam,
+  RefereeLevel,
+  RefereeReport,
   RegulationRule,
+  ReportType,
   RosterHistoryEntry,
   RosterSession,
   SessionUser,
@@ -133,6 +139,64 @@ export const api = {
   analyticsExportUrl: () => `${getApiBaseUrl()}/analytics/export`,
 
   getRegulations: () => request<RegulationRule[]>("/regulations"),
+
+  getExams: (refereeId?: string) =>
+    request<RefereeExam[]>(`/exams${refereeId ? `?refereeId=${refereeId}` : ""}`),
+
+  createExam: (body: {
+    refereeId: string;
+    tipo: ExamType;
+    nivelObjetivo: RefereeLevel;
+    fecha: string;
+    examinador: string;
+    puntuacion?: number;
+    puntuacionMaxima?: number;
+    resultado?: ExamResult;
+    notas?: string;
+  }) =>
+    request<RefereeExam>("/exams", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateExam: (
+    id: string,
+    body: {
+      resultado?: ExamResult;
+      puntuacion?: number;
+      notas?: string;
+      fecha?: string;
+      examinador?: string;
+    },
+  ) =>
+    request<RefereeExam>(`/exams/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteExam: (id: string) =>
+    request<{ deleted: boolean }>(`/exams/${id}`, { method: "DELETE" }),
+
+  getReports: (refereeId?: string) =>
+    request<RefereeReport[]>(
+      `/reports${refereeId ? `?refereeId=${refereeId}` : ""}`,
+    ),
+
+  createReport: (body: {
+    refereeId: string;
+    titulo: string;
+    tipo: ReportType;
+    evento?: string;
+    contenido: string;
+    adjuntoUrl?: string;
+  }) =>
+    request<RefereeReport>("/reports", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  deleteReport: (id: string) =>
+    request<{ deleted: boolean }>(`/reports/${id}`, { method: "DELETE" }),
 
   toggleUserActive: (id: string, activo: boolean) =>
     request<{ id: string; activo: boolean }>(`/admin/users/${id}`, {

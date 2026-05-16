@@ -15,6 +15,8 @@ import type {
   Competition,
   PromotionRequest,
   Referee,
+  RefereeExam,
+  RefereeReport,
   RegulationRule,
   RosterHistoryEntry,
 } from "@/lib/types";
@@ -27,6 +29,8 @@ interface AppStore {
   promotions: PromotionRequest[];
   activity: ActivityItem[];
   history: RosterHistoryEntry[];
+  exams: RefereeExam[];
+  reports: RefereeReport[];
 }
 
 const globalStore = globalThis as unknown as { __aepStore?: AppStore };
@@ -216,6 +220,52 @@ export const REGULATION_RULES: RegulationRule[] = [
   },
 ];
 
+function seedExams(): RefereeExam[] {
+  const [a, b, c] = REFEREES;
+  const rows: RefereeExam[] = [];
+  if (a)
+    rows.push({
+      id: "exam-seed-1",
+      refereeId: a.id,
+      refereeName: a.nombre,
+      tipo: "Reglamento IPF",
+      nivelObjetivo: "Nacional",
+      fecha: "2026-02-14",
+      examinador: "Comité Técnico AEP",
+      puntuacion: 88,
+      puntuacionMaxima: 100,
+      resultado: "Aprobado",
+      notas: "Examen anual de reglamento técnico.",
+    });
+  if (b)
+    rows.push({
+      id: "exam-seed-2",
+      refereeId: b.id,
+      refereeName: b.nombre,
+      tipo: "Práctico",
+      nivelObjetivo: "IPF Cat. 2",
+      fecha: "2026-04-03",
+      examinador: "Comité Técnico IPF",
+      puntuacionMaxima: 100,
+      resultado: "Pendiente",
+    });
+  if (c)
+    rows.push({
+      id: "exam-seed-3",
+      refereeId: c.id,
+      refereeName: c.nombre,
+      tipo: "Recertificación",
+      nivelObjetivo: "Nacional",
+      fecha: "2026-01-20",
+      examinador: "Comité Técnico AEP",
+      puntuacion: 58,
+      puntuacionMaxima: 100,
+      resultado: "Suspenso",
+      notas: "Debe repetir la parte práctica.",
+    });
+  return rows;
+}
+
 function createStore(): AppStore {
   const assignments = new Map<string, AssignmentsMap>();
   assignments.set("evt-001", { ...INITIAL_ASSIGNMENTS });
@@ -227,6 +277,8 @@ function createStore(): AppStore {
     promotions: seedPromotions(),
     activity: [...ACTIVITY],
     history: [],
+    exams: seedExams(),
+    reports: [],
   };
 }
 
