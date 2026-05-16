@@ -106,6 +106,37 @@ async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
   });
 }
 
+/**
+ * Retroalimentación temporal: registra el índice de salud y lo compara con la
+ * última captura. Si la tabla `health_snapshots` aún no existe, degrada sin
+ * romper (Supabase devuelve error en data, no lanza excepción).
+ */
+async function applyHealthHistory(
+  health: import("@/lib/types").OperationalHealth,
+): Promise<void> {
+  const supabase = db();
+  const { data: last, error } = await supabase
+    .from("health_snapshots")
+    .select("score, captured_at")
+    .order("captured_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return;
+  if (last && typeof last.score === "number") {
+    health.previousScore = last.score;
+    health.delta = health.score - last.score;
+  }
+  const lastMs = last?.captured_at ? new Date(last.captured_at).getTime() : 0;
+  const SIX_HOURS = 6 * 60 * 60 * 1000;
+  if (Date.now() - lastMs > SIX_HOURS) {
+    await supabase.from("health_snapshots").insert({
+      score: health.score,
+      status: health.status,
+      factors: health.factors,
+    });
+  }
+}
+
 async function buildKpis(): Promise<DashboardKpi[]> {
   const supabase = db();
   const template = await getRosterTemplate();
@@ -222,6 +253,7 @@ export const supabaseDataService = {
       coverage,
       activity: activityItems,
     });
+    await applyHealthHistory(health);
 
     return {
       kpis: await buildKpis(),
@@ -231,6 +263,7 @@ export const supabaseDataService = {
       currentUser: user,
       health,
       insights,
+      coverage,
       generatedAt: new Date().toISOString(),
     };
   },

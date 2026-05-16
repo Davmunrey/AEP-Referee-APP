@@ -139,6 +139,9 @@ export interface OperationalHealth {
   status: HealthStatus;
   summary: string;
   factors: HealthFactor[];
+  /** Variación del índice frente a la captura anterior (retroalimentación). */
+  delta?: number;
+  previousScore?: number;
 }
 
 export interface EventCoverage {
@@ -159,6 +162,7 @@ export interface DashboardPayload {
   currentUser: SessionUser;
   health: OperationalHealth;
   insights: Insight[];
+  coverage: EventCoverage[];
   generatedAt: string;
 }
 
