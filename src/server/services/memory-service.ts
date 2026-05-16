@@ -1,4 +1,5 @@
 import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
+import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import type {
   AnalyticsPayload,
   AppMeta,
@@ -99,12 +100,38 @@ export const memoryDataService = {
     const competitions = [...store.competitions].sort((a, b) =>
       a.fecha.localeCompare(b.fecha),
     );
+    const template = getRosterTemplate();
+    const coverage = competitions.map((c) => {
+      const assignments = store.assignments.get(c.id) ?? {};
+      const filled = Object.values(assignments).filter(Boolean).length;
+      const open = countOpenSlots(template, assignments);
+      return {
+        id: c.id,
+        nombre: c.nombre,
+        fecha: c.fecha,
+        estado: c.estado,
+        filled,
+        open,
+        required: filled + open,
+      };
+    });
+    const { health, insights } = buildIntelligence({
+      referees: store.referees,
+      competitions,
+      approvals: store.approvals,
+      promotions: store.promotions,
+      coverage,
+      activity: store.activity,
+    });
     return {
       kpis: buildKpis(),
       activity: store.activity,
       calendar: getCalendarEvents(),
       upcomingCompetitions: competitions.slice(0, 6),
       currentUser: user,
+      health,
+      insights,
+      generatedAt: new Date().toISOString(),
     };
   },
 

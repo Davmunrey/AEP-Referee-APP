@@ -109,12 +109,57 @@ export interface AppMeta {
   currentUser: SessionUser;
 }
 
+export type InsightSeverity = "crítico" | "alerta" | "sugerencia" | "ok";
+
+export interface InsightAction {
+  label: string;
+  href: string;
+}
+
+export interface Insight {
+  id: string;
+  severity: InsightSeverity;
+  title: string;
+  detail: string;
+  metric?: string;
+  action?: InsightAction;
+}
+
+export type HealthStatus = "óptimo" | "estable" | "atención" | "crítico";
+
+export interface HealthFactor {
+  label: string;
+  score: number;
+  weight: number;
+  detail: string;
+}
+
+export interface OperationalHealth {
+  score: number;
+  status: HealthStatus;
+  summary: string;
+  factors: HealthFactor[];
+}
+
+export interface EventCoverage {
+  id: string;
+  nombre: string;
+  fecha: string;
+  estado: EventStatus;
+  filled: number;
+  open: number;
+  required: number;
+}
+
 export interface DashboardPayload {
   kpis: DashboardKpi[];
   activity: ActivityItem[];
   calendar: Record<string, CalendarDayEvent>;
   upcomingCompetitions: Competition[];
   currentUser: SessionUser;
+  health: OperationalHealth;
+  insights: Insight[];
+  generatedAt: string;
 }
 
 export interface ApprovalProposal {
