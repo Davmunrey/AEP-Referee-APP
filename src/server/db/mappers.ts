@@ -5,6 +5,8 @@ import type {
   Competition,
   PromotionRequest,
   Referee,
+  RefereeExam,
+  RefereeReport,
   RegulationRule,
   RosterHistoryEntry,
 } from "@/lib/types";
@@ -113,6 +115,38 @@ export function mapRegulation(row: Record<string, unknown>): RegulationRule {
     minLevel: String(row.min_level) as RegulationRule["minLevel"],
     eventTypes: (row.event_types as string[]) as RegulationRule["eventTypes"],
     note: String(row.note ?? ""),
+  };
+}
+
+export function mapExam(row: Record<string, unknown>): RefereeExam {
+  return {
+    id: String(row.id),
+    refereeId: String(row.referee_id),
+    refereeName: String(row.referee_name),
+    tipo: row.tipo as RefereeExam["tipo"],
+    nivelObjetivo: String(row.nivel_objetivo) as RefereeExam["nivelObjetivo"],
+    fecha: String(row.fecha),
+    examinador: String(row.examinador),
+    puntuacion: row.puntuacion != null ? Number(row.puntuacion) : undefined,
+    puntuacionMaxima: Number(row.puntuacion_maxima ?? 100),
+    resultado: row.resultado as RefereeExam["resultado"],
+    notas: row.notas ? String(row.notas) : undefined,
+    createdAt: row.created_at ? String(row.created_at) : undefined,
+  };
+}
+
+export function mapReport(row: Record<string, unknown>): RefereeReport {
+  return {
+    id: String(row.id),
+    refereeId: String(row.referee_id),
+    refereeName: String(row.referee_name),
+    titulo: String(row.titulo),
+    tipo: row.tipo as RefereeReport["tipo"],
+    evento: row.evento ? String(row.evento) : undefined,
+    contenido: String(row.contenido),
+    adjuntoUrl: row.adjunto_url ? String(row.adjunto_url) : undefined,
+    autor: String(row.autor),
+    createdAt: row.created_at ? String(row.created_at) : undefined,
   };
 }
 

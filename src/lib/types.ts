@@ -211,6 +211,57 @@ export interface RosterHistoryEntry {
   detail?: string;
 }
 
+export type ExamType =
+  | "Teórico"
+  | "Práctico"
+  | "Reglamento IPF"
+  | "Recertificación";
+export type ExamResult = "Aprobado" | "Suspenso" | "Pendiente";
+
+export interface RefereeExam {
+  id: string;
+  refereeId: string;
+  refereeName: string;
+  tipo: ExamType;
+  nivelObjetivo: RefereeLevel;
+  fecha: string;
+  examinador: string;
+  puntuacion?: number;
+  puntuacionMaxima: number;
+  resultado: ExamResult;
+  notas?: string;
+  createdAt?: string;
+}
+
+export type ReportType =
+  | "Desempeño"
+  | "Incidencia"
+  | "Evaluación"
+  | "Auto-informe";
+
+export interface RefereeReport {
+  id: string;
+  refereeId: string;
+  refereeName: string;
+  titulo: string;
+  tipo: ReportType;
+  evento?: string;
+  contenido: string;
+  adjuntoUrl?: string;
+  autor: string;
+  createdAt?: string;
+}
+
+export interface JudgeProfile {
+  referee: Referee;
+  exams: RefereeExam[];
+  reports: RefereeReport[];
+  examsPassed: number;
+  examsTotal: number;
+  avgScore: number | null;
+  lastExam?: RefereeExam;
+}
+
 export interface AnalyticsPayload {
   coverageByZone: { zona: string; name: string; pct: number; eventos: number }[];
   topReferees: { id: string; nombre: string; eventos: number; nivel: RefereeLevel }[];
