@@ -2,6 +2,172 @@ import type { IpfChapter } from "@/lib/types";
 
 export const IPF_CHAPTERS: IpfChapter[] = [
   {
+    num: "1",
+    title: "GENERAL",
+    articles: [
+      {
+        num: "1",
+        title: "The sport",
+        text: "Powerlifting comprises three lifts contested in the following order: the Squat, the Bench Press and the Deadlift. The competition total is the sum of the highest successful attempt in each of the three lifts. Where two or more lifters achieve the same total, the lighter bodyweight lifter is ranked above the heavier; if bodyweights are equal, the lifter who reached the total first is ranked higher.",
+      },
+      {
+        num: "2",
+        title: "Bodyweight categories — Men",
+        text: "Men (Open and Junior): 59 kg, 66 kg, 74 kg, 83 kg, 93 kg, 105 kg, 120 kg and 120 kg+. Sub-Junior and Junior categories additionally contest a 53 kg class.",
+      },
+      {
+        num: "3",
+        title: "Bodyweight categories — Women",
+        text: "Women (Open and Junior): 47 kg, 52 kg, 57 kg, 63 kg, 69 kg, 76 kg, 84 kg and 84 kg+. Sub-Junior and Junior categories additionally contest a 43 kg class.",
+      },
+      {
+        num: "4",
+        title: "Age categories",
+        text: "Age categories are reckoned by calendar year. Sub-Junior: from the calendar year of the 14th birthday to the year of the 18th. Junior: 19 to 23. Open: from 14 with no upper age limit. Masters 1: 40–49. Masters 2: 50–59. Masters 3: 60–69. Masters 4: 70 and over.",
+      },
+      {
+        num: "5",
+        title: "Equipment divisions",
+        text: "Two equipment divisions are contested and scored separately. Classic (raw): supportive equipment limited to belt, knee sleeves and wrist wraps. Equipped: an approved squat suit, bench press shirt, deadlift suit and knee wraps are additionally permitted.",
+      },
+      {
+        num: "6",
+        title: "Attempts",
+        text: "Each lifter is allowed three attempts at each lift. A lifter who succeeds with a first or second attempt may take a fourth attempt for a record; a fourth attempt does not count toward the competition total.",
+      },
+      {
+        num: "7",
+        title: "Rounds and order",
+        text: "The competition proceeds in rounds. Within a round, lifters are called in ascending order of the weight requested; where weights are equal the lower lot number lifts first. A lifter must not decrease a weight already requested except where the rules expressly permit it.",
+      },
+      {
+        num: "8",
+        title: "Timing",
+        text: "A lifter has one minute, from the moment the bar is announced as loaded and the platform is clear, to begin the attempt. Three minutes are allowed when a lifter follows themselves. Failure to begin within the allotted time forfeits the attempt.",
+      },
+    ],
+  },
+  {
+    num: "2",
+    title: "THE SQUAT",
+    articles: [
+      {
+        num: "1",
+        title: "Rules of performance",
+        text: "(1) The lifter assumes an upright position with the top of the bar not more than 3 cm below the top of the anterior deltoids; the bar is held horizontally across the shoulders, hands and fingers gripping the bar, feet flat on the platform.\n(2) After removing the bar from the racks (the lifter may be assisted) the lifter moves to establish the starting position and waits motionless, erect with knees locked, for the Chief Referee's signal.\n(3) The signal to start consists of a downward movement of the arm and the audible command \"Squat\".\n(4) On the signal the lifter bends the knees and lowers the body until the top surface of the legs at the hip joint is lower than the top of the knees.\n(5) The lifter then recovers at will to the upright position with knees locked. Double bouncing at the bottom and any downward movement during the ascent are not permitted.\n(6) When the lifter is motionless and erect, the Chief Referee signals to replace the bar with a backward movement of the arm and the audible command \"Rack\".",
+      },
+      {
+        num: "2",
+        title: "Causes for disqualification of the Squat",
+        text: "(1) Failure to observe the Chief Referee's signals at the start or completion of the lift.\n(2) Double bouncing at the bottom, more than one recovery attempt, or any downward movement during the ascent.\n(3) Failure to assume an upright position with the knees locked at the start and finish of the lift.\n(4) Stepping backward or forward, or moving the feet laterally; rocking the feet between the ball and heel is permitted.\n(5) Failure to bend the knees and lower the body until the top of the leg surface at the hip joint is lower than the top of the knees.\n(6) Contact with the bar or the lifter by the spotters/loaders between the referee's signals to make the lift easier.\n(7) Contact of the elbows or upper arms with the legs that supports or aids the lifter.\n(8) Failure to make a bona fide attempt to return the bar to the racks.\n(9) Any dropping or dumping of the bar after completion of the lift.",
+      },
+      {
+        num: "3",
+        title: "Signals",
+        text: "Start: downward movement of the arm with the audible command \"Squat\". Finish: backward movement of the arm with the audible command \"Rack\".",
+      },
+    ],
+  },
+  {
+    num: "3",
+    title: "THE BENCH PRESS",
+    articles: [
+      {
+        num: "1",
+        title: "Rules of performance",
+        text: "(1) The lifter lies on their back with head, shoulders and buttocks in contact with the bench surface. The shoes are flat on the floor (as flat as the shape of the sole allows).\n(2) The hands and fingers grip the bar with the thumbs encircling it; a reverse grip is not permitted. The maximum grip spacing is 81 cm measured between the forefingers — both forefingers must be within or on the 81 cm ring marks.\n(3) Up to five spotters/loaders may be used. The lifter may receive a hand-out; the bar must be released to the lifter with the arms straight.\n(4) Having received the bar at straight arms with elbows locked, the lifter waits for the Chief Referee's signal. The audible command \"Start\" is given when the bar is held motionless.\n(5) After the signal the lifter lowers the bar to the chest or abdominal area (the bar must not touch the belt) and holds it motionless, after which the audible command \"Press\" is given.\n(6) The lifter presses the bar upward to straight arms with elbows locked. When held motionless the audible command \"Rack\" is given.",
+      },
+      {
+        num: "2",
+        title: "Causes for disqualification of the Bench Press",
+        text: "(1) Failure to observe the Chief Referee's signals \"Start\", \"Press\" and \"Rack\".\n(2) Any change of position that results in loss of contact (lifting) of the head, shoulders or buttocks from the bench, or movement of the shoes on the floor, or lateral movement of the hands during the lift.\n(3) Heaving or sinking the bar into the chest after it is motionless in a manner that aids the lifter.\n(4) Any downward movement of the bar during the press.\n(5) Failure to press the bar to full arm extension with elbows locked at completion.\n(6) Failure to wait for the referee's signals.\n(7) Contact of the bar with the rack uprights during the lift that makes the press easier.\n(8) Contact of the lifter's feet with the bench or its supports.\n(9) Deliberate contact between the bar and the bar-rest supports during the lift.",
+      },
+      {
+        num: "3",
+        title: "Signals",
+        text: "\"Start\": given when the bar is motionless at straight arms. \"Press\": given when the bar is motionless on the chest. \"Rack\": given on completion at straight arms with elbows locked.",
+      },
+    ],
+  },
+  {
+    num: "4",
+    title: "THE DEADLIFT",
+    articles: [
+      {
+        num: "1",
+        title: "Rules of performance",
+        text: "(1) The bar is laid horizontally in front of the lifter's feet, gripped with an optional grip in both hands and lifted with one continuous motion until the lifter is standing erect.\n(2) At completion the knees are locked straight and the lifter stands erect with the shoulders back.\n(3) The Chief Referee's signal consists of a downward movement of the arm and the audible command \"Down\". The signal is not given until the bar is held motionless and the lifter is in the apparent finished position.\n(4) Any raising of the bar, or any deliberate attempt to do so, counts as an attempt.",
+      },
+      {
+        num: "2",
+        title: "Causes for disqualification of the Deadlift",
+        text: "(1) Any downward movement of the bar before it reaches the final position.\n(2) Failure to stand erect with the shoulders back.\n(3) Failure to lock the knees straight at completion.\n(4) Supporting the bar on the thighs during the lift — \"hitching\" (a series of supporting movements of the bar against the thighs) or any sliding of the bar up the thighs.\n(5) Stepping backward or forward, or lateral movement of the feet; rocking the feet between ball and heel is permitted.\n(6) Lowering the bar before the Chief Referee's \"Down\" signal.\n(7) Allowing the bar to return to the platform without maintaining control with both hands — releasing the bar from the palms of the hands.",
+      },
+      {
+        num: "3",
+        title: "Signals",
+        text: "\"Down\": a downward movement of the arm with the audible command, given only when the bar is motionless and the lifter is erect in the finished position.",
+      },
+    ],
+  },
+  {
+    num: "5",
+    title: "WEIGH-IN",
+    articles: [
+      {
+        num: "1",
+        title: "Time and place",
+        text: "The weigh-in for each bodyweight category begins two hours before the start of that category's competition and lasts 1.5 hours. Each lifter is weighed once. The weigh-in is conducted in private by referees or jury members of the same sex as the lifter, in the presence of the team manager or coach.",
+      },
+      {
+        num: "2",
+        title: "Making weight",
+        text: "Lifters must weigh within the limits of the bodyweight category in which they are entered. A lifter weighing outside the limits may, within the official weigh-in period, return and be weighed again. Failure to make weight within the period results in the lifter being moved to the appropriate category or being disqualified, in accordance with the rules.",
+      },
+      {
+        num: "3",
+        title: "Declaration of attempts",
+        text: "At weigh-in each lifter declares the first-attempt weights for the squat, the bench press and the deadlift, recorded on the lifter's card. The order of lifting is determined by the declared first attempts.",
+      },
+      {
+        num: "4",
+        title: "Officials and identification",
+        text: "The weigh-in is conducted by two or three appointed referees. Lifters must present valid identification establishing nationality and age.",
+      },
+    ],
+  },
+  {
+    num: "6",
+    title: "COSTUME AND PERSONAL EQUIPMENT",
+    articles: [
+      {
+        num: "1",
+        title: "Approved list and inspection",
+        text: "All personal equipment must appear on the IPF approved list. Referees inspect personal equipment before competition and may inspect it on the platform. Non-compliant items must be removed or replaced before the lifter competes.",
+      },
+      {
+        num: "2",
+        title: "Classic (raw) division",
+        text: "In the Classic division supportive equipment is restricted to: a one-piece lifting singlet, a T-shirt, underwear/briefs, socks, a lifting belt, knee sleeves (maximum length 30 cm), wrist wraps and approved footwear. Squat suits, bench press shirts and knee wraps are NOT permitted in Classic.",
+      },
+      {
+        num: "3",
+        title: "Equipped division",
+        text: "In the Equipped division an approved squat suit, bench press shirt, deadlift suit and knee wraps may be used in addition to the items allowed in Classic, subject to the dimensional and material limits set out in the rules.",
+      },
+      {
+        num: "4",
+        title: "Lifting belt",
+        text: "If worn, the belt is worn over the lifting suit. Maximum width 10 cm, maximum thickness 13 mm. It must be of approved material and fastened with an approved buckle or lever.",
+      },
+      {
+        num: "5",
+        title: "Penalties",
+        text: "Lifters discovered on the platform using equipment that has not been checked in, or using illegal items, are subject to penalty up to and including disqualification of the attempt or of the lifter.",
+      },
+    ],
+  },
+  {
     num: "7",
     title: "REFEREES",
     articles: [
@@ -239,6 +405,58 @@ export const IPF_CHAPTERS: IpfChapter[] = [
         num: "9",
         title: "Equipment approval",
         text: "(a) Responsible for inspecting all competition and personal equipment. Also equipment submitted by manufacturers for use of the words \"IPF Approved\" in advertisements. If items meet all IPF rules, the Executive Committee may levy a fee and issue a certificate of approval.\n\n(b) At the end of each year, a renewal fee for each item must be submitted for re-certification of approval. If the design has changed, the item must be resubmitted.\n\n(c) If, after a certificate of approval has been issued, the manufacturer changes the design so that it no longer meets IPF rules, the IPF shall withdraw approval and will not re-issue until corrections are made and the item resubmitted.",
+      },
+    ],
+  },
+  {
+    num: "9",
+    title: "RECORDS",
+    articles: [
+      {
+        num: "1",
+        title: "Recognised records",
+        text: "Records are recognised in the Squat, Bench Press, Deadlift and Total for each bodyweight, age and equipment category, and for the recognised single-lift disciplines where applicable.",
+      },
+      {
+        num: "2",
+        title: "Margin and record attempts",
+        text: "To set a record the weight must exceed the existing record by at least 0.5 kg. A lifter who has succeeded with a first or second attempt may take a record attempt as a fourth attempt; a fourth attempt does not count toward the competition total.",
+      },
+      {
+        num: "3",
+        title: "Validation",
+        text: "A record performance must be passed by all three referees and confirmed by the Jury. For a World record the lifter must satisfy doping control and the record application must be submitted on the official form.",
+      },
+      {
+        num: "4",
+        title: "Equipment verification",
+        text: "Equipment used for a record (bar and discs) must be verified for accuracy. Record attempts must take place under the conditions specified by the IPF.",
+      },
+    ],
+  },
+  {
+    num: "10",
+    title: "ANTI-DOPING",
+    articles: [
+      {
+        num: "1",
+        title: "Code compliance",
+        text: "The IPF is a signatory to the World Anti-Doping Code. All lifters, coaches and officials are bound by the IPF Anti-Doping Rules and the WADA Prohibited List.",
+      },
+      {
+        num: "2",
+        title: "Doping control",
+        text: "Doping control may be carried out in-competition and out-of-competition. Selected lifters must report for sample collection; refusal or failure to submit is treated as an anti-doping rule violation.",
+      },
+      {
+        num: "3",
+        title: "Records and doping control",
+        text: "A record will not be ratified unless the lifter has undergone doping control at that competition with a negative result.",
+      },
+      {
+        num: "4",
+        title: "Therapeutic Use Exemptions",
+        text: "Therapeutic Use Exemptions must be applied for and granted in advance in accordance with the IPF TUE procedure. Sanctions for violations follow the WADA Code.",
       },
     ],
   },
