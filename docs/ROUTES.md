@@ -4,9 +4,9 @@
 
 | Ruta | Descripción |
 |------|-------------|
-| `/sign-in` | Login: Google OAuth + email/contraseña (Supabase Auth) |
+| `/sign-in` | Login y registro: email/contraseña (Supabase Auth) |
 | `/sign-up` | Redirección a `/sign-in` (registro unificado) |
-| `/auth/callback` | Callback OAuth: intercambia el código por sesión |
+| `/auth/callback` | Callback: confirma email / intercambia código por sesión |
 | `/login` | Redirección legacy a `/sign-in` |
 
 ## Dashboard (autenticadas)
@@ -15,16 +15,18 @@ Layout: `AppShell` (sidebar colapsable + `app-mesh`). Protegidas por el middlewa
 
 | Ruta | Módulo | Componentes principales |
 |------|--------|------------------------|
-| `/` | Dashboard | `DashboardHero`, `KpiCards`, `OperationalCalendar`, `ActivityFeed`, `EventsTable` |
+| `/` | Dashboard | `DashboardLive`, `DashboardHero`, `KpiCards`, `HealthGauge`, `InsightsPanel`, `OperationalCalendar`, `CoverageForecast`, `EventsTable`, `ActivityFeed` |
 | `/events` | Campeonatos | `EventsTable` (filtros + paginación + eliminar) |
 | `/events/new` | Nuevo campeonato | `NewCompetitionForm` (guard unload si hay datos) |
 | `/events/[id]` | Tarima | `RosterBuilder` (pantalla completa — drag & drop, validación normativa, historial) |
 | `/referees` | Directorio | `RefereesDirectory` (filtros, paginación, nueva alta) |
-| `/referees/[id]` | Ficha árbitro | Resumen + `RefereeEditForm` + `RefereePromotionButton` |
+| `/referees/[id]` | Ficha de juez | Resumen + trayectoria + `ExamsManager` + `ReportsManager` + `RefereeEditForm` + `RefereePromotionButton` |
+| `/exams` | Exámenes arbitrales | `ExamsManager` (tablero global) + tarjetas de estadística |
+| `/reports` | Sandbox de informes | `ReportsManager` (repositorio global) + tarjetas de estadística |
 | `/approvals` | Aprobaciones | `ApprovalsBoard` (cola + diff + comentario obligatorio al rechazar) |
 | `/promotions` | Ascensos | `PromotionsBoard` + `NewPromotionDialog` |
 | `/analytics` | Estadísticas | `AnalyticsDashboard` (cobertura, top árbitros, críticos) |
-| `/regulations` | Normativa IPF | `RegulationsView` (filtro por tipo, referencias IPF TR) |
+| `/regulations` | Normativa IPF | `RegulationsView` (matriz AEP + reglamento IPF completo con búsqueda) |
 | `/admin/users` | Usuarios | `UsersAdmin` — solo accesible para rol `nacional` |
 
 ## Navegación lateral (sidebar)
@@ -38,6 +40,8 @@ Layout: `AppShell` (sidebar colapsable + `app-mesh`). Protegidas por el middlewa
 **Gestión** (todos los roles, con restricciones por RBAC):
 - Aprobaciones (`/approvals`) — badge contador de pendientes
 - Ascensos (`/promotions`)
+- Exámenes (`/exams`)
+- Informes (`/reports`)
 - Estadísticas (`/analytics`)
 - Normativa IPF (`/regulations`)
 - Usuarios (`/admin/users`) — solo rol `nacional`
