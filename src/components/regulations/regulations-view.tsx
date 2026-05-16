@@ -16,13 +16,19 @@ import {
 import { selectFieldClassSm } from "@/lib/design-tokens";
 import type { EventType, IpfChapter, RegulationRule } from "@/lib/types";
 import { IPF_CHAPTERS } from "@/lib/ipf-chapters";
-import { BookOpen, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { BookOpen, FileText, ChevronDown, ChevronRight, Search, X } from "lucide-react";
 
 const EVENT_TYPES: EventType[] = ["AEP-1", "AEP-2", "AEP-3"];
 
 type Tab = "matrix" | "ipf";
 
-function IpfArticleList({ chapter }: { chapter: IpfChapter }) {
+function IpfArticleList({
+  chapter,
+  expandAll = false,
+}: {
+  chapter: IpfChapter;
+  expandAll?: boolean;
+}) {
   const [openArticles, setOpenArticles] = useState<Set<string>>(new Set());
 
   const toggle = (num: string) => {
@@ -37,7 +43,7 @@ function IpfArticleList({ chapter }: { chapter: IpfChapter }) {
   return (
     <div className="divide-y divide-border-muted">
       {chapter.articles.map((art) => {
-        const isOpen = openArticles.has(art.num);
+        const isOpen = expandAll || openArticles.has(art.num);
         const label = art.title
           ? `Art. ${chapter.num}.${art.num} — ${art.title}`
           : `Art. ${chapter.num}.${art.num}`;
@@ -78,6 +84,20 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
   const [openChapters, setOpenChapters] = useState<Set<string>>(
     new Set(IPF_CHAPTERS.map((c) => c.num))
   );
+  const [ipfQuery, setIpfQuery] = useState("");
+
+  const q = ipfQuery.trim().toLowerCase();
+  const ipfChapters: IpfChapter[] = !q
+    ? IPF_CHAPTERS
+    : IPF_CHAPTERS.flatMap((c) => {
+        const chapterMatch = `cap ${c.num} ${c.title}`.toLowerCase().includes(q);
+        if (chapterMatch) return [c];
+        const articles = c.articles.filter((a) =>
+          `${c.num}.${a.num} ${a.title ?? ""} ${a.text}`.toLowerCase().includes(q),
+        );
+        return articles.length ? [{ ...c, articles }] : [];
+      });
+  const ipfArticleCount = ipfChapters.reduce((n, c) => n + c.articles.length, 0);
 
   const filtered =
     filterTipo === "TODOS"
@@ -186,14 +206,50 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
 
       {tab === "ipf" && (
         <div className="space-y-4">
-          <p className="text-xs text-subtle-muted">
-            Capítulos 7 y 8 del{" "}
-            <strong className="text-foreground-secondary">IPF Technical Rulebook (vigente 01/03/2026)</strong>.
-            Haz clic en un artículo para expandirlo.
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-subtle-muted">
+              <strong className="text-foreground-secondary">IPF Technical Rulebook</strong>{" "}
+              completo — {IPF_CHAPTERS.length} capítulos. Haz clic en un artículo para expandirlo.
+            </p>
+            <div className="relative w-full sm:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-subtle-muted" />
+              <input
+                type="search"
+                value={ipfQuery}
+                onChange={(e) => setIpfQuery(e.target.value)}
+                placeholder="Buscar en el reglamento…"
+                className="h-9 w-full rounded-xl border border-border-strong bg-surface pl-9 pr-8 text-sm text-foreground placeholder:text-subtle-muted focus-ring"
+              />
+              {ipfQuery && (
+                <button
+                  type="button"
+                  onClick={() => setIpfQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtle-muted hover:text-foreground"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
 
-          {IPF_CHAPTERS.map((chapter) => {
-            const isOpen = openChapters.has(chapter.num);
+          {q && (
+            <p className="text-xs text-subtle-muted">
+              {ipfArticleCount} artículo(s) en {ipfChapters.length} capítulo(s) coinciden con
+              «{ipfQuery}».
+            </p>
+          )}
+
+          {ipfChapters.length === 0 && (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-subtle-muted">
+                Sin resultados para «{ipfQuery}».
+              </CardContent>
+            </Card>
+          )}
+
+          {ipfChapters.map((chapter) => {
+            const isOpen = q ? true : openChapters.has(chapter.num);
             return (
               <Card key={chapter.num}>
                 <CardHeader className="p-0">
@@ -220,7 +276,7 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
                 </CardHeader>
                 {isOpen && (
                   <CardContent className="p-0 border-t border-border-muted">
-                    <IpfArticleList chapter={chapter} />
+                    <IpfArticleList chapter={chapter} expandAll={!!q} />
                   </CardContent>
                 )}
               </Card>
