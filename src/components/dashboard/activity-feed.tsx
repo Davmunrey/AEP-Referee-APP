@@ -13,6 +13,9 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
         </Link>
       </CardHeader>
       <CardContent className="divide-y divide-border-muted p-0">
+        {activity.length === 0 && (
+          <p className="px-4 py-8 text-center text-xs text-subtle-muted">Sin actividad reciente.</p>
+        )}
         {activity.map((item, i) => (
           <div key={i} className="px-4 py-3 transition-colors hover:bg-surface-hover">
             <div className="mb-1 flex items-center gap-2">

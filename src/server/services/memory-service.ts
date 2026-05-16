@@ -411,10 +411,14 @@ export const memoryDataService = {
       .slice(0, 5)
       .map((r) => ({ id: r.id, nombre: r.nombre, eventos: r.eventos, nivel: r.nivel }));
 
+    const reviewed = store.approvals.filter((a) => a.status !== "pendiente").length;
+    const rejected = store.approvals.filter((a) => a.status === "rechazado").length;
+    const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : 0;
+
     return {
       coverageByZone,
       topReferees,
-      rejectionRate: 8,
+      rejectionRate,
       criticalEvents: competitions.filter((c) => c.estado === "Crítico"),
       totals: {
         activeReferees: store.referees.filter((r) => r.estado === "Activo").length,
@@ -454,6 +458,52 @@ export const memoryDataService = {
       lines.push("");
     }
     return lines.join("\n");
+  },
+
+  deleteReferee: async (id: string): Promise<boolean> => {
+    const store = getStore();
+    const idx = store.referees.findIndex((r) => r.id === id);
+    if (idx < 0) return false;
+    store.referees.splice(idx, 1);
+    return true;
+  },
+
+  deleteCompetition: async (id: string): Promise<boolean> => {
+    const store = getStore();
+    const idx = store.competitions.findIndex((c) => c.id === id);
+    if (idx < 0) return false;
+    store.competitions.splice(idx, 1);
+    store.assignments.delete(id);
+    return true;
+  },
+
+  createPromotion: async (input: {
+    refereeId: string;
+    toLevel: import("@/lib/types").RefereeLevel;
+    zona: string;
+    motivo?: string;
+  }): Promise<import("@/lib/types").PromotionRequest> => {
+    const store = getStore();
+    const referee = store.referees.find((r) => r.id === input.refereeId);
+    if (!referee) throw new Error("Árbitro no encontrado");
+    const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
+    const fromIdx = LEVEL_ORDER.indexOf(referee.nivel);
+    const toIdx = LEVEL_ORDER.indexOf(input.toLevel);
+    if (toIdx <= fromIdx) throw new Error(`El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`);
+    const req: import("@/lib/types").PromotionRequest = {
+      id: `pro-${Date.now()}`,
+      refereeId: input.refereeId,
+      refereeName: referee.nombre,
+      fromLevel: referee.nivel,
+      toLevel: input.toLevel,
+      zona: input.zona,
+      status: "pendiente",
+      submittedAt: new Date().toISOString().split("T")[0]!,
+      eventosCompletados: referee.eventos,
+      motivo: input.motivo,
+    };
+    store.promotions.unshift(req);
+    return req;
   },
 
   getNavCounts: async (user?: SessionUser): Promise<{ events: number; approvals: number }> => {

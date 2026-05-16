@@ -113,37 +113,106 @@ function seedPromotions(): PromotionRequest[] {
 }
 
 export const REGULATION_RULES: RegulationRule[] = [
+  // ─── Juez Central ──────────────────────────────────────────────────────────
   {
-    id: "reg-1",
+    id: "reg-c1",
+    rol: "Juez Central",
+    roleKey: "central",
+    minLevel: "IPF Cat. 1",
+    eventTypes: ["AEP-1"],
+    note: "Campeonato de España: el central debe ser IPF Cat. 1 para homologación mundial (IPF TR Art. 3.5.1)",
+  },
+  {
+    id: "reg-c2",
     rol: "Juez Central",
     roleKey: "central",
     minLevel: "IPF Cat. 2",
-    eventTypes: ["AEP-1"],
-    note: "AEP-1 exige mínimo IPF Cat. 2 en central y laterales",
+    eventTypes: ["AEP-2"],
+    note: "Campeonato nacional abierto: central mínimo IPF Cat. 2 (AEP Reglamento Art. 8.2)",
   },
   {
-    id: "reg-2",
+    id: "reg-c3",
     rol: "Juez Central",
     roleKey: "central",
     minLevel: "Nacional",
-    eventTypes: ["AEP-2", "AEP-3"],
-    note: "Campeonatos regionales/nacionales",
+    eventTypes: ["AEP-3"],
+    note: "Campeonato regional: central mínimo Nacional (AEP Reglamento Art. 8.3)",
+  },
+  // ─── Jueces Laterales ──────────────────────────────────────────────────────
+  {
+    id: "reg-l1",
+    rol: "Juez Lateral",
+    roleKey: "lateral",
+    minLevel: "IPF Cat. 2",
+    eventTypes: ["AEP-1"],
+    note: "AEP-1: laterales mínimo IPF Cat. 2 (IPF TR Art. 3.5.2). Se requieren 2 laterales por plataforma.",
   },
   {
-    id: "reg-3",
+    id: "reg-l2",
+    rol: "Juez Lateral",
+    roleKey: "lateral",
+    minLevel: "Nacional",
+    eventTypes: ["AEP-2"],
+    note: "AEP-2: laterales mínimo Nacional (AEP Reglamento Art. 8.2). 2 laterales por plataforma.",
+  },
+  {
+    id: "reg-l3",
+    rol: "Juez Lateral",
+    roleKey: "lateral",
+    minLevel: "Regional",
+    eventTypes: ["AEP-3"],
+    note: "AEP-3: laterales mínimo Regional (AEP Reglamento Art. 8.3).",
+  },
+  // ─── Jurado ────────────────────────────────────────────────────────────────
+  {
+    id: "reg-j1",
+    rol: "Jurado",
+    roleKey: "jurado",
+    minLevel: "IPF Cat. 1",
+    eventTypes: ["AEP-1"],
+    note: "Campeonato de España: jurado mínimo IPF Cat. 1. Resuelve apelaciones por mayoría simple (IPF TR Art. 3.6)",
+  },
+  {
+    id: "reg-j2",
+    rol: "Jurado",
+    roleKey: "jurado",
+    minLevel: "IPF Cat. 2",
+    eventTypes: ["AEP-2"],
+    note: "AEP-2: jurado mínimo IPF Cat. 2 (AEP Reglamento Art. 9.1).",
+  },
+  {
+    id: "reg-j3",
     rol: "Jurado",
     roleKey: "jurado",
     minLevel: "Nacional",
-    eventTypes: ["AEP-1"],
-    note: "Mínimo Nacional en AEP-1",
+    eventTypes: ["AEP-3"],
+    note: "AEP-3: jurado mínimo Nacional (AEP Reglamento Art. 9.2).",
+  },
+  // ─── Pesaje ────────────────────────────────────────────────────────────────
+  {
+    id: "reg-p1",
+    rol: "Pesaje",
+    roleKey: "pesaje",
+    minLevel: "Nacional",
+    eventTypes: ["AEP-1", "AEP-2"],
+    note: "Campeonatos nacionales: responsable de pesaje mínimo Nacional (IPF TR Art. 4.1.1).",
   },
   {
-    id: "reg-4",
-    rol: "Pesaje / Material",
+    id: "reg-p2",
+    rol: "Pesaje",
     roleKey: "pesaje",
     minLevel: "Regional",
+    eventTypes: ["AEP-3"],
+    note: "Campeonato regional: pesaje mínimo Regional (AEP Reglamento Art. 10).",
+  },
+  // ─── Control de material ───────────────────────────────────────────────────
+  {
+    id: "reg-m1",
+    rol: "Control de material",
+    roleKey: "material",
+    minLevel: "Regional",
     eventTypes: ["AEP-1", "AEP-2", "AEP-3"],
-    note: "Regional o superior",
+    note: "Control de equipamiento: mínimo Regional en todos los tipos de campeonato (IPF TR Art. 4.2).",
   },
 ];
 

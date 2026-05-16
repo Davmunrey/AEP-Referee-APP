@@ -128,31 +128,25 @@
   .app-mesh {
     background-color: var(--background);
     background-image:
-      radial-gradient(ellipse 90% 60% at 10% -10%, var(--mesh-primary), transparent 55%),
-      radial-gradient(ellipse 70% 50% at 95% 0%, var(--mesh-warning), transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 100%, var(--mesh-info), transparent 45%);
+      radial-gradient(ellipse 80% 50% at 12% -8%, var(--mesh-primary), transparent 60%),
+      radial-gradient(ellipse 60% 45% at 95% 0%, var(--mesh-warning), transparent 55%);
   }
 
   .glass-panel {
-    background: linear-gradient(145deg, var(--glass-from) 0%, var(--glass-to) 100%);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 0 0 1px var(--glass-shadow-ring), var(--shadow-md);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
   }
 
   .glass-panel-soft {
-    background: var(--surface-raised);
-    backdrop-filter: blur(12px);
+    background: var(--card);
     border: 1px solid var(--border-muted);
+    box-shadow: var(--shadow-card);
   }
 
   .surface-card {
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--card) 90%, transparent) 0%,
-      color-mix(in srgb, var(--neutral-900) 95%, transparent) 100%
-    );
-    border: 1px solid var(--glass-border);
+    background: var(--card);
+    border: 1px solid var(--border);
     box-shadow: var(--shadow-card);
   }
 

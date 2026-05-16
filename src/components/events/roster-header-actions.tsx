@@ -39,7 +39,8 @@ interface RosterHeaderActionsProps {
   fillPct: number;
   pending: boolean;
   statusMsg: string | null;
-  onStatus: (msg: string | null) => void;
+  statusIsError?: boolean;
+  onStatus: (msg: string | null, isError?: boolean) => void;
   startTransition: TransitionStartFunction;
 }
 
@@ -50,6 +51,7 @@ export function RosterHeaderActions({
   fillPct,
   pending,
   statusMsg,
+  statusIsError = false,
   onStatus,
   startTransition,
 }: RosterHeaderActionsProps) {
@@ -76,9 +78,9 @@ export function RosterHeaderActions({
             startTransition(async () => {
               try {
                 const res = await api.saveDraft(eventId);
-                onStatus(res.message);
+                onStatus(res.message, false);
               } catch {
-                onStatus("Error al guardar el borrador");
+                onStatus("Error al guardar el borrador", true);
               }
             });
           }}
@@ -101,12 +103,13 @@ export function RosterHeaderActions({
           className="gap-1.5"
           disabled={pending}
           onClick={() => {
+            if (fillPct < 100 && !confirm(`El roster está al ${fillPct}% (${filledSlots}/${totalSlots} plazas). ¿Enviar igualmente?`)) return;
             startTransition(async () => {
               try {
                 const res = await api.submitRoster(eventId);
-                onStatus(res.message);
+                onStatus(res.message, false);
               } catch {
-                onStatus("Error al enviar la propuesta");
+                onStatus("Error al enviar la propuesta", true);
               }
             });
           }}
@@ -116,7 +119,9 @@ export function RosterHeaderActions({
         </Button>
       </div>
       {(pending || statusMsg) && (
-        <p className="text-xs text-warning/90">{pending ? "Guardando…" : statusMsg}</p>
+        <p className={`text-xs ${pending ? "text-muted-foreground" : statusIsError ? "text-destructive" : "text-success"}`}>
+          {pending ? "Guardando…" : statusMsg}
+        </p>
       )}
     </div>
   );

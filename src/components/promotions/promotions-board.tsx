@@ -4,40 +4,60 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { LevelBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
+import { NewPromotionDialog } from "@/components/promotions/new-promotion-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { api } from "@/lib/api/client";
-import type { PromotionRequest } from "@/lib/types";
+import type { PromotionRequest, Referee, Zone } from "@/lib/types";
 import { TrendingUp } from "lucide-react";
 
 export function PromotionsBoard({
   initial,
   canReview,
+  canCreate,
+  referees,
+  zones,
+  userZona,
 }: {
   initial: PromotionRequest[];
   canReview: boolean;
+  canCreate: boolean;
+  referees: Referee[];
+  zones: Zone[];
+  userZona?: string;
 }) {
   const [items, setItems] = useState(initial);
   const [pending, startTransition] = useTransition();
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const router = useRouter();
 
   const review = (id: string, approve: boolean) => {
+    setReviewError(null);
     startTransition(async () => {
-      const updated = await api.reviewPromotion(id, approve);
-      setItems((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      router.refresh();
+      try {
+        const updated = await api.reviewPromotion(id, approve);
+        setItems((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+        router.refresh();
+      } catch (err) {
+        setReviewError(err instanceof Error ? err.message : "Error al revisar");
+      }
     });
   };
 
   return (
     <PageShell>
-      <PageHeader
-        eyebrow="Gestión"
-        title="Ascensos de nivel"
-        description="Solicitudes Regional → Nacional → IPF · revisión centralizada"
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          eyebrow="Gestión"
+          title="Ascensos de nivel"
+          description="Solicitudes Regional → Nacional → IPF · revisión centralizada"
+        />
+        {canCreate && (
+          <NewPromotionDialog referees={referees} zones={zones} userZona={userZona} />
+        )}
+      </div>
 
       <Card>
         <CardHeader className="border-b border-border-muted pb-4">
@@ -96,6 +116,9 @@ export function PromotionsBoard({
           )}
         </CardContent>
       </Card>
+      {reviewError && (
+        <p className="text-sm text-destructive">{reviewError}</p>
+      )}
     </PageShell>
   );
 }

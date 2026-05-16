@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     sede: body.sede,
     sesiones: body.sesiones ?? 3,
     requeridos: body.requeridos ?? 9,
-    zona: body.zona ?? user.zona ?? "MAD",
+    zona: body.zona ?? user.zona ?? "",
   });
   return jsonOk(comp);
 }

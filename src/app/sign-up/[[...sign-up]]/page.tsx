@@ -1,21 +1,6 @@
-import { SignUp } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
+// Sign-up via Google — handled in /sign-in
 export default function SignUpPage() {
-  return (
-    <div className="app-mesh flex min-h-screen items-center justify-center p-6">
-      <SignUp
-        routing="path"
-        path="/sign-up"
-        signInUrl="/sign-in"
-        forceRedirectUrl="/"
-        fallbackRedirectUrl="/"
-        appearance={{
-          elements: {
-            rootBox: "mx-auto",
-            card: "glass-panel border-border shadow-none",
-          },
-        }}
-      />
-    </div>
-  );
+  redirect("/sign-in");
 }

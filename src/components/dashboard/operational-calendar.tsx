@@ -11,25 +11,10 @@ import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
 
-/** June 2026 — week grid from prototype (includes May/Jul overflow). */
-const CALENDAR_WEEKS: number[][] = [
-  [25, 26, 27, 28, 29, 30, 31],
-  [1, 2, 3, 4, 5, 6, 7],
-  [8, 9, 10, 11, 12, 13, 14],
-  [15, 16, 17, 18, 19, 20, 21],
-  [22, 23, 24, 25, 26, 27, 28],
-  [29, 30, 1, 2, 3, 4, 5],
+const MONTHS_ES = [
+  "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+  "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
 ];
-
-function monthOf(weekIdx: number, dayIdx: number) {
-  if (weekIdx === 0) return 5;
-  if (weekIdx === 5 && dayIdx >= 2) return 7;
-  return 6;
-}
-
-function dayKey(day: number, month: number) {
-  return `2026-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
 
 const statusBar: Record<EventStatus, string> = {
   Completo: "bg-success",
@@ -38,29 +23,79 @@ const statusBar: Record<EventStatus, string> = {
   Borrador: "bg-subtle-muted",
 };
 
+function buildWeeks(year: number, month: number): { day: number; month: number; year: number }[][] {
+  const firstDay = new Date(year, month, 1);
+  // Monday-based: 0=Mon … 6=Sun
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+
+  const cells: { day: number; month: number; year: number }[] = [];
+
+  for (let i = startOffset - 1; i >= 0; i--) {
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    cells.push({ day: daysInPrev - i, month: prevMonth, year: prevYear });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ day: d, month, year });
+  }
+  const nextMonth = month === 11 ? 0 : month + 1;
+  const nextYear = month === 11 ? year + 1 : year;
+  while (cells.length % 7 !== 0) {
+    cells.push({ day: cells.length - startOffset - daysInMonth + 1, month: nextMonth, year: nextYear });
+  }
+
+  const weeks: { day: number; month: number; year: number }[][] = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
+  return weeks;
+}
+
+function dateKey(year: number, month: number, day: number) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export function OperationalCalendar({
   calendar,
 }: {
   calendar: Record<string, CalendarDayEvent>;
 }) {
-  const [monthLabel] = useState("JUN 2026");
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+
+  const goBack = () => {
+    if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
+    else setViewMonth((m) => m - 1);
+  };
+  const goNext = () => {
+    if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
+    else setViewMonth((m) => m + 1);
+  };
+
+  const weeks = buildWeeks(viewYear, viewMonth);
+  const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
 
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b border-border py-3">
         <div className="flex items-center gap-3">
           <CardTitle className="text-sm font-semibold">Calendario operativo</CardTitle>
-          <span className="font-mono text-[11px] text-subtle-muted">{monthLabel}</span>
+          <span className="font-mono text-[11px] text-subtle-muted">
+            {MONTHS_ES[viewMonth]} {viewYear}
+          </span>
         </div>
         <div className="flex items-center gap-1">
           {(["Completo", "Incompleto", "Crítico", "Borrador"] as EventStatus[]).map((s) => (
             <EventStatusBadge key={s} status={s} />
           ))}
           <span className="mx-2 h-4 w-px bg-muted" />
-          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mes anterior">
+          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mes anterior" onClick={goBack}>
             <ChevronLeft className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mes siguiente">
+          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mes siguiente" onClick={goNext}>
             <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -77,13 +112,12 @@ export function OperationalCalendar({
           ))}
         </div>
         <div className="grid grid-cols-7">
-          {CALENDAR_WEEKS.map((week, wi) =>
-            week.map((day, di) => {
-              const month = monthOf(wi, di);
-              const key = dayKey(day, month);
+          {weeks.map((week, wi) =>
+            week.map((cell, di) => {
+              const key = dateKey(cell.year, cell.month, cell.day);
               const evt = calendar[key];
-              const otherMonth = month !== 6;
-              const isToday = key === "2026-06-08";
+              const otherMonth = cell.month !== viewMonth;
+              const isToday = key === todayKey;
 
               return (
                 <div
@@ -107,12 +141,10 @@ export function OperationalCalendar({
                         !otherMonth && !isToday && "text-muted-foreground",
                       )}
                     >
-                      {day}
+                      {cell.day}
                     </span>
                     {isToday && (
-                      <span className="font-mono text-[8px] tracking-wider text-warning">
-                        HOY
-                      </span>
+                      <span className="font-mono text-[8px] tracking-wider text-warning">HOY</span>
                     )}
                   </div>
                   {evt && (

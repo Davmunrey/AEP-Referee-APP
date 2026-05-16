@@ -1,6 +1,8 @@
-import { jsonOk } from "@/lib/api/route-utils";
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
-/** Logout gestionado por Clerk en el cliente (SignOutButton). */
 export async function POST() {
-  return jsonOk({ ok: true, message: "Usa el botón Cerrar sesión del panel" });
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  return NextResponse.json({ ok: true });
 }

@@ -1,8 +1,6 @@
-import { clerkClient } from "@clerk/nextjs/server";
 import { canManageUsers } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { isClerkConfigured } from "@/lib/clerk/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import type { UserRole } from "@/lib/types";
@@ -27,7 +25,6 @@ export async function POST(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   if (!canManageUsers(user)) return jsonError("Sin permiso", 403);
-  if (!isClerkConfigured()) return jsonError("Clerk no configurado", 503);
   if (!isSupabaseConfigured()) return jsonError("Supabase no configurado", 503);
 
   const body = await request.json();
@@ -55,29 +52,23 @@ export async function POST(request: Request) {
     .slice(0, 2)
     .toUpperCase();
 
-  const nameParts = nombre.split(" ");
-  const firstName = nameParts[0] ?? nombre;
-  const lastName = nameParts.slice(1).join(" ") || undefined;
+  // Create auth user via Supabase Admin
+  const admin = createAdminClient();
+  const { data: authData, error: authError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: nombre },
+  });
 
-  const clerk = await clerkClient();
-  let clerkUserId: string;
-  try {
-    const clerkUser = await clerk.users.createUser({
-      emailAddress: [email],
-      password,
-      firstName,
-      lastName,
-      skipPasswordChecks: false,
-    });
-    clerkUserId = clerkUser.id;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "No se pudo crear el usuario en Clerk";
-    return jsonError(message, 400);
+  if (authError || !authData.user) {
+    return jsonError(authError?.message ?? "No se pudo crear el usuario", 400);
   }
 
-  const admin = createAdminClient();
-  const { error: profileError } = await admin.from("profiles").insert({
-    id: clerkUserId,
+  const userId = authData.user.id;
+
+  const { error: profileError } = await admin.from("profiles").upsert({
+    id: userId,
     email,
     nombre,
     rol_label: rolLabel,
@@ -88,22 +79,9 @@ export async function POST(request: Request) {
   });
 
   if (profileError) {
-    try {
-      await clerk.users.deleteUser(clerkUserId);
-    } catch {
-      // rollback best-effort
-    }
+    await admin.auth.admin.deleteUser(userId).catch(() => null);
     return jsonError(profileError.message, 500);
   }
 
-  return jsonOk({
-    id: clerkUserId,
-    email,
-    nombre,
-    rol_label: rolLabel,
-    iniciales,
-    role,
-    zona,
-    activo: true,
-  });
+  return jsonOk({ id: userId, email, nombre, rol_label: rolLabel, iniciales, role, zona, activo: true });
 }

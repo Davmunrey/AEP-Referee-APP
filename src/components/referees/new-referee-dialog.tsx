@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
 import type { RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,20 @@ interface NewRefereeDialogProps {
 export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDialogProps) {
   const router = useRouter();
   const [nombre, setNombre] = useState("");
-  const [zona, setZona] = useState(zones[0]?.code ?? "MAD");
+  const [zona, setZona] = useState(zones[0]?.code ?? "");
   const [nivel, setNivel] = useState<RefereeLevel>(levels[0] ?? "Regional");
   const [estado, setEstado] = useState<RefereeStatus>("Activo");
   const [email, setEmail] = useState("");
   const [licencia, setLicencia] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -54,18 +61,13 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/60"
-        aria-label="Cerrar"
-        onClick={onClose}
-      />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-referee-title"
-        className="relative z-10 w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-xl"
+        className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
       >
         <h3 id="new-referee-title" className="text-lg font-semibold text-foreground">
           Nuevo árbitro

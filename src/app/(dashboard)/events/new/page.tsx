@@ -3,7 +3,7 @@ import { NewCompetitionForm } from "@/components/events/new-competition-form";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth/session";
-import { getZones } from "@/server/store";
+import { dataService } from "@/server/services";
 import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -27,7 +27,7 @@ export default async function NewEventPage() {
         description="Crea un evento en borrador y configura la tarima arbitral después."
       />
 
-      <NewCompetitionForm zones={getZones()} defaultZona={user.zona} />
+      <NewCompetitionForm zones={(await dataService.getMeta(user)).zones} defaultZona={user.zona} />
     </PageShell>
   );
 }

@@ -7,6 +7,10 @@ export default async function ApprovalsPage() {
   const user = await getSession();
   if (!user) redirect("/sign-in");
 
-  const approvals = await dataService.getApprovals(user);
-  return <ApprovalsBoard initial={approvals} canReview={canApprove(user)} />;
+  const [approvals, referees] = await Promise.all([
+    dataService.getApprovals(user),
+    dataService.getReferees({ user }),
+  ]);
+  const refNames = Object.fromEntries(referees.map((r) => [r.id, r.nombre]));
+  return <ApprovalsBoard initial={approvals} canReview={canApprove(user)} refNames={refNames} />;
 }

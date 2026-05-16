@@ -74,12 +74,23 @@ export function mapPromotion(row: Record<string, unknown>): PromotionRequest {
 }
 
 export function mapActivity(row: Record<string, unknown>): ActivityItem {
+  const createdAt = row.created_at as string | undefined;
+  let hace: string;
+  if (createdAt) {
+    const diffMin = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+    if (diffMin < 1) hace = "ahora";
+    else if (diffMin < 60) hace = `hace ${diffMin}min`;
+    else if (diffMin < 1440) hace = `hace ${Math.floor(diffMin / 60)}h`;
+    else hace = `hace ${Math.floor(diffMin / 1440)}d`;
+  } else {
+    hace = String(row.hace ?? "—");
+  }
   return {
     tipo: row.tipo as ActivityItem["tipo"],
     actor: String(row.actor),
     accion: String(row.accion),
     evento: String(row.evento),
-    hace: String(row.hace),
+    hace,
   };
 }
 

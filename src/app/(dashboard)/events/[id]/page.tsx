@@ -13,20 +13,25 @@ export default async function EventPage({ params }: EventPageProps) {
   if (!user) redirect("/sign-in");
 
   const { id } = await params;
-  const event = await dataService.getCompetition(id);
-  const roster = await dataService.getRoster(id);
+  const [event, roster, meta, regulations, referees] = await Promise.all([
+    dataService.getCompetition(id),
+    dataService.getRoster(id),
+    dataService.getMeta(user),
+    dataService.getRegulations(),
+    dataService.getReferees({ user }),
+  ]);
   if (!event || !roster) notFound();
-
-  const meta = await dataService.getMeta(user);
 
   return (
     <RosterBuilder
       event={event}
       template={roster.template}
       initialAssignments={roster.assignments}
-      referees={await dataService.getReferees({ user })}
+      referees={referees}
       zones={meta.zones}
       levels={meta.levels}
+      regulations={regulations}
+      userRole={user.role}
     />
   );
 }

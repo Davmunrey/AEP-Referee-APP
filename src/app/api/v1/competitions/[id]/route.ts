@@ -26,3 +26,18 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!updated) return jsonError("Competición no encontrada", 404);
   return jsonOk(updated);
 }
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const user = await requireApiUser();
+  if (!isSessionUser(user)) return user;
+  if (user.role === "lectura") return jsonError("Sin permiso", 403);
+
+  const { id } = await context.params;
+  const event = await dataService.getCompetition(id);
+  if (!event) return jsonError("Competición no encontrada", 404);
+  if (user.role === "regional" && event.zona !== user.zona) return jsonError("Sin permiso", 403);
+
+  const ok = await dataService.deleteCompetition(id);
+  if (!ok) return jsonError("No se pudo eliminar", 500);
+  return jsonOk({ deleted: true });
+}

@@ -31,7 +31,7 @@ export function EventsTable({ competitions }: { competitions: Competition[] }) {
             </thead>
             <tbody>
               {events.map((event) => {
-                const pct = Math.round((event.confirmados / event.requeridos) * 100);
+                const pct = event.requeridos > 0 ? Math.round((event.confirmados / event.requeridos) * 100) : 0;
                 return (
                   <tr
                     key={event.id}

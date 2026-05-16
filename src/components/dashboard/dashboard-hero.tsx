@@ -1,29 +1,44 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import type { CurrentUser, DashboardPayload } from "@/lib/types";
-import { Calendar, Download, Plus } from "lucide-react";
+import type { DashboardPayload, SessionUser } from "@/lib/types";
+import { Download, Plus } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { api } from "@/lib/api/client";
 
 export function DashboardHero({
   user,
   dashboard,
 }: {
-  user: CurrentUser;
+  user: SessionUser;
   dashboard: DashboardPayload;
 }) {
   const firstName = user.nombre.split(" ")[0];
   const pendingApprovals = dashboard.kpis.find((k) => k.label.includes("Aprobaciones"));
   const openSlots = dashboard.kpis.find((k) => k.label.includes("Plazas"));
   const criticalEvent = dashboard.upcomingCompetitions.find((c) => c.estado === "Crítico");
+  const now = new Date();
+  const quarter = `T${Math.ceil((now.getMonth() + 1) / 3)} ${now.getFullYear()}`;
 
   return (
     <div className="glass-panel-soft rounded-3xl p-6 sm:p-8">
       <div className="flex flex-wrap items-end justify-between gap-6">
-        <div className="max-w-2xl">
-          <p className="friendly-label mb-3">Panel operativo · T2 2026</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
-            Hola, {firstName} 👋
-          </h1>
-          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+        <div className="flex max-w-2xl items-start gap-5">
+          <Image
+            src="/assets/aep-mark.png"
+            alt="AEP"
+            width={72}
+            height={72}
+            className="hidden shrink-0 sm:block"
+            priority
+          />
+          <div>
+            <p className="friendly-label mb-3">Panel operativo · {quarter}</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
+              Hola, {firstName}
+            </h1>
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
             {pendingApprovals && Number(pendingApprovals.value) > 0 ? (
               <>
                 Tienes{" "}
@@ -50,23 +65,24 @@ export function DashboardHero({
             ) : (
               <> — buen día para revisar la temporada.</>
             )}
-          </p>
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl">
-            <Calendar className="h-3.5 w-3.5" />
-            T2 2026
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl" asChild>
+            <a href={api.analyticsExportUrl()} download>
+              <Download className="h-3.5 w-3.5" />
+              Exportar
+            </a>
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 rounded-xl">
-            <Download className="h-3.5 w-3.5" />
-            Exportar
-          </Button>
-          <Button size="sm" className="gap-1.5 rounded-xl" asChild>
-            <Link href="/events/new">
-              <Plus className="h-3.5 w-3.5" />
-              Nuevo campeonato
-            </Link>
-          </Button>
+          {user.role !== "lectura" && (
+            <Button size="sm" className="gap-1.5 rounded-xl" asChild>
+              <Link href="/events/new">
+                <Plus className="h-3.5 w-3.5" />
+                Nuevo campeonato
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </div>

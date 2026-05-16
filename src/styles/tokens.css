@@ -1,103 +1,107 @@
 /**
  * AEP Tarima — design tokens (única fuente de verdad).
- * Los componentes deben usar clases Tailwind semánticas mapeadas en globals.css,
- * nunca colores hex/rgb sueltos en TSX.
+ * Tema claro profesional. Los componentes usan clases Tailwind semánticas
+ * mapeadas en globals.css, nunca colores hex/rgb sueltos en TSX.
  */
 :root {
   /* ── Primitivos de marca ───────────────────────────────────────────── */
-  --aep-red-500: #e63b2e;
-  --aep-red-400: #f04a3d;
-  --aep-red-300: #f87171;
-  --aep-amber-500: #f0b429;
-  --aep-amber-400: #fbbf24;
+  --aep-red-600: #c8362a;
+  --aep-red-500: #dc3f31;
+  --aep-red-400: #e85d50;
+  --aep-red-100: #fbe6e3;
+  --aep-amber-600: #c2790c;
+  --aep-amber-500: #e8920f;
+  --aep-amber-100: #fcefd6;
+  --aep-blue-600: #2563eb;
   --aep-blue-500: #3b82f6;
-  --aep-blue-400: #60a5fa;
-  --aep-emerald-500: #34d399;
-  --aep-emerald-400: #4ade80;
+  --aep-blue-100: #e0ecfd;
+  --aep-emerald-600: #15924f;
+  --aep-emerald-500: #1faf63;
+  --aep-emerald-100: #d8f0e2;
 
-  /* ── Neutros (escala cálida) ───────────────────────────────────────── */
-  --neutral-950: #090807;
-  --neutral-925: #0c0a09;
-  --neutral-900: #141210;
-  --neutral-850: #1a1816;
-  --neutral-800: #1f1c1a;
-  --neutral-750: #2a2623;
-  --neutral-600: #6b6560;
-  --neutral-500: #9c958c;
-  --neutral-400: #b8b0a6;
-  --neutral-300: #d4cdc4;
-  --neutral-200: #e8e2d9;
-  --neutral-100: #f7f3ed;
-  --neutral-50: #fffaf8;
+  /* ── Neutros (escala cálida tipo stone) ────────────────────────────── */
+  --neutral-0: #ffffff;
+  --neutral-50: #faf9f7;
+  --neutral-100: #f4f2ef;
+  --neutral-150: #edeae5;
+  --neutral-200: #e3dfd8;
+  --neutral-300: #d0cabf;
+  --neutral-400: #aaa399;
+  --neutral-500: #837c72;
+  --neutral-600: #5f594f;
+  --neutral-700: #46413a;
+  --neutral-800: #2e2a25;
+  --neutral-900: #1c1916;
+  --neutral-950: #0f0d0b;
 
   /* ── Semánticos: fondos ────────────────────────────────────────────── */
-  --background: var(--neutral-950);
-  --foreground: var(--neutral-100);
-  --foreground-secondary: var(--neutral-300);
+  --background: var(--neutral-50);
+  --foreground: var(--neutral-900);
+  --foreground-secondary: var(--neutral-700);
   --subtle: var(--neutral-500);
-  --subtle-muted: var(--neutral-600);
+  --subtle-muted: var(--neutral-400);
 
-  --card: var(--neutral-900);
-  --card-foreground: var(--neutral-50);
-  --popover: var(--neutral-850);
-  --popover-foreground: var(--neutral-50);
+  --card: var(--neutral-0);
+  --card-foreground: var(--neutral-900);
+  --popover: var(--neutral-0);
+  --popover-foreground: var(--neutral-900);
 
-  --sidebar: var(--neutral-925);
-  --sidebar-foreground: var(--neutral-100);
+  --sidebar: var(--neutral-0);
+  --sidebar-foreground: var(--neutral-900);
 
-  --surface: color-mix(in srgb, var(--neutral-50) 4%, transparent);
-  --surface-hover: color-mix(in srgb, var(--neutral-50) 3%, transparent);
-  --surface-active: color-mix(in srgb, var(--neutral-50) 8%, transparent);
-  --surface-raised: color-mix(in srgb, var(--neutral-900) 92%, transparent);
+  --surface: var(--neutral-100);
+  --surface-hover: var(--neutral-150);
+  --surface-active: var(--neutral-200);
+  --surface-raised: var(--neutral-0);
 
-  --secondary: var(--neutral-800);
-  --secondary-foreground: var(--neutral-100);
-  --muted: var(--neutral-800);
+  --secondary: var(--neutral-100);
+  --secondary-foreground: var(--neutral-800);
+  --muted: var(--neutral-100);
   --muted-foreground: var(--neutral-500);
-  --accent: var(--neutral-750);
-  --accent-foreground: var(--neutral-100);
+  --accent: var(--neutral-150);
+  --accent-foreground: var(--neutral-800);
 
   /* ── Semánticos: marca / acción ────────────────────────────────────── */
   --primary: var(--aep-red-500);
-  --primary-hover: var(--aep-red-400);
-  --primary-soft: var(--aep-red-300);
-  --primary-foreground: var(--neutral-50);
-  --primary-muted: color-mix(in srgb, var(--primary) 20%, transparent);
-  --primary-subtle: color-mix(in srgb, var(--primary) 10%, transparent);
-  --primary-border: color-mix(in srgb, var(--primary) 30%, transparent);
+  --primary-hover: var(--aep-red-600);
+  --primary-soft: var(--aep-red-400);
+  --primary-foreground: var(--neutral-0);
+  --primary-muted: color-mix(in srgb, var(--primary) 14%, transparent);
+  --primary-subtle: var(--aep-red-100);
+  --primary-border: color-mix(in srgb, var(--primary) 28%, transparent);
 
-  --destructive: var(--aep-red-500);
-  --destructive-foreground: var(--neutral-50);
-  --destructive-muted: color-mix(in srgb, var(--destructive) 10%, transparent);
-  --destructive-border: color-mix(in srgb, var(--destructive) 30%, transparent);
+  --destructive: var(--aep-red-600);
+  --destructive-foreground: var(--neutral-0);
+  --destructive-muted: var(--aep-red-100);
+  --destructive-border: color-mix(in srgb, var(--destructive) 26%, transparent);
 
   /* ── Semánticos: estado ────────────────────────────────────────────── */
-  --success: var(--aep-emerald-400);
-  --success-muted: color-mix(in srgb, var(--aep-emerald-500) 20%, transparent);
+  --success: var(--aep-emerald-600);
+  --success-muted: var(--aep-emerald-100);
   --success-border: color-mix(in srgb, var(--aep-emerald-500) 30%, transparent);
 
-  --warning: var(--aep-amber-400);
-  --warning-muted: color-mix(in srgb, var(--aep-amber-500) 20%, transparent);
-  --warning-border: color-mix(in srgb, var(--aep-amber-500) 30%, transparent);
-  --warning-subtle: color-mix(in srgb, var(--aep-amber-500) 10%, transparent);
+  --warning: var(--aep-amber-600);
+  --warning-muted: var(--aep-amber-100);
+  --warning-border: color-mix(in srgb, var(--aep-amber-500) 32%, transparent);
+  --warning-subtle: color-mix(in srgb, var(--aep-amber-100) 60%, var(--neutral-0));
 
-  --info: var(--aep-blue-400);
-  --info-muted: color-mix(in srgb, var(--aep-blue-500) 20%, transparent);
+  --info: var(--aep-blue-600);
+  --info-muted: var(--aep-blue-100);
   --info-border: color-mix(in srgb, var(--aep-blue-500) 30%, transparent);
-  --info-soft: color-mix(in srgb, var(--aep-blue-400) 90%, var(--neutral-50));
+  --info-soft: var(--aep-blue-600);
 
   /* ── Gráficos / SVG inline ─────────────────────────────────────────── */
-  --chart-track: var(--neutral-800);
+  --chart-track: var(--neutral-200);
   --chart-success: var(--aep-emerald-500);
   --chart-warning: var(--aep-amber-500);
   --chart-danger: var(--primary);
 
   /* ── Bordes ────────────────────────────────────────────────────────── */
-  --border: color-mix(in srgb, var(--neutral-50) 8%, transparent);
-  --border-muted: color-mix(in srgb, var(--neutral-50) 6%, transparent);
-  --border-strong: color-mix(in srgb, var(--neutral-50) 10%, transparent);
-  --input: color-mix(in srgb, var(--neutral-50) 10%, transparent);
-  --ring: var(--primary);
+  --border: var(--neutral-200);
+  --border-muted: var(--neutral-150);
+  --border-strong: var(--neutral-300);
+  --input: var(--neutral-300);
+  --ring: color-mix(in srgb, var(--primary) 45%, transparent);
 
   /* ── Radios ────────────────────────────────────────────────────────── */
   --radius-sm: 0.5rem;
@@ -117,53 +121,52 @@
   --text-3xl: 1.875rem;
 
   --tracking-tight: -0.02em;
-  --tracking-wide: 0.08em;
-  --tracking-wider: 0.14em;
-  --tracking-widest: 0.18em;
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.1em;
+  --tracking-widest: 0.14em;
 
-  /* ── Sombras ───────────────────────────────────────────────────────── */
-  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--neutral-950) 40%, transparent);
-  --shadow-md: 0 8px 32px color-mix(in srgb, var(--neutral-950) 35%, transparent);
-  --shadow-card: 0 1px 0 color-mix(in srgb, var(--neutral-50) 4%, transparent) inset,
-    0 12px 40px color-mix(in srgb, var(--neutral-950) 25%, transparent);
-  --shadow-primary: 0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent);
-  --shadow-primary-lg: 0 6px 20px color-mix(in srgb, var(--primary) 40%, transparent);
-  --shadow-glow-primary: 0 0 20px color-mix(in srgb, var(--primary) 12%, transparent);
-  --shadow-glow-primary-lg: 0 0 40px color-mix(in srgb, var(--primary) 8%, transparent);
-  --shadow-glow-warning: 0 0 40px color-mix(in srgb, var(--warning) 8%, transparent);
-  --shadow-glow-info: 0 0 40px color-mix(in srgb, var(--info) 8%, transparent);
+  /* ── Sombras (suaves, para fondo claro) ────────────────────────────── */
+  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--neutral-900) 6%, transparent);
+  --shadow-md: 0 4px 16px color-mix(in srgb, var(--neutral-900) 8%, transparent);
+  --shadow-card: 0 1px 3px color-mix(in srgb, var(--neutral-900) 6%, transparent);
+  --shadow-primary: 0 2px 8px color-mix(in srgb, var(--primary) 22%, transparent);
+  --shadow-primary-lg: 0 4px 14px color-mix(in srgb, var(--primary) 26%, transparent);
+  --shadow-glow-primary: 0 1px 3px color-mix(in srgb, var(--neutral-900) 6%, transparent);
+  --shadow-glow-primary-lg: 0 4px 16px color-mix(in srgb, var(--neutral-900) 8%, transparent);
+  --shadow-glow-warning: 0 1px 3px color-mix(in srgb, var(--neutral-900) 6%, transparent);
+  --shadow-glow-info: 0 1px 3px color-mix(in srgb, var(--neutral-900) 6%, transparent);
 
-  /* ── Mesh / glass (derivados) ──────────────────────────────────────── */
-  --mesh-primary: color-mix(in srgb, var(--primary) 14%, transparent);
-  --mesh-warning: color-mix(in srgb, var(--aep-amber-500) 8%, transparent);
-  --mesh-info: color-mix(in srgb, var(--aep-blue-500) 5%, transparent);
+  /* ── Mesh / glass (suaves) ─────────────────────────────────────────── */
+  --mesh-primary: color-mix(in srgb, var(--primary) 5%, transparent);
+  --mesh-warning: color-mix(in srgb, var(--aep-amber-500) 4%, transparent);
+  --mesh-info: color-mix(in srgb, var(--aep-blue-500) 3%, transparent);
 
-  --glass-from: color-mix(in srgb, var(--neutral-850) 92%, transparent);
-  --glass-to: color-mix(in srgb, var(--neutral-900) 88%, transparent);
-  --glass-border: color-mix(in srgb, var(--neutral-50) 7%, transparent);
-  --glass-shadow-outer: color-mix(in srgb, var(--neutral-950) 35%, transparent);
-  --glass-shadow-ring: color-mix(in srgb, var(--neutral-950) 20%, transparent);
+  --glass-from: var(--neutral-0);
+  --glass-to: var(--neutral-0);
+  --glass-border: var(--neutral-200);
+  --glass-shadow-outer: color-mix(in srgb, var(--neutral-900) 8%, transparent);
+  --glass-shadow-ring: transparent;
 
-  --gradient-brand-from: var(--neutral-50);
-  --gradient-brand-mid: #f0d4cc;
-  --gradient-brand-to: #e8a090;
+  --gradient-brand-from: var(--neutral-900);
+  --gradient-brand-mid: var(--aep-red-600);
+  --gradient-brand-to: var(--aep-amber-600);
 
-  --selection-bg: color-mix(in srgb, var(--primary) 35%, transparent);
-  --selection-fg: var(--neutral-50);
+  --selection-bg: color-mix(in srgb, var(--primary) 20%, transparent);
+  --selection-fg: var(--neutral-900);
 
-  --scrollbar-thumb: color-mix(in srgb, var(--neutral-50) 12%, transparent);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--neutral-50) 20%, transparent);
+  --scrollbar-thumb: var(--neutral-300);
+  --scrollbar-thumb-hover: var(--neutral-400);
 
-  /* ── Roles demo (personas) ─────────────────────────────────────────── */
-  --role-nacional-ring: color-mix(in srgb, var(--primary) 40%, transparent);
-  --role-nacional-bg-from: color-mix(in srgb, var(--primary) 15%, transparent);
-  --role-nacional-bg-to: color-mix(in srgb, var(--primary) 5%, transparent);
+  /* ── Roles (personas) ──────────────────────────────────────────────── */
+  --role-nacional-ring: color-mix(in srgb, var(--primary) 35%, transparent);
+  --role-nacional-bg-from: var(--aep-red-100);
+  --role-nacional-bg-to: color-mix(in srgb, var(--aep-red-100) 40%, var(--neutral-0));
 
-  --role-regional-ring: color-mix(in srgb, var(--warning) 40%, transparent);
-  --role-regional-bg-from: color-mix(in srgb, var(--aep-amber-500) 15%, transparent);
-  --role-regional-bg-to: color-mix(in srgb, var(--aep-amber-500) 5%, transparent);
+  --role-regional-ring: color-mix(in srgb, var(--warning) 35%, transparent);
+  --role-regional-bg-from: var(--aep-amber-100);
+  --role-regional-bg-to: color-mix(in srgb, var(--aep-amber-100) 40%, var(--neutral-0));
 
-  --role-read-ring: color-mix(in srgb, var(--neutral-400) 30%, transparent);
-  --role-read-bg-from: color-mix(in srgb, var(--neutral-600) 15%, transparent);
-  --role-read-bg-to: color-mix(in srgb, var(--neutral-900) 5%, transparent);
+  --role-read-ring: color-mix(in srgb, var(--neutral-400) 35%, transparent);
+  --role-read-bg-from: var(--neutral-150);
+  --role-read-bg-to: var(--neutral-50);
 }
