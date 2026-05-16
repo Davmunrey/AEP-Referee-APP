@@ -2,10 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import type { DashboardPayload, SessionUser } from "@/lib/types";
-import { Download, Plus } from "lucide-react";
+import { ArrowRight, Download, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 
 export function DashboardHero({
   user,
@@ -20,6 +21,9 @@ export function DashboardHero({
   const criticalEvent = dashboard.upcomingCompetitions.find((c) => c.estado === "Crítico");
   const now = new Date();
   const quarter = `T${Math.ceil((now.getMonth() + 1) / 3)} ${now.getFullYear()}`;
+  const nextAction = dashboard.insights.find(
+    (i) => (i.severity === "crítico" || i.severity === "alerta") && i.action,
+  );
 
   return (
     <div className="glass-panel-soft rounded-3xl p-6 sm:p-8">
@@ -66,6 +70,23 @@ export function DashboardHero({
               <> — buen día para revisar la temporada.</>
             )}
             </p>
+            {nextAction?.action && (
+              <Link
+                href={nextAction.action.href}
+                className={cn(
+                  "mt-4 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[12.5px] font-medium transition-colors",
+                  nextAction.severity === "crítico"
+                    ? "border-destructive-border bg-destructive-muted text-destructive hover:bg-destructive-muted/70"
+                    : "border-warning-border bg-warning-muted text-warning hover:bg-warning-muted/70",
+                )}
+              >
+                <span className="uppercase tracking-wide opacity-70">
+                  Acción prioritaria
+                </span>
+                <span className="font-semibold">{nextAction.title}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">

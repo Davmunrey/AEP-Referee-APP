@@ -1,4 +1,5 @@
 import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
+import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { CALENDAR_EVENTS, LEVELS, ROSTER_TEMPLATE } from "@/lib/mock-data";
 import type { CalendarDayEvent } from "@/lib/types";
 import type {
@@ -172,21 +173,65 @@ export const supabaseDataService = {
     if (user.role === "regional" && user.zona) {
       query = query.eq("zona", user.zona);
     }
-    const { data: competitions } = await query;
-    const { data: activity } = await supabase
-      .from("activity_log")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20);
+    const template = await getRosterTemplate();
+    const [
+      { data: competitionRows },
+      { data: activity },
+      { data: referees },
+      { data: approvals },
+      { data: promotions },
+    ] = await Promise.all([
+      query,
+      supabase
+        .from("activity_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase.from("referees").select("estado, disp"),
+      supabase.from("approval_proposals").select("status"),
+      supabase.from("promotion_requests").select("status"),
+    ]);
+
+    const competitions = (competitionRows ?? []).map((r) =>
+      mapCompetition(r as Record<string, unknown>),
+    );
+    const coverage = await Promise.all(
+      competitions.map(async (c) => {
+        const assignments = await loadAssignments(c.id);
+        const filled = Object.values(assignments).filter(Boolean).length;
+        const open = countOpenSlots(template, assignments);
+        return {
+          id: c.id,
+          nombre: c.nombre,
+          fecha: c.fecha,
+          estado: c.estado,
+          filled,
+          open,
+          required: filled + open,
+        };
+      }),
+    );
+    const activityItems = (activity ?? []).map((r) =>
+      mapActivity(r as Record<string, unknown>),
+    );
+    const { health, insights } = buildIntelligence({
+      referees: (referees ?? []) as { estado: string; disp?: boolean }[],
+      competitions,
+      approvals: (approvals ?? []) as { status: string }[],
+      promotions: (promotions ?? []) as { status: string }[],
+      coverage,
+      activity: activityItems,
+    });
 
     return {
       kpis: await buildKpis(),
-      activity: (activity ?? []).map((r) => mapActivity(r as Record<string, unknown>)),
+      activity: activityItems,
       calendar: await getCalendarEvents(),
-      upcomingCompetitions: (competitions ?? [])
-        .map((r) => mapCompetition(r as Record<string, unknown>))
-        .slice(0, 6),
+      upcomingCompetitions: competitions.slice(0, 6),
       currentUser: user,
+      health,
+      insights,
+      generatedAt: new Date().toISOString(),
     };
   },
 
