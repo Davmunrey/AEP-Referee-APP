@@ -1,30 +1,38 @@
 # Base de datos (Supabase Postgres)
 
-## Migración
+## Migraciones
 
-Ejecuta el archivo completo:
+Ejecuta los archivos en orden en el SQL Editor de Supabase (o `supabase db push`):
 
 ```
-supabase/migrations/001_initial_schema.sql
+supabase/migrations/001_initial_schema.sql    # esquema base
+supabase/migrations/003_supabase_auth.sql     # Auth nativo (revierte Clerk)
+supabase/migrations/004_health_snapshots.sql  # bitácora de salud del panel
+supabase/migrations/005_judge_management.sql  # exámenes e informes de jueces
 ```
 
-En el SQL Editor de Supabase o con CLI: `supabase db push`.
+Las migraciones 004 y 005 usan `CREATE TABLE IF NOT EXISTS` — son seguras de
+re-ejecutar. La app **degrada sin romper** si 004/005 no están aplicadas: las
+funciones afectadas devuelven listas vacías en lugar de fallar.
 
 ## Tablas principales
 
-| Tabla | Uso |
-|-------|-----|
-| `zones` | Códigos de zona federativa (MAD, CAT, …) |
-| `profiles` | Perfil 1:1 con `auth.users` (rol, zona, activo) |
-| `referees` | Directorio de árbitros |
-| `competitions` | Campeonatos |
-| `roster_assignments` | Slot → árbitro por evento |
-| `approval_proposals` | Propuestas de tarima pendientes |
-| `promotion_requests` | Ascensos de nivel |
-| `activity_log` | Feed del dashboard |
-| `roster_history` | Auditoría de cambios en tarima |
-| `regulation_rules` | Normativa IPF |
-| `app_config` | JSON (`roster_template`, `calendar_events`) |
+| Tabla | Migración | Uso |
+|-------|-----------|-----|
+| `zones` | 001 | Códigos de zona federativa (MAD, CAT, …) |
+| `profiles` | 001 / 003 | Perfil 1:1 con `auth.users` (rol, zona, activo) |
+| `referees` | 001 | Directorio de árbitros |
+| `competitions` | 001 | Campeonatos |
+| `roster_assignments` | 001 | Slot → árbitro por evento |
+| `approval_proposals` | 001 | Propuestas de tarima pendientes |
+| `promotion_requests` | 001 | Ascensos de nivel |
+| `activity_log` | 001 | Feed del dashboard |
+| `roster_history` | 001 | Auditoría de cambios en tarima |
+| `regulation_rules` | 001 | Normativa IPF |
+| `app_config` | 001 | JSON (`roster_template`, `calendar_events`) |
+| `health_snapshots` | 004 | Bitácora del índice de salud operativa |
+| `referee_exams` | 005 | Exámenes arbitrales (teórico, práctico, reglamento, recert.) |
+| `referee_reports` | 005 | Informes de desempeño / incidencias por juez |
 
 ## RLS
 

@@ -22,9 +22,9 @@
    (exámenes e informes de jueces).
 2. Authentication → URL Configuration → Site URL = dominio Vercel;
    Redirect URLs = `https://<dominio>/auth/callback` y `http://localhost:3000/auth/callback`.
-3. (Opcional) Authentication → Providers → Google: activar e introducir
-   `Client ID`/`Secret` si se quiere login con Google.
-4. Authentication → Policies → activar *Leaked password protection*.
+3. Authentication → Policies → activar *Leaked password protection*.
+
+> El login es solo email/contraseña; no hay que configurar proveedores OAuth.
 
 ## Pasos
 

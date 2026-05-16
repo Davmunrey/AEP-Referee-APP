@@ -47,6 +47,10 @@
 | `OperationalCalendar` | Calendario mensual navegable, eventos marcados por estado |
 | `ActivityFeed` | Feed de últimas acciones (asignaciones, aprobaciones, ascensos) |
 | `EventsTable` (dashboard) | Tabla de próximos eventos con cobertura |
+| `DashboardLive` | Barra de control en vivo: auto-refresca el árbol de servidor cada 60 s, con pausa y refresco manual |
+| `HealthGauge` | Anillo SVG del índice de salud operativa 0–100 con 5 factores ponderados y delta vs. captura previa |
+| `InsightsPanel` | Recomendaciones auto-generadas, priorizadas por severidad, con enlaces de acción |
+| `CoverageForecast` | Previsión de cobertura por evento: barra de progreso y días restantes con color de riesgo |
 
 ### Campeonatos
 | Componente | Descripción |
@@ -58,13 +62,15 @@
 | `RosterHistoryPanel` | Panel flotante de historial de cambios (fetch lazy) |
 | `SessionBlock` | Bloque de sesión con slots y progreso |
 
-### Árbitros
+### Árbitros / Jueces
 | Componente | Descripción |
 |------------|-------------|
 | `RefereesDirectory` | Directorio con filtros (zona/nivel/estado/búsqueda) y paginación |
 | `NewRefereeDialog` | Modal de alta de árbitro (Escape/backdrop para cerrar) |
 | `RefereeEditForm` | Formulario de edición de ficha arbitral |
 | `RefereePromotionButton` | Botón + modal para solicitar ascenso (valida nivel superior) |
+| `ExamsManager` | Registro y calificación de exámenes arbitrales. Reusable: acoplado a un juez (ficha) o global (`/exams`) |
+| `ReportsManager` | Subida y consulta de informes de juez (sandbox). Reusable: acoplado o global (`/reports`) |
 
 ### Aprobaciones
 | Componente | Descripción |
@@ -80,8 +86,8 @@
 ### Normativa
 | Componente | Descripción |
 |------------|-------------|
-| `RegulationsView` | Dos pestañas: (1) Matriz AEP filtrable por tipo evento, (2) Reglamento IPF artículo por artículo (caps. 7 y 8) |
-| `IpfArticleList` | Lista acordeón de artículos de un capítulo IPF con expand/collapse por artículo |
+| `RegulationsView` | Dos pestañas: (1) Matriz AEP filtrable por tipo de evento, (2) Reglamento IPF completo (11 capítulos) con búsqueda full-text |
+| `IpfArticleList` | Lista acordeón de artículos de un capítulo IPF con expand/collapse (auto-expandido al buscar) |
 
 ### Estadísticas
 | Componente | Descripción |

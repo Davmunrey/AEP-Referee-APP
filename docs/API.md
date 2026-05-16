@@ -2,19 +2,28 @@
 
 Base URL en local: `http://localhost:3000/api/v1`
 
-Todas las rutas requieren sesión Supabase Auth activa (cookie `sb-*-auth-token`). Las respuestas tienen el formato:
+Todas las rutas (salvo las de `auth`) requieren sesión Supabase Auth activa (cookie `sb-*-auth-token`). Las respuestas tienen el formato:
 
 ```json
-{ "data": <T> }           // éxito
+{ "data": <T> }          // éxito
 { "error": "mensaje" }   // error
 ```
+
+## Autenticación
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/auth/login` | Login por email/contraseña (también gestionado desde `/sign-in`) |
+| `POST` | `/auth/logout` | Cierra la sesión |
+| `POST` | `/auth/signout` | Alias de cierre de sesión |
+| `GET` | `/auth/me` | Usuario y perfil de la sesión actual |
 
 ## Meta y dashboard
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `GET` | `/meta` | Zonas, niveles y usuario actual |
-| `GET` | `/dashboard` | KPIs, calendario, actividad, próximos eventos, usuario |
+| `GET` | `/dashboard` | KPIs, salud operativa, recomendaciones (`insights`), cobertura por evento, calendario, actividad, próximos eventos y `generatedAt` |
 
 ## Árbitros
 
@@ -64,6 +73,23 @@ Todas las rutas requieren sesión Supabase Auth activa (cookie `sb-*-auth-token`
 | `GET` | `/promotions` | todos | Listado (nacional: todas, regional: su zona) |
 | `POST` | `/promotions` | nacional, regional | `{ refereeId, toLevel, zona, motivo? }` — solicitar ascenso |
 | `POST` | `/promotions/:id/review` | nacional | `{ approve: bool }` — aprobar o rechazar |
+
+## Exámenes arbitrales
+
+| Método | Ruta | Permisos | Descripción |
+|--------|------|----------|-------------|
+| `GET` | `/exams` | todos | Listado de exámenes; filtro opcional `?refereeId=` |
+| `POST` | `/exams` | nacional, regional | `{ refereeId, tipo, nivelObjetivo, fecha, examinador, puntuacion?, puntuacionMaxima?, resultado?, notas? }` |
+| `PATCH` | `/exams/:id` | nacional, regional | `{ resultado?, puntuacion?, notas?, fecha?, examinador? }` — calificar / editar |
+| `DELETE` | `/exams/:id` | nacional | Eliminar examen |
+
+## Informes de jueces
+
+| Método | Ruta | Permisos | Descripción |
+|--------|------|----------|-------------|
+| `GET` | `/reports` | todos | Listado de informes; filtro opcional `?refereeId=` |
+| `POST` | `/reports` | nacional, regional | `{ refereeId, titulo, tipo, evento?, contenido, adjuntoUrl? }` — subir informe (autor = usuario en sesión) |
+| `DELETE` | `/reports/:id` | nacional, regional | Eliminar informe |
 
 ## Estadísticas y exportación
 

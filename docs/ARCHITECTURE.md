@@ -51,11 +51,17 @@ Handlers REST que delegan en `dataService`. Respuestas JSON tipadas con `src/lib
 | `/approvals/[id]/review` | POST |
 | `/promotions` | GET, POST |
 | `/promotions/[id]/review` | POST |
+| `/exams` | GET, POST |
+| `/exams/[id]` | PATCH, DELETE |
+| `/reports` | GET, POST |
+| `/reports/[id]` | DELETE |
 | `/analytics` | GET |
 | `/analytics/export` | GET (CSV) |
 | `/regulations` | GET |
 | `/meta` | GET |
 | `/dashboard` | GET |
+| `/auth/login`, `/auth/logout`, `/auth/signout` | POST |
+| `/auth/me` | GET |
 | `/admin/users` | GET, POST |
 | `/admin/users/[id]` | PATCH, DELETE |
 
@@ -72,8 +78,19 @@ Handlers REST que delegan en `dataService`. Respuestas JSON tipadas con `src/lib
 - **`auth/session.ts`** — `getSession()`, `requireApiUser()`, helpers RBAC (`canEditRoster`, `canManageUsers`)
 - **`api/client.ts`** — cliente fetch tipado para componentes cliente
 - **`api/config.ts`** — URL base de la API
+- **`dashboard-intelligence.ts`** — motor puro que deriva el índice de salud operativa y las recomendaciones a partir del estado actual
+- **`judge-stats.ts`** — helper puro que combina árbitro + exámenes + informes en un `JudgeProfile` con métricas
+- **`ipf-chapters.ts`** — IPF Technical Rulebook completo (11 capítulos) como dato estructurado
 - **`design-tokens.ts`** — clases semánticas Tailwind
 - **`types.ts`** — tipos TypeScript compartidos
+
+### Capa de inteligencia (retroalimentación)
+
+El dashboard se alimenta de sus propios datos: `getDashboard()` reúne árbitros,
+competiciones, cobertura, aprobaciones y actividad, y `buildIntelligence()`
+deriva un índice de salud ponderado y recomendaciones priorizadas — sin entrada
+manual. La migración `004_health_snapshots.sql` permite registrar el índice cada
+6 h para comparar el estado actual con el pasado.
 
 ## Autenticación y RBAC (Supabase Auth)
 
@@ -83,7 +100,7 @@ Handlers REST que delegan en `dataService`. Respuestas JSON tipadas con `src/lib
 | `regional` | Su zona (`user.zona`) | CRUD en su zona, propone tarimas, solicita ascensos |
 | `lectura` | Sin restricción geográfica | Solo lectura, sin crear/editar |
 
-- Auth con Supabase Auth: Google OAuth + email/contraseña, sesión por cookies (`@supabase/ssr`)
+- Auth con Supabase Auth: email/contraseña, sesión por cookies (`@supabase/ssr`)
 - Perfiles federativos en tabla `profiles` (1:1 con `auth.users`)
 - Primer usuario registrado → rol `nacional`; resto → `lectura` (promoción manual)
 - Service role admin client bypassa RLS para operaciones del servidor
