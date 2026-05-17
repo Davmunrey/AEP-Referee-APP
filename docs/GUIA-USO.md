@@ -87,7 +87,20 @@ Desde el hero puedes **exportar CSV** de temporada o ir a **Nuevo campeonato**.
 
 ### 5.1 Listado
 
-Filtra por tipo **AEP-1 / AEP-2 / AEP-3**, estado y texto libre. Cada fila muestra cobertura y estado. Pulsa una fila para abrir la **tarima**.
+Filtra por tipo **AEP-1 / AEP-2 / AEP-3**, estado y texto libre. Cada fila muestra cobertura, zona y estado. Pulsa una fila para abrir la **tarima**.
+
+### 5.1.bis Importar Calendario AEP
+
+Botón **«Importar calendario AEP»** (Super Admin / Delegado de Jueces). Sube el PDF anual de AEP (`Calendario_AEP_2026.pdf` o similar):
+
+1. La plataforma detecta automáticamente todas las entradas y filtra las de **ámbito español** (AEP-1 / AEP-2 / AEP-3). Las europeas (EPF) y mundiales (IPF) se descartan.
+2. Vista previa muestra: año, total detectado, españolas elegibles, duplicadas (ya existentes), nuevas a crear y avisos de parseo.
+3. Al **Aplicar**, se crean las nuevas competiciones con tipo, fecha, sede y zona (deducida de la provincia).
+4. Las entradas marcadas «pendiente» en el PDF se omiten — créalas a mano cuando haya fecha confirmada.
+
+### 5.1.ter Eventos finalizados
+
+Cuando `fechaFin < hoy`, el campeonato pasa a **modo solo lectura**: muestra badge **«Cerrado»** en la cabecera y desaparecen los botones de editar plantilla, asignar, flags, borrador y enviar a aprobación. La API responde **423 Locked** ante cualquier intento de modificar.
 
 ### 5.2 Crear campeonato (`/events/new`)
 

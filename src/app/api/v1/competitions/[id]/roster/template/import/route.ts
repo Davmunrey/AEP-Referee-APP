@@ -1,3 +1,4 @@
+import { isCompetitionPast } from "@/lib/competition-status";
 import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";

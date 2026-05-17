@@ -65,6 +65,8 @@ interface RosterBuilderProps {
   initialAssignments: AssignmentsMap;
   initialFlags?: FlagsMap;
   canEdit?: boolean;
+  /** Campeonato finalizado (`fechaFin < hoy`) — modo lectura forzado. */
+  isPast?: boolean;
   referees: Referee[];
   zones: Zone[];
   levels: RefereeLevel[];
@@ -82,6 +84,7 @@ export function RosterBuilder({
   initialAssignments,
   initialFlags = {},
   canEdit = false,
+  isPast = false,
   referees,
   zones,
   levels,
@@ -300,6 +303,14 @@ export function RosterBuilder({
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <EventTypeBadge tipo={event.tipo} />
                 <EventStatusBadge status={event.estado} />
+                {isPast && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                    title="Campeonato finalizado — solo lectura"
+                  >
+                    Cerrado
+                  </span>
+                )}
                 <span className="text-xs text-subtle-muted">{event.aprobacion}</span>
               </div>
               <h1 className="text-xl font-semibold text-foreground">{event.nombre}</h1>

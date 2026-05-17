@@ -1,3 +1,4 @@
+import { isCompetitionPast } from "@/lib/competition-status";
 import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -15,6 +16,7 @@ export async function POST(_request: Request, context: RouteContext) {
   const comp = await dataService.getCompetition(id);
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso", 403);
+  if (isCompetitionPast(comp)) return jsonError("Campeonato finalizado: solo lectura", 423);
 
   const proposal = await dataService.submitRoster(id, user.nombre);
   if (!proposal) return jsonError("No se pudo enviar", 400);
