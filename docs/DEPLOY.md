@@ -6,7 +6,7 @@
 
 - Repositorio GitHub conectado a Vercel
 - Proyecto Supabase (región EU recomendada)
-- Migraciones **001 → 008** aplicadas (ver [`DATABASE.md`](./DATABASE.md))
+- Migraciones **001 → 010** aplicadas (ver [`DATABASE.md`](./DATABASE.md))
 
 ## Variables de entorno en Vercel
 
@@ -18,7 +18,7 @@
 
 ## Configuración Supabase
 
-1. SQL Editor — migraciones en orden hasta `008_per_event_roster_template.sql`.
+1. SQL Editor — migraciones en orden hasta `010_referees_registry_fields.sql`.
 2. **URL Configuration** — Site URL = `https://aep-tarima.vercel.app`; Redirect URLs:
    - `https://aep-tarima.vercel.app/auth/callback`
    - `http://localhost:3000/auth/callback`
@@ -32,7 +32,10 @@
 
    ```bash
    npm run db:seed
+   npm run db:import-judges -- "/ruta/Copia de Control jueces.xlsx"
    ```
+
+   Si existían datos demo antiguos: `npm run db:cleanup-demo` antes o después del import.
 
 3. **Backfill plantillas (opcional)** — si hay campeonatos con `template` NULL:
 

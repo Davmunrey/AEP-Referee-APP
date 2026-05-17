@@ -34,6 +34,7 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 | `GET` | `/referees/:id` | todos | Detalle |
 | `PATCH` | `/referees/:id` | no `solo_ver` | Actualizar. `delegado_zona` solo puede editar jueces de su zona y no puede moverlos a otra. |
 | `DELETE` | `/referees/:id` | `super_admin`, `delegado_jueces` | Eliminar |
+| `POST` | `/referees/import` | `canImportJudgesRegistry` | `multipart/form-data` con `file` (.xlsx). Vista previa; con `?apply=true` upsert masivo desde «Control jueces». |
 
 ## Campeonatos
 

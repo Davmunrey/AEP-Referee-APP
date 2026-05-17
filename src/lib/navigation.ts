@@ -76,6 +76,32 @@ export function getPageMeta(pathname: string): PageMeta {
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Normativa IPF" }],
     };
   }
+  if (pathname === "/events/new") {
+    return {
+      title: "Nuevo campeonato",
+      crumbs: [
+        { label: "AEP Tarima", href: "/" },
+        { label: "Campeonatos", href: "/events" },
+        { label: "Nuevo" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/referees/") && pathname !== "/referees") {
+    return {
+      title: "Ficha de juez",
+      crumbs: [
+        { label: "AEP Tarima", href: "/" },
+        { label: "Directorio", href: "/referees" },
+        { label: "Ficha" },
+      ],
+    };
+  }
+  if (pathname === "/admin/users") {
+    return {
+      title: "Usuarios",
+      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Usuarios" }],
+    };
+  }
   return {
     title: "AEP Tarima",
     crumbs: [{ label: "AEP Tarima", href: "/" }],

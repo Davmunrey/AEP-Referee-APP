@@ -25,6 +25,11 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
   const [estado, setEstado] = useState(referee.estado);
   const [email, setEmail] = useState(referee.email ?? "");
   const [licencia, setLicencia] = useState(referee.licencia ?? "");
+  const [localidad, setLocalidad] = useState(referee.localidad ?? "");
+  const [telefono, setTelefono] = useState(referee.telefono ?? "");
+  const [genero, setGenero] = useState(referee.genero ?? "");
+  const [antiguedad, setAntiguedad] = useState(referee.antiguedad ?? "");
+  const [notas, setNotas] = useState(referee.notas ?? "");
   const [disp, setDisp] = useState(referee.disp);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,6 +42,11 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     estado !== referee.estado ||
     email !== (referee.email ?? "") ||
     licencia !== (referee.licencia ?? "") ||
+    localidad !== (referee.localidad ?? "") ||
+    telefono !== (referee.telefono ?? "") ||
+    genero !== (referee.genero ?? "") ||
+    antiguedad !== (referee.antiguedad ?? "") ||
+    notas !== (referee.notas ?? "") ||
     disp !== referee.disp;
 
   const onCancel = () => {
@@ -46,6 +56,11 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     setEstado(referee.estado);
     setEmail(referee.email ?? "");
     setLicencia(referee.licencia ?? "");
+    setLocalidad(referee.localidad ?? "");
+    setTelefono(referee.telefono ?? "");
+    setGenero(referee.genero ?? "");
+    setAntiguedad(referee.antiguedad ?? "");
+    setNotas(referee.notas ?? "");
     setDisp(referee.disp);
     setError(null);
     setSaved(false);
@@ -64,6 +79,11 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
         estado,
         email: email || undefined,
         licencia: licencia || undefined,
+        localidad: localidad || undefined,
+        telefono: telefono || undefined,
+        genero: genero || undefined,
+        antiguedad: antiguedad || undefined,
+        notas: notas || undefined,
         disp,
       });
       setSaved(true);
@@ -146,6 +166,33 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
               <label htmlFor="ref-licencia" className="mb-1 block text-xs font-medium text-foreground-secondary">Licencia</label>
               <Input id="ref-licencia" value={licencia} onChange={(e) => setLicencia(e.target.value)} />
             </div>
+            <div>
+              <label htmlFor="ref-localidad" className="mb-1 block text-xs font-medium text-foreground-secondary">Localidad</label>
+              <Input id="ref-localidad" value={localidad} onChange={(e) => setLocalidad(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="ref-telefono" className="mb-1 block text-xs font-medium text-foreground-secondary">Teléfono</label>
+              <Input id="ref-telefono" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="ref-genero" className="mb-1 block text-xs font-medium text-foreground-secondary">Género</label>
+              <Input id="ref-genero" value={genero} onChange={(e) => setGenero(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="ref-antiguedad" className="mb-1 block text-xs font-medium text-foreground-secondary">Antigüedad</label>
+              <Input id="ref-antiguedad" type="date" value={antiguedad} onChange={(e) => setAntiguedad(e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="ref-notas" className="mb-1 block text-xs font-medium text-foreground-secondary">Notas</label>
+            <textarea
+              id="ref-notas"
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              rows={3}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            />
           </div>
 
           <label htmlFor="ref-disp" className="flex items-center gap-2 text-sm text-foreground-secondary">

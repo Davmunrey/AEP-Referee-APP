@@ -5,7 +5,7 @@ import type { Referee, RefereeExam, RefereeReport } from "@/lib/types";
 const REFEREE: Referee = {
   id: "r1",
   nombre: "Ana Ruiz",
-  zona: "Centro",
+  zona: "CENTRO",
   nivel: "Nacional",
   estado: "Activo",
   eventos: 12,

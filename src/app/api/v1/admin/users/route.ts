@@ -1,3 +1,4 @@
+import { normalizeZoneInput } from "@/lib/aep-zones";
 import { canManageUsers } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   const nombre = String(body.nombre ?? "").trim();
   const rolLabel = String(body.rolLabel ?? "").trim();
   const role = body.role as UserRole;
-  const zona = body.zona ? String(body.zona) : null;
+  const zona = body.zona ? normalizeZoneInput(String(body.zona)) : null;
 
   if (!email || !password || !nombre || !rolLabel || !role) {
     return jsonError("Email, contraseña, nombre, rol y etiqueta son obligatorios", 400);

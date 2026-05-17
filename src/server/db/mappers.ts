@@ -11,6 +11,32 @@ import type {
   RosterHistoryEntry,
 } from "@/lib/types";
 
+/** Convierte ficha de juez (app) → columnas Postgres. */
+export function refereeToDbRow(
+  patch: Partial<Referee> & { id?: string; iniciales?: string },
+): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  if (patch.id != null) row.id = patch.id;
+  if (patch.nombre != null) row.nombre = patch.nombre;
+  if (patch.zona != null) row.zona = patch.zona;
+  if (patch.nivel != null) row.nivel = patch.nivel;
+  if (patch.estado != null) row.estado = patch.estado;
+  if (patch.eventos != null) row.eventos = patch.eventos;
+  if (patch.ultimo != null) row.ultimo = patch.ultimo;
+  if (patch.disp != null) row.disp = patch.disp;
+  if (patch.iniciales != null) row.iniciales = patch.iniciales;
+  if (patch.email !== undefined) row.email = patch.email ?? null;
+  if (patch.licencia !== undefined) row.licencia = patch.licencia ?? null;
+  if (patch.localidad !== undefined) row.localidad = patch.localidad ?? null;
+  if (patch.telefono !== undefined) row.telefono = patch.telefono ?? null;
+  if (patch.genero !== undefined) row.genero = patch.genero ?? null;
+  if (patch.antiguedad !== undefined) row.antiguedad = patch.antiguedad ?? null;
+  if (patch.excelId !== undefined) row.excel_id = patch.excelId ?? null;
+  if (patch.notas !== undefined) row.notas = patch.notas ?? null;
+  if (patch.ultimoFecha !== undefined) row.ultimo_fecha = patch.ultimoFecha ?? null;
+  return row;
+}
+
 export function mapReferee(row: Record<string, unknown>): Referee {
   return {
     id: String(row.id),
@@ -24,6 +50,15 @@ export function mapReferee(row: Record<string, unknown>): Referee {
     iniciales: String(row.iniciales),
     email: row.email ? String(row.email) : undefined,
     licencia: row.licencia ? String(row.licencia) : undefined,
+    localidad: row.localidad ? String(row.localidad) : undefined,
+    telefono: row.telefono ? String(row.telefono) : undefined,
+    genero: row.genero ? String(row.genero) : undefined,
+    antiguedad: row.antiguedad ? String(row.antiguedad).slice(0, 10) : undefined,
+    excelId: row.excel_id != null ? Number(row.excel_id) : undefined,
+    notas: row.notas ? String(row.notas) : undefined,
+    ultimoFecha: row.ultimo_fecha
+      ? String(row.ultimo_fecha).slice(0, 10)
+      : undefined,
   };
 }
 

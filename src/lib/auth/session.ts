@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { profileToSessionUser, type ProfileRow } from "@/lib/auth/profile";
+import { resolveZoneCode } from "@/lib/aep-zones";
 import type { SessionUser } from "@/lib/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -86,7 +87,11 @@ export async function getSession(): Promise<SessionUser | null> {
 /** Campeonatos y tarima: crear, editar, asignar. */
 export function canEditRoster(user: SessionUser, eventZona?: string): boolean {
   if (user.role === "super_admin" || user.role === "delegado_jueces") return true;
-  if (user.role === "delegado_zona") return user.zona === eventZona;
+  if (user.role === "delegado_zona") {
+    const userZone = resolveZoneCode(user.zona);
+    const eventZone = resolveZoneCode(eventZona);
+    return !!userZone && userZone === eventZone;
+  }
   return false;
 }
 

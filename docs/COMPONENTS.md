@@ -5,7 +5,7 @@
 | Componente | Archivo | Uso |
 |------------|---------|-----|
 | `AppShell` | `layout/app-shell.tsx` | Sidebar + topbar + main |
-| `Sidebar` | `layout/sidebar.tsx` | Navegación, org switcher, usuario, collapse |
+| `Sidebar` | `layout/sidebar.tsx` | Navegación; **Tarima activa** usa `activeRosterHref` (no duplica `/events`) |
 | `TopBar` | `layout/topbar.tsx` | Breadcrumbs y título de página |
 | `PageShell` | `layout/page-shell.tsx` | Contenedor con `max-w` y padding unificado |
 | `PageHeader` | `layout/page-shell.tsx` | Eyebrow + título + descripción + slot de acciones |
@@ -67,6 +67,7 @@
 | Componente | Descripción |
 |------------|-------------|
 | `RefereesDirectory` | Directorio con filtros (zona/nivel/estado/búsqueda) y paginación |
+| `JudgesRegistryImport` | Importación del Excel «Control jueces» (vista previa + aplicar) |
 | `NewRefereeDialog` | Modal de alta de juez (Escape/backdrop para cerrar) |
 | `RefereeEditForm` | Formulario de edición de ficha de jueces |
 | `RefereePromotionButton` | Botón + modal para solicitar ascenso (valida nivel superior) |
@@ -87,7 +88,9 @@
 ### Normativa
 | Componente | Descripción |
 |------------|-------------|
-| `RegulationsView` | Dos pestañas: (1) Matriz AEP filtrable por tipo de evento, (2) Reglamento IPF completo (11 capítulos) con búsqueda full-text |
+| `RegulationsView` | Tres pestañas: Guía AEP 2026, Matriz jueces, Reglamento IPF |
+| `AepGuidePanel` | Zonas geográficas 2026, estructura AEP-1/2/3, cuotas |
+| `RegulationMatrixPanel` | Tabla de nivel mínimo por rol y tipo |
 | `IpfArticleList` | Lista acordeón de artículos de un capítulo IPF con expand/collapse (auto-expandido al buscar) |
 
 ### Estadísticas

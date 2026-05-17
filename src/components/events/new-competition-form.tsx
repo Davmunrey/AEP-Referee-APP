@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
+import { AEP_COMPETITION_TYPE_DESC } from "@/lib/aep-guide-2026";
 import type { EventType, Zone } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,11 +21,7 @@ const TYPE_DEFAULTS: Record<EventType, { sesiones: string; requeridos: string }>
   "AEP-3": { sesiones: "4", requeridos: "12" },
 };
 
-const TYPE_DESC: Record<EventType, string> = {
-  "AEP-1": "Nivel básico — plantilla reducida",
-  "AEP-2": "Estándar — configuración habitual",
-  "AEP-3": "Nivel nacional — plantilla ampliada",
-};
+const TYPE_DESC = AEP_COMPETITION_TYPE_DESC;
 
 interface FieldErrors {
   nombre?: string;

@@ -14,6 +14,7 @@ import type {
   PromotionRequest,
   Referee,
   RefereeExam,
+  JudgesRegistryImportResult,
   RefereeLevel,
   RefereeReport,
   RegulationRule,
@@ -137,6 +138,23 @@ export const api = {
       created?: number;
       errors?: string[];
     }>(res);
+    if (isApiError(parsed)) throw new Error(parsed.error);
+    return parsed.data;
+  },
+
+  importJudgesRegistry: async (
+    file: File,
+    replace = false,
+  ): Promise<JudgesRegistryImportResult> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const path = `/referees/import${replace ? "?replace=true" : ""}`;
+    const res = await fetch(`${getApiBaseUrl()}${path}`, {
+      method: "POST",
+      credentials: "include",
+      body: fd,
+    });
+    const parsed = await parseApiResponse<JudgesRegistryImportResult>(res);
     if (isApiError(parsed)) throw new Error(parsed.error);
     return parsed.data;
   },

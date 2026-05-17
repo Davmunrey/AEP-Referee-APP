@@ -8,6 +8,7 @@ import { RefereeEditForm } from "@/components/referees/referee-edit-form";
 import { RefereePromotionButton } from "@/components/referees/referee-promotion-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveZoneCode } from "@/lib/aep-zones";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -30,7 +31,11 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!profile) notFound();
 
   const { referee, exams, reports, examsPassed, examsTotal, avgScore } = profile;
-  if (user.role === "delegado_zona" && referee.zona !== user.zona) notFound();
+  if (user.role === "delegado_zona" && user.zona) {
+    const userZone = resolveZoneCode(user.zona) ?? user.zona;
+    const refZone = resolveZoneCode(referee.zona) ?? referee.zona;
+    if (refZone !== userZone) notFound();
+  }
   const zoneName =
     meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
   const canEdit = user.role !== "solo_ver";
@@ -153,6 +158,50 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                 {referee.disp ? "Disponible" : "No disponible"}
               </p>
             </div>
+            {referee.localidad && (
+              <div>
+                <p className="friendly-label mb-1">Localidad</p>
+                <p className="text-sm text-foreground">{referee.localidad}</p>
+              </div>
+            )}
+            {referee.telefono && (
+              <div>
+                <p className="friendly-label mb-1">Teléfono</p>
+                <p className="text-sm text-foreground">{referee.telefono}</p>
+              </div>
+            )}
+            {referee.email && (
+              <div>
+                <p className="friendly-label mb-1">Email</p>
+                <a href={`mailto:${referee.email}`} className="text-sm text-primary hover:underline">
+                  {referee.email}
+                </a>
+              </div>
+            )}
+            {referee.genero && (
+              <div>
+                <p className="friendly-label mb-1">Género</p>
+                <p className="text-sm text-foreground">{referee.genero}</p>
+              </div>
+            )}
+            {referee.antiguedad && (
+              <div>
+                <p className="friendly-label mb-1">Antigüedad</p>
+                <p className="text-sm text-foreground">{referee.antiguedad}</p>
+              </div>
+            )}
+            {referee.excelId != null && (
+              <div>
+                <p className="friendly-label mb-1">ID registro</p>
+                <p className="font-mono text-sm text-foreground">{referee.excelId}</p>
+              </div>
+            )}
+            {referee.notas && (
+              <div className="sm:col-span-2">
+                <p className="friendly-label mb-1">Notas</p>
+                <p className="text-sm text-foreground-secondary">{referee.notas}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

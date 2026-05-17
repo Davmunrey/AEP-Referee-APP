@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { AEP_JUDGE_LICENSE_NOTE } from "@/lib/aep-guide-2026";
 import { BarChart2, BookOpen, CheckCircle2, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -67,6 +68,7 @@ export default async function ExamsPage() {
         title="Exámenes de jueces"
         description="Teoría, práctica, reglamento IPF y recertificaciones de la plantilla de jueces"
       />
+      <p className="-mt-2 text-sm text-subtle-muted">{AEP_JUDGE_LICENSE_NOTE}</p>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label}>

@@ -10,7 +10,7 @@ function referee(over: Partial<Referee> = {}): Referee {
   return {
     id: "r1",
     nombre: "Ana Ruiz",
-    zona: "Centro",
+    zona: "CENTRO",
     nivel: "Nacional",
     estado: "Activo",
     eventos: 5,

@@ -6,6 +6,7 @@ import { ArrowRight, Download, FileSearch, Plus, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/lib/api/client";
+import { canCreateCompetition } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
 function greet(nombre: string): string {
@@ -32,7 +33,7 @@ export function DashboardHero({
     (i) => (i.severity === "crítico" || i.severity === "alerta") && i.action,
   );
 
-  const isAdmin = user.role === "super_admin" || user.role === "delegado_zona";
+  const canCreate = canCreateCompetition(user.role);
 
   return (
     <div className="glass-panel-soft rounded-3xl p-6 sm:p-8">
@@ -122,7 +123,7 @@ export function DashboardHero({
               Exportar
             </a>
           </Button>
-          {isAdmin && (
+          {canCreate && (
             <Button size="sm" className="gap-1.5 rounded-xl" asChild>
               <Link href="/events/new">
                 <Plus className="h-3.5 w-3.5" />

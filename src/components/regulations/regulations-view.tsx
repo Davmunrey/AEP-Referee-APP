@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { IpfChapter } from "@/lib/types";
+import { AepGuidePanel } from "@/components/regulations/aep-guide-panel";
+import { RegulationMatrixPanel } from "@/components/regulations/regulation-matrix-panel";
+import { AEP_GUIDE_META } from "@/lib/aep-guide-2026";
+import type { IpfChapter, RegulationRule } from "@/lib/types";
 import { IPF_CHAPTERS } from "@/lib/ipf-chapters";
+import { cn } from "@/lib/utils";
 import {
   Check,
   ChevronDown,
@@ -124,7 +128,20 @@ function IpfArticleList({
   );
 }
 
-export function RegulationsView() {
+type RegulationsTab = "ipf" | "guide" | "matrix";
+
+const TABS: { id: RegulationsTab; label: string }[] = [
+  { id: "ipf", label: "Reglamento IPF" },
+  { id: "guide", label: `Guía AEP ${AEP_GUIDE_META.season}` },
+  { id: "matrix", label: "Matriz jueces" },
+];
+
+interface RegulationsViewProps {
+  rules: RegulationRule[];
+}
+
+export function RegulationsView({ rules }: RegulationsViewProps) {
+  const [tab, setTab] = useState<RegulationsTab>("ipf");
   const [openChapters, setOpenChapters] = useState<Set<string>>(
     new Set(IPF_CHAPTERS.map((c) => c.num)),
   );
@@ -152,16 +169,62 @@ export function RegulationsView() {
     });
   };
 
+  const headerByTab: Record<RegulationsTab, { title: string; description: string }> = {
+    ipf: {
+      title: "Reglamento IPF",
+      description: "IPF Technical Rulebook completo con búsqueda en texto",
+    },
+    guide: {
+      title: `Guía AEP ${AEP_GUIDE_META.season}`,
+      description: "Zonas, niveles competitivos, cuotas y marcas mínimas (diciembre 2025)",
+    },
+    matrix: {
+      title: "Matriz de jueces AEP",
+      description: "Nivel mínimo por rol y tipo de campeonato en la tarima",
+    },
+  };
+
+  const header = headerByTab[tab];
+
   return (
     <PageShell>
       <PageHeader
         eyebrow="Gestión"
-        title="Reglamento IPF"
-        description="IPF Technical Rulebook completo con búsqueda en texto"
+        title={header.title}
+        description={header.description}
       />
 
+      <div
+        className="flex flex-wrap gap-1 rounded-xl border border-border-muted bg-surface/60 p-1"
+        role="tablist"
+        aria-label="Secciones de normativa"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={cn(
+              "rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-ring",
+              tab === t.id
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground-secondary hover:bg-surface-hover",
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "guide" && <AepGuidePanel />}
+
+      {tab === "matrix" && <RegulationMatrixPanel rules={rules} />}
+
+      {tab === "ipf" && (
+      <>
       <div className="space-y-4">
-        {/* Prominent search box */}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-muted" />
           <input
@@ -255,6 +318,7 @@ export function RegulationsView() {
         })}
       </div>
 
+
       <div className="rounded-xl border border-border-muted bg-surface/50 px-4 py-3 text-xs leading-relaxed text-subtle-muted space-y-1">
         <p>
           Fuente:{" "}
@@ -284,9 +348,13 @@ export function RegulationsView() {
         </p>
         <p className="italic">
           Los niveles AEP (Regional, Nacional, IPF Cat. 2, IPF Cat. 1) corresponden a Nacional,
-          Cat. II y Cat. I del sistema internacional IPF.
+          Cat. II y Cat. I del sistema internacional IPF. Consulta la pestaña Guía AEP 2026 para
+          estructura de campeonatos y marcas mínimas de atletas.
         </p>
       </div>
+      </>
+      )}
+
     </PageShell>
   );
 }

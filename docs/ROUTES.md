@@ -37,7 +37,9 @@ Layout: `AppShell`. Middleware + `(dashboard)/layout.tsx` redirigen a `/sign-in`
 
 ## Sidebar
 
-**Operaciones:** Dashboard, Campeonatos, Directorio, Tarima activa (activa en `/events/[id]`).
+**Operaciones:** Dashboard, Campeonatos, Tarima activa (enlace dinámico al campeonato operativo más próximo), Directorio.
+
+`Tarima activa` ya no duplica la URL de Campeonatos: apunta a `/events/[id]` del evento prioritario (incompleto y futuro, o el primero disponible).
 
 **Gestión:** Aprobaciones (badge contador), Ascensos, Exámenes, Informes, Estadísticas, Normativa IPF, Usuarios (visible para `super_admin` y `delegado_jueces`).
 

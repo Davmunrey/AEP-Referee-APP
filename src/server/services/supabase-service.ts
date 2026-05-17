@@ -1,6 +1,14 @@
 import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
-import { CALENDAR_EVENTS, LEVELS } from "@/lib/mock-data";
+import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
+import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import type { JudgesRegistryImportResult } from "@/lib/types";
+import {
+  importJudgesRegistryToSupabase,
+} from "@/server/services/import-judges-registry";
+import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
+import { LEVELS } from "@/lib/mock-data";
+import { pickActiveRosterHref } from "@/lib/nav-utils";
 import {
   enumerateSlotKeys,
   getPresetForEventType,
@@ -48,6 +56,7 @@ import {
   mapReferee,
   mapRegulation,
   mapReport,
+  refereeToDbRow,
 } from "@/server/db/mappers";
 
 function db() {
@@ -78,10 +87,8 @@ async function persistCompetitionTemplate(eventId: string, template: RosterSessi
 }
 
 async function getCalendarEvents(): Promise<Record<string, CalendarDayEvent>> {
-  const supabase = db();
-  const { data } = await supabase.from("app_config").select("value").eq("key", "calendar_events").single();
-  if (data?.value) return data.value as Record<string, CalendarDayEvent>;
-  return CALENDAR_EVENTS;
+  const competitions = await supabaseDataService.getCompetitions();
+  return calendarEventsFromCompetitions(competitions);
 }
 
 async function getZones() {
@@ -296,10 +303,8 @@ export const supabaseDataService = {
   getDashboard: async (user: SessionUser): Promise<DashboardPayload> => {
     const supabase = db();
     const isZoneScoped = user.role === "delegado_zona" && !!user.zona;
-    let query = supabase.from("competitions").select("*").order("fecha", { ascending: true });
-    if (isZoneScoped) {
-      query = query.eq("zona", user.zona!);
-    }
+    const userZone = isZoneScoped ? resolveZoneCode(user.zona) : undefined;
+    const query = supabase.from("competitions").select("*").order("fecha", { ascending: true });
     const [
       { data: competitionRows },
       { data: activity },
@@ -320,9 +325,9 @@ export const supabaseDataService = {
       loadAllAssignments(),
     ]);
 
-    const competitions = (competitionRows ?? []).map((r) =>
-      mapCompetition(r as Record<string, unknown>),
-    );
+    const competitions = (competitionRows ?? [])
+      .map((r) => mapCompetition(r as Record<string, unknown>))
+      .filter((c) => !userZone || resolveZoneCode(c.zona) === userZone);
     const templateByComp = new Map(
       (competitionRows ?? []).map((r) => {
         const row = r as { id: string; template: RosterSession[] | null; tipo: string };
@@ -451,7 +456,12 @@ export const supabaseDataService = {
       .join("")
       .slice(0, 2)
       .toUpperCase();
-    const row = { ...input, id, iniciales };
+    const row = refereeToDbRow({
+      ...input,
+      id,
+      iniciales,
+      zona: normalizeZoneInput(input.zona) ?? input.zona,
+    });
     const { data, error } = await supabase.from("referees").insert(row).select().single();
     if (error) throw error;
     await pushActivity({
@@ -466,16 +476,19 @@ export const supabaseDataService = {
 
   updateReferee: async (id: string, patch: Partial<Referee>): Promise<Referee | undefined> => {
     const supabase = db();
-    const dbPatch: Partial<Referee> = { ...patch };
-    // Recalcular iniciales si cambia el nombre.
-    if (typeof dbPatch.nombre === "string" && dbPatch.nombre.trim()) {
-      dbPatch.iniciales = dbPatch.nombre
+    const merged = { ...patch };
+    if (patch.zona !== undefined) {
+      merged.zona = normalizeZoneInput(patch.zona) ?? patch.zona;
+    }
+    if (typeof merged.nombre === "string" && merged.nombre.trim()) {
+      merged.iniciales = merged.nombre
         .split(" ")
         .map((p) => p[0])
         .join("")
         .slice(0, 2)
         .toUpperCase();
     }
+    const dbPatch = refereeToDbRow(merged);
     const { data, error } = await supabase
       .from("referees")
       .update(dbPatch)
@@ -488,10 +501,13 @@ export const supabaseDataService = {
 
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const supabase = db();
-    let query = supabase.from("competitions").select("*").order("fecha");
-    if (user?.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
-    const { data } = await query;
-    return (data ?? []).map((r) => mapCompetition(r as Record<string, unknown>));
+    const { data } = await supabase.from("competitions").select("*").order("fecha");
+    const list = (data ?? []).map((r) => mapCompetition(r as Record<string, unknown>));
+    if (user?.role === "delegado_zona" && user.zona) {
+      const userZone = resolveZoneCode(user.zona);
+      return list.filter((c) => resolveZoneCode(c.zona) === userZone);
+    }
+    return list;
   },
 
   getCompetition: async (id: string) => {
@@ -519,7 +535,7 @@ export const supabaseDataService = {
       confirmados: 0,
       estado: "Borrador",
       aprobacion: "Sin propuesta",
-      zona: input.zona ?? null,
+      zona: normalizeZoneInput(input.zona),
       template,
     };
     const { data, error } = await supabase.from("competitions").insert(row).select().single();
@@ -530,6 +546,9 @@ export const supabaseDataService = {
   updateCompetition: async (id: string, patch: Partial<Competition>): Promise<Competition | undefined> => {
     const supabase = db();
     const dbPatch: Record<string, unknown> = { ...patch };
+    if (patch.zona !== undefined) {
+      dbPatch.zona = normalizeZoneInput(patch.zona);
+    }
     if (patch.fechaFin) {
       dbPatch.fecha_fin = patch.fechaFin;
       delete dbPatch.fechaFin;
@@ -1021,7 +1040,7 @@ export const supabaseDataService = {
       referee_name: referee.nombre,
       from_level: referee.nivel,
       to_level: input.toLevel,
-      zona: input.zona,
+      zona: normalizeZoneInput(input.zona) ?? input.zona,
       status: "pendiente",
       submitted_at: new Date().toISOString().split("T")[0],
       eventos_completados: referee.eventos,
@@ -1033,11 +1052,15 @@ export const supabaseDataService = {
   },
 
   getNavCounts: async (user?: SessionUser) => {
-    const events = (await supabaseDataService.getCompetitions(user)).length;
+    const competitions = await supabaseDataService.getCompetitions(user);
     const approvals = (await supabaseDataService.getApprovals(user)).filter(
       (a) => a.status === "pendiente",
     ).length;
-    return { events, approvals };
+    return {
+      events: competitions.length,
+      approvals,
+      activeRosterHref: pickActiveRosterHref(competitions),
+    };
   },
 
   getExams: async (
@@ -1252,4 +1275,10 @@ export const supabaseDataService = {
     ]);
     return computeJudgeProfile(referee, exams, reports);
   },
+
+  importJudgesRegistry: async (
+    parsed: ParsedJudgesRegistry,
+    options?: { replace?: boolean },
+  ): Promise<JudgesRegistryImportResult> =>
+    importJudgesRegistryToSupabase(parsed, options),
 };

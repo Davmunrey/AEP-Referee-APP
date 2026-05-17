@@ -215,6 +215,20 @@ Los **Delegados de Zona** ven el estado de sus envíos pero no aprueban.
 
 ## 8. Directorio de jueces (`/referees`)
 
+### 8.1 Importar registro maestro (Excel)
+
+**Super Admin** y **Delegado de Jueces**: botón **«Importar registro»** en el directorio.
+
+1. Sube `Copia de Control jueces.xlsx` (hojas `Datos`, `Arbitrajes2026`, `Campeonatos26`).
+2. Revisa la vista previa (jueces nuevos/actualizados, campeonatos detectados, avisos).
+3. **Aplicar** hace upsert por `excel_id` en Supabase.
+
+CLI equivalente: `npm run db:import-judges -- "/ruta/al/archivo.xlsx"`.
+
+Para eliminar jueces demo antiguos (`j001`–`j016`): `npm run db:cleanup-demo`.
+
+### 8.2 Consulta y gestión
+
 - Buscar por nombre, filtrar por **zona**, **nivel**, **estado**.
 - **Ficha** (`/referees/[id]`): datos, trayectoria, exámenes, informes, edición, solicitud de ascenso y botón **Eliminar juez** (Super Admin / Delegado de Jueces).
 - **Alta** de nuevo juez (según permisos). **Delegados de Zona** solo pueden crear/editar jueces de su propia zona.
@@ -254,8 +268,13 @@ Cobertura por zona, jueces más activos, eventos críticos y **exportación CSV*
 
 ## 12. Normativa (`/regulations`)
 
-- **Matriz AEP** — nivel mínimo por rol y tipo de campeonato.
+Tres pestañas según la **Guía AEP 2026** (diciembre 2025) y normativa técnica:
+
 - **Reglamento IPF** — 11 capítulos con búsqueda en texto completo.
+- **Guía AEP 2026** — zonas geográficas oficiales, estructura AEP-1/2/3, cuotas de licencias e inscripciones, marcas mínimas regional/Open y requisitos de licencia básica para jueces.
+- **Matriz jueces** — nivel mínimo por rol y tipo de campeonato (validación en tarima).
+
+Referencia ampliada: [`GUIA-AEP-2026.md`](./GUIA-AEP-2026.md).
 
 Úsala al montar la tarima para evitar incidencias en competición.
 
@@ -271,7 +290,7 @@ Solo **Super Admin** y **Delegado de Jueces** (la entrada del sidebar es visible
 - **Activar / desactivar** o **eliminar** cuentas.
 - Columna **Alta** muestra cuándo se creó cada cuenta.
 
-Los nuevos registros por `/sign-in` llegan como **solo_ver** salvo el primero del proyecto. En el formulario de signup se muestra un aviso explícito de este comportamiento.
+El acceso es **solo por cuentas creadas** por administración (no hay alta pública en `/sign-in`).
 
 ### ¿Olvidaste tu contraseña?
 En `/sign-in` (modo iniciar sesión), enlace **«¿Olvidaste tu contraseña?»** despliega un campo de email y envía un enlace de reset vía Supabase (`resetPasswordForEmail`).
