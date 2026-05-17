@@ -107,9 +107,11 @@ export const serverApi = {
         if (!roster) throw new Error("Competición no encontrada");
         return roster;
       }
-      return serverRequest<{ template: RosterSession[]; assignments: AssignmentsMap }>(
-        `/competitions/${eventId}/roster`,
-      );
+      return serverRequest<{
+        template: RosterSession[];
+        assignments: AssignmentsMap;
+        flags: import("@/lib/types").FlagsMap;
+      }>(`/competitions/${eventId}/roster`);
     }),
 
   getApprovals: () =>

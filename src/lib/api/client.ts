@@ -5,6 +5,8 @@ import type {
   AppMeta,
   ApprovalProposal,
   AssignmentsMap,
+  FlagsMap,
+  SlotFlags,
   Competition,
   DashboardPayload,
   ExamResult,
@@ -64,18 +66,38 @@ export const api = {
   getCompetition: (id: string) => request<Competition>(`/competitions/${id}`),
 
   getRoster: (eventId: string) =>
-    request<{ template: RosterSession[]; assignments: AssignmentsMap }>(
+    request<{ template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }>(
       `/competitions/${eventId}/roster`,
     ),
+
+  saveTemplate: (eventId: string, template: RosterSession[]) =>
+    request<{ template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }>(
+      `/competitions/${eventId}/roster/template`,
+      { method: "PUT", body: JSON.stringify({ template }) },
+    ),
+
+  setSlotFlags: (eventId: string, slotKey: string, flags: SlotFlags) =>
+    request<{ flags: FlagsMap }>(`/competitions/${eventId}/roster/flags`, {
+      method: "PATCH",
+      body: JSON.stringify({ slotKey, flags }),
+    }),
 
   getRosterHistory: (eventId: string) =>
     request<RosterHistoryEntry[]>(`/competitions/${eventId}/roster/history`),
 
-  assignReferee: (eventId: string, slotKey: string, refereeId: string) =>
-    request<{ assignments: AssignmentsMap }>(`/competitions/${eventId}/roster/assign`, {
-      method: "POST",
-      body: JSON.stringify({ slotKey, refereeId }),
-    }),
+  assignReferee: (
+    eventId: string,
+    slotKey: string,
+    refereeId: string,
+    flags?: SlotFlags,
+  ) =>
+    request<{ assignments: AssignmentsMap; flags?: FlagsMap }>(
+      `/competitions/${eventId}/roster/assign`,
+      {
+        method: "POST",
+        body: JSON.stringify({ slotKey, refereeId, flags }),
+      },
+    ),
 
   clearSlot: (eventId: string, slotKey: string) =>
     request<{ assignments: AssignmentsMap }>(`/competitions/${eventId}/roster/clear`, {

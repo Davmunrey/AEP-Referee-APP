@@ -38,8 +38,10 @@ describe("canEditRoster", () => {
     expect(canEditRoster(zona, undefined)).toBe(false);
   });
 
-  it("delegado_jueces no gestiona campeonatos", () => {
-    expect(canEditRoster(user("delegado_jueces"), "Centro")).toBe(false);
+  it("delegado_jueces edita tarima en cualquier zona (jefe nacional)", () => {
+    expect(canEditRoster(user("delegado_jueces"), "Centro")).toBe(true);
+    expect(canEditRoster(user("delegado_jueces"), "Norte")).toBe(true);
+    expect(canEditRoster(user("delegado_jueces"))).toBe(true);
   });
 
   it("solo_ver nunca edita", () => {
@@ -48,18 +50,18 @@ describe("canEditRoster", () => {
 });
 
 describe("canApprove", () => {
-  it("solo super_admin aprueba propuestas", () => {
+  it("super_admin y delegado_jueces aprueban propuestas", () => {
     expect(canApprove(user("super_admin"))).toBe(true);
-    expect(canApprove(user("delegado_jueces"))).toBe(false);
+    expect(canApprove(user("delegado_jueces"))).toBe(true);
     expect(canApprove(user("delegado_zona", "Centro"))).toBe(false);
     expect(canApprove(user("solo_ver"))).toBe(false);
   });
 });
 
 describe("canManageUsers", () => {
-  it("solo super_admin gestiona usuarios", () => {
+  it("super_admin y delegado_jueces gestionan usuarios", () => {
     expect(canManageUsers(user("super_admin"))).toBe(true);
-    expect(canManageUsers(user("delegado_jueces"))).toBe(false);
+    expect(canManageUsers(user("delegado_jueces"))).toBe(true);
     expect(canManageUsers(user("delegado_zona", "Centro"))).toBe(false);
     expect(canManageUsers(user("solo_ver"))).toBe(false);
   });

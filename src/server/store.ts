@@ -8,23 +8,28 @@ import {
   ROSTER_TEMPLATE,
   ZONES,
 } from "@/lib/mock-data";
+import { getPresetForEventType } from "@/lib/roster-template";
 import type {
   ActivityItem,
   ApprovalProposal,
   AssignmentsMap,
   Competition,
+  FlagsMap,
   PromotionRequest,
   Referee,
   RefereeExam,
   RefereeReport,
   RegulationRule,
   RosterHistoryEntry,
+  RosterSession,
 } from "@/lib/types";
 
 interface AppStore {
   referees: Referee[];
   competitions: Competition[];
+  templates: Map<string, RosterSession[]>;
   assignments: Map<string, AssignmentsMap>;
+  slotFlags: Map<string, FlagsMap>;
   approvals: ApprovalProposal[];
   promotions: PromotionRequest[];
   activity: ActivityItem[];
@@ -268,11 +273,19 @@ function seedExams(): RefereeExam[] {
 
 function createStore(): AppStore {
   const assignments = new Map<string, AssignmentsMap>();
+  const templates = new Map<string, RosterSession[]>();
+  const slotFlags = new Map<string, FlagsMap>();
   assignments.set("evt-001", { ...INITIAL_ASSIGNMENTS });
+  for (const comp of COMPETITIONS) {
+    templates.set(comp.id, getPresetForEventType(comp.tipo));
+    slotFlags.set(comp.id, {});
+  }
   return {
     referees: REFEREES.map((r) => ({ ...r })),
     competitions: COMPETITIONS.map((c) => ({ ...c })),
+    templates,
     assignments,
+    slotFlags,
     approvals: seedApprovals(),
     promotions: seedPromotions(),
     activity: [...ACTIVITY],
@@ -299,6 +312,20 @@ export function getLevels() {
 
 export function getRosterTemplate() {
   return ROSTER_TEMPLATE;
+}
+
+export function getEventTemplate(competitionId: string): RosterSession[] {
+  const store = getStore();
+  const existing = store.templates.get(competitionId);
+  if (existing) return existing;
+  const comp = store.competitions.find((c) => c.id === competitionId);
+  const tpl = comp ? getPresetForEventType(comp.tipo) : ROSTER_TEMPLATE;
+  store.templates.set(competitionId, tpl);
+  return tpl;
+}
+
+export function setEventTemplate(competitionId: string, template: RosterSession[]) {
+  getStore().templates.set(competitionId, template);
 }
 
 export function getCalendarEvents() {

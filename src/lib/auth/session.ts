@@ -78,15 +78,14 @@ export async function getSession(): Promise<SessionUser | null> {
 /**
  * RBAC. Cuatro roles:
  *  - super_admin      — control total.
- *  - delegado_jueces  — autoridad nacional sobre jueces, exámenes, informes y
- *                       ascensos; sin poder sobre campeonatos ni usuarios.
+ *  - delegado_jueces  — jefe nacional de jueces; autoridad total (igual que super_admin).
  *  - delegado_zona    — gestiona campeonatos, tarimas y jueces de SU zona.
  *  - solo_ver         — solo lectura.
  */
 
 /** Campeonatos y tarima: crear, editar, asignar. */
 export function canEditRoster(user: SessionUser, eventZona?: string): boolean {
-  if (user.role === "super_admin") return true;
+  if (user.role === "super_admin" || user.role === "delegado_jueces") return true;
   if (user.role === "delegado_zona") return user.zona === eventZona;
   return false;
 }
@@ -96,12 +95,12 @@ export const canManageCompetitions = canEditRoster;
 
 /** Aprobar propuestas de tarima. */
 export function canApprove(user: SessionUser): boolean {
-  return user.role === "super_admin";
+  return user.role === "super_admin" || user.role === "delegado_jueces";
 }
 
 /** Gestión de cuentas de usuario. */
 export function canManageUsers(user: SessionUser): boolean {
-  return user.role === "super_admin";
+  return user.role === "super_admin" || user.role === "delegado_jueces";
 }
 
 /** Crear/editar jueces, exámenes e informes. */

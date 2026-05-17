@@ -22,6 +22,7 @@ export async function POST(request: Request, context: RouteContext) {
     eventId,
     slotKey: body.slotKey,
     refereeId: body.refereeId,
+    flags: body.flags,
   });
   if (!parsed.success) {
     return jsonError("Datos de asignación inválidos", 400, parsed.error.flatten());
@@ -32,7 +33,11 @@ export async function POST(request: Request, context: RouteContext) {
     parsed.data.slotKey,
     parsed.data.refereeId,
     user.nombre,
+    parsed.data.flags,
   );
   if (result.error) return jsonError(result.error, 400);
-  return jsonOk({ assignments: result.assignments });
+  return jsonOk({
+    assignments: result.assignments,
+    flags: result.flags,
+  });
 }

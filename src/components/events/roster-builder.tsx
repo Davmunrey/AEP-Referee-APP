@@ -11,12 +11,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type {
   AssignmentsMap,
   Competition,
+  FlagsMap,
   Referee,
   RefereeLevel,
   RegulationRule,
   RoleKey,
   RosterRole,
   RosterSession,
+  SlotFlags,
   UserRole,
   Zone,
 } from "@/lib/types";
@@ -24,6 +26,7 @@ import { selectFieldClass } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, ArrowLeft, Check, GripVertical, Info, X } from "lucide-react";
 import { RosterHistoryPanel } from "@/components/events/roster-history-panel";
+import { RosterTemplateEditor } from "@/components/events/roster-template-editor";
 
 const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
 
@@ -49,6 +52,8 @@ interface RosterBuilderProps {
   event: Competition;
   template: RosterSession[];
   initialAssignments: AssignmentsMap;
+  initialFlags?: FlagsMap;
+  canEdit?: boolean;
   referees: Referee[];
   zones: Zone[];
   levels: RefereeLevel[];
@@ -62,16 +67,21 @@ function zoneName(zones: Zone[], code: string) {
 
 export function RosterBuilder({
   event,
-  template,
+  template: initialTemplate,
   initialAssignments,
+  initialFlags = {},
+  canEdit = false,
   referees,
   zones,
   levels,
   regulations = [],
-  userRole,
 }: RosterBuilderProps) {
-  const readOnly = userRole === "solo_ver" || userRole === "delegado_jueces";
+  const readOnly = !canEdit;
+  const [template, setTemplate] = useState(initialTemplate);
   const [assignments, setAssignments] = useState(initialAssignments);
+  const [flags, setFlags] = useState<FlagsMap>(initialFlags);
+  const [isEditing, setIsEditing] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [filterZona, setFilterZona] = useState("TODAS");
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [search, setSearch] = useState("");
@@ -162,6 +172,7 @@ export function RosterBuilder({
       try {
         const res = await api.assignReferee(event.id, slotKey, refereeId);
         setAssignments(res.assignments);
+        if (res.flags) setFlags(res.flags);
         setStatusMsg(null);
         setStatusIsError(false);
       } catch (err) {
@@ -202,6 +213,47 @@ export function RosterBuilder({
     persistAssign(selectedSlot, refereeId);
   };
 
+  const toggleFlag = (slotKey: string, field: keyof SlotFlags) => {
+    if (readOnly || !assignments[slotKey]) return;
+    const current = flags[slotKey] ?? {};
+    const next: SlotFlags = {
+      ...current,
+      [field]: !current[field],
+    };
+    const snapshot = flags;
+    setFlags((prev) => ({ ...prev, [slotKey]: next }));
+    startTransition(async () => {
+      try {
+        const res = await api.setSlotFlags(event.id, slotKey, next);
+        setFlags(res.flags);
+      } catch {
+        setFlags(snapshot);
+        setStatusMsg("No se pudieron guardar los marcadores del slot");
+        setStatusIsError(true);
+      }
+    });
+  };
+
+  const saveTemplate = (next: RosterSession[]) => {
+    setSavingTemplate(true);
+    startTransition(async () => {
+      try {
+        const res = await api.saveTemplate(event.id, next);
+        setTemplate(res.template);
+        setAssignments(res.assignments);
+        setFlags(res.flags);
+        setIsEditing(false);
+        setStatusMsg("Plantilla guardada");
+        setStatusIsError(false);
+      } catch (err) {
+        setStatusMsg(err instanceof Error ? err.message : "No se pudo guardar la plantilla");
+        setStatusIsError(true);
+      } finally {
+        setSavingTemplate(false);
+      }
+    });
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <div className="glass-panel-soft border-b border-border-muted px-6 py-4">
@@ -232,8 +284,19 @@ export function RosterBuilder({
               </p>
             )}
             <div className="flex items-center gap-2">
+              {canEdit && (
+                <Button
+                  type="button"
+                  variant={isEditing ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsEditing((v) => !v)}
+                  disabled={pending || savingTemplate}
+                >
+                  {isEditing ? "Volver a tarima" : "Editar plantilla"}
+                </Button>
+              )}
               <RosterHistoryPanel eventId={event.id} />
-              {!readOnly && (
+              {!readOnly && !isEditing && (
                 <RosterHeaderActions
                   eventId={event.id}
                   filledSlots={filledSlots}
@@ -326,39 +389,57 @@ export function RosterBuilder({
         </section>
 
         <section className="flex flex-col overflow-hidden">
-          <div className="border-b border-border p-4">
-            <h2 className="text-sm font-semibold text-foreground-secondary">
-              Acta de tarima · {template.length} sesiones
-            </h2>
-            <p className="text-xs text-subtle-muted">
-              Competición (9 roles) y pesaje por sesión, agrupadas por día
-            </p>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="space-y-6 p-4">
-              {groupSessionsByDay(template).map(([dia, sesiones]) => (
-                <div key={dia} className="space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
-                    {dia}
-                  </h3>
-                  {sesiones.map((session) => (
-                    <SessionBlock
-                      key={session.sesion}
-                      session={session}
-                      assignments={assignments}
-                      getReferee={getReferee}
-                      selectedSlot={selectedSlot}
-                      onSelectSlot={setSelectedSlot}
-                      onDrop={onDrop}
-                      onClear={persistClear}
-                      checkViolation={checkViolation}
-                      readOnly={readOnly}
-                    />
+          {isEditing ? (
+            <ScrollArea className="flex-1">
+              <div className="p-4">
+                <RosterTemplateEditor
+                  eventType={event.tipo}
+                  initialTemplate={template}
+                  onSave={saveTemplate}
+                  onCancel={() => setIsEditing(false)}
+                  saving={savingTemplate}
+                />
+              </div>
+            </ScrollArea>
+          ) : (
+            <>
+              <div className="border-b border-border p-4">
+                <h2 className="text-sm font-semibold text-foreground-secondary">
+                  Acta de tarima · {template.length} sesiones
+                </h2>
+                <p className="text-xs text-subtle-muted">
+                  Competición y pesaje por sesión, agrupadas por día
+                </p>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="space-y-6 p-4">
+                  {groupSessionsByDay(template).map(([dia, sesiones]) => (
+                    <div key={dia} className="space-y-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
+                        {dia}
+                      </h3>
+                      {sesiones.map((session) => (
+                        <SessionBlock
+                          key={session.sesion}
+                          session={session}
+                          assignments={assignments}
+                          flags={flags}
+                          getReferee={getReferee}
+                          selectedSlot={selectedSlot}
+                          onSelectSlot={setSelectedSlot}
+                          onDrop={onDrop}
+                          onClear={persistClear}
+                          onToggleFlag={toggleFlag}
+                          checkViolation={checkViolation}
+                          readOnly={readOnly}
+                        />
+                      ))}
+                    </div>
                   ))}
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+              </ScrollArea>
+            </>
+          )}
         </section>
       </div>
     </div>
@@ -453,11 +534,13 @@ interface SlotGridProps {
   sesion: string;
   roles: RosterRole[];
   assignments: AssignmentsMap;
+  flags: FlagsMap;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
   onDrop: (slotKey: string, refereeId: string) => void;
   onClear: (slotKey: string) => void;
+  onToggleFlag: (slotKey: string, field: keyof SlotFlags) => void;
   checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
   readOnly: boolean;
 }
@@ -466,11 +549,13 @@ function SlotGrid({
   sesion,
   roles,
   assignments,
+  flags,
   getReferee,
   selectedSlot,
   onSelectSlot,
   onDrop,
   onClear,
+  onToggleFlag,
   checkViolation,
   readOnly,
 }: SlotGridProps) {
@@ -488,6 +573,7 @@ function SlotGrid({
                 const referee = refereeId ? getReferee(refereeId) : undefined;
                 const isSelected = selectedSlot === slotKey;
                 const violation = refereeId ? checkViolation(role.key, refereeId) : undefined;
+                const slotFlags = flags[slotKey];
 
                 return (
                   <div
@@ -515,8 +601,20 @@ function SlotGrid({
                   >
                     {referee ? (
                       <>
-                        <p className="text-sm font-medium text-foreground">{referee.nombre}</p>
-                        <div className="mt-1 flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-foreground">
+                          {referee.nombre}
+                          {slotFlags?.compartido && (
+                            <span className="ml-1 text-primary" title="Compartido">
+                              *
+                            </span>
+                          )}
+                          {slotFlags?.intercambio && (
+                            <span className="ml-0.5 text-accent" title="Intercambio">
+                              ↑↓
+                            </span>
+                          )}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
                           <LevelBadge level={referee.nivel} />
                           {violation && (
                             <span
@@ -527,20 +625,52 @@ function SlotGrid({
                               min. {violation.minLevel}
                             </span>
                           )}
+                          {!readOnly && (
+                            <>
+                              <Button
+                                type="button"
+                                variant={slotFlags?.compartido ? "default" : "outline"}
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-mono"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onToggleFlag(slotKey, "compartido");
+                                }}
+                                title="Compartido (*)"
+                              >
+                                *
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={slotFlags?.intercambio ? "default" : "outline"}
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-mono"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onToggleFlag(slotKey, "intercambio");
+                                }}
+                                title="Intercambio (↑↓)"
+                              >
+                                ↑↓
+                              </Button>
+                            </>
+                          )}
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-1 top-1 h-7 w-7 text-subtle-muted"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onClear(slotKey);
-                          }}
-                          aria-label="Quitar asignación"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
+                        {!readOnly && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1 h-7 w-7 text-subtle-muted"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onClear(slotKey);
+                            }}
+                            aria-label="Quitar asignación"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </>
                     ) : (
                       <p className="text-xs text-subtle-muted">
@@ -560,21 +690,25 @@ function SlotGrid({
 function SessionBlock({
   session,
   assignments,
+  flags,
   getReferee,
   selectedSlot,
   onSelectSlot,
   onDrop,
   onClear,
+  onToggleFlag,
   checkViolation,
   readOnly = false,
 }: {
   session: RosterSession;
   assignments: AssignmentsMap;
+  flags: FlagsMap;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
   onDrop: (slotKey: string, refereeId: string) => void;
   onClear: (slotKey: string) => void;
+  onToggleFlag: (slotKey: string, field: keyof SlotFlags) => void;
   checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
   readOnly?: boolean;
 }) {
@@ -584,11 +718,13 @@ function SessionBlock({
   const grid = {
     sesion: session.sesion,
     assignments,
+    flags,
     getReferee,
     selectedSlot,
     onSelectSlot,
     onDrop,
     onClear,
+    onToggleFlag,
     checkViolation,
     readOnly,
   };

@@ -157,3 +157,19 @@ export function assignmentsFromRows(
   for (const row of rows) map[row.slot_key] = row.referee_id;
   return map;
 }
+
+export function flagsFromRows(
+  rows: { slot_key: string; flags: Record<string, unknown> | null }[],
+): import("@/lib/types").FlagsMap {
+  const map: import("@/lib/types").FlagsMap = {};
+  for (const row of rows) {
+    const f = row.flags;
+    if (f && typeof f === "object" && (f.compartido || f.intercambio)) {
+      map[row.slot_key] = {
+        compartido: Boolean(f.compartido),
+        intercambio: Boolean(f.intercambio),
+      };
+    }
+  }
+  return map;
+}

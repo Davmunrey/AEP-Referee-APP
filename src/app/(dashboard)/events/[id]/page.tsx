@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { RosterBuilder } from "@/components/events/roster-builder";
-import { getSession } from "@/lib/auth/session";
+import { canEditRoster, getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
 
@@ -29,6 +29,8 @@ export default async function EventPage({ params }: EventPageProps) {
       event={event}
       template={roster.template}
       initialAssignments={roster.assignments}
+      initialFlags={roster.flags ?? {}}
+      canEdit={canEditRoster(user, event.zona)}
       referees={referees}
       zones={meta.zones}
       levels={meta.levels}
