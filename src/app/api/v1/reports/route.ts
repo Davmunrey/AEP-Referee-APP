@@ -17,14 +17,17 @@ export async function POST(request: Request) {
   if (!isSessionUser(user)) return user;
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
-  const body = (await request.json()) as {
+  const body = (await request.json().catch(() => null)) as {
     refereeId?: string;
     titulo?: string;
     tipo?: ReportType;
     evento?: string;
     contenido?: string;
     adjuntoUrl?: string;
-  };
+  } | null;
+  if (!body || typeof body !== "object") {
+    return jsonError("Cuerpo de solicitud inválido", 400);
+  }
   if (!body.refereeId || !body.titulo || !body.tipo || !body.contenido) {
     return jsonError("Faltan campos obligatorios", 400);
   }

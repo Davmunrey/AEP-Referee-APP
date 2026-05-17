@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Loader2, MoreHorizontal, Trash2, UserPlus } from "lucide-react";
 import { NewRefereeDialog } from "@/components/referees/new-referee-dialog";
 import { LevelBadge, StatusBadge } from "@/components/aep/badges";
@@ -29,9 +30,10 @@ export function RefereesDirectory({
   levels,
   canEdit = false,
 }: RefereesDirectoryProps) {
+  const searchParams = useSearchParams();
   const [referees, setReferees] = useState(initialReferees);
   const [showNew, setShowNew] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [filterZona, setFilterZona] = useState("TODAS");
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [filterEstado, setFilterEstado] = useState("TODOS");

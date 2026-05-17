@@ -71,6 +71,12 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
     try {
       await api.deleteCompetition(id);
       setEvents((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? `No se pudo eliminar: ${err.message}`
+          : "No se pudo eliminar el campeonato.",
+      );
     } finally {
       setDeletingId(null);
     }

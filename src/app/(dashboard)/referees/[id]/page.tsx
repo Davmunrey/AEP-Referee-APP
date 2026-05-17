@@ -29,6 +29,8 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!profile) notFound();
 
   const { referee, exams, reports, examsPassed, examsTotal, avgScore } = profile;
+  // Un delegado de zona solo accede a árbitros de su zona.
+  if (user.role === "delegado_zona" && referee.zona !== user.zona) notFound();
   const zoneName =
     meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
   const canEdit = user.role !== "solo_ver";

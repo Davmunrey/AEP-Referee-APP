@@ -202,8 +202,17 @@ export const memoryDataService = {
     const store = getStore();
     const idx = store.referees.findIndex((r) => r.id === id);
     if (idx < 0) return undefined;
-    store.referees[idx] = { ...store.referees[idx]!, ...patch };
-    return store.referees[idx];
+    const merged = { ...store.referees[idx]!, ...patch };
+    if (typeof patch.nombre === "string" && patch.nombre.trim()) {
+      merged.iniciales = patch.nombre
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+    }
+    store.referees[idx] = merged;
+    return merged;
   },
 
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {

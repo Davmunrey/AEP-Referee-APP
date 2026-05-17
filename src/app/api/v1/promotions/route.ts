@@ -22,21 +22,18 @@ export async function POST(request: Request) {
   const toLevel = String(body.toLevel ?? "").trim() as RefereeLevel;
   const motivo = body.motivo ? String(body.motivo).trim() : undefined;
 
-  // Un delegado de zona solo puede solicitar ascensos dentro de SU zona.
-  let zona: string;
-  if (user.role === "delegado_zona") {
-    const requested = body.zona ? String(body.zona).trim() : "";
-    if (requested && requested !== user.zona) {
-      return jsonError("No puedes solicitar ascensos fuera de tu zona", 403);
-    }
-    zona = user.zona ?? "";
-    if (!zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
-  } else {
-    zona = String(body.zona ?? "").trim();
+  if (!refereeId || !toLevel) {
+    return jsonError("refereeId y toLevel son obligatorios", 400);
   }
 
-  if (!refereeId || !toLevel || !zona) {
-    return jsonError("refereeId, toLevel y zona son obligatorios", 400);
+  // La zona se deriva SIEMPRE del árbitro, nunca del body (anti-IDOR).
+  const referee = await dataService.getReferee(refereeId);
+  if (!referee) return jsonError("Árbitro no encontrado", 404);
+  const zona = referee.zona;
+
+  // Un delegado de zona solo solicita ascensos de árbitros de SU zona.
+  if (user.role === "delegado_zona" && zona !== user.zona) {
+    return jsonError("No puedes solicitar ascensos fuera de tu zona", 403);
   }
 
   const req = await dataService.createPromotion({ refereeId, toLevel, zona, motivo });

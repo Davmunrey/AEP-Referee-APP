@@ -18,7 +18,7 @@ export function DashboardHero({
   const firstName = user.nombre.split(" ")[0];
   const pendingApprovals = dashboard.kpis.find((k) => k.label.includes("Aprobaciones"));
   const openSlots = dashboard.kpis.find((k) => k.label.includes("Plazas"));
-  const criticalEvent = dashboard.upcomingCompetitions.find((c) => c.estado === "Crítico");
+  const criticalEvent = dashboard.coverage.find((c) => c.estado === "Crítico");
   const now = new Date();
   const quarter = `T${Math.ceil((now.getMonth() + 1) / 3)} ${now.getFullYear()}`;
   const nextAction = dashboard.insights.find(

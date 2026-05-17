@@ -109,7 +109,12 @@ export function canManageJudges(user: SessionUser): boolean {
   return user.role !== "solo_ver";
 }
 
-/** Eliminar jueces, exámenes o informes; revisar ascensos. */
+/** Eliminar jueces, exámenes o informes. */
 export function canAdminJudges(user: SessionUser): boolean {
+  return user.role === "super_admin" || user.role === "delegado_jueces";
+}
+
+/** Revisar (aprobar/rechazar) solicitudes de ascenso. */
+export function canReviewPromotions(user: SessionUser): boolean {
   return user.role === "super_admin" || user.role === "delegado_jueces";
 }

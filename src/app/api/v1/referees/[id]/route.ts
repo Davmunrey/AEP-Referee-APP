@@ -1,6 +1,7 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
+import type { Referee } from "@/lib/types";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -21,8 +22,23 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const body = await request.json();
-  const updated = await dataService.updateReferee(id, body);
+  const raw = await request.json().catch(() => null);
+  if (!raw || typeof raw !== "object") {
+    return jsonError("Cuerpo de solicitud inválido", 400);
+  }
+  // Lista blanca de campos editables — nunca `id` ni `iniciales` (derivado).
+  const patch: Partial<Referee> = {};
+  if (typeof raw.nombre === "string") patch.nombre = raw.nombre;
+  if (typeof raw.zona === "string") patch.zona = raw.zona;
+  if (typeof raw.nivel === "string") patch.nivel = raw.nivel as Referee["nivel"];
+  if (typeof raw.estado === "string") patch.estado = raw.estado as Referee["estado"];
+  if (typeof raw.eventos === "number") patch.eventos = raw.eventos;
+  if (typeof raw.ultimo === "string") patch.ultimo = raw.ultimo;
+  if (typeof raw.disp === "boolean") patch.disp = raw.disp;
+  if (typeof raw.email === "string") patch.email = raw.email;
+  if (typeof raw.licencia === "string") patch.licencia = raw.licencia;
+
+  const updated = await dataService.updateReferee(id, patch);
   if (!updated) return jsonError("Árbitro no encontrado", 404);
   return jsonOk(updated);
 }

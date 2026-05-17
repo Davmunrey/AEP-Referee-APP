@@ -118,7 +118,7 @@ export default function SignInPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />

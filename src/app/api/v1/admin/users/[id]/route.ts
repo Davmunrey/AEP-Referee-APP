@@ -70,8 +70,13 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
   const admin = createAdminClient();
 
-  // Delete from auth + profiles (profiles has ON DELETE CASCADE)
-  await admin.auth.admin.deleteUser(id).catch(() => null);
+  // Borra el usuario de auth y verifica el resultado.
+  const { error: authError } = await admin.auth.admin.deleteUser(id);
+  if (authError) {
+    return jsonError(`No se pudo eliminar el usuario: ${authError.message}`, 500);
+  }
+  // Elimina el perfil explícitamente (no se asume FK ON DELETE CASCADE).
+  await admin.from("profiles").delete().eq("id", id);
 
   return jsonOk({ deleted: true });
 }

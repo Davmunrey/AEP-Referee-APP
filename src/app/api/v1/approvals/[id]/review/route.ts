@@ -13,7 +13,7 @@ export async function POST(request: Request, context: RouteContext) {
   if (!canApprove(user)) return jsonError("Sin permiso para aprobar", 403);
 
   const { id } = await context.params;
-  const body = await request.json();
+  const body = await request.json().catch(() => ({}));
   const approve = Boolean(body.approve);
   const comment = body.comment ? String(body.comment) : undefined;
 

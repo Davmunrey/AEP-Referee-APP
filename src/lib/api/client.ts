@@ -18,7 +18,6 @@ import type {
   ReportType,
   RosterHistoryEntry,
   RosterSession,
-  SessionUser,
 } from "@/lib/types";
 import { isApiError } from "./types";
 
@@ -38,15 +37,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return parsed.data;
 }
 
+// Nota: el login/logout se gestiona directamente con el cliente Supabase
+// en /sign-in y el sidebar — no hay método de API REST para auth.
 export const api = {
-  login: (email: string, password: string) =>
-    request<{ user: SessionUser }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
-
-  logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
-
   getMeta: () => request<AppMeta>("/meta"),
   getDashboard: () => request<DashboardPayload>("/dashboard"),
 
@@ -94,9 +87,10 @@ export const api = {
     request<{ message: string }>(`/competitions/${eventId}/roster/draft`, { method: "POST" }),
 
   submitRoster: (eventId: string) =>
-    request<{ message: string }>(`/competitions/${eventId}/roster/submit`, {
-      method: "POST",
-    }),
+    request<{ message: string; proposal: ApprovalProposal }>(
+      `/competitions/${eventId}/roster/submit`,
+      { method: "POST" },
+    ),
 
   exportRosterUrl: (eventId: string) =>
     `${getApiBaseUrl()}/competitions/${eventId}/roster/export`,

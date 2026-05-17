@@ -142,8 +142,9 @@ export function RosterBuilder({
   }, [filterZona, filterNivel, search, referees, selectedRoleKey, regulations, event.tipo]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
-    setAssignments((prev) => {
-      const next = { ...prev };
+    const snapshot = assignments;
+    setAssignments(() => {
+      const next = { ...snapshot };
       for (const k of Object.keys(next)) {
         if (next[k] === refereeId) delete next[k];
       }
@@ -157,6 +158,8 @@ export function RosterBuilder({
         setStatusMsg(null);
         setStatusIsError(false);
       } catch (err) {
+        // Revertir la actualización optimista al estado previo.
+        setAssignments(snapshot);
         setStatusMsg(err instanceof Error ? err.message : "No se pudo guardar la asignación");
         setStatusIsError(true);
       }
@@ -279,7 +282,9 @@ export function RosterBuilder({
               </select>
             </div>
             <p className="mt-2 font-mono text-[10px] text-subtle-muted">
-              {availableReferees.length} disponibles
+              {availableReferees.filter((r) => !assignedIds.has(r.id)).length} disponibles
+              {" · "}
+              {availableReferees.length} en total
             </p>
           </div>
           <ScrollArea className="flex-1">
@@ -294,7 +299,8 @@ export function RosterBuilder({
                   onDragStart={() => setDraggedId(referee.id)}
                   onDragEnd={() => setDraggedId(null)}
                   onClick={() => onQuickAssign(referee.id)}
-                  highlight={!!selectedSlot}
+                  highlight={!!selectedSlot && !readOnly}
+                  readOnly={readOnly}
                 />
               ))}
               {availableReferees.length === 0 && (
@@ -332,6 +338,7 @@ export function RosterBuilder({
                   onDrop={onDrop}
                   onClear={persistClear}
                   checkViolation={checkViolation}
+                  readOnly={readOnly}
                 />
               ))}
             </div>
@@ -351,6 +358,7 @@ function RefereeCard({
   onDragEnd,
   onClick,
   highlight,
+  readOnly = false,
 }: {
   zones: Zone[];
   referee: Referee;
@@ -360,22 +368,25 @@ function RefereeCard({
   onDragEnd: () => void;
   onClick: () => void;
   highlight: boolean;
+  readOnly?: boolean;
 }) {
+  const locked = assigned || readOnly;
   return (
     <li
-      draggable={!assigned}
+      draggable={!locked}
       onDragStart={(e) => {
-        if (assigned) return;
+        if (locked) return;
         e.dataTransfer.setData("text/plain", referee.id);
         onDragStart();
       }}
       onDragEnd={onDragEnd}
-      onClick={() => !assigned && onClick()}
+      onClick={() => !locked && onClick()}
       className={cn(
         "flex items-center gap-3 rounded-lg border border-border bg-surface/80 px-3 py-2.5 transition-colors",
         assigned && "cursor-not-allowed opacity-40",
-        !assigned && "cursor-grab active:cursor-grabbing",
-        !assigned && highlight && "hover:border-warning-border hover:bg-warning-subtle",
+        readOnly && !assigned && "cursor-default",
+        !locked && "cursor-grab active:cursor-grabbing",
+        !locked && highlight && "hover:border-warning-border hover:bg-warning-subtle",
         dragging && "opacity-50",
       )}
     >
@@ -414,6 +425,7 @@ function SessionBlock({
   onDrop,
   onClear,
   checkViolation,
+  readOnly = false,
 }: {
   session: RosterSession;
   assignments: AssignmentsMap;
@@ -423,6 +435,7 @@ function SessionBlock({
   onDrop: (slotKey: string, refereeId: string) => void;
   onClear: (slotKey: string) => void;
   checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
+  readOnly?: boolean;
 }) {
   const { filled, slots, pct } = sessionProgress(session, assignments);
   const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
@@ -468,7 +481,10 @@ function SessionBlock({
                       const id = e.dataTransfer.getData("text/plain");
                       if (id) onDrop(slotKey, id);
                     }}
-                    onClick={() => onSelectSlot(isSelected ? null : slotKey)}
+                    onClick={() => {
+                      if (readOnly) return;
+                      onSelectSlot(isSelected ? null : slotKey);
+                    }}
                     className={cn(
                       "relative min-h-[72px] rounded-lg border border-dashed p-3 transition-colors",
                       isSelected
