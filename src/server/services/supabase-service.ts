@@ -27,6 +27,7 @@ import type {
   SessionUser,
 } from "@/lib/types";
 import { computeJudgeProfile } from "@/lib/judge-stats";
+import { formatRosterExport } from "@/lib/roster-export";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assignmentsFromRows,
@@ -803,27 +804,10 @@ export const supabaseDataService = {
     const { data: referees } = await supabase.from("referees").select("id, nombre, nivel");
     const refMap = new Map((referees ?? []).map((r) => [r.id, r]));
 
-    const lines: string[] = [
-      `AEP TARIMA — Plantilla arbitral`,
-      `Evento: ${comp.nombre}`,
-      `Fechas: ${comp.fecha} – ${comp.fechaFin}`,
-      `Sede: ${comp.sede}`,
-      `Tipo: ${comp.tipo}`,
-      "",
-    ];
-    for (const session of roster.template) {
-      lines.push(`## ${session.sesion} — ${session.nombre}`);
-      for (const role of session.roles) {
-        for (let i = 0; i < role.slots; i++) {
-          const key = `${session.sesion}_${role.key}_${i}`;
-          const refId = roster.assignments[key];
-          const ref = refId ? refMap.get(refId) : undefined;
-          lines.push(`- ${role.rol} ${i + 1}: ${ref?.nombre ?? "— VACÍO"} (${ref?.nivel ?? ""})`);
-        }
-      }
-      lines.push("");
-    }
-    return lines.join("\n");
+    return formatRosterExport(comp, roster.template, roster.assignments, (id) => {
+      const r = refMap.get(id);
+      return r ? { nombre: String(r.nombre), nivel: String(r.nivel) } : undefined;
+    });
   },
 
   deleteReferee: async (id: string): Promise<boolean> => {

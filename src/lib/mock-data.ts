@@ -137,67 +137,85 @@ export const COMPETITIONS: Competition[] = [
   },
 ];
 
+/** 9 roles de competición — orden oficial del acta AEP. */
+const COMPETICION_ROLES: RosterSession["roles"] = [
+  { rol: "Juez Central", slots: 1, key: "central" },
+  { rol: "Juez Lateral", slots: 2, key: "lateral" },
+  { rol: "Ordenador", slots: 1, key: "ordenador" },
+  { rol: "Speaker / Mesa", slots: 1, key: "speaker" },
+  { rol: "Juez Control", slots: 1, key: "control" },
+  { rol: "Jurado", slots: 3, key: "jurado" },
+];
+
+/** Bloque de pesaje y revisión de equipamiento. */
+const PESAJE_ROLES: RosterSession["roles"] = [
+  { rol: "Pesaje", slots: 1, key: "pesaje" },
+  { rol: "Control Equipamiento", slots: 1, key: "equipamiento" },
+];
+
 export const ROSTER_TEMPLATE: RosterSession[] = [
   {
     sesion: "S1",
-    nombre: "Sesión 1 · Sábado mañana",
-    fecha: "Sáb 13 jun · 10:00–14:00",
-    grupos: ["-59 kg F", "-66 kg F"],
-    roles: [
-      { rol: "Jurado", slots: 3, key: "jurado" },
-      { rol: "Juez Central", slots: 1, key: "central" },
-      { rol: "Jueces Laterales", slots: 2, key: "lateral" },
-      { rol: "Pesaje", slots: 2, key: "pesaje" },
-      { rol: "Control Material", slots: 1, key: "material" },
-    ],
+    nombre: "Sesión 1",
+    dia: "Sábado",
+    categorias: [{ genero: "Hombres", pesos: "-74 kg (C) · -83 kg (C)" }],
+    horarioCompeticion: "10:30 - 13:45",
+    horarioPesaje: "08:30 - 10:00",
+    roles: COMPETICION_ROLES.map((r) => ({ ...r })),
+    pesajeRoles: PESAJE_ROLES.map((r) => ({ ...r })),
   },
   {
     sesion: "S2",
-    nombre: "Sesión 2 · Sábado tarde",
-    fecha: "Sáb 13 jun · 16:00–20:00",
-    grupos: ["-74 kg F", "-83 kg F"],
-    roles: [
-      { rol: "Jurado", slots: 3, key: "jurado" },
-      { rol: "Juez Central", slots: 1, key: "central" },
-      { rol: "Jueces Laterales", slots: 2, key: "lateral" },
-      { rol: "Pesaje", slots: 2, key: "pesaje" },
-      { rol: "Control Material", slots: 1, key: "material" },
-    ],
+    nombre: "Sesión 2",
+    dia: "Sábado",
+    categorias: [{ genero: "Mujeres", pesos: "-57 kg (A) · -63 kg (A)" }],
+    horarioCompeticion: "16:00 - 19:15",
+    horarioPesaje: "14:00 - 15:30",
+    roles: COMPETICION_ROLES.map((r) => ({ ...r })),
+    pesajeRoles: PESAJE_ROLES.map((r) => ({ ...r })),
   },
   {
     sesion: "S3",
-    nombre: "Sesión 3 · Domingo mañana",
-    fecha: "Dom 14 jun · 10:00–14:00",
-    grupos: ["-66 kg M", "-74 kg M"],
-    roles: [
-      { rol: "Jurado", slots: 3, key: "jurado" },
-      { rol: "Juez Central", slots: 1, key: "central" },
-      { rol: "Jueces Laterales", slots: 2, key: "lateral" },
-      { rol: "Pesaje", slots: 2, key: "pesaje" },
-      { rol: "Control Material", slots: 1, key: "material" },
-    ],
+    nombre: "Sesión 3",
+    dia: "Domingo",
+    categorias: [{ genero: "Hombres", pesos: "-93 kg (A) · -105 kg (A)" }],
+    horarioCompeticion: "10:30 - 13:45",
+    horarioPesaje: "08:30 - 10:00",
+    roles: COMPETICION_ROLES.map((r) => ({ ...r })),
+    pesajeRoles: PESAJE_ROLES.map((r) => ({ ...r })),
+  },
+  {
+    sesion: "S4",
+    nombre: "Sesión 4",
+    dia: "Domingo",
+    categorias: [{ genero: "Mujeres", pesos: "-69 kg (A) · -76 kg (A)" }],
+    horarioCompeticion: "16:00 - 19:15",
+    horarioPesaje: "14:00 - 15:30",
+    roles: COMPETICION_ROLES.map((r) => ({ ...r })),
+    pesajeRoles: PESAJE_ROLES.map((r) => ({ ...r })),
   },
 ];
 
 export const INITIAL_ASSIGNMENTS: AssignmentsMap = {
-  S1_jurado_0: "j001",
-  S1_jurado_1: "j002",
   S1_central_0: "j005",
   S1_lateral_0: "j007",
   S1_lateral_1: "j010",
+  S1_ordenador_0: "j009",
+  S1_speaker_0: "j006",
+  S1_control_0: "j003",
+  S1_jurado_0: "j001",
+  S1_jurado_1: "j002",
   S1_pesaje_0: "j003",
-  S1_pesaje_1: "j006",
-  S1_material_0: "j009",
-  S2_jurado_0: "j002",
-  S2_jurado_1: "j001",
+  S1_equipamiento_0: "j009",
   S2_central_0: "j007",
   S2_lateral_0: "j005",
   S2_lateral_1: "j010",
+  S2_jurado_0: "j002",
+  S2_jurado_1: "j001",
   S2_pesaje_0: "j014",
-  S3_jurado_0: "j001",
   S3_central_0: "j010",
   S3_lateral_0: "j007",
-  S3_pesaje_0: "j013",
+  S3_jurado_0: "j001",
 };
 
 export const CALENDAR_EVENTS: Record<string, CalendarDayEvent> = {
