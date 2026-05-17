@@ -30,9 +30,9 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 | Método | Ruta | Permisos | Descripción |
 |--------|------|----------|-------------|
 | `GET` | `/referees` | todos | Listado (zona filtrada para `delegado_zona`) |
-| `POST` | `/referees` | no `solo_ver` | Crear juez |
+| `POST` | `/referees` | no `solo_ver` | Crear juez. `delegado_zona` solo puede crear jueces en su propia zona (validado en servidor). |
 | `GET` | `/referees/:id` | todos | Detalle |
-| `PATCH` | `/referees/:id` | no `solo_ver` | Actualizar |
+| `PATCH` | `/referees/:id` | no `solo_ver` | Actualizar. `delegado_zona` solo puede editar jueces de su zona y no puede moverlos a otra. |
 | `DELETE` | `/referees/:id` | `super_admin`, `delegado_jueces` | Eliminar |
 
 ## Campeonatos
@@ -75,21 +75,24 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 
 | Método | Ruta | Permisos | Descripción |
 |--------|------|----------|-------------|
-| `GET` | `/promotions` | todos | Listado |
+| `GET` | `/promotions` | todos | Listado (filtrado por zona para `delegado_zona`) |
 | `POST` | `/promotions` | no `solo_ver` | Solicitar ascenso |
-| `POST` | `/promotions/:id/review` | `canReviewPromotions` | Aprobar / rechazar |
+| `POST` | `/promotions/:id/review` | `canReviewPromotions` | `{ approve, comment? }` — **comentario obligatorio al rechazar** (paridad con aprobaciones) |
 
 ## Exámenes e informes
 
+Tanto `GET /exams` como `GET /reports` aplican **scoping por zona** automáticamente: un `delegado_zona` solo ve exámenes/informes de jueces de su zona.
+
 | Método | Ruta | Permisos | Descripción |
 |--------|------|----------|-------------|
-| `GET` | `/exams` | todos | `?refereeId=` opcional |
+| `GET` | `/exams` | todos | `?refereeId=` opcional. Filtrado por zona para `delegado_zona`. |
 | `POST` | `/exams` | no `solo_ver` | Crear examen |
 | `PATCH` | `/exams/:id` | no `solo_ver` | Calificar / editar |
 | `DELETE` | `/exams/:id` | `canAdminJudges` | Eliminar |
-| `GET` | `/reports` | todos | `?refereeId=` opcional |
+| `GET` | `/reports` | todos | `?refereeId=` opcional. Filtrado por zona para `delegado_zona`. |
 | `POST` | `/reports` | no `solo_ver` | Subir informe |
-| `DELETE` | `/reports/:id` | no `solo_ver` (admin para borrado duro) | Eliminar |
+| `PATCH` | `/reports/:id` | no `solo_ver` | Editar campos: `titulo`, `tipo`, `evento`, `contenido`, `adjuntoUrl` |
+| `DELETE` | `/reports/:id` | `canAdminJudges` | Eliminar |
 
 ## Estadísticas y normativa
 
@@ -101,9 +104,11 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 
 ## Administración
 
+`canManageUsers` cubre `super_admin` y `delegado_jueces`.
+
 | Método | Ruta | Permisos | Descripción |
 |--------|------|----------|-------------|
-| `GET` | `/admin/users` | `canManageUsers` | Lista usuarios |
-| `POST` | `/admin/users` | `canManageUsers` | Crear usuario |
-| `PATCH` | `/admin/users/:id` | `canManageUsers` | `{ activo }` |
-| `DELETE` | `/admin/users/:id` | `canManageUsers` | Eliminar |
+| `GET` | `/admin/users` | `canManageUsers` | Lista usuarios con `created_at` |
+| `POST` | `/admin/users` | `canManageUsers` | Crear usuario `{ email, password, nombre, role, zona?, rolLabel? }` |
+| `PATCH` | `/admin/users/:id` | `canManageUsers` | `{ activo?, role?, zona?, nombre?, rolLabel? }` — guards anti-self-demote |
+| `DELETE` | `/admin/users/:id` | `canManageUsers` | Eliminar (no permite borrar la propia cuenta) |

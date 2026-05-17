@@ -81,20 +81,27 @@ Primer registro → `super_admin`. Detalle: [`AUTH.md`](./AUTH.md).
 ## Flujo de tarima
 
 1. Delegado abre `/events/[id]` — ve plantilla (guardada o preset).
-2. Opcional: **Editar plantilla** → `PUT .../roster/template`.
-3. Asigna jueces → `POST .../assign`; flags → `PATCH .../flags`.
-4. Validación normativa en cliente (`roster-rules`).
-5. Borrador o **Enviar a aprobación** → `approval_proposals`.
-6. `super_admin` / `delegado_jueces` aprueban en `/approvals`.
+2. Opcional: **Importar PDF** desde la cabecera → `POST .../roster/template/import?apply=true`. Genera plantilla con sesiones + grupos.
+3. Opcional: **Editar plantilla** → `PUT .../roster/template`. Cancelar pide confirmación si hay cambios sin guardar.
+4. Asigna jueces → `POST .../assign`; flags → `PATCH .../flags`.
+5. Validación normativa en cliente (`roster-rules`); `violationCount` cubre `roles` + `pesajeRoles`.
+6. Borrador o **Enviar a aprobación** → `approval_proposals`.
+7. `super_admin` / `delegado_jueces` aprueban en `/approvals`.
 
 ## Inteligencia del dashboard
 
 `getDashboard()` + `buildIntelligence()` — salud 0–100 e insights sin entrada manual. `health_snapshots` (004) para histórico.
 
+KPIs filtrados por zona para `delegado_zona` tanto en modo Supabase (vía `getCompetitions(user)`) como en modo memoria (`buildKpis(user)` desde la auditoría).
+
 ## Validaciones clave
 
-- Nivel mínimo por rol y tipo (matriz AEP).
+- Nivel mínimo por rol y tipo (matriz AEP). Cubre roles de competición y de pesaje.
 - Un juez, un slot activo.
 - Solo jueces activos y disponibles en pool.
 - Rechazo de aprobación con comentario obligatorio.
+- Rechazo de ascenso con comentario obligatorio (paridad con aprobaciones).
 - Confirmación si roster incompleto al enviar.
+- `delegado_zona` no puede crear/editar jueces fuera de su zona ni mover jueces entre zonas.
+- Importar PDF: solo `application/pdf` o `application/x-pdf`, máx 5 MB.
+- Admin no puede desactivar/eliminar su propia cuenta ni cambiarse el rol.

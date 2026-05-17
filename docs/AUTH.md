@@ -48,14 +48,29 @@ El `id` en `profiles` coincide 1:1 con el `id` (UUID) de `auth.users` de Supabas
 
 Implementación en `src/lib/auth/session.ts`:
 
-| Rol | `canEditRoster` | `canApprove` | `canManageUsers` | `canManageJudges` | `canAdminJudges` |
-|-----|-----------------|--------------|------------------|-------------------|------------------|
-| `super_admin` | cualquier zona | sí | sí | sí | sí |
-| `delegado_jueces` | cualquier zona | sí | sí | sí | sí |
-| `delegado_zona` | solo `user.zona === eventZona` | no | no | sí | no |
-| `solo_ver` | no | no | no | no | no |
+| Rol | `canEditRoster` | `canApprove` | `canManageUsers` | `canManageJudges` | `canAdminJudges` | `canReviewPromotions` |
+|-----|-----------------|--------------|------------------|-------------------|------------------|------------------------|
+| `super_admin` | cualquier zona | sí | sí | sí | sí | sí |
+| `delegado_jueces` | cualquier zona | sí | sí | sí | sí | sí |
+| `delegado_zona` | solo `user.zona === eventZona` | no | no | sí (su zona) | no | no |
+| `solo_ver` | no | no | no | no | no | no |
 
-`delegado_jueces` tiene **paridad operativa** con `super_admin` en tarima, aprobaciones y usuarios (diseño federativo: jefe nacional de jueces).
+`delegado_jueces` tiene **paridad operativa** con `super_admin` en tarima, aprobaciones, ascensos y usuarios (diseño federativo: jefe nacional de jueces).
+
+### Scoping por zona (`delegado_zona`)
+
+El servidor aplica filtros de zona en todos los recursos derivados de jueces:
+
+| Recurso | Lectura (GET) | Escritura |
+|---------|--------------|-----------|
+| Campeonatos | filtra `zona === user.zona` | crear/editar/borrar solo en su zona |
+| Tarima / asignaciones / flags | hereda zona del campeonato | igual |
+| Jueces | filtra por zona | `POST`/`PATCH` solo en su zona; no puede mover juez a otra zona |
+| Aprobaciones | filtra por zona | no aprueba |
+| Ascensos | filtra por zona | solicita; no revisa |
+| Exámenes | filtra por zona del juez | crea/edita; no elimina |
+| Informes | filtra por zona del juez | crea/edita; no elimina |
+| KPIs dashboard (memoria) | calculados con datos de su zona | n/a |
 
 ## Alta de usuarios
 

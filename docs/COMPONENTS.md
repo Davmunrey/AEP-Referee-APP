@@ -98,12 +98,19 @@
 ### Administración
 | Componente | Descripción |
 |------------|-------------|
-| `UsersAdmin` | Alta/baja/activación (`canManageUsers`: `super_admin`, `delegado_jueces`) |
+| `UsersAdmin` | Alta/baja/activación + edición (rol, zona, nombre), búsqueda, filtros (rol/zona/estado), columna `created_at`, modal de credenciales generadas tras crear usuario (`canManageUsers`: `super_admin`, `delegado_jueces`) |
+
+### Sign-in / auth
+| Componente | Descripción |
+|------------|-------------|
+| `SignInPage` | Tabs sign-in / sign-up con micro-animación, aviso de rol `solo_ver` en signup, campo nombre obligatorio en signup, enlace "¿Olvidaste tu contraseña?" → flujo `resetPasswordForEmail` |
 
 ## Accesibilidad
 
-- Todos los modales tienen `role="dialog"`, `aria-modal="true"` y `aria-labelledby`
+- Todos los modales tienen `role="dialog"`, `aria-modal="true"`, `aria-labelledby` y **focus trap** (Tab cycle dentro del diálogo)
 - Escape y click en backdrop cierran todos los modales
 - `focus-ring` en todos los elementos interactivos (inputs, selects, botones)
-- `aria-label` en botones sin texto visible (iconos)
+- `aria-label` en botones sin texto visible (iconos), `aria-pressed` en toggles
+- Skip link "Saltar al contenido principal" → `#main-content`
+- `htmlFor`/`id` correctos en todos los formularios (`referee-edit-form`, etc.)
 - `Empty states` descriptivos que distinguen "lista vacía" de "sin resultados con filtro"

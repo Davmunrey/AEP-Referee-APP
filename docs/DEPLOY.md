@@ -51,11 +51,17 @@
 ## Checklist post-deploy
 
 - [ ] Primer usuario → `super_admin`
-- [ ] Login email/contraseña
-- [ ] Crear delegado de zona en `/admin/users`
-- [ ] Delegado de zona solo ve su zona
+- [ ] Login email/contraseña + reset password (`¿Olvidaste tu contraseña?`)
+- [ ] Crear delegado de zona en `/admin/users` y comprobar modal de credenciales
+- [ ] Editar rol/zona de un usuario desde la tabla
+- [ ] Delegado de zona solo ve su zona en jueces, exámenes, informes y aprobaciones
+- [ ] Delegado de zona NO puede crear/editar jueces de otra zona (esperado 403)
+- [ ] Importar PDF de horario en `/events/[id]` desde botón "Importar PDF" en cabecera
 - [ ] Editar plantilla y asignar juez en tarima
 - [ ] Flags `*` / `↑↓` en export TXT
+- [ ] Grupos visibles en cabecera de sesión y export TXT
 - [ ] Enviar propuesta y aprobar como `delegado_jueces` o `super_admin`
+- [ ] Rechazar ascenso pide comentario obligatorio
+- [ ] Sidebar Usuarios visible para `delegado_jueces`
 
 Guía operativa: [`GUIA-USO.md`](./GUIA-USO.md).
