@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { canApprove, canEditRoster, canManageUsers } from "@/lib/auth/session";
+import {
+  canAdminJudges,
+  canApprove,
+  canEditRoster,
+  canManageJudges,
+  canManageUsers,
+} from "@/lib/auth/session";
 import type { SessionUser, UserRole } from "@/lib/types";
 
 /**
- * NOTE ON ROLES: the task brief referenced roles `super_admin`,
- * `delegado_jueces`, `delegado_zona`, `solo_ver`, and helpers
- * `canManageJudges` / `canAdminJudges`. The actual codebase
- * (src/lib/types.ts -> UserRole, src/lib/auth/session.ts) uses the role
- * triplet `nacional` | `regional` | `lectura` and exports only
- * `canEditRoster`, `canApprove`, `canManageUsers`. These tests cover the
- * RBAC helpers that genuinely exist; the brief's names do not appear in
- * the source.
+ * RBAC para el modelo de 4 roles:
+ *  super_admin · delegado_jueces · delegado_zona · solo_ver
  */
 function user(role: UserRole, zona?: string): SessionUser {
   return {
@@ -25,39 +25,60 @@ function user(role: UserRole, zona?: string): SessionUser {
 }
 
 describe("canEditRoster", () => {
-  it("denies read-only (lectura) users", () => {
-    expect(canEditRoster(user("lectura"), "Centro")).toBe(false);
+  it("super_admin puede editar cualquier zona", () => {
+    expect(canEditRoster(user("super_admin"), "Centro")).toBe(true);
+    expect(canEditRoster(user("super_admin"), "Norte")).toBe(true);
+    expect(canEditRoster(user("super_admin"))).toBe(true);
   });
 
-  it("allows national (nacional) users for any zone", () => {
-    expect(canEditRoster(user("nacional"), "Centro")).toBe(true);
-    expect(canEditRoster(user("nacional"), "Norte")).toBe(true);
-    expect(canEditRoster(user("nacional"))).toBe(true);
+  it("delegado_zona solo edita su propia zona", () => {
+    const zona = user("delegado_zona", "Centro");
+    expect(canEditRoster(zona, "Centro")).toBe(true);
+    expect(canEditRoster(zona, "Norte")).toBe(false);
+    expect(canEditRoster(zona, undefined)).toBe(false);
   });
 
-  it("allows regional users only within their own zone", () => {
-    const regional = user("regional", "Centro");
-    expect(canEditRoster(regional, "Centro")).toBe(true);
-    expect(canEditRoster(regional, "Norte")).toBe(false);
+  it("delegado_jueces no gestiona campeonatos", () => {
+    expect(canEditRoster(user("delegado_jueces"), "Centro")).toBe(false);
   });
 
-  it("denies a regional user when the event has no zone", () => {
-    expect(canEditRoster(user("regional", "Centro"), undefined)).toBe(false);
+  it("solo_ver nunca edita", () => {
+    expect(canEditRoster(user("solo_ver"), "Centro")).toBe(false);
   });
 });
 
 describe("canApprove", () => {
-  it("allows only national users", () => {
-    expect(canApprove(user("nacional"))).toBe(true);
-    expect(canApprove(user("regional", "Centro"))).toBe(false);
-    expect(canApprove(user("lectura"))).toBe(false);
+  it("solo super_admin aprueba propuestas", () => {
+    expect(canApprove(user("super_admin"))).toBe(true);
+    expect(canApprove(user("delegado_jueces"))).toBe(false);
+    expect(canApprove(user("delegado_zona", "Centro"))).toBe(false);
+    expect(canApprove(user("solo_ver"))).toBe(false);
   });
 });
 
 describe("canManageUsers", () => {
-  it("allows only national users", () => {
-    expect(canManageUsers(user("nacional"))).toBe(true);
-    expect(canManageUsers(user("regional", "Centro"))).toBe(false);
-    expect(canManageUsers(user("lectura"))).toBe(false);
+  it("solo super_admin gestiona usuarios", () => {
+    expect(canManageUsers(user("super_admin"))).toBe(true);
+    expect(canManageUsers(user("delegado_jueces"))).toBe(false);
+    expect(canManageUsers(user("delegado_zona", "Centro"))).toBe(false);
+    expect(canManageUsers(user("solo_ver"))).toBe(false);
+  });
+});
+
+describe("canManageJudges", () => {
+  it("todos menos solo_ver pueden crear/editar jueces", () => {
+    expect(canManageJudges(user("super_admin"))).toBe(true);
+    expect(canManageJudges(user("delegado_jueces"))).toBe(true);
+    expect(canManageJudges(user("delegado_zona", "Centro"))).toBe(true);
+    expect(canManageJudges(user("solo_ver"))).toBe(false);
+  });
+});
+
+describe("canAdminJudges", () => {
+  it("solo super_admin y delegado_jueces administran/eliminan jueces", () => {
+    expect(canAdminJudges(user("super_admin"))).toBe(true);
+    expect(canAdminJudges(user("delegado_jueces"))).toBe(true);
+    expect(canAdminJudges(user("delegado_zona", "Centro"))).toBe(false);
+    expect(canAdminJudges(user("solo_ver"))).toBe(false);
   });
 });
