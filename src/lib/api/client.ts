@@ -76,6 +76,71 @@ export const api = {
       { method: "PUT", body: JSON.stringify({ template }) },
     ),
 
+  importCalendar: async (
+    file: File,
+    apply = false,
+  ): Promise<{
+    preview: {
+      filename: string;
+      year: number;
+      totalDetected: number;
+      eligibleCount: number;
+      duplicateCount: number;
+      toCreateCount: number;
+      warnings: string[];
+      entries: Array<{
+        rawDate: string;
+        fechaInicio: string | null;
+        fechaFin: string | null;
+        nombre: string;
+        localidad: string;
+        organizador: string;
+        tipo: string | null;
+        zona?: string;
+        pendiente: boolean;
+        nuevo: boolean;
+      }>;
+    };
+    created?: number;
+    errors?: string[];
+  }> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const path = `/calendar/import${apply ? "?apply=true" : ""}`;
+    const res = await fetch(`${getApiBaseUrl()}${path}`, {
+      method: "POST",
+      credentials: "include",
+      body: fd,
+    });
+    const parsed = await parseApiResponse<{
+      preview: {
+        filename: string;
+        year: number;
+        totalDetected: number;
+        eligibleCount: number;
+        duplicateCount: number;
+        toCreateCount: number;
+        warnings: string[];
+        entries: Array<{
+          rawDate: string;
+          fechaInicio: string | null;
+          fechaFin: string | null;
+          nombre: string;
+          localidad: string;
+          organizador: string;
+          tipo: string | null;
+          zona?: string;
+          pendiente: boolean;
+          nuevo: boolean;
+        }>;
+      };
+      created?: number;
+      errors?: string[];
+    }>(res);
+    if (isApiError(parsed)) throw new Error(parsed.error);
+    return parsed.data;
+  },
+
   importSchedule: async (
     eventId: string,
     file: File,

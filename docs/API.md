@@ -45,6 +45,18 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 | `PATCH` | `/competitions/:id` | `canEditRoster` | Actualizar |
 | `DELETE` | `/competitions/:id` | `canEditRoster` | Eliminar |
 
+### Importar Calendario AEP
+
+| Método | Ruta | Permisos | Descripción |
+|--------|------|----------|-------------|
+| `POST` | `/calendar/import` | `super_admin`, `delegado_jueces` | `multipart/form-data` con `file` (PDF AEP). Devuelve `{ preview }` con todas las entradas detectadas. Con `?apply=true` crea las competiciones de ámbito español (AEP-1/2/3) que no existan ya. Límite 5 MB. |
+
+Filtro España aplicado: nivel ∈ {AEP1, AEP2, AEP3} y localidad/organizador no extranjeros (excluye EPF, IPF, Finland, Malta, Slovenia…). Detección de duplicados por `(nombre + fechaInicio)`. Entradas marcadas como `pendiente` se omiten al aplicar.
+
+### Lock por fecha
+
+Todas las rutas mutadoras de tarima (`PUT .../template`, `POST .../template/import`, `PATCH .../flags`, `POST .../assign|clear|draft|submit`) devuelven **`423 Locked`** si `fechaFin < hoy`. Mensaje: `"Campeonato finalizado: solo lectura"`. La UI muestra badge **«Cerrado»** y oculta los controles de edición.
+
 ## Tarima (roster)
 
 | Método | Ruta | Permisos | Descripción |
