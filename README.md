@@ -1,6 +1,6 @@
-# AEP Tarima — Plataforma de Gestión Arbitral
+# AEP Tarima — Plataforma de Gestión de jueces
 
-Herramienta interna de la **Asociación Española de Powerlifting (AEP)** para la gestión integral de plantillas arbitrales en campeonatos nacionales y regionales.
+Herramienta interna de la **Asociación Española de Powerlifting (AEP)** para la gestión integral de plantillas de jueces en campeonatos nacionales y regionales.
 
 **Producción:** [https://aep-tarima.vercel.app/](https://aep-tarima.vercel.app/) · **Marca:** AEP Tarima · color primario `#e63b2e` · diseño en [`docs/DESIGN.md`](./docs/DESIGN.md).
 
@@ -11,7 +11,7 @@ Herramienta interna de la **Asociación Española de Powerlifting (AEP)** para l
 ### Dashboard operativo inteligente
 Centro de control que se **retroalimenta de sus propios datos**:
 
-- **KPIs de temporada** — árbitros activos, próximas competiciones, plazas sin cubrir, aprobaciones pendientes.
+- **KPIs de temporada** — jueces activos, próximas competiciones, plazas sin cubrir, aprobaciones pendientes.
 - **Salud operativa** (`HealthGauge`) — índice ponderado 0–100 sobre 5 factores, con anillo visual y comparación frente a la captura anterior.
 - **Recomendaciones automáticas** (`InsightsPanel`) — sugerencias priorizadas (crítico / alerta / sugerencia) con enlace a la acción.
 - **Previsión de cobertura** (`CoverageForecast`) — progreso por plantilla, días restantes y nivel de riesgo.
@@ -22,10 +22,10 @@ Centro de control que se **retroalimenta de sus propios datos**:
 - **Listado** con filtros por tipo (AEP-1/2/3), estado y búsqueda.
 - **Creación** con validación de fechas, zona y plazas.
 - **Plantilla por evento** — cada campeonato guarda su propia estructura de sesiones (`competitions.template`). Si está vacía, la app aplica el preset oficial según el tipo (AEP-1, AEP-2 o AEP-3).
-- **Editor de plantilla** (`RosterTemplateEditor`) — sesiones, días, categorías, horarios y roles editables antes de asignar árbitros.
+- **Editor de plantilla** (`RosterTemplateEditor`) — sesiones, días, categorías, horarios y roles editables antes de asignar jueces.
 - **Constructor de tarima** (`RosterBuilder`) — asignación por arrastre o clic, validación normativa, flags de slot (`*` compartido, `↑↓` intercambio), historial y envío a aprobación.
 
-### Directorio de árbitros / Ficha de juez
+### Directorio de jueces / Ficha de juez
 Búsqueda, filtros, paginación, trayectoria (exámenes, informes), alta, edición y ascensos.
 
 ### Exámenes, informes, aprobaciones, ascensos, estadísticas, normativa IPF/AEP
@@ -120,7 +120,7 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 | `npm run dev` | Servidor de desarrollo (puerto 3000) |
 | `npm run build` | Build de producción |
 | `npm run start` | Servidor de producción |
-| `npm run db:seed` | Pobla zonas, árbitros, campeonatos y normativa |
+| `npm run db:seed` | Pobla zonas, jueces, campeonatos y normativa |
 | `npm run db:backfill-templates` | Rellena `competitions.template` desde presets por tipo |
 | `npm test` | Vitest (reglas de tarima, plantillas, RBAC) |
 | `npm run lint` | ESLint |
@@ -145,5 +145,5 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 
 ## Normativa IPF de referencia
 - [IPF Technical Rules (EN)](https://www.powerlifting.sport/rules/codes/info/technical-rules)
-- [Árbitros IPF](https://www.powerlifting.sport/federation/referees)
+- [Jueces IPF](https://www.powerlifting.sport/federation/referees)
 - [Reglamento AEP](https://powerlifting.es)

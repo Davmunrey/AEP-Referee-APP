@@ -30,6 +30,13 @@ export async function POST(request: Request) {
   if (!body.nombre || !body.zona || !body.nivel || !body.estado) {
     return jsonError("Faltan campos obligatorios", 400);
   }
+  // delegado_zona solo puede crear jueces en su propia zona
+  if (user.role === "delegado_zona") {
+    if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
+    if (body.zona !== user.zona) {
+      return jsonError("Solo puedes crear jueces en tu zona", 403);
+    }
+  }
   const referee = await dataService.createReferee({
     nombre: body.nombre,
     zona: body.zona,

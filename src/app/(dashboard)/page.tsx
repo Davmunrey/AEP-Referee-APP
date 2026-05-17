@@ -20,21 +20,32 @@ export default async function DashboardPage() {
 
   return (
     <PageShell>
+      {/* Live status bar */}
       <DashboardLive generatedAt={dashboard.generatedAt} />
+
+      {/* Hero */}
       <DashboardHero user={dashboard.currentUser} dashboard={dashboard} />
+
+      {/* KPIs */}
       <KpiCards kpis={dashboard.kpis} />
-      <div className="grid gap-4 xl:grid-cols-2">
+
+      {/* Health + Insights side-by-side on large screens */}
+      <div className="grid gap-4 lg:grid-cols-2">
         <HealthGauge health={dashboard.health} />
         <InsightsPanel insights={dashboard.insights} />
       </div>
-      <div className="grid gap-4 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+
+      {/* Calendar (wider) + Coverage forecast */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>
         <CoverageForecast coverage={dashboard.coverage} />
       </div>
-      <div className="grid gap-4 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+
+      {/* Events table (wider) + Activity feed */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <EventsTable competitions={dashboard.upcomingCompetitions} />
         </div>
         <ActivityFeed activity={dashboard.activity} />

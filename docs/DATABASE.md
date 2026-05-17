@@ -22,7 +22,7 @@ Las migraciones 004+ usan patrones idempotentes donde aplica. Sin 004/005 la app
 |-------|-----|
 | `zones` | Códigos de zona (MAD, CAT, …) |
 | `profiles` | Perfil 1:1 con `auth.users` (`role`, `zona`, `activo`) |
-| `referees` | Directorio de árbitros |
+| `referees` | Directorio de jueces |
 | `competitions` | Campeonatos; **`template` JSONB** — plantilla de sesiones por evento |
 | `roster_assignments` | `slot_key` → `referee_id`; **`flags` JSONB** — `{ compartido, intercambio }` |
 | `approval_proposals` | Propuestas de tarima |
@@ -32,7 +32,7 @@ Las migraciones 004+ usan patrones idempotentes donde aplica. Sin 004/005 la app
 | `regulation_rules` | Normativa IPF/AEP |
 | `app_config` | JSON legacy (`roster_template`, calendario) |
 | `health_snapshots` | Bitácora de salud operativa |
-| `referee_exams` | Exámenes arbitrales |
+| `referee_exams` | Exámenes de jueces |
 | `referee_reports` | Informes de juez |
 
 ### Columnas nuevas (008)
@@ -63,7 +63,7 @@ Políticas con `public.current_profile()` para filtrar por rol y zona. Rutas `/a
 npm run db:seed
 ```
 
-Pobla zonas, normativa, árbitros, campeonatos demo, etc. No crea usuarios auth (registro manual o `/admin/users`).
+Pobla zonas, normativa, jueces, campeonatos demo, etc. No crea usuarios auth (registro manual o `/admin/users`).
 
 ## Backfill de plantillas (opción A)
 

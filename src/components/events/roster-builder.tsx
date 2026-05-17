@@ -24,9 +24,20 @@ import type {
 } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, ArrowLeft, Check, GripVertical, Info, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  Info,
+  X,
+} from "lucide-react";
 import { RosterHistoryPanel } from "@/components/events/roster-history-panel";
 import { RosterTemplateEditor } from "@/components/events/roster-template-editor";
+import { ScheduleImportDialog } from "@/components/events/schedule-import-dialog";
+import { FileUp } from "lucide-react";
 
 const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
 
@@ -82,6 +93,7 @@ export function RosterBuilder({
   const [flags, setFlags] = useState<FlagsMap>(initialFlags);
   const [isEditing, setIsEditing] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [filterZona, setFilterZona] = useState("TODAS");
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [search, setSearch] = useState("");
@@ -107,18 +119,27 @@ export function RosterBuilder({
   const violationCount = useMemo(() => {
     let count = 0;
     for (const session of template) {
-      for (const role of session.roles) {
+      const allRoles = [...session.roles, ...(session.pesajeRoles ?? [])];
+      for (const role of allRoles) {
         for (let i = 0; i < role.slots; i++) {
           const key = `${session.sesion}_${role.key}_${i}`;
           const refId = assignments[key];
-          if (refId && violatesRegulation(role.key, event.tipo, getReferee(refId)?.nivel ?? "Regional", regulations)) {
+          if (
+            refId &&
+            violatesRegulation(
+              role.key,
+              event.tipo,
+              getReferee(refId)?.nivel ?? "Regional",
+              regulations,
+            )
+          ) {
             count++;
           }
         }
       }
     }
     return count;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignments, template, regulations, event.tipo]);
 
   const totalSlots = template.reduce(
@@ -216,10 +237,7 @@ export function RosterBuilder({
   const toggleFlag = (slotKey: string, field: keyof SlotFlags) => {
     if (readOnly || !assignments[slotKey]) return;
     const current = flags[slotKey] ?? {};
-    const next: SlotFlags = {
-      ...current,
-      [field]: !current[field],
-    };
+    const next: SlotFlags = { ...current, [field]: !current[field] };
     const snapshot = flags;
     setFlags((prev) => ({ ...prev, [slotKey]: next }));
     startTransition(async () => {
@@ -254,8 +272,22 @@ export function RosterBuilder({
     });
   };
 
+  const isDragging = draggedId !== null;
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
+      <ScheduleImportDialog
+        eventId={event.id}
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onApplied={(tpl) => {
+          setTemplate(tpl);
+          setImportOpen(false);
+          setStatusMsg("Plantilla importada desde PDF");
+          setStatusIsError(false);
+        }}
+      />
+      {/* Page header */}
       <div className="glass-panel-soft border-b border-border-muted px-6 py-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -276,14 +308,29 @@ export function RosterBuilder({
               </p>
             </div>
           </div>
+
           <div className="flex flex-col items-end gap-2">
             {violationCount > 0 && (
-              <p className="flex items-center gap-1.5 rounded-lg border border-warning-border bg-warning-subtle px-3 py-1.5 text-xs font-medium text-warning">
+              <p className="flex items-center gap-1.5 rounded-lg border border-warning-border bg-warning-subtle px-3 py-1.5 text-xs font-semibold text-warning">
                 <AlertTriangle className="h-3.5 w-3.5" />
-                {violationCount} violación{violationCount > 1 ? "es" : ""} normativa
+                {violationCount} violación{violationCount > 1 ? "es" : ""} de normativa
               </p>
             )}
             <div className="flex items-center gap-2">
+              {canEdit && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setImportOpen(true)}
+                  disabled={pending || savingTemplate}
+                  title="Importar horario en PDF y generar la plantilla automáticamente"
+                >
+                  <FileUp className="h-3.5 w-3.5" />
+                  Importar PDF
+                </Button>
+              )}
               {canEdit && (
                 <Button
                   type="button"
@@ -305,7 +352,10 @@ export function RosterBuilder({
                   pending={pending}
                   statusMsg={statusMsg}
                   statusIsError={statusIsError}
-                  onStatus={(msg, isError) => { setStatusMsg(msg); setStatusIsError(isError ?? false); }}
+                  onStatus={(msg, isError) => {
+                    setStatusMsg(msg);
+                    setStatusIsError(isError ?? false);
+                  }}
                   startTransition={startTransition}
                 />
               )}
@@ -314,11 +364,23 @@ export function RosterBuilder({
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] xl:grid-cols-[minmax(0,360px)_1fr]">
+      {/* Main layout: left pane (referees) + right pane (acta) */}
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,300px)_1fr] xl:grid-cols-[minmax(0,340px)_1fr]">
+        {/* ── Left pane: referee list ── */}
         <section className="flex flex-col border-r border-border">
           <div className="border-b border-border p-4">
-            <h2 className="text-sm font-semibold text-foreground-secondary">Árbitros disponibles</h2>
-            <p className="text-xs text-subtle-muted">Arrastra o selecciona un slot y haz clic</p>
+            <h2 className="text-sm font-semibold text-foreground-secondary">
+              Jueces disponibles
+            </h2>
+            <p className="mt-0.5 text-xs text-subtle-muted">
+              {selectedSlot && !readOnly ? (
+                <span className="font-medium text-primary">
+                  Slot seleccionado — haz clic en un juez para asignar
+                </span>
+              ) : (
+                "Arrastra o selecciona un slot primero"
+              )}
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Input
                 placeholder="Buscar por nombre..."
@@ -330,6 +392,7 @@ export function RosterBuilder({
                 value={filterZona}
                 onChange={(e) => setFilterZona(e.target.value)}
                 className={selectFieldClass}
+                aria-label="Filtrar por zona"
               >
                 <option value="TODAS">Todas las zonas</option>
                 {zones.map((z) => (
@@ -342,6 +405,7 @@ export function RosterBuilder({
                 value={filterNivel}
                 onChange={(e) => setFilterNivel(e.target.value)}
                 className={selectFieldClass}
+                aria-label="Filtrar por nivel"
               >
                 <option value="TODOS">Todos los niveles</option>
                 {levels.map((n) => (
@@ -352,13 +416,14 @@ export function RosterBuilder({
               </select>
             </div>
             <p className="mt-2 font-mono text-[10px] text-subtle-muted">
-              {availableReferees.length} árbitros
+              {availableReferees.length} jueces
               {" · "}
               {availableReferees.filter((r) => assignedIds.has(r.id)).length} ya en tarima
             </p>
           </div>
+
           <ScrollArea className="flex-1">
-            <ul className="space-y-2 p-4">
+            <ul className="space-y-1.5 p-3">
               {availableReferees.map((referee) => (
                 <RefereeCard
                   key={referee.id}
@@ -370,6 +435,7 @@ export function RosterBuilder({
                   onDragEnd={() => setDraggedId(null)}
                   onClick={() => onQuickAssign(referee.id)}
                   highlight={!!selectedSlot && !readOnly}
+                  isDragging={isDragging}
                   readOnly={readOnly}
                 />
               ))}
@@ -380,14 +446,16 @@ export function RosterBuilder({
               )}
             </ul>
           </ScrollArea>
+
           <div className="border-t border-border bg-background px-3 py-2">
             <p className="flex items-start gap-2 text-[10.5px] leading-snug text-subtle-muted">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Arrastra un árbitro a un hueco, o haz clic en un hueco y luego en el árbitro.
+              Arrastra un juez a un hueco, o haz clic en el hueco y luego en el juez.
             </p>
           </div>
         </section>
 
+        {/* ── Right pane: acta ── */}
         <section className="flex flex-col overflow-hidden">
           {isEditing ? (
             <ScrollArea className="flex-1">
@@ -404,19 +472,22 @@ export function RosterBuilder({
             </ScrollArea>
           ) : (
             <>
-              <div className="border-b border-border p-4">
+              <div className="border-b border-border px-5 py-3">
                 <h2 className="text-sm font-semibold text-foreground-secondary">
-                  Acta de tarima · {template.length} sesiones
+                  Acta de tarima · {template.length} sesión{template.length !== 1 ? "es" : ""}
                 </h2>
                 <p className="text-xs text-subtle-muted">
                   Competición y pesaje por sesión, agrupadas por día
                 </p>
               </div>
-              <ScrollArea className="flex-1">
-                <div className="space-y-6 p-4">
+              {/* Native scroll div so sticky session day headers work */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-5 p-4">
                   {groupSessionsByDay(template).map(([dia, sesiones]) => (
                     <div key={dia} className="space-y-3">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
+                      {/* Sticky day heading */}
+                      <h3 className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-background/90 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary shadow-sm backdrop-blur-sm">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                         {dia}
                       </h3>
                       {sesiones.map((session) => (
@@ -433,12 +504,13 @@ export function RosterBuilder({
                           onToggleFlag={toggleFlag}
                           checkViolation={checkViolation}
                           readOnly={readOnly}
+                          isDragging={isDragging}
                         />
                       ))}
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </>
           )}
         </section>
@@ -456,6 +528,7 @@ function RefereeCard({
   onDragEnd,
   onClick,
   highlight,
+  isDragging,
   readOnly = false,
 }: {
   zones: Zone[];
@@ -466,10 +539,9 @@ function RefereeCard({
   onDragEnd: () => void;
   onClick: () => void;
   highlight: boolean;
+  isDragging: boolean;
   readOnly?: boolean;
 }) {
-  // `assigned` (ya en alguna sesión) NO bloquea: un juez puede repetir en
-  // varias sesiones. Solo `readOnly` (rol sin permiso) bloquea.
   const locked = readOnly;
   return (
     <li
@@ -482,16 +554,22 @@ function RefereeCard({
       onDragEnd={onDragEnd}
       onClick={() => !locked && onClick()}
       className={cn(
-        "flex items-center gap-3 rounded-lg border border-border bg-surface/80 px-3 py-2.5 transition-colors",
-        assigned && "opacity-65",
-        readOnly && "cursor-default",
-        !locked && "cursor-grab active:cursor-grabbing",
-        !locked && highlight && "hover:border-warning-border hover:bg-warning-subtle",
-        dragging && "opacity-50",
+        "flex cursor-grab items-center gap-2.5 rounded-lg border border-border bg-surface/80 px-3 py-2 transition-all duration-100 active:cursor-grabbing",
+        assigned && "opacity-60",
+        locked && "cursor-default",
+        dragging && "scale-95 opacity-40 shadow-none",
+        !locked && highlight && "cursor-pointer border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10 hover:shadow-sm",
+        !locked && isDragging && !dragging && "hover:border-success/50 hover:bg-success/5",
+        !locked && !highlight && !isDragging && "hover:border-border-strong hover:bg-surface hover:shadow-sm",
       )}
     >
-      <GripVertical className="h-4 w-4 shrink-0 text-subtle-muted" />
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+      <GripVertical
+        className={cn(
+          "h-4 w-4 shrink-0 transition-colors",
+          highlight ? "text-primary" : "text-subtle-muted",
+        )}
+      />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
         {referee.iniciales}
       </div>
       <div className="min-w-0 flex-1">
@@ -499,15 +577,13 @@ function RefereeCard({
         <p className="text-xs text-subtle-muted">{zoneName(zones, referee.zona)}</p>
       </div>
       <LevelBadge level={referee.nivel} />
-      {assigned && <Check className="h-3.5 w-3.5 text-success" />}
+      {assigned && <Check className="h-3.5 w-3.5 shrink-0 text-success" />}
     </li>
   );
 }
 
 /** Agrupa sesiones por día preservando el orden. */
-function groupSessionsByDay(
-  sessions: RosterSession[],
-): [string, RosterSession[]][] {
+function groupSessionsByDay(sessions: RosterSession[]): [string, RosterSession[]][] {
   const groups: [string, RosterSession[]][] = [];
   for (const s of sessions) {
     const dia = s.dia || "Sesiones";
@@ -544,6 +620,7 @@ interface SlotGridProps {
   onToggleFlag: (slotKey: string, field: keyof SlotFlags) => void;
   checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
   readOnly: boolean;
+  isDragging: boolean;
 }
 
 function SlotGrid({
@@ -559,131 +636,191 @@ function SlotGrid({
   onToggleFlag,
   checkViolation,
   readOnly,
+  isDragging,
 }: SlotGridProps) {
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {roles.map((role) => (
         <div key={role.key}>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-subtle-muted">
-              {role.rol}
-            </p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {Array.from({ length: role.slots }).map((_, idx) => {
-                const slotKey = `${sesion}_${role.key}_${idx}`;
-                const refereeId = assignments[slotKey];
-                const referee = refereeId ? getReferee(refereeId) : undefined;
-                const isSelected = selectedSlot === slotKey;
-                const violation = refereeId ? checkViolation(role.key, refereeId) : undefined;
-                const slotFlags = flags[slotKey];
+          <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">
+            {role.rol}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {Array.from({ length: role.slots }).map((_, idx) => {
+              const slotKey = `${sesion}_${role.key}_${idx}`;
+              const refereeId = assignments[slotKey];
+              const referee = refereeId ? getReferee(refereeId) : undefined;
+              const isSelected = selectedSlot === slotKey;
+              const isDropTarget = dragOverKey === slotKey;
+              const violation = refereeId ? checkViolation(role.key, refereeId) : undefined;
+              const slotFlags = flags[slotKey];
 
-                return (
-                  <div
-                    key={slotKey}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const id = e.dataTransfer.getData("text/plain");
-                      if (id) onDrop(slotKey, id);
-                    }}
-                    onClick={() => {
-                      if (readOnly) return;
-                      onSelectSlot(isSelected ? null : slotKey);
-                    }}
-                    className={cn(
-                      "relative min-h-[72px] rounded-lg border border-dashed p-3 transition-colors",
-                      isSelected
-                        ? "border-primary-border bg-primary-muted"
+              return (
+                <div
+                  key={slotKey}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverKey(slotKey);
+                  }}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    setDragOverKey(slotKey);
+                  }}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                      setDragOverKey(null);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverKey(null);
+                    const id = e.dataTransfer.getData("text/plain");
+                    if (id) onDrop(slotKey, id);
+                  }}
+                  onClick={() => {
+                    if (readOnly) return;
+                    onSelectSlot(isSelected ? null : slotKey);
+                  }}
+                  className={cn(
+                    "relative min-h-[76px] rounded-lg border-2 p-3 transition-all duration-100",
+                    !readOnly && "cursor-pointer",
+                    isDropTarget
+                      ? "border-primary bg-primary/10 shadow-md"
+                      : isSelected
+                        ? "border-primary bg-primary/5 shadow-sm"
                         : violation
                           ? "border-warning-border bg-warning-subtle"
                           : referee
-                            ? "border-border-strong bg-muted/50"
-                            : "border-border-strong bg-background/50 hover:border-border-strong",
-                    )}
-                  >
-                    {referee ? (
-                      <>
-                        <p className="text-sm font-medium text-foreground">
+                            ? "border-border-strong bg-muted/40"
+                            : isDragging
+                              ? "border-dashed border-success/50 bg-success/5 hover:border-success hover:bg-success/10"
+                              : "border-dashed border-border-strong bg-background/50 hover:border-primary/50 hover:bg-primary/5",
+                  )}
+                >
+                  {referee ? (
+                    <>
+                      {/* Referee name + flags indicator */}
+                      <div className="flex items-start justify-between gap-1">
+                        <p className="flex-1 truncate text-sm font-semibold text-foreground">
                           {referee.nombre}
                           {slotFlags?.compartido && (
-                            <span className="ml-1 text-primary" title="Compartido">
+                            <span
+                              className="ml-1 font-mono text-primary"
+                              title="Compartido entre sesiones"
+                            >
                               *
                             </span>
                           )}
                           {slotFlags?.intercambio && (
-                            <span className="ml-0.5 text-accent" title="Intercambio">
+                            <span
+                              className="ml-0.5 font-mono text-accent"
+                              title="Intercambio de jueces"
+                            >
                               ↑↓
                             </span>
                           )}
                         </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          <LevelBadge level={referee.nivel} />
-                          {violation && (
-                            <span
-                              title={`Mínimo ${violation.minLevel} para ${violation.rol}`}
-                              className="flex items-center gap-1 text-[10px] text-warning"
-                            >
-                              <AlertTriangle className="h-3 w-3" />
-                              min. {violation.minLevel}
-                            </span>
-                          )}
-                          {!readOnly && (
-                            <>
-                              <Button
-                                type="button"
-                                variant={slotFlags?.compartido ? "default" : "outline"}
-                                size="sm"
-                                className="h-6 px-1.5 text-[10px] font-mono"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onToggleFlag(slotKey, "compartido");
-                                }}
-                                title="Compartido (*)"
-                              >
-                                *
-                              </Button>
-                              <Button
-                                type="button"
-                                variant={slotFlags?.intercambio ? "default" : "outline"}
-                                size="sm"
-                                className="h-6 px-1.5 text-[10px] font-mono"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onToggleFlag(slotKey, "intercambio");
-                                }}
-                                title="Intercambio (↑↓)"
-                              >
-                                ↑↓
-                              </Button>
-                            </>
-                          )}
-                        </div>
                         {!readOnly && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="absolute right-1 top-1 h-7 w-7 text-subtle-muted"
+                            className="h-6 w-6 shrink-0 text-subtle-muted hover:text-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
                               onClear(slotKey);
                             }}
                             aria-label="Quitar asignación"
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-3 w-3" />
                           </Button>
                         )}
-                      </>
-                    ) : (
-                      <p className="text-xs text-subtle-muted">
-                        {isSelected ? "Selecciona un árbitro" : "Slot vacío — clic o arrastrar"}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      </div>
+
+                      {/* Level + violation */}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <LevelBadge level={referee.nivel} />
+                        {violation && (
+                          <span
+                            title={`Mínimo ${violation.minLevel} para ${violation.rol}`}
+                            className="flex items-center gap-1 rounded border border-warning-border bg-warning-muted px-1.5 py-0.5 text-[10px] font-semibold text-warning"
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                            min. {violation.minLevel}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Flag toolbar */}
+                      {!readOnly && (
+                        <div className="mt-2 flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleFlag(slotKey, "compartido");
+                            }}
+                            title="Compartido (*) — el juez comparte sesión con otro evento"
+                            aria-pressed={slotFlags?.compartido ? "true" : "false"}
+                            className={cn(
+                              "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",
+                              slotFlags?.compartido
+                                ? "border-primary bg-primary text-white"
+                                : "border-border bg-background text-subtle-muted hover:border-primary/50 hover:text-primary",
+                            )}
+                          >
+                            <span>*</span>
+                            <span className="hidden text-[9px] sm:inline">Comp.</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleFlag(slotKey, "intercambio");
+                            }}
+                            title="Intercambio (↑↓) — juez en intercambio con otra federación"
+                            aria-pressed={slotFlags?.intercambio ? "true" : "false"}
+                            className={cn(
+                              "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",
+                              slotFlags?.intercambio
+                                ? "border-accent bg-accent text-white"
+                                : "border-border bg-background text-subtle-muted hover:border-accent/50 hover:text-accent",
+                            )}
+                          >
+                            <span>↑↓</span>
+                            <span className="hidden text-[9px] sm:inline">Interc.</span>
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex h-full min-h-[52px] flex-col items-center justify-center gap-1">
+                      {isDropTarget ? (
+                        <p className="text-xs font-medium text-primary">Soltar aquí</p>
+                      ) : isSelected ? (
+                        <p className="text-xs font-medium text-primary">
+                          Haz clic en un juez →
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-[11px] text-subtle-muted">Slot vacío</p>
+                          {!readOnly && (
+                            <p className="text-[10px] text-subtle-muted/70">
+                              clic para seleccionar · arrastrar
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -700,6 +837,7 @@ function SessionBlock({
   onToggleFlag,
   checkViolation,
   readOnly = false,
+  isDragging,
 }: {
   session: RosterSession;
   assignments: AssignmentsMap;
@@ -712,10 +850,13 @@ function SessionBlock({
   onToggleFlag: (slotKey: string, field: keyof SlotFlags) => void;
   checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
   readOnly?: boolean;
+  isDragging: boolean;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
   const { filled, slots, pct } = sessionProgress(session, assignments);
   const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
   const pesajeRoles = session.pesajeRoles ?? [];
+
   const grid = {
     sesion: session.sesion,
     assignments,
@@ -728,14 +869,30 @@ function SessionBlock({
     onToggleFlag,
     checkViolation,
     readOnly,
+    isDragging,
   };
 
   return (
-    <article className="rounded-xl border border-border bg-surface/40 p-4">
-      <header className="mb-4 flex items-start justify-between gap-4">
-        <div className="min-w-0">
+    <article className="overflow-hidden rounded-xl border border-border bg-surface/40 shadow-sm">
+      <header className="flex items-start gap-3 p-4">
+        {/* Collapse toggle */}
+        <button
+          type="button"
+          className="mt-0.5 rounded text-subtle-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={collapsed ? "Expandir sesión" : "Colapsar sesión"}
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+        >
+          {collapsed ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronUp className="h-4 w-4" />
+          )}
+        </button>
+
+        <div className="min-w-0 flex-1">
           <p className="font-mono text-xs text-primary">{session.sesion}</p>
-          <h3 className="font-medium text-foreground">{session.nombre}</h3>
+          <h3 className="font-semibold text-foreground">{session.nombre}</h3>
           <div className="mt-1 flex flex-wrap gap-1">
             {(session.categorias ?? []).map((c, i) => (
               <span
@@ -766,9 +923,14 @@ function SessionBlock({
             </ul>
           )}
         </div>
-        <div className="min-w-[100px] shrink-0">
+
+        {/* Progress mini-bar */}
+        <div className="min-w-[90px] shrink-0">
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${pct}%` }} />
+            <div
+              className={cn("h-full rounded-full transition-all duration-500", barColor)}
+              style={{ width: `${pct}%` }}
+            />
           </div>
           <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-subtle-muted">
             {filled}/{slots}
@@ -776,15 +938,28 @@ function SessionBlock({
         </div>
       </header>
 
-      <SlotGrid roles={session.roles} {...grid} />
-
-      {pesajeRoles.length > 0 && (
-        <>
-          <p className="mb-2 mt-5 border-t border-border-muted pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary">
-            Pesaje y revisión de equipamiento · {session.horarioPesaje}
+      {!collapsed && (
+        <div className="border-t border-border-muted px-4 pb-4 pt-3">
+          {/* Competition roles group heading */}
+          <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-foreground-secondary">
+            Competición
           </p>
-          <SlotGrid roles={pesajeRoles} {...grid} />
-        </>
+          <SlotGrid roles={session.roles} {...grid} />
+
+          {pesajeRoles.length > 0 && (
+            <>
+              {/* Pesaje separator */}
+              <div className="my-4 flex items-center gap-2">
+                <div className="flex-1 border-t border-border-muted" />
+                <p className="text-[10.5px] font-semibold uppercase tracking-wider text-primary">
+                  Pesaje · {session.horarioPesaje}
+                </p>
+                <div className="flex-1 border-t border-border-muted" />
+              </div>
+              <SlotGrid roles={pesajeRoles} {...grid} />
+            </>
+          )}
+        </div>
       )}
     </article>
   );

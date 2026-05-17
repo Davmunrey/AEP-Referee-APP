@@ -54,14 +54,14 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
     },
     {
       href: "/events",
-      label: "Constructor Tarima",
+      label: "Tarima activa",
       icon: Layers,
       match: (p) => p.startsWith("/events/") && p !== "/events",
     },
   ];
 }
 
-function buildSecondaryNav(counts: NavCounts, isNacional: boolean): NavItem[] {
+function buildSecondaryNav(counts: NavCounts, canSeeUsers: boolean): NavItem[] {
   const items: NavItem[] = [
     {
       href: "/approvals",
@@ -86,7 +86,7 @@ function buildSecondaryNav(counts: NavCounts, isNacional: boolean): NavItem[] {
     { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
     { href: "/regulations", label: "Normativa IPF", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
   ];
-  if (isNacional) {
+  if (canSeeUsers) {
     items.push({
       href: "/admin/users",
       label: "Usuarios",
@@ -115,7 +115,9 @@ export function Sidebar({
   onToggle,
 }: SidebarProps) {
   const primaryNav = buildPrimaryNav(navCounts);
-  const secondaryNav = buildSecondaryNav(navCounts, currentUser.role === "super_admin");
+  const canSeeUsers =
+    currentUser.role === "super_admin" || currentUser.role === "delegado_jueces";
+  const secondaryNav = buildSecondaryNav(navCounts, canSeeUsers);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -132,21 +134,27 @@ export function Sidebar({
       <Link
         key={item.label}
         href={item.href}
+        aria-current={active ? "page" : undefined}
         className={cn(
-          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150 focus-ring",
           active
-            ? "bg-surface-active text-foreground nav-glow-active shadow-sm"
-            : "text-muted-foreground hover:bg-surface hover:text-foreground",
+            ? "bg-surface-active text-foreground nav-glow-active"
+            : "text-muted-foreground hover:bg-surface hover:text-foreground active:bg-surface-hover",
         )}
         title={collapsed ? item.label : undefined}
       >
         {active && (
-          <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary" />
+          <span
+            aria-hidden="true"
+            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary shadow-glow-primary"
+          />
         )}
         <span
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
-            active ? "bg-primary/20 text-primary" : "bg-surface text-subtle-muted group-hover:text-foreground-secondary",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-150",
+            active
+              ? "bg-primary/15 text-primary"
+              : "bg-transparent text-subtle-muted group-hover:bg-surface group-hover:text-foreground-secondary",
           )}
         >
           <Icon className="h-4 w-4" />
@@ -157,13 +165,13 @@ export function Sidebar({
             {item.badge != null && item.badge > 0 ? (
               <span
                 className={cn(
-                  "min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-center font-mono text-[10px] font-medium tabular-nums",
+                  "inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-px text-center font-mono text-[10px] font-semibold tabular-nums leading-none",
                   item.href === "/approvals"
-                    ? "bg-primary/20 text-primary-soft"
-                    : "bg-surface-active text-muted-foreground",
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-surface-active text-foreground-secondary",
                 )}
               >
-                {item.badge}
+                {item.badge > 99 ? "99+" : item.badge}
               </span>
             ) : null}
           </>
@@ -175,8 +183,8 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-border-muted bg-sidebar/95 backdrop-blur-xl transition-[width] duration-300 ease-out",
-        collapsed ? "w-[76px]" : "w-[252px]",
+        "flex h-full flex-col border-r border-border-muted bg-sidebar/95 backdrop-blur-xl transition-[width] duration-200 ease-out",
+        collapsed ? "w-[72px]" : "w-[248px]",
       )}
     >
       <div className={cn("border-b border-border-muted px-4 py-5", collapsed && "px-3")}>
@@ -223,7 +231,7 @@ export function Sidebar({
           <Button
             variant="ghost"
             size="sm"
-            className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-foreground-secondary"
+            className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-destructive focus-ring"
             onClick={() => void handleSignOut()}
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -234,7 +242,7 @@ export function Sidebar({
           variant="ghost"
           size={collapsed ? "icon" : "default"}
           onClick={onToggle}
-          className="w-full justify-center rounded-xl text-subtle-muted hover:bg-surface"
+          className="w-full justify-center rounded-xl text-subtle-muted hover:bg-surface focus-ring"
           aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}

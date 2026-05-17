@@ -12,7 +12,7 @@ export async function GET(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
   const { id } = await context.params;
   const referee = await dataService.getReferee(id);
-  if (!referee) return jsonError("Árbitro no encontrado", 404);
+  if (!referee) return jsonError("Juez no encontrado", 404);
   return jsonOk(referee);
 }
 
@@ -22,6 +22,18 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
+  const existing = await dataService.getReferee(id);
+  if (!existing) return jsonError("Juez no encontrado", 404);
+
+  // delegado_zona: solo puede editar jueces de su propia zona y no puede
+  // moverlos a otra zona distinta de la suya.
+  if (user.role === "delegado_zona") {
+    if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
+    if (existing.zona !== user.zona) {
+      return jsonError("Solo puedes editar jueces de tu zona", 403);
+    }
+  }
+
   const raw = await request.json().catch(() => null);
   if (!raw || typeof raw !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
@@ -38,8 +50,16 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (typeof raw.email === "string") patch.email = raw.email;
   if (typeof raw.licencia === "string") patch.licencia = raw.licencia;
 
+  if (
+    user.role === "delegado_zona" &&
+    typeof patch.zona === "string" &&
+    patch.zona !== user.zona
+  ) {
+    return jsonError("No puedes mover jueces a otra zona", 403);
+  }
+
   const updated = await dataService.updateReferee(id, patch);
-  if (!updated) return jsonError("Árbitro no encontrado", 404);
+  if (!updated) return jsonError("Juez no encontrado", 404);
   return jsonOk(updated);
 }
 
@@ -51,6 +71,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   const { id } = await context.params;
   const ok = await dataService.deleteReferee(id);
-  if (!ok) return jsonError("Árbitro no encontrado", 404);
+  if (!ok) return jsonError("Juez no encontrado", 404);
   return jsonOk({ deleted: true });
 }

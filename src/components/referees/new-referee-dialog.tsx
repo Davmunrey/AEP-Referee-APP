@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { UserPlus, X } from "lucide-react";
 import { api } from "@/lib/api/client";
 import type { RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,9 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     document.addEventListener("keydown", handler);
     dialogRef.current?.focus();
     return () => document.removeEventListener("keydown", handler);
@@ -56,86 +59,153 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
       router.push(`/referees/${referee.id}`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo crear el árbitro");
+      setError(err instanceof Error ? err.message : "No se pudo crear el juez");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         ref={dialogRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-referee-title"
-        className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-xl outline-none"
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface p-0 shadow-2xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 id="new-referee-title" className="text-lg font-semibold text-foreground">
-          Nuevo árbitro
-        </h3>
-        <form onSubmit={onSubmit} className="mt-4 space-y-3">
-          <div>
-            <label className="mb-1 block text-xs text-subtle-muted">Nombre completo</label>
-            <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+        {/* Dialog header */}
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <UserPlus className="h-4 w-4 text-primary" />
+            </div>
+            <h3 id="new-referee-title" className="text-base font-semibold text-foreground">
+              Nuevo juez
+            </h3>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-5 p-6">
+          {/* Section: Datos principales */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+              Datos principales
+            </p>
             <div>
-              <label className="mb-1 block text-xs text-subtle-muted">Zona</label>
-              <select value={zona} onChange={(e) => setZona(e.target.value)} className={selectFieldClass}>
-                {zones.map((z) => (
-                  <option key={z.code} value={z.code}>
-                    {z.name}
-                  </option>
-                ))}
-              </select>
+              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+                Nombre completo <span className="text-destructive" aria-hidden="true">*</span>
+              </label>
+              <Input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+                placeholder="Ej. Juan García López"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+                  Zona <span className="text-destructive" aria-hidden="true">*</span>
+                </label>
+                <select
+                  value={zona}
+                  onChange={(e) => setZona(e.target.value)}
+                  className={selectFieldClass}
+                >
+                  {zones.map((z) => (
+                    <option key={z.code} value={z.code}>
+                      {z.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+                  Nivel <span className="text-destructive" aria-hidden="true">*</span>
+                </label>
+                <select
+                  value={nivel}
+                  onChange={(e) => setNivel(e.target.value as RefereeLevel)}
+                  className={selectFieldClass}
+                >
+                  {levels.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-subtle-muted">Nivel</label>
+              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Estado</label>
               <select
-                value={nivel}
-                onChange={(e) => setNivel(e.target.value as RefereeLevel)}
+                value={estado}
+                onChange={(e) => setEstado(e.target.value as RefereeStatus)}
                 className={selectFieldClass}
               >
-                {levels.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
                   </option>
                 ))}
               </select>
             </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs text-subtle-muted">Estado</label>
-            <select
-              value={estado}
-              onChange={(e) => setEstado(e.target.value as RefereeStatus)}
-              className={selectFieldClass}
+
+          {/* Section: Datos opcionales */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+              Datos opcionales
+            </p>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Email</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="juez@ejemplo.com"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Licencia</label>
+              <Input
+                value={licencia}
+                onChange={(e) => setLicencia(e.target.value)}
+                placeholder="Nº de licencia AEP"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive-border bg-destructive-muted px-3 py-2"
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-subtle-muted">Email (opcional)</label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-subtle-muted">Licencia (opcional)</label>
-            <Input value={licencia} onChange={(e) => setLicencia(e.target.value)} />
-          </div>
-          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Guardando…" : "Crear árbitro"}
+            <Button type="submit" disabled={loading || !nombre.trim()}>
+              {loading ? "Guardando…" : "Crear juez"}
             </Button>
           </div>
         </form>

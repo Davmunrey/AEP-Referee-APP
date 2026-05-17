@@ -1,5 +1,5 @@
 /**
- * Pobla Supabase con datos de referencia (zonas, normativa, árbitros,
+ * Pobla Supabase con datos de referencia (zonas, normativa, jueces,
  * campeonatos, asignaciones, actividad). NO crea usuarios — el alta de
  * usuarios se hace por inicio de sesión con Google (auto-perfil) o desde
  * /admin/users por el rol nacional.
@@ -54,7 +54,7 @@ async function seed() {
     })),
   );
 
-  console.log("→ Árbitros…");
+  console.log("→ Jueces…");
   await admin.from("referees").upsert(
     REFEREES.map((r) => ({
       id: r.id,

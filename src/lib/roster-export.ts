@@ -14,7 +14,7 @@ interface ExportRef {
 }
 
 /**
- * Formatea el acta de plantilla arbitral en texto, replicando la estructura
+ * Formatea el acta de plantilla de jueces en texto, replicando la estructura
  * oficial AEP: agrupado por día, cada sesión con sus categorías, horarios y
  * los bloques de competición y de pesaje.
  */
@@ -41,7 +41,7 @@ export function formatRosterExport(
 ): string {
   const lines: string[] = [
     "ASOCIACIÓN ESPAÑOLA DE POWERLIFTING",
-    "Acta de plantilla arbitral",
+    "Acta de plantilla de jueces",
     "",
     `Evento: ${comp.nombre}`,
     `Tipo:   ${comp.tipo}`,

@@ -12,20 +12,27 @@ import { cn } from "@/lib/utils";
 const WEEKDAYS = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
 
 const MONTHS_ES = [
-  "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
-  "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-const statusBar: Record<EventStatus, string> = {
+/** Color for event dot / top strip by status */
+const statusDot: Record<EventStatus, string> = {
   Completo: "bg-success",
   Incompleto: "bg-warning",
-  Crítico: "bg-primary",
-  Borrador: "bg-subtle-muted",
+  Crítico: "bg-destructive",
+  Borrador: "bg-muted-foreground/40",
+};
+
+const statusCellBg: Record<EventStatus, string> = {
+  Completo: "rgba(63,159,106,0.10)",
+  Crítico: "rgba(212,52,38,0.10)",
+  Incompleto: "rgba(232,168,44,0.10)",
+  Borrador: "rgba(122,114,105,0.07)",
 };
 
 function buildWeeks(year: number, month: number): { day: number; month: number; year: number }[][] {
   const firstDay = new Date(year, month, 1);
-  // Monday-based: 0=Mon … 6=Sun
   const startOffset = (firstDay.getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrev = new Date(year, month, 0).getDate();
@@ -80,37 +87,56 @@ export function OperationalCalendar({
 
   return (
     <Card className="overflow-hidden p-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-border py-3">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-border py-3">
         <div className="flex items-center gap-3">
           <CardTitle className="text-sm font-semibold">Calendario operativo</CardTitle>
-          <span className="font-mono text-[11px] text-subtle-muted">
+          <span className="text-sm font-medium text-foreground/70">
             {MONTHS_ES[viewMonth]} {viewYear}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {(["Completo", "Incompleto", "Crítico", "Borrador"] as EventStatus[]).map((s) => (
             <EventStatusBadge key={s} status={s} />
           ))}
-          <span className="mx-2 h-4 w-px bg-muted" />
-          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mes anterior" onClick={goBack}>
-            <ChevronLeft className="h-3.5 w-3.5" />
+          <span className="mx-1.5 h-4 w-px bg-border" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-lg"
+            aria-label="Mes anterior"
+            onClick={goBack}
+          >
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mes siguiente" onClick={goNext}>
-            <ChevronRight className="h-3.5 w-3.5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-lg"
+            aria-label="Mes siguiente"
+            onClick={goNext}
+          >
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="grid grid-cols-7 border-b border-border">
-          {WEEKDAYS.map((d) => (
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 border-b border-border bg-surface/50">
+          {WEEKDAYS.map((d, idx) => (
             <div
               key={d}
-              className="border-r border-border px-2 py-2 font-mono text-[10px] tracking-wider text-subtle-muted last:border-r-0"
+              className={cn(
+                "border-r border-border/50 px-2 py-2 font-mono text-[10px] tracking-widest last:border-r-0",
+                // Weekend tone (SAB=5, DOM=6)
+                idx >= 5 ? "text-muted-foreground/40" : "text-muted-foreground/60",
+              )}
             >
               {d}
             </div>
           ))}
         </div>
+
+        {/* Day cells */}
         <div className="grid grid-cols-7">
           {weeks.map((week, wi) =>
             week.map((cell, di) => {
@@ -118,52 +144,58 @@ export function OperationalCalendar({
               const evt = calendar[key];
               const otherMonth = cell.month !== viewMonth;
               const isToday = key === todayKey;
+              const isWeekend = di >= 5;
 
               return (
                 <div
                   key={`${wi}-${di}`}
                   className={cn(
-                    "relative min-h-[78px] border-b border-r border-border last:border-r-0",
-                    otherMonth && "bg-background/80",
+                    "relative min-h-[72px] border-b border-r border-border/50 last:border-r-0",
+                    otherMonth && "bg-surface/30 opacity-50",
+                    isWeekend && !otherMonth && "bg-surface/40",
                   )}
                 >
+                  {/* Status top strip */}
                   {evt && (
                     <span
-                      className={cn("absolute left-0 right-0 top-0 h-0.5", statusBar[evt.estado])}
+                      className={cn("absolute left-0 right-0 top-0 h-0.5", statusDot[evt.estado])}
                     />
                   )}
+
+                  {/* Day number */}
                   <div className="flex items-center justify-between px-2 pt-2">
                     <span
                       className={cn(
-                        "font-mono text-[11px] tabular-nums",
-                        otherMonth && "text-subtle-muted",
-                        isToday && "font-semibold text-warning",
-                        !otherMonth && !isToday && "text-muted-foreground",
+                        "flex h-6 w-6 items-center justify-center font-mono text-[11px] tabular-nums",
+                        isToday
+                          ? "rounded-full bg-primary font-bold text-primary-foreground"
+                          : otherMonth
+                            ? "text-muted-foreground/30"
+                            : isWeekend
+                              ? "text-muted-foreground/50"
+                              : "text-muted-foreground",
                       )}
                     >
                       {cell.day}
                     </span>
-                    {isToday && (
-                      <span className="font-mono text-[8px] tracking-wider text-warning">HOY</span>
+                    {/* Status dot for events */}
+                    {evt && !isToday && (
+                      <span
+                        className={cn("h-1.5 w-1.5 rounded-full", statusDot[evt.estado])}
+                        aria-hidden="true"
+                      />
                     )}
                   </div>
+
+                  {/* Event block */}
                   {evt && (
                     <Link
                       href={`/events/${evt.id}`}
-                      className="mx-1.5 mb-1.5 block rounded px-1.5 py-1 transition-colors hover:brightness-110"
-                      style={{
-                        background:
-                          evt.estado === "Completo"
-                            ? "rgba(63,159,106,0.12)"
-                            : evt.estado === "Crítico"
-                              ? "rgba(212,52,38,0.12)"
-                              : evt.estado === "Incompleto"
-                                ? "rgba(232,168,44,0.12)"
-                                : "rgba(122,114,105,0.12)",
-                      }}
+                      className="mx-1.5 mb-1.5 mt-0.5 block rounded-lg px-1.5 py-1 transition-colors hover:brightness-110"
+                      style={{ background: statusCellBg[evt.estado] }}
                     >
                       <EventTypeBadge tipo={evt.tipo} />
-                      <p className="mt-1 truncate text-[10.5px] font-medium leading-tight text-foreground-secondary">
+                      <p className="mt-0.5 truncate text-[10px] font-medium leading-tight text-foreground/70">
                         {evt.label}
                       </p>
                     </Link>

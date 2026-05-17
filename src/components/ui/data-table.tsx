@@ -19,7 +19,7 @@ export function DataTableHeaderRow({
   return (
     <tr
       className={cn(
-        "border-b border-border text-left text-xs font-medium uppercase tracking-wider text-subtle-muted",
+        "border-b border-border bg-surface/50 text-left text-[11px] font-semibold uppercase tracking-widest text-subtle-muted",
         className,
       )}
       {...props}
@@ -38,7 +38,7 @@ export function DataTableRow({
   return (
     <tr
       className={cn(
-        "border-b border-border/60 transition-colors hover:bg-muted/30",
+        "border-b border-border/50 transition-colors duration-100 hover:bg-surface-hover",
         className,
       )}
       {...props}
@@ -50,12 +50,12 @@ export function DataTableCell({
   className,
   ...props
 }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-6 py-4", className)} {...props} />;
+  return <td className={cn("px-4 py-3", className)} {...props} />;
 }
 
 export function DataTableHeadCell({
   className,
   ...props
 }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn("px-6 py-3 font-medium", className)} {...props} />;
+  return <th className={cn("px-4 py-2.5 font-semibold", className)} {...props} />;
 }

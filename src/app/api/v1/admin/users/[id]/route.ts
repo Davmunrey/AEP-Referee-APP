@@ -48,6 +48,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     patch.role = body.role;
   }
   if (body.zona !== undefined) patch.zona = body.zona ? String(body.zona) : null;
+  if (typeof body.nombre === "string" && body.nombre.trim()) {
+    patch.nombre = body.nombre.trim();
+  }
+  if (typeof body.rolLabel === "string" && body.rolLabel.trim()) {
+    patch.rol_label = body.rolLabel.trim();
+  }
 
   if (Object.keys(patch).length === 0) {
     return jsonError("Nada que actualizar", 400);

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Loader2, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Loader2, Trash2, X } from "lucide-react";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -19,9 +19,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api/client";
 import { selectFieldClassSm } from "@/lib/design-tokens";
-import { formatDateRange } from "@/lib/utils";
+import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
-import { CalendarDays } from "lucide-react";
 
 interface EventsTableProps {
   initialEvents: Competition[];
@@ -32,10 +31,12 @@ interface EventsTableProps {
 const EVENT_TYPES: EventType[] = ["AEP-1", "AEP-2", "AEP-3"];
 const EVENT_STATUSES: EventStatus[] = ["Completo", "Incompleto", "Crítico", "Borrador"];
 const PAGE_SIZE = 20;
+const MAX_VISIBLE_PAGES = 5;
 
 export function EventsTable({ initialEvents, role, userZona }: EventsTableProps) {
   const [events, setEvents] = useState(initialEvents);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState("TODOS");
@@ -45,12 +46,19 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
     return events.filter((e) => {
       if (filterTipo !== "TODOS" && e.tipo !== filterTipo) return false;
       if (filterEstado !== "TODOS" && e.estado !== filterEstado) return false;
-      if (search && !e.nombre.toLowerCase().includes(search.toLowerCase()) && !e.sede.toLowerCase().includes(search.toLowerCase())) return false;
+      if (
+        search &&
+        !e.nombre.toLowerCase().includes(search.toLowerCase()) &&
+        !e.sede.toLowerCase().includes(search.toLowerCase())
+      )
+        return false;
       return true;
     });
   }, [events, filterTipo, filterEstado, search]);
 
-  useEffect(() => { setPage(1); }, [filterTipo, filterEstado, search]);
+  useEffect(() => {
+    setPage(1);
+  }, [filterTipo, filterEstado, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
@@ -60,14 +68,14 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
   );
 
   const canDelete = (event: Competition) => {
-    if (role === "super_admin") return true;
+    if (role === "super_admin" || role === "delegado_jueces") return true;
     if (role === "delegado_zona") return event.zona === userZona;
     return false;
   };
 
-  const deleteEvent = async (id: string, nombre: string) => {
-    if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  const deleteEvent = async (id: string) => {
     setDeletingId(id);
+    setConfirmDeleteId(null);
     try {
       await api.deleteCompetition(id);
       setEvents((prev) => prev.filter((e) => e.id !== id));
@@ -84,9 +92,24 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
 
   const hasFilters = search || filterTipo !== "TODOS" || filterEstado !== "TODOS";
 
+  const clearFilters = () => {
+    setSearch("");
+    setFilterTipo("TODOS");
+    setFilterEstado("TODOS");
+  };
+
+  const pageRange = useMemo(() => {
+    const half = Math.floor(MAX_VISIBLE_PAGES / 2);
+    let start = Math.max(1, safeCurrentPage - half);
+    const end = Math.min(totalPages, start + MAX_VISIBLE_PAGES - 1);
+    start = Math.max(1, end - MAX_VISIBLE_PAGES + 1);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [safeCurrentPage, totalPages]);
+
   return (
     <div className="space-y-0">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border-muted p-4">
+      {/* Sticky filter row */}
+      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border-muted bg-card px-4 py-3 backdrop-blur-sm">
         <Input
           type="search"
           placeholder="Buscar campeonato o sede…"
@@ -102,7 +125,11 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
           aria-label="Filtrar por tipo"
         >
           <option value="TODOS">Todos los tipos</option>
-          {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          {EVENT_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
         <select
           value={filterEstado}
@@ -111,20 +138,40 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
           aria-label="Filtrar por estado"
         >
           <option value="TODOS">Todos los estados</option>
-          {EVENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {EVENT_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
         {hasFilters && (
-          <span className="text-xs text-subtle-muted">
-            {filtered.length} de {events.length}
-          </span>
+          <>
+            <span className="ml-auto text-xs text-subtle-muted">
+              {filtered.length} de {events.length} resultado{filtered.length !== 1 ? "s" : ""}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs"
+              onClick={clearFilters}
+            >
+              <X className="h-3 w-3" />
+              Limpiar
+            </Button>
+          </>
         )}
       </div>
+
       {pageRows.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
-          className="m-6 border-none bg-transparent"
+          className="m-8 border-none bg-transparent"
           title={hasFilters ? "Sin coincidencias" : "Sin campeonatos"}
-          description={hasFilters ? "Ajusta los filtros para ver resultados." : "Crea el primer campeonato con el botón Nuevo campeonato."}
+          description={
+            hasFilters
+              ? "Prueba con otros filtros o limpia la búsqueda."
+              : "Aún no hay campeonatos en la temporada. Crea el primero con «Nuevo campeonato»."
+          }
         />
       ) : (
         <DataTable>
@@ -133,6 +180,7 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
               <DataTableHeadCell>Campeonato</DataTableHeadCell>
               <DataTableHeadCell>Fecha</DataTableHeadCell>
               <DataTableHeadCell>Tipo</DataTableHeadCell>
+              <DataTableHeadCell>Zona</DataTableHeadCell>
               <DataTableHeadCell>Cobertura</DataTableHeadCell>
               <DataTableHeadCell>Estado</DataTableHeadCell>
               <DataTableHeadCell />
@@ -140,9 +188,19 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
           </DataTableHead>
           <DataTableBody>
             {pageRows.map((event) => {
-              const pct = event.requeridos > 0 ? Math.round((event.confirmados / event.requeridos) * 100) : 0;
+              const pct =
+                event.requeridos > 0
+                  ? Math.round((event.confirmados / event.requeridos) * 100)
+                  : 0;
+              const isConfirmingDelete = confirmDeleteId === event.id;
               return (
-                <DataTableRow key={event.id} className="group">
+                <DataTableRow
+                  key={event.id}
+                  className={cn(
+                    "group transition-colors duration-150",
+                    isConfirmingDelete && "bg-destructive/5",
+                  )}
+                >
                   <DataTableCell>
                     <p className="font-medium text-foreground">{event.nombre}</p>
                     <p className="text-xs text-subtle-muted">{event.sede}</p>
@@ -152,6 +210,9 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
                   </DataTableCell>
                   <DataTableCell>
                     <EventTypeBadge tipo={event.tipo} />
+                  </DataTableCell>
+                  <DataTableCell className="font-mono text-[11px] uppercase text-muted-foreground">
+                    {event.zona ?? "—"}
                   </DataTableCell>
                   <DataTableCell className="min-w-[140px]">
                     <Progress value={pct} />
@@ -163,30 +224,54 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
                     <EventStatusBadge status={event.estado} />
                   </DataTableCell>
                   <DataTableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/events/${event.id}`}>
-                          Tarima
-                          <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                      {canDelete(event) && (
+                    {isConfirmingDelete ? (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-xs text-destructive">¿Eliminar?</span>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                          variant="destructive"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-xs"
                           disabled={deletingId === event.id}
-                          onClick={() => void deleteEvent(event.id, event.nombre)}
-                          aria-label={`Eliminar ${event.nombre}`}
+                          onClick={() => void deleteEvent(event.id)}
                         >
                           {deletingId === event.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Check className="h-3 w-3" />
                           )}
+                          Sí, eliminar
                         </Button>
-                      )}
-                    </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setConfirmDeleteId(null)}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/events/${event.id}`}>
+                            Tarima
+                            <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                        {canDelete(event) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                            disabled={deletingId === event.id}
+                            onClick={() => setConfirmDeleteId(event.id)}
+                            aria-label={`Eliminar ${event.nombre}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </DataTableCell>
                 </DataTableRow>
               );
@@ -194,27 +279,62 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
           </DataTableBody>
         </DataTable>
       )}
+
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 border-t border-border px-4 py-3">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 border-t border-border px-4 py-3">
           <Button
             variant="outline"
             size="sm"
+            className="h-7 px-2 text-xs"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => setPage(1)}
+            aria-label="Primera página"
+          >
+            «
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs"
             disabled={safeCurrentPage <= 1}
             onClick={() => setPage((p) => p - 1)}
           >
             Anterior
           </Button>
-          <span className="text-xs text-subtle-muted">
-            {safeCurrentPage} / {totalPages}
-          </span>
+          {pageRange.map((p) => (
+            <Button
+              key={p}
+              variant={p === safeCurrentPage ? "default" : "outline"}
+              size="sm"
+              className="h-7 w-7 p-0 text-xs"
+              onClick={() => setPage(p)}
+              aria-current={p === safeCurrentPage ? "page" : undefined}
+            >
+              {p}
+            </Button>
+          ))}
           <Button
             variant="outline"
             size="sm"
+            className="h-7 px-2 text-xs"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
             Siguiente
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() => setPage(totalPages)}
+            aria-label="Última página"
+          >
+            »
+          </Button>
+          <span className="ml-2 text-xs text-subtle-muted">
+            Pág. {safeCurrentPage} de {totalPages}
+          </span>
         </div>
       )}
     </div>

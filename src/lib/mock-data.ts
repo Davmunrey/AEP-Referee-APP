@@ -280,7 +280,7 @@ export const ACTIVITY: ActivityItem[] = [
 
 export const DASHBOARD_KPIS: DashboardKpi[] = [
   {
-    label: "Árbitros Activos",
+    label: "Jueces Activos",
     value: String(REFEREES.filter((r) => r.estado === "Activo").length),
     sub: `/ ${REFEREES.length} federados`,
     trend: "cuota operativa 2026",
@@ -298,7 +298,7 @@ export const DASHBOARD_KPIS: DashboardKpi[] = [
   {
     label: "Conflictos de Asignación",
     value: "14",
-    sub: "árbitros sin cubrir en 3 eventos",
+    sub: "jueces sin cubrir en 3 eventos",
     trend: "2 eventos en estado crítico",
     trendDir: "warn",
     accent: "yellow",
@@ -348,7 +348,7 @@ export function getUpcomingCompetitions(limit?: number) {
 
 export const CURRENT_USER = {
   nombre: "Laura Iglesias",
-  rol: "Responsable Nacional de Árbitros",
+  rol: "Responsable Nacional de Jueces",
   iniciales: "LI",
   email: "l.iglesias@fechap.es",
 };

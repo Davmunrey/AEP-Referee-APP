@@ -25,7 +25,6 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
   const [elapsed, setElapsed] = useState(0);
   const baseRef = useRef(Date.now());
 
-  // Reinicia el contador cuando llegan datos nuevos del servidor.
   useEffect(() => {
     baseRef.current = Date.now();
     setElapsed(0);
@@ -35,7 +34,6 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
     startTransition(() => router.refresh());
   }, [router]);
 
-  // Tick de 1 s para el reloj relativo.
   useEffect(() => {
     const id = setInterval(() => {
       setElapsed(Math.floor((Date.now() - baseRef.current) / 1000));
@@ -43,7 +41,6 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
     return () => clearInterval(id);
   }, []);
 
-  // Auto-refresco periódico.
   useEffect(() => {
     if (!auto) return;
     const id = setInterval(refresh, REFRESH_MS);
@@ -51,50 +48,59 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
   }, [auto, refresh]);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border-muted bg-surface px-4 py-2.5">
-      <div className="flex items-center gap-2.5" aria-live="polite">
-        <span className="relative flex h-2 w-2" aria-hidden="true">
+    <div
+      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border-muted bg-surface px-3.5 py-2"
+      aria-live="polite"
+    >
+      {/* Status indicator */}
+      <div className="flex items-center gap-2">
+        <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
           {auto && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
           )}
           <span
             className={cn(
-              "relative inline-flex h-2 w-2 rounded-full",
-              auto ? "bg-success" : "bg-subtle",
+              "relative inline-flex h-1.5 w-1.5 rounded-full",
+              auto ? "bg-success" : "bg-muted-foreground/40",
             )}
           />
         </span>
-        <span className="text-[12px] font-medium text-foreground-secondary">
-          {auto ? "Panel en vivo" : "Actualización en pausa"}
+        <span className="text-[11.5px] font-medium text-foreground/70">
+          {isPending ? "Actualizando…" : auto ? "En vivo" : "Pausado"}
         </span>
-        <span className="text-[11px] text-subtle-muted">
-          · actualizado {relativeLabel(elapsed)}
+        <span className="text-[11px] text-muted-foreground/50">
+          · {relativeLabel(elapsed)}
         </span>
       </div>
-      <div className="flex items-center gap-1.5">
+
+      {/* Controls — minimal, icon-first */}
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={() => setAuto((v) => !v)}
           aria-pressed={auto}
           aria-label={auto ? "Pausar actualización automática" : "Reanudar actualización automática"}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px] font-medium text-muted-foreground transition-colors focus-ring hover:bg-surface-hover"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {auto ? (
-            <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+            <Pause className="h-3 w-3" aria-hidden="true" />
           ) : (
-            <Play className="h-3.5 w-3.5" aria-hidden="true" />
+            <Play className="h-3 w-3" aria-hidden="true" />
           )}
-          {auto ? "Pausar" : "Reanudar"}
+          <span className="hidden sm:inline">{auto ? "Pausar" : "Reanudar"}</span>
         </button>
         <button
           type="button"
           onClick={refresh}
           disabled={isPending}
           aria-label="Actualizar panel ahora"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-surface-hover px-2.5 py-1 text-[11.5px] font-medium text-foreground-secondary transition-colors focus-ring hover:bg-surface-active disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
         >
-          <RefreshCw className={cn("h-3.5 w-3.5", isPending && "animate-spin")} aria-hidden="true" />
-          {isPending ? "Actualizando" : "Actualizar"}
+          <RefreshCw
+            className={cn("h-3 w-3", isPending && "animate-spin")}
+            aria-hidden="true"
+          />
+          <span className="hidden sm:inline">Actualizar</span>
         </button>
       </div>
     </div>

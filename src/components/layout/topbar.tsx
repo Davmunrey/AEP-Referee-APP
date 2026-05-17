@@ -30,7 +30,10 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
             <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
               {i > 0 && <ChevronRight className="h-3 w-3 text-subtle-muted" aria-hidden="true" />}
               {crumb.href ? (
-                <Link href={crumb.href} className="transition-colors hover:text-foreground-secondary">
+                <Link
+                  href={crumb.href}
+                  className="rounded-sm transition-colors hover:text-foreground-secondary focus-ring"
+                >
                   {crumb.label}
                 </Link>
               ) : (
@@ -58,14 +61,14 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
             />
             <Input
               type="search"
-              placeholder="Buscar árbitros…"
+              placeholder="Buscar jueces…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") runSearch();
               }}
-              className="h-9 w-64 rounded-full border-border-muted bg-surface pl-9 text-xs"
-              aria-label="Buscar árbitros — pulsa Enter"
+              className="h-9 w-64 rounded-full border-border bg-surface pl-9 text-xs transition-all duration-150 hover:border-border-strong focus-visible:border-primary-border focus-visible:w-72"
+              aria-label="Buscar jueces — pulsa Enter"
             />
           </div>
         )}

@@ -1,11 +1,10 @@
 /** Tamaño máximo aceptado para PDFs de horario (5 MB). */
 export const MAX_PDF_BYTES = 5 * 1024 * 1024;
 
-/** MIME types aceptados. */
+/** MIME types aceptados — solo PDF estricto. */
 const ACCEPTED_MIME = new Set([
   "application/pdf",
   "application/x-pdf",
-  "application/octet-stream",
 ]);
 
 export interface PdfExtractionResult {

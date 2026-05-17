@@ -8,18 +8,18 @@ interface ComingSoonProps {
 
 export function ComingSoon({ moduleName }: ComingSoonProps) {
   return (
-    <div className="mx-auto flex max-w-lg flex-col items-center justify-center px-6 py-24 text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg border border-border bg-surface">
-        <Sparkles className="h-6 w-6 text-subtle-muted" />
+    <div className="mx-auto flex max-w-md flex-col items-center justify-center px-6 py-24 text-center">
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5">
+        <Sparkles className="h-6 w-6 text-primary/60" />
       </div>
       <h2 className="text-lg font-semibold tracking-tight text-foreground">
-        Módulo <span className="text-warning">{moduleName}</span>
+        <span className="text-primary">{moduleName}</span> próximamente
       </h2>
-      <p className="mt-2 text-sm text-subtle-muted">
-        Este módulo está planificado en la hoja de ruta. Mientras tanto, usa el Dashboard o el
-        Constructor de Tarima.
+      <p className="mt-2.5 max-w-xs text-sm leading-relaxed text-subtle-muted">
+        Este módulo está en desarrollo. Mientras tanto puedes usar el Dashboard o el Constructor de
+        Tarima.
       </p>
-      <div className="mt-6 flex gap-2">
+      <div className="mt-7 flex gap-2">
         <Button variant="outline" asChild>
           <Link href="/">Dashboard</Link>
         </Button>

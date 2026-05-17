@@ -24,7 +24,7 @@ export default async function NewEventPage() {
       <PageHeader
         eyebrow="Operaciones"
         title="Nuevo campeonato"
-        description="Crea un evento en borrador y configura la tarima arbitral después."
+        description="Crea un evento en borrador y configura la tarima de jueces después."
       />
 
       <NewCompetitionForm zones={(await dataService.getMeta(user)).zones} defaultZona={user.zona} />

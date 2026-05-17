@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api/client";
-import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
+import { selectFieldClass, selectFieldClassSm, textareaFieldClass } from "@/lib/design-tokens";
 import type {
   ExamResult,
   ExamType,
@@ -34,6 +34,7 @@ const LEVELS: RefereeLevel[] = [
   "IPF Cat. 2",
   "IPF Cat. 1",
 ];
+const RESULTS: ExamResult[] = ["Aprobado", "Suspenso", "Pendiente"];
 
 function resultBadge(r: ExamResult) {
   if (r === "Aprobado") return <Badge variant="success">Aprobado</Badge>;
@@ -62,6 +63,11 @@ export function ExamsManager({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // List filters
+  const [filterTipo, setFilterTipo] = useState<ExamType | "TODOS">("TODOS");
+  const [filterResultado, setFilterResultado] = useState<ExamResult | "TODOS">("TODOS");
+
+  // Form fields
   const [refereeId, setRefereeId] = useState(lockedRefereeId ?? "");
   const [tipo, setTipo] = useState<ExamType>("Reglamento IPF");
   const [nivelObjetivo, setNivelObjetivo] = useState<RefereeLevel>("Nacional");
@@ -133,12 +139,18 @@ export function ExamsManager({
     }
   };
 
+  const filteredExams = exams.filter((e) => {
+    if (filterTipo !== "TODOS" && e.tipo !== filterTipo) return false;
+    if (filterResultado !== "TODOS" && e.resultado !== filterResultado) return false;
+    return true;
+  });
+
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <GraduationCap className="h-4 w-4 text-primary" />
-          Exámenes arbitrales
+          Exámenes de jueces
           <span className="text-xs font-normal text-subtle-muted">
             ({exams.length})
           </span>
@@ -259,13 +271,75 @@ export function ExamsManager({
         </div>
       )}
 
+      {/* Compact filter row — only shown when there are exams */}
+      {exams.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border-muted bg-surface/30 px-4 py-2">
+          <select
+            value={filterTipo}
+            onChange={(e) => setFilterTipo(e.target.value as ExamType | "TODOS")}
+            className={selectFieldClassSm}
+            aria-label="Filtrar por tipo"
+          >
+            <option value="TODOS">Tipo — Todos</option>
+            {EXAM_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filterResultado}
+            onChange={(e) => setFilterResultado(e.target.value as ExamResult | "TODOS")}
+            className={selectFieldClassSm}
+            aria-label="Filtrar por resultado"
+          >
+            <option value="TODOS">Resultado — Todos</option>
+            {RESULTS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+          {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
+            <button
+              type="button"
+              className="flex items-center gap-1 text-[11px] text-subtle-muted hover:text-foreground"
+              onClick={() => { setFilterTipo("TODOS"); setFilterResultado("TODOS"); }}
+            >
+              <X className="h-3 w-3" />
+              Limpiar
+            </button>
+          )}
+          {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
+            <span className="ml-auto text-[11px] text-subtle-muted">
+              {filteredExams.length} de {exams.length}
+            </span>
+          )}
+        </div>
+      )}
+
       <CardContent className="divide-y divide-border-muted p-0">
         {exams.length === 0 && (
+          <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
+            <GraduationCap className="h-10 w-10 text-border-strong" />
+            <div>
+              <p className="text-sm font-medium text-foreground-secondary">
+                Sin exámenes registrados
+              </p>
+              <p className="mt-0.5 text-xs text-subtle-muted">
+                {canEdit
+                  ? "Usa «Nuevo examen» para registrar el primero."
+                  : "Aún no hay exámenes en el historial."}
+              </p>
+            </div>
+          </div>
+        )}
+        {exams.length > 0 && filteredExams.length === 0 && (
           <p className="px-4 py-8 text-center text-xs text-subtle-muted">
-            Sin exámenes registrados.
+            Sin resultados para los filtros seleccionados.
           </p>
         )}
-        {exams.map((exam) => {
+        {filteredExams.map((exam) => {
           const pct =
             exam.puntuacion != null && exam.puntuacionMaxima > 0
               ? Math.round((exam.puntuacion / exam.puntuacionMaxima) * 100)
@@ -293,7 +367,7 @@ export function ExamsManager({
               {pct != null && (
                 <div className="mt-2 flex items-center gap-2">
                   <div
-                    className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-active"
+                    className="h-2 flex-1 overflow-hidden rounded-full bg-surface-active"
                     role="progressbar"
                     aria-valuenow={pct}
                     aria-valuemin={0}
@@ -302,7 +376,7 @@ export function ExamsManager({
                   >
                     <div
                       className={cn(
-                        "h-full rounded-full",
+                        "h-full rounded-full transition-all",
                         pct >= 60 ? "bg-success" : "bg-destructive",
                       )}
                       style={{ width: `${Math.max(pct, 3)}%` }}
@@ -325,21 +399,21 @@ export function ExamsManager({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1 rounded-lg text-[11.5px]"
+                        className="h-7 gap-1.5 rounded-lg border-success-border text-[11.5px] text-success hover:bg-success-muted hover:text-success"
                         disabled={busy}
                         onClick={() => mark(exam.id, "Aprobado")}
                       >
-                        <Check className="h-3 w-3 text-success" />
+                        <Check className="h-3 w-3" />
                         Aprobar
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1 rounded-lg text-[11.5px]"
+                        className="h-7 gap-1.5 rounded-lg border-destructive-border text-[11.5px] text-destructive hover:bg-destructive-muted hover:text-destructive"
                         disabled={busy}
                         onClick={() => mark(exam.id, "Suspenso")}
                       >
-                        <X className="h-3 w-3 text-destructive" />
+                        <X className="h-3 w-3" />
                         Suspender
                       </Button>
                     </>

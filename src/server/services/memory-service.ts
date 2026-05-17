@@ -64,40 +64,54 @@ function syncCompetitionCoverage(eventId: string) {
   else comp.estado = "Incompleto";
 }
 
-function buildKpis(): DashboardKpi[] {
+function buildKpis(user?: SessionUser): DashboardKpi[] {
   const store = getStore();
-  const active = store.referees.filter((r) => r.estado === "Activo").length;
-  const pending = store.approvals.filter((a) => a.status === "pendiente").length;
+  const isZoneScoped =
+    user?.role === "delegado_zona" && typeof user.zona === "string";
+  const referees = isZoneScoped
+    ? store.referees.filter((r) => r.zona === user!.zona)
+    : store.referees;
+  const competitions = isZoneScoped
+    ? store.competitions.filter((c) => c.zona === user!.zona)
+    : store.competitions;
+  const approvals = isZoneScoped
+    ? store.approvals.filter((a) => a.zona === user!.zona)
+    : store.approvals;
+
+  const active = referees.filter((r) => r.estado === "Activo").length;
+  const pending = approvals.filter((a) => a.status === "pendiente").length;
   let openSlots = 0;
-  for (const c of store.competitions) {
+  for (const c of competitions) {
     openSlots += countOpenSlots(
       getEventTemplate(c.id),
       store.assignments.get(c.id) ?? {},
     );
   }
-  const critical = store.competitions.filter((c) => c.estado === "Crítico").length;
+  const critical = competitions.filter((c) => c.estado === "Crítico").length;
+
+  const subAlcance = isZoneScoped ? `zona ${user!.zona}` : "temporada 2026";
 
   return [
     {
-      label: "Árbitros Activos",
+      label: "Jueces Activos",
       value: String(active),
-      sub: `/ ${store.referees.length} federados`,
-      trend: "cuota operativa 2026",
+      sub: `/ ${referees.length} federados`,
+      trend: subAlcance,
       trendDir: "up",
       accent: "neutral",
     },
     {
       label: "Próximas Competiciones",
-      value: String(store.competitions.length),
+      value: String(competitions.length),
       sub: "campeonatos en calendario",
-      trend: "3 AEP-1 · 1 AEP-2 · 2 AEP-3",
+      trend: subAlcance,
       trendDir: "up",
       accent: "red",
     },
     {
       label: "Plazas sin cubrir",
       value: String(openSlots),
-      sub: `en ${store.competitions.length} eventos`,
+      sub: `en ${competitions.length} eventos`,
       trend: `${critical} eventos en estado crítico`,
       trendDir: critical > 0 ? "warn" : "flat",
       accent: "yellow",
@@ -106,7 +120,7 @@ function buildKpis(): DashboardKpi[] {
       label: "Aprobaciones Pendientes",
       value: String(pending),
       sub: "propuestas regionales",
-      trend: "esperan 36 h de media",
+      trend: subAlcance,
       trendDir: "flat",
       accent: "blue",
     },
@@ -156,7 +170,7 @@ export const memoryDataService = {
       healthHistory.push({ score: health.score, at: Date.now() });
     }
     return {
-      kpis: buildKpis(),
+      kpis: buildKpis(user),
       activity: store.activity,
       calendar: getCalendarEvents(),
       upcomingCompetitions: competitions.slice(0, 6),
@@ -204,7 +218,7 @@ export const memoryDataService = {
     pushActivity({
       tipo: "cambio",
       actor: "Sistema",
-      accion: "registró al árbitro",
+      accion: "registró al juez",
       evento: referee.nombre,
       hace: "ahora",
     });
@@ -326,7 +340,7 @@ export const memoryDataService = {
     const store = getStore();
     const assignments = store.assignments.get(eventId) ?? {};
     if (!assignments[slotKey]) {
-      return { error: "Asigna un árbitro antes de marcar flags" };
+      return { error: "Asigna un juez antes de marcar flags" };
     }
     const all = { ...(store.slotFlags.get(eventId) ?? {}) };
     const merged: SlotFlags = {
@@ -634,7 +648,7 @@ export const memoryDataService = {
   }): Promise<import("@/lib/types").PromotionRequest> => {
     const store = getStore();
     const referee = store.referees.find((r) => r.id === input.refereeId);
-    if (!referee) throw new Error("Árbitro no encontrado");
+    if (!referee) throw new Error("Juez no encontrado");
     const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
     const fromIdx = LEVEL_ORDER.indexOf(referee.nivel);
     const toIdx = LEVEL_ORDER.indexOf(input.toLevel);
@@ -663,11 +677,21 @@ export const memoryDataService = {
     return { events, approvals };
   },
 
-  getExams: async (refereeId?: string): Promise<RefereeExam[]> => {
-    const exams = getStore().exams;
-    return (refereeId ? exams.filter((e) => e.refereeId === refereeId) : exams)
-      .slice()
-      .sort((a, b) => b.fecha.localeCompare(a.fecha));
+  getExams: async (
+    refereeId?: string,
+    user?: SessionUser,
+  ): Promise<RefereeExam[]> => {
+    const store = getStore();
+    let exams = store.exams.slice();
+    // Scoping por zona para delegado_zona: solo exámenes de jueces de su zona.
+    if (user && user.role === "delegado_zona" && user.zona) {
+      const zoneRefs = new Set(
+        store.referees.filter((r) => r.zona === user.zona).map((r) => r.id),
+      );
+      exams = exams.filter((e) => zoneRefs.has(e.refereeId));
+    }
+    if (refereeId) exams = exams.filter((e) => e.refereeId === refereeId);
+    return exams.sort((a, b) => b.fecha.localeCompare(a.fecha));
   },
 
   createExam: async (input: {
@@ -683,7 +707,7 @@ export const memoryDataService = {
   }): Promise<RefereeExam> => {
     const store = getStore();
     const referee = store.referees.find((r) => r.id === input.refereeId);
-    if (!referee) throw new Error("Árbitro no encontrado");
+    if (!referee) throw new Error("Juez no encontrado");
     const exam: RefereeExam = {
       id: `exam-${Date.now()}`,
       refereeId: input.refereeId,
@@ -725,11 +749,22 @@ export const memoryDataService = {
     return true;
   },
 
-  getReports: async (refereeId?: string): Promise<RefereeReport[]> => {
-    const reports = getStore().reports;
-    return (refereeId ? reports.filter((r) => r.refereeId === refereeId) : reports)
-      .slice()
-      .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  getReports: async (
+    refereeId?: string,
+    user?: SessionUser,
+  ): Promise<RefereeReport[]> => {
+    const store = getStore();
+    let reports = store.reports.slice();
+    if (user && user.role === "delegado_zona" && user.zona) {
+      const zoneRefs = new Set(
+        store.referees.filter((r) => r.zona === user.zona).map((r) => r.id),
+      );
+      reports = reports.filter((r) => zoneRefs.has(r.refereeId));
+    }
+    if (refereeId) reports = reports.filter((r) => r.refereeId === refereeId);
+    return reports.sort((a, b) =>
+      (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+    );
   },
 
   createReport: async (input: {
@@ -743,7 +778,7 @@ export const memoryDataService = {
   }): Promise<RefereeReport> => {
     const store = getStore();
     const referee = store.referees.find((r) => r.id === input.refereeId);
-    if (!referee) throw new Error("Árbitro no encontrado");
+    if (!referee) throw new Error("Juez no encontrado");
     const report: RefereeReport = {
       id: `rep-${Date.now()}`,
       refereeId: input.refereeId,
@@ -757,6 +792,18 @@ export const memoryDataService = {
       createdAt: new Date().toISOString(),
     };
     store.reports.unshift(report);
+    return report;
+  },
+
+  updateReport: async (
+    id: string,
+    patch: Partial<
+      Pick<RefereeReport, "titulo" | "tipo" | "evento" | "contenido" | "adjuntoUrl">
+    >,
+  ): Promise<RefereeReport | undefined> => {
+    const report = getStore().reports.find((r) => r.id === id);
+    if (!report) return undefined;
+    Object.assign(report, patch);
     return report;
   },
 
