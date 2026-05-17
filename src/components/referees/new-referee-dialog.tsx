@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api/client";
 import type { RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,13 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
   const [licencia, setLicencia] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
+    dialogRef.current?.focus();
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
@@ -63,10 +65,12 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-referee-title"
-        className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-xl"
+        className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 id="new-referee-title" className="text-lg font-semibold text-foreground">
@@ -125,7 +129,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
             <label className="mb-1 block text-xs text-subtle-muted">Licencia (opcional)</label>
             <Input value={licencia} onChange={(e) => setLicencia(e.target.value)} />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar

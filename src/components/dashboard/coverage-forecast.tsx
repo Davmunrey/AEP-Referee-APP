@@ -65,7 +65,14 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-active">
+                <div
+                  className="h-2 flex-1 overflow-hidden rounded-full bg-surface-active"
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Cobertura ${c.nombre}: ${pct}%, estado ${c.estado}`}
+                >
                   <div
                     className={cn("h-full rounded-full transition-all", BAR_TONE[c.estado])}
                     style={{ width: `${Math.max(pct, 3)}%` }}

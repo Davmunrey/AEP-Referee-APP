@@ -221,7 +221,11 @@ export function ReportsManager({
               className={selectFieldClass}
             />
           </label>
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
           <div className="flex justify-end">
             <Button size="sm" className="rounded-xl" disabled={busy} onClick={submit}>
               {busy ? "Subiendo…" : "Subir informe"}
@@ -243,9 +247,11 @@ export function ReportsManager({
               <button
                 type="button"
                 onClick={() => toggle(report.id)}
-                className="flex w-full items-start gap-2 text-left"
+                className="flex w-full items-start gap-2 rounded-lg text-left focus-ring"
+                aria-expanded={isOpen}
+                aria-controls={`report-body-${report.id}`}
               >
-                <span className="mt-0.5 shrink-0 text-primary">
+                <span className="mt-0.5 shrink-0 text-primary" aria-hidden="true">
                   {isOpen ? (
                     <ChevronDown className="h-3.5 w-3.5" />
                   ) : (
@@ -267,7 +273,7 @@ export function ReportsManager({
                 </span>
               </button>
               {isOpen && (
-                <div className="mt-2 pl-6">
+                <div id={`report-body-${report.id}`} className="mt-2 pl-6">
                   <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-foreground-secondary">
                     {report.contenido}
                   </p>

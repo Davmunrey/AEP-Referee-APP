@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export function NewPromotionDialog({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const eligible = referees.filter(
     (r) => r.estado === "Activo" && higherLevels(r.nivel).length > 0,
@@ -79,6 +80,7 @@ export function NewPromotionDialog({
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("keydown", handler);
+    dialogRef.current?.focus();
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
@@ -93,11 +95,11 @@ export function NewPromotionDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setOpen(false)}>
-      <div role="dialog" aria-modal="true" aria-labelledby="new-promo-title" className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="new-promo-title" className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-xl outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 id="new-promo-title" className="text-lg font-semibold">Solicitar ascenso de nivel</h2>
-          <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" aria-label="Cerrar" onClick={() => setOpen(false)}>
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
         <form onSubmit={submit} className="space-y-4">
@@ -158,7 +160,7 @@ export function NewPromotionDialog({
               onChange={(e) => setForm((f) => ({ ...f, motivo: e.target.value }))}
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar

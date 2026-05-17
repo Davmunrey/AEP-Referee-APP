@@ -62,7 +62,12 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
         <div className="relative mx-auto h-[136px] w-[136px] shrink-0">
-          <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
+          <svg
+            viewBox="0 0 128 128"
+            className="h-full w-full -rotate-90"
+            role="img"
+            aria-label={`Índice de salud operativa: ${health.score} de 100, estado ${health.status}`}
+          >
             <circle
               cx="64"
               cy="64"
@@ -130,7 +135,14 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
                     {f.score}
                   </span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-active">
+                <div
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-surface-active"
+                  role="progressbar"
+                  aria-valuenow={f.score}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${f.label}: ${f.score} de 100`}
+                >
                   <div
                     className={cn("h-full rounded-full", factorTone(f.score))}
                     style={{ width: `${Math.max(f.score, 3)}%` }}
