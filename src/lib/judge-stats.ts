@@ -1,15 +1,18 @@
+import { isSanctionActive } from "@/lib/sanctions";
 import type {
   JudgeProfile,
   Referee,
   RefereeExam,
   RefereeReport,
+  RefereeSanction,
 } from "@/lib/types";
 
-/** Combina juez + exámenes + informes en un perfil con métricas. */
+/** Combina juez + exámenes + informes + sanciones en un perfil con métricas. */
 export function computeJudgeProfile(
   referee: Referee,
   exams: RefereeExam[],
   reports: RefereeReport[],
+  sanctions: RefereeSanction[] = [],
 ): JudgeProfile {
   const sortedExams = [...exams].sort((a, b) => b.fecha.localeCompare(a.fecha));
   const sortedReports = [...reports].sort((a, b) =>
@@ -22,10 +25,17 @@ export function computeJudgeProfile(
         scored.reduce((acc, e) => acc + (e.puntuacion ?? 0), 0) / scored.length,
       )
     : null;
+  const sortedSanctions = [...sanctions].sort((a, b) =>
+    (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+  );
+  const activeSanction = sortedSanctions.find((s) => isSanctionActive(s));
+
   return {
     referee,
     exams: sortedExams,
     reports: sortedReports,
+    sanctions: sortedSanctions,
+    activeSanction,
     examsPassed: passed,
     examsTotal: exams.length,
     avgScore,

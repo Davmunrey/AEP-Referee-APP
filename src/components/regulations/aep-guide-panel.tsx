@@ -116,14 +116,14 @@ export function AepGuidePanel() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Zonas geográficas oficiales</CardTitle>
+          <CardTitle className="text-sm">Zonas operativas (Excel jueces)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <ul className="space-y-2 text-sm text-foreground-secondary">
             {AEP_GEOGRAPHIC_ZONES.map((z) => (
               <li key={z.id}>
                 <span className="font-medium text-foreground">{z.name}</span>
-                <span className="text-subtle-muted"> — {z.provinces.join(", ")}</span>
+                <span className="font-mono text-subtle-muted"> ({z.id})</span>
               </li>
             ))}
           </ul>

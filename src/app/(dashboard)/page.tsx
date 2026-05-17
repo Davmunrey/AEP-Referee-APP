@@ -6,6 +6,7 @@ import { DashboardLive } from "@/components/dashboard/dashboard-live";
 import { EventsTable } from "@/components/dashboard/events-table";
 import { HealthGauge } from "@/components/dashboard/health-gauge";
 import { InsightsPanel } from "@/components/dashboard/insights-panel";
+import { SanctionsAlerts } from "@/components/dashboard/sanctions-alerts";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { OperationalCalendar } from "@/components/dashboard/operational-calendar";
 import { getSession } from "@/lib/auth/session";
@@ -28,6 +29,8 @@ export default async function DashboardPage() {
 
       {/* KPIs */}
       <KpiCards kpis={dashboard.kpis} />
+
+      <SanctionsAlerts alerts={dashboard.sanctionAlerts} />
 
       {/* Health + Insights side-by-side on large screens */}
       <div className="grid gap-4 lg:grid-cols-2">

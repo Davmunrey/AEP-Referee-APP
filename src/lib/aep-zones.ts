@@ -1,141 +1,135 @@
 import type { Zone } from "@/lib/types";
 
-/** Zonas geográficas oficiales AEP 2026 (§4.1 Guía AEP). Código canónico en BD y RBAC. */
-export const AEP_GEOGRAPHIC_ZONES = [
+/**
+ * Cinco zonas operativas del Excel «Control jueces» (único modelo para jueces, RBAC y campeonatos).
+ */
+export const AEP_MACRO_ZONES = [
+  { id: "NOROESTE", name: "1- NOROESTE", excelLabels: ["1-NOROESTE", "1- NOROESTE"] },
+  { id: "CENTRO", name: "2- CENTRO", excelLabels: ["2- CENTRO", "2-CENTRO"] },
   {
-    id: "N1",
-    name: "Zona norte 1",
-    provinces: ["Galicia", "Asturias", "Castilla y León"],
+    id: "MEDITERRANEO",
+    name: "3- MEDITERRANEO",
+    excelLabels: ["3- MEDITERRANEO", "3-MEDITERRANEO"],
   },
-  {
-    id: "N2",
-    name: "Zona norte 2",
-    provinces: [
-      "Cantabria",
-      "País Vasco",
-      "Navarra",
-      "La Rioja",
-      "Aragón",
-    ],
-  },
-  {
-    id: "CENTRO",
-    name: "Zona centro",
-    provinces: ["Extremadura", "Castilla-La Mancha"],
-  },
-  {
-    id: "MAD",
-    name: "Zona Madrid",
-    provinces: ["Madrid"],
-  },
-  {
-    id: "CAT",
-    name: "Zona Cataluña",
-    provinces: ["Cataluña"],
-  },
-  {
-    id: "LEV",
-    name: "Zona levante e islas",
-    provinces: ["Valencia", "Murcia", "Baleares"],
-  },
-  {
-    id: "SUR",
-    name: "Zona sur",
-    provinces: ["Andalucía", "Ceuta", "Melilla"],
-  },
-  {
-    id: "CAN",
-    name: "Zona Canarias",
-    provinces: ["Canarias"],
-  },
+  { id: "ANDALUCIA", name: "4- ANDALUCIA", excelLabels: ["4- ANDALUCIA", "4-ANDALUCIA"] },
+  { id: "CANARIAS", name: "5- CANARIAS", excelLabels: ["5- CANARIAS", "5-CANARIAS"] },
 ] as const;
 
-export type AepGeographicZoneId = (typeof AEP_GEOGRAPHIC_ZONES)[number]["id"];
+export type AepMacroZoneId = (typeof AEP_MACRO_ZONES)[number]["id"];
 
-/** Listado para selects, seed y mock (`zones` en Supabase). */
-export const AEP_ZONES: Zone[] = AEP_GEOGRAPHIC_ZONES.map((z) => ({
+/** @deprecated Usar `AepMacroZoneId`. */
+export type AepGeographicZoneId = AepMacroZoneId;
+
+/** Listado para selects, seed y API meta. */
+export const AEP_ZONES: Zone[] = AEP_MACRO_ZONES.map((z) => ({
   code: z.id,
   name: z.name,
 }));
 
-/** Códigos CCAA/provincia históricos en Tarima → zona geográfica 2026. */
-export const LEGACY_ZONE_CODE_MAP: Record<string, AepGeographicZoneId> = {
-  AND: "SUR",
-  VAL: "LEV",
-  GAL: "N1",
-  AST: "N1",
-  CYL: "N1",
-  PVA: "N2",
-  ARA: "N2",
-  Centro: "CENTRO",
+/** @deprecated Usar `AEP_MACRO_ZONES`. */
+export const AEP_GEOGRAPHIC_ZONES = AEP_MACRO_ZONES;
+
+const MACRO_NAME_BY_ID = Object.fromEntries(
+  AEP_MACRO_ZONES.map((z) => [z.id, z.name]),
+) as Record<AepMacroZoneId, string>;
+
+function normalizeZoneKey(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ").toUpperCase();
+}
+
+/** Etiquetas Excel y códigos históricos → id macro canónico. */
+export const LEGACY_ZONE_CODE_MAP: Record<string, AepMacroZoneId> = {
+  NOROESTE: "NOROESTE",
+  "1-NOROESTE": "NOROESTE",
+  "1- NOROESTE": "NOROESTE",
   CENTRO: "CENTRO",
-  Norte: "N1",
-  NORTE: "N1",
-  MAD: "MAD",
-  CAT: "CAT",
-  CAN: "CAN",
-  N1: "N1",
-  N2: "N2",
-  LEV: "LEV",
-  SUR: "SUR",
+  "2- CENTRO": "CENTRO",
+  "2-CENTRO": "CENTRO",
+  MEDITERRANEO: "MEDITERRANEO",
+  "3- MEDITERRANEO": "MEDITERRANEO",
+  "3-MEDITERRANEO": "MEDITERRANEO",
+  ANDALUCIA: "ANDALUCIA",
+  "4- ANDALUCIA": "ANDALUCIA",
+  "4-ANDALUCIA": "ANDALUCIA",
+  CANARIAS: "CANARIAS",
+  "5- CANARIAS": "CANARIAS",
+  "5-CANARIAS": "CANARIAS",
+  // Subdivisiones geográficas antiguas (migración 009) → macro
+  N1: "NOROESTE",
+  N2: "NOROESTE",
+  Norte: "NOROESTE",
+  NORTE: "NOROESTE",
+  GAL: "NOROESTE",
+  AST: "NOROESTE",
+  CYL: "NOROESTE",
+  PVA: "NOROESTE",
+  ARA: "NOROESTE",
+  MAD: "CENTRO",
+  CAT: "MEDITERRANEO",
+  LEV: "MEDITERRANEO",
+  VAL: "MEDITERRANEO",
+  SUR: "ANDALUCIA",
+  AND: "ANDALUCIA",
+  CAN: "CANARIAS",
+  Centro: "CENTRO",
 };
 
-/** Provincia o localidad → código zona geográfica (import calendario, sedes). */
-export const PROVINCE_TO_GEOGRAPHIC_ZONE: Record<string, AepGeographicZoneId> = {
-  Madrid: "MAD",
-  Barcelona: "CAT",
-  Tarragona: "CAT",
-  Lleida: "CAT",
-  Girona: "CAT",
-  Cataluña: "CAT",
-  Valencia: "LEV",
-  Castellón: "LEV",
-  Alicante: "LEV",
-  Murcia: "LEV",
-  Baleares: "LEV",
-  Mallorca: "LEV",
-  Sevilla: "SUR",
-  Málaga: "SUR",
-  Granada: "SUR",
-  Cádiz: "SUR",
-  Córdoba: "SUR",
-  Huelva: "SUR",
-  Almería: "SUR",
-  Jaén: "SUR",
-  Andalucía: "SUR",
-  Ceuta: "SUR",
-  Melilla: "SUR",
-  "A Coruña": "N1",
-  "La Coruña": "N1",
-  Pontevedra: "N1",
-  Lugo: "N1",
-  Ourense: "N1",
-  Galicia: "N1",
-  Asturias: "N1",
-  Valladolid: "N1",
-  León: "N1",
-  Salamanca: "N1",
-  Burgos: "N1",
-  Zamora: "N1",
-  Palencia: "N1",
-  Segovia: "N1",
-  Ávila: "N1",
-  Soria: "N1",
-  "Castilla y León": "N1",
-  Vizcaya: "N2",
-  Bizkaia: "N2",
-  Guipúzcoa: "N2",
-  Gipuzkoa: "N2",
-  Álava: "N2",
-  Araba: "N2",
-  "País Vasco": "N2",
-  Cantabria: "N2",
-  Navarra: "N2",
-  "La Rioja": "N2",
-  Zaragoza: "N2",
-  Huesca: "N2",
-  Teruel: "N2",
-  Aragón: "N2",
+/** Provincia/localidad → zona macro (calendario PDF, sedes sin columna Zona). */
+export const PROVINCE_TO_MACRO_ZONE: Record<string, AepMacroZoneId> = {
+  Madrid: "CENTRO",
+  Barcelona: "MEDITERRANEO",
+  Tarragona: "MEDITERRANEO",
+  Lleida: "MEDITERRANEO",
+  Girona: "MEDITERRANEO",
+  Cataluña: "MEDITERRANEO",
+  Valencia: "MEDITERRANEO",
+  Castellón: "MEDITERRANEO",
+  Alicante: "MEDITERRANEO",
+  Murcia: "MEDITERRANEO",
+  Baleares: "MEDITERRANEO",
+  Mallorca: "MEDITERRANEO",
+  Sevilla: "ANDALUCIA",
+  Málaga: "ANDALUCIA",
+  Granada: "ANDALUCIA",
+  Cádiz: "ANDALUCIA",
+  Córdoba: "ANDALUCIA",
+  Huelva: "ANDALUCIA",
+  Almería: "ANDALUCIA",
+  Jaén: "ANDALUCIA",
+  Andalucía: "ANDALUCIA",
+  Ceuta: "ANDALUCIA",
+  Melilla: "ANDALUCIA",
+  "A Coruña": "NOROESTE",
+  "La Coruña": "NOROESTE",
+  Pontevedra: "NOROESTE",
+  Lugo: "NOROESTE",
+  Ourense: "NOROESTE",
+  Galicia: "NOROESTE",
+  Asturias: "NOROESTE",
+  Valladolid: "NOROESTE",
+  León: "NOROESTE",
+  Salamanca: "NOROESTE",
+  Burgos: "NOROESTE",
+  Zamora: "NOROESTE",
+  Palencia: "NOROESTE",
+  Segovia: "NOROESTE",
+  Ávila: "NOROESTE",
+  Soria: "NOROESTE",
+  "Castilla y León": "NOROESTE",
+  Vizcaya: "NOROESTE",
+  Bizkaia: "NOROESTE",
+  Guipúzcoa: "NOROESTE",
+  Gipuzkoa: "NOROESTE",
+  Álava: "NOROESTE",
+  Araba: "NOROESTE",
+  "País Vasco": "NOROESTE",
+  Cantabria: "NOROESTE",
+  Navarra: "NOROESTE",
+  "La Rioja": "NOROESTE",
+  Zaragoza: "NOROESTE",
+  Huesca: "NOROESTE",
+  Teruel: "NOROESTE",
+  Aragón: "NOROESTE",
   Badajoz: "CENTRO",
   Cáceres: "CENTRO",
   Extremadura: "CENTRO",
@@ -145,57 +139,73 @@ export const PROVINCE_TO_GEOGRAPHIC_ZONE: Record<string, AepGeographicZoneId> = 
   Guadalajara: "CENTRO",
   Albacete: "CENTRO",
   "Castilla-La Mancha": "CENTRO",
-  "Las Palmas De Gran Canaria": "CAN",
-  "Las Palmas": "CAN",
-  Tenerife: "CAN",
-  Canarias: "CAN",
+  "Las Palmas De Gran Canaria": "CANARIAS",
+  "Las Palmas": "CANARIAS",
+  Tenerife: "CANARIAS",
+  Canarias: "CANARIAS",
 };
 
-const GEOGRAPHIC_NAME_BY_ID = Object.fromEntries(
-  AEP_GEOGRAPHIC_ZONES.map((z) => [z.id, z.name]),
-) as Record<string, string>;
+/** @deprecated Usar `PROVINCE_TO_MACRO_ZONE`. */
+export const PROVINCE_TO_GEOGRAPHIC_ZONE = PROVINCE_TO_MACRO_ZONE;
 
-/** Normaliza código almacenado (legacy CCAA o alias) → id geográfico 2026. */
 export function resolveZoneCode(
   code: string | null | undefined,
-): AepGeographicZoneId | undefined {
+): AepMacroZoneId | undefined {
   if (!code) return undefined;
   const trimmed = code.trim();
   if (!trimmed) return undefined;
+
   const direct = LEGACY_ZONE_CODE_MAP[trimmed];
   if (direct) return direct;
-  const upper = LEGACY_ZONE_CODE_MAP[trimmed.toUpperCase()];
+
+  const upper = LEGACY_ZONE_CODE_MAP[normalizeZoneKey(trimmed)];
   if (upper) return upper;
-  if (GEOGRAPHIC_NAME_BY_ID[trimmed]) return trimmed as AepGeographicZoneId;
+
+  const key = normalizeZoneKey(trimmed);
+  if (key.includes("NOROESTE")) return "NOROESTE";
+  if (key.includes("CENTRO")) return "CENTRO";
+  if (key.includes("MEDITERRAN")) return "MEDITERRANEO";
+  if (key.includes("ANDALUCIA")) return "ANDALUCIA";
+  if (key.includes("CANARIAS")) return "CANARIAS";
+
+  if (MACRO_NAME_BY_ID[trimmed as AepMacroZoneId]) {
+    return trimmed as AepMacroZoneId;
+  }
+
   return undefined;
 }
 
+export function macroZoneName(macroId: string): string {
+  return MACRO_NAME_BY_ID[macroId as AepMacroZoneId] ?? macroId;
+}
+
+/** @deprecated Usar `macroZoneName`. */
 export function geographicZoneName(geographicId: string): string {
-  return GEOGRAPHIC_NAME_BY_ID[geographicId] ?? geographicId;
+  return macroZoneName(geographicId);
 }
 
 export function zoneDisplayName(code: string | null | undefined): string {
   const resolved = resolveZoneCode(code);
   if (!resolved) return code?.trim() || "—";
-  return geographicZoneName(resolved);
+  return macroZoneName(resolved);
 }
 
-/** Valor listo para persistir en BD (migra códigos legacy). */
-export function normalizeZoneInput(
-  zona?: string | null,
-): string | null {
+export function normalizeZoneInput(zona?: string | null): string | null {
   return resolveZoneCode(zona) ?? null;
 }
 
-export function deduceGeographicZone(
+export function deduceMacroZone(
   provincia: string | undefined,
   localidad: string,
-): AepGeographicZoneId | undefined {
+): AepMacroZoneId | undefined {
   const candidates: string[] = [];
   if (provincia) candidates.push(provincia.replace(/\(|\)/g, "").trim());
   candidates.push(localidad.replace(/\([^)]*\)/g, "").trim());
   for (const c of candidates) {
-    if (PROVINCE_TO_GEOGRAPHIC_ZONE[c]) return PROVINCE_TO_GEOGRAPHIC_ZONE[c];
+    if (PROVINCE_TO_MACRO_ZONE[c]) return PROVINCE_TO_MACRO_ZONE[c];
   }
   return undefined;
 }
+
+/** @deprecated Usar `deduceMacroZone`. */
+export const deduceGeographicZone = deduceMacroZone;

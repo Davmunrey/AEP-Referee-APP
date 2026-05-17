@@ -13,6 +13,9 @@ import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { redirect } from "next/navigation";
+import { RefereeArbitrajePanel } from "@/components/referees/referee-arbitraje-panel";
+import { RefereeSanctionsPanel } from "@/components/referees/referee-sanctions-panel";
+import { canManageSanctions } from "@/lib/permissions";
 import { DeleteRefereeButton } from "./delete-referee-button";
 
 interface RefereePageProps {
@@ -30,7 +33,16 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   ]);
   if (!profile) notFound();
 
-  const { referee, exams, reports, examsPassed, examsTotal, avgScore } = profile;
+  const {
+    referee,
+    exams,
+    reports,
+    sanctions,
+    activeSanction,
+    examsPassed,
+    examsTotal,
+    avgScore,
+  } = profile;
   if (user.role === "delegado_zona" && user.zona) {
     const userZone = resolveZoneCode(user.zona) ?? user.zona;
     const refZone = resolveZoneCode(referee.zona) ?? referee.zona;
@@ -39,6 +51,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   const zoneName =
     meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
   const canEdit = user.role !== "solo_ver";
+  const canSanction = canManageSanctions(user, referee.zona);
   const canDelete = user.role === "super_admin" || user.role === "delegado_jueces";
 
   const trayectoria = [
@@ -76,6 +89,12 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
                 {referee.zona} · {zoneName}
+                {referee.excelMacroZone && referee.excelMacroZone !== referee.zona && (
+                  <span className="font-normal normal-case text-muted-foreground">
+                    {" "}
+                    (Excel: {referee.excelMacroZone})
+                  </span>
+                )}
               </p>
               <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
                 {referee.nombre}
@@ -121,6 +140,21 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
           </div>
         </div>
       </Card>
+
+      {referee.arbitrajeStats && referee.arbitrajeStats.total > 0 && (
+        <RefereeArbitrajePanel stats={referee.arbitrajeStats} />
+      )}
+
+      {(canSanction || sanctions.length > 0 || activeSanction) && (
+        <RefereeSanctionsPanel
+          refereeId={referee.id}
+          zonaName={zoneName}
+          sanctions={sanctions}
+          activeSanction={activeSanction}
+          canManage={canSanction}
+          zones={meta.zones}
+        />
+      )}
 
       {/* Data + Trajectory two-column layout */}
       <div className="grid gap-4 lg:grid-cols-5">

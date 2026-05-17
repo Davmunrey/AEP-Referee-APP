@@ -1,12 +1,14 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { parseAepCalendarText } from "@/lib/calendar-parser";
+import { competitionDedupKey } from "@/lib/competition-dedup";
 import {
   MAX_PDF_BYTES,
   extractPdfText,
   validatePdfMime,
 } from "@/lib/schedule-parser";
 import type { Competition } from "@/lib/types";
+import { revalidatePath } from "next/cache";
 import { dataService } from "@/server/services";
 
 export const runtime = "nodejs";
@@ -20,7 +22,8 @@ export const maxDuration = 30;
  *   - tipo ∈ {AEP-1, AEP-2, AEP-3}
  *   - localidad/organizador no extranjero (sin "Finland", "Malta", etc.)
  *   - fecha inicio parseable (entries `pendiente` se descartan en apply)
- *   - no duplica eventos con la misma combinación (nombre + fecha) que ya existan en BD
+ *   - no duplica eventos con la misma combinación (nombre + fecha + tipo) que ya existan en BD
+ *   - en apply: limpia duplicados previos en BD (misma clave) antes de crear nuevos
  */
 export async function POST(request: Request) {
   const user = await requireApiUser();
@@ -73,15 +76,28 @@ export async function POST(request: Request) {
   // Filtro España: tipo AEP-1/2/3 y no extranjero.
   const elegibles = parsed.entries.filter((e) => e.esEspaña && e.tipo !== null);
 
-  // Existing competitions to avoid duplicates by (nombre + fecha).
+  let dedupeRemoved = 0;
+  if (apply) {
+    const dedupe = await dataService.removeDuplicateCompetitions(user);
+    dedupeRemoved = dedupe.removed.length;
+  }
+
   const existing = await dataService.getCompetitions(user);
-  const existingKeys = new Set(
-    existing.map((c) => `${c.nombre.toLowerCase().trim()}__${c.fecha}`),
+  const dbDuplicateGroups = await dataService.findCompetitionDuplicates(user);
+  const dbDuplicateCount = dbDuplicateGroups.reduce(
+    (n, g) => n + g.events.length - 1,
+    0,
   );
 
+  const existingKeys = new Set(existing.map((c) => competitionDedupKey(c)));
+
   const toCreate = elegibles.filter((e) => {
-    if (!e.fechaInicio) return false; // descarta "pendiente"
-    const key = `${e.nombre.toLowerCase().trim()}__${e.fechaInicio}`;
+    if (!e.fechaInicio || !e.tipo) return false;
+    const key = competitionDedupKey({
+      nombre: e.nombre,
+      fecha: e.fechaInicio,
+      tipo: e.tipo,
+    });
     return !existingKeys.has(key);
   });
 
@@ -91,6 +107,7 @@ export async function POST(request: Request) {
     totalDetected: parsed.entries.length,
     eligibleCount: elegibles.length,
     duplicateCount: elegibles.length - toCreate.length,
+    dbDuplicateCount,
     toCreateCount: toCreate.length,
     warnings: parsed.warnings,
     entries: elegibles.map((e) => ({
@@ -105,7 +122,14 @@ export async function POST(request: Request) {
       pendiente: e.pendiente,
       nuevo: !!(
         e.fechaInicio &&
-        !existingKeys.has(`${e.nombre.toLowerCase().trim()}__${e.fechaInicio}`)
+        e.tipo &&
+        !existingKeys.has(
+          competitionDedupKey({
+            nombre: e.nombre,
+            fecha: e.fechaInicio,
+            tipo: e.tipo,
+          }),
+        )
       ),
     })),
   };
@@ -136,5 +160,12 @@ export async function POST(request: Request) {
     }
   }
 
-  return jsonOk({ preview, created: created.length, errors });
+  revalidatePath("/events");
+  revalidatePath("/");
+  return jsonOk({
+    preview,
+    created: created.length,
+    dedupeRemoved,
+    errors,
+  });
 }

@@ -11,6 +11,7 @@ import type {
   Referee,
   RefereeExam,
   RefereeReport,
+  RefereeSanction,
   RegulationRule,
   RosterHistoryEntry,
   RosterSession,
@@ -28,6 +29,7 @@ interface AppStore {
   history: RosterHistoryEntry[];
   exams: RefereeExam[];
   reports: RefereeReport[];
+  sanctions: RefereeSanction[];
 }
 
 const globalStore = globalThis as unknown as { __aepStore?: AppStore };
@@ -45,6 +47,7 @@ function createStore(): AppStore {
     history: [],
     exams: [],
     reports: [],
+    sanctions: [],
   };
 }
 

@@ -6,8 +6,11 @@ export {
   type ParsedRegistryReferee,
 } from "./parse-xlsx";
 export {
-  EXCEL_ZONE_TO_GEOGRAPHIC,
   mapExcelZone,
   mapExcelLevel,
+  mapExcelActivo,
   refereeIdFromExcelId,
 } from "./maps";
+export { parseCampeonatosCsv } from "./parse-csv";
+export type { RefereeArbitrajeStats } from "./arbitraje-stats";
+export { topArbitrajeRoles, ARBITRAJE_ROLE_LABELS } from "./arbitraje-stats";

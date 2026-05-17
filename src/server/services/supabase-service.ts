@@ -7,6 +7,11 @@ import {
   importJudgesRegistryToSupabase,
 } from "@/server/services/import-judges-registry";
 import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
+import {
+  competitionDedupKey,
+  competitionsToRemoveInGroup,
+  groupCompetitionDuplicates,
+} from "@/lib/competition-dedup";
 import { LEVELS } from "@/lib/mock-data";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import {
@@ -42,6 +47,15 @@ import type {
   SessionUser,
 } from "@/lib/types";
 import { computeJudgeProfile } from "@/lib/judge-stats";
+import {
+  createRefereeSanction,
+  expireStaleSanctions,
+  getActiveSanction,
+  getSanctionAlerts,
+  listRefereeSanctions,
+  markSanctionDelegateNotified,
+  revokeRefereeSanction,
+} from "@/server/services/referee-sanctions";
 import { formatRosterExport } from "@/lib/roster-export";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -301,6 +315,7 @@ export const supabaseDataService = {
   }),
 
   getDashboard: async (user: SessionUser): Promise<DashboardPayload> => {
+    await expireStaleSanctions();
     const supabase = db();
     const isZoneScoped = user.role === "delegado_zona" && !!user.zona;
     const userZone = isZoneScoped ? resolveZoneCode(user.zona) : undefined;
@@ -413,6 +428,7 @@ export const supabaseDataService = {
       health,
       insights,
       coverage,
+      sanctionAlerts: await getSanctionAlerts(user),
       generatedAt: new Date().toISOString(),
     };
   },
@@ -424,6 +440,7 @@ export const supabaseDataService = {
     q?: string;
     user?: SessionUser;
   }): Promise<Referee[]> => {
+    await expireStaleSanctions();
     const supabase = db();
     const { data } = await supabase.from("referees").select("*").order("nombre");
     return (data ?? [])
@@ -520,8 +537,27 @@ export const supabaseDataService = {
     input: Omit<Competition, "id" | "confirmados" | "estado" | "aprobacion">,
   ): Promise<Competition> => {
     const supabase = db();
-    const { count } = await supabase.from("competitions").select("*", { count: "exact", head: true });
-    const id = `evt-${String((count ?? 0) + 1).padStart(3, "0")}`;
+    const existing = await supabase.from("competitions").select("id, nombre, fecha, tipo");
+    const key = competitionDedupKey(input);
+    const dupe = (existing.data ?? []).find(
+      (r) =>
+        competitionDedupKey({
+          nombre: String(r.nombre),
+          fecha: String(r.fecha),
+          tipo: String(r.tipo),
+        }) === key,
+    );
+    if (dupe) {
+      throw new Error(
+        `Ya existe un campeonato igual (${String(dupe.nombre)}, ${String(dupe.fecha)}). Id: ${String(dupe.id)}`,
+      );
+    }
+    const maxNum = (existing.data ?? []).reduce((max, row) => {
+      const m = /^evt-(\d+)$/i.exec(String(row.id));
+      const n = m ? Number.parseInt(m[1]!, 10) : 0;
+      return Number.isFinite(n) ? Math.max(max, n) : max;
+    }, 0);
+    const id = `evt-${String(maxNum + 1).padStart(3, "0")}`;
     const template = getPresetForEventType(input.tipo);
     const row = {
       id,
@@ -1012,8 +1048,40 @@ export const supabaseDataService = {
 
   deleteCompetition: async (id: string): Promise<boolean> => {
     const supabase = db();
-    const { error } = await supabase.from("competitions").delete().eq("id", id);
-    return !error;
+    await supabase.from("roster_assignments").delete().eq("competition_id", id);
+    await supabase.from("approval_proposals").delete().eq("event_id", id);
+    await supabase.from("roster_history").delete().eq("event_id", id);
+    const { data, error } = await supabase
+      .from("competitions")
+      .delete()
+      .eq("id", id)
+      .select("id");
+    if (error) {
+      console.error("[deleteCompetition]", id, error.message);
+      return false;
+    }
+    return (data?.length ?? 0) > 0;
+  },
+
+  findCompetitionDuplicates: async (user?: SessionUser) => {
+    const list = await supabaseDataService.getCompetitions(user);
+    return groupCompetitionDuplicates(list);
+  },
+
+  removeDuplicateCompetitions: async (user?: SessionUser) => {
+    const groups = await supabaseDataService.findCompetitionDuplicates(user);
+    const removed: string[] = [];
+    const kept: string[] = [];
+    for (const group of groups) {
+      const toDrop = competitionsToRemoveInGroup(group.events);
+      const keep = group.events.find((e) => !toDrop.some((d) => d.id === e.id));
+      if (keep) kept.push(keep.id);
+      for (const c of toDrop) {
+        const ok = await supabaseDataService.deleteCompetition(c.id);
+        if (ok) removed.push(c.id);
+      }
+    }
+    return { removed, kept, groups: groups.length };
   },
 
   createPromotion: async (input: {
@@ -1279,12 +1347,21 @@ export const supabaseDataService = {
   ): Promise<JudgeProfile | undefined> => {
     const referee = await supabaseDataService.getReferee(refereeId);
     if (!referee) return undefined;
-    const [exams, reports] = await Promise.all([
+    const [exams, reports, sanctions] = await Promise.all([
       supabaseDataService.getExams(refereeId),
       supabaseDataService.getReports(refereeId),
+      listRefereeSanctions(refereeId),
     ]);
-    return computeJudgeProfile(referee, exams, reports);
+    return computeJudgeProfile(referee, exams, reports, sanctions);
   },
+
+  listRefereeSanctions,
+  getActiveSanction,
+  createRefereeSanction,
+  revokeRefereeSanction,
+  markSanctionDelegateNotified,
+  getSanctionAlerts,
+  expireStaleSanctions,
 
   importJudgesRegistry: async (
     parsed: ParsedJudgesRegistry,

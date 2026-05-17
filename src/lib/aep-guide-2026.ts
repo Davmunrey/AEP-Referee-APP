@@ -157,7 +157,7 @@ export const AEP_GUIDE_SECTIONS = [
   {
     id: "zonas",
     title: "Zonas geográficas",
-    body: "Ocho zonas oficiales para campeonatos regionales AEP-2. En AEP Tarima los delegados de zona, campeonatos y jueces usan estos mismos códigos (N1, N2, CENTRO, MAD, CAT, LEV, SUR, CAN).",
+    body: "Cinco zonas operativas del Excel de jueces (1- NOROESTE … 5- CANARIAS). En AEP Tarima delegados, campeonatos y jueces usan los códigos NOROESTE, CENTRO, MEDITERRANEO, ANDALUCIA y CANARIAS.",
   },
   {
     id: "niveles",

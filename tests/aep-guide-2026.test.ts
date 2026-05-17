@@ -8,14 +8,14 @@ import {
 } from "@/lib/aep-guide-2026";
 
 describe("aep-guide-2026", () => {
-  it("define 8 zonas geográficas oficiales", () => {
-    expect(AEP_GEOGRAPHIC_ZONES).toHaveLength(8);
+  it("define 5 zonas macro Excel", () => {
+    expect(AEP_GEOGRAPHIC_ZONES).toHaveLength(5);
   });
 
-  it("mapea código operativo a zona geográfica", () => {
-    expect(operationalToGeographicName("MAD")).toBe("Zona Madrid");
-    expect(operationalToGeographicName("VAL")).toBe("Zona levante e islas");
-    expect(geographicZoneName("LEV")).toBe("Zona levante e islas");
+  it("mapea código legacy a etiqueta macro", () => {
+    expect(operationalToGeographicName("MAD")).toBe("2- CENTRO");
+    expect(operationalToGeographicName("VAL")).toBe("3- MEDITERRANEO");
+    expect(geographicZoneName("MEDITERRANEO")).toBe("3- MEDITERRANEO");
   });
 
   it("describe niveles AEP según guía (no invertidos)", () => {

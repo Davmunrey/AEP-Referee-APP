@@ -183,6 +183,7 @@ export const memoryDataService = {
       health,
       insights,
       coverage,
+      sanctionAlerts: [],
       generatedAt: new Date().toISOString(),
     };
   },
@@ -661,7 +662,30 @@ export const memoryDataService = {
     if (idx < 0) return false;
     store.competitions.splice(idx, 1);
     store.assignments.delete(id);
+    store.slotFlags.delete(id);
     return true;
+  },
+
+  findCompetitionDuplicates: async (user?: import("@/lib/types").SessionUser) => {
+    const { groupCompetitionDuplicates } = await import("@/lib/competition-dedup");
+    const list = await memoryDataService.getCompetitions(user);
+    return groupCompetitionDuplicates(list);
+  },
+
+  removeDuplicateCompetitions: async (user?: import("@/lib/types").SessionUser) => {
+    const { competitionsToRemoveInGroup } = await import("@/lib/competition-dedup");
+    const groups = await memoryDataService.findCompetitionDuplicates(user);
+    const removed: string[] = [];
+    const kept: string[] = [];
+    for (const group of groups) {
+      const toDrop = competitionsToRemoveInGroup(group.events);
+      const keep = group.events.find((e) => !toDrop.some((d) => d.id === e.id));
+      if (keep) kept.push(keep.id);
+      for (const c of toDrop) {
+        if (await memoryDataService.deleteCompetition(c.id)) removed.push(c.id);
+      }
+    }
+    return { removed, kept, groups: groups.length };
   },
 
   createPromotion: async (input: {
@@ -851,12 +875,43 @@ export const memoryDataService = {
   ): Promise<JudgeProfile | undefined> => {
     const referee = await memoryDataService.getReferee(refereeId);
     if (!referee) return undefined;
+    const store = getStore();
     const [exams, reports] = await Promise.all([
       memoryDataService.getExams(refereeId),
       memoryDataService.getReports(refereeId),
     ]);
-    return computeJudgeProfile(referee, exams, reports);
+    const sanctions = store.sanctions.filter((s) => s.refereeId === refereeId);
+    return computeJudgeProfile(referee, exams, reports, sanctions);
   },
+
+  listRefereeSanctions: async (refereeId: string) => {
+    const store = getStore();
+    return store.sanctions
+      .filter((s) => s.refereeId === refereeId)
+      .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  },
+
+  getActiveSanction: async (refereeId: string) => {
+    const list = await memoryDataService.listRefereeSanctions(refereeId);
+    const { isSanctionActive } = await import("@/lib/sanctions");
+    return list.find((s) => isSanctionActive(s));
+  },
+
+  createRefereeSanction: async () => {
+    throw new Error("Sanciones requieren Supabase configurado");
+  },
+
+  revokeRefereeSanction: async () => {
+    throw new Error("Sanciones requieren Supabase configurado");
+  },
+
+  markSanctionDelegateNotified: async () => {
+    throw new Error("Sanciones requieren Supabase configurado");
+  },
+
+  getSanctionAlerts: async () => [],
+
+  expireStaleSanctions: async () => 0,
 
   importJudgesRegistry: async (
     parsed: ParsedJudgesRegistry,

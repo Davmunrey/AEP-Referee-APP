@@ -46,7 +46,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (typeof raw.nombre === "string") patch.nombre = raw.nombre;
   if (typeof raw.zona === "string") patch.zona = raw.zona;
   if (typeof raw.nivel === "string") patch.nivel = raw.nivel as Referee["nivel"];
-  if (typeof raw.estado === "string") patch.estado = raw.estado as Referee["estado"];
+  if (typeof raw.estado === "string") {
+    if (raw.estado === "Sancionado") {
+      return jsonError(
+        "Para sancionar usa el panel «Sanciones» en la ficha del juez",
+        400,
+      );
+    }
+    patch.estado = raw.estado as Referee["estado"];
+  }
   if (typeof raw.eventos === "number") patch.eventos = raw.eventos;
   if (typeof raw.ultimo === "string") patch.ultimo = raw.ultimo;
   if (typeof raw.disp === "boolean") patch.disp = raw.disp;

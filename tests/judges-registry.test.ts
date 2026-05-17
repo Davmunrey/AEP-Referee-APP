@@ -10,17 +10,28 @@ import {
 
 const MASTER_XLSX = "/Users/mac/Downloads/Copia de Control jueces.xlsx";
 
+const MACRO_ZONES = [
+  "NOROESTE",
+  "CENTRO",
+  "MEDITERRANEO",
+  "ANDALUCIA",
+  "CANARIAS",
+] as const;
+
 describe("judges registry maps", () => {
-  it("maps excel zones to geographic codes", () => {
-    expect(mapExcelZone("1-NOROESTE")).toBe("N1");
+  it("maps excel zones to macro codes", () => {
+    expect(mapExcelZone("1-NOROESTE")).toBe("NOROESTE");
     expect(mapExcelZone("2- CENTRO")).toBe("CENTRO");
-    expect(mapExcelZone("3- MEDITERRANEO")).toBe("LEV");
-    expect(mapExcelZone("4- ANDALUCIA")).toBe("SUR");
-    expect(mapExcelZone("5- CANARIAS")).toBe("CAN");
+    expect(mapExcelZone("3- MEDITERRANEO")).toBe("MEDITERRANEO");
+    expect(mapExcelZone("4- ANDALUCIA")).toBe("ANDALUCIA");
+    expect(mapExcelZone("5- CANARIAS")).toBe("CANARIAS");
   });
 
-  it("overrides zone from Madrid locality", () => {
-    expect(mapExcelZone("2- CENTRO", "Madrid")).toBe("MAD");
+  it("does not override excel zone from locality", () => {
+    expect(mapExcelZone("3- MEDITERRANEO", "Tarragona", "Tarragona")).toBe(
+      "MEDITERRANEO",
+    );
+    expect(mapExcelZone("2- CENTRO", "Madrid", "Madrid")).toBe("CENTRO");
   });
 
   it("maps levels and ERA names", () => {
@@ -49,11 +60,14 @@ describe("parseJudgesRegistryXlsx", () => {
     const first = parsed.referees.find((r) => r.excelId === 1);
     expect(first?.id).toBe("j-1");
     expect(first?.nombre.length).toBeGreaterThan(2);
-    expect(["N1", "CENTRO", "MAD", "CAT", "LEV", "SUR", "CAN"]).toContain(first?.zona);
+    expect(MACRO_ZONES).toContain(first?.zona);
   });
 
   it("parses 2026 competitions", () => {
     expect(parsed.competitions.length).toBeGreaterThanOrEqual(10);
     expect(parsed.competitions.every((c) => c.tipo.startsWith("AEP-"))).toBe(true);
+    expect(parsed.competitions.every((c) => MACRO_ZONES.includes(c.zona))).toBe(
+      true,
+    );
   });
 });
