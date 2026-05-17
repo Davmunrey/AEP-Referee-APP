@@ -1,5 +1,5 @@
 import { PromotionsBoard } from "@/components/promotions/promotions-board";
-import { canApprove, getSession } from "@/lib/auth/session";
+import { canReviewPromotions, getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
 
@@ -16,7 +16,7 @@ export default async function PromotionsPage() {
   return (
     <PromotionsBoard
       initial={promotions}
-      canReview={canApprove(user)}
+      canReview={canReviewPromotions(user)}
       canCreate={user.role !== "solo_ver"}
       referees={referees}
       zones={meta.zones}

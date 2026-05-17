@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   if (!isSessionUser(user)) return user;
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
-  const body = (await request.json()) as {
+  const body = (await request.json().catch(() => null)) as {
     refereeId?: string;
     tipo?: ExamType;
     nivelObjetivo?: RefereeLevel;
@@ -27,7 +27,10 @@ export async function POST(request: Request) {
     puntuacionMaxima?: number;
     resultado?: ExamResult;
     notas?: string;
-  };
+  } | null;
+  if (!body || typeof body !== "object") {
+    return jsonError("Cuerpo de solicitud inválido", 400);
+  }
   if (
     !body.refereeId ||
     !body.tipo ||
@@ -37,6 +40,15 @@ export async function POST(request: Request) {
   ) {
     return jsonError("Faltan campos obligatorios", 400);
   }
+  const puntuacionMaxima =
+    body.puntuacionMaxima != null ? Math.max(1, Math.round(body.puntuacionMaxima)) : 100;
+  let puntuacion: number | undefined;
+  if (body.puntuacion != null) {
+    if (typeof body.puntuacion !== "number" || Number.isNaN(body.puntuacion)) {
+      return jsonError("Puntuación inválida", 400);
+    }
+    puntuacion = Math.min(puntuacionMaxima, Math.max(0, Math.round(body.puntuacion)));
+  }
   try {
     const exam = await dataService.createExam({
       refereeId: body.refereeId,
@@ -44,8 +56,8 @@ export async function POST(request: Request) {
       nivelObjetivo: body.nivelObjetivo,
       fecha: body.fecha,
       examinador: body.examinador,
-      puntuacion: body.puntuacion,
-      puntuacionMaxima: body.puntuacionMaxima,
+      puntuacion,
+      puntuacionMaxima,
       resultado: body.resultado,
       notas: body.notas,
     });

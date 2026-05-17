@@ -13,13 +13,22 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const body = (await request.json()) as {
+  const body = (await request.json().catch(() => null)) as {
     resultado?: ExamResult;
     puntuacion?: number;
     notas?: string;
     fecha?: string;
     examinador?: string;
-  };
+  } | null;
+  if (!body || typeof body !== "object") {
+    return jsonError("Cuerpo de solicitud inválido", 400);
+  }
+  if (body.puntuacion != null) {
+    if (typeof body.puntuacion !== "number" || Number.isNaN(body.puntuacion)) {
+      return jsonError("Puntuación inválida", 400);
+    }
+    body.puntuacion = Math.min(100, Math.max(0, Math.round(body.puntuacion)));
+  }
   const updated = await dataService.updateExam(id, body);
   if (!updated) return jsonError("Examen no encontrado", 404);
   return jsonOk(updated);

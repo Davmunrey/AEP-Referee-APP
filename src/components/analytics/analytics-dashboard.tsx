@@ -17,7 +17,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat-card";
 import type { AnalyticsPayload } from "@/lib/types";
-import { AlertTriangle } from "lucide-react";
+import { api } from "@/lib/api/client";
+import { AlertTriangle, Download } from "lucide-react";
 
 export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
   return (
@@ -26,7 +27,16 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         eyebrow="Gestión"
         title="Estadísticas"
         description="Temporada 2026 · cobertura por zona, carga arbitral y eventos críticos"
-      />
+      >
+        <a
+          href={api.analyticsExportUrl()}
+          download
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-3 py-2 text-sm font-medium text-foreground-secondary transition-colors hover:bg-surface-hover focus-ring"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden="true" />
+          Exportar CSV
+        </a>
+      </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

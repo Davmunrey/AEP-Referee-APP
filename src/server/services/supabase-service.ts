@@ -413,9 +413,19 @@ export const supabaseDataService = {
 
   updateReferee: async (id: string, patch: Partial<Referee>): Promise<Referee | undefined> => {
     const supabase = db();
+    const dbPatch: Partial<Referee> = { ...patch };
+    // Recalcular iniciales si cambia el nombre.
+    if (typeof dbPatch.nombre === "string" && dbPatch.nombre.trim()) {
+      dbPatch.iniciales = dbPatch.nombre
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+    }
     const { data, error } = await supabase
       .from("referees")
-      .update(patch)
+      .update(dbPatch)
       .eq("id", id)
       .select()
       .single();

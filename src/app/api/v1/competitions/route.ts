@@ -22,6 +22,17 @@ export async function POST(request: Request) {
   if (!body.nombre || !body.tipo || !body.fecha || !body.fechaFin || !body.sede) {
     return jsonError("Faltan campos obligatorios", 400);
   }
+  if (body.fechaFin < body.fecha) {
+    return jsonError("La fecha de fin no puede ser anterior a la de inicio", 400);
+  }
+  const sesiones = Math.round(Number(body.sesiones ?? 3));
+  const requeridos = Math.round(Number(body.requeridos ?? 9));
+  if (!Number.isFinite(sesiones) || sesiones < 1 || sesiones > 6) {
+    return jsonError("Las sesiones deben estar entre 1 y 6", 400);
+  }
+  if (!Number.isFinite(requeridos) || requeridos < 1) {
+    return jsonError("Las plazas requeridas deben ser al menos 1", 400);
+  }
 
   // Un delegado de zona solo puede crear competiciones en SU zona.
   // Solo el super_admin puede asignar una zona arbitraria.
@@ -42,8 +53,8 @@ export async function POST(request: Request) {
     fecha: body.fecha,
     fechaFin: body.fechaFin,
     sede: body.sede,
-    sesiones: body.sesiones ?? 3,
-    requeridos: body.requeridos ?? 9,
+    sesiones,
+    requeridos,
     zona,
   });
   return jsonOk(comp);

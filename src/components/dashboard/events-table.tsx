@@ -30,6 +30,16 @@ export function EventsTable({ competitions }: { competitions: Competition[] }) {
               </tr>
             </thead>
             <tbody>
+              {events.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-10 text-center text-xs text-subtle-muted"
+                  >
+                    Sin competiciones próximas.
+                  </td>
+                </tr>
+              )}
               {events.map((event) => {
                 const pct = event.requeridos > 0 ? Math.round((event.confirmados / event.requeridos) * 100) : 0;
                 return (

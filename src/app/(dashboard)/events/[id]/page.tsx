@@ -21,6 +21,8 @@ export default async function EventPage({ params }: EventPageProps) {
     dataService.getReferees({ user }),
   ]);
   if (!event || !roster) notFound();
+  // Un delegado de zona solo accede a campeonatos de su zona.
+  if (user.role === "delegado_zona" && event.zona !== user.zona) notFound();
 
   return (
     <RosterBuilder

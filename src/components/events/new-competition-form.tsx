@@ -30,10 +30,20 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const isDirty = nombre !== "" || sede !== "";
+  const isDirty =
+    nombre !== "" ||
+    sede !== "" ||
+    fecha !== "" ||
+    fechaFin !== "" ||
+    tipo !== "AEP-2" ||
+    sesiones !== "3" ||
+    requeridos !== "9";
   useEffect(() => {
     if (!isDirty) return;
-    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
@@ -45,6 +55,16 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
       setError("La fecha de fin no puede ser anterior a la fecha de inicio");
       return;
     }
+    const nSesiones = Math.round(Number(sesiones));
+    const nRequeridos = Math.round(Number(requeridos));
+    if (!Number.isFinite(nSesiones) || nSesiones < 1 || nSesiones > 6) {
+      setError("Las sesiones deben estar entre 1 y 6");
+      return;
+    }
+    if (!Number.isFinite(nRequeridos) || nRequeridos < 1) {
+      setError("Las plazas requeridas deben ser al menos 1");
+      return;
+    }
     setLoading(true);
     try {
       const comp = await api.createCompetition({
@@ -53,8 +73,8 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
         fecha,
         fechaFin: fechaFin || fecha,
         sede,
-        sesiones: Number(sesiones) || 3,
-        requeridos: Number(requeridos) || 9,
+        sesiones: nSesiones,
+        requeridos: nRequeridos,
         zona,
       });
       router.push(`/events/${comp.id}`);
