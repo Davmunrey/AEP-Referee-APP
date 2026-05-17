@@ -195,17 +195,17 @@ export function Sidebar({
         <OrgSwitcher collapsed={collapsed} org={orgLabel} subtitle={orgSubtitle} />
       </div>
 
-      <nav className="mt-6 flex flex-col gap-1 px-3">
-        {!collapsed && <p className="friendly-label mb-2 px-3">Operaciones</p>}
-        {primaryNav.map((item) => renderLink(item))}
-      </nav>
+      <div className="flex-1 min-h-0 overflow-y-auto pb-2">
+        <nav className="mt-6 flex flex-col gap-1 px-3">
+          {!collapsed && <p className="friendly-label mb-2 px-3">Operaciones</p>}
+          {primaryNav.map((item) => renderLink(item))}
+        </nav>
 
-      <nav className="mt-6 flex flex-col gap-1 px-3">
-        {!collapsed && <p className="friendly-label mb-2 px-3">Gestión</p>}
-        {secondaryNav.map((item) => renderLink(item))}
-      </nav>
-
-      <div className="flex-1" />
+        <nav className="mt-6 flex flex-col gap-1 px-3">
+          {!collapsed && <p className="friendly-label mb-2 px-3">Gestión</p>}
+          {secondaryNav.map((item) => renderLink(item))}
+        </nav>
+      </div>
 
       <div className={cn("border-t border-border-muted p-3", collapsed && "px-2")}>
         {!collapsed ? (

@@ -1,35 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { LevelBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeaderRow,
-  DataTableHeadCell,
-  DataTableRow,
-} from "@/components/ui/data-table";
-import { selectFieldClassSm } from "@/lib/design-tokens";
-import type { EventType, IpfChapter, RegulationRule } from "@/lib/types";
+import type { IpfChapter } from "@/lib/types";
 import { IPF_CHAPTERS } from "@/lib/ipf-chapters";
 import {
-  BookOpen,
   Check,
   ChevronDown,
   ChevronRight,
-  FileText,
   Link2,
   Search,
   X,
 } from "lucide-react";
-
-const EVENT_TYPES: EventType[] = ["AEP-1", "AEP-2", "AEP-3"];
-
-type Tab = "matrix" | "ipf";
 
 /** Wraps query matches in a <mark> for visual highlighting. */
 function HighlightText({ text, query }: { text: string; query: string }) {
@@ -141,9 +124,7 @@ function IpfArticleList({
   );
 }
 
-export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
-  const [tab, setTab] = useState<Tab>("matrix");
-  const [filterTipo, setFilterTipo] = useState<EventType | "TODOS">("TODOS");
+export function RegulationsView() {
   const [openChapters, setOpenChapters] = useState<Set<string>>(
     new Set(IPF_CHAPTERS.map((c) => c.num)),
   );
@@ -162,11 +143,6 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
       });
   const ipfArticleCount = ipfChapters.reduce((n, c) => n + c.articles.length, 0);
 
-  const filtered =
-    filterTipo === "TODOS"
-      ? rules
-      : rules.filter((r) => r.eventTypes.includes(filterTipo));
-
   const toggleChapter = (num: string) => {
     setOpenChapters((prev) => {
       const next = new Set(prev);
@@ -180,126 +156,11 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
     <PageShell>
       <PageHeader
         eyebrow="Gestión"
-        title="Normativa IPF / AEP"
-        description="Requisitos mínimos por rol y reglamento técnico IPF completo"
+        title="Reglamento IPF"
+        description="IPF Technical Rulebook completo con búsqueda en texto"
       />
 
-      {/* Tab bar */}
-      <div
-        className="flex gap-1 border-b border-border-muted"
-        role="tablist"
-        aria-label="Vistas de normativa"
-      >
-        <button
-          type="button"
-          role="tab"
-          id="tab-matrix"
-          aria-selected={tab === "matrix"}
-          aria-controls="panel-matrix"
-          onClick={() => setTab("matrix")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px focus-ring ${
-            tab === "matrix"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-          Matriz AEP
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="tab-ipf"
-          aria-selected={tab === "ipf"}
-          aria-controls="panel-ipf"
-          onClick={() => {
-            setTab("ipf");
-          }}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px focus-ring ${
-            tab === "ipf"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <FileText className="h-3.5 w-3.5" aria-hidden="true" />
-          Reglamento IPF
-        </button>
-      </div>
-
-      {/* Matrix tab panel */}
-      <div
-        id="panel-matrix"
-        role="tabpanel"
-        aria-labelledby="tab-matrix"
-        hidden={tab !== "matrix"}
-      >
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-border-muted pb-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-primary" />
-              <CardTitle>Matriz rol → nivel mínimo</CardTitle>
-            </div>
-            <select
-              value={filterTipo}
-              onChange={(e) => setFilterTipo(e.target.value as EventType | "TODOS")}
-              className={selectFieldClassSm}
-              aria-label="Filtrar por tipo de evento"
-            >
-              <option value="TODOS">Todos los tipos</option>
-              {EVENT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </CardHeader>
-          <CardContent className="p-0">
-            <DataTable>
-              <DataTableHead>
-                <DataTableHeaderRow>
-                  <DataTableHeadCell>Rol</DataTableHeadCell>
-                  <DataTableHeadCell>Nivel mínimo</DataTableHeadCell>
-                  <DataTableHeadCell>Tipos evento</DataTableHeadCell>
-                  <DataTableHeadCell>Notas</DataTableHeadCell>
-                </DataTableHeaderRow>
-              </DataTableHead>
-              <DataTableBody>
-                {filtered.map((r) => (
-                  <DataTableRow key={r.id}>
-                    <DataTableCell className="font-medium text-foreground">{r.rol}</DataTableCell>
-                    <DataTableCell>
-                      <LevelBadge level={r.minLevel} />
-                    </DataTableCell>
-                    <DataTableCell className="font-mono text-xs text-muted-foreground">
-                      {r.eventTypes.join(", ")}
-                    </DataTableCell>
-                    <DataTableCell className="text-subtle-muted">{r.note}</DataTableCell>
-                  </DataTableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <DataTableRow>
-                    <DataTableCell
-                      colSpan={4}
-                      className="py-8 text-center text-xs text-subtle-muted"
-                    >
-                      Sin reglas para este tipo de evento.
-                    </DataTableCell>
-                  </DataTableRow>
-                )}
-              </DataTableBody>
-            </DataTable>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* IPF tab panel */}
-      <div
-        id="panel-ipf"
-        role="tabpanel"
-        aria-labelledby="tab-ipf"
-        hidden={tab !== "ipf"}
-        className="space-y-4"
-      >
+      <div className="space-y-4">
         {/* Prominent search box */}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-muted" />
