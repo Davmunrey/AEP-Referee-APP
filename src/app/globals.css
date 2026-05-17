@@ -194,6 +194,14 @@
     background: linear-gradient(to right, var(--role-read-bg-from), var(--role-read-bg-to));
   }
 
+  .bg-role-jueces {
+    background: linear-gradient(
+      to right,
+      var(--role-jueces-bg-from),
+      var(--role-jueces-bg-to)
+    );
+  }
+
   .ring-role-nacional {
     @apply hover:ring-2 hover:ring-primary-border;
   }
@@ -204,5 +212,9 @@
 
   .ring-role-lectura {
     @apply hover:ring-2 hover:ring-border-strong;
+  }
+
+  .ring-role-jueces {
+    @apply hover:ring-2 hover:ring-info-border;
   }
 }

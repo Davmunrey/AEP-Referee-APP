@@ -69,7 +69,7 @@ export function RosterBuilder({
   regulations = [],
   userRole,
 }: RosterBuilderProps) {
-  const readOnly = userRole === "lectura";
+  const readOnly = userRole === "solo_ver" || userRole === "delegado_jueces";
   const [assignments, setAssignments] = useState(initialAssignments);
   const [filterZona, setFilterZona] = useState("TODAS");
   const [filterNivel, setFilterNivel] = useState("TODOS");

@@ -12,7 +12,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "lectura") return jsonError("Sin permiso", 403);
+  if (user.role === "solo_ver" || user.role === "delegado_jueces")
+    return jsonError("Sin permiso", 403);
 
   const body = (await request.json()) as Partial<Competition>;
   if (!body.nombre || !body.tipo || !body.fecha || !body.fechaFin || !body.sede) {

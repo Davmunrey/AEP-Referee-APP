@@ -96,17 +96,22 @@ export const roleTokens: Record<
   UserRole,
   { ring: string; bg: string; icon: string }
 > = {
-  nacional: {
+  super_admin: {
     ring: "ring-role-nacional",
     bg: "bg-role-nacional",
     icon: tokens.text.brand,
   },
-  regional: {
+  delegado_jueces: {
+    ring: "ring-role-jueces",
+    bg: "bg-role-jueces",
+    icon: tokens.text.info,
+  },
+  delegado_zona: {
     ring: "ring-role-regional",
     bg: "bg-role-regional",
     icon: tokens.text.warning,
   },
-  lectura: {
+  solo_ver: {
     ring: "ring-role-lectura",
     bg: "bg-role-lectura",
     icon: tokens.text.subtle,

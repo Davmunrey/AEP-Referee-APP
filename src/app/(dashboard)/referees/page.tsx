@@ -23,7 +23,7 @@ export default async function RefereesPage() {
         initialReferees={referees}
         zones={zones}
         levels={meta.levels}
-        canEdit={user.role !== "lectura"}
+        canEdit={user.role !== "solo_ver"}
       />
     </PageShell>
   );

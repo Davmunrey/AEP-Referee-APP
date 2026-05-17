@@ -38,8 +38,8 @@ export async function POST(request: Request) {
   if (!email || !password || !nombre || !rolLabel || !role) {
     return jsonError("Email, contraseña, nombre, rol y etiqueta son obligatorios", 400);
   }
-  if (role === "regional" && !zona) {
-    return jsonError("Los usuarios regionales requieren zona", 400);
+  if (role === "delegado_zona" && !zona) {
+    return jsonError("Los delegados de zona requieren zona", 400);
   }
   if (password.length < 8) {
     return jsonError("La contraseña debe tener al menos 8 caracteres", 400);
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     rol_label: rolLabel,
     iniciales,
     role,
-    zona: role === "nacional" ? null : zona,
+    zona: role === "delegado_zona" ? zona : null,
     activo: true,
   });
 

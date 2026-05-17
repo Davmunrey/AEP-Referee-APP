@@ -17,7 +17,7 @@ export default async function PromotionsPage() {
     <PromotionsBoard
       initial={promotions}
       canReview={canApprove(user)}
-      canCreate={user.role !== "lectura"}
+      canCreate={user.role !== "solo_ver"}
       referees={referees}
       zones={meta.zones}
       userZona={user.zona}
