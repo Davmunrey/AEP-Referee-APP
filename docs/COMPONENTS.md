@@ -106,7 +106,7 @@
 ### Sign-in / auth
 | Componente | Descripción |
 |------------|-------------|
-| `SignInPage` | Tabs sign-in / sign-up con micro-animación, aviso de rol `solo_ver` en signup, campo nombre obligatorio en signup, enlace "¿Olvidaste tu contraseña?" → flujo `resetPasswordForEmail` |
+| `SignInPage` | Solo login (cuentas invitadas); enlace "¿Olvidaste tu contraseña?" → `resetPasswordForEmail` |
 
 ## Accesibilidad
 

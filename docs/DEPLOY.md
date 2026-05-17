@@ -6,7 +6,7 @@
 
 - Repositorio GitHub conectado a Vercel
 - Proyecto Supabase (región EU recomendada)
-- Migraciones **001 → 010** aplicadas (ver [`DATABASE.md`](./DATABASE.md))
+- Migraciones **001 → 011** aplicadas (ver [`DATABASE.md`](./DATABASE.md))
 
 ## Variables de entorno en Vercel
 
@@ -18,12 +18,12 @@
 
 ## Configuración Supabase
 
-1. SQL Editor — migraciones en orden hasta `010_referees_registry_fields.sql`.
+1. SQL Editor — migraciones en orden hasta `011_invite_only_auth.sql`.
 2. **URL Configuration** — Site URL = `https://aep-tarima.vercel.app`; Redirect URLs:
    - `https://aep-tarima.vercel.app/auth/callback`
    - `http://localhost:3000/auth/callback`
 3. **Leaked password protection** — activar si el plan lo permite (Pro).
-4. Login solo **email/contraseña**.
+4. Login solo **email/contraseña**; desactivar *Enable email signup* en Auth (ver [`AUTH.md`](./AUTH.md)).
 
 ## Pasos
 

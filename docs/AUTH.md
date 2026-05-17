@@ -15,14 +15,14 @@ El `id` en `profiles` coincide 1:1 con el `id` (UUID) de `auth.users` de Supabas
 ## Flujo de login
 
 1. El usuario entra en `/sign-in`.
-2. Introduce **email + contraseña** (modo «iniciar sesión» o «crear cuenta»).
+2. Introduce **email + contraseña** (solo inicio de sesión; no hay registro público en la UI).
 3. Supabase Auth crea la sesión (cookies `sb-*-auth-token`).
-4. En registro nuevo, si está activada la confirmación de email, Supabase envía un enlace a `/auth/callback` → `exchangeCodeForSession`.
-5. `getSession()` lee el usuario auth y carga su fila en `profiles`.
-6. Si el perfil **no existe**, se crea automáticamente (`ensureProfile` o trigger `handle_new_user`):
-   - **Primer usuario registrado** → rol `super_admin`, etiqueta «Super Admin».
-   - **Resto** → rol `solo_ver`, etiqueta «Pendiente de asignación»; un administrador los promociona en `/admin/users`.
-7. Si `activo = false`, no hay acceso al panel.
+4. `getSession()` lee el usuario auth y carga su fila en `profiles`.
+5. Si el perfil **no existe**, se crea vía `ensureProfile` o trigger `handle_new_user` (`011_invite_only_auth.sql`):
+   - **Primer usuario** del proyecto → `super_admin`, `activo = true` (bootstrap).
+   - **Invitados** (`user_metadata.invited = true`, p. ej. alta en `/admin/users`) → `activo = true`.
+   - **Cualquier otro registro auth** → `solo_ver`, **`activo = false`** → sin acceso al panel.
+6. Si `activo = false`, `getSession()` devuelve `null` y el middleware redirige a `/sign-in`.
 
 ## Etiquetas de organización (UI)
 
@@ -43,6 +43,7 @@ El `id` en `profiles` coincide 1:1 con el `id` (UUID) de `auth.users` de Supabas
    - Redirect URLs: `http://localhost:3000/auth/callback`, `https://aep-tarima.vercel.app/auth/callback`.
 3. **Protección de contraseñas filtradas** — `Authentication → Policies` → *Leaked password protection* (plan Pro).
 4. **Confirmación de email** — opcional desactivar para uso interno.
+5. **Registro público** — en **Authentication → Providers → Email**, desactivar *Enable email signup* (recomendado). La app ya bloquea cuentas no invitadas vía `activo = false` en `011_invite_only_auth.sql`.
 
 ## Roles y permisos (RBAC)
 
@@ -74,9 +75,9 @@ El servidor aplica filtros de zona en todos los recursos derivados de jueces:
 
 ## Alta de usuarios
 
-- **Autoservicio** — registro en `/sign-in`; primer usuario → `super_admin`, resto → `solo_ver`.
+- **Solo invitación** — `/sign-up` redirige a `/sign-in`. Cuentas creadas en `/admin/users` llevan `invited: true` y quedan activas.
 - **Gestión** — `super_admin` o `delegado_jueces` en `/admin/users`: rol, zona, activo, baja.
-- Alta manual vía API: `supabase.auth.admin.createUser` (email confirmado).
+- API admin: `POST /api/v1/admin/users` → `createUser` con `user_metadata.invited = true`.
 
 ## Cierre de sesión
 

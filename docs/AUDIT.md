@@ -15,7 +15,7 @@ Correcciones aplicadas en la misma rama:
 - Calendario dashboard desde competiciones en BD (`calendar-from-competitions.ts`).
 - Eliminado `coming-soon.tsx` con rutas hardcodeadas.
 
-Pendiente de revisar en despliegue: signup público, `/regulations` en `PUBLIC_PATHS`, PATCH de informes.
+**2026-05-17 (cierre):** invite-only (`011` + `invited` metadata), `/regulations` fuera de rutas públicas, PATCH informes con scope zona + `getReport`.
 
 ---
 

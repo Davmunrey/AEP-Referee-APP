@@ -23,11 +23,13 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
   const meta = user.user_metadata ?? {};
   const email = user.email ?? "";
   const nombre = String(meta.full_name ?? meta.name ?? email.split("@")[0] ?? "Usuario");
+  const invited = meta.invited === true;
 
   const { count } = await admin
     .from("profiles")
     .select("id", { count: "exact", head: true });
   const isFirst = (count ?? 0) === 0;
+  const activo = isFirst || invited;
 
   await admin
     .from("profiles")
@@ -40,7 +42,7 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
         iniciales: initialsFrom(nombre, email),
         role: isFirst ? "super_admin" : "solo_ver",
         zona: null,
-        activo: true,
+        activo,
       },
       { onConflict: "id", ignoreDuplicates: true },
     );

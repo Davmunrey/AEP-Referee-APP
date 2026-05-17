@@ -1,3 +1,4 @@
+import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { canAdminJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -36,6 +37,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (typeof raw.contenido === "string") patch.contenido = raw.contenido;
   if (typeof raw.adjuntoUrl === "string") patch.adjuntoUrl = raw.adjuntoUrl;
 
+  const existing = await dataService.getReport(id);
+  if (!existing) return jsonError("Informe no encontrado", 404);
+  const scopeErr = await assertRefereeInUserZone(user, existing.refereeId);
+  if (scopeErr) return scopeErr;
+
   const updated = await dataService.updateReport(id, patch);
   if (!updated) return jsonError("Informe no encontrado", 404);
   return jsonOk(updated);
@@ -47,6 +53,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!canAdminJudges(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
+  const existing = await dataService.getReport(id);
+  if (!existing) return jsonError("Informe no encontrado", 404);
+  const scopeErr = await assertRefereeInUserZone(user, existing.refereeId);
+  if (scopeErr) return scopeErr;
+
   const ok = await dataService.deleteReport(id);
   if (!ok) return jsonError("Informe no encontrado", 404);
   return jsonOk({ deleted: true });

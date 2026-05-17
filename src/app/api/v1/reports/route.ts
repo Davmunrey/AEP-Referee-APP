@@ -1,3 +1,4 @@
+import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
@@ -34,6 +35,8 @@ export async function POST(request: Request) {
   if (!body.refereeId || !body.titulo || !body.tipo || !body.contenido) {
     return jsonError("Faltan campos obligatorios", 400);
   }
+  const scopeErr = await assertRefereeInUserZone(user, body.refereeId);
+  if (scopeErr) return scopeErr;
   try {
     const report = await dataService.createReport({
       refereeId: body.refereeId,

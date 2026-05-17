@@ -14,6 +14,7 @@ supabase/migrations/007_rls_hardening.sql
 supabase/migrations/008_per_event_roster_template.sql
 supabase/migrations/009_geographic_zones.sql
 supabase/migrations/010_referees_registry_fields.sql
+supabase/migrations/011_invite_only_auth.sql
 ```
 
 Las migraciones 004+ usan patrones idempotentes donde aplica. Sin 004/005 la app degrada con listas vacías en exámenes/informes/salud.

@@ -36,6 +36,15 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 | `DELETE` | `/referees/:id` | `super_admin`, `delegado_jueces` | Eliminar |
 | `POST` | `/referees/import` | `canImportJudgesRegistry` | `multipart/form-data` con `file` (.xlsx). Vista previa; con `?apply=true` upsert masivo desde «Control jueces». |
 
+### Informes
+
+| Método | Ruta | Permisos | Descripción |
+|--------|------|----------|-------------|
+| `GET` | `/reports` | sesión | Listado (`?refereeId=` opcional); filtrado por zona |
+| `POST` | `/reports` | no `solo_ver` | Crear informe |
+| `PATCH` | `/reports/:id` | no `solo_ver` | Editar título, tipo, evento, contenido, adjunto |
+| `DELETE` | `/reports/:id` | `canAdminJudges` | Eliminar |
+
 ## Campeonatos
 
 | Método | Ruta | Permisos | Descripción |
@@ -113,7 +122,7 @@ Tanto `GET /exams` como `GET /reports` aplican **scoping por zona** automáticam
 |--------|------|-------------|
 | `GET` | `/analytics` | Métricas de temporada |
 | `GET` | `/analytics/export` | CSV |
-| `GET` | `/regulations` | Matriz normativa |
+| `GET` | `/regulations` | Matriz normativa (requiere sesión) |
 
 ## Administración
 
