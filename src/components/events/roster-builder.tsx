@@ -143,10 +143,13 @@ export function RosterBuilder({
 
   const persistAssign = (slotKey: string, refereeId: string) => {
     const snapshot = assignments;
+    const session = slotKey.split("_")[0];
     setAssignments(() => {
       const next = { ...snapshot };
+      // Un juez puede estar en varias sesiones; solo se libera su slot
+      // anterior DENTRO de la misma sesión (no puede ocupar 2 a la vez).
       for (const k of Object.keys(next)) {
-        if (next[k] === refereeId) delete next[k];
+        if (next[k] === refereeId && k.split("_")[0] === session) delete next[k];
       }
       next[slotKey] = refereeId;
       return next;
@@ -282,9 +285,9 @@ export function RosterBuilder({
               </select>
             </div>
             <p className="mt-2 font-mono text-[10px] text-subtle-muted">
-              {availableReferees.filter((r) => !assignedIds.has(r.id)).length} disponibles
+              {availableReferees.length} árbitros
               {" · "}
-              {availableReferees.length} en total
+              {availableReferees.filter((r) => assignedIds.has(r.id)).length} ya en tarima
             </p>
           </div>
           <ScrollArea className="flex-1">
@@ -370,7 +373,9 @@ function RefereeCard({
   highlight: boolean;
   readOnly?: boolean;
 }) {
-  const locked = assigned || readOnly;
+  // `assigned` (ya en alguna sesión) NO bloquea: un juez puede repetir en
+  // varias sesiones. Solo `readOnly` (rol sin permiso) bloquea.
+  const locked = readOnly;
   return (
     <li
       draggable={!locked}
@@ -383,8 +388,8 @@ function RefereeCard({
       onClick={() => !locked && onClick()}
       className={cn(
         "flex items-center gap-3 rounded-lg border border-border bg-surface/80 px-3 py-2.5 transition-colors",
-        assigned && "cursor-not-allowed opacity-40",
-        readOnly && !assigned && "cursor-default",
+        assigned && "opacity-65",
+        readOnly && "cursor-default",
         !locked && "cursor-grab active:cursor-grabbing",
         !locked && highlight && "hover:border-warning-border hover:bg-warning-subtle",
         dragging && "opacity-50",
