@@ -1,59 +1,58 @@
 # Rutas de la aplicación
 
-## Autenticación (Supabase Auth)
+## Autenticación
 
 | Ruta | Descripción |
 |------|-------------|
-| `/sign-in` | Login y registro: email/contraseña (Supabase Auth) |
-| `/sign-up` | Redirección a `/sign-in` (registro unificado) |
-| `/auth/callback` | Callback: confirma email / intercambia código por sesión |
-| `/login` | Redirección legacy a `/sign-in` |
+| `/sign-in` | Login y registro email/contraseña |
+| `/sign-up` | Redirección a `/sign-in` |
+| `/auth/callback` | Confirmación email / exchange code |
+| `/login` | Legacy → `/sign-in` |
 
 ## Dashboard (autenticadas)
 
-Layout: `AppShell` (sidebar colapsable + `app-mesh`). Protegidas por el middleware Supabase y por `(dashboard)/layout.tsx` → redirige a `/sign-in` si no hay sesión.
+Layout: `AppShell`. Middleware + `(dashboard)/layout.tsx` redirigen a `/sign-in` sin sesión.
 
 | Ruta | Módulo | Componentes principales |
 |------|--------|------------------------|
-| `/` | Dashboard | `DashboardLive`, `DashboardHero`, `KpiCards`, `HealthGauge`, `InsightsPanel`, `OperationalCalendar`, `CoverageForecast`, `EventsTable`, `ActivityFeed` |
-| `/events` | Campeonatos | `EventsTable` (filtros + paginación + eliminar) |
-| `/events/new` | Nuevo campeonato | `NewCompetitionForm` (guard unload si hay datos) |
-| `/events/[id]` | Tarima | `RosterBuilder` (pantalla completa — drag & drop, validación normativa, historial) |
-| `/referees` | Directorio | `RefereesDirectory` (filtros, paginación, nueva alta) |
-| `/referees/[id]` | Ficha de juez | Resumen + trayectoria + `ExamsManager` + `ReportsManager` + `RefereeEditForm` + `RefereePromotionButton` |
-| `/exams` | Exámenes arbitrales | `ExamsManager` (tablero global) + tarjetas de estadística |
-| `/reports` | Sandbox de informes | `ReportsManager` (repositorio global) + tarjetas de estadística |
-| `/approvals` | Aprobaciones | `ApprovalsBoard` (cola + diff + comentario obligatorio al rechazar) |
-| `/promotions` | Ascensos | `PromotionsBoard` + `NewPromotionDialog` |
-| `/analytics` | Estadísticas | `AnalyticsDashboard` (cobertura, top árbitros, críticos) |
-| `/regulations` | Normativa IPF | `RegulationsView` (matriz AEP + reglamento IPF completo con búsqueda) |
-| `/admin/users` | Usuarios | `UsersAdmin` — solo accesible para rol `nacional` |
+| `/` | Dashboard | `DashboardLive`, `KpiCards`, `HealthGauge`, `InsightsPanel`, `CoverageForecast`, … |
+| `/events` | Campeonatos | `EventsTable` |
+| `/events/new` | Nuevo campeonato | `NewCompetitionForm` |
+| `/events/[id]` | Tarima | `RosterTemplateEditor`, `RosterBuilder`, `RosterHeaderActions`, `RosterHistoryPanel` |
+| `/referees` | Directorio | `RefereesDirectory` |
+| `/referees/[id]` | Ficha juez | `ExamsManager`, `ReportsManager`, `RefereeEditForm`, … |
+| `/exams` | Exámenes | `ExamsManager` (global) |
+| `/reports` | Informes | `ReportsManager` (global) |
+| `/approvals` | Aprobaciones | `ApprovalsBoard` |
+| `/promotions` | Ascensos | `PromotionsBoard`, `NewPromotionDialog` |
+| `/analytics` | Estadísticas | `AnalyticsDashboard` |
+| `/regulations` | Normativa | `RegulationsView`, `IpfArticleList` |
+| `/admin/users` | Usuarios | `UsersAdmin` — `canManageUsers` |
 
-## Navegación lateral (sidebar)
+## Tarima (`/events/[id]`)
 
-**Operaciones** (todos los roles):
-- Dashboard (`/`)
-- Campeonatos (`/events`)
-- Directorio (`/referees`)
-- Constructor Tarima → enlace a `/events` (se activa al navegar a `/events/[id]`)
+- **Modo lectura** (`solo_ver`): sin arrastre ni guardado.
+- **Modo edición** (`canEditRoster`): editor de plantilla, asignaciones, flags `*` / `↑↓`, borrador, envío.
+- Props clave: `canEdit`, `initialTemplate`, `initialAssignments`, `initialFlags`.
 
-**Gestión** (todos los roles, con restricciones por RBAC):
-- Aprobaciones (`/approvals`) — badge contador de pendientes
-- Ascensos (`/promotions`)
-- Exámenes (`/exams`)
-- Informes (`/reports`)
-- Estadísticas (`/analytics`)
-- Normativa IPF (`/regulations`)
-- Usuarios (`/admin/users`) — solo rol `nacional`
+## Sidebar
+
+**Operaciones:** Dashboard, Campeonatos, Directorio, Constructor Tarima (activo en `/events/[id]`).
+
+**Gestión:** Aprobaciones (badge), Ascensos, Exámenes, Informes, Estadísticas, Normativa IPF, Usuarios (solo si `canManageUsers`).
+
+Org switcher muestra etiqueta AEP según rol (`orgLabelForUser`).
 
 ## Middleware
 
-`src/middleware.ts` — middleware Supabase (`updateSession`) activo en todas las rutas: refresca la sesión por cookies, redirige a `/sign-in` las rutas privadas sin sesión y devuelve 401 en `/api/*`. El layout `(dashboard)/layout.tsx` repite la comprobación en servidor.
+`src/middleware.ts` — `updateSession`, protege rutas privadas, 401 en `/api/*` sin sesión.
 
-## Páginas especiales
+## Errores
 
-| Ruta | Componente | Descripción |
-|------|-----------|-------------|
-| `/` (loading) | `loading.tsx` | Spinner mientras carga el dashboard |
-| 404 | `not-found.tsx` | Página genérica de recurso no encontrado |
-| Error | `error.tsx` | Boundary de error global con botón de reintento |
+| Archivo | Uso |
+|---------|-----|
+| `loading.tsx` | Spinner dashboard |
+| `not-found.tsx` | 404 |
+| `error.tsx` | Boundary con reintento |
+
+Guía de usuario: [`GUIA-USO.md`](./GUIA-USO.md).

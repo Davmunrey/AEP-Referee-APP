@@ -10,121 +10,91 @@
                                                        │
                                               ┌────────▼────────┐
                                               │  dataService    │
-                                              │ (abstracción)   │
                                               └────────┬────────┘
-                                                       │
                               ┌────────────────────────┴──────────────┐
-                              │                                        │
                      ┌────────▼────────┐                    ┌─────────▼───────┐
-                     │  Supabase       │                    │  memory-service │
-                     │  (producción)   │                    │  (desarrollo)   │
+                     │  supabase-service│                    │ memory-service  │
                      └─────────────────┘                    └─────────────────┘
 ```
 
 ## Capas
 
-### 1. Presentación (`src/app`, `src/components`)
+### Presentación (`src/app`, `src/components`)
 
-- **App Router** — rutas en `src/app/(dashboard)/*`
-- **Server Components** — páginas cargan datos vía `dataService` en servidor
-- **Client Components** — formularios, tarima, aprobaciones, filtros (`"use client"`)
-- **Layout** — `src/app/(dashboard)/layout.tsx` hace la comprobación de sesión para todas las rutas protegidas
+- **App Router** — `src/app/(dashboard)/*`
+- **Server Components** — datos vía `dataService`
+- **Client** — tarima, editor de plantilla, formularios (`"use client"`)
 
-### 2. API (`src/app/api/v1`)
+### API (`src/app/api/v1`)
 
-Handlers REST que delegan en `dataService`. Respuestas JSON tipadas con `src/lib/types`:
+Handlers REST → `dataService`. Rutas de tarima relevantes:
 
 | Ruta | Métodos |
 |------|---------|
-| `/referees` | GET, POST |
-| `/referees/[id]` | GET, PATCH, DELETE |
-| `/competitions` | GET, POST |
-| `/competitions/[id]` | GET, PATCH, DELETE |
 | `/competitions/[id]/roster` | GET |
+| `/competitions/[id]/roster/template` | PUT |
+| `/competitions/[id]/roster/flags` | PATCH |
 | `/competitions/[id]/roster/assign` | POST |
 | `/competitions/[id]/roster/clear` | POST |
 | `/competitions/[id]/roster/draft` | POST |
 | `/competitions/[id]/roster/submit` | POST |
 | `/competitions/[id]/roster/export` | GET |
 | `/competitions/[id]/roster/history` | GET |
-| `/approvals` | GET |
-| `/approvals/[id]/review` | POST |
-| `/promotions` | GET, POST |
-| `/promotions/[id]/review` | POST |
-| `/exams` | GET, POST |
-| `/exams/[id]` | PATCH, DELETE |
-| `/reports` | GET, POST |
-| `/reports/[id]` | DELETE |
-| `/analytics` | GET |
-| `/analytics/export` | GET (CSV) |
-| `/regulations` | GET |
-| `/meta` | GET |
-| `/dashboard` | GET |
-| `/auth/login`, `/auth/logout`, `/auth/signout` | POST |
-| `/auth/me` | GET |
-| `/admin/users` | GET, POST |
-| `/admin/users/[id]` | PATCH, DELETE |
 
-### 3. Servicio de datos (`src/server`)
+Lista completa en [`API.md`](./API.md).
 
-- **`services/index.ts`** — selecciona `supabaseDataService` (prod) o `memoryDataService` (dev) según variables de entorno
-- **`services/supabase-service.ts`** — implementación Postgres con cliente admin (service role, bypass RLS)
-- **`services/memory-service.ts`** — implementación en memoria para desarrollo sin Supabase
-- **`store.ts`** — datos de fixture para desarrollo (árbitros, campeonatos, normativa)
-- **`db/mappers.ts`** — conversión filas Postgres → tipos TypeScript
+### Servicio de datos (`src/server`)
 
-### 4. Infraestructura (`src/lib`)
+- **`services/index.ts`** — Supabase vs memoria según env
+- **`supabase-service.ts`** — Postgres + service role
+- **`memory-service.ts`** — desarrollo sin Supabase
+- **`db/mappers.ts`** — filas ↔ tipos TS
 
-- **`auth/session.ts`** — `getSession()`, `requireApiUser()`, helpers RBAC (`canEditRoster`, `canManageUsers`)
-- **`api/client.ts`** — cliente fetch tipado para componentes cliente
-- **`api/config.ts`** — URL base de la API
-- **`dashboard-intelligence.ts`** — motor puro que deriva el índice de salud operativa y las recomendaciones a partir del estado actual
-- **`judge-stats.ts`** — helper puro que combina árbitro + exámenes + informes en un `JudgeProfile` con métricas
-- **`ipf-chapters.ts`** — IPF Technical Rulebook completo (11 capítulos) como dato estructurado
-- **`design-tokens.ts`** — clases semánticas Tailwind
-- **`types.ts`** — tipos TypeScript compartidos
+### Dominio tarima (`src/lib`)
 
-### Capa de inteligencia (retroalimentación)
+| Módulo | Rol |
+|--------|-----|
+| `roster-template.ts` | `getPresetForEventType`, `enumerateSlotKeys`, `pruneAssignments` |
+| `roster-rules.ts` | Validación nivel mínimo |
+| `roster-export.ts` | Acta TXT con flags `*` / `↑↓` |
+| `mock-data.ts` | `PRESET_AEP1`, `PRESET_AEP2`, `PRESET_AEP3` |
 
-El dashboard se alimenta de sus propios datos: `getDashboard()` reúne árbitros,
-competiciones, cobertura, aprobaciones y actividad, y `buildIntelligence()`
-deriva un índice de salud ponderado y recomendaciones priorizadas — sin entrada
-manual. La migración `004_health_snapshots.sql` permite registrar el índice cada
-6 h para comparar el estado actual con el pasado.
+## Plantilla por evento
 
-## Autenticación y RBAC (Supabase Auth)
+1. **Lectura:** `getCompetitionTemplate(eventId)` — si `competitions.template` es null, preset por `tipo`.
+2. **Escritura:** `saveCompetitionTemplate` — persiste JSON, ejecuta `pruneAssignments` (elimina asignaciones/flags de slots que ya no existen).
+3. **Flags:** `setSlotFlags` — actualiza `roster_assignments.flags` por `slot_key`; exige árbitro asignado.
 
-| Rol | Alcance | Permisos |
-|-----|---------|----------|
-| `nacional` | Toda la federación | CRUD completo, aprueba rosters y ascensos, gestiona usuarios |
-| `regional` | Su zona (`user.zona`) | CRUD en su zona, propone tarimas, solicita ascensos |
-| `lectura` | Sin restricción geográfica | Solo lectura, sin crear/editar |
+## RBAC
 
-- Auth con Supabase Auth: email/contraseña, sesión por cookies (`@supabase/ssr`)
-- Perfiles federativos en tabla `profiles` (1:1 con `auth.users`)
-- Primer usuario registrado → rol `nacional`; resto → `lectura` (promoción manual)
-- Service role admin client bypassa RLS para operaciones del servidor
-- Detalle completo en [`docs/AUTH.md`](./AUTH.md)
+| Rol | Tarima / plantilla | Aprobar | Usuarios |
+|-----|-------------------|---------|----------|
+| `super_admin` | toda federación | sí | sí |
+| `delegado_jueces` | toda federación | sí | sí |
+| `delegado_zona` | su `zona` | no | no |
+| `solo_ver` | lectura | no | no |
 
-## Flujo completo de una tarima
+Helpers: `src/lib/auth/session.ts` — `canEditRoster`, `canApprove`, `canManageUsers`, etc.
 
-1. **Regional** abre `/events/[id]` y ve la plantilla vacía
-2. Arrastra árbitros o selecciona slot + árbitro por clic
-3. Cada asignación se persiste inmediatamente vía `POST .../roster/assign`
-4. El sistema valida nivel mínimo por rol (normativa IPF/AEP) y muestra alertas
-5. **Regional** pulsa "Guardar borrador" o "Enviar a aprobación"
-6. El envío crea una `ApprovalProposal` con estado `pendiente`
-7. **Nacional** revisa en `/approvals`: ve el diff slot→árbitro
-8. Aprueba (sin comentario) o rechaza (con comentario obligatorio)
-9. El estado del campeonato se actualiza en tiempo real
+Primer registro → `super_admin`. Detalle: [`AUTH.md`](./AUTH.md).
 
-## Validaciones de negocio clave
+## Flujo de tarima
 
-- Nivel mínimo por rol y tipo de campeonato (`RegulationRule`) — alerta visual en tarima
-- Un árbitro no puede ocupar dos slots simultáneos (la asignación anterior se libera)
-- Solo árbitros `Activo` y `disp: true` aparecen en el pool de la tarima
-- RBAC filtra listados y operaciones por zona para rol `regional`
-- Nivel destino en ascenso debe ser superior al nivel actual
-- Rechazo de aprobación requiere comentario obligatorio
-- Confirmación al enviar roster incompleto (< 100%)
-- Validación de fecha fin ≥ fecha inicio en creación de campeonato
+1. Delegado abre `/events/[id]` — ve plantilla (guardada o preset).
+2. Opcional: **Editar plantilla** → `PUT .../roster/template`.
+3. Asigna árbitros → `POST .../assign`; flags → `PATCH .../flags`.
+4. Validación normativa en cliente (`roster-rules`).
+5. Borrador o **Enviar a aprobación** → `approval_proposals`.
+6. `super_admin` / `delegado_jueces` aprueban en `/approvals`.
+
+## Inteligencia del dashboard
+
+`getDashboard()` + `buildIntelligence()` — salud 0–100 e insights sin entrada manual. `health_snapshots` (004) para histórico.
+
+## Validaciones clave
+
+- Nivel mínimo por rol y tipo (matriz AEP).
+- Un árbitro, un slot activo.
+- Solo árbitros activos y disponibles en pool.
+- Rechazo de aprobación con comentario obligatorio.
+- Confirmación si roster incompleto al enviar.
