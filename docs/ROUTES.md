@@ -37,9 +37,11 @@ Layout: `AppShell`. Middleware + `(dashboard)/layout.tsx` redirigen a `/sign-in`
 
 ## Sidebar
 
-**Operaciones:** Dashboard, Campeonatos, Directorio, Constructor Tarima (activo en `/events/[id]`).
+**Operaciones:** Dashboard, Campeonatos, Directorio, Tarima activa (activa en `/events/[id]`).
 
-**Gestión:** Aprobaciones (badge), Ascensos, Exámenes, Informes, Estadísticas, Normativa IPF, Usuarios (solo si `canManageUsers`).
+**Gestión:** Aprobaciones (badge contador), Ascensos, Exámenes, Informes, Estadísticas, Normativa IPF, Usuarios (visible para `super_admin` y `delegado_jueces`).
+
+Estado de colapso del sidebar persiste en `localStorage` (`aep-tarima:sidebar-collapsed`).
 
 Org switcher muestra etiqueta AEP según rol (`orgLabelForUser`).
 

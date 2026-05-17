@@ -203,19 +203,21 @@ Los **Delegados de Zona** ven el estado de sus envíos pero no aprueban.
 ## 8. Directorio de jueces (`/referees`)
 
 - Buscar por nombre, filtrar por **zona**, **nivel**, **estado**.
-- **Ficha** (`/referees/[id]`): datos, trayectoria, exámenes, informes, edición y solicitud de ascenso.
-- **Alta** de nuevo juez (según permisos).
+- **Ficha** (`/referees/[id]`): datos, trayectoria, exámenes, informes, edición, solicitud de ascenso y botón **Eliminar juez** (Super Admin / Delegado de Jueces).
+- **Alta** de nuevo juez (según permisos). **Delegados de Zona** solo pueden crear/editar jueces de su propia zona.
 - **Baja** — Super Admin / Delegado de Jueces.
 
 ---
 
 ## 9. Exámenes (`/exams`) e informes (`/reports`)
 
+Los **Delegados de Zona** solo ven los exámenes e informes de jueces de su propia zona.
+
 ### Exámenes
 Tipos: Teórico, Práctico, Reglamento IPF, Recertificación. Registra fecha, examinador, puntuación y resultado (Aprobado / Suspenso / Pendiente). Calificación rápida en pendientes.
 
-### Informes (sandbox)
-Tipos: Desempeño, Incidencia, Evaluación, Auto-informe. Texto libre, evento opcional, URL de adjunto. También desde la ficha del juez.
+### Informes
+Tipos: Desempeño, Incidencia, Evaluación, Auto-informe. Texto libre, evento opcional, URL de adjunto. **Editables** desde la propia tarjeta (`Editar` → titulo / tipo / evento / contenido / adjunto). También accesibles desde la ficha del juez.
 
 ---
 
@@ -224,8 +226,10 @@ Tipos: Desempeño, Incidencia, Evaluación, Auto-informe. Texto libre, evento op
 Flujo **Regional → Nacional → IPF Cat. 2 → IPF Cat. 1**:
 
 1. Delegado (zona o nacional) solicita ascenso con motivo.
-2. Super Admin / Delegado de Jueces **aprueba o rechaza**.
+2. Super Admin / Delegado de Jueces **aprueba o rechaza**. Al **rechazar**, el comentario es **obligatorio**.
 3. El nivel destino debe ser **superior** al actual.
+
+KPIs por estado (Pendientes / Aprobadas / Rechazadas / Esta semana) en la cabecera del tablero.
 
 ---
 
@@ -246,13 +250,18 @@ Cobertura por zona, jueces más activos, eventos críticos y **exportación CSV*
 
 ## 13. Usuarios (`/admin/users`)
 
-Solo **Super Admin** y **Delegado de Jueces**.
+Solo **Super Admin** y **Delegado de Jueces** (la entrada del sidebar es visible solo para ambos).
 
-- Crear usuario (email, contraseña temporal, nombre, rol, zona).
-- Activar / desactivar.
-- Eliminar cuenta federativa.
+- **Búsqueda** por nombre o email + filtros por rol, zona y estado activo/inactivo.
+- **Crear usuario** (email, contraseña temporal, nombre, rol, zona). Tras crear, aparece un modal con las credenciales generadas y un botón **Copiar credenciales** — guárdalas o envíalas al usuario.
+- **Editar** rol, zona, nombre y etiqueta (`rolLabel`) de un usuario existente desde el botón Editar de cada fila. El servidor impide auto-degradarse o auto-eliminarse.
+- **Activar / desactivar** o **eliminar** cuentas.
+- Columna **Alta** muestra cuándo se creó cada cuenta.
 
-Los nuevos registros por `/sign-in` llegan como **solo_ver** salvo el primero del proyecto.
+Los nuevos registros por `/sign-in` llegan como **solo_ver** salvo el primero del proyecto. En el formulario de signup se muestra un aviso explícito de este comportamiento.
+
+### ¿Olvidaste tu contraseña?
+En `/sign-in` (modo iniciar sesión), enlace **«¿Olvidaste tu contraseña?»** despliega un campo de email y envía un enlace de reset vía Supabase (`resetPasswordForEmail`).
 
 ---
 

@@ -140,6 +140,7 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 | [`docs/ROUTES.md`](./docs/ROUTES.md) | Rutas de la app |
 | [`docs/COMPONENTS.md`](./docs/COMPONENTS.md) | Componentes UI |
 | [`docs/DESIGN.md`](./docs/DESIGN.md) | Tokens y paleta |
+| [`docs/AUDIT.md`](./docs/AUDIT.md) | Auditoría QA (matriz roles × capacidades, gaps cerrados) |
 
 ---
 
