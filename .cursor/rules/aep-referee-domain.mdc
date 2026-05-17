@@ -1,0 +1,21 @@
+---
+description: AEP Referee APP domain — zones, sanctions, imports (this repo only)
+alwaysApply: true
+---
+
+# AEP Referee APP
+
+Stack: Next.js 15 App Router, TypeScript, Supabase (service role server-side), Vitest, Tailwind, PDF/XLSX import.
+
+| User intent | Skill / code |
+|-------------|--------------|
+| Excel judges / calendar PDF | repo parsers + `senior-backend`; data quality → `data-quality-auditor` |
+| Supabase RLS / auth | `senior-backend` + Supabase MCP |
+| Zones / macro regions | `src/lib/aep-zones.ts` |
+| Competition dedupe | `src/lib/competition-dedup.ts` |
+| Referee sanctions | `src/lib/sanctions.ts`, `src/server/services/referee-sanctions.ts` |
+| Judges registry | `src/lib/judges-registry/`, `POST /api/v1/referees/import?apply=` |
+| Import/export UI | `src/lib/import-export-ui.ts`, `src/components/data-transfer/` |
+| Roster UX / guards | `src/lib/roster-ui.ts`, `roster-route-guards.ts`, `roster-active.ts` |
+
+Verify after changes: `npm test` then `npm run build`.

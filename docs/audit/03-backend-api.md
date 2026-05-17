@@ -26,3 +26,16 @@
 ## Resumen
 
 - Prioridad tests API roster + auth regulations + mensajes error estructurados en UI
+
+## Estado post-implementación (2026-05-17)
+
+| ID | Estado | Notas |
+|----|--------|-------|
+| BE-03 | Hecho | Auth en `/regulations` |
+| BE-04 | Hecho | Preview calendario + copy dedupe en UI |
+| BE-05 | Parcial | `roster-route-guards`, `assign-referee-schema` tests; sin tests HTTP route handlers |
+| BE-06 | Hecho | `sanction-mappers.test.ts` |
+| BE-07 | Pendiente | — |
+| IE | Hecho | `POST /referees/import?apply=false\|true`; `import-preview.ts` |
+
+Cliente: `formatApiError` en imports; exports vía `fetchRosterExportText` / `fetchAnalyticsExportText`.

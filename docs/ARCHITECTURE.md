@@ -108,4 +108,12 @@ KPIs filtrados por zona para `delegado_zona` tanto en modo Supabase (vía `getCo
 - Confirmación si roster incompleto al enviar.
 - `delegado_zona` no puede crear/editar jueces fuera de su zona ni mover jueces entre zonas.
 - Importar PDF: solo `application/pdf` o `application/x-pdf`, máx 5 MB.
+- Import Excel jueces: preview obligatoria (`apply=false`) antes de persistir (`apply=true`).
+- Export TXT/CSV: cliente descarga vía fetch + blob (no navegación directa a URL API).
+
+## Import / export (UI compartida)
+
+- `src/lib/import-export-ui.ts` — permisos por rol, copy diferenciado calendario vs horario, helpers MIME/stats.
+- `src/components/data-transfer/*` — shell de diálogo, stepper, drop zone, preview stats, export preview.
+- `src/lib/judges-registry/import-preview.ts` — construcción de preview para Excel maestro.
 - Admin no puede desactivar/eliminar su propia cuenta ni cambiarse el rol.

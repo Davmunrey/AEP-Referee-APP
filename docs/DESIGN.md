@@ -47,6 +47,8 @@
 | `text-gradient-brand` | Titulares de marca |
 | `friendly-label` | Eyebrows de sección |
 | `focus-ring` | Focus accesible en inputs y botones |
+| `transfer-enter` | Entrada de paneles en wizards import/export (respeta `prefers-reduced-motion`) |
+| `transfer-row-stagger` | Filas escalonadas en listas de preview |
 | `bg-role-*` / `ring-role-*` | Acentos por rol (`super_admin`, `delegado_jueces`, `delegado_zona`, `solo_ver`) |
 
 ## Componentes de layout

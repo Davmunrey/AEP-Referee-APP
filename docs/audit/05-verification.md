@@ -7,7 +7,7 @@
 
 | Comando | Resultado |
 |---------|-----------|
-| `npm test` | **132** tests, 21 archivos — OK |
+| `npm test` | **142** tests, 23 archivos — OK |
 | `npm run build` | Next.js 15.5 — OK (sin errores TS) |
 
 ## Playwright / E2E
@@ -30,6 +30,15 @@ No hay `playwright.config` ni dependencia Playwright en el repo. **Smoke E2E:** 
 - Stepper y filtros con `aria-label` en selectores de zona (events table).
 - Drag-drop sin alternativa teclado completa — **pendiente** (auditoría 02-frontend-a11y).
 - Contraste badges: usar tokens existentes.
+
+## Ola import/export (2026-05-17)
+
+| Área | Estado |
+|------|--------|
+| Wizards calendario / horario / jueces | Implementado |
+| Export TXT + CSV con preview | Implementado |
+| Tests `import-export-ui`, `judges-import-preview` | OK |
+| Hub «Datos AEP» centralizado (P1 plan) | Diferido |
 
 ## P2 / P3 (diferido)
 

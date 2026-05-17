@@ -34,7 +34,18 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 | `GET` | `/referees/:id` | todos | Detalle |
 | `PATCH` | `/referees/:id` | no `solo_ver` | Actualizar. `delegado_zona` solo puede editar jueces de su zona y no puede moverlos a otra. |
 | `DELETE` | `/referees/:id` | `super_admin`, `delegado_jueces` | Eliminar |
-| `POST` | `/referees/import` | `canImportJudgesRegistry` | `multipart/form-data` con `file` (.xlsx). Vista previa; con `?apply=true` upsert masivo desde «Control jueces». |
+| `POST` | `/referees/import` | `canImportJudgesRegistry` | `multipart/form-data` con `file` (.xlsx). `?apply=false` (default) solo preview; `?apply=true` upsert; `?replace=true` opcional |
+
+### Importar registro de jueces (detalle)
+
+| Query | Comportamiento |
+|-------|----------------|
+| `apply=false` (default) | Vista previa — no escribe en BD |
+| `apply=true` | Aplica upsert/replace |
+| `replace=true` | Con `apply=true`, reemplaza por `excel_id` |
+
+Preview: `{ preview: { newCount, updatedCount, skippedCount, championships[], warnings[], sampleRows[] }, imported: 0, ... }`.  
+Apply: `{ preview: null, imported, updated, skipped, championships, warnings[] }`.
 
 ### Informes
 
@@ -79,7 +90,7 @@ Todas las rutas mutadoras de tarima (`PUT .../template`, `POST .../template/impo
 | `POST` | `/competitions/:id/roster/clear` | `canEditRoster` | `{ slotKey }` |
 | `POST` | `/competitions/:id/roster/draft` | `canEditRoster` | Guardar borrador + historial |
 | `POST` | `/competitions/:id/roster/submit` | `canEditRoster` | Enviar a aprobación |
-| `GET` | `/competitions/:id/roster/export` | todos | TXT del acta |
+| `GET` | `/competitions/:id/roster/export` | todos | TXT del acta (UI: preview + blob vía `fetchRosterExportText`) |
 | `GET` | `/competitions/:id/roster/history` | todos | Historial de cambios |
 
 **`slotKey`:** `{sesion}_{roleKey}_{indice}` — ej. `S1_central_0`, `S1_jurado_2`.
@@ -121,7 +132,7 @@ Tanto `GET /exams` como `GET /reports` aplican **scoping por zona** automáticam
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `GET` | `/analytics` | Métricas de temporada |
-| `GET` | `/analytics/export` | CSV |
+| `GET` | `/analytics/export` | CSV (UI: preview + blob vía `fetchAnalyticsExportText`) |
 | `GET` | `/regulations` | Matriz normativa (requiere sesión) |
 
 ## Administración

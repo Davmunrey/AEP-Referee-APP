@@ -40,3 +40,15 @@ Flujos: crear campeonato → plantilla (manual/PDF) → asignar → borrador →
 
 - Top 3: navegación tarima, breadcrumb, imports confusos
 - Quick wins: copy imports, breadcrumb con nombre, CTA en lista eventos
+
+## Estado post-implementación (2026-05-17)
+
+| ID | Estado | Notas |
+|----|--------|-------|
+| UX-01 | Parcial | `OpenRostersPanel` en `/events`; sidebar «Tarima activa» sigue siendo un deep-link |
+| UX-02 | Hecho | `useEventCrumbLabel` en topbar |
+| UX-03 | Parcial | Wizards unificados + copy en `import-export-ui` (calendario vs horario) |
+| UX-04 | Parcial | `RosterStepper`, `RosterHelpPanel`, `RosterRevisionPanel` |
+| UX-05 | Parcial | CTAs en panel de ayuda; empty states en editor pendientes de pulir |
+| UX-06 | Pendiente | Badge aprobaciones en lista tarimas |
+| UX-07 | Pendiente | Responsive tablet |

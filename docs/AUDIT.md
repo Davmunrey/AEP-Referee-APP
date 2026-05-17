@@ -566,3 +566,19 @@ Revisión de todas las helpers:
 ---
 
 *Fin del informe — generado en base a inspección estática del código fuente. No se ha ejecutado la aplicación.*
+
+---
+
+## 7. Addendum (2026-05-17) — Import/Export y tarima
+
+Ola posterior al informe inicial. Detalle en `docs/audit/05-verification.md` y backlog `docs/AUDIT-BACKLOG.md` (IE-1..IE-5 cerrados).
+
+| Área | Entregado |
+|------|-----------|
+| UI compartida | `src/lib/import-export-ui.ts`, `src/components/data-transfer/*` |
+| Import calendario / horario / jueces | Wizards unificados; horario con confirmación de reemplazo; jueces con `apply=false\|true` |
+| Export roster / analytics | `ExportPreviewDialog` + descarga blob |
+| Tarima UX | Stepper, ayuda, revisión, rosters abiertos, guards de ruta |
+| Tests | 142 Vitest (`npm test`); build OK |
+
+Pendiente de la ola: hub "Datos AEP" en eventos (P1 plan), E2E Playwright, tests HTTP dedicados para rutas calendar/template import.
