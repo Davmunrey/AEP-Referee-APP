@@ -521,8 +521,11 @@ export const supabaseDataService = {
 
     const supabase = db();
     const assignments = await loadAssignments(eventId);
+    // El juez puede estar en varias sesiones; solo se libera su slot previo
+    // dentro de la MISMA sesión.
+    const session = slotKey.split("_")[0];
     for (const key of Object.keys(assignments)) {
-      if (assignments[key] === refereeId) {
+      if (assignments[key] === refereeId && key.split("_")[0] === session) {
         await supabase
           .from("roster_assignments")
           .delete()

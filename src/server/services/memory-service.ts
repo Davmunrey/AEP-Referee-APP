@@ -286,8 +286,13 @@ export const memoryDataService = {
 
     const store = getStore();
     const assignments = { ...(store.assignments.get(eventId) ?? {}) };
+    // El juez puede estar en varias sesiones; solo se libera su slot previo
+    // dentro de la MISMA sesión.
+    const session = slotKey.split("_")[0];
     for (const key of Object.keys(assignments)) {
-      if (assignments[key] === refereeId) delete assignments[key];
+      if (assignments[key] === refereeId && key.split("_")[0] === session) {
+        delete assignments[key];
+      }
     }
     assignments[slotKey] = refereeId;
     store.assignments.set(eventId, assignments);
