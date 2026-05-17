@@ -91,7 +91,7 @@ Filtra por tipo **AEP-1 / AEP-2 / AEP-3**, estado y texto libre. Cada fila muest
 
 ### 5.1.bis Importar Calendario AEP
 
-Botón **«Importar calendario AEP»** (Super Admin / Delegado de Jueces). Sube el PDF anual de AEP (`Calendario_AEP_2026.pdf` o similar):
+Botón **«Importar calendario AEP»** (Super Admin / Delegado de Jueces). Abre un **asistente en tres pasos** (subir → revisar → aplicar). Sube el PDF anual de AEP (`Calendario_AEP_2026.pdf` o similar); puedes **arrastrar el archivo** o elegirlo del explorador:
 
 1. La plataforma detecta automáticamente todas las entradas y filtra las de **ámbito español** (AEP-1 / AEP-2 / AEP-3). Las europeas (EPF) y mundiales (IPF) se descartan.
 2. Vista previa muestra: año, total detectado, españolas elegibles, duplicadas (ya existentes), nuevas a crear y avisos de parseo.
@@ -145,12 +145,13 @@ En la página del campeonato (`/events/[id]`), si tienes permiso de edición:
 
 ### 5.5 Importar horario PDF
 
-En el editor de plantilla, botón **Importar PDF**:
+En el editor de plantilla, botón **Importar PDF** (mismo asistente que el calendario: pasos subir / revisar / aplicar):
 
-1. Selecciona un PDF de horario AEP oficial. Nombres tipo `20260517_AEP1_Horario-Junior_rev3.pdf` se reconocen automáticamente (tipo y fecha).
+1. Selecciona o arrastra un PDF de horario AEP oficial. Nombres tipo `20260517_AEP1_Horario-Junior_rev3.pdf` se reconocen automáticamente (tipo y fecha).
 2. La plataforma extrae **sesiones**, **grupos**, **horarios** (Pesaje / Inicio / Fin) y los **levantadores** por grupo.
-3. Revisa la **vista previa**: cabecera (campeonato, sede, fechas), número de sesiones detectadas y avisos de parseo.
-4. Confirma con **Aplicar plantilla** — sustituye la plantilla actual y purga asignaciones huérfanas.
+3. Revisa la **vista previa**: cabecera, sesiones detectadas, **impacto en plazas** y avisos de parseo.
+4. Si ya hay plantilla guardada, debes **confirmar el reemplazo** (casilla) antes de aplicar.
+5. **Aplicar plantilla** — sustituye la plantilla actual y purga asignaciones huérfanas.
 
 Roles de jueces por defecto según el tipo (AEP-1: con jurado; AEP-2: con Liftingcast; AEP-3: cuadrante regional). Edita los roles tras importar si la sesión necesita un perfil distinto.
 
@@ -188,7 +189,7 @@ Actívalos desde la barra de herramientas del constructor (modo edición). Requi
 
 - **Guardar borrador** — snapshot en historial sin enviar a aprobación.
 - **Historial** — panel con cambios recientes (quién, cuándo, qué slot).
-- **Exportar TXT** — acta de plantilla con estructura oficial AEP (días, sesiones, categorías, horarios, nombres y flags).
+- **Exportar TXT** — abre un diálogo con **vista previa** del acta (estructura oficial AEP), estadísticas resumidas, **copiar al portapapeles** o **descargar** archivo `.txt`.
 
 ### 6.5 Enviar a aprobación
 
@@ -219,9 +220,10 @@ Los **Delegados de Zona** ven el estado de sus envíos pero no aprueban.
 
 **Super Admin** y **Delegado de Jueces**: botón **«Importar registro»** en el directorio.
 
-1. Sube `Copia de Control jueces.xlsx` (hojas `Datos`, `Arbitrajes2026`, `Campeonatos26`).
-2. Revisa la vista previa (jueces nuevos/actualizados, campeonatos detectados, avisos).
-3. **Aplicar** hace upsert por `excel_id` en Supabase.
+1. Sube `Copia de Control jueces.xlsx` (hojas `Datos`, `Arbitrajes2026`, `Campeonatos26`) — arrastrar o selector de archivo.
+2. El servidor devuelve **solo vista previa** (`apply=false`): conteos de altas/actualizaciones, campeonatos detectados y avisos.
+3. Opcional: activa **reemplazar existentes** si quieres sobrescribir por `excel_id`.
+4. **Aplicar** envía `apply=true` y hace upsert en Supabase.
 
 CLI equivalente: `npm run db:import-judges -- "/ruta/al/archivo.xlsx"`.
 
@@ -262,7 +264,7 @@ KPIs por estado (Pendientes / Aprobadas / Rechazadas / Esta semana) en la cabece
 
 ## 11. Estadísticas (`/analytics`)
 
-Cobertura por zona, jueces más activos, eventos críticos y **exportación CSV** de la temporada.
+Cobertura por zona, jueces más activos, eventos críticos y **exportación CSV** de la temporada (diálogo de vista previa antes de descargar).
 
 ---
 

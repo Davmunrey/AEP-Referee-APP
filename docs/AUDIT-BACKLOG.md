@@ -32,6 +32,16 @@
 | P1-6 | Dedupe UX en import calendario (preview dedupeRemoved) | Medio | Done (copy + preview existente) |
 | P1-7 | Filtros zona por defecto según rol delegado | Medio | Done |
 
+## P1 — Import / export unificado (2026-05-17)
+
+| ID | Ítem | RICE | Estado |
+|----|------|------|--------|
+| IE-1 | Shell `data-transfer` + `import-export-ui` | Alto | Done |
+| IE-2 | Calendar + schedule import wizards | Alto | Done |
+| IE-3 | Judges import apply=false/true + UI preview | Alto | Done |
+| IE-4 | Export roster/analytics con preview dialog | Alto | Done |
+| IE-5 | Tests `import-export-ui`, `judges-import-preview` | Medio | Done |
+
 ## P2 — Operaciones
 
 | ID | Ítem | RICE |
@@ -53,4 +63,4 @@ Backlog P0 ejecutado en Fase 3. P1 cerrado en misma iteración. P2/P3 diferidos 
 
 ## Fase 4
 
-`npm test` (132) y `npm run build` OK. Playwright no configurado en repo.
+`npm test` (**142**) y `npm run build` OK. Playwright no configurado en repo.

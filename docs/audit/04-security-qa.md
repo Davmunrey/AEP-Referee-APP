@@ -8,7 +8,7 @@
 
 | ID | Sev | Hallazgo | Recomendación |
 |----|-----|----------|----------------|
-| SEC-01 | P1 | `regulations` sin guard sesión en page | Redirect si no auth |
+| SEC-01 | P1 | `regulations` sin guard sesión en page | Redirect si no auth — **corregido** (auth en page/API, ver BE-03) |
 | SEC-02 | P1 | `solo_ver` bloqueado en muchas rutas POST — OK | Documentar matriz rol × acción |
 | SEC-03 | P2 | Evento pasado: `canEdit` false en page pero lista puede confundir | Badge "Solo lectura" en lista si `isPast` |
 | SEC-04 | P1 | Sin tests E2E flujo tarima | Playwright: login → assign → submit (smoke) |
@@ -28,3 +28,10 @@
 1. Vitest: `api-roster.test.ts` — assign, submit, template PUT
 2. Vitest: `referee-sanctions-service.test.ts` — si se extrae lógica testeable
 3. Playwright (opcional P1): 1 spec happy path tarima
+
+## Estado post-implementación (2026-05-17)
+
+- Vitest: **142** tests (`assign-referee-schema`, `roster-route-guards`, `sanction-mappers`, `import-export-ui`, etc.).
+- Import jueces: dry-run obligatorio (`apply=false`) antes de persistir.
+- Export: preview en cliente antes de descarga (sin navegación directa a URL de export).
+- E2E tarima: sigue pendiente (SEC-04).

@@ -7,6 +7,7 @@
 | `AppShell` | `layout/app-shell.tsx` | Sidebar + topbar + main |
 | `Sidebar` | `layout/sidebar.tsx` | Navegación; **Tarima activa** usa `activeRosterHref` (no duplica `/events`) |
 | `TopBar` | `layout/topbar.tsx` | Breadcrumbs y título de página |
+| `useEventCrumbLabel` | `layout/event-crumb-label.tsx` | Nombre del campeonato en breadcrumb (no id crudo) |
 | `PageShell` | `layout/page-shell.tsx` | Contenedor con `max-w` y padding unificado |
 | `PageHeader` | `layout/page-shell.tsx` | Eyebrow + título + descripción + slot de acciones |
 
@@ -23,6 +24,20 @@
 | `StatCard` | Tarjeta KPI con acento de color (dashboard + analytics) |
 | `StatusPill` | Indicador de estado de workflow (pendiente/aprobado/rechazado) |
 | `EmptyState` | Estado vacío con icono, título y descripción opcionales |
+
+## Transferencias de datos (`components/data-transfer/`)
+
+Shell compartido para imports/exports (permisos y copy en `src/lib/import-export-ui.ts`):
+
+| Componente | Descripción |
+|------------|-------------|
+| `TransferDialogShell` | Modal con stepper, focus trap, animación `transfer-enter` |
+| `TransferStepper` | Pasos Subir → Revisar → Aplicar |
+| `FileDropZone` | Arrastrar/soltar + selector de archivo con MIME validado |
+| `TransferPreviewStats` | KPIs de vista previa (sesiones, plazas, jueces…) |
+| `TransferWarnings` | Lista de avisos de parseo o datos |
+| `TransferResultBanner` | Resultado tras aplicar import |
+| `ExportPreviewDialog` | Vista previa TXT/CSV, copiar portapapeles, descarga blob |
 | `ScrollArea` | Área scrollable con scrollbar personalizado |
 | `Avatar` | Avatar con fallback de iniciales |
 | `DropdownMenu` | Menú desplegable (Radix) |
@@ -56,10 +71,16 @@
 | Componente | Descripción |
 |------------|-------------|
 | `EventsTable` (events) | Tabla completa con filtros, paginación y borrado |
+| `OpenRostersPanel` | Tarimas abiertas con enlace directo al constructor |
+| `CalendarImportDialog` | Import calendario AEP (wizard compartido) |
+| `ScheduleImportDialog` | Import horario PDF; confirmación si reemplaza plantilla |
+| `RosterStepper` | Plantilla \| Asignación \| Revisión |
+| `RosterHelpPanel` | Ayuda contextual «Cómo montar una tarima» |
+| `RosterRevisionPanel` | Resumen de huecos y violaciones antes de enviar |
 | `NewCompetitionForm` | Formulario de creación con validación de fechas y guard de unload |
 | `RosterTemplateEditor` | Editor inline de plantilla: sesiones, días, categorías, horarios, roles de pista y pesaje |
 | `RosterBuilder` | Constructor: drag & drop, flags `*`/`↑↓`, validación normativa, historial. `canEdit` desactiva edición |
-| `RosterHeaderActions` | Cabecera: cobertura, editar plantilla, borrador, exportar TXT, enviar aprobación |
+| `RosterHeaderActions` | Cabecera: cobertura, editar plantilla, borrador, exportar TXT (preview dialog), enviar aprobación |
 | `RosterHistoryPanel` | Historial de cambios (fetch lazy) |
 | `SessionBlock` | Bloque de sesión con slots y progreso |
 
@@ -67,7 +88,7 @@
 | Componente | Descripción |
 |------------|-------------|
 | `RefereesDirectory` | Directorio con filtros (zona/nivel/estado/búsqueda) y paginación |
-| `JudgesRegistryImport` | Importación del Excel «Control jueces» (vista previa + aplicar) |
+| `JudgesRegistryImport` | Excel «Control jueces»: upload → preview API (`apply=false`) → aplicar (`apply=true`) |
 | `NewRefereeDialog` | Modal de alta de juez (Escape/backdrop para cerrar) |
 | `RefereeEditForm` | Formulario de edición de ficha de jueces |
 | `RefereePromotionButton` | Botón + modal para solicitar ascenso (valida nivel superior) |
@@ -110,7 +131,8 @@
 
 ## Accesibilidad
 
-- Todos los modales tienen `role="dialog"`, `aria-modal="true"`, `aria-labelledby` y **focus trap** (Tab cycle dentro del diálogo)
+- Todos los modales (incl. `TransferDialogShell` y `ExportPreviewDialog`) tienen `role="dialog"`, `aria-modal="true"`, `aria-labelledby` y **focus trap**
+- Animaciones de transferencia respetan `prefers-reduced-motion` (`.transfer-enter` en `globals.css`)
 - Escape y click en backdrop cierran todos los modales
 - `focus-ring` en todos los elementos interactivos (inputs, selects, botones)
 - `aria-label` en botones sin texto visible (iconos), `aria-pressed` en toggles

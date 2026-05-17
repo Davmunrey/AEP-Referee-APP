@@ -18,12 +18,20 @@ Centro de control que se **retroalimenta de sus propios datos**:
 - **Panel en vivo** (`DashboardLive`) — auto-refresco del árbol de servidor cada 60 s.
 - Calendario operativo, feed de actividad y tabla de próximos eventos.
 
+### Importación y exportación de datos
+Wizards compartidos (`src/components/data-transfer/`, `src/lib/import-export-ui.ts`):
+
+- **Calendario AEP** (PDF anual) — vista previa → aplicar competiciones.
+- **Horario de campeonato** (PDF) — vista previa con impacto en sesiones/plazas; **confirmación** si reemplaza plantilla guardada.
+- **Registro de jueces** (Excel) — `POST /referees/import?apply=false` (preview) → `?apply=true` (persistir).
+- **Exportar tarima** (TXT) y **analytics** (CSV) — diálogo de vista previa, copiar y descarga en cliente (sin `window.location`).
+
 ### Campeonatos y tarima
-- **Listado** con filtros por tipo (AEP-1/2/3), estado y búsqueda.
+- **Listado** con filtros por tipo (AEP-1/2/3), estado y búsqueda; panel **Tarimas abiertas** con acceso rápido al constructor.
 - **Creación** con validación de fechas, zona y plazas.
 - **Plantilla por evento** — cada campeonato guarda su propia estructura de sesiones (`competitions.template`). Si está vacía, la app aplica el preset oficial según el tipo (AEP-1, AEP-2 o AEP-3).
 - **Editor de plantilla** (`RosterTemplateEditor`) — sesiones, días, categorías, horarios y roles editables antes de asignar jueces.
-- **Constructor de tarima** (`RosterBuilder`) — asignación por arrastre o clic, validación normativa, flags de slot (`*` compartido, `↑↓` intercambio), historial y envío a aprobación.
+- **Constructor de tarima** (`RosterBuilder`) — stepper Plantilla / Asignación / Revisión, asignación por arrastre o clic, validación normativa, flags de slot (`*` compartido, `↑↓` intercambio), historial y envío a aprobación.
 
 ### Directorio de jueces / Ficha de juez
 Búsqueda, filtros, paginación, trayectoria (exámenes, informes), alta, edición y ascensos. Importación del Excel maestro «Control jueces» (hojas Datos, Arbitrajes2026, Campeonatos26).
@@ -94,6 +102,7 @@ npm install
 #   supabase/migrations/008_per_event_roster_template.sql
 #   supabase/migrations/009_geographic_zones.sql
 #   supabase/migrations/010_referees_registry_fields.sql
+#   supabase/migrations/011_invite_only_auth.sql
 
 npm run db:seed
 npm run db:import-judges -- "/ruta/Copia de Control jueces.xlsx"
@@ -127,7 +136,7 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 | `npm run db:import-judges` | Importa registro maestro desde Excel |
 | `npm run db:cleanup-demo` | Elimina jueces seed y actividad ficticia |
 | `npm run db:backfill-templates` | Rellena `competitions.template` desde presets por tipo |
-| `npm test` | Vitest (reglas de tarima, plantillas, RBAC) |
+| `npm test` | Vitest (**142** tests: tarima, plantillas, RBAC, import/export) |
 | `npm run lint` | ESLint |
 
 ---
@@ -139,7 +148,7 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 | [`docs/GUIA-USO.md`](./docs/GUIA-USO.md) | **Guía de uso** con branding AEP Tarima y flujos operativos |
 | [`docs/GUIA-AEP-2026.md`](./docs/GUIA-AEP-2026.md) | **Guía AEP 2026** (zonas, niveles, cuotas, marcas mínimas) |
 | [`docs/DEPLOY.md`](./docs/DEPLOY.md) | Vercel, variables, checklist |
-| [`docs/DATABASE.md`](./docs/DATABASE.md) | Esquema, RLS, migraciones 001–008 |
+| [`docs/DATABASE.md`](./docs/DATABASE.md) | Esquema, RLS, migraciones 001–011 |
 | [`docs/AUTH.md`](./docs/AUTH.md) | Auth, roles, sesión |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Capas, RBAC, plantillas por evento |
 | [`docs/API.md`](./docs/API.md) | REST `/api/v1/*` |
@@ -147,6 +156,9 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 | [`docs/COMPONENTS.md`](./docs/COMPONENTS.md) | Componentes UI |
 | [`docs/DESIGN.md`](./docs/DESIGN.md) | Tokens y paleta |
 | [`docs/AUDIT.md`](./docs/AUDIT.md) | Auditoría QA (matriz roles × capacidades, gaps cerrados) |
+| [`docs/AUDIT-CHARTER.md`](./docs/AUDIT-CHARTER.md) | Charter auditoría tarima (2026-05-17) |
+| [`docs/AUDIT-BACKLOG.md`](./docs/AUDIT-BACKLOG.md) | Backlog priorizado post-auditoría |
+| [`docs/audit/`](./docs/audit/) | Informes UX, frontend, API, seguridad, verificación |
 
 ---
 

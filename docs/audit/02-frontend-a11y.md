@@ -30,3 +30,18 @@
 - `src/components/events/roster/` — subcomponentes
 - `src/components/events/roster-stepper.tsx`
 - `src/components/events/roster-help-panel.tsx`
+
+## Estado post-implementación (2026-05-17)
+
+| ID | Estado | Notas |
+|----|--------|-------|
+| FE-01 | Parcial | `roster-ui.ts`, stepper/help/revision; builder sigue grande |
+| FE-02 | Parcial | Motivos inline en pool (`roster-ui`) |
+| FE-06 | Hecho | CTA / `OpenRostersPanel` en `/events` |
+| FE-07 | — | Sin cambio |
+| A11Y | Parcial | `TransferDialogShell` con focus trap; drag teclado pendiente |
+
+## Transferencias de datos
+
+- `src/components/data-transfer/*` — modales import/export unificados
+- `prefers-reduced-motion` en animaciones `.transfer-enter`

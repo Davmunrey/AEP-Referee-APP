@@ -16,10 +16,10 @@ Layout: `AppShell`. Middleware + `(dashboard)/layout.tsx` redirigen a `/sign-in`
 | Ruta | Módulo | Componentes principales |
 |------|--------|------------------------|
 | `/` | Dashboard | `DashboardLive`, `KpiCards`, `HealthGauge`, `InsightsPanel`, `CoverageForecast`, … |
-| `/events` | Campeonatos | `EventsTable` |
+| `/events` | Campeonatos | `EventsTable`, `OpenRostersPanel`, `CalendarImportDialog` |
 | `/events/new` | Nuevo campeonato | `NewCompetitionForm` |
-| `/events/[id]` | Tarima | `RosterTemplateEditor`, `RosterBuilder`, `RosterHeaderActions`, `RosterHistoryPanel` |
-| `/referees` | Directorio | `RefereesDirectory` |
+| `/events/[id]` | Tarima | `RosterStepper`, `RosterTemplateEditor`, `RosterBuilder`, `RosterHeaderActions`, `ScheduleImportDialog`, `ExportPreviewDialog`, `RosterHelpPanel`, `RosterRevisionPanel`, `RosterHistoryPanel` |
+| `/referees` | Directorio | `RefereesDirectory`, `JudgesRegistryImport` |
 | `/referees/[id]` | Ficha juez | `ExamsManager`, `ReportsManager`, `RefereeEditForm`, … |
 | `/exams` | Exámenes | `ExamsManager` (global) |
 | `/reports` | Informes | `ReportsManager` (global) |
