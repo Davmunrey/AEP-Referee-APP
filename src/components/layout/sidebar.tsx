@@ -43,20 +43,20 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
       href: "/events",
       label: "Campeonatos",
       icon: CalendarDays,
-      badge: counts.events,
-      match: (p) => p === "/events",
+      badge: counts.events > 0 ? counts.events : undefined,
+      match: (p) => p === "/events" || p === "/events/new",
+    },
+    {
+      href: counts.activeRosterHref,
+      label: "Tarima activa",
+      icon: Layers,
+      match: (p) => p.startsWith("/events/") && p !== "/events" && p !== "/events/new",
     },
     {
       href: "/referees",
       label: "Directorio",
       icon: Users,
       match: (p) => p.startsWith("/referees"),
-    },
-    {
-      href: "/events",
-      label: "Tarima activa",
-      icon: Layers,
-      match: (p) => p.startsWith("/events/") && p !== "/events",
     },
   ];
 }
@@ -132,7 +132,7 @@ export function Sidebar({
     const Icon = item.icon;
     return (
       <Link
-        key={item.label}
+        key={`${item.label}-${item.href}`}
         href={item.href}
         aria-current={active ? "page" : undefined}
         className={cn(

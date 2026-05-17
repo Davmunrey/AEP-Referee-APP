@@ -51,6 +51,24 @@ export interface Referee {
   iniciales: string;
   email?: string;
   licencia?: string;
+  localidad?: string;
+  telefono?: string;
+  genero?: string;
+  /** Fecha ISO (YYYY-MM-DD) de antigüedad como juez. */
+  antiguedad?: string;
+  /** ID en hoja «Datos» del Excel maestro. */
+  excelId?: number;
+  notas?: string;
+  ultimoFecha?: string;
+}
+
+export interface JudgesRegistryImportResult {
+  refereesCreated: number;
+  refereesUpdated: number;
+  refereesSkipped: number;
+  competitionsCreated: number;
+  competitionsSkipped: number;
+  warnings: string[];
 }
 
 export interface Competition {

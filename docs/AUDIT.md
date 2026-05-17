@@ -4,6 +4,19 @@
 **Versión:** basada en estado actual del repo (`/Users/mac/AEP-Referee-APP`)  
 **Scope:** Código fuente completo — no se ha ejecutado la app ni se ha accedido a producción.
 
+### Addendum 2026-05-17 (post-auditoría operativa)
+
+Correcciones aplicadas en la misma rama:
+
+- Eliminados datos demo (`mock-data` sin jueces/eventos; `db:cleanup-demo`; seed solo zonas/normativa).
+- Sidebar **Tarima activa** → `pickActiveRosterHref` (enlace dinámico, sin duplicar listado).
+- Permisos UI centralizados en `src/lib/permissions.ts` (alineados con API).
+- Importación registro jueces: Excel + `POST /referees/import` + `npm run db:import-judges`.
+- Calendario dashboard desde competiciones en BD (`calendar-from-competitions.ts`).
+- Eliminado `coming-soon.tsx` con rutas hardcodeadas.
+
+Pendiente de revisar en despliegue: signup público, `/regulations` en `PUBLIC_PATHS`, PATCH de informes.
+
 ---
 
 ## 1. Resumen Ejecutivo

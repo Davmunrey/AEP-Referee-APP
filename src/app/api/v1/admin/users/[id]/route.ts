@@ -1,3 +1,4 @@
+import { normalizeZoneInput } from "@/lib/aep-zones";
 import { canManageUsers } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -47,7 +48,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
     patch.role = body.role;
   }
-  if (body.zona !== undefined) patch.zona = body.zona ? String(body.zona) : null;
+  if (body.zona !== undefined) {
+    patch.zona = body.zona ? normalizeZoneInput(String(body.zona)) : null;
+  }
   if (typeof body.nombre === "string" && body.nombre.trim()) {
     patch.nombre = body.nombre.trim();
   }

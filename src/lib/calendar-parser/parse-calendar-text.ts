@@ -1,4 +1,5 @@
 import type { EventType } from "@/lib/types";
+import { normalizeAepCalendarPdfText } from "./normalize-calendar-pdf-text";
 import type { ParsedCalendar, ParsedCalendarEntry } from "./types";
 
 const MONTHS_ES: Record<string, number> = {
@@ -28,72 +29,7 @@ const NIVEL_VALID = new Set([
   "Especial",
 ]);
 
-/** Mapa provincia → código zona AEP. Cubre las principales; faltantes → undefined. */
-const PROVINCIA_A_ZONA: Record<string, string> = {
-  // MAD
-  Madrid: "MAD",
-  // CAT
-  Barcelona: "CAT",
-  Tarragona: "CAT",
-  Lleida: "CAT",
-  Girona: "CAT",
-  // VAL
-  Valencia: "VAL",
-  Castellón: "VAL",
-  Alicante: "VAL",
-  // AND
-  Sevilla: "AND",
-  Málaga: "AND",
-  Granada: "AND",
-  Cádiz: "AND",
-  Córdoba: "AND",
-  Huelva: "AND",
-  Almería: "AND",
-  Jaén: "AND",
-  // GAL
-  "A Coruña": "GAL",
-  "La Coruña": "GAL",
-  Pontevedra: "GAL",
-  Lugo: "GAL",
-  Ourense: "GAL",
-  // PVA
-  Vizcaya: "PVA",
-  Bizkaia: "PVA",
-  Guipúzcoa: "PVA",
-  Gipuzkoa: "PVA",
-  Álava: "PVA",
-  Araba: "PVA",
-  // CYL
-  Valladolid: "CYL",
-  León: "CYL",
-  Salamanca: "CYL",
-  Burgos: "CYL",
-  Zamora: "CYL",
-  Palencia: "CYL",
-  Segovia: "CYL",
-  Ávila: "CYL",
-  Soria: "CYL",
-  // ARA
-  Zaragoza: "ARA",
-  Huesca: "ARA",
-  Teruel: "ARA",
-  // AST
-  Asturias: "AST",
-  // CAN
-  "Las Palmas De Gran Canaria": "CAN",
-  "Las Palmas": "CAN",
-  Tenerife: "CAN",
-  // Otros — fallback
-  Cantabria: "CYL",
-  "La Rioja": "ARA",
-  Navarra: "PVA",
-  Toledo: "MAD",
-  "Ciudad Real": "MAD",
-  Albacete: "MAD",
-  Murcia: "VAL",
-  Baleares: "CAT",
-  Mallorca: "CAT",
-};
+import { deduceGeographicZone } from "@/lib/aep-zones";
 
 const DATE_SINGLE_RE = /^(\d{1,2})-([a-záéíóú]{3})$/i;
 const DATE_RANGE_SAME_RE = /^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3})$/i;
@@ -182,14 +118,7 @@ function deducirZona(
   provincia: string | undefined,
   localidad: string,
 ): string | undefined {
-  const candidatos: string[] = [];
-  if (provincia) candidatos.push(provincia.replace(/\(|\)/g, "").trim());
-  // Si no hay provincia entre paréntesis, intenta usar la propia localidad como provincia.
-  candidatos.push(localidad.replace(/\([^)]*\)/g, "").trim());
-  for (const c of candidatos) {
-    if (PROVINCIA_A_ZONA[c]) return PROVINCIA_A_ZONA[c];
-  }
-  return undefined;
+  return deduceGeographicZone(provincia, localidad);
 }
 
 function looksForeign(localidad: string): boolean {
@@ -211,11 +140,12 @@ function detectYear(text: string): number {
  * no parece extranjera.
  */
 export function parseAepCalendarText(input: string): ParsedCalendar {
-  const year = detectYear(input);
+  const normalized = normalizeAepCalendarPdfText(input);
+  const year = detectYear(normalized);
   const warnings: string[] = [];
 
   // Limpia headers tabla y agrupa líneas en bloques separados por líneas vacías.
-  const rawLines = input.split(/\r?\n/).map((l) => l.trim());
+  const rawLines = normalized.split(/\r?\n/).map((l) => l.trim());
   const cleanLines = rawLines.filter((l) => !isHeaderLine(l));
 
   // Bloques no vacíos.
@@ -242,29 +172,36 @@ export function parseAepCalendarText(input: string): ParsedCalendar {
       continue;
     }
 
-    // Esperamos 7 bloques siguientes: nombre, localidad, organizador, nivel, divisiones, modalidades, equipamiento.
-    const slice = blocks.slice(i + 1, i + 8);
-    if (slice.length < 6) {
-      // No hay suficientes campos — paramos.
+    // Campos hasta la siguiente fecha (la misma fecha puede repetirse como separador).
+    let next = i + 1;
+    while (next < blocks.length) {
+      const candidate = blocks[next];
+      if (isDateLine(candidate)) break;
+      next++;
+    }
+    const slice = blocks.slice(i + 1, next);
+
+    const nivelIdx = slice.findIndex((part) =>
+      NIVEL_VALID.has(part.replace(/\s+/g, "")),
+    );
+    if (nivelIdx < 0 || slice.length < nivelIdx + 2) {
       warnings.push(`Entrada incompleta tras fecha "${block}"`);
-      i++;
+      i = next;
       continue;
     }
 
-    const [
-      nombre,
-      localidad,
-      organizador,
-      nivelRaw,
-      divisiones,
-      modalidades,
-      equipamiento,
-    ] = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6] ?? ""];
+    const prefix = slice.slice(0, nivelIdx);
+    const nombre = prefix[0] ?? "";
+    const localidad = prefix[1] ?? prefix[0] ?? "";
+    const organizador = prefix[2] ?? prefix[1] ?? prefix[0] ?? "";
+    const nivelRaw = slice[nivelIdx];
+    const divisiones = slice[nivelIdx + 1] ?? "";
+    const modalidades = slice[nivelIdx + 2] ?? "";
+    const equipamiento = slice[nivelIdx + 3] ?? "";
 
     if (!NIVEL_VALID.has(nivelRaw.replace(/\s+/g, ""))) {
-      // Fila de estructura distinta — saltamos para no corromper el parser.
       warnings.push(`Nivel desconocido «${nivelRaw}» — fila ignorada`);
-      i += 1;
+      i = next;
       continue;
     }
 
@@ -296,7 +233,7 @@ export function parseAepCalendarText(input: string): ParsedCalendar {
       pendiente: dates.pendiente,
     });
 
-    i += 8;
+    i = next;
   }
 
   return { year, entries, warnings };

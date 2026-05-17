@@ -12,17 +12,21 @@ supabase/migrations/005_judge_management.sql
 supabase/migrations/006_roles_rebrand.sql      # user_role: super_admin, delegado_*, solo_ver
 supabase/migrations/007_rls_hardening.sql
 supabase/migrations/008_per_event_roster_template.sql
+supabase/migrations/009_geographic_zones.sql
+supabase/migrations/010_referees_registry_fields.sql
 ```
 
 Las migraciones 004+ usan patrones idempotentes donde aplica. Sin 004/005 la app degrada con listas vacías en exámenes/informes/salud.
+
+`009` define las 8 zonas geográficas AEP 2026 (`N1`, `N2`, `CENTRO`, `MAD`, `CAT`, `LEV`, `SUR`, `CAN`). `010` añade columnas del registro Excel en `referees` (`excel_id`, licencia, localidad, etc.).
 
 ## Tablas principales
 
 | Tabla | Uso |
 |-------|-----|
-| `zones` | Códigos de zona (MAD, CAT, …) |
+| `zones` | Códigos de zona geográfica AEP 2026 (`N1`, `N2`, `CENTRO`, `MAD`, `CAT`, `LEV`, `SUR`, `CAN`) |
 | `profiles` | Perfil 1:1 con `auth.users` (`role`, `zona`, `activo`) |
-| `referees` | Directorio de jueces |
+| `referees` | Directorio de jueces (`excel_id` único tras importación del maestro) |
 | `competitions` | Campeonatos; **`template` JSONB** — plantilla de sesiones por evento |
 | `roster_assignments` | `slot_key` → `referee_id`; **`flags` JSONB** — `{ compartido, intercambio }` |
 | `approval_proposals` | Propuestas de tarima |
@@ -63,7 +67,23 @@ Políticas con `public.current_profile()` para filtrar por rol y zona. Rutas `/a
 npm run db:seed
 ```
 
-Pobla zonas, normativa, jueces, campeonatos demo, etc. No crea usuarios auth (registro manual o `/admin/users`).
+Pobla **zonas**, **normativa** (`regulation_rules`) y referencia de preset de plantilla. **No** inserta jueces ni campeonatos ficticios. No crea usuarios auth (registro manual o `/admin/users`).
+
+### Importar registro maestro de jueces
+
+```bash
+npm run db:import-judges -- "/ruta/Copia de Control jueces.xlsx"
+```
+
+Hojas: `Datos`, `Arbitrajes2026`, `Campeonatos26`. Upsert por `excel_id`. También disponible en UI: **Directorio → Importar registro**.
+
+### Limpiar datos demo legacy
+
+Si quedaron jueces seed (`j001`–`j016`) u actividad ficticia:
+
+```bash
+npm run db:cleanup-demo
+```
 
 ## Backfill de plantillas (opción A)
 

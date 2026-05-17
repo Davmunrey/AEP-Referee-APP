@@ -49,7 +49,7 @@ describe("parseAepCalendarText", () => {
     expect(madrid?.zona).toBe("MAD");
 
     const malaga = parsed.entries.find((e) => /Guadalteba/i.test(e.nombre));
-    expect(malaga?.zona).toBe("AND");
+    expect(malaga?.zona).toBe("SUR");
   });
 
   it("excluye campeonatos europeos / mundiales", () => {
@@ -64,5 +64,37 @@ describe("parseAepCalendarText", () => {
     );
     expect(cto?.tipo).toBe("AEP-1");
     expect(cto?.esEspaña).toBe(true);
+  });
+
+  it("parsea texto pegado típico de pdf-parse", () => {
+    const glued = `
+CALENDARIO de COMPETICIONES 2026
+FECHACOMPETICIONES 1º TRIMESTRE 2026LOCALIDADORGANIZADORNIVELDIVISIONESPBMR/E
+24-25 ene
+AEP 3 - IV Copa Black Crown - Madrid
+Arganda del Rey
+(Madrid)
+Black CrownAEP3OPENP-BR
+3-4 oct
+ANDALUCÍAAlmeriaPower Huercal OveraAEP2OPENP-BR-E
+3-4 oct
+AEP 3 - AndalucíaAlmeriaPower Huercal OveraAEP3OPENP-BR
+07-15 feb
+EUROPEAN Masters Classic Powerlifting ChampionshipsPlace OuluFinlandEPFMASTERsPR
+`;
+    const parsedGlued = parseAepCalendarText(glued);
+    expect(parsedGlued.entries.length).toBeGreaterThanOrEqual(3);
+    const blackCrown = parsedGlued.entries.find((e) =>
+      /Black Crown/i.test(e.nombre),
+    );
+    expect(blackCrown?.tipo).toBe("AEP-3");
+    expect(blackCrown?.esEspaña).toBe(true);
+    const andalucia = parsedGlued.entries.filter((e) => /Andalucía/i.test(e.nombre));
+    expect(andalucia.length).toBeGreaterThanOrEqual(2);
+    const european = parsedGlued.entries.find((e) =>
+      /EUROPEAN Masters/i.test(e.nombre),
+    );
+    expect(european?.tipo).toBeNull();
+    expect(european?.esEspaña).toBe(false);
   });
 });

@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { api } from "@/lib/api/client";
+import { pickActiveRosterHref } from "@/lib/nav-utils";
 import type { SessionUser } from "@/lib/types";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
@@ -10,6 +13,7 @@ const COLLAPSE_KEY = "aep-tarima:sidebar-collapsed";
 export interface NavCounts {
   events: number;
   approvals: number;
+  activeRosterHref: string;
 }
 
 export function AppShell({
@@ -26,6 +30,31 @@ export function AppShell({
   orgSubtitle: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const pathname = usePathname();
+  const [liveNavCounts, setLiveNavCounts] = useState(navCounts);
+
+  useEffect(() => {
+    setLiveNavCounts(navCounts);
+  }, [navCounts]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([api.getCompetitions(), api.getApprovals()])
+      .then(([competitions, approvals]) => {
+        if (cancelled) return;
+        setLiveNavCounts({
+          events: competitions.length,
+          approvals: approvals.filter((a) => a.status === "pendiente").length,
+          activeRosterHref: pickActiveRosterHref(competitions),
+        });
+      })
+      .catch(() => {
+        // Mantener contadores del servidor si la API falla (sesión expirada, etc.).
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, navCounts]);
 
   useEffect(() => {
     try {
@@ -56,7 +85,7 @@ export function AppShell({
       <Sidebar
         collapsed={collapsed}
         currentUser={currentUser}
-        navCounts={navCounts}
+        navCounts={liveNavCounts}
         orgLabel={orgLabel}
         orgSubtitle={orgSubtitle}
         onToggle={toggleCollapsed}

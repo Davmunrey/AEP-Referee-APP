@@ -13,6 +13,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
+import { JudgesRegistryImportButton } from "@/components/referees/judges-registry-import";
 import { NewRefereeDialog } from "@/components/referees/new-referee-dialog";
 import { LevelBadge, StatusBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ interface RefereesDirectoryProps {
   zones: Zone[];
   levels: RefereeLevel[];
   canEdit?: boolean;
+  canImport?: boolean;
 }
 
 export function RefereesDirectory({
@@ -38,6 +40,7 @@ export function RefereesDirectory({
   zones,
   levels,
   canEdit = false,
+  canImport = false,
 }: RefereesDirectoryProps) {
   const searchParams = useSearchParams();
   const [referees, setReferees] = useState(initialReferees);
@@ -142,6 +145,7 @@ export function RefereesDirectory({
               Limpiar filtros
             </Button>
           )}
+          {canImport && <JudgesRegistryImportButton />}
           {canEdit && (
             <Button size="sm" className="gap-1.5" onClick={() => setShowNew(true)}>
               <UserPlus className="h-3.5 w-3.5" />
@@ -270,6 +274,7 @@ export function RefereesDirectory({
                 <tr className="border-b border-border/80 text-left font-mono text-[10px] uppercase tracking-wider text-subtle-muted">
                   <th className="w-10 px-4 py-2" />
                   <th className="px-4 py-2 font-medium">Juez</th>
+                  <th className="px-4 py-2 font-medium">Localidad</th>
                   <th className="px-4 py-2 font-medium">Zona</th>
                   <th className="px-4 py-2 font-medium">Nivel</th>
                   <th className="px-4 py-2 font-medium">Estado</th>
@@ -296,6 +301,9 @@ export function RefereesDirectory({
                       >
                         {referee.nombre}
                       </Link>
+                    </td>
+                    <td className="px-4 py-2.5 text-sm text-muted-foreground">
+                      {referee.localidad ?? "—"}
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       <span className="font-mono text-[10px] text-subtle-muted">{referee.zona}</span>

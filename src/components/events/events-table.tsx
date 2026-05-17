@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarDays, Check, Loader2, Trash2, X } from "lucide-react";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
@@ -34,6 +35,7 @@ const PAGE_SIZE = 20;
 const MAX_VISIBLE_PAGES = 5;
 
 export function EventsTable({ initialEvents, role, userZona }: EventsTableProps) {
+  const router = useRouter();
   const [events, setEvents] = useState(initialEvents);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -41,6 +43,10 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState("TODOS");
   const [filterEstado, setFilterEstado] = useState("TODOS");
+
+  useEffect(() => {
+    setEvents(initialEvents);
+  }, [initialEvents]);
 
   const filtered = useMemo(() => {
     return events.filter((e) => {
@@ -79,6 +85,7 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
     try {
       await api.deleteCompetition(id);
       setEvents((prev) => prev.filter((e) => e.id !== id));
+      router.refresh();
     } catch (err) {
       alert(
         err instanceof Error

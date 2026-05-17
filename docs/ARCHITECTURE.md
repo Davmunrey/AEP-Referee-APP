@@ -57,7 +57,11 @@ Lista completa en [`API.md`](./API.md).
 | `roster-template.ts` | `getPresetForEventType`, `enumerateSlotKeys`, `pruneAssignments` |
 | `roster-rules.ts` | Validación nivel mínimo |
 | `roster-export.ts` | Acta TXT con flags `*` / `↑↓` |
-| `mock-data.ts` | `PRESET_AEP1`, `PRESET_AEP2`, `PRESET_AEP3` |
+| `mock-data.ts` | Presets AEP-1/2/3 de plantilla (sin datos demo de jueces/eventos) |
+| `permissions.ts` | `canCreateCompetition`, `canImportCalendar`, `canImportJudgesRegistry`, … |
+| `nav-utils.ts` | `pickActiveRosterHref` — enlace «Tarima activa» sin duplicar `/events` |
+| `calendar-from-competitions.ts` | Eventos de calendario derivados de `competitions` en BD |
+| `judges-registry/` | Parser e import del Excel «Control jueces» |
 
 ## Plantilla por evento
 
@@ -74,7 +78,7 @@ Lista completa en [`API.md`](./API.md).
 | `delegado_zona` | su `zona` | no | no |
 | `solo_ver` | lectura | no | no |
 
-Helpers: `src/lib/auth/session.ts` — `canEditRoster`, `canApprove`, `canManageUsers`, etc.
+Helpers: `src/lib/auth/session.ts` — `canEditRoster`, `canApprove`, etc.; reglas de producto en `src/lib/permissions.ts`.
 
 Primer registro → `super_admin`. Detalle: [`AUTH.md`](./AUTH.md).
 

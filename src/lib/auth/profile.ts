@@ -1,3 +1,4 @@
+import { resolveZoneCode, zoneDisplayName } from "@/lib/aep-zones";
 import type { SessionUser, UserRole } from "@/lib/types";
 
 export interface ProfileRow {
@@ -19,7 +20,7 @@ export function profileToSessionUser(row: ProfileRow): SessionUser {
     rol: row.rol_label,
     iniciales: row.iniciales,
     role: row.role,
-    zona: row.zona ?? undefined,
+    zona: resolveZoneCode(row.zona) ?? undefined,
   };
 }
 
@@ -31,7 +32,10 @@ export function orgLabelForUser(user: SessionUser): { org: string; subtitle: str
     return { org: "AEP · Comité de Jueces", subtitle: user.rol };
   }
   if (user.role === "delegado_zona" && user.zona) {
-    return { org: `AEP Regional · ${user.zona}`, subtitle: user.rol };
+    return {
+      org: `AEP Regional · ${zoneDisplayName(user.zona)}`,
+      subtitle: user.rol,
+    };
   }
   return { org: "AEP Consulta", subtitle: user.rol };
 }

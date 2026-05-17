@@ -1,5 +1,6 @@
 import { RefereesDirectory } from "@/components/referees/referees-directory";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
+import { canImportJudgesRegistry } from "@/lib/permissions";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
@@ -24,6 +25,7 @@ export default async function RefereesPage() {
         zones={zones}
         levels={meta.levels}
         canEdit={user.role !== "solo_ver"}
+        canImport={canImportJudgesRegistry(user.role)}
       />
     </PageShell>
   );

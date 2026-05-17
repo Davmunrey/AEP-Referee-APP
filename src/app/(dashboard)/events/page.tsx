@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventsTable } from "@/components/events/events-table";
 import { CalendarImportButton } from "@/components/events/calendar-import-button";
+import { canCreateCompetition, canImportCalendar } from "@/lib/permissions";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { Plus } from "lucide-react";
@@ -25,12 +26,8 @@ export default async function EventsPage() {
         description={`${events.length} eventos en temporada · gestión de plantillas de jueces`}
       >
         <div className="flex flex-wrap gap-2">
-          {(user.role === "super_admin" || user.role === "delegado_jueces") && (
-            <CalendarImportButton />
-          )}
-          {(user.role === "super_admin" ||
-            user.role === "delegado_jueces" ||
-            user.role === "delegado_zona") && (
+          {canImportCalendar(user.role) && <CalendarImportButton />}
+          {canCreateCompetition(user.role) && (
             <Button className="gap-1.5" asChild>
               <Link href="/events/new">
                 <Plus className="h-4 w-4" />

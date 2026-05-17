@@ -4,6 +4,8 @@ import { orgLabelForUser } from "@/lib/auth/profile";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

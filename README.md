@@ -26,7 +26,7 @@ Centro de control que se **retroalimenta de sus propios datos**:
 - **Constructor de tarima** (`RosterBuilder`) — asignación por arrastre o clic, validación normativa, flags de slot (`*` compartido, `↑↓` intercambio), historial y envío a aprobación.
 
 ### Directorio de jueces / Ficha de juez
-Búsqueda, filtros, paginación, trayectoria (exámenes, informes), alta, edición y ascensos.
+Búsqueda, filtros, paginación, trayectoria (exámenes, informes), alta, edición y ascensos. Importación del Excel maestro «Control jueces» (hojas Datos, Arbitrajes2026, Campeonatos26).
 
 ### Exámenes, informes, aprobaciones, ascensos, estadísticas, normativa IPF/AEP
 Igual que en versiones anteriores; ver [`docs/GUIA-USO.md`](./docs/GUIA-USO.md) para flujos paso a paso.
@@ -92,8 +92,11 @@ npm install
 #   supabase/migrations/006_roles_rebrand.sql
 #   supabase/migrations/007_rls_hardening.sql
 #   supabase/migrations/008_per_event_roster_template.sql
+#   supabase/migrations/009_geographic_zones.sql
+#   supabase/migrations/010_referees_registry_fields.sql
 
 npm run db:seed
+npm run db:import-judges -- "/ruta/Copia de Control jueces.xlsx"
 npm run dev
 ```
 
@@ -120,7 +123,9 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 | `npm run dev` | Servidor de desarrollo (puerto 3000) |
 | `npm run build` | Build de producción |
 | `npm run start` | Servidor de producción |
-| `npm run db:seed` | Pobla zonas, jueces, campeonatos y normativa |
+| `npm run db:seed` | Zonas, normativa y preset de plantilla (sin datos demo) |
+| `npm run db:import-judges` | Importa registro maestro desde Excel |
+| `npm run db:cleanup-demo` | Elimina jueces seed y actividad ficticia |
 | `npm run db:backfill-templates` | Rellena `competitions.template` desde presets por tipo |
 | `npm test` | Vitest (reglas de tarima, plantillas, RBAC) |
 | `npm run lint` | ESLint |
@@ -132,6 +137,7 @@ Dominio: **https://aep-tarima.vercel.app/** — detalle en [`docs/DEPLOY.md`](./
 | Documento | Contenido |
 |-----------|-----------|
 | [`docs/GUIA-USO.md`](./docs/GUIA-USO.md) | **Guía de uso** con branding AEP Tarima y flujos operativos |
+| [`docs/GUIA-AEP-2026.md`](./docs/GUIA-AEP-2026.md) | **Guía AEP 2026** (zonas, niveles, cuotas, marcas mínimas) |
 | [`docs/DEPLOY.md`](./docs/DEPLOY.md) | Vercel, variables, checklist |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Esquema, RLS, migraciones 001–008 |
 | [`docs/AUTH.md`](./docs/AUTH.md) | Auth, roles, sesión |

@@ -1,7 +1,12 @@
+import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
+import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import type { JudgesRegistryImportResult } from "@/lib/types";
+import { importJudgesRegistryToMemory } from "@/server/services/import-judges-registry";
 import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import { formatRosterExport } from "@/lib/roster-export";
+import { pickActiveRosterHref } from "@/lib/nav-utils";
 import { getPresetForEventType, pruneAssignments } from "@/lib/roster-template";
 import type {
   AnalyticsPayload,
@@ -213,7 +218,12 @@ export const memoryDataService = {
       .join("")
       .slice(0, 2)
       .toUpperCase();
-    const referee: Referee = { ...input, id, iniciales };
+    const referee: Referee = {
+      ...input,
+      id,
+      iniciales,
+      zona: normalizeZoneInput(input.zona) ?? input.zona,
+    };
     store.referees.push(referee);
     pushActivity({
       tipo: "cambio",
@@ -229,7 +239,13 @@ export const memoryDataService = {
     const store = getStore();
     const idx = store.referees.findIndex((r) => r.id === id);
     if (idx < 0) return undefined;
-    const merged = { ...store.referees[idx]!, ...patch };
+    const merged = {
+      ...store.referees[idx]!,
+      ...patch,
+      ...(patch.zona !== undefined
+        ? { zona: normalizeZoneInput(patch.zona) ?? patch.zona }
+        : {}),
+    };
     if (typeof patch.nombre === "string" && patch.nombre.trim()) {
       merged.iniciales = patch.nombre
         .split(" ")
@@ -245,7 +261,8 @@ export const memoryDataService = {
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const list = getStore().competitions;
     if (user?.role === "delegado_zona" && user.zona) {
-      return list.filter((c) => c.zona === user.zona);
+      const userZone = resolveZoneCode(user.zona);
+      return list.filter((c) => resolveZoneCode(c.zona) === userZone);
     }
     return list;
   },
@@ -263,6 +280,7 @@ export const memoryDataService = {
       confirmados: 0,
       estado: "Borrador",
       aprobacion: "Sin propuesta",
+      zona: normalizeZoneInput(input.zona) ?? input.zona,
     };
     store.competitions.push(comp);
     store.assignments.set(id, {});
@@ -275,7 +293,13 @@ export const memoryDataService = {
     const store = getStore();
     const idx = store.competitions.findIndex((c) => c.id === id);
     if (idx < 0) return undefined;
-    store.competitions[idx] = { ...store.competitions[idx]!, ...patch };
+    store.competitions[idx] = {
+      ...store.competitions[idx]!,
+      ...patch,
+      ...(patch.zona !== undefined
+        ? { zona: normalizeZoneInput(patch.zona) ?? patch.zona }
+        : {}),
+    };
     return store.competitions[idx];
   },
 
@@ -659,7 +683,7 @@ export const memoryDataService = {
       refereeName: referee.nombre,
       fromLevel: referee.nivel,
       toLevel: input.toLevel,
-      zona: input.zona,
+      zona: normalizeZoneInput(input.zona) ?? input.zona,
       status: "pendiente",
       submittedAt: new Date().toISOString().split("T")[0]!,
       eventosCompletados: referee.eventos,
@@ -669,12 +693,16 @@ export const memoryDataService = {
     return req;
   },
 
-  getNavCounts: async (user?: SessionUser): Promise<{ events: number; approvals: number }> => {
-    const events = (await memoryDataService.getCompetitions(user)).length;
+  getNavCounts: async (user?: SessionUser) => {
+    const competitions = await memoryDataService.getCompetitions(user);
     const approvals = (await memoryDataService.getApprovals(user)).filter(
       (a) => a.status === "pendiente",
     ).length;
-    return { events, approvals };
+    return {
+      events: competitions.length,
+      approvals,
+      activeRosterHref: pickActiveRosterHref(competitions),
+    };
   },
 
   getExams: async (
@@ -826,4 +854,10 @@ export const memoryDataService = {
     ]);
     return computeJudgeProfile(referee, exams, reports);
   },
+
+  importJudgesRegistry: async (
+    parsed: ParsedJudgesRegistry,
+    options?: { replace?: boolean },
+  ): Promise<JudgesRegistryImportResult> =>
+    importJudgesRegistryToMemory(parsed, options),
 };
