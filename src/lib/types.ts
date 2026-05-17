@@ -15,7 +15,9 @@ export type RoleKey =
   | "jurado"
   | "pesaje"
   | "equipamiento"
-  | "material";
+  | "material"
+  | "mesa"
+  | "liftingcast";
 
 export type UserRole =
   | "super_admin"
@@ -120,6 +122,14 @@ export interface DashboardKpi {
 }
 
 export type AssignmentsMap = Record<string, string>;
+
+/** Flags de slot en acta AEP: * comparte sesión, ↑↓ intercambio pesaje H/M. */
+export interface SlotFlags {
+  compartido?: boolean;
+  intercambio?: boolean;
+}
+
+export type FlagsMap = Record<string, SlotFlags>;
 
 export interface CurrentUser {
   nombre: string;

@@ -2,6 +2,7 @@ import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import { formatRosterExport } from "@/lib/roster-export";
+import { getPresetForEventType, pruneAssignments } from "@/lib/roster-template";
 import type {
   AnalyticsPayload,
   AppMeta,
@@ -9,6 +10,8 @@ import type {
   AssignmentsMap,
   AssignValidation,
   Competition,
+  FlagsMap,
+  SlotFlags,
   DashboardKpi,
   DashboardPayload,
   ExamResult,
@@ -26,7 +29,17 @@ import type {
   RosterSession,
   SessionUser,
 } from "@/lib/types";
-import { REGULATION_RULES, getCalendarEvents, getLevels, getRosterTemplate, getStore, getZones, pushActivity, pushHistory } from "@/server/store";
+import {
+  REGULATION_RULES,
+  getCalendarEvents,
+  getEventTemplate,
+  getLevels,
+  getStore,
+  getZones,
+  pushActivity,
+  pushHistory,
+  setEventTemplate,
+} from "@/server/store";
 
 /** Bitácora de salud en memoria (modo dev sin Supabase). */
 const healthHistory: { score: number; at: number }[] = [];
@@ -44,7 +57,7 @@ function syncCompetitionCoverage(eventId: string) {
   const assignments = store.assignments.get(eventId) ?? {};
   const filled = Object.values(assignments).filter(Boolean).length;
   comp.confirmados = filled;
-  const open = countOpenSlots(getRosterTemplate(), assignments);
+  const open = countOpenSlots(getEventTemplate(eventId), assignments);
   if (open === 0) comp.estado = "Completo";
   else if (filled === 0) comp.estado = "Borrador";
   else if (open > 5) comp.estado = "Crítico";
@@ -58,7 +71,7 @@ function buildKpis(): DashboardKpi[] {
   let openSlots = 0;
   for (const c of store.competitions) {
     openSlots += countOpenSlots(
-      getRosterTemplate(),
+      getEventTemplate(c.id),
       store.assignments.get(c.id) ?? {},
     );
   }
@@ -112,11 +125,10 @@ export const memoryDataService = {
     const competitions = [...store.competitions].sort((a, b) =>
       a.fecha.localeCompare(b.fecha),
     );
-    const template = getRosterTemplate();
     const coverage = competitions.map((c) => {
       const assignments = store.assignments.get(c.id) ?? {};
       const filled = Object.values(assignments).filter(Boolean).length;
-      const open = countOpenSlots(template, assignments);
+      const open = countOpenSlots(getEventTemplate(c.id), assignments);
       return {
         id: c.id,
         nombre: c.nombre,
@@ -240,6 +252,8 @@ export const memoryDataService = {
     };
     store.competitions.push(comp);
     store.assignments.set(id, {});
+    store.slotFlags.set(id, {});
+    setEventTemplate(id, getPresetForEventType(input.tipo));
     return comp;
   },
 
@@ -253,14 +267,83 @@ export const memoryDataService = {
 
   getRoster: async (
     eventId: string,
-  ): Promise<{ template: RosterSession[]; assignments: AssignmentsMap } | undefined> => {
+  ): Promise<
+    { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap } | undefined
+  > => {
     if (!(await memoryDataService.getCompetition(eventId))) return undefined;
     const store = getStore();
     if (!store.assignments.has(eventId)) store.assignments.set(eventId, {});
+    if (!store.slotFlags.has(eventId)) store.slotFlags.set(eventId, {});
     return {
-      template: getRosterTemplate(),
+      template: getEventTemplate(eventId),
       assignments: { ...store.assignments.get(eventId)! },
+      flags: { ...store.slotFlags.get(eventId)! },
     };
+  },
+
+  saveCompetitionTemplate: async (
+    eventId: string,
+    template: RosterSession[],
+    actor: string,
+  ) => {
+    const comp = await memoryDataService.getCompetition(eventId);
+    if (!comp) return undefined;
+    const store = getStore();
+    setEventTemplate(eventId, template);
+    const assignments = store.assignments.get(eventId) ?? {};
+    const flags = store.slotFlags.get(eventId) ?? {};
+    const pruned = pruneAssignments(template, assignments, flags);
+    store.assignments.set(eventId, pruned.assignments);
+    store.slotFlags.set(eventId, pruned.flags);
+    const idx = store.competitions.findIndex((c) => c.id === eventId);
+    if (idx >= 0) {
+      store.competitions[idx] = {
+        ...store.competitions[idx]!,
+        sesiones: template.length,
+      };
+    }
+    syncCompetitionCoverage(eventId);
+    pushHistory({
+      eventId,
+      at: new Date().toISOString(),
+      actor,
+      action: "Plantilla actualizada",
+      detail: `${template.length} sesiones`,
+    });
+    return {
+      template,
+      assignments: pruned.assignments,
+      flags: pruned.flags,
+    };
+  },
+
+  setSlotFlags: async (
+    eventId: string,
+    slotKey: string,
+    flags: SlotFlags,
+    actor: string,
+  ): Promise<{ flags: FlagsMap } | { error: string }> => {
+    const store = getStore();
+    const assignments = store.assignments.get(eventId) ?? {};
+    if (!assignments[slotKey]) {
+      return { error: "Asigna un árbitro antes de marcar flags" };
+    }
+    const all = { ...(store.slotFlags.get(eventId) ?? {}) };
+    const merged: SlotFlags = {
+      compartido: Boolean(flags.compartido),
+      intercambio: Boolean(flags.intercambio),
+    };
+    if (merged.compartido || merged.intercambio) all[slotKey] = merged;
+    else delete all[slotKey];
+    store.slotFlags.set(eventId, all);
+    pushHistory({
+      eventId,
+      at: new Date().toISOString(),
+      actor,
+      action: "Flags slot",
+      detail: slotKey,
+    });
+    return { flags: { ...all } };
   },
 
   validateAssign: async (
@@ -281,7 +364,8 @@ export const memoryDataService = {
     slotKey: string,
     refereeId: string,
     actor: string,
-  ): Promise<{ assignments?: AssignmentsMap; error?: string }> => {
+    slotFlags?: SlotFlags,
+  ): Promise<{ assignments?: AssignmentsMap; flags?: FlagsMap; error?: string }> => {
     const validation = await memoryDataService.validateAssign(eventId, slotKey, refereeId);
     if (!validation.ok) return { error: validation.error };
 
@@ -297,6 +381,14 @@ export const memoryDataService = {
     }
     assignments[slotKey] = refereeId;
     store.assignments.set(eventId, assignments);
+    const flagMap = { ...(store.slotFlags.get(eventId) ?? {}) };
+    if (slotFlags && (slotFlags.compartido || slotFlags.intercambio)) {
+      flagMap[slotKey] = {
+        compartido: Boolean(slotFlags.compartido),
+        intercambio: Boolean(slotFlags.intercambio),
+      };
+    }
+    store.slotFlags.set(eventId, flagMap);
     syncCompetitionCoverage(eventId);
     pushHistory({
       eventId,
@@ -305,7 +397,10 @@ export const memoryDataService = {
       action: "Asignación",
       detail: `${slotKey} → ${refereeId}`,
     });
-    return { assignments: { ...assignments } };
+    return {
+      assignments: { ...assignments },
+      flags: { ...flagMap },
+    };
   },
 
   clearSlot: async (
@@ -317,6 +412,9 @@ export const memoryDataService = {
     const assignments = { ...(store.assignments.get(eventId) ?? {}) };
     delete assignments[slotKey];
     store.assignments.set(eventId, assignments);
+    const flagMap = { ...(store.slotFlags.get(eventId) ?? {}) };
+    delete flagMap[slotKey];
+    store.slotFlags.set(eventId, flagMap);
     syncCompetitionCoverage(eventId);
     pushHistory({
       eventId,
@@ -458,7 +556,7 @@ export const memoryDataService = {
     let openSlots = 0;
     for (const c of competitions) {
       openSlots += countOpenSlots(
-        getRosterTemplate(),
+        getEventTemplate(c.id),
         store.assignments.get(c.id) ?? {},
       );
     }
@@ -499,10 +597,16 @@ export const memoryDataService = {
     const comp = await memoryDataService.getCompetition(eventId);
     if (!roster || !comp) return null;
     const store = getStore();
-    return formatRosterExport(comp, roster.template, roster.assignments, (id) => {
-      const r = store.referees.find((ref) => ref.id === id);
-      return r ? { nombre: r.nombre, nivel: r.nivel } : undefined;
-    });
+    return formatRosterExport(
+      comp,
+      roster.template,
+      roster.assignments,
+      (id) => {
+        const r = store.referees.find((ref) => ref.id === id);
+        return r ? { nombre: r.nombre, nivel: r.nivel } : undefined;
+      },
+      roster.flags,
+    );
   },
 
   deleteReferee: async (id: string): Promise<boolean> => {

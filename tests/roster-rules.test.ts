@@ -44,6 +44,11 @@ describe("minLevelForRole", () => {
     expect(minLevelForRole("pesaje", "AEP-2")).toBe("Regional");
     expect(minLevelForRole("material", "AEP-1")).toBe("Regional");
   });
+
+  it("requires Regional for mesa and liftingcast", () => {
+    expect(minLevelForRole("mesa", "AEP-2")).toBe("Regional");
+    expect(minLevelForRole("liftingcast", "AEP-3")).toBe("Regional");
+  });
 });
 
 describe("validateAssignment", () => {
@@ -130,5 +135,16 @@ describe("countOpenSlots", () => {
 
   it("returns 0 for an empty template", () => {
     expect(countOpenSlots([], { a: "ref1" })).toBe(0);
+  });
+
+  it("counts pesaje slots in open slots", () => {
+    const withPesaje = [
+      {
+        roles: [{ slots: 1 }],
+        pesajeRoles: [{ slots: 2 }],
+      },
+    ];
+    expect(countOpenSlots(withPesaje, {})).toBe(3);
+    expect(countOpenSlots(withPesaje, { a: "r1" })).toBe(2);
   });
 });

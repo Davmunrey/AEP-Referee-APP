@@ -17,6 +17,8 @@ const MIN_LEVEL_BY_ROLE: Partial<Record<RoleKey, RefereeLevel>> = {
   pesaje: "Regional",
   equipamiento: "Regional",
   material: "Regional",
+  mesa: "Regional",
+  liftingcast: "Regional",
 };
 
 export function minLevelForRole(roleKey: RoleKey, eventType: EventType): RefereeLevel {

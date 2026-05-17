@@ -1,4 +1,4 @@
-import type { AssignmentsMap, RosterSession } from "@/lib/types";
+import type { AssignmentsMap, FlagsMap, RosterSession } from "@/lib/types";
 
 interface ExportComp {
   nombre: string;
@@ -18,11 +18,26 @@ interface ExportRef {
  * oficial AEP: agrupado por día, cada sesión con sus categorías, horarios y
  * los bloques de competición y de pesaje.
  */
+function formatRefName(
+  ref: ExportRef | undefined,
+  slotKey: string,
+  flags: FlagsMap,
+): string {
+  if (!ref) return "— VACÍO";
+  const suffix: string[] = [];
+  const f = flags[slotKey];
+  if (f?.compartido) suffix.push("*");
+  if (f?.intercambio) suffix.push("↑↓");
+  const flagStr = suffix.length ? ` ${suffix.join(" ")}` : "";
+  return `${ref.nombre} (${ref.nivel})${flagStr}`;
+}
+
 export function formatRosterExport(
   comp: ExportComp,
   template: RosterSession[],
   assignments: AssignmentsMap,
   refLookup: (id: string) => ExportRef | undefined,
+  flags: FlagsMap = {},
 ): string {
   const lines: string[] = [
     "ASOCIACIÓN ESPAÑOLA DE POWERLIFTING",
@@ -41,11 +56,10 @@ export function formatRosterExport(
     for (const role of roles) {
       for (let i = 0; i < role.slots; i++) {
         const refId = assignments[`${sesion}_${role.key}_${i}`];
+        const slotKey = `${sesion}_${role.key}_${i}`;
         const ref = refId ? refLookup(refId) : undefined;
         const label = role.slots > 1 ? `${role.rol} ${i + 1}` : role.rol;
-        lines.push(
-          `   - ${label}: ${ref ? `${ref.nombre} (${ref.nivel})` : "— VACÍO"}`,
-        );
+        lines.push(`   - ${label}: ${formatRefName(ref, slotKey, flags)}`);
       }
     }
   };

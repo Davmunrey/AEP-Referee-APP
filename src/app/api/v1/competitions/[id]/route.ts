@@ -18,8 +18,7 @@ export async function GET(_request: Request, context: RouteContext) {
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "solo_ver" || user.role === "delegado_jueces")
-    return jsonError("Sin permiso", 403);
+  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   const body = await request.json().catch(() => null);
@@ -47,8 +46,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "solo_ver" || user.role === "delegado_jueces")
-    return jsonError("Sin permiso", 403);
+  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   const event = await dataService.getCompetition(id);
