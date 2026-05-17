@@ -1166,6 +1166,16 @@ export const supabaseDataService = {
     return !error;
   },
 
+  getReport: async (id: string): Promise<RefereeReport | undefined> => {
+    const supabase = db();
+    const { data } = await supabase
+      .from("referee_reports")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    return data ? mapReport(data as Record<string, unknown>) : undefined;
+  },
+
   getReports: async (
     refereeId?: string,
     user?: SessionUser,

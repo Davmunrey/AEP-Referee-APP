@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: nombre },
+    user_metadata: { full_name: nombre, invited: true },
   });
 
   if (authError || !authData.user) {

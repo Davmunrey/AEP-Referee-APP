@@ -777,6 +777,9 @@ export const memoryDataService = {
     return true;
   },
 
+  getReport: async (id: string): Promise<RefereeReport | undefined> =>
+    getStore().reports.find((r) => r.id === id),
+
   getReports: async (
     refereeId?: string,
     user?: SessionUser,
