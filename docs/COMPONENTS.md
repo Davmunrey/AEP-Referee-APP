@@ -57,9 +57,10 @@
 |------------|-------------|
 | `EventsTable` (events) | Tabla completa con filtros, paginación y borrado |
 | `NewCompetitionForm` | Formulario de creación con validación de fechas y guard de unload |
-| `RosterBuilder` | Constructor de tarima: drag & drop, validación normativa, historial. Modo lectura para rol `lectura` |
-| `RosterHeaderActions` | Cabecera de tarima: cobertura, guardar borrador, exportar, enviar |
-| `RosterHistoryPanel` | Panel flotante de historial de cambios (fetch lazy) |
+| `RosterTemplateEditor` | Editor inline de plantilla: sesiones, días, categorías, horarios, roles de pista y pesaje |
+| `RosterBuilder` | Constructor: drag & drop, flags `*`/`↑↓`, validación normativa, historial. `canEdit` desactiva edición |
+| `RosterHeaderActions` | Cabecera: cobertura, editar plantilla, borrador, exportar TXT, enviar aprobación |
+| `RosterHistoryPanel` | Historial de cambios (fetch lazy) |
 | `SessionBlock` | Bloque de sesión con slots y progreso |
 
 ### Árbitros / Jueces
@@ -97,7 +98,7 @@
 ### Administración
 | Componente | Descripción |
 |------------|-------------|
-| `UsersAdmin` | Alta/baja/activación de usuarios (solo rol `nacional`) |
+| `UsersAdmin` | Alta/baja/activación (`canManageUsers`: `super_admin`, `delegado_jueces`) |
 
 ## Accesibilidad
 

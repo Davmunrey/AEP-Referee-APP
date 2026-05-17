@@ -2,57 +2,87 @@
 
 ## Migraciones
 
-Ejecuta los archivos en orden en el SQL Editor de Supabase (o `supabase db push`):
+Ejecuta en orden en el SQL Editor de Supabase (o `supabase db push`):
 
 ```
-supabase/migrations/001_initial_schema.sql    # esquema base
-supabase/migrations/003_supabase_auth.sql     # Auth nativo (revierte Clerk)
-supabase/migrations/004_health_snapshots.sql  # bitácora de salud del panel
-supabase/migrations/005_judge_management.sql  # exámenes e informes de jueces
+supabase/migrations/001_initial_schema.sql
+supabase/migrations/003_supabase_auth.sql
+supabase/migrations/004_health_snapshots.sql
+supabase/migrations/005_judge_management.sql
+supabase/migrations/006_roles_rebrand.sql      # user_role: super_admin, delegado_*, solo_ver
+supabase/migrations/007_rls_hardening.sql
+supabase/migrations/008_per_event_roster_template.sql
 ```
 
-Las migraciones 004 y 005 usan `CREATE TABLE IF NOT EXISTS` — son seguras de
-re-ejecutar. La app **degrada sin romper** si 004/005 no están aplicadas: las
-funciones afectadas devuelven listas vacías en lugar de fallar.
+Las migraciones 004+ usan patrones idempotentes donde aplica. Sin 004/005 la app degrada con listas vacías en exámenes/informes/salud.
 
 ## Tablas principales
 
-| Tabla | Migración | Uso |
-|-------|-----------|-----|
-| `zones` | 001 | Códigos de zona federativa (MAD, CAT, …) |
-| `profiles` | 001 / 003 | Perfil 1:1 con `auth.users` (rol, zona, activo) |
-| `referees` | 001 | Directorio de árbitros |
-| `competitions` | 001 | Campeonatos |
-| `roster_assignments` | 001 | Slot → árbitro por evento |
-| `approval_proposals` | 001 | Propuestas de tarima pendientes |
-| `promotion_requests` | 001 | Ascensos de nivel |
-| `activity_log` | 001 | Feed del dashboard |
-| `roster_history` | 001 | Auditoría de cambios en tarima |
-| `regulation_rules` | 001 | Normativa IPF |
-| `app_config` | 001 | JSON (`roster_template`, `calendar_events`) |
-| `health_snapshots` | 004 | Bitácora del índice de salud operativa |
-| `referee_exams` | 005 | Exámenes arbitrales (teórico, práctico, reglamento, recert.) |
-| `referee_reports` | 005 | Informes de desempeño / incidencias por juez |
+| Tabla | Uso |
+|-------|-----|
+| `zones` | Códigos de zona (MAD, CAT, …) |
+| `profiles` | Perfil 1:1 con `auth.users` (`role`, `zona`, `activo`) |
+| `referees` | Directorio de árbitros |
+| `competitions` | Campeonatos; **`template` JSONB** — plantilla de sesiones por evento |
+| `roster_assignments` | `slot_key` → `referee_id`; **`flags` JSONB** — `{ compartido, intercambio }` |
+| `approval_proposals` | Propuestas de tarima |
+| `promotion_requests` | Ascensos |
+| `activity_log` | Feed del dashboard |
+| `roster_history` | Auditoría de tarima |
+| `regulation_rules` | Normativa IPF/AEP |
+| `app_config` | JSON legacy (`roster_template`, calendario) |
+| `health_snapshots` | Bitácora de salud operativa |
+| `referee_exams` | Exámenes arbitrales |
+| `referee_reports` | Informes de juez |
+
+### Columnas nuevas (008)
+
+| Columna | Tipo | Comportamiento |
+|---------|------|----------------|
+| `competitions.template` | `JSONB` nullable | `RosterSession[]`. `NULL` → preset por `tipo` en aplicación |
+| `roster_assignments.flags` | `JSONB` default `{}` | Flags por slot; solo con asignación activa |
+
+RLS en 008: sin políticas nuevas; la API usa **service role** + RBAC en handlers.
+
+## Roles (`user_role`)
+
+Definidos en `006_roles_rebrand.sql`:
+
+- `super_admin`
+- `delegado_jueces`
+- `delegado_zona`
+- `solo_ver`
 
 ## RLS
 
-Las políticas usan `public.current_profile()` para filtrar por rol y zona. El cliente anon autenticado solo ve filas permitidas; operaciones de administración de usuarios usan **service role** en rutas `/api/v1/admin/*`.
+Políticas con `public.current_profile()` para filtrar por rol y zona. Rutas `/api/v1/admin/*` y operaciones de servidor usan **service role**.
 
 ## Seed
 
 ```bash
-# .env.local con SUPABASE_SERVICE_ROLE_KEY
 npm run db:seed
 ```
 
-Crea zonas, árbitros, campeonatos, normativa, actividad y usuarios:
+Pobla zonas, normativa, árbitros, campeonatos demo, etc. No crea usuarios auth (registro manual o `/admin/users`).
 
-- `nacional@aep-tarima.es`
-- `madrid@aep-tarima.es`, `cataluna@aep-tarima.es`, …
-- `consulta@aep-tarima.es`
+## Backfill de plantillas (opción A)
 
-Contraseña inicial: `SEED_DEFAULT_PASSWORD` o `ChangeMe2026!` por defecto. **Cámbiala en producción.**
+Copia presets AEP-1/2/3 en filas con `template IS NULL`:
+
+```bash
+npm run db:backfill-templates
+```
+
+Equivalente SQL (generado desde `src/lib/mock-data.ts`):
+
+```sql
+UPDATE competitions SET template = '<preset AEP-1 JSON>'::jsonb
+  WHERE tipo = 'AEP-1' AND template IS NULL;
+-- idem AEP-2, AEP-3
+```
+
+Tras el backfill, la UI edita la copia persistida; el preset en código solo aplica si `template` sigue siendo `NULL`.
 
 ## Desarrollo sin Supabase
 
-Si no hay variables `NEXT_PUBLIC_SUPABASE_*`, `dataService` usa memoria (`memory-service.ts`) para explorar UI sin login real. No uses este modo en Vercel.
+Sin `NEXT_PUBLIC_SUPABASE_*`, `dataService` usa `memory-service.ts`. No usar en Vercel.

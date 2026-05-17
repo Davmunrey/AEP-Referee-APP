@@ -47,7 +47,7 @@
 | `text-gradient-brand` | Titulares de marca |
 | `friendly-label` | Eyebrows de sección |
 | `focus-ring` | Focus accesible en inputs y botones |
-| `bg-role-*` / `ring-role-*` | Personas demo (nacional, regional, lectura) |
+| `bg-role-*` / `ring-role-*` | Acentos por rol (`super_admin`, `delegado_jueces`, `delegado_zona`, `solo_ver`) |
 
 ## Componentes de layout
 

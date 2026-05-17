@@ -1,57 +1,61 @@
 # Despliegue en Vercel
 
+**Producción:** https://aep-tarima.vercel.app/
+
 ## Requisitos
 
-- Repositorio en GitHub conectado a Vercel
-- Proyecto Supabase (región EU recomendada para datos federativos en España)
-- Migraciones `001_initial_schema.sql`, `003_supabase_auth.sql`,
-  `004_health_snapshots.sql` y `005_judge_management.sql` aplicadas
+- Repositorio GitHub conectado a Vercel
+- Proyecto Supabase (región EU recomendada)
+- Migraciones **001 → 008** aplicadas (ver [`DATABASE.md`](./DATABASE.md))
 
 ## Variables de entorno en Vercel
 
 | Variable | Entorno | Descripción |
 |----------|---------|-------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Production, Preview | URL del proyecto Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production, Preview | Clave anónima Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Production only | Service role — admin de usuarios y seed |
+| `NEXT_PUBLIC_SUPABASE_URL` | Production, Preview | URL del proyecto |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production, Preview | Clave anónima |
+| `SUPABASE_SERVICE_ROLE_KEY` | Production only | Service role — admin y seed |
 
 ## Configuración Supabase
 
-1. SQL Editor → ejecutar `001_initial_schema.sql`, `003_supabase_auth.sql`,
-   `004_health_snapshots.sql` (bitácora de salud) y `005_judge_management.sql`
-   (exámenes e informes de jueces).
-2. Authentication → URL Configuration → Site URL = dominio Vercel;
-   Redirect URLs = `https://<dominio>/auth/callback` y `http://localhost:3000/auth/callback`.
-3. Authentication → Policies → activar *Leaked password protection*.
-
-> El login es solo email/contraseña; no hay que configurar proveedores OAuth.
+1. SQL Editor — migraciones en orden hasta `008_per_event_roster_template.sql`.
+2. **URL Configuration** — Site URL = `https://aep-tarima.vercel.app`; Redirect URLs:
+   - `https://aep-tarima.vercel.app/auth/callback`
+   - `http://localhost:3000/auth/callback`
+3. **Leaked password protection** — activar si el plan lo permite (Pro).
+4. Login solo **email/contraseña**.
 
 ## Pasos
 
-1. **Build**: Vercel ejecuta `npm run build`. El proyecto debe compilar con las
-   variables de Supabase definidas.
-2. **Seed (una vez)**: desde tu máquina, con `.env.local` apuntando al Supabase
-   de producción:
+1. **Build** — `npm run build` en Vercel con variables definidas.
+2. **Seed (una vez)** — desde local con `.env.local` apuntando a prod:
 
    ```bash
    npm run db:seed
    ```
 
-   Puebla zonas, normativa, árbitros y campeonatos. No crea usuarios.
-3. **Dominio**: asigna el dominio federativo en Vercel → Settings → Domains.
-4. **Primer acceso**: el primer usuario que se registre obtiene rol `nacional`.
+3. **Backfill plantillas (opcional)** — si hay campeonatos con `template` NULL:
+
+   ```bash
+   npm run db:backfill-templates
+   ```
+
+4. **Dominio** — asignado: `aep-tarima.vercel.app` (Vercel → Settings → Domains).
+5. **Primer acceso** — primer registro → `super_admin`.
 
 ## Notas serverless
 
-- El store en memoria **no** persiste entre invocaciones en Vercel. En
-  producción `dataService` usa siempre Postgres vía Supabase.
-- Sin `NEXT_PUBLIC_SUPABASE_URL` la API devuelve 503 y el login no funcionará.
+- `memory-service` no persiste en Vercel; producción usa siempre Supabase.
+- Sin `NEXT_PUBLIC_SUPABASE_URL` la API devuelve 503.
 
 ## Checklist post-deploy
 
-- [ ] Registro del primer usuario → rol nacional automático
-- [ ] Login con email/contraseña
-- [ ] Crear usuario regional desde `/admin/users`
-- [ ] El usuario regional solo ve su zona
-- [ ] Asignar árbitro en tarima y enviar propuesta
-- [ ] Aprobar propuesta como nacional
+- [ ] Primer usuario → `super_admin`
+- [ ] Login email/contraseña
+- [ ] Crear delegado de zona en `/admin/users`
+- [ ] Delegado de zona solo ve su zona
+- [ ] Editar plantilla y asignar árbitro en tarima
+- [ ] Flags `*` / `↑↓` en export TXT
+- [ ] Enviar propuesta y aprobar como `delegado_jueces` o `super_admin`
+
+Guía operativa: [`GUIA-USO.md`](./GUIA-USO.md).

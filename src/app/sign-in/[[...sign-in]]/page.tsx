@@ -160,10 +160,6 @@ export default function SignInPage() {
           </button>
         </div>
 
-        <p className="mt-6 text-center text-[11px] leading-relaxed text-subtle-muted">
-          Acceso para personal federativo AEP. El primer usuario registrado obtiene
-          rol Nacional; el resto requiere aprobación del equipo nacional.
-        </p>
       </div>
     </div>
   );

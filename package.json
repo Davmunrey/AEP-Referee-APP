@@ -11,7 +11,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:seed": "npx tsx --env-file=.env.local scripts/seed.ts"
+    "db:seed": "npx tsx --env-file=.env.local scripts/seed.ts",
+    "db:backfill-templates": "npx tsx --env-file=.env.local scripts/backfill-templates.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
