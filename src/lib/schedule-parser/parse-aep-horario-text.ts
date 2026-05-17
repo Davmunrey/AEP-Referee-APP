@@ -9,11 +9,15 @@ import type {
 
 const DAY_RE =
   /^(Lunes|Martes|Miércoles|Jueves|Viernes|Sábado|Domingo),\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}$/i;
-const SESSION_RE = /^SESI[ÓO]N\s+(\d+)\s*:$/i;
-const GROUP_RE = /^\*?\s*Grupo\s+(\d+)\s*:$/i;
+/** Acepta el resto de la línea tras los dos puntos como categoría inline. */
+const SESSION_RE = /^SESI[ÓO]N\s+(\d+)\s*:\s*(.*)$/i;
+/** Igual: el resto tras `:` puede ser la categoría del grupo (pdf-parse a veces los une). */
+const GROUP_RE = /^\*?\s*Grupo\s+(\d+)\s*:\s*(.*)$/i;
 const SCHEDULE_RE =
   /Pesaje\s+(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\s*\/\s*Inicio\s+(\d{1,2}:\d{2})\s*\/\s*Fin\s+(\d{1,2}:\d{2})/i;
 const LEV_RE = /^(\d+)\s+lev\.?$/i;
+/** Cola "N lev." al final de una línea; usado para extraer el total y limpiar la categoría. */
+const LEV_TAIL_RE = /(\d+)\s+lev\.?\s*$/i;
 const REV_RE = /^rev\.\s*(.+)$/i;
 const TYPE_RE = /\bAEP-([123])\b/i;
 const HEADER_TITLE_RE = /^(ASOCIACI[ÓO]N\s+ESPA[ÑN]OLA.*POWERLIFTING)$/i;
@@ -76,6 +80,13 @@ function parseCategoryLine(line: string): RosterCategoria[] {
     const genero = m[1].toLowerCase().startsWith("h") ? "Hombres" : "Mujeres";
     return { genero, pesos: m[2].trim() };
   });
+}
+
+/** Extrae el total de levantadores de una cola tipo "25 lev." y devuelve el texto limpio. */
+function extractLevTail(s: string): { text: string; total?: number } {
+  const m = s.match(LEV_TAIL_RE);
+  if (!m || m.index === undefined) return { text: s.trim() };
+  return { text: s.slice(0, m.index).trim(), total: Number(m[1]) };
 }
 
 function normalizeRange(range: string): string {
@@ -176,6 +187,7 @@ export function parseAepHorarioText(input: string): ParsedHorario {
         days.push(currentDay);
       }
       const num = sessionMatch[1];
+      const inlineCategory = (sessionMatch[2] ?? "").trim();
       currentSession = {
         sesion: `S${num}`,
         nombre: `Sesión ${num}`,
@@ -185,7 +197,19 @@ export function parseAepHorarioText(input: string): ParsedHorario {
       };
       sessions.push(currentSession);
       currentGroup = undefined;
-      pendingCategory = "session";
+
+      // pdf-parse a veces concatena "SESIÓN N: <categoría> N lev." en una sola línea.
+      if (inlineCategory) {
+        const { text, total } = extractLevTail(inlineCategory);
+        if (total !== undefined) currentSession.totalLevantadores = total;
+        if (text) {
+          currentSession.rawCategoria = text;
+          currentSession.categorias = parseCategoryLine(text);
+        }
+        pendingCategory = undefined;
+      } else {
+        pendingCategory = "session";
+      }
       continue;
     }
 
@@ -201,13 +225,25 @@ export function parseAepHorarioText(input: string): ParsedHorario {
         continue;
       }
       const num = groupMatch[1];
+      const inlineCategory = (groupMatch[2] ?? "").trim();
       currentGroup = {
         nombre: `Grupo ${num}`,
         rawCategoria: "",
         categorias: [],
       };
       currentSession.grupos.push(currentGroup);
-      pendingCategory = "group";
+
+      if (inlineCategory) {
+        const { text, total } = extractLevTail(inlineCategory);
+        if (total !== undefined) currentGroup.levantadores = total;
+        if (text) {
+          currentGroup.rawCategoria = text;
+          currentGroup.categorias = parseCategoryLine(text);
+        }
+        pendingCategory = undefined;
+      } else {
+        pendingCategory = "group";
+      }
       continue;
     }
 
