@@ -23,7 +23,10 @@ export async function POST(request: Request) {
   if (!isSessionUser(user)) return user;
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
-  const body = (await request.json()) as Partial<Referee>;
+  const body = (await request.json().catch(() => null)) as Partial<Referee> | null;
+  if (!body || typeof body !== "object") {
+    return jsonError("Cuerpo de solicitud inválido", 400);
+  }
   if (!body.nombre || !body.zona || !body.nivel || !body.estado) {
     return jsonError("Faltan campos obligatorios", 400);
   }

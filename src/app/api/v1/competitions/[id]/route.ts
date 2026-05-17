@@ -22,7 +22,23 @@ export async function PATCH(request: Request, context: RouteContext) {
     return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return jsonError("Cuerpo de solicitud inválido", 400);
+  }
+
+  const event = await dataService.getCompetition(id);
+  if (!event) return jsonError("Competición no encontrada", 404);
+
+  // Un delegado de zona solo puede editar competiciones de SU zona
+  // y no puede reasignar la competición a otra zona.
+  if (user.role === "delegado_zona") {
+    if (event.zona !== user.zona) return jsonError("Sin permiso", 403);
+    if (body.zona !== undefined && body.zona !== user.zona) {
+      return jsonError("No puedes mover competiciones a otra zona", 403);
+    }
+  }
+
   const updated = await dataService.updateCompetition(id, body);
   if (!updated) return jsonError("Competición no encontrada", 404);
   return jsonOk(updated);
