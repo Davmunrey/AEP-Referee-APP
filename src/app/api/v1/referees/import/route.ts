@@ -1,6 +1,9 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
-import { parseJudgesRegistryXlsx } from "@/lib/judges-registry";
+import {
+  buildJudgesRegistryImportPreview,
+  parseJudgesRegistryXlsx,
+} from "@/lib/judges-registry";
 import { dataService } from "@/server/services";
 
 export const runtime = "nodejs";
@@ -16,6 +19,7 @@ export async function POST(request: Request) {
   }
 
   const url = new URL(request.url);
+  const apply = url.searchParams.get("apply") === "true";
   const replace = url.searchParams.get("replace") === "true";
 
   let formData: FormData;
@@ -33,6 +37,9 @@ export async function POST(request: Request) {
     return jsonError("El archivo excede 8 MB", 400);
   }
 
+  const filename =
+    file instanceof File && file.name ? file.name : "Control jueces.xlsx";
+
   const buffer = await file.arrayBuffer();
   let parsed;
   try {
@@ -48,13 +55,16 @@ export async function POST(request: Request) {
     return jsonError("No se encontraron jueces en la hoja «Datos»", 400);
   }
 
+  const previewPayload = buildJudgesRegistryImportPreview(parsed, filename, replace);
+
+  if (!apply) {
+    return jsonOk({ preview: previewPayload });
+  }
+
   const result = await dataService.importJudgesRegistry(parsed, { replace });
 
   return jsonOk({
-    preview: {
-      referees: parsed.referees.length,
-      competitions: parsed.competitions.length,
-    },
+    preview: previewPayload,
     ...result,
   });
 }

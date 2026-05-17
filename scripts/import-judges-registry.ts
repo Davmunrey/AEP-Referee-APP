@@ -58,7 +58,7 @@ importJudgesRegistryToSupabase(parsed, { replace })
     console.log(`  Jueces omitidos:     ${r.refereesSkipped}`);
     console.log(`  Campeonatos nuevos:  ${r.competitionsCreated}`);
     console.log(`  Campeonatos dup:     ${r.competitionsSkipped}`);
-    if (r.warnings.length) {
+    if (r.warnings?.length) {
       console.log("\nAvisos:");
       for (const w of r.warnings.slice(0, 20)) console.log(`  - ${w}`);
       if (r.warnings.length > 20) {

@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
 import { EventStatusBadge, EventTypeBadge, LevelBadge } from "@/components/aep/badges";
 import { RosterHeaderActions } from "@/components/events/roster-header-actions";
+import { RosterHelpPanel } from "@/components/events/roster-help-panel";
+import { RosterRevisionPanel } from "@/components/events/roster-revision-panel";
+import { RosterStepper } from "@/components/events/roster-stepper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,11 +23,16 @@ import type {
   RosterRole,
   RosterSession,
   SlotFlags,
-  UserRole,
   Zone,
 } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { topArbitrajeRoles } from "@/lib/judges-registry/arbitraje-stats";
+import {
+  countRegulationViolations,
+  findRegulationViolation,
+  getAssignabilityReason,
+  type RosterWorkflowStep,
+} from "@/lib/roster-ui";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
@@ -40,26 +49,6 @@ import { RosterTemplateEditor } from "@/components/events/roster-template-editor
 import { ScheduleImportDialog } from "@/components/events/schedule-import-dialog";
 import { FileUp } from "lucide-react";
 
-const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-
-function meetsMinLevel(actual: RefereeLevel, min: RefereeLevel): boolean {
-  return LEVEL_ORDER.indexOf(actual) >= LEVEL_ORDER.indexOf(min);
-}
-
-function violatesRegulation(
-  roleKey: RoleKey,
-  eventType: string,
-  nivel: RefereeLevel,
-  regulations: RegulationRule[],
-): RegulationRule | undefined {
-  return regulations.find(
-    (r) =>
-      r.roleKey === roleKey &&
-      r.eventTypes.includes(eventType as Competition["tipo"]) &&
-      !meetsMinLevel(nivel, r.minLevel),
-  );
-}
-
 interface RosterBuilderProps {
   event: Competition;
   template: RosterSession[];
@@ -72,7 +61,8 @@ interface RosterBuilderProps {
   zones: Zone[];
   levels: RefereeLevel[];
   regulations?: RegulationRule[];
-  userRole?: UserRole;
+  /** Zona por defecto en filtro de jueces (delegado_zona → su zona). */
+  defaultZonaFilter?: string;
 }
 
 function zoneName(zones: Zone[], code: string) {
@@ -90,6 +80,7 @@ export function RosterBuilder({
   zones,
   levels,
   regulations = [],
+  defaultZonaFilter = "TODAS",
 }: RosterBuilderProps) {
   const readOnly = !canEdit;
   const [template, setTemplate] = useState(initialTemplate);
@@ -98,7 +89,7 @@ export function RosterBuilder({
   const [isEditing, setIsEditing] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [filterZona, setFilterZona] = useState("TODAS");
+  const [filterZona, setFilterZona] = useState(defaultZonaFilter);
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [search, setSearch] = useState("");
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -106,6 +97,24 @@ export function RosterBuilder({
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const [statusIsError, setStatusIsError] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [workflowStep, setWorkflowStep] = useState<RosterWorkflowStep>("asignacion");
+
+  const totalSlots = template.reduce(
+    (acc, s) =>
+      acc +
+      s.roles.reduce((a, r) => a + r.slots, 0) +
+      (s.pesajeRoles ?? []).reduce((a, r) => a + r.slots, 0),
+    0,
+  );
+  const filledSlots = Object.values(assignments).filter(Boolean).length;
+  const fillPct = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
+  const openSlots = Math.max(0, totalSlots - filledSlots);
+  const plantillaDone = totalSlots > 0;
+  const asignacionDone = filledSlots > 0;
+
+  useEffect(() => {
+    if (totalSlots === 0) setWorkflowStep("plantilla");
+  }, [totalSlots]);
 
   const assignedIds = useMemo(
     () => new Set(Object.values(assignments).filter(Boolean)),
@@ -117,44 +126,20 @@ export function RosterBuilder({
   const checkViolation = (roleKey: RoleKey, refereeId: string) => {
     const referee = getReferee(refereeId);
     if (!referee) return undefined;
-    return violatesRegulation(roleKey, event.tipo, referee.nivel, regulations);
+    return findRegulationViolation(roleKey, event.tipo, referee.nivel, regulations);
   };
 
-  const violationCount = useMemo(() => {
-    let count = 0;
-    for (const session of template) {
-      const allRoles = [...session.roles, ...(session.pesajeRoles ?? [])];
-      for (const role of allRoles) {
-        for (let i = 0; i < role.slots; i++) {
-          const key = `${session.sesion}_${role.key}_${i}`;
-          const refId = assignments[key];
-          if (
-            refId &&
-            violatesRegulation(
-              role.key,
-              event.tipo,
-              getReferee(refId)?.nivel ?? "Regional",
-              regulations,
-            )
-          ) {
-            count++;
-          }
-        }
-      }
-    }
-    return count;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignments, template, regulations, event.tipo]);
-
-  const totalSlots = template.reduce(
-    (acc, s) =>
-      acc +
-      s.roles.reduce((a, r) => a + r.slots, 0) +
-      (s.pesajeRoles ?? []).reduce((a, r) => a + r.slots, 0),
-    0,
+  const violationCount = useMemo(
+    () =>
+      countRegulationViolations(
+        template,
+        assignments,
+        event.tipo,
+        (id) => referees.find((r) => r.id === id)?.nivel,
+        regulations,
+      ),
+    [assignments, template, regulations, event.tipo, referees],
   );
-  const filledSlots = Object.values(assignments).filter(Boolean).length;
-  const fillPct = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
 
   const selectedRoleKey = selectedSlot
     ? (selectedSlot.split("_")[1] as RoleKey | undefined)
@@ -170,8 +155,8 @@ export function RosterBuilder({
     });
     if (selectedRoleKey) {
       list.sort((a, b) => {
-        const aOk = !violatesRegulation(selectedRoleKey, event.tipo, a.nivel, regulations);
-        const bOk = !violatesRegulation(selectedRoleKey, event.tipo, b.nivel, regulations);
+        const aOk = !getAssignabilityReason(a, selectedRoleKey, event.tipo, regulations);
+        const bOk = !getAssignabilityReason(b, selectedRoleKey, event.tipo, regulations);
         if (aOk && !bOk) return -1;
         if (!aOk && bOk) return 1;
         return 0;
@@ -203,7 +188,7 @@ export function RosterBuilder({
       } catch (err) {
         // Revertir la actualización optimista al estado previo.
         setAssignments(snapshot);
-        setStatusMsg(err instanceof Error ? err.message : "No se pudo guardar la asignación");
+        setStatusMsg(formatApiError(err, "No se pudo guardar la asignación"));
         setStatusIsError(true);
       }
     });
@@ -219,8 +204,8 @@ export function RosterBuilder({
       try {
         const res = await api.clearSlot(event.id, slotKey);
         setAssignments(res.assignments);
-      } catch {
-        setStatusMsg("No se pudo quitar la asignación");
+      } catch (err) {
+        setStatusMsg(formatApiError(err, "No se pudo quitar la asignación"));
         setStatusIsError(true);
       }
     });
@@ -248,9 +233,9 @@ export function RosterBuilder({
       try {
         const res = await api.setSlotFlags(event.id, slotKey, next);
         setFlags(res.flags);
-      } catch {
+      } catch (err) {
         setFlags(snapshot);
-        setStatusMsg("No se pudieron guardar los marcadores del slot");
+        setStatusMsg(formatApiError(err, "No se pudieron guardar los marcadores del slot"));
         setStatusIsError(true);
       }
     });
@@ -265,10 +250,11 @@ export function RosterBuilder({
         setAssignments(res.assignments);
         setFlags(res.flags);
         setIsEditing(false);
+        setWorkflowStep("asignacion");
         setStatusMsg("Plantilla guardada");
         setStatusIsError(false);
       } catch (err) {
-        setStatusMsg(err instanceof Error ? err.message : "No se pudo guardar la plantilla");
+        setStatusMsg(formatApiError(err, "No se pudo guardar la plantilla"));
         setStatusIsError(true);
       } finally {
         setSavingTemplate(false);
@@ -283,10 +269,12 @@ export function RosterBuilder({
       <ScheduleImportDialog
         eventId={event.id}
         open={importOpen}
+        hasExistingTemplate={template.length > 0}
         onClose={() => setImportOpen(false)}
         onApplied={(tpl) => {
           setTemplate(tpl);
           setImportOpen(false);
+          setWorkflowStep("asignacion");
           setStatusMsg("Plantilla importada desde PDF");
           setStatusIsError(false);
         }}
@@ -337,10 +325,10 @@ export function RosterBuilder({
                   className="gap-1.5"
                   onClick={() => setImportOpen(true)}
                   disabled={pending || savingTemplate}
-                  title="Importar horario en PDF y generar la plantilla automáticamente"
+                  title="Importar horario de este campeonato (PDF)"
                 >
                   <FileUp className="h-3.5 w-3.5" />
-                  Importar PDF
+                  Importar horario
                 </Button>
               )}
               {canEdit && (
@@ -348,7 +336,15 @@ export function RosterBuilder({
                   type="button"
                   variant={isEditing ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setIsEditing((v) => !v)}
+                  onClick={() => {
+                    if (isEditing) {
+                      setIsEditing(false);
+                      setWorkflowStep(totalSlots > 0 ? "asignacion" : "plantilla");
+                    } else {
+                      setIsEditing(true);
+                      setWorkflowStep("plantilla");
+                    }
+                  }}
                   disabled={pending || savingTemplate}
                 >
                   {isEditing ? "Volver a tarima" : "Editar plantilla"}
@@ -361,6 +357,8 @@ export function RosterBuilder({
                   filledSlots={filledSlots}
                   totalSlots={totalSlots}
                   fillPct={fillPct}
+                  violationCount={violationCount}
+                  openSlots={openSlots}
                   pending={pending}
                   statusMsg={statusMsg}
                   statusIsError={statusIsError}
@@ -376,9 +374,70 @@ export function RosterBuilder({
         </div>
       </div>
 
-      {/* Main layout: left pane (referees) + right pane (acta) */}
+      {!readOnly && (
+        <>
+          <RosterHelpPanel />
+          <RosterStepper
+            current={isEditing ? "plantilla" : workflowStep}
+            onChange={(step) => {
+              setIsEditing(false);
+              setWorkflowStep(step);
+            }}
+            disabled={pending || savingTemplate}
+            plantillaDone={plantillaDone}
+            asignacionDone={asignacionDone}
+          />
+        </>
+      )}
+
+      {workflowStep === "revision" && !isEditing && !readOnly ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <RosterRevisionPanel
+            filledSlots={filledSlots}
+            totalSlots={totalSlots}
+            fillPct={fillPct}
+            violationCount={violationCount}
+            openSlots={openSlots}
+            onGoAssign={() => setWorkflowStep("asignacion")}
+          />
+        </div>
+      ) : workflowStep === "plantilla" && !isEditing && totalSlots === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+          <p className="max-w-md text-sm text-muted-foreground">
+            Este campeonato aún no tiene plantilla de tarima. Importa el horario PDF de este evento
+            o define sesiones y plazas manualmente.
+          </p>
+          {canEdit && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button
+                type="button"
+                className="gap-1.5"
+                onClick={() => setImportOpen(true)}
+                disabled={pending}
+              >
+                <FileUp className="h-3.5 w-3.5" />
+                Importar horario (PDF)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(true);
+                  setWorkflowStep("plantilla");
+                }}
+                disabled={pending}
+              >
+                Crear plantilla manual
+              </Button>
+            </div>
+          )}
+          <p className="text-[11px] text-subtle-muted">
+            El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.
+          </p>
+        </div>
+      ) : (
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,300px)_1fr] xl:grid-cols-[minmax(0,340px)_1fr]">
-        {/* ── Left pane: referee list ── */}
+        {(workflowStep === "asignacion" || isEditing) && (
         <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
           <div className="border-b border-border p-4">
             <h2 className="text-sm font-semibold text-foreground-secondary">
@@ -436,13 +495,24 @@ export function RosterBuilder({
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             <ul className="space-y-1.5 p-3">
-              {availableReferees.map((referee) => (
+              {availableReferees.map((referee) => {
+                const blockedReason =
+                  selectedRoleKey && selectedSlot
+                    ? getAssignabilityReason(
+                        referee,
+                        selectedRoleKey,
+                        event.tipo,
+                        regulations,
+                      )
+                    : null;
+                return (
                 <RefereeCard
                   key={referee.id}
                   zones={zones}
                   referee={referee}
                   assigned={assignedIds.has(referee.id)}
                   dragging={draggedId === referee.id}
+                  blockedReason={blockedReason}
                   onDragStart={() => setDraggedId(referee.id)}
                   onDragEnd={() => setDraggedId(null)}
                   onClick={() => onQuickAssign(referee.id)}
@@ -450,7 +520,8 @@ export function RosterBuilder({
                   isDragging={isDragging}
                   readOnly={readOnly}
                 />
-              ))}
+                );
+              })}
               {availableReferees.length === 0 && (
                 <li className="py-8 text-center text-xs text-subtle-muted">
                   Sin coincidencias. Ajusta los filtros.
@@ -466,6 +537,7 @@ export function RosterBuilder({
             </p>
           </div>
         </section>
+        )}
 
         {/* ── Right pane: acta ── */}
         <section className="flex flex-col overflow-hidden">
@@ -527,6 +599,7 @@ export function RosterBuilder({
           )}
         </section>
       </div>
+      )}
     </div>
   );
 }
@@ -536,6 +609,7 @@ function RefereeCard({
   referee,
   assigned,
   dragging,
+  blockedReason,
   onDragStart,
   onDragEnd,
   onClick,
@@ -547,6 +621,7 @@ function RefereeCard({
   referee: Referee;
   assigned: boolean;
   dragging: boolean;
+  blockedReason?: string | null;
   onDragStart: () => void;
   onDragEnd: () => void;
   onClick: () => void;
@@ -554,7 +629,7 @@ function RefereeCard({
   isDragging: boolean;
   readOnly?: boolean;
 }) {
-  const locked = readOnly;
+  const locked = readOnly || !!blockedReason;
   const topRoles = referee.arbitrajeStats
     ? topArbitrajeRoles(referee.arbitrajeStats, 2)
     : [];
@@ -595,6 +670,9 @@ function RefereeCard({
           {topRoles.length > 0 &&
             ` · ${topRoles.map((r) => `${r.count}× ${r.role}`).join(", ")}`}
         </p>
+        {blockedReason && (
+          <p className="mt-1 text-[10px] font-medium text-warning">{blockedReason}</p>
+        )}
       </div>
       <LevelBadge level={referee.nivel} />
       {assigned && <Check className="h-3.5 w-3.5 shrink-0 text-success" />}

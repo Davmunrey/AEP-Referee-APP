@@ -69,13 +69,26 @@ export interface Referee {
   arbitrajeStats?: RefereeArbitrajeStats;
 }
 
-export interface JudgesRegistryImportResult {
-  refereesCreated: number;
-  refereesUpdated: number;
-  refereesSkipped: number;
-  competitionsCreated: number;
-  competitionsSkipped: number;
+export interface JudgesRegistryImportPreview {
+  filename: string;
+  refereeCount: number;
+  competitionCount: number;
   warnings: string[];
+  sampleReferees: Array<{ nombre: string; zona: string; nivel: string }>;
+  replaceRequested: boolean;
+}
+
+export interface JudgesRegistryImportApplyResult {
+  refereesCreated?: number;
+  refereesUpdated?: number;
+  refereesSkipped?: number;
+  competitionsCreated?: number;
+  competitionsSkipped?: number;
+  warnings?: string[];
+}
+
+export interface JudgesRegistryImportResult extends JudgesRegistryImportApplyResult {
+  preview: JudgesRegistryImportPreview;
 }
 
 export interface Competition {

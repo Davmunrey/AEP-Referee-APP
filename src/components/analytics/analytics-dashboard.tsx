@@ -17,9 +17,10 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import type { AnalyticsPayload } from "@/lib/types";
+import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-dialog";
 import { api } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Download, Loader2, MapPin, Trophy } from "lucide-react";
+import { AlertTriangle, Download, MapPin, Trophy } from "lucide-react";
 
 function zonePctStyle(pct: number): { bar: string; text: string } {
   if (pct >= 75) return { bar: "bg-success", text: "text-success" };
@@ -29,38 +30,33 @@ function zonePctStyle(pct: number): { bar: string; text: string } {
 }
 
 export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
-  const [exporting, setExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const maxEvt = Math.max(...data.topReferees.map((r) => r.eventos), 1);
-
-  const handleExport = () => {
-    setExporting(true);
-    setTimeout(() => setExporting(false), 2500);
-  };
+  const exportFilename = `estadisticas-${new Date().toISOString().slice(0, 10)}.csv`;
 
   return (
     <PageShell>
+      <ExportPreviewDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        kind="analytics_export"
+        fetchText={() => api.fetchAnalyticsExportText()}
+        filename={exportFilename}
+        mime="text/csv;charset=utf-8"
+      />
       <PageHeader
         eyebrow="Gestión"
         title="Estadísticas"
         description="Temporada 2026 · cobertura por zona, carga de jueces y eventos críticos"
       >
-        <a
-          href={api.analyticsExportUrl()}
-          download
-          onClick={handleExport}
-          aria-disabled={exporting}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-3 py-2 text-sm font-medium text-foreground-secondary transition-colors hover:bg-surface-hover focus-ring",
-            exporting && "pointer-events-none opacity-60",
-          )}
+        <button
+          type="button"
+          onClick={() => setExportOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-3 py-2 text-sm font-medium text-foreground-secondary transition-colors hover:bg-surface-hover focus-ring"
         >
-          {exporting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-          ) : (
-            <Download className="h-3.5 w-3.5" aria-hidden="true" />
-          )}
-          {exporting ? "Exportando…" : "Exportar CSV"}
-        </a>
+          <Download className="h-3.5 w-3.5" aria-hidden="true" />
+          Exportar CSV
+        </button>
       </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

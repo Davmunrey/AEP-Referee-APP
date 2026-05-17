@@ -2,7 +2,7 @@ import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
-import type { JudgesRegistryImportResult } from "@/lib/types";
+import type { JudgesRegistryImportApplyResult } from "@/lib/types";
 import {
   importJudgesRegistryToSupabase,
 } from "@/server/services/import-judges-registry";
@@ -1366,6 +1366,6 @@ export const supabaseDataService = {
   importJudgesRegistry: async (
     parsed: ParsedJudgesRegistry,
     options?: { replace?: boolean },
-  ): Promise<JudgesRegistryImportResult> =>
+  ): Promise<JudgesRegistryImportApplyResult> =>
     importJudgesRegistryToSupabase(parsed, options),
 };

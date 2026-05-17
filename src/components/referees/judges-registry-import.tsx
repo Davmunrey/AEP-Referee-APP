@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { FileDropZone } from "@/components/data-transfer/file-drop-zone";
+import { TransferDialogShell } from "@/components/data-transfer/transfer-dialog-shell";
+import { TransferPreviewStats } from "@/components/data-transfer/transfer-preview-stats";
+import { TransferResultBanner } from "@/components/data-transfer/transfer-result-banner";
+import { TransferStepper } from "@/components/data-transfer/transfer-stepper";
+import { TransferWarnings } from "@/components/data-transfer/transfer-warnings";
+import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
-import type { JudgesRegistryImportResult } from "@/lib/types";
-import { FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
+import {
+  canApplyPreview,
+  TRANSFER_KIND_COPY,
+  type TransferStep,
+} from "@/lib/import-export-ui";
+import type { JudgesRegistryImportPreview, JudgesRegistryImportResult } from "@/lib/types";
+import { FileSpreadsheet, Loader2 } from "lucide-react";
 
 interface JudgesRegistryImportProps {
   open: boolean;
@@ -27,139 +39,199 @@ export function JudgesRegistryImportButton() {
 
 function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const copy = TRANSFER_KIND_COPY.judges;
   const [file, setFile] = useState<File | null>(null);
   const [replace, setReplace] = useState(false);
+  const [preview, setPreview] = useState<JudgesRegistryImportPreview | null>(null);
+  const [result, setResult] = useState<JudgesRegistryImportResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<JudgesRegistryImportResult | null>(null);
 
   useEffect(() => {
     if (!open) {
       setFile(null);
       setReplace(false);
-      setError(null);
+      setPreview(null);
       setResult(null);
+      setError(null);
       setLoading(false);
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  const step: TransferStep = result ? "result" : preview ? "preview" : "upload";
 
-  if (!open) return null;
-
-  const runImport = async () => {
-    if (!file) return;
+  const runPreview = async (selected: File, replaceFlag: boolean) => {
     setLoading(true);
     setError(null);
+    setPreview(null);
+    setResult(null);
     try {
-      const res = await api.importJudgesRegistry(file, replace);
-      setResult(res);
-      router.refresh();
+      const res = await api.importJudgesRegistry(selected, { replace: replaceFlag, apply: false });
+      setPreview(res.preview);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al importar");
+      setError(formatApiError(e, "Error al leer el Excel"));
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="judges-import-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl">
-        <div className="flex items-start justify-between border-b border-border px-6 py-4">
-          <div>
-            <h2 id="judges-import-title" className="text-lg font-semibold text-foreground">
-              Importar Control jueces
-            </h2>
-            <p className="mt-1 text-sm text-subtle-muted">
-              Hojas «Datos», «Arbitrajes2026» y «Campeonatos26». Actualiza el directorio completo.
-            </p>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Cerrar">
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+  const handleFile = (f: File | null) => {
+    if (!f) return;
+    setFile(f);
+    void runPreview(f, replace);
+  };
 
-        <div className="px-6 py-4">
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
+  const handleReplaceChange = (checked: boolean) => {
+    setReplace(checked);
+    if (file) void runPreview(file, checked);
+  };
 
-          <Button
-            type="button"
-            variant="outline"
-            className="mb-4 w-full gap-2"
-            onClick={() => inputRef.current?.click()}
-          >
-            <Upload className="h-4 w-4" />
-            {file ? file.name : "Seleccionar Copia de Control jueces.xlsx"}
-          </Button>
+  const apply = async () => {
+    if (!file || !preview) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.importJudgesRegistry(file, { replace, apply: true });
+      setResult(res);
+      router.refresh();
+    } catch (e) {
+      setError(formatApiError(e, "Error al importar"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          <label className="mb-4 flex items-start gap-2 text-sm text-foreground-secondary">
-            <input
-              type="checkbox"
-              checked={replace}
-              onChange={(e) => setReplace(e.target.checked)}
-              className="mt-1"
-            />
-            <span>
-              Reemplazar datos existentes (borra jueces y campeonatos actuales antes de importar).
-              Solo para carga inicial.
-            </span>
-          </label>
+  const canApply = !!preview && canApplyPreview(preview) && !result;
 
-          {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
-
-          {result && (
-            <div className="mb-4 rounded-lg border border-border-muted bg-surface/80 p-3 text-sm">
-              <p>
-                Jueces: {result.refereesCreated} nuevos, {result.refereesUpdated} actualizados
-                {result.refereesSkipped > 0 ? `, ${result.refereesSkipped} omitidos` : ""}.
-              </p>
-              <p className="mt-1">
-                Campeonatos: {result.competitionsCreated} nuevos
-                {result.competitionsSkipped > 0
-                  ? `, ${result.competitionsSkipped} duplicados omitidos`
-                  : ""}
-                .
-              </p>
-              {result.warnings.length > 0 && (
-                <p className="mt-2 text-xs text-subtle-muted">
-                  {result.warnings.length} avisos (revisa consola del servidor).
-                </p>
-              )}
-            </div>
+  const footer = (
+    <div className="flex justify-end gap-2">
+      <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+        {result ? "Cerrar" : "Cancelar"}
+      </Button>
+      {!result && (
+        <Button type="button" disabled={!canApply || loading} onClick={() => void apply()}>
+          {loading ? (
+            <>
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              Procesando…
+            </>
+          ) : (
+            copy.applyCta
           )}
-
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={onClose}>
-              Cerrar
-            </Button>
-            <Button disabled={!file || loading} onClick={() => void runImport()}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Importar"}
-            </Button>
-          </div>
-        </div>
-      </div>
+        </Button>
+      )}
     </div>
+  );
+
+  return (
+    <TransferDialogShell
+      open={open}
+      onClose={onClose}
+      title={copy.title}
+      subtitle={copy.subtitle}
+      titleId="judges-import-title"
+      footer={footer}
+      maxWidthClass="max-w-lg"
+    >
+      <TransferStepper step={step} />
+
+      <FileDropZone
+        kind="judges"
+        file={file}
+        onFile={handleFile}
+        disabled={loading || !!result}
+        hint={copy.acceptedHint}
+      />
+
+      <label className="flex items-start gap-2 text-sm text-foreground-secondary">
+        <input
+          type="checkbox"
+          checked={replace}
+          onChange={(e) => handleReplaceChange(e.target.checked)}
+          disabled={loading || !!result}
+          className="mt-1"
+        />
+        <span>
+          Reemplazar datos existentes (borra jueces y campeonatos actuales antes de importar). Solo
+          para carga inicial.
+        </span>
+      </label>
+
+      {loading && !preview && !result ? (
+        <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Analizando Excel…
+        </div>
+      ) : null}
+
+      {error ? (
+        <TransferResultBanner variant="error" title="No se pudo importar">
+          {error}
+        </TransferResultBanner>
+      ) : null}
+
+      {preview && !result ? (
+        <div className="space-y-3 transfer-enter">
+          <TransferPreviewStats
+            items={[
+              { label: "Jueces", value: preview.refereeCount, tone: "success" },
+              { label: "Campeonatos", value: preview.competitionCount },
+              { label: "Archivo", value: preview.filename },
+            ]}
+          />
+          <TransferWarnings warnings={preview.warnings} />
+          {preview.sampleReferees.length > 0 ? (
+            <div className="rounded-md border border-border">
+              <table className="w-full text-xs">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Nombre</th>
+                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Zona</th>
+                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Nivel</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.sampleReferees.map((r, i) => (
+                    <tr
+                      key={`${r.nombre}-${i}`}
+                      className="transfer-row-stagger border-t border-border"
+                      style={{ animationDelay: `${Math.min(i, 7) * 40}ms` }}
+                    >
+                      <td className="px-2 py-1.5 text-foreground">{r.nombre}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{r.zona}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{r.nivel}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {preview.replaceRequested ? (
+            <p className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-xs text-warning">
+              Se aplicará reemplazo total de jueces y campeonatos al confirmar.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {result ? (
+        <TransferResultBanner variant="success" title="Importación completada">
+          <p>
+            Jueces: {result.refereesCreated ?? 0} nuevos, {result.refereesUpdated ?? 0} actualizados
+            {(result.refereesSkipped ?? 0) > 0 ? `, ${result.refereesSkipped} omitidos` : ""}.
+          </p>
+          <p className="mt-1">
+            Campeonatos: {result.competitionsCreated ?? 0} nuevos
+            {(result.competitionsSkipped ?? 0) > 0
+              ? `, ${result.competitionsSkipped} duplicados omitidos`
+              : ""}
+            .
+          </p>
+          {(result.warnings?.length ?? 0) > 0 ? (
+            <p className="mt-2 text-xs opacity-90">{result.warnings!.length} avisos de parseo.</p>
+          ) : null}
+        </TransferResultBanner>
+      ) : null}
+    </TransferDialogShell>
   );
 }

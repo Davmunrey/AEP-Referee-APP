@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { useEventCrumbLabel } from "@/components/layout/event-crumb-label";
 import { getPageMeta } from "@/lib/navigation";
 import type { CurrentUser } from "@/lib/types";
 
@@ -13,6 +14,8 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
   const pathname = usePathname();
   const router = useRouter();
   const meta = getPageMeta(pathname);
+  const eventIdCrumb = pathname.match(/^\/events\/([^/]+)$/)?.[1];
+  const eventCrumbLabel = useEventCrumbLabel(eventIdCrumb ?? "Evento");
   const hideSearch = pathname.startsWith("/events/");
   const [query, setQuery] = useState("");
 
@@ -26,21 +29,26 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border-muted bg-sidebar/80 px-6 backdrop-blur-xl">
       <div className="flex min-w-0 items-center gap-3">
         <nav className="hidden items-center gap-1.5 text-[12px] text-subtle-muted md:flex">
-          {meta.crumbs.map((crumb, i) => (
-            <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
-              {i > 0 && <ChevronRight className="h-3 w-3 text-subtle-muted" aria-hidden="true" />}
-              {crumb.href ? (
-                <Link
-                  href={crumb.href}
-                  className="rounded-sm transition-colors hover:text-foreground-secondary focus-ring"
-                >
-                  {crumb.label}
-                </Link>
-              ) : (
-                <span className="font-medium text-foreground-secondary">{crumb.label}</span>
-              )}
-            </span>
-          ))}
+          {meta.crumbs.map((crumb, i) => {
+            const isLast = i === meta.crumbs.length - 1;
+            const label =
+              isLast && eventIdCrumb && eventIdCrumb !== "new" ? eventCrumbLabel : crumb.label;
+            return (
+              <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
+                {i > 0 && <ChevronRight className="h-3 w-3 text-subtle-muted" aria-hidden="true" />}
+                {crumb.href ? (
+                  <Link
+                    href={crumb.href}
+                    className="rounded-sm transition-colors hover:text-foreground-secondary focus-ring"
+                  >
+                    {label}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-foreground-secondary">{label}</span>
+                )}
+              </span>
+            );
+          })}
         </nav>
         {meta.title && !pathname.startsWith("/events/") && (
           <div className="hidden min-w-0 border-l border-border-muted pl-4 lg:block">
