@@ -11,6 +11,7 @@ export {
   mapExcelActivo,
   refereeIdFromExcelId,
 } from "./maps";
+export { buildJudgesRegistryImportPreview } from "./import-preview";
 export { parseCampeonatosCsv } from "./parse-csv";
 export type { RefereeArbitrajeStats } from "./arbitraje-stats";
 export { topArbitrajeRoles, ARBITRAJE_ROLE_LABELS } from "./arbitraje-stats";

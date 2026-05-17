@@ -177,11 +177,16 @@ export const api = {
 
   importJudgesRegistry: async (
     file: File,
-    replace = false,
+    options: { replace?: boolean; apply?: boolean } = {},
   ): Promise<JudgesRegistryImportResult> => {
+    const { replace = false, apply = false } = options;
     const fd = new FormData();
     fd.append("file", file);
-    const path = `/referees/import${replace ? "?replace=true" : ""}`;
+    const params = new URLSearchParams();
+    if (replace) params.set("replace", "true");
+    if (apply) params.set("apply", "true");
+    const qs = params.toString();
+    const path = `/referees/import${qs ? `?${qs}` : ""}`;
     const res = await fetch(`${getApiBaseUrl()}${path}`, {
       method: "POST",
       credentials: "include",
@@ -190,6 +195,30 @@ export const api = {
     const parsed = await parseApiResponse<JudgesRegistryImportResult>(res);
     if (isApiError(parsed)) throw new Error(parsed.error);
     return parsed.data;
+  },
+
+  fetchRosterExportText: async (eventId: string): Promise<string> => {
+    const res = await fetch(`${getApiBaseUrl()}/competitions/${eventId}/roster/export`, {
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const parsed = await parseApiResponse<unknown>(res);
+      if (isApiError(parsed)) throw new Error(parsed.error);
+      throw new Error("No se pudo generar el acta");
+    }
+    return res.text();
+  },
+
+  fetchAnalyticsExportText: async (): Promise<string> => {
+    const res = await fetch(`${getApiBaseUrl()}/analytics/export`, {
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const parsed = await parseApiResponse<unknown>(res);
+      if (isApiError(parsed)) throw new Error(parsed.error);
+      throw new Error("No se pudo generar el CSV");
+    }
+    return res.text();
   },
 
   importSchedule: async (

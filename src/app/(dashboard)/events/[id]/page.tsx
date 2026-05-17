@@ -41,7 +41,9 @@ export default async function EventPage({ params }: EventPageProps) {
       zones={meta.zones}
       levels={meta.levels}
       regulations={regulations}
-      userRole={user.role}
+      defaultZonaFilter={
+        user.role === "delegado_zona" && event.zona ? event.zona : "TODAS"
+      }
     />
   );
 }

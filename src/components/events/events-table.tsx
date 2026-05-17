@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/data-table";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api/client";
+import { isCompetitionPast } from "@/lib/competition-status";
 import { groupCompetitionDuplicates } from "@/lib/competition-dedup";
 import { selectFieldClassSm } from "@/lib/design-tokens";
 import { cn, formatDateRange } from "@/lib/utils";
@@ -44,7 +45,18 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState("TODOS");
   const [filterEstado, setFilterEstado] = useState("TODOS");
+  const [filterZona, setFilterZona] = useState(() =>
+    role === "delegado_zona" && userZona ? userZona : "TODOS",
+  );
   const [deduping, setDeduping] = useState(false);
+
+  const zoneOptions = useMemo(() => {
+    const codes = new Set<string>();
+    for (const e of events) {
+      if (e.zona) codes.add(e.zona);
+    }
+    return [...codes].sort();
+  }, [events]);
 
   useEffect(() => {
     setEvents(initialEvents);
@@ -71,6 +83,7 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
     return events.filter((e) => {
       if (filterTipo !== "TODOS" && e.tipo !== filterTipo) return false;
       if (filterEstado !== "TODOS" && e.estado !== filterEstado) return false;
+      if (filterZona !== "TODOS" && e.zona !== filterZona) return false;
       if (
         search &&
         !e.nombre.toLowerCase().includes(search.toLowerCase()) &&
@@ -79,11 +92,11 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
         return false;
       return true;
     });
-  }, [events, filterTipo, filterEstado, search]);
+  }, [events, filterTipo, filterEstado, filterZona, search]);
 
   useEffect(() => {
     setPage(1);
-  }, [filterTipo, filterEstado, search]);
+  }, [filterTipo, filterEstado, filterZona, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
@@ -135,12 +148,17 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
     }
   };
 
-  const hasFilters = search || filterTipo !== "TODOS" || filterEstado !== "TODOS";
+  const hasFilters =
+    search ||
+    filterTipo !== "TODOS" ||
+    filterEstado !== "TODOS" ||
+    filterZona !== "TODOS";
 
   const clearFilters = () => {
     setSearch("");
     setFilterTipo("TODOS");
     setFilterEstado("TODOS");
+    setFilterZona(role === "delegado_zona" && userZona ? userZona : "TODOS");
   };
 
   const pageRange = useMemo(() => {
@@ -176,6 +194,21 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
             </option>
           ))}
         </select>
+        {zoneOptions.length > 0 && (
+          <select
+            value={filterZona}
+            onChange={(e) => setFilterZona(e.target.value)}
+            className={selectFieldClassSm}
+            aria-label="Filtrar por zona"
+          >
+            <option value="TODOS">Todas las zonas</option>
+            {zoneOptions.map((z) => (
+              <option key={z} value={z}>
+                {z}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           value={filterEstado}
           onChange={(e) => setFilterEstado(e.target.value)}
@@ -258,6 +291,7 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
                   ? Math.round((event.confirmados / event.requeridos) * 100)
                   : 0;
               const isConfirmingDelete = confirmDeleteId === event.id;
+              const isPast = isCompetitionPast(event);
               return (
                 <DataTableRow
                   key={event.id}
@@ -269,6 +303,11 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
                   <DataTableCell>
                     <p className="font-medium text-foreground">
                       {event.nombre}
+                      {isPast && (
+                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                          Solo lectura
+                        </span>
+                      )}
                       {duplicateIds.has(event.id) && (
                         <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-[10px] font-semibold uppercase text-warning">
                           Duplicado
@@ -328,7 +367,7 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/events/${event.id}`}>
-                            Tarima
+                            Montar tarima
                             <ArrowRight className="ml-1 h-3.5 w-3.5" />
                           </Link>
                         </Button>

@@ -385,6 +385,7 @@ export function RosterTemplateEditor({
       <ScheduleImportDialog
         eventId={eventId}
         open={importOpen}
+        hasExistingTemplate={sessions.length > 0}
         onClose={() => setImportOpen(false)}
         onApplied={(tpl) => {
           setSessions(cloneTemplate(tpl));

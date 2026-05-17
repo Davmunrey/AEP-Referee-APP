@@ -1,6 +1,6 @@
 import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
-import type { JudgesRegistryImportResult } from "@/lib/types";
+import type { JudgesRegistryImportApplyResult } from "@/lib/types";
 import { importJudgesRegistryToMemory } from "@/server/services/import-judges-registry";
 import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
@@ -916,6 +916,6 @@ export const memoryDataService = {
   importJudgesRegistry: async (
     parsed: ParsedJudgesRegistry,
     options?: { replace?: boolean },
-  ): Promise<JudgesRegistryImportResult> =>
+  ): Promise<JudgesRegistryImportApplyResult> =>
     importJudgesRegistryToMemory(parsed, options),
 };

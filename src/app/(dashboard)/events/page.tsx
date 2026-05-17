@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OpenRostersPanel } from "@/components/events/open-rosters-panel";
 import { EventsTable } from "@/components/events/events-table";
 import { CalendarImportButton } from "@/components/events/calendar-import-button";
 import { canCreateCompetition, canImportCalendar } from "@/lib/permissions";
@@ -37,6 +38,8 @@ export default async function EventsPage() {
           )}
         </div>
       </PageHeader>
+
+      <OpenRostersPanel events={events} />
 
       <Card>
         <CardHeader className="border-b border-border-muted pb-4">

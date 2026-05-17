@@ -1,6 +1,6 @@
 import { inicialesFromNombre, type ParsedJudgesRegistry } from "@/lib/judges-registry";
 import { getPresetForEventType } from "@/lib/roster-template";
-import type { JudgesRegistryImportResult, Referee } from "@/lib/types";
+import type { JudgesRegistryImportApplyResult, Referee } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/server/store";
 
@@ -11,7 +11,7 @@ function db() {
 export async function importJudgesRegistryToSupabase(
   parsed: ParsedJudgesRegistry,
   options?: { replace?: boolean },
-): Promise<JudgesRegistryImportResult> {
+): Promise<JudgesRegistryImportApplyResult> {
   const supabase = db();
   const warnings = [...parsed.warnings];
   let refereesCreated = 0;
@@ -170,7 +170,7 @@ export async function importJudgesRegistryToSupabase(
 export function importJudgesRegistryToMemory(
   parsed: ParsedJudgesRegistry,
   options?: { replace?: boolean },
-): JudgesRegistryImportResult {
+): JudgesRegistryImportApplyResult {
   const store = getStore();
   const warnings = [...parsed.warnings];
   let refereesCreated = 0;

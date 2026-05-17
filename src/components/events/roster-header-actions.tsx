@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-dialog";
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,8 @@ interface RosterHeaderActionsProps {
   filledSlots: number;
   totalSlots: number;
   fillPct: number;
+  violationCount?: number;
+  openSlots?: number;
   pending: boolean;
   statusMsg: string | null;
   statusIsError?: boolean;
@@ -51,28 +54,49 @@ export function RosterHeaderActions({
   filledSlots,
   totalSlots,
   fillPct,
+  violationCount = 0,
+  openSlots = 0,
   pending,
   statusMsg,
   statusIsError = false,
   onStatus,
   startTransition,
 }: RosterHeaderActionsProps) {
-  const [exporting, setExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const coverageBarColor =
     fillPct >= 100 ? "bg-success" : fillPct >= 70 ? "bg-warning" : "bg-chart-danger";
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      window.location.href = api.exportRosterUrl(eventId);
-      await new Promise<void>((r) => setTimeout(r, 1200));
-    } finally {
-      setExporting(false);
-    }
-  };
+  const exportFilename = `acta-tarima-${eventId}.txt`;
 
   return (
+    <>
+      <ExportPreviewDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        kind="roster_export"
+        fetchText={() => api.fetchRosterExportText(eventId)}
+        filename={exportFilename}
+        mime="text/plain;charset=utf-8"
+        summaryStats={[
+          {
+            label: "Cobertura",
+            value: `${fillPct}%`,
+            tone: fillPct >= 100 ? "success" : undefined,
+          },
+          { label: "Plazas", value: `${filledSlots}/${totalSlots}` },
+          {
+            label: "Huecos",
+            value: openSlots,
+            tone: openSlots > 0 ? "warning" : undefined,
+          },
+          {
+            label: "Violaciones",
+            value: violationCount,
+            tone: violationCount > 0 ? "warning" : undefined,
+          },
+        ]}
+      />
     <div className="flex flex-col items-end gap-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {/* Coverage card with ring + bar */}
@@ -118,15 +142,11 @@ export function RosterHeaderActions({
           variant="outline"
           size="sm"
           className="gap-1.5"
-          disabled={pending || exporting}
-          onClick={() => void handleExport()}
+          disabled={pending}
+          onClick={() => setExportOpen(true)}
         >
-          {exporting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Download className="h-3.5 w-3.5" />
-          )}
-          {exporting ? "Exportando…" : "Exportar"}
+          <Download className="h-3.5 w-3.5" />
+          Exportar
         </Button>
 
         {/* Highlighted submit button with brand color */}
@@ -138,13 +158,15 @@ export function RosterHeaderActions({
           )}
           disabled={pending}
           onClick={() => {
-            if (
-              fillPct < 100 &&
-              !confirm(
-                `El roster está al ${fillPct}% (${filledSlots}/${totalSlots} plazas). ¿Enviar igualmente?`,
-              )
-            )
-              return;
+            const lines = [
+              `Cobertura: ${fillPct}% (${filledSlots}/${totalSlots} plazas).`,
+              openSlots > 0 ? `Huecos sin asignar: ${openSlots}.` : null,
+              violationCount > 0
+                ? `Violaciones de normativa: ${violationCount}.`
+                : null,
+              "¿Enviar la propuesta a aprobación?",
+            ].filter(Boolean);
+            if (!confirm(lines.join("\n"))) return;
             startTransition(async () => {
               try {
                 const res = await api.submitRoster(eventId);
@@ -180,5 +202,6 @@ export function RosterHeaderActions({
         </p>
       )}
     </div>
+    </>
   );
 }

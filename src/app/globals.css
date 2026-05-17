@@ -230,4 +230,30 @@
   .ring-role-jueces {
     @apply hover:ring-2 hover:ring-info-border;
   }
+
+  .transfer-enter {
+    animation: transfer-fade-in 280ms ease-out both;
+  }
+
+  .transfer-row-stagger {
+    animation: transfer-fade-in 220ms ease-out both;
+  }
+
+  @keyframes transfer-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .transfer-enter,
+    .transfer-row-stagger {
+      animation: none;
+    }
+  }
 }
