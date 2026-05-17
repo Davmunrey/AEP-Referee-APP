@@ -51,6 +51,7 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 |--------|------|----------|-------------|
 | `GET` | `/competitions/:id/roster` | todos | `{ template, assignments, flags }` |
 | `PUT` | `/competitions/:id/roster/template` | `canEditRoster` | `{ template: RosterSession[] }` — guarda plantilla; purga slots huérfanos |
+| `POST` | `/competitions/:id/roster/template/import` | `canEditRoster` | `multipart/form-data` con campo `file` (PDF AEP). Devuelve `{ preview, template }`. Con `?apply=true` persiste vía `saveCompetitionTemplate`. Límite 5 MB. |
 | `PATCH` | `/competitions/:id/roster/flags` | `canEditRoster` | `{ slotKey, flags: { compartido?, intercambio? } }` — requiere árbitro en slot |
 | `POST` | `/competitions/:id/roster/assign` | `canEditRoster` | `{ slotKey, refereeId, flags? }` |
 | `POST` | `/competitions/:id/roster/clear` | `canEditRoster` | `{ slotKey }` |

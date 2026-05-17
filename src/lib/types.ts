@@ -80,6 +80,13 @@ export interface RosterCategoria {
   pesos: string;
 }
 
+/** Grupo dentro de una sesión (Grupo 1, Grupo 2…) — categorías y nº levantadores. */
+export interface RosterGrupo {
+  nombre: string;
+  categorias: RosterCategoria[];
+  levantadores?: number;
+}
+
 export interface RosterSession {
   sesion: string;
   nombre: string;
@@ -95,6 +102,8 @@ export interface RosterSession {
   roles: RosterRole[];
   /** Roles del bloque de pesaje y revisión de equipamiento. */
   pesajeRoles: RosterRole[];
+  /** Grupos opcionales — desglose por sesión (Grupo 1, Grupo 2…). */
+  grupos?: RosterGrupo[];
 }
 
 export interface ActivityItem {

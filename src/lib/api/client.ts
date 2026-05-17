@@ -76,6 +76,62 @@ export const api = {
       { method: "PUT", body: JSON.stringify({ template }) },
     ),
 
+  importSchedule: async (
+    eventId: string,
+    file: File,
+    apply = false,
+  ): Promise<{
+    preview: {
+      filename: string;
+      pages: number;
+      sessionCount: number;
+      tipoDetected: string;
+      warnings: string[];
+      header: {
+        campeonato?: string;
+        sede?: string;
+        fechasTexto?: string;
+        revision?: string;
+        tipo?: string;
+      };
+    };
+    template: RosterSession[];
+    assignments?: AssignmentsMap;
+    flags?: FlagsMap;
+  }> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const path = `/competitions/${eventId}/roster/template/import${apply ? "?apply=true" : ""}`;
+    const res = await fetch(`${getApiBaseUrl()}${path}`, {
+      method: "POST",
+      credentials: "include",
+      body: fd,
+    });
+    const parsed = await parseApiResponse<{
+      preview: {
+        filename: string;
+        pages: number;
+        sessionCount: number;
+        tipoDetected: string;
+        warnings: string[];
+        header: {
+          campeonato?: string;
+          sede?: string;
+          fechasTexto?: string;
+          revision?: string;
+          tipo?: string;
+        };
+      };
+      template: RosterSession[];
+      assignments?: AssignmentsMap;
+      flags?: FlagsMap;
+    }>(res);
+    if (isApiError(parsed)) {
+      throw new Error(parsed.error);
+    }
+    return parsed.data;
+  },
+
   setSlotFlags: (eventId: string, slotKey: string, flags: SlotFlags) =>
     request<{ flags: FlagsMap }>(`/competitions/${eventId}/roster/flags`, {
       method: "PATCH",
