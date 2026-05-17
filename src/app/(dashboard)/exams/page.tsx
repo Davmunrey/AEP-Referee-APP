@@ -3,14 +3,17 @@ import { ExamsManager } from "@/components/judge/exams-manager";
 import { Card, CardContent } from "@/components/ui/card";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
+import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { BarChart2, BookOpen, CheckCircle2, Clock } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export default async function ExamsPage() {
   const user = await getSession();
   if (!user) redirect("/sign-in");
 
   const [exams, referees] = await Promise.all([
-    dataService.getExams(),
+    dataService.getExams(undefined, user),
     dataService.getReferees({ user }),
   ]);
 
@@ -20,28 +23,68 @@ export default async function ExamsPage() {
   const resueltos = aprobados + suspensos;
   const tasa = resueltos > 0 ? Math.round((aprobados / resueltos) * 100) : 0;
 
-  const stats = [
-    { label: "Exámenes totales", value: exams.length, tone: "text-foreground" },
-    { label: "Aprobados", value: aprobados, tone: "text-success" },
-    { label: "Pendientes", value: pendientes, tone: "text-warning" },
-    { label: "Tasa de aprobación", value: `${tasa}%`, tone: "text-primary" },
+  const stats: {
+    label: string;
+    value: string | number;
+    tone: string;
+    iconBg: string;
+    Icon: LucideIcon;
+  }[] = [
+    {
+      label: "Exámenes totales",
+      value: exams.length,
+      tone: "text-foreground-secondary",
+      iconBg: "bg-muted",
+      Icon: BookOpen,
+    },
+    {
+      label: "Aprobados",
+      value: aprobados,
+      tone: "text-success",
+      iconBg: "bg-success-muted",
+      Icon: CheckCircle2,
+    },
+    {
+      label: "Pendientes",
+      value: pendientes,
+      tone: "text-warning",
+      iconBg: "bg-warning-muted",
+      Icon: Clock,
+    },
+    {
+      label: "Tasa de aprobación",
+      value: `${tasa}%`,
+      tone: "text-primary",
+      iconBg: "bg-primary-muted",
+      Icon: BarChart2,
+    },
   ];
 
   return (
     <PageShell>
       <PageHeader
         eyebrow="Gestión de jueces"
-        title="Exámenes arbitrales"
-        description="Teoría, práctica, reglamento IPF y recertificaciones de la plantilla arbitral"
+        title="Exámenes de jueces"
+        description="Teoría, práctica, reglamento IPF y recertificaciones de la plantilla de jueces"
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label}>
-            <CardContent className="py-4">
-              <p className="friendly-label mb-1">{s.label}</p>
-              <p className={`text-2xl font-bold tracking-tight ${s.tone}`}>
-                {s.value}
-              </p>
+            <CardContent className="flex items-center gap-3 px-4 py-3.5">
+              <div
+                className={cn(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                  s.iconBg,
+                )}
+              >
+                <s.Icon className={cn("h-4 w-4", s.tone)} aria-hidden="true" />
+              </div>
+              <div>
+                <p className={cn("text-2xl font-bold leading-none tracking-tight", s.tone)}>
+                  {s.value}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
+              </div>
             </CardContent>
           </Card>
         ))}

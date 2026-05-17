@@ -16,8 +16,8 @@ export default async function RefereesPage() {
     <PageShell>
       <PageHeader
         eyebrow="Operaciones"
-        title="Directorio de árbitros"
-        description={`${referees.length} árbitros · ${zones.length} zonas federativas`}
+        title="Directorio de jueces"
+        description={`${referees.length} jueces · ${zones.length} zonas federativas`}
       />
       <RefereesDirectory
         initialReferees={referees}

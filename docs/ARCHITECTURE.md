@@ -63,7 +63,7 @@ Lista completa en [`API.md`](./API.md).
 
 1. **Lectura:** `getCompetitionTemplate(eventId)` — si `competitions.template` es null, preset por `tipo`.
 2. **Escritura:** `saveCompetitionTemplate` — persiste JSON, ejecuta `pruneAssignments` (elimina asignaciones/flags de slots que ya no existen).
-3. **Flags:** `setSlotFlags` — actualiza `roster_assignments.flags` por `slot_key`; exige árbitro asignado.
+3. **Flags:** `setSlotFlags` — actualiza `roster_assignments.flags` por `slot_key`; exige juez asignado.
 
 ## RBAC
 
@@ -82,7 +82,7 @@ Primer registro → `super_admin`. Detalle: [`AUTH.md`](./AUTH.md).
 
 1. Delegado abre `/events/[id]` — ve plantilla (guardada o preset).
 2. Opcional: **Editar plantilla** → `PUT .../roster/template`.
-3. Asigna árbitros → `POST .../assign`; flags → `PATCH .../flags`.
+3. Asigna jueces → `POST .../assign`; flags → `PATCH .../flags`.
 4. Validación normativa en cliente (`roster-rules`).
 5. Borrador o **Enviar a aprobación** → `approval_proposals`.
 6. `super_admin` / `delegado_jueces` aprueban en `/approvals`.
@@ -94,7 +94,7 @@ Primer registro → `super_admin`. Detalle: [`AUTH.md`](./AUTH.md).
 ## Validaciones clave
 
 - Nivel mínimo por rol y tipo (matriz AEP).
-- Un árbitro, un slot activo.
-- Solo árbitros activos y disponibles en pool.
+- Un juez, un slot activo.
+- Solo jueces activos y disponibles en pool.
 - Rechazo de aprobación con comentario obligatorio.
 - Confirmación si roster incompleto al enviar.

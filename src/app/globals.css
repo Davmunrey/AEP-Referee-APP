@@ -106,8 +106,8 @@
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: var(--scrollbar-size, 6px);
+    height: var(--scrollbar-size, 6px);
   }
 
   ::-webkit-scrollbar-track {
@@ -117,10 +117,13 @@
   ::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border-radius: var(--radius-full);
+    border: 1px solid transparent;
+    background-clip: content-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
+    background-clip: content-box;
   }
 }
 
@@ -163,7 +166,16 @@
   }
 
   .nav-glow-active {
-    box-shadow: var(--shadow-glow-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 20%, transparent),
+      0 1px 3px color-mix(in srgb, var(--neutral-900) 6%, transparent);
+  }
+
+  .skip-link {
+    @apply absolute -top-full left-4 z-[9999] rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-150 focus:top-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  .data-table-zebra tbody tr:nth-child(even) {
+    background-color: color-mix(in srgb, var(--surface) 50%, transparent);
   }
 
   .friendly-label {
@@ -172,6 +184,7 @@
 
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+    transition: box-shadow 120ms ease-out;
   }
 
   .bg-role-nacional {

@@ -26,12 +26,12 @@ export async function POST(request: Request) {
     return jsonError("refereeId y toLevel son obligatorios", 400);
   }
 
-  // La zona se deriva SIEMPRE del árbitro, nunca del body (anti-IDOR).
+  // La zona se deriva SIEMPRE del juez, nunca del body (anti-IDOR).
   const referee = await dataService.getReferee(refereeId);
-  if (!referee) return jsonError("Árbitro no encontrado", 404);
+  if (!referee) return jsonError("Juez no encontrado", 404);
   const zona = referee.zona;
 
-  // Un delegado de zona solo solicita ascensos de árbitros de SU zona.
+  // Un delegado de zona solo solicita ascensos de jueces de SU zona.
   if (user.role === "delegado_zona" && zona !== user.zona) {
     return jsonError("No puedes solicitar ascensos fuera de tu zona", 403);
   }

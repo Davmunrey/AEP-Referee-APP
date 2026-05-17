@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
 import type { RosterSession } from "@/lib/types";
-import { AlertTriangle, FileUp, Loader2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileUp, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImportPreview {
   filename: string;
@@ -39,6 +40,10 @@ export function ScheduleImportDialog({
   const [template, setTemplate] = useState<RosterSession[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState(false);
+  // drag depth counter avoids flicker when pointer enters child elements
+  const [dragDepth, setDragDepth] = useState(0);
+  const isDraggingOver = dragDepth > 0;
 
   useEffect(() => {
     if (!open) {
@@ -47,6 +52,8 @@ export function ScheduleImportDialog({
       setTemplate(null);
       setError(null);
       setLoading(false);
+      setApplied(false);
+      setDragDepth(0);
     }
   }, [open]);
 
@@ -79,20 +86,25 @@ export function ScheduleImportDialog({
 
   const handleFile = (f: File | null) => {
     if (!f) return;
+    if (f.type !== "application/pdf" && !f.name.toLowerCase().endsWith(".pdf")) {
+      setError("Solo se admiten archivos PDF.");
+      return;
+    }
     setFile(f);
-    runPreview(f);
+    void runPreview(f);
   };
 
   const apply = async () => {
-    if (!template) return;
+    if (!template || !file) return;
     setLoading(true);
     setError(null);
     try {
-      await api.saveTemplate(eventId, template);
-      onApplied(template);
+      const res = await api.importSchedule(eventId, file, true);
+      setApplied(true);
+      await new Promise<void>((r) => setTimeout(r, 900));
+      onApplied(res.template);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar la plantilla");
-    } finally {
       setLoading(false);
     }
   };
@@ -102,12 +114,31 @@ export function ScheduleImportDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="schedule-import-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      onKeyDown={(e) => {
+        if (e.key !== "Tab") return;
+        const root = e.currentTarget;
+        const focusable = root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && active === first) {
+          last.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && active === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      }}
     >
-      <div className="w-full max-w-3xl rounded-2xl border border-border bg-card shadow-xl">
+      <div className="w-full max-w-3xl rounded-2xl border border-border bg-card shadow-2xl">
+        {/* Header */}
         <div className="flex items-start justify-between border-b border-border px-6 py-4">
           <div>
             <h2 id="schedule-import-title" className="text-base font-semibold text-foreground">
@@ -122,8 +153,37 @@ export function ScheduleImportDialog({
           </Button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
-          <div className="flex items-center gap-3">
+        <div className="space-y-4 px-6 py-5">
+          {/* Drop zone */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Zona de carga de PDF"
+            className={cn(
+              "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              isDraggingOver
+                ? "border-primary bg-primary/5"
+                : file
+                  ? "border-success/60 bg-success/5"
+                  : "border-border hover:border-border-strong hover:bg-surface",
+            )}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setDragDepth((d) => d + 1);
+            }}
+            onDragLeave={() => setDragDepth((d) => Math.max(0, d - 1))}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragDepth(0);
+              const dropped = e.dataTransfer.files[0];
+              if (dropped) handleFile(dropped);
+            }}
+          >
             <input
               ref={fileInputRef}
               type="file"
@@ -132,70 +192,96 @@ export function ScheduleImportDialog({
               aria-label="Seleccionar archivo PDF de horario"
               onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-            >
-              <FileUp className="mr-2 h-4 w-4" />
-              {file ? "Cambiar PDF" : "Seleccionar PDF"}
-            </Button>
-            {file && (
-              <span className="text-xs text-muted-foreground">
-                {file.name} · {(file.size / 1024).toFixed(0)} KB
-              </span>
+            {loading ? (
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            ) : file ? (
+              <CheckCircle2 className="h-8 w-8 text-success" />
+            ) : (
+              <FileUp className={cn("h-8 w-8", isDraggingOver ? "text-primary" : "text-subtle-muted")} />
             )}
-            {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {loading
+                  ? "Procesando PDF…"
+                  : file
+                    ? file.name
+                    : isDraggingOver
+                      ? "Suelta el PDF aquí"
+                      : "Arrastra un PDF o haz clic para seleccionar"}
+              </p>
+              {file && !loading && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {(file.size / 1024).toFixed(0)} KB · haz clic para cambiar
+                </p>
+              )}
+              {!file && !loading && (
+                <p className="mt-0.5 text-xs text-subtle-muted">
+                  Formato oficial AEP · solo PDF
+                </p>
+              )}
+            </div>
           </div>
 
+          {/* Error */}
           {error && (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {error}
+            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
-          {preview && (
+          {/* Success flash */}
+          {applied && (
+            <div className="flex items-center gap-2 rounded-md border border-success/40 bg-success/10 px-3 py-2.5 text-xs text-success">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              Plantilla aplicada correctamente — cerrando…
+            </div>
+          )}
+
+          {/* Preview */}
+          {preview && !applied && (
             <div className="space-y-3">
+              {/* Metadata grid */}
               <div className="grid gap-2 rounded-md border border-border bg-surface px-3 py-2 text-xs sm:grid-cols-2">
                 {preview.header.campeonato && (
                   <div>
                     <span className="text-subtle-muted">Campeonato:</span>{" "}
-                    <span className="text-foreground">{preview.header.campeonato}</span>
+                    <span className="font-medium text-foreground">{preview.header.campeonato}</span>
                   </div>
                 )}
                 <div>
                   <span className="text-subtle-muted">Tipo detectado:</span>{" "}
-                  <span className="text-foreground">{preview.tipoDetected}</span>
+                  <span className="font-medium text-foreground">{preview.tipoDetected}</span>
                 </div>
                 {preview.header.sede && (
                   <div>
                     <span className="text-subtle-muted">Sede:</span>{" "}
-                    <span className="text-foreground">{preview.header.sede}</span>
+                    <span className="font-medium text-foreground">{preview.header.sede}</span>
                   </div>
                 )}
                 {preview.header.fechasTexto && (
                   <div>
                     <span className="text-subtle-muted">Fechas:</span>{" "}
-                    <span className="text-foreground">{preview.header.fechasTexto}</span>
+                    <span className="font-medium text-foreground">{preview.header.fechasTexto}</span>
                   </div>
                 )}
                 <div>
                   <span className="text-subtle-muted">Páginas:</span> {preview.pages}
                 </div>
                 <div>
-                  <span className="text-subtle-muted">Sesiones:</span> {preview.sessionCount}
+                  <span className="text-subtle-muted">Sesiones:</span>{" "}
+                  <span className="font-medium text-foreground">{preview.sessionCount}</span>
                 </div>
               </div>
 
+              {/* Warnings */}
               {preview.warnings.length > 0 && (
                 <div className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-xs text-warning">
-                  <p className="mb-1 flex items-center gap-1 font-semibold">
-                    <AlertTriangle className="h-3.5 w-3.5" />
+                  <p className="mb-1.5 flex items-center gap-1.5 font-semibold">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     Avisos del parseo
                   </p>
-                  <ul className="list-disc pl-5 space-y-0.5">
+                  <ul className="space-y-1 pl-5 list-disc">
                     {preview.warnings.map((w, i) => (
                       <li key={i}>{w}</li>
                     ))}
@@ -203,42 +289,54 @@ export function ScheduleImportDialog({
                 </div>
               )}
 
+              {/* Preview table */}
               {template && (
-                <div className="max-h-72 overflow-auto rounded-md border border-border">
+                <div className="max-h-64 overflow-auto rounded-md border border-border">
                   <table className="w-full text-xs">
-                    <thead className="bg-muted text-subtle-muted">
+                    <thead className="sticky top-0 z-10 bg-muted shadow-sm">
                       <tr>
-                        <th className="px-2 py-1.5 text-left">Día</th>
-                        <th className="px-2 py-1.5 text-left">Sesión</th>
-                        <th className="px-2 py-1.5 text-left">Categorías</th>
-                        <th className="px-2 py-1.5 text-left">Pesaje</th>
-                        <th className="px-2 py-1.5 text-left">Competición</th>
-                        <th className="px-2 py-1.5 text-left">Grupos</th>
+                        <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Día</th>
+                        <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Sesión</th>
+                        <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Categorías</th>
+                        <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Pesaje</th>
+                        <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Competición</th>
+                        <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Grupos</th>
                       </tr>
                     </thead>
                     <tbody>
                       {template.map((s) => (
-                        <tr key={s.sesion} className="border-t border-border">
+                        <tr key={s.sesion} className="border-t border-border hover:bg-muted/40">
                           <td className="px-2 py-1.5 text-foreground">{s.dia}</td>
                           <td className="px-2 py-1.5 font-medium text-foreground">{s.sesion}</td>
                           <td className="px-2 py-1.5 text-foreground">
-                            {s.categorias
-                              .map((c) => `${c.genero} ${c.pesos}`)
-                              .join(" · ") || "—"}
+                            {s.categorias.map((c) => `${c.genero} ${c.pesos}`).join(" · ") || "—"}
                           </td>
-                          <td className="px-2 py-1.5 text-muted-foreground">{s.horarioPesaje || "—"}</td>
+                          <td className="px-2 py-1.5 text-muted-foreground">
+                            {s.horarioPesaje || "—"}
+                          </td>
                           <td className="px-2 py-1.5 text-muted-foreground">
                             {s.horarioCompeticion || "—"}
                           </td>
-                          <td className="px-2 py-1.5 text-muted-foreground">
-                            {s.grupos && s.grupos.length > 0
-                              ? s.grupos
-                                  .map(
-                                    (g) =>
-                                      `${g.nombre}${g.levantadores ? ` (${g.levantadores})` : ""}`,
-                                  )
-                                  .join(", ")
-                              : "—"}
+                          <td className="px-2 py-1.5">
+                            {s.grupos && s.grupos.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {s.grupos.map((g, gi) => (
+                                  <span
+                                    key={gi}
+                                    className="inline-flex items-center rounded bg-surface-active px-1.5 py-0.5 text-[10px] text-foreground-secondary"
+                                  >
+                                    {g.nombre}
+                                    {g.levantadores ? (
+                                      <span className="ml-1 text-subtle-muted">
+                                        ({g.levantadores})
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -248,18 +346,32 @@ export function ScheduleImportDialog({
               )}
 
               <p className="text-[11px] text-subtle-muted">
-                Aplicar reemplazará la plantilla actual. Las asignaciones en slots que ya no existan se eliminarán.
+                Aplicar reemplazará la plantilla actual. Las asignaciones en slots que ya no existan
+                se eliminarán.
               </p>
             </div>
           )}
         </div>
 
+        {/* Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-border bg-surface px-6 py-3">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" onClick={apply} disabled={!template || loading}>
-            {loading ? "Procesando…" : "Aplicar plantilla"}
+          <Button type="button" onClick={() => void apply()} disabled={!template || loading || applied}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                Procesando…
+              </>
+            ) : applied ? (
+              <>
+                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                Aplicada
+              </>
+            ) : (
+              "Aplicar plantilla"
+            )}
           </Button>
         </div>
       </div>

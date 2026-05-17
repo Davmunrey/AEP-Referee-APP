@@ -1,6 +1,6 @@
 # Guía de uso — AEP Tarima
 
-Manual operativo para delegados, comité de jueces y consulta. La plataforma es la herramienta interna de la **Asociación Española de Powerlifting (AEP)** para diseñar plantillas arbitrales, asignar jueces y tramitar aprobaciones en campeonatos **AEP-1**, **AEP-2** y **AEP-3**.
+Manual operativo para delegados, comité de jueces y consulta. La plataforma es la herramienta interna de la **Asociación Española de Powerlifting (AEP)** para diseñar plantillas de jueces, asignar jueces y tramitar aprobaciones en campeonatos **AEP-1**, **AEP-2** y **AEP-3**.
 
 ---
 
@@ -28,7 +28,7 @@ Según tu rol, verás:
 ### Convenciones visuales
 
 - **Estados de campeonato:** Completo (verde), Incompleto (ámbar), Crítico (rojo), Borrador (gris).
-- **Niveles arbitrales:** badges de color por Regional / Nacional / IPF Cat. 2 / IPF Cat. 1.
+- **Niveles de jueces:** badges de color por Regional / Nacional / IPF Cat. 2 / IPF Cat. 1.
 - **Tarima:** paneles `glass-panel-soft` en cabecera; slots vacíos en rojo suave; alertas normativas en ámbar.
 
 Más detalle técnico de tokens: [`DESIGN.md`](./DESIGN.md).
@@ -62,7 +62,7 @@ Para cerrar sesión: botón **Cerrar sesión** en el sidebar.
 
 - **Crear campeonato** — Super Admin, Delegado de Jueces, Delegado de Zona (en su zona).
 - **Editar plantilla de sesiones** — quien pueda editar la tarima de ese evento.
-- **Asignar árbitros y marcar flags** — mismo criterio.
+- **Asignar jueces y marcar flags** — mismo criterio.
 - **Enviar tarima a aprobación** — Delegado de Zona (o nacional en cualquier zona).
 - **Aprobar / rechazar** — Super Admin o Delegado de Jueces.
 - **Gestionar usuarios** (`/admin/users`) — Super Admin o Delegado de Jueces.
@@ -73,7 +73,7 @@ Para cerrar sesión: botón **Cerrar sesión** en el sidebar.
 
 Pantalla de inicio tras el login.
 
-- **KPIs** — árbitros activos, eventos próximos, plazas sin cubrir, aprobaciones pendientes.
+- **KPIs** — jueces activos, eventos próximos, plazas sin cubrir, aprobaciones pendientes.
 - **Salud operativa** — índice 0–100 con desglose de factores (cobertura, urgencia, cola de aprobaciones, etc.).
 - **Recomendaciones** — acciones sugeridas con enlace directo (ej. ir a un campeonato crítico).
 - **Previsión de cobertura** — barras por evento y días hasta la fecha.
@@ -139,7 +139,7 @@ En el editor de plantilla, botón **Importar PDF**:
 3. Revisa la **vista previa**: cabecera (campeonato, sede, fechas), número de sesiones detectadas y avisos de parseo.
 4. Confirma con **Aplicar plantilla** — sustituye la plantilla actual y purga asignaciones huérfanas.
 
-Roles arbitrales por defecto según el tipo (AEP-1: con jurado; AEP-2: con Liftingcast; AEP-3: cuadrante regional). Edita los roles tras importar si la sesión necesita un perfil distinto.
+Roles de jueces por defecto según el tipo (AEP-1: con jurado; AEP-2: con Liftingcast; AEP-3: cuadrante regional). Edita los roles tras importar si la sesión necesita un perfil distinto.
 
 Límite de archivo: **5 MB**. El PDF debe contener texto seleccionable (no escaneo OCR).
 
@@ -147,29 +147,29 @@ Límite de archivo: **5 MB**. El PDF debe contener texto seleccionable (no escan
 
 ## 6. Constructor de tarima (`/events/[id]`)
 
-### 6.1 Asignar árbitros
+### 6.1 Asignar jueces
 
-- **Arrastrar** un árbitro del panel lateral a un slot, o **clic** en slot + selección.
-- Solo aparecen árbitros **activos** y disponibles (`disp: true`).
-- Un árbitro no puede ocupar dos slots a la vez: la asignación anterior se libera.
+- **Arrastrar** un juez del panel lateral a un slot, o **clic** en slot + selección.
+- Solo aparecen jueces **activos** y disponibles (`disp: true`).
+- Un juez no puede ocupar dos slots a la vez: la asignación anterior se libera.
 - Cada cambio se guarda con `POST .../roster/assign`.
 
 **Formato de slot:** `{sesion}_{roleKey}_{índice}` — ejemplo: `S1_central_0`, `S1_jurado_2`.
 
 ### 6.2 Validación normativa
 
-La tarima compara el **nivel del árbitro** con la **matriz AEP** (`/regulations`). Si el nivel es insuficiente para el rol y tipo de campeonato, verás una **alerta visual** (no bloquea el guardado, pero debes corregir antes del envío oficial).
+La tarima compara el **nivel del juez** con la **matriz AEP** (`/regulations`). Si el nivel es insuficiente para el rol y tipo de campeonato, verás una **alerta visual** (no bloquea el guardado, pero debes corregir antes del envío oficial).
 
 ### 6.3 Flags de slot (`*` y `↑↓`)
 
-Con un árbitro ya asignado en el slot:
+Con un juez ya asignado en el slot:
 
 | Flag | Símbolo en exportación | Significado operativo |
 |------|------------------------|------------------------|
 | **Compartido** | `*` | Slot compartido según criterio AEP |
 | **Intercambio** | `↑↓` | Posibilidad de intercambio entre jueces |
 
-Actívalos desde la barra de herramientas del constructor (modo edición). Requieren árbitro asignado. Se guardan en `roster_assignments.flags` y aparecen en el **TXT exportado** junto al nombre.
+Actívalos desde la barra de herramientas del constructor (modo edición). Requieren juez asignado. Se guardan en `roster_assignments.flags` y aparecen en el **TXT exportado** junto al nombre.
 
 ### 6.4 Borrador, historial y exportación
 
@@ -192,7 +192,7 @@ En modo **solo lectura** no verás controles de edición.
 Para **Super Admin** y **Delegado de Jueces**:
 
 1. Abre la cola de propuestas **pendientes**.
-2. Revisa el **diff** (slot → árbitro anterior / nuevo).
+2. Revisa el **diff** (slot → juez anterior / nuevo).
 3. **Aprobar** — actualiza el estado del campeonato.
 4. **Rechazar** — obligatorio escribir **comentario** para el delegado regional.
 
@@ -200,11 +200,11 @@ Los **Delegados de Zona** ven el estado de sus envíos pero no aprueban.
 
 ---
 
-## 8. Directorio de árbitros (`/referees`)
+## 8. Directorio de jueces (`/referees`)
 
 - Buscar por nombre, filtrar por **zona**, **nivel**, **estado**.
 - **Ficha** (`/referees/[id]`): datos, trayectoria, exámenes, informes, edición y solicitud de ascenso.
-- **Alta** de nuevo árbitro (según permisos).
+- **Alta** de nuevo juez (según permisos).
 - **Baja** — Super Admin / Delegado de Jueces.
 
 ---
@@ -231,7 +231,7 @@ Flujo **Regional → Nacional → IPF Cat. 2 → IPF Cat. 1**:
 
 ## 11. Estadísticas (`/analytics`)
 
-Cobertura por zona, árbitros más activos, eventos críticos y **exportación CSV** de la temporada.
+Cobertura por zona, jueces más activos, eventos críticos y **exportación CSV** de la temporada.
 
 ---
 
@@ -260,9 +260,9 @@ Los nuevos registros por `/sign-in` llegan como **solo_ver** salvo el primero de
 
 | Término | Significado |
 |---------|-------------|
-| **Tarima** | Plantilla arbitral completa de un campeonato |
+| **Tarima** | Plantilla de jueces completa de un campeonato |
 | **Plantilla / template** | Estructura de sesiones y roles (sin nombres de jueces) |
-| **Asignación** | Árbitro concreto en un `slotKey` |
+| **Asignación** | Juez concreto en un `slotKey` |
 | **slotKey** | Identificador único de plaza (ej. `S2_lateral_1`) |
 | **Preset** | Plantilla tipo AEP-1/2/3 por defecto |
 | **Propuesta** | Envío de tarima a aprobación nacional |

@@ -31,8 +31,8 @@
 
 | Componente | Descripción |
 |------------|-------------|
-| `LevelBadge` | Nivel arbitral (Regional / Nacional / IPF Cat. 2 / IPF Cat. 1) |
-| `StatusBadge` | Estado de árbitro (Activo / Inactivo / Sancionado) |
+| `LevelBadge` | Nivel de jueces (Regional / Nacional / IPF Cat. 2 / IPF Cat. 1) |
+| `StatusBadge` | Estado de juez (Activo / Inactivo / Sancionado) |
 | `EventTypeBadge` | Tipo de campeonato (AEP-1 / AEP-2 / AEP-3) |
 | `EventStatusBadge` | Estado de campeonato (Completo / Incompleto / Crítico / Borrador) |
 | `ActivityTypeBadge` | Tipo de actividad en el feed (propuesta / aprobación / ascenso…) |
@@ -63,14 +63,14 @@
 | `RosterHistoryPanel` | Historial de cambios (fetch lazy) |
 | `SessionBlock` | Bloque de sesión con slots y progreso |
 
-### Árbitros / Jueces
+### Jueces / Jueces
 | Componente | Descripción |
 |------------|-------------|
 | `RefereesDirectory` | Directorio con filtros (zona/nivel/estado/búsqueda) y paginación |
-| `NewRefereeDialog` | Modal de alta de árbitro (Escape/backdrop para cerrar) |
-| `RefereeEditForm` | Formulario de edición de ficha arbitral |
+| `NewRefereeDialog` | Modal de alta de juez (Escape/backdrop para cerrar) |
+| `RefereeEditForm` | Formulario de edición de ficha de jueces |
 | `RefereePromotionButton` | Botón + modal para solicitar ascenso (valida nivel superior) |
-| `ExamsManager` | Registro y calificación de exámenes arbitrales. Reusable: acoplado a un juez (ficha) o global (`/exams`) |
+| `ExamsManager` | Registro y calificación de exámenes de jueces. Reusable: acoplado a un juez (ficha) o global (`/exams`) |
 | `ReportsManager` | Subida y consulta de informes de juez (sandbox). Reusable: acoplado o global (`/reports`) |
 
 ### Aprobaciones
@@ -93,7 +93,7 @@
 ### Estadísticas
 | Componente | Descripción |
 |------------|-------------|
-| `AnalyticsDashboard` | Cobertura por zona, top árbitros, críticos, totales + exportar |
+| `AnalyticsDashboard` | Cobertura por zona, top jueces, críticos, totales + exportar |
 
 ### Administración
 | Componente | Descripción |

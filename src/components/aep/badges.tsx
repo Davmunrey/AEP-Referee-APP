@@ -59,7 +59,7 @@ export function ActivityTypeBadge({ tipo }: { tipo: string }) {
     cambio: "CAMBIO",
   };
   return (
-    <Badge variant={map[tipo] ?? "muted"} className="text-[9px] tracking-wider">
+    <Badge variant={map[tipo] ?? "muted"} size="sm" className="tracking-wider">
       {labels[tipo] ?? tipo.toUpperCase()}
     </Badge>
   );

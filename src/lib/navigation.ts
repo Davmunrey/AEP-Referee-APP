@@ -19,7 +19,7 @@ export function getPageMeta(pathname: string): PageMeta {
   }
   if (pathname === "/referees") {
     return {
-      title: "Directorio de Árbitros",
+      title: "Directorio de Jueces",
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Directorio" }],
     };
   }
@@ -60,7 +60,7 @@ export function getPageMeta(pathname: string): PageMeta {
   }
   if (pathname === "/exams") {
     return {
-      title: "Exámenes arbitrales",
+      title: "Exámenes de jueces",
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Exámenes" }],
     };
   }

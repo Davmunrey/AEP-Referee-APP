@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
-import { Check, Download } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Check, Download, Loader2, Send } from "lucide-react";
 import type { TransitionStartFunction } from "react";
 
 function CoverageRing({ pct }: { pct: number }) {
@@ -55,9 +57,25 @@ export function RosterHeaderActions({
   onStatus,
   startTransition,
 }: RosterHeaderActionsProps) {
+  const [exporting, setExporting] = useState(false);
+
+  const coverageBarColor =
+    fillPct >= 100 ? "bg-success" : fillPct >= 70 ? "bg-warning" : "bg-chart-danger";
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      window.location.href = api.exportRosterUrl(eventId);
+      await new Promise<void>((r) => setTimeout(r, 1200));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
+        {/* Coverage card with ring + bar */}
         <div className="flex items-center gap-3 rounded-md border border-border bg-surface px-4 py-2">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-wider text-subtle-muted">
@@ -67,9 +85,17 @@ export function RosterHeaderActions({
               {filledSlots}
               <span className="text-subtle-muted">/{totalSlots}</span>
             </p>
+            {/* Linear progress bar */}
+            <div className="mt-1.5 h-1 w-20 overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn("h-full rounded-full transition-all duration-500", coverageBarColor)}
+                style={{ width: `${fillPct}%` }}
+              />
+            </div>
           </div>
           <CoverageRing pct={fillPct} />
         </div>
+
         <Button
           variant="outline"
           size="sm"
@@ -87,23 +113,38 @@ export function RosterHeaderActions({
         >
           Guardar borrador
         </Button>
+
         <Button
           variant="outline"
           size="sm"
           className="gap-1.5"
-          asChild
+          disabled={pending || exporting}
+          onClick={() => void handleExport()}
         >
-          <a href={api.exportRosterUrl(eventId)} download>
+          {exporting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
             <Download className="h-3.5 w-3.5" />
-            Exportar
-          </a>
+          )}
+          {exporting ? "Exportando…" : "Exportar"}
         </Button>
+
+        {/* Highlighted submit button with brand color */}
         <Button
           size="sm"
-          className="gap-1.5"
+          className={cn(
+            "gap-1.5 font-semibold shadow-sm transition-all",
+            fillPct >= 100 && "animate-pulse",
+          )}
           disabled={pending}
           onClick={() => {
-            if (fillPct < 100 && !confirm(`El roster está al ${fillPct}% (${filledSlots}/${totalSlots} plazas). ¿Enviar igualmente?`)) return;
+            if (
+              fillPct < 100 &&
+              !confirm(
+                `El roster está al ${fillPct}% (${filledSlots}/${totalSlots} plazas). ¿Enviar igualmente?`,
+              )
+            )
+              return;
             startTransition(async () => {
               try {
                 const res = await api.submitRoster(eventId);
@@ -114,12 +155,27 @@ export function RosterHeaderActions({
             });
           }}
         >
-          <Check className="h-3.5 w-3.5" />
+          {pending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : fillPct >= 100 ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <Send className="h-3.5 w-3.5" />
+          )}
           Enviar a aprobación
         </Button>
       </div>
+
       {(pending || statusMsg) && (
-        <p className={`text-xs ${pending ? "text-muted-foreground" : statusIsError ? "text-destructive" : "text-success"}`}>
+        <p
+          className={`text-xs ${
+            pending
+              ? "text-muted-foreground"
+              : statusIsError
+                ? "text-destructive"
+                : "text-success"
+          }`}
+        >
           {pending ? "Guardando…" : statusMsg}
         </p>
       )}

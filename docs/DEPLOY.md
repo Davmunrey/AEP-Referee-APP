@@ -54,7 +54,7 @@
 - [ ] Login email/contraseña
 - [ ] Crear delegado de zona en `/admin/users`
 - [ ] Delegado de zona solo ve su zona
-- [ ] Editar plantilla y asignar árbitro en tarima
+- [ ] Editar plantilla y asignar juez en tarima
 - [ ] Flags `*` / `↑↓` en export TXT
 - [ ] Enviar propuesta y aprobar como `delegado_jueces` o `super_admin`
 

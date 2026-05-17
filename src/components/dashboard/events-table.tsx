@@ -13,7 +13,7 @@ export function EventsTable({ competitions }: { competitions: Competition[] }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Plantillas arbitrales — próximos eventos</CardTitle>
+        <CardTitle>Plantillas de jueces — próximos eventos</CardTitle>
         <span className="text-xs text-subtle-muted">Estado de completitud del roster</span>
       </CardHeader>
       <CardContent className="p-0">

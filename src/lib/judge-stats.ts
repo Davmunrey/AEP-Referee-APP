@@ -5,7 +5,7 @@ import type {
   RefereeReport,
 } from "@/lib/types";
 
-/** Combina árbitro + exámenes + informes en un perfil con métricas. */
+/** Combina juez + exámenes + informes en un perfil con métricas. */
 export function computeJudgeProfile(
   referee: Referee,
   exams: RefereeExam[],

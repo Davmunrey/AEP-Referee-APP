@@ -15,9 +15,9 @@ const ibmMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AEP Tarima — Gestión de Árbitros",
+  title: "AEP Tarima — Gestión de Jueces",
   description:
-    "Panel B2B de gestión de árbitros para la Asociación Española de Powerlifting",
+    "Panel B2B de gestión de jueces para la Asociación Española de Powerlifting",
 };
 
 export default function RootLayout({

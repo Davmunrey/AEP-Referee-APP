@@ -1,7 +1,7 @@
 /**
  * Motor de inteligencia del panel — capa de retroalimentación.
  *
- * Lee el estado operativo (árbitros, competiciones, cobertura, aprobaciones)
+ * Lee el estado operativo (jueces, competiciones, cobertura, aprobaciones)
  * y deriva por sí mismo un índice de salud y recomendaciones priorizadas.
  * No requiere entrada manual: el panel se alimenta de sus propios datos.
  */
@@ -119,10 +119,10 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
         pending > 0 ? `${pending} propuestas sin revisar` : "bandeja al día",
     },
     {
-      label: "Disponibilidad arbitral",
+      label: "Disponibilidad de jueces",
       score: clampScore(availableScore),
       weight: 0.12,
-      detail: `${active}/${total} árbitros activos`,
+      detail: `${active}/${total} jueces activos`,
     },
   ];
 
@@ -155,7 +155,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       detail:
         d !== null && d >= 0
           ? `${c.open} plazas sin cubrir y el evento es en ${d} día${d === 1 ? "" : "s"}.`
-          : `${c.open} plazas sin cubrir. Asigna árbitros cuanto antes.`,
+          : `${c.open} plazas sin cubrir. Asigna jueces cuanto antes.`,
       metric: `${c.open} libres`,
       action: { label: "Completar plantilla", href: `/events/${c.id}` },
     });
@@ -196,13 +196,13 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       id: "promotions-pending",
       severity: "sugerencia",
       title: `${pendingPromos} ascensos por resolver`,
-      detail: "Resolver ascensos amplía el grupo de árbitros elegibles para roles superiores.",
+      detail: "Resolver ascensos amplía el grupo de jueces elegibles para roles superiores.",
       metric: `${pendingPromos} solicitudes`,
       action: { label: "Ver ascensos", href: "/promotions" },
     });
   }
 
-  // 5 — Disponibilidad arbitral baja.
+  // 5 — Disponibilidad de jueces baja.
   const total = referees.length;
   const active = referees.filter((r) => r.estado === "Activo").length;
   const activePct = total > 0 ? (active / total) * 100 : 100;
@@ -210,8 +210,8 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
     insights.push({
       id: "low-availability",
       severity: "alerta",
-      title: "Disponibilidad arbitral ajustada",
-      detail: `Solo ${active} de ${total} árbitros figuran como activos (${Math.round(activePct)}%).`,
+      title: "Disponibilidad de jueces ajustada",
+      detail: `Solo ${active} de ${total} jueces figuran como activos (${Math.round(activePct)}%).`,
       metric: `${Math.round(activePct)}%`,
       action: { label: "Revisar directorio", href: "/referees" },
     });

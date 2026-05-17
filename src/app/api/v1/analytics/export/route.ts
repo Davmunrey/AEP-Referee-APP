@@ -23,7 +23,7 @@ export async function GET() {
         .join(",");
     }),
     "",
-    "ÁRBITROS",
+    "JUECES",
     "Nombre,Zona,Nivel,Estado,Eventos 2026",
     ...referees.map((r) =>
       [r.nombre, r.zona, r.nivel, r.estado, r.eventos]

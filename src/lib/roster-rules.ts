@@ -35,10 +35,10 @@ export function validateAssignment(
   eventType: EventType,
 ): AssignValidation {
   if (referee.estado !== "Activo") {
-    return { ok: false, error: "El árbitro no está activo" };
+    return { ok: false, error: "El juez no está activo" };
   }
   if (!referee.disp) {
-    return { ok: false, error: "El árbitro no está disponible" };
+    return { ok: false, error: "El juez no está disponible" };
   }
   const required = minLevelForRole(roleKey, eventType);
   if (LEVEL_RANK[referee.nivel] < LEVEL_RANK[required]) {

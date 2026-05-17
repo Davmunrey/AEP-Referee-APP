@@ -252,7 +252,7 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
 
   return [
     {
-      label: "Árbitros Activos",
+      label: "Jueces Activos",
       value: String(active),
       sub: `/ ${refereesLength} federados`,
       trend: "cuota operativa 2026",
@@ -457,7 +457,7 @@ export const supabaseDataService = {
     await pushActivity({
       tipo: "cambio",
       actor: "Sistema",
-      accion: "registró al árbitro",
+      accion: "registró al juez",
       evento: input.nombre,
       hace: "ahora",
     });
@@ -617,7 +617,7 @@ export const supabaseDataService = {
   ): Promise<{ flags: FlagsMap } | { error: string }> => {
     const assignments = await loadAssignments(eventId);
     if (!assignments[slotKey]) {
-      return { error: "Asigna un árbitro antes de marcar flags" };
+      return { error: "Asigna un juez antes de marcar flags" };
     }
     const supabase = db();
     const merged: SlotFlags = {
@@ -1009,7 +1009,7 @@ export const supabaseDataService = {
       .select("nombre, nivel, eventos")
       .eq("id", input.refereeId)
       .single();
-    if (!referee) throw new Error("Árbitro no encontrado");
+    if (!referee) throw new Error("Juez no encontrado");
     const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
     const fromIdx = LEVEL_ORDER.indexOf(referee.nivel as string);
     const toIdx = LEVEL_ORDER.indexOf(input.toLevel);
@@ -1040,13 +1040,26 @@ export const supabaseDataService = {
     return { events, approvals };
   },
 
-  getExams: async (refereeId?: string): Promise<RefereeExam[]> => {
+  getExams: async (
+    refereeId?: string,
+    user?: SessionUser,
+  ): Promise<RefereeExam[]> => {
     const supabase = db();
     let query = supabase
       .from("referee_exams")
       .select("*")
       .order("fecha", { ascending: false });
     if (refereeId) query = query.eq("referee_id", refereeId);
+    // Scoping por zona para delegado_zona: limitar a jueces de su zona.
+    if (user && user.role === "delegado_zona" && user.zona) {
+      const { data: zoneRefs } = await supabase
+        .from("referees")
+        .select("id")
+        .eq("zona", user.zona);
+      const ids = (zoneRefs ?? []).map((r) => (r as { id: string }).id);
+      if (ids.length === 0) return [];
+      query = query.in("referee_id", ids);
+    }
     const { data } = await query;
     return (data ?? []).map((r) => mapExam(r as Record<string, unknown>));
   },
@@ -1068,7 +1081,7 @@ export const supabaseDataService = {
       .select("nombre")
       .eq("id", input.refereeId)
       .single();
-    if (!ref) throw new Error("Árbitro no encontrado");
+    if (!ref) throw new Error("Juez no encontrado");
     const row = {
       id: `exam-${Date.now()}`,
       referee_id: input.refereeId,
@@ -1130,13 +1143,25 @@ export const supabaseDataService = {
     return !error;
   },
 
-  getReports: async (refereeId?: string): Promise<RefereeReport[]> => {
+  getReports: async (
+    refereeId?: string,
+    user?: SessionUser,
+  ): Promise<RefereeReport[]> => {
     const supabase = db();
     let query = supabase
       .from("referee_reports")
       .select("*")
       .order("created_at", { ascending: false });
     if (refereeId) query = query.eq("referee_id", refereeId);
+    if (user && user.role === "delegado_zona" && user.zona) {
+      const { data: zoneRefs } = await supabase
+        .from("referees")
+        .select("id")
+        .eq("zona", user.zona);
+      const ids = (zoneRefs ?? []).map((r) => (r as { id: string }).id);
+      if (ids.length === 0) return [];
+      query = query.in("referee_id", ids);
+    }
     const { data } = await query;
     return (data ?? []).map((r) => mapReport(r as Record<string, unknown>));
   },
@@ -1156,7 +1181,7 @@ export const supabaseDataService = {
       .select("nombre")
       .eq("id", input.refereeId)
       .single();
-    if (!ref) throw new Error("Árbitro no encontrado");
+    if (!ref) throw new Error("Juez no encontrado");
     const row = {
       id: `rep-${Date.now()}`,
       referee_id: input.refereeId,
@@ -1181,6 +1206,29 @@ export const supabaseDataService = {
       evento: ref.nombre,
       hace: "ahora",
     });
+    return mapReport(data as Record<string, unknown>);
+  },
+
+  updateReport: async (
+    id: string,
+    patch: Partial<
+      Pick<RefereeReport, "titulo" | "tipo" | "evento" | "contenido" | "adjuntoUrl">
+    >,
+  ): Promise<RefereeReport | undefined> => {
+    const supabase = db();
+    const dbPatch: Record<string, unknown> = {};
+    if (patch.titulo !== undefined) dbPatch.titulo = patch.titulo;
+    if (patch.tipo !== undefined) dbPatch.tipo = patch.tipo;
+    if (patch.evento !== undefined) dbPatch.evento = patch.evento;
+    if (patch.contenido !== undefined) dbPatch.contenido = patch.contenido;
+    if (patch.adjuntoUrl !== undefined) dbPatch.adjunto_url = patch.adjuntoUrl;
+    const { data, error } = await supabase
+      .from("referee_reports")
+      .update(dbPatch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) return undefined;
     return mapReport(data as Record<string, unknown>);
   },
 

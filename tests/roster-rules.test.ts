@@ -55,7 +55,7 @@ describe("validateAssignment", () => {
   it("rejects an inactive referee", () => {
     const v = validateAssignment(referee({ estado: "Inactivo" }), "jurado", "AEP-2");
     expect(v.ok).toBe(false);
-    expect(v).toHaveProperty("error", "El árbitro no está activo");
+    expect(v).toHaveProperty("error", "El juez no está activo");
   });
 
   it("rejects a sanctioned referee", () => {
@@ -66,7 +66,7 @@ describe("validateAssignment", () => {
   it("rejects an unavailable referee", () => {
     const v = validateAssignment(referee({ disp: false }), "jurado", "AEP-2");
     expect(v.ok).toBe(false);
-    expect(v).toHaveProperty("error", "El árbitro no está disponible");
+    expect(v).toHaveProperty("error", "El juez no está disponible");
   });
 
   it("rejects a referee below the role's minimum level", () => {
@@ -102,7 +102,7 @@ describe("validateAssignment", () => {
       "AEP-1",
     );
     expect(v.ok).toBe(false);
-    expect(v).toHaveProperty("error", "El árbitro no está activo");
+    expect(v).toHaveProperty("error", "El juez no está activo");
   });
 });
 

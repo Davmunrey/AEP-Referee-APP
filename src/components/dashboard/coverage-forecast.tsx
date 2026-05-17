@@ -12,13 +12,25 @@ const BAR_TONE: Record<EventStatus, string> = {
   Borrador: "bg-subtle",
 };
 
-function dayLabel(d: number | null): { text: string; tone: string } {
-  if (d === null) return { text: "sin fecha", tone: "text-subtle-muted" };
-  if (d < 0) return { text: "finalizado", tone: "text-subtle-muted" };
-  if (d === 0) return { text: "hoy", tone: "text-destructive" };
-  if (d <= 7) return { text: `${d} d`, tone: "text-destructive" };
-  if (d <= 21) return { text: `${d} d`, tone: "text-warning" };
-  return { text: `${d} d`, tone: "text-muted-foreground" };
+const STATUS_TEXT: Record<EventStatus, string> = {
+  Completo: "text-success",
+  Incompleto: "text-warning",
+  Crítico: "text-destructive",
+  Borrador: "text-muted-foreground",
+};
+
+function dayLabel(d: number | null): { text: string; tone: string; pill: string } {
+  if (d === null)
+    return { text: "sin fecha", tone: "text-muted-foreground/60", pill: "bg-surface-hover text-muted-foreground/60" };
+  if (d < 0)
+    return { text: "finalizado", tone: "text-muted-foreground/60", pill: "bg-surface-hover text-muted-foreground/60" };
+  if (d === 0)
+    return { text: "hoy", tone: "text-destructive", pill: "bg-destructive-muted text-destructive border border-destructive/20" };
+  if (d <= 7)
+    return { text: `${d}d`, tone: "text-destructive", pill: "bg-destructive-muted text-destructive border border-destructive/20" };
+  if (d <= 21)
+    return { text: `${d}d`, tone: "text-warning", pill: "bg-warning-muted text-warning border border-warning/20" };
+  return { text: `${d}d`, tone: "text-muted-foreground", pill: "bg-surface-hover text-muted-foreground" };
 }
 
 /** Previsión de cobertura — progreso de cada plantilla y tiempo restante. */
@@ -31,19 +43,19 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
     <Card className="overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <CalendarClock className="h-4 w-4 text-primary" />
+          <CalendarClock className="h-4 w-4 text-primary" aria-hidden="true" />
           Previsión de cobertura
         </CardTitle>
         <Link
           href="/events"
-          className="text-xs font-medium text-primary hover:text-primary-soft"
+          className="text-xs font-medium text-primary hover:text-primary/80"
         >
           Ver eventos →
         </Link>
       </CardHeader>
-      <CardContent className="space-y-3.5 p-5">
+      <CardContent className="space-y-1 p-3">
         {upcoming.length === 0 && (
-          <p className="py-4 text-center text-xs text-subtle-muted">
+          <p className="py-8 text-center text-xs text-muted-foreground/60">
             Sin competiciones programadas.
           </p>
         )}
@@ -54,19 +66,27 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
             <Link
               key={c.id}
               href={`/events/${c.id}`}
-              className="block rounded-xl p-2 transition-colors hover:bg-surface-hover"
+              className="group block rounded-xl p-2.5 transition-colors hover:bg-surface-hover"
             >
-              <div className="mb-1.5 flex items-center justify-between gap-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="truncate text-[13px] font-medium text-foreground">
                   {c.nombre}
                 </span>
-                <span className={cn("shrink-0 font-mono text-[11px] font-semibold", day.tone)}>
+                {/* Days-until pill */}
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold",
+                    day.pill,
+                  )}
+                >
                   {day.text}
                 </span>
               </div>
+
+              {/* Progress bar — taller, rounded, with hover detail */}
               <div className="flex items-center gap-2.5">
                 <div
-                  className="h-2 flex-1 overflow-hidden rounded-full bg-surface-active"
+                  className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface-active"
                   role="progressbar"
                   aria-valuenow={pct}
                   aria-valuemin={0}
@@ -74,11 +94,19 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
                   aria-label={`Cobertura ${c.nombre}: ${pct}%, estado ${c.estado}`}
                 >
                   <div
-                    className={cn("h-full rounded-full transition-all", BAR_TONE[c.estado])}
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      BAR_TONE[c.estado],
+                    )}
                     style={{ width: `${Math.max(pct, 3)}%` }}
                   />
                 </div>
-                <span className="shrink-0 font-mono text-[11px] text-subtle-muted">
+                <span
+                  className={cn(
+                    "shrink-0 font-mono text-[11px] font-semibold",
+                    STATUS_TEXT[c.estado],
+                  )}
+                >
                   {c.filled}/{c.required}
                 </span>
               </div>

@@ -8,7 +8,10 @@ export async function GET(request: Request) {
   if (!isSessionUser(user)) return user;
   const { searchParams } = new URL(request.url);
   return jsonOk(
-    await dataService.getReports(searchParams.get("refereeId") ?? undefined),
+    await dataService.getReports(
+      searchParams.get("refereeId") ?? undefined,
+      user,
+    ),
   );
 }
 

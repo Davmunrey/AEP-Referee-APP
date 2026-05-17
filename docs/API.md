@@ -25,12 +25,12 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 | `GET` | `/meta` | Zonas, niveles y usuario actual |
 | `GET` | `/dashboard` | KPIs, salud, insights, cobertura, calendario, actividad |
 
-## Árbitros
+## Jueces
 
 | Método | Ruta | Permisos | Descripción |
 |--------|------|----------|-------------|
 | `GET` | `/referees` | todos | Listado (zona filtrada para `delegado_zona`) |
-| `POST` | `/referees` | no `solo_ver` | Crear árbitro |
+| `POST` | `/referees` | no `solo_ver` | Crear juez |
 | `GET` | `/referees/:id` | todos | Detalle |
 | `PATCH` | `/referees/:id` | no `solo_ver` | Actualizar |
 | `DELETE` | `/referees/:id` | `super_admin`, `delegado_jueces` | Eliminar |
@@ -52,7 +52,7 @@ Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `s
 | `GET` | `/competitions/:id/roster` | todos | `{ template, assignments, flags }` |
 | `PUT` | `/competitions/:id/roster/template` | `canEditRoster` | `{ template: RosterSession[] }` — guarda plantilla; purga slots huérfanos |
 | `POST` | `/competitions/:id/roster/template/import` | `canEditRoster` | `multipart/form-data` con campo `file` (PDF AEP). Devuelve `{ preview, template }`. Con `?apply=true` persiste vía `saveCompetitionTemplate`. Límite 5 MB. |
-| `PATCH` | `/competitions/:id/roster/flags` | `canEditRoster` | `{ slotKey, flags: { compartido?, intercambio? } }` — requiere árbitro en slot |
+| `PATCH` | `/competitions/:id/roster/flags` | `canEditRoster` | `{ slotKey, flags: { compartido?, intercambio? } }` — requiere juez en slot |
 | `POST` | `/competitions/:id/roster/assign` | `canEditRoster` | `{ slotKey, refereeId, flags? }` |
 | `POST` | `/competitions/:id/roster/clear` | `canEditRoster` | `{ slotKey }` |
 | `POST` | `/competitions/:id/roster/draft` | `canEditRoster` | Guardar borrador + historial |

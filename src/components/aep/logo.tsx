@@ -9,7 +9,7 @@ interface AepLogoProps {
 
 export function AepLogo({ collapsed, className }: AepLogoProps) {
   return (
-    <Link href="/" className={cn("flex items-center gap-2.5", className)}>
+    <Link href="/" className={cn("flex items-center gap-2.5 rounded-lg focus-ring", className)}>
       <Image
         src="/assets/aep-mark.png"
         alt="AEP"
@@ -24,7 +24,7 @@ export function AepLogo({ collapsed, className }: AepLogoProps) {
             AEP Tarima
           </p>
           <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-subtle-muted">
-            Gestión arbitral
+            Gestión de jueces
           </p>
         </div>
       )}

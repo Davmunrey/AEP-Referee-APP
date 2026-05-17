@@ -200,10 +200,10 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  reviewPromotion: (id: string, approve: boolean) =>
+  reviewPromotion: (id: string, approve: boolean, comment?: string) =>
     request<PromotionRequest>(`/promotions/${id}/review`, {
       method: "POST",
-      body: JSON.stringify({ approve }),
+      body: JSON.stringify({ approve, comment }),
     }),
 
   getAnalytics: () => request<AnalyticsPayload>("/analytics"),
@@ -267,6 +267,21 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  updateReport: (
+    id: string,
+    body: {
+      titulo?: string;
+      tipo?: ReportType;
+      evento?: string;
+      contenido?: string;
+      adjuntoUrl?: string;
+    },
+  ) =>
+    request<RefereeReport>(`/reports/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
   deleteReport: (id: string) =>
     request<{ deleted: boolean }>(`/reports/${id}`, { method: "DELETE" }),
 
@@ -274,6 +289,21 @@ export const api = {
     request<{ id: string; activo: boolean }>(`/admin/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ activo }),
+    }),
+
+  updateUser: (
+    id: string,
+    body: {
+      activo?: boolean;
+      role?: "super_admin" | "delegado_jueces" | "delegado_zona" | "solo_ver";
+      zona?: string | null;
+      rolLabel?: string;
+      nombre?: string;
+    },
+  ) =>
+    request<{ id: string; activo: boolean }>(`/admin/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
     }),
 
   deleteUser: (id: string) =>

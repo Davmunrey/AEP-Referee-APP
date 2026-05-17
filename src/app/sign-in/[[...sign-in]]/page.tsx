@@ -1,11 +1,15 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 type Mode = "signin" | "signup";
+
+const inputClass =
+  "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-border-strong";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -17,6 +21,38 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(searchParams.get("error"));
   const [info, setInfo] = useState<string | null>(null);
+  // L4 — forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError(null);
+    setInfo(null);
+    setShowForgotPassword(false);
+    setForgotEmail("");
+  };
+
+  // L4 — send password-reset email
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) return;
+    setForgotLoading(true);
+    setError(null);
+    const supabase = createClient();
+    const origin = window.location.origin;
+    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${origin}/auth/callback`,
+    });
+    setForgotLoading(false);
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    setInfo("Si la cuenta existe, te enviaremos un email con instrucciones.");
+    setShowForgotPassword(false);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,99 +103,210 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-6">
+      {/* Subtle gradient background */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background via-background to-primary/4" />
+      <div className="pointer-events-none absolute -top-48 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+
+      <div className="relative z-10 w-full max-w-sm">
+        {/* Logo + tagline */}
         <div className="mb-8 flex flex-col items-center">
           <Image
             src="/assets/aep-master-logo.png"
             alt="Asociación Española de Powerlifting"
             width={280}
             height={76}
-            className="h-auto w-64"
+            className="h-auto w-60"
             priority
           />
-          <p className="mt-5 text-center text-sm text-muted-foreground">
-            Plataforma de gestión arbitral
+          <p className="mt-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+            Plataforma de gestión de jueces
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-7 shadow-sm">
-          <h1 className="text-base font-semibold text-foreground">
-            {mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}
-          </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {mode === "signin"
-              ? "Accede con tu cuenta federativa."
-              : "Regístrate para solicitar acceso a la plataforma."}
-          </p>
+        {/* Card */}
+        <div className="rounded-2xl border border-border bg-card shadow-card">
+          {/* Accent top border */}
+          <div className="h-0.5 w-full rounded-t-2xl bg-primary" />
 
-          <form onSubmit={(e) => void submit(e)} className="mt-5 space-y-3">
-            {mode === "signup" && (
-              <input
-                type="text"
-                placeholder="Nombre completo"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-            )}
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
-            >
-              {loading && (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
+          {/* Tab switcher */}
+          <div className="px-6 pt-5">
+            <div className="flex rounded-xl border border-border bg-surface p-1">
+              <button
+                type="button"
+                onClick={() => switchMode("signin")}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                  mode === "signin"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Iniciar sesión
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode("signup")}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                  mode === "signup"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Crear cuenta
+              </button>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="px-6 pb-6 pt-5">
+            <p className="mb-4 text-xs text-muted-foreground">
+              {mode === "signin"
+                ? "Accede con tu cuenta federativa."
+                : "Regístrate para solicitar acceso a la plataforma."}
+            </p>
+
+            <form onSubmit={(e) => void submit(e)} className="space-y-3">
+              {/* M12 — nombre required in signup mode */}
+              {mode === "signup" && (
+                <div>
+                  <label htmlFor="nombre" className="sr-only">
+                    Nombre completo
+                  </label>
+                  <input
+                    id="nombre"
+                    type="text"
+                    placeholder="Nombre completo *"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    autoComplete="name"
+                    required
+                    className={inputClass}
+                  />
+                </div>
               )}
-              {mode === "signin" ? "Entrar" : "Crear cuenta"}
-            </button>
-          </form>
+              <div>
+                <label htmlFor="email" className="sr-only">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  Contraseña
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  className={inputClass}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : null}
+                {mode === "signin" ? "Entrar" : "Crear cuenta"}
+              </button>
 
-          {error && (
-            <p className="mt-4 rounded-lg bg-destructive-muted px-3 py-2 text-center text-xs text-destructive">
-              {error}
-            </p>
-          )}
-          {info && (
-            <p className="mt-4 rounded-lg bg-success-muted px-3 py-2 text-center text-xs text-success">
-              {info}
-            </p>
-          )}
+              {/* M11 — solo_ver role notice in signup mode */}
+              {mode === "signup" && (
+                <p className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-xs text-muted-foreground">
+                  Tu cuenta tendrá acceso de solo lectura hasta que un administrador te asigne un
+                  rol.
+                </p>
+              )}
+            </form>
 
-          <button
-            type="button"
-            onClick={() => {
-              setMode((m) => (m === "signin" ? "signup" : "signin"));
-              setError(null);
-              setInfo(null);
-            }}
-            className="mt-5 w-full text-center text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {mode === "signin"
-              ? "¿No tienes cuenta? Crear una"
-              : "¿Ya tienes cuenta? Iniciar sesión"}
-          </button>
+            {/* L4 — Forgot password (signin mode only, outside main form to avoid nesting) */}
+            {mode === "signin" && (
+              <div className="mt-2">
+                {!showForgotPassword ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="rounded text-xs text-muted-foreground/70 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                ) : (
+                  <form
+                    onSubmit={(e) => void handleForgotPassword(e)}
+                    className="mt-2 flex gap-2"
+                  >
+                    <input
+                      type="email"
+                      placeholder="Tu email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                      className={inputClass}
+                    />
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
+                    >
+                      {forgotLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                      ) : (
+                        "Enviar enlace"
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* Messages */}
+            {error && (
+              <div
+                role="alert"
+                className="mt-4 flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive-muted px-3.5 py-2.5"
+              >
+                <AlertCircle
+                  className="mt-px h-4 w-4 shrink-0 text-destructive"
+                  aria-hidden="true"
+                />
+                <p className="text-xs leading-snug text-destructive">{error}</p>
+              </div>
+            )}
+            {info && (
+              <div
+                role="status"
+                className="mt-4 flex items-start gap-2.5 rounded-xl border border-success/20 bg-success-muted px-3.5 py-2.5"
+              >
+                <CheckCircle2
+                  className="mt-px h-4 w-4 shrink-0 text-success"
+                  aria-hidden="true"
+                />
+                <p className="text-xs leading-snug text-success">{info}</p>
+              </div>
+            )}
+          </div>
         </div>
 
+        <p className="mt-5 text-center text-[11px] text-muted-foreground/60">
+          AEP · Gestión de jueces interna
+        </p>
       </div>
     </div>
   );

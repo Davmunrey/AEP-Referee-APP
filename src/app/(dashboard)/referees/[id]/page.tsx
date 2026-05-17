@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { redirect } from "next/navigation";
+import { DeleteRefereeButton } from "./delete-referee-button";
 
 interface RefereePageProps {
   params: Promise<{ id: string }>;
@@ -29,7 +30,6 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!profile) notFound();
 
   const { referee, exams, reports, examsPassed, examsTotal, avgScore } = profile;
-  // Un delegado de zona solo accede a árbitros de su zona.
   if (user.role === "delegado_zona" && referee.zona !== user.zona) notFound();
   const zoneName =
     meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
@@ -55,72 +55,121 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       <PageHeader
         eyebrow="Gestión de jueces"
         title={referee.nombre}
-        description={`Ficha arbitral · ${zoneName}`}
+        description={`Ficha de jueces · ${zoneName}`}
       />
 
-      <Card className="glass-panel-soft">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-muted text-lg font-semibold">
+      {/* Hero card */}
+      <Card className="overflow-hidden p-0">
+        <div className="px-6 py-5">
+          <div className="flex flex-wrap items-start gap-4">
+            {/* Avatar */}
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/20 bg-primary/10 text-lg font-bold text-primary">
               {referee.iniciales}
             </span>
-            Resumen
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="friendly-label mb-1">Zona</p>
-            <p className="text-sm text-foreground">
-              {referee.zona} · {zoneName}
-            </p>
+
+            {/* Identity */}
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
+                {referee.zona} · {zoneName}
+              </p>
+              <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+                {referee.nombre}
+              </h2>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <LevelBadge level={referee.nivel} />
+                <StatusBadge status={referee.estado} />
+                {referee.disp && (
+                  <span className="rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-medium text-success">
+                    Disponible
+                  </span>
+                )}
+                {referee.licencia && (
+                  <span className="font-mono text-[11px] text-subtle-muted">
+                    Lic. {referee.licencia}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Quick actions */}
+            {canEdit && (
+              <div className="flex flex-wrap gap-2">
+                <RefereePromotionButton
+                  refereeId={referee.id}
+                  currentLevel={referee.nivel}
+                  zona={referee.zona}
+                />
+                <Button variant="outline" size="sm" asChild>
+                  <a href="#edit-form">
+                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                    Editar
+                  </a>
+                </Button>
+                {canDelete && (
+                  <DeleteRefereeButton
+                    refereeId={referee.id}
+                    refereeName={referee.nombre}
+                  />
+                )}
+              </div>
+            )}
           </div>
-          <div>
-            <p className="friendly-label mb-1">Nivel</p>
-            <LevelBadge level={referee.nivel} />
-          </div>
-          <div>
-            <p className="friendly-label mb-1">Estado</p>
-            <StatusBadge status={referee.estado} />
-          </div>
-          <div>
-            <p className="friendly-label mb-1">Eventos 2026</p>
-            <p className="font-mono text-sm text-foreground">{referee.eventos}</p>
-          </div>
-          <div>
-            <p className="friendly-label mb-1">Último evento</p>
-            <p className="text-sm text-foreground">{referee.ultimo}</p>
-          </div>
-          <div>
-            <p className="friendly-label mb-1">Disponibilidad</p>
-            <p className="text-sm text-foreground">
-              {referee.disp ? "Disponible" : "No disponible"}
-            </p>
-          </div>
-        </CardContent>
+        </div>
       </Card>
 
-      <div className="grid gap-3 sm:grid-cols-4">
-        {trayectoria.map((t) => (
-          <Card key={t.label}>
-            <CardContent className="py-3.5">
-              <p className="friendly-label mb-1">{t.label}</p>
-              <p className="text-xl font-bold tracking-tight text-foreground">
-                {t.value}
+      {/* Data + Trajectory two-column layout */}
+      <div className="grid gap-4 lg:grid-cols-5">
+        {/* Data fields — 3/5 */}
+        <Card className="glass-panel-soft lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Datos del juez</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="friendly-label mb-1">Zona</p>
+              <p className="text-sm text-foreground">
+                {referee.zona} · {zoneName}
               </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+            <div>
+              <p className="friendly-label mb-1">Nivel</p>
+              <LevelBadge level={referee.nivel} />
+            </div>
+            <div>
+              <p className="friendly-label mb-1">Estado</p>
+              <StatusBadge status={referee.estado} />
+            </div>
+            <div>
+              <p className="friendly-label mb-1">Eventos 2026</p>
+              <p className="font-mono text-sm text-foreground">{referee.eventos}</p>
+            </div>
+            <div>
+              <p className="friendly-label mb-1">Último evento</p>
+              <p className="text-sm text-foreground">{referee.ultimo}</p>
+            </div>
+            <div>
+              <p className="friendly-label mb-1">Disponibilidad</p>
+              <p className="text-sm text-foreground">
+                {referee.disp ? "Disponible" : "No disponible"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-      {canEdit && (
-        <div className="flex flex-wrap gap-3">
-          <RefereePromotionButton
-            refereeId={referee.id}
-            currentLevel={referee.nivel}
-            zona={referee.zona}
-          />
+        {/* Trajectory stats — 2/5 */}
+        <div className="grid grid-cols-2 content-start gap-3 lg:col-span-2">
+          {trayectoria.map((t) => (
+            <Card key={t.label}>
+              <CardContent className="px-5 py-4">
+                <p className="friendly-label mb-1">{t.label}</p>
+                <p className="text-2xl font-bold tracking-tight text-foreground">
+                  {t.value}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      )}
+      </div>
 
       <ExamsManager
         exams={exams}
@@ -139,7 +188,9 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       />
 
       {canEdit && (
-        <RefereeEditForm referee={referee} zones={meta.zones} levels={meta.levels} />
+        <div id="edit-form">
+          <RefereeEditForm referee={referee} zones={meta.zones} levels={meta.levels} />
+        </div>
       )}
     </PageShell>
   );
