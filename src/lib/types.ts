@@ -7,10 +7,14 @@ export type EventStatus =
   | "Borrador";
 export type EventType = "AEP-1" | "AEP-2" | "AEP-3";
 export type RoleKey =
-  | "jurado"
   | "central"
   | "lateral"
+  | "ordenador"
+  | "speaker"
+  | "control"
+  | "jurado"
   | "pesaje"
+  | "equipamiento"
   | "material";
 
 export type UserRole =
@@ -68,12 +72,27 @@ export interface RosterRole {
   key: RoleKey;
 }
 
+/** Categoría que compite en una sesión: género + clases de peso. */
+export interface RosterCategoria {
+  genero: "Hombres" | "Mujeres";
+  pesos: string;
+}
+
 export interface RosterSession {
   sesion: string;
   nombre: string;
-  fecha: string;
-  grupos: string[];
+  /** Día al que pertenece la sesión — agrupa columnas (ej. "Viernes 15 may"). */
+  dia: string;
+  /** Categorías que compiten en la sesión. */
+  categorias: RosterCategoria[];
+  /** Horario de competición (ej. "12:30 - 15:45"). */
+  horarioCompeticion: string;
+  /** Horario de pesaje y revisión de equipamiento (ej. "10:30 - 12:00"). */
+  horarioPesaje: string;
+  /** Roles de competición (9 plazas). */
   roles: RosterRole[];
+  /** Roles del bloque de pesaje y revisión de equipamiento. */
+  pesajeRoles: RosterRole[];
 }
 
 export interface ActivityItem {

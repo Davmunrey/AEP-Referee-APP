@@ -10,13 +10,19 @@ const LEVEL_RANK: Record<RefereeLevel, number> = {
 const MIN_LEVEL_BY_ROLE: Partial<Record<RoleKey, RefereeLevel>> = {
   central: "Nacional",
   lateral: "Nacional",
+  control: "Nacional",
   jurado: "Regional",
+  ordenador: "Regional",
+  speaker: "Regional",
+  pesaje: "Regional",
+  equipamiento: "Regional",
+  material: "Regional",
 };
 
 export function minLevelForRole(roleKey: RoleKey, eventType: EventType): RefereeLevel {
   if (eventType === "AEP-1") {
     if (roleKey === "central" || roleKey === "lateral") return "IPF Cat. 2";
-    if (roleKey === "jurado") return "Nacional";
+    if (roleKey === "jurado" || roleKey === "control") return "Nacional";
   }
   return MIN_LEVEL_BY_ROLE[roleKey] ?? "Regional";
 }
@@ -43,16 +49,17 @@ export function validateAssignment(
 }
 
 export function countOpenSlots(
-  template: { roles: { slots: number }[] }[],
+  template: {
+    roles: { slots: number }[];
+    pesajeRoles?: { slots: number }[];
+  }[],
   assignments: Record<string, string>,
 ): number {
   let total = 0;
-  let filled = 0;
   for (const session of template) {
-    for (const role of session.roles) {
-      total += role.slots;
-    }
+    for (const role of session.roles) total += role.slots;
+    for (const role of session.pesajeRoles ?? []) total += role.slots;
   }
-  filled = Object.values(assignments).filter(Boolean).length;
+  const filled = Object.values(assignments).filter(Boolean).length;
   return Math.max(0, total - filled);
 }

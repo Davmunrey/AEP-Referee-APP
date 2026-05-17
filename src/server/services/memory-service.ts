@@ -1,6 +1,7 @@
 import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { computeJudgeProfile } from "@/lib/judge-stats";
+import { formatRosterExport } from "@/lib/roster-export";
 import type {
   AnalyticsPayload,
   AppMeta,
@@ -498,27 +499,10 @@ export const memoryDataService = {
     const comp = await memoryDataService.getCompetition(eventId);
     if (!roster || !comp) return null;
     const store = getStore();
-    const lines: string[] = [
-      `AEP TARIMA — Plantilla arbitral`,
-      `Evento: ${comp.nombre}`,
-      `Fechas: ${comp.fecha} – ${comp.fechaFin}`,
-      `Sede: ${comp.sede}`,
-      `Tipo: ${comp.tipo}`,
-      "",
-    ];
-    for (const session of roster.template) {
-      lines.push(`## ${session.sesion} — ${session.nombre}`);
-      for (const role of session.roles) {
-        for (let i = 0; i < role.slots; i++) {
-          const key = `${session.sesion}_${role.key}_${i}`;
-          const refId = roster.assignments[key];
-          const ref = refId ? store.referees.find((r) => r.id === refId) : undefined;
-          lines.push(`- ${role.rol} ${i + 1}: ${ref?.nombre ?? "— VACÍO"} (${ref?.nivel ?? ""})`);
-        }
-      }
-      lines.push("");
-    }
-    return lines.join("\n");
+    return formatRosterExport(comp, roster.template, roster.assignments, (id) => {
+      const r = store.referees.find((ref) => ref.id === id);
+      return r ? { nombre: r.nombre, nivel: r.nivel } : undefined;
+    });
   },
 
   deleteReferee: async (id: string): Promise<boolean> => {

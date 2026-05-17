@@ -15,6 +15,7 @@ import type {
   RefereeLevel,
   RegulationRule,
   RoleKey,
+  RosterRole,
   RosterSession,
   UserRole,
   Zone,
@@ -111,7 +112,10 @@ export function RosterBuilder({
   }, [assignments, template, regulations, event.tipo]);
 
   const totalSlots = template.reduce(
-    (acc, s) => acc + s.roles.reduce((a, r) => a + r.slots, 0),
+    (acc, s) =>
+      acc +
+      s.roles.reduce((a, r) => a + r.slots, 0) +
+      (s.pesajeRoles ?? []).reduce((a, r) => a + r.slots, 0),
     0,
   );
   const filledSlots = Object.values(assignments).filter(Boolean).length;
@@ -323,26 +327,35 @@ export function RosterBuilder({
 
         <section className="flex flex-col overflow-hidden">
           <div className="border-b border-border p-4">
-            <h2 className="text-sm font-semibold text-foreground-secondary">Slots de asignación</h2>
+            <h2 className="text-sm font-semibold text-foreground-secondary">
+              Acta de tarima · {template.length} sesiones
+            </h2>
             <p className="text-xs text-subtle-muted">
-              Juez Central, Laterales, Pesaje y Jurado por sesión
+              Competición (9 roles) y pesaje por sesión, agrupadas por día
             </p>
           </div>
           <ScrollArea className="flex-1">
             <div className="space-y-6 p-4">
-              {template.map((session) => (
-                <SessionBlock
-                  key={session.sesion}
-                  session={session}
-                  assignments={assignments}
-                  getReferee={getReferee}
-                  selectedSlot={selectedSlot}
-                  onSelectSlot={setSelectedSlot}
-                  onDrop={onDrop}
-                  onClear={persistClear}
-                  checkViolation={checkViolation}
-                  readOnly={readOnly}
-                />
+              {groupSessionsByDay(template).map(([dia, sesiones]) => (
+                <div key={dia} className="space-y-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
+                    {dia}
+                  </h3>
+                  {sesiones.map((session) => (
+                    <SessionBlock
+                      key={session.sesion}
+                      session={session}
+                      assignments={assignments}
+                      getReferee={getReferee}
+                      selectedSlot={selectedSlot}
+                      onSelectSlot={setSelectedSlot}
+                      onDrop={onDrop}
+                      onClear={persistClear}
+                      checkViolation={checkViolation}
+                      readOnly={readOnly}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           </ScrollArea>
@@ -409,10 +422,25 @@ function RefereeCard({
   );
 }
 
+/** Agrupa sesiones por día preservando el orden. */
+function groupSessionsByDay(
+  sessions: RosterSession[],
+): [string, RosterSession[]][] {
+  const groups: [string, RosterSession[]][] = [];
+  for (const s of sessions) {
+    const dia = s.dia || "Sesiones";
+    const existing = groups.find(([d]) => d === dia);
+    if (existing) existing[1].push(s);
+    else groups.push([dia, [s]]);
+  }
+  return groups;
+}
+
 function sessionProgress(session: RosterSession, assignments: AssignmentsMap) {
-  const slots = session.roles.reduce((a, r) => a + r.slots, 0);
+  const allRoles = [...session.roles, ...(session.pesajeRoles ?? [])];
+  const slots = allRoles.reduce((a, r) => a + r.slots, 0);
   let filled = 0;
-  for (const role of session.roles) {
+  for (const role of allRoles) {
     for (let i = 0; i < role.slots; i++) {
       if (assignments[`${session.sesion}_${role.key}_${i}`]) filled++;
     }
@@ -421,18 +449,9 @@ function sessionProgress(session: RosterSession, assignments: AssignmentsMap) {
   return { filled, slots, pct };
 }
 
-function SessionBlock({
-  session,
-  assignments,
-  getReferee,
-  selectedSlot,
-  onSelectSlot,
-  onDrop,
-  onClear,
-  checkViolation,
-  readOnly = false,
-}: {
-  session: RosterSession;
+interface SlotGridProps {
+  sesion: string;
+  roles: RosterRole[];
   assignments: AssignmentsMap;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
@@ -440,38 +459,31 @@ function SessionBlock({
   onDrop: (slotKey: string, refereeId: string) => void;
   onClear: (slotKey: string) => void;
   checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
-  readOnly?: boolean;
-}) {
-  const { filled, slots, pct } = sessionProgress(session, assignments);
-  const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
+  readOnly: boolean;
+}
 
+function SlotGrid({
+  sesion,
+  roles,
+  assignments,
+  getReferee,
+  selectedSlot,
+  onSelectSlot,
+  onDrop,
+  onClear,
+  checkViolation,
+  readOnly,
+}: SlotGridProps) {
   return (
-    <article className="rounded-xl border border-border bg-surface/40 p-4">
-      <header className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs text-primary">{session.sesion}</p>
-          <h3 className="font-medium text-foreground">{session.nombre}</h3>
-          <p className="text-xs text-subtle-muted">{session.fecha}</p>
-          <p className="mt-1 text-xs text-subtle-muted">{session.grupos.join(" · ")}</p>
-        </div>
-        <div className="min-w-[100px]">
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${pct}%` }} />
-          </div>
-          <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-subtle-muted">
-            {filled}/{slots}
-          </p>
-        </div>
-      </header>
-      <div className="space-y-4">
-        {session.roles.map((role) => (
-          <div key={role.key}>
+    <div className="space-y-4">
+      {roles.map((role) => (
+        <div key={role.key}>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-subtle-muted">
               {role.rol}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {Array.from({ length: role.slots }).map((_, idx) => {
-                const slotKey = `${session.sesion}_${role.key}_${idx}`;
+                const slotKey = `${sesion}_${role.key}_${idx}`;
                 const refereeId = assignments[slotKey];
                 const referee = refereeId ? getReferee(refereeId) : undefined;
                 const isSelected = selectedSlot === slotKey;
@@ -541,7 +553,87 @@ function SessionBlock({
             </div>
           </div>
         ))}
-      </div>
+    </div>
+  );
+}
+
+function SessionBlock({
+  session,
+  assignments,
+  getReferee,
+  selectedSlot,
+  onSelectSlot,
+  onDrop,
+  onClear,
+  checkViolation,
+  readOnly = false,
+}: {
+  session: RosterSession;
+  assignments: AssignmentsMap;
+  getReferee: (id: string) => Referee | undefined;
+  selectedSlot: string | null;
+  onSelectSlot: (key: string | null) => void;
+  onDrop: (slotKey: string, refereeId: string) => void;
+  onClear: (slotKey: string) => void;
+  checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
+  readOnly?: boolean;
+}) {
+  const { filled, slots, pct } = sessionProgress(session, assignments);
+  const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
+  const pesajeRoles = session.pesajeRoles ?? [];
+  const grid = {
+    sesion: session.sesion,
+    assignments,
+    getReferee,
+    selectedSlot,
+    onSelectSlot,
+    onDrop,
+    onClear,
+    checkViolation,
+    readOnly,
+  };
+
+  return (
+    <article className="rounded-xl border border-border bg-surface/40 p-4">
+      <header className="mb-4 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-mono text-xs text-primary">{session.sesion}</p>
+          <h3 className="font-medium text-foreground">{session.nombre}</h3>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {(session.categorias ?? []).map((c, i) => (
+              <span
+                key={i}
+                className="rounded bg-surface-active px-1.5 py-0.5 text-[10.5px] text-foreground-secondary"
+              >
+                {c.genero} {c.pesos}
+              </span>
+            ))}
+          </div>
+          <p className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-subtle-muted">
+            <span>Competición {session.horarioCompeticion}</span>
+            <span>Pesaje {session.horarioPesaje}</span>
+          </p>
+        </div>
+        <div className="min-w-[100px] shrink-0">
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${pct}%` }} />
+          </div>
+          <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-subtle-muted">
+            {filled}/{slots}
+          </p>
+        </div>
+      </header>
+
+      <SlotGrid roles={session.roles} {...grid} />
+
+      {pesajeRoles.length > 0 && (
+        <>
+          <p className="mb-2 mt-5 border-t border-border-muted pt-3 text-[11px] font-semibold uppercase tracking-wider text-primary">
+            Pesaje y revisión de equipamiento · {session.horarioPesaje}
+          </p>
+          <SlotGrid roles={pesajeRoles} {...grid} />
+        </>
+      )}
     </article>
   );
 }
