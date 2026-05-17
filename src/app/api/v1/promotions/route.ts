@@ -12,7 +12,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "lectura") return jsonError("Sin permiso", 403);
+  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const body = await request.json();
   const refereeId = String(body.refereeId ?? "").trim();

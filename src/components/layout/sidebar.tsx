@@ -115,7 +115,7 @@ export function Sidebar({
   onToggle,
 }: SidebarProps) {
   const primaryNav = buildPrimaryNav(navCounts);
-  const secondaryNav = buildSecondaryNav(navCounts, currentUser.role === "nacional");
+  const secondaryNav = buildSecondaryNav(navCounts, currentUser.role === "super_admin");
   const pathname = usePathname();
   const router = useRouter();
 

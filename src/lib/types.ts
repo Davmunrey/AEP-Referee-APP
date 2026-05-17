@@ -13,7 +13,19 @@ export type RoleKey =
   | "pesaje"
   | "material";
 
-export type UserRole = "nacional" | "regional" | "lectura";
+export type UserRole =
+  | "super_admin"
+  | "delegado_jueces"
+  | "delegado_zona"
+  | "solo_ver";
+
+/** Etiqueta legible para cada rol de usuario. */
+export const ROLE_LABELS: Record<UserRole, string> = {
+  super_admin: "Super Admin",
+  delegado_jueces: "Delegado de Jueces",
+  delegado_zona: "Delegado de Zona",
+  solo_ver: "Solo Ver",
+};
 export type ApprovalStatus = "pendiente" | "aprobado" | "rechazado";
 
 export interface Zone {

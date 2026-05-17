@@ -35,9 +35,9 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
         id: user.id,
         email,
         nombre,
-        rol_label: isFirst ? "AEP Nacional" : "Pendiente de asignación",
+        rol_label: isFirst ? "Super Admin" : "Pendiente de asignación",
         iniciales: initialsFrom(nombre, email),
-        role: isFirst ? "nacional" : "lectura",
+        role: isFirst ? "super_admin" : "solo_ver",
         zona: null,
         activo: true,
       },
@@ -75,16 +75,41 @@ export async function getSession(): Promise<SessionUser | null> {
   return profileToSessionUser(profile as ProfileRow);
 }
 
+/**
+ * RBAC. Cuatro roles:
+ *  - super_admin      — control total.
+ *  - delegado_jueces  — autoridad nacional sobre jueces, exámenes, informes y
+ *                       ascensos; sin poder sobre campeonatos ni usuarios.
+ *  - delegado_zona    — gestiona campeonatos, tarimas y jueces de SU zona.
+ *  - solo_ver         — solo lectura.
+ */
+
+/** Campeonatos y tarima: crear, editar, asignar. */
 export function canEditRoster(user: SessionUser, eventZona?: string): boolean {
-  if (user.role === "lectura") return false;
-  if (user.role === "nacional") return true;
-  return user.zona === eventZona;
+  if (user.role === "super_admin") return true;
+  if (user.role === "delegado_zona") return user.zona === eventZona;
+  return false;
 }
 
+/** Alias semántico para gestión de campeonatos. */
+export const canManageCompetitions = canEditRoster;
+
+/** Aprobar propuestas de tarima. */
 export function canApprove(user: SessionUser): boolean {
-  return user.role === "nacional";
+  return user.role === "super_admin";
 }
 
+/** Gestión de cuentas de usuario. */
 export function canManageUsers(user: SessionUser): boolean {
-  return user.role === "nacional";
+  return user.role === "super_admin";
+}
+
+/** Crear/editar jueces, exámenes e informes. */
+export function canManageJudges(user: SessionUser): boolean {
+  return user.role !== "solo_ver";
+}
+
+/** Eliminar jueces, exámenes o informes; revisar ascensos. */
+export function canAdminJudges(user: SessionUser): boolean {
+  return user.role === "super_admin" || user.role === "delegado_jueces";
 }

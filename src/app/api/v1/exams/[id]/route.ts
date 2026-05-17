@@ -10,7 +10,7 @@ interface RouteContext {
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "lectura") return jsonError("Sin permiso", 403);
+  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   const body = (await request.json()) as {
@@ -28,7 +28,8 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role !== "nacional") return jsonError("Sin permiso", 403);
+  if (user.role !== "super_admin" && user.role !== "delegado_jueces")
+    return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   const ok = await dataService.deleteExam(id);

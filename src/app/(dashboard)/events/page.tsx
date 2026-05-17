@@ -23,7 +23,7 @@ export default async function EventsPage() {
         title="Campeonatos"
         description={`${events.length} eventos en temporada · gestión de plantillas arbitrales`}
       >
-        {user.role !== "lectura" && (
+        {(user.role === "super_admin" || user.role === "delegado_zona") && (
           <Button className="gap-1.5" asChild>
             <Link href="/events/new">
               <Plus className="h-4 w-4" />

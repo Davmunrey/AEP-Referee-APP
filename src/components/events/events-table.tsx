@@ -60,9 +60,9 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
   );
 
   const canDelete = (event: Competition) => {
-    if (role === "lectura") return false;
-    if (role === "nacional") return true;
-    return event.zona === userZona;
+    if (role === "super_admin") return true;
+    if (role === "delegado_zona") return event.zona === userZona;
+    return false;
   };
 
   const deleteEvent = async (id: string, nombre: string) => {

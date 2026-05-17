@@ -10,7 +10,8 @@ import { redirect } from "next/navigation";
 export default async function NewEventPage() {
   const user = await getSession();
   if (!user) redirect("/sign-in");
-  if (user.role === "lectura") redirect("/events");
+  if (user.role === "solo_ver" || user.role === "delegado_jueces")
+    redirect("/events");
 
   return (
     <PageShell>

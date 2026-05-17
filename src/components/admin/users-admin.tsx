@@ -44,7 +44,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
     password: "",
     nombre: "",
     rolLabel: "",
-    role: "regional" as UserRole,
+    role: "delegado_zona" as UserRole,
     zona: zones[0]?.code ?? "",
   });
 
@@ -109,7 +109,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           nombre: form.nombre,
           rolLabel: form.rolLabel,
           role: form.role,
-          zona: form.role === "regional" ? form.zona : null,
+          zona: form.role === "delegado_zona" ? form.zona : null,
         }),
       });
       const json = await res.json();
@@ -119,7 +119,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
         password: "",
         nombre: "",
         rolLabel: "",
-        role: "regional",
+        role: "delegado_zona",
         zona: zones[0]?.code ?? "",
       });
       await load();
@@ -175,11 +175,12 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           value={form.role}
           onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}
         >
-          <option value="nacional">Nacional</option>
-          <option value="regional">Regional</option>
-          <option value="lectura">Solo lectura</option>
+          <option value="super_admin">Super Admin</option>
+          <option value="delegado_jueces">Delegado de Jueces</option>
+          <option value="delegado_zona">Delegado de Zona</option>
+          <option value="solo_ver">Solo Ver</option>
         </select>
-        {form.role === "regional" && (
+        {form.role === "delegado_zona" && (
           <select
             className={selectFieldClass}
             value={form.zona}

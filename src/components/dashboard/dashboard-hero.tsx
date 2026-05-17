@@ -96,7 +96,7 @@ export function DashboardHero({
               Exportar
             </a>
           </Button>
-          {user.role !== "lectura" && (
+          {(user.role === "super_admin" || user.role === "delegado_zona") && (
             <Button size="sm" className="gap-1.5 rounded-xl" asChild>
               <Link href="/events/new">
                 <Plus className="h-3.5 w-3.5" />

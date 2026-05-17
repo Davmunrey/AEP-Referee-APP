@@ -47,8 +47,8 @@ export default async function ReportsPage() {
       <ReportsManager
         reports={reports}
         referees={referees.map((r) => ({ id: r.id, nombre: r.nombre }))}
-        canEdit={user.role !== "lectura"}
-        canDelete={user.role === "nacional"}
+        canEdit={user.role !== "solo_ver"}
+        canDelete={user.role === "super_admin" || user.role === "delegado_jueces"}
       />
     </PageShell>
   );

@@ -164,7 +164,7 @@ export const memoryDataService = {
   }): Promise<Referee[]> => {
     const store = getStore();
     return store.referees.filter((r) => {
-      if (params?.user?.role === "regional" && params.user.zona && r.zona !== params.user.zona) {
+      if (params?.user?.role === "delegado_zona" && params.user.zona && r.zona !== params.user.zona) {
         return false;
       }
       if (params?.zona && params.zona !== "TODAS" && r.zona !== params.zona) return false;
@@ -208,7 +208,7 @@ export const memoryDataService = {
 
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const list = getStore().competitions;
-    if (user?.role === "regional" && user.zona) {
+    if (user?.role === "delegado_zona" && user.zona) {
       return list.filter((c) => c.zona === user.zona);
     }
     return list;
@@ -361,7 +361,7 @@ export const memoryDataService = {
 
   getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
     const list = getStore().approvals;
-    if (user?.role === "regional" && user.zona) {
+    if (user?.role === "delegado_zona" && user.zona) {
       return list.filter((a) => a.zona === user.zona);
     }
     return list;
@@ -406,7 +406,7 @@ export const memoryDataService = {
 
   getPromotions: async (user?: SessionUser): Promise<PromotionRequest[]> => {
     const list = getStore().promotions;
-    if (user?.role === "regional" && user.zona) {
+    if (user?.role === "delegado_zona" && user.zona) {
       return list.filter((p) => p.zona === user.zona);
     }
     return list;

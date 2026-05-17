@@ -211,7 +211,7 @@ export const supabaseDataService = {
   getDashboard: async (user: SessionUser): Promise<DashboardPayload> => {
     const supabase = db();
     let query = supabase.from("competitions").select("*").order("fecha", { ascending: true });
-    if (user.role === "regional" && user.zona) {
+    if (user.role === "delegado_zona" && user.zona) {
       query = query.eq("zona", user.zona);
     }
     const template = await getRosterTemplate();
@@ -290,7 +290,7 @@ export const supabaseDataService = {
     return (data ?? [])
       .map((r) => mapReferee(r as Record<string, unknown>))
       .filter((r) => {
-        if (params?.user?.role === "regional" && params.user.zona && r.zona !== params.user.zona) {
+        if (params?.user?.role === "delegado_zona" && params.user.zona && r.zona !== params.user.zona) {
           return false;
         }
         if (params?.zona && params.zona !== "TODAS" && r.zona !== params.zona) return false;
@@ -345,7 +345,7 @@ export const supabaseDataService = {
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const supabase = db();
     let query = supabase.from("competitions").select("*").order("fecha");
-    if (user?.role === "regional" && user.zona) query = query.eq("zona", user.zona);
+    if (user?.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
     const { data } = await query;
     return (data ?? []).map((r) => mapCompetition(r as Record<string, unknown>));
   },
@@ -543,7 +543,7 @@ export const supabaseDataService = {
   getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
     const supabase = db();
     let query = supabase.from("approval_proposals").select("*").order("submitted_at", { ascending: false });
-    if (user?.role === "regional" && user.zona) query = query.eq("zona", user.zona);
+    if (user?.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
     const { data } = await query;
     return (data ?? []).map((r) => mapApproval(r as Record<string, unknown>));
   },
@@ -616,7 +616,7 @@ export const supabaseDataService = {
   getPromotions: async (user?: SessionUser): Promise<PromotionRequest[]> => {
     const supabase = db();
     let query = supabase.from("promotion_requests").select("*");
-    if (user?.role === "regional" && user.zona) query = query.eq("zona", user.zona);
+    if (user?.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
     const { data } = await query;
     return (data ?? []).map((r) => mapPromotion(r as Record<string, unknown>));
   },

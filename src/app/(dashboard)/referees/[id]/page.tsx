@@ -31,8 +31,8 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   const { referee, exams, reports, examsPassed, examsTotal, avgScore } = profile;
   const zoneName =
     meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
-  const canEdit = user.role !== "lectura";
-  const canDelete = user.role === "nacional";
+  const canEdit = user.role !== "solo_ver";
+  const canDelete = user.role === "super_admin" || user.role === "delegado_jueces";
 
   const trayectoria = [
     { label: "Exámenes", value: examsTotal },

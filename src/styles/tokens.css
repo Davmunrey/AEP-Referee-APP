@@ -169,4 +169,8 @@
   --role-read-ring: color-mix(in srgb, var(--neutral-400) 35%, transparent);
   --role-read-bg-from: var(--neutral-150);
   --role-read-bg-to: var(--neutral-50);
+
+  --role-jueces-ring: color-mix(in srgb, var(--info) 35%, transparent);
+  --role-jueces-bg-from: color-mix(in srgb, var(--info) 16%, var(--neutral-0));
+  --role-jueces-bg-to: color-mix(in srgb, var(--info) 6%, var(--neutral-0));
 }
