@@ -197,7 +197,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           <Button type="submit" disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear usuario"}
           </Button>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         </div>
       </form>
 
@@ -248,9 +248,10 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
                       size="icon"
                       className="text-destructive hover:text-destructive"
                       disabled={actionId === u.id}
+                      aria-label={`Eliminar ${u.nombre}`}
                       onClick={() => void deleteUser(u.id, u.nombre)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </DataTableCell>

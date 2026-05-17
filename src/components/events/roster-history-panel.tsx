@@ -28,16 +28,29 @@ export function RosterHistoryPanel({ eventId }: { eventId: string }) {
 
   return (
     <div className="relative">
-      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void toggle()}>
-        <History className="h-3.5 w-3.5" />
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-1.5"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => void toggle()}
+      >
+        <History className="h-3.5 w-3.5" aria-hidden="true" />
         Historial
       </Button>
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border border-border bg-background shadow-xl">
           <div className="flex items-center justify-between border-b border-border-muted px-4 py-3">
             <p className="text-xs font-semibold text-foreground">Historial de cambios</p>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOpen(false)}>
-              <X className="h-3.5 w-3.5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              aria-label="Cerrar historial"
+              onClick={() => setOpen(false)}
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
           </div>
           <div className="max-h-72 overflow-y-auto divide-y divide-border-muted">

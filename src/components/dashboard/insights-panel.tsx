@@ -66,10 +66,14 @@ export function InsightsPanel({ insights }: { insights: Insight[] }) {
           const Icon = s.icon;
           return (
             <div key={insight.id} className="flex gap-3 px-4 py-3.5">
-              <span className={cn("mt-0.5 w-1 shrink-0 rounded-full", s.rail)} />
+              <span
+                aria-hidden="true"
+                className={cn("mt-0.5 w-1 shrink-0 rounded-full", s.rail)}
+              />
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center gap-2">
-                  <Icon className={cn("h-3.5 w-3.5 shrink-0", s.iconColor)} />
+                  <Icon className={cn("h-3.5 w-3.5 shrink-0", s.iconColor)} aria-hidden="true" />
+                  <span className="sr-only">{insight.severity}:</span>
                   <p className="truncate text-[13px] font-semibold text-foreground">
                     {insight.title}
                   </p>

@@ -44,8 +44,12 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
       <div className="flex items-center gap-2.5">
         {!hideSearch && (
           <div className="relative hidden max-w-xs md:block">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-subtle-muted" />
+            <Search
+              className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-subtle-muted"
+              aria-hidden="true"
+            />
             <Input
+              type="search"
               placeholder="Buscar campeonatos, árbitros…"
               className="h-9 w-64 rounded-full border-border-muted bg-surface pl-9 text-xs"
               aria-label="Buscar"

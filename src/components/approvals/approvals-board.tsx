@@ -83,8 +83,9 @@ export function ApprovalsBoard({ initial, canReview, refNames = {} }: ApprovalsB
                   key={item.id}
                   type="button"
                   onClick={() => setSelected(item)}
+                  aria-pressed={selected?.id === item.id}
                   className={cn(
-                    "w-full rounded-xl border p-3.5 text-left transition-all",
+                    "w-full rounded-xl border p-3.5 text-left transition-all focus-ring",
                     selected?.id === item.id
                       ? "border-primary-border bg-primary-muted shadow-glow-primary"
                       : "border-border hover:border-border-strong hover:bg-surface-hover",

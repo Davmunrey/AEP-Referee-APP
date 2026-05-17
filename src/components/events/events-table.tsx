@@ -82,7 +82,9 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
     <div className="space-y-0">
       <div className="flex flex-wrap items-center gap-2 border-b border-border-muted p-4">
         <Input
+          type="search"
           placeholder="Buscar campeonato o sede…"
+          aria-label="Buscar campeonato o sede"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"

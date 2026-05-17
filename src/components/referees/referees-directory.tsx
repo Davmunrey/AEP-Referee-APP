@@ -90,7 +90,9 @@ export function RefereesDirectory({
       <Card className="overflow-hidden p-0">
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
           <Input
+            type="search"
             placeholder="Buscar por nombre…"
+            aria-label="Buscar árbitro por nombre"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-8 max-w-xs text-xs"

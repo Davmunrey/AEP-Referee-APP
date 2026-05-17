@@ -52,8 +52,8 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border-muted bg-surface px-4 py-2.5">
-      <div className="flex items-center gap-2.5">
-        <span className="relative flex h-2 w-2">
+      <div className="flex items-center gap-2.5" aria-live="polite">
+        <span className="relative flex h-2 w-2" aria-hidden="true">
           {auto && (
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
           )}
@@ -75,18 +75,25 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
         <button
           type="button"
           onClick={() => setAuto((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover"
+          aria-pressed={auto}
+          aria-label={auto ? "Pausar actualización automática" : "Reanudar actualización automática"}
+          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px] font-medium text-muted-foreground transition-colors focus-ring hover:bg-surface-hover"
         >
-          {auto ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          {auto ? (
+            <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <Play className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
           {auto ? "Pausar" : "Reanudar"}
         </button>
         <button
           type="button"
           onClick={refresh}
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-surface-hover px-2.5 py-1 text-[11.5px] font-medium text-foreground-secondary transition-colors hover:bg-surface-active disabled:opacity-60"
+          aria-label="Actualizar panel ahora"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-surface-hover px-2.5 py-1 text-[11.5px] font-medium text-foreground-secondary transition-colors focus-ring hover:bg-surface-active disabled:opacity-60"
         >
-          <RefreshCw className={cn("h-3.5 w-3.5", isPending && "animate-spin")} />
+          <RefreshCw className={cn("h-3.5 w-3.5", isPending && "animate-spin")} aria-hidden="true" />
           {isPending ? "Actualizando" : "Actualizar"}
         </button>
       </div>

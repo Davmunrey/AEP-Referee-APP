@@ -246,7 +246,11 @@ export function ExamsManager({
               className={textareaFieldClass}
             />
           </label>
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
           <div className="flex justify-end">
             <Button size="sm" className="rounded-xl" disabled={busy} onClick={submit}>
               {busy ? "Guardando…" : "Registrar examen"}
@@ -288,7 +292,14 @@ export function ExamsManager({
               </p>
               {pct != null && (
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-active">
+                  <div
+                    className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-active"
+                    role="progressbar"
+                    aria-valuenow={pct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Puntuación: ${pct}% (${pct >= 60 ? "aprobado" : "no superado"})`}
+                  >
                     <div
                       className={cn(
                         "h-full rounded-full",

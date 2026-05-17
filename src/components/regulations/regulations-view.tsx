@@ -52,10 +52,11 @@ function IpfArticleList({
             <button
               type="button"
               onClick={() => toggle(art.num)}
-              className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors"
+              className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors focus-ring hover:bg-surface-hover"
               aria-expanded={isOpen}
+              aria-controls={`ipf-art-${chapter.num}-${art.num}`}
             >
-              <span className="mt-0.5 shrink-0 text-primary">
+              <span className="mt-0.5 shrink-0 text-primary" aria-hidden="true">
                 {isOpen ? (
                   <ChevronDown className="h-3.5 w-3.5" />
                 ) : (
@@ -65,7 +66,7 @@ function IpfArticleList({
               <span className="text-sm font-medium text-foreground">{label}</span>
             </button>
             {isOpen && (
-              <div className="px-4 pb-4 pl-10">
+              <div id={`ipf-art-${chapter.num}-${art.num}`} className="px-4 pb-4 pl-10">
                 <p className="whitespace-pre-line text-sm leading-relaxed text-foreground-secondary">
                   {art.text}
                 </p>
@@ -122,35 +123,43 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border-muted">
+      <div className="flex gap-1 border-b border-border-muted" role="tablist" aria-label="Vistas de normativa">
         <button
           type="button"
+          role="tab"
+          id="tab-matrix"
+          aria-selected={tab === "matrix"}
+          aria-controls="panel-matrix"
           onClick={() => setTab("matrix")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px focus-ring ${
             tab === "matrix"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <BookOpen className="h-3.5 w-3.5" />
+          <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
           Matriz AEP
         </button>
         <button
           type="button"
+          role="tab"
+          id="tab-ipf"
+          aria-selected={tab === "ipf"}
+          aria-controls="panel-ipf"
           onClick={() => setTab("ipf")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px focus-ring ${
             tab === "ipf"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <FileText className="h-3.5 w-3.5" />
+          <FileText className="h-3.5 w-3.5" aria-hidden="true" />
           Reglamento IPF
         </button>
       </div>
 
       {tab === "matrix" && (
-        <Card>
+        <Card id="panel-matrix" role="tabpanel" aria-labelledby="tab-matrix">
           <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-border-muted pb-4">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-primary" />
@@ -205,7 +214,7 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
       )}
 
       {tab === "ipf" && (
-        <div className="space-y-4">
+        <div className="space-y-4" id="panel-ipf" role="tabpanel" aria-labelledby="tab-ipf">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-subtle-muted">
               <strong className="text-foreground-secondary">IPF Technical Rulebook</strong>{" "}
@@ -256,10 +265,11 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
                   <button
                     type="button"
                     onClick={() => toggleChapter(chapter.num)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left focus-ring"
                     aria-expanded={isOpen}
+                    aria-controls={`ipf-chapter-${chapter.num}`}
                   >
-                    <span className="text-primary">
+                    <span className="text-primary" aria-hidden="true">
                       {isOpen ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (
@@ -275,7 +285,10 @@ export function RegulationsView({ rules }: { rules: RegulationRule[] }) {
                   </button>
                 </CardHeader>
                 {isOpen && (
-                  <CardContent className="p-0 border-t border-border-muted">
+                  <CardContent
+                    id={`ipf-chapter-${chapter.num}`}
+                    className="p-0 border-t border-border-muted"
+                  >
                     <IpfArticleList chapter={chapter} expandAll={!!q} />
                   </CardContent>
                 )}
