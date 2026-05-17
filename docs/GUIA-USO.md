@@ -124,10 +124,24 @@ En la página del campeonato (`/events/[id]`), si tienes permiso de edición:
    - Añadir / quitar **sesiones** (S1, S2…).
    - Cambiar **día**, **nombre**, **categorías** (género y pesos).
    - Ajustar **horarios** de competición y pesaje.
+   - Configurar **grupos** dentro de cada sesión (Grupo 1, Grupo 2…) con sus categorías y nº de levantadores.
    - Definir **roles** de pista y de pesaje (nombre, clave, número de plazas).
 3. **Guardar plantilla** — persiste en el servidor. Las asignaciones en slots que ya no existan se eliminan automáticamente.
 
 > Tras cambiar la plantilla, revisa las asignaciones: los `slotKey` antiguos desaparecen del mapa.
+
+### 5.5 Importar horario PDF
+
+En el editor de plantilla, botón **Importar PDF**:
+
+1. Selecciona un PDF de horario AEP oficial. Nombres tipo `20260517_AEP1_Horario-Junior_rev3.pdf` se reconocen automáticamente (tipo y fecha).
+2. La plataforma extrae **sesiones**, **grupos**, **horarios** (Pesaje / Inicio / Fin) y los **levantadores** por grupo.
+3. Revisa la **vista previa**: cabecera (campeonato, sede, fechas), número de sesiones detectadas y avisos de parseo.
+4. Confirma con **Aplicar plantilla** — sustituye la plantilla actual y purga asignaciones huérfanas.
+
+Roles arbitrales por defecto según el tipo (AEP-1: con jurado; AEP-2: con Liftingcast; AEP-3: cuadrante regional). Edita los roles tras importar si la sesión necesita un perfil distinto.
+
+Límite de archivo: **5 MB**. El PDF debe contener texto seleccionable (no escaneo OCR).
 
 ---
 

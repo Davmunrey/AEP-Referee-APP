@@ -5,13 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ROLE_LABELS, cloneTemplate, defaultPesajeRoles } from "@/lib/roster-template";
 import { COMPETICION_ROLES_AEP1, COMPETICION_ROLES_AEP2 } from "@/lib/mock-data";
-import type { EventType, RoleKey, RosterRole, RosterSession } from "@/lib/types";
+import type {
+  EventType,
+  RoleKey,
+  RosterCategoria,
+  RosterGrupo,
+  RosterRole,
+  RosterSession,
+} from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, FileUp, Plus, Trash2 } from "lucide-react";
+import { ScheduleImportDialog } from "@/components/events/schedule-import-dialog";
 
 const ROLE_KEYS = Object.keys(ROLE_LABELS) as RoleKey[];
 
 export interface RosterTemplateEditorProps {
+  eventId: string;
   eventType: EventType;
   initialTemplate: RosterSession[];
   onSave: (template: RosterSession[]) => void;
@@ -85,6 +94,7 @@ function RoleRows({
 }
 
 export function RosterTemplateEditor({
+  eventId,
   eventType,
   initialTemplate,
   onSave,
@@ -92,6 +102,7 @@ export function RosterTemplateEditor({
   saving,
 }: RosterTemplateEditorProps) {
   const [sessions, setSessions] = useState(() => cloneTemplate(initialTemplate));
+  const [importOpen, setImportOpen] = useState(false);
 
   const patchSession = (idx: number, patch: Partial<RosterSession>) => {
     setSessions((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
@@ -179,6 +190,97 @@ export function RosterTemplateEditor({
     );
   };
 
+  const patchGrupo = (
+    si: number,
+    gi: number,
+    patch: Partial<RosterGrupo>,
+  ) => {
+    setSessions((prev) =>
+      prev.map((s, i) => {
+        if (i !== si) return s;
+        const grupos = (s.grupos ?? []).map((g, j) => (j === gi ? { ...g, ...patch } : g));
+        return { ...s, grupos };
+      }),
+    );
+  };
+
+  const patchGrupoCat = (
+    si: number,
+    gi: number,
+    ci: number,
+    field: "genero" | "pesos",
+    value: string,
+  ) => {
+    setSessions((prev) =>
+      prev.map((s, i) => {
+        if (i !== si) return s;
+        const grupos = (s.grupos ?? []).map((g, j) =>
+          j !== gi
+            ? g
+            : {
+                ...g,
+                categorias: g.categorias.map((c, k) =>
+                  k === ci ? { ...c, [field]: value } : c,
+                ),
+              },
+        );
+        return { ...s, grupos };
+      }),
+    );
+  };
+
+  const addGrupo = (si: number) => {
+    setSessions((prev) =>
+      prev.map((s, i) => {
+        if (i !== si) return s;
+        const existing = s.grupos ?? [];
+        const nombre = `Grupo ${existing.length + 1}`;
+        const newGrupo: RosterGrupo = {
+          nombre,
+          categorias: [{ genero: "Hombres" as const, pesos: "" } satisfies RosterCategoria],
+          levantadores: undefined,
+        };
+        return { ...s, grupos: [...existing, newGrupo] };
+      }),
+    );
+  };
+
+  const removeGrupo = (si: number, gi: number) => {
+    setSessions((prev) =>
+      prev.map((s, i) => {
+        if (i !== si) return s;
+        const grupos = (s.grupos ?? []).filter((_, j) => j !== gi);
+        return { ...s, grupos: grupos.length > 0 ? grupos : undefined };
+      }),
+    );
+  };
+
+  const addGrupoCat = (si: number, gi: number) => {
+    setSessions((prev) =>
+      prev.map((s, i) => {
+        if (i !== si) return s;
+        const grupos = (s.grupos ?? []).map((g, j) =>
+          j === gi
+            ? { ...g, categorias: [...g.categorias, { genero: "Hombres" as const, pesos: "" }] }
+            : g,
+        );
+        return { ...s, grupos };
+      }),
+    );
+  };
+
+  const removeGrupoCat = (si: number, gi: number, ci: number) => {
+    setSessions((prev) =>
+      prev.map((s, i) => {
+        if (i !== si) return s;
+        const grupos = (s.grupos ?? []).map((g, j) =>
+          j !== gi ? g : { ...g, categorias: g.categorias.filter((_, k) => k !== ci) },
+        );
+        return { ...s, grupos };
+      }),
+    );
+  };
+
   const addSession = () => {
     const id = nextSessionId(sessions);
     const last = sessions[sessions.length - 1];
@@ -219,6 +321,16 @@ export function RosterTemplateEditor({
           Edita sesiones, días, categorías, horarios y roles. Guardar actualiza la plantilla del evento.
         </p>
         <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setImportOpen(true)}
+            disabled={saving}
+          >
+            <FileUp className="mr-1 h-4 w-4" />
+            Importar PDF
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={addSession}>
             <Plus className="mr-1 h-4 w-4" />
             Sesión
@@ -231,6 +343,16 @@ export function RosterTemplateEditor({
           </Button>
         </div>
       </div>
+
+      <ScheduleImportDialog
+        eventId={eventId}
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onApplied={(tpl) => {
+          setSessions(cloneTemplate(tpl));
+          setImportOpen(false);
+        }}
+      />
 
       {sessions.map((session, si) => (
         <div
@@ -331,6 +453,94 @@ export function RosterTemplateEditor({
                 onChange={(e) => patchSession(si, { horarioPesaje: e.target.value })}
               />
             </label>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wider text-subtle-muted">
+                Grupos {session.grupos && session.grupos.length > 0 ? `(${session.grupos.length})` : ""}
+              </p>
+              <Button type="button" variant="ghost" size="sm" onClick={() => addGrupo(si)}>
+                <Plus className="mr-1 h-3 w-3" />
+                Grupo
+              </Button>
+            </div>
+            {(session.grupos ?? []).map((grupo, gi) => (
+              <div
+                key={`${grupo.nombre}-${gi}`}
+                className="space-y-2 rounded border border-border p-2"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    className="w-32"
+                    value={grupo.nombre}
+                    onChange={(e) => patchGrupo(si, gi, { nombre: e.target.value })}
+                    placeholder="Grupo 1"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    className="w-20"
+                    value={grupo.levantadores ?? ""}
+                    onChange={(e) =>
+                      patchGrupo(si, gi, {
+                        levantadores: e.target.value ? Math.max(0, Number(e.target.value)) : undefined,
+                      })
+                    }
+                    placeholder="lev."
+                  />
+                  <span className="text-xs text-subtle-muted">levantadores</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => addGrupoCat(si, gi)}
+                  >
+                    <Plus className="mr-1 h-3 w-3" />
+                    Categoría
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeGrupo(si, gi)}
+                    aria-label="Eliminar grupo"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+                {grupo.categorias.map((cat, ci) => (
+                  <div key={ci} className="flex flex-wrap items-center gap-2 pl-2">
+                    <select
+                      value={cat.genero}
+                      onChange={(e) =>
+                        patchGrupoCat(si, gi, ci, "genero", e.target.value)
+                      }
+                      className={selectFieldClass}
+                    >
+                      <option value="Hombres">Hombres</option>
+                      <option value="Mujeres">Mujeres</option>
+                    </select>
+                    <Input
+                      className="flex-1 min-w-[8rem]"
+                      value={cat.pesos}
+                      onChange={(e) => patchGrupoCat(si, gi, ci, "pesos", e.target.value)}
+                      placeholder="Pesos del grupo"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeGrupoCat(si, gi, ci)}
+                      aria-label="Eliminar categoría"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
 
           <RoleRows

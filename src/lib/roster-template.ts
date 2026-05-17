@@ -26,6 +26,13 @@ export function cloneTemplate(sessions: RosterSession[]): RosterSession[] {
     categorias: s.categorias.map((c) => ({ ...c })),
     roles: cloneRosterRoles(s.roles),
     pesajeRoles: cloneRosterRoles(s.pesajeRoles ?? []),
+    grupos: s.grupos
+      ? s.grupos.map((g) => ({
+          nombre: g.nombre,
+          categorias: g.categorias.map((c) => ({ ...c })),
+          levantadores: g.levantadores,
+        }))
+      : undefined,
   }));
 }
 

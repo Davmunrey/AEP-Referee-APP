@@ -393,6 +393,7 @@ export function RosterBuilder({
             <ScrollArea className="flex-1">
               <div className="p-4">
                 <RosterTemplateEditor
+                  eventId={event.id}
                   eventType={event.tipo}
                   initialTemplate={template}
                   onSave={saveTemplate}
@@ -749,6 +750,21 @@ function SessionBlock({
             <span>Competición {session.horarioCompeticion}</span>
             <span>Pesaje {session.horarioPesaje}</span>
           </p>
+          {session.grupos && session.grupos.length > 0 && (
+            <ul className="mt-1.5 space-y-0.5 text-[11px] text-foreground-secondary">
+              {session.grupos.map((g, gi) => (
+                <li key={gi} className="flex flex-wrap gap-1">
+                  <span className="font-mono text-subtle-muted">{g.nombre}:</span>
+                  <span>
+                    {g.categorias.map((c) => `${c.genero} ${c.pesos}`).join(" · ") || "—"}
+                  </span>
+                  {typeof g.levantadores === "number" && (
+                    <span className="text-subtle-muted">({g.levantadores} lev.)</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="min-w-[100px] shrink-0">
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">

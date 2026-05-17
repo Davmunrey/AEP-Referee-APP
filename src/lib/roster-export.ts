@@ -76,6 +76,15 @@ export function formatRosterExport(
       .join(" · ");
     lines.push("", `## ${s.sesion} · ${s.nombre}`);
     if (cats) lines.push(`   Categorías: ${cats}`);
+    if (s.grupos && s.grupos.length > 0) {
+      for (const g of s.grupos) {
+        const gcats = g.categorias
+          .map((c) => `${c.genero} ${c.pesos}`)
+          .join(" · ");
+        const lev = typeof g.levantadores === "number" ? ` (${g.levantadores} lev.)` : "";
+        lines.push(`   ${g.nombre}: ${gcats}${lev}`);
+      }
+    }
     lines.push(`   Competición · ${s.horarioCompeticion}`);
     renderRoles(s.sesion, s.roles);
 
