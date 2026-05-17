@@ -23,6 +23,7 @@ import type {
   Zone,
 } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
+import { topArbitrajeRoles } from "@/lib/judges-registry/arbitraje-stats";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
@@ -378,7 +379,7 @@ export function RosterBuilder({
       {/* Main layout: left pane (referees) + right pane (acta) */}
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,300px)_1fr] xl:grid-cols-[minmax(0,340px)_1fr]">
         {/* ── Left pane: referee list ── */}
-        <section className="flex flex-col border-r border-border">
+        <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
           <div className="border-b border-border p-4">
             <h2 className="text-sm font-semibold text-foreground-secondary">
               Jueces disponibles
@@ -433,7 +434,7 @@ export function RosterBuilder({
             </p>
           </div>
 
-          <ScrollArea className="flex-1">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             <ul className="space-y-1.5 p-3">
               {availableReferees.map((referee) => (
                 <RefereeCard
@@ -456,7 +457,7 @@ export function RosterBuilder({
                 </li>
               )}
             </ul>
-          </ScrollArea>
+          </div>
 
           <div className="border-t border-border bg-background px-3 py-2">
             <p className="flex items-start gap-2 text-[10.5px] leading-snug text-subtle-muted">
@@ -554,6 +555,9 @@ function RefereeCard({
   readOnly?: boolean;
 }) {
   const locked = readOnly;
+  const topRoles = referee.arbitrajeStats
+    ? topArbitrajeRoles(referee.arbitrajeStats, 2)
+    : [];
   return (
     <li
       draggable={!locked}
@@ -586,6 +590,11 @@ function RefereeCard({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{referee.nombre}</p>
         <p className="text-xs text-subtle-muted">{zoneName(zones, referee.zona)}</p>
+        <p className="mt-0.5 font-mono text-[10px] text-subtle-muted">
+          {referee.eventos} arb.
+          {topRoles.length > 0 &&
+            ` · ${topRoles.map((r) => `${r.count}× ${r.role}`).join(", ")}`}
+        </p>
       </div>
       <LevelBadge level={referee.nivel} />
       {assigned && <Check className="h-3.5 w-3.5 shrink-0 text-success" />}

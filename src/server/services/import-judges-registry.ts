@@ -46,6 +46,8 @@ export async function importJudgesRegistryToSupabase(
       excel_id: r.excelId,
       notas: r.notas ?? null,
       ultimo_fecha: r.ultimoFecha ?? null,
+      excel_macro_zone: r.excelMacroZone ?? null,
+      arbitraje_stats: r.arbitrajeStats ?? null,
     };
 
     const { data: byExcel } = await supabase
@@ -108,6 +110,23 @@ export async function importJudgesRegistryToSupabase(
   for (const c of parsed.competitions) {
     const key = `${c.nombre.toLowerCase().trim()}__${c.fecha}`;
     if (existingKeys.has(key)) {
+      const { data: existing } = await supabase
+        .from("competitions")
+        .select("id")
+        .eq("nombre", c.nombre)
+        .eq("fecha", c.fecha)
+        .maybeSingle();
+      if (existing?.id) {
+        await supabase
+          .from("competitions")
+          .update({
+            tipo: c.tipo,
+            fecha_fin: c.fechaFin,
+            sede: c.sede,
+            zona: c.zona,
+          })
+          .eq("id", existing.id);
+      }
       competitionsSkipped++;
       continue;
     }
@@ -183,6 +202,8 @@ export function importJudgesRegistryToMemory(
       excelId: r.excelId,
       notas: r.notas,
       ultimoFecha: r.ultimoFecha,
+      excelMacroZone: r.excelMacroZone,
+      arbitrajeStats: r.arbitrajeStats,
     };
     const idx = store.referees.findIndex(
       (x) => x.excelId === r.excelId || x.id === r.id,

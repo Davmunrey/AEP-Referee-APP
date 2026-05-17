@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
@@ -55,6 +56,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return jsonError("Sin permiso", 403);
 
   const ok = await dataService.deleteCompetition(id);
-  if (!ok) return jsonError("No se pudo eliminar", 500);
+  if (!ok) return jsonError("No se pudo eliminar el campeonato en la base de datos", 500);
+  revalidatePath("/events");
+  revalidatePath("/");
+  revalidatePath(`/events/${id}`);
   return jsonOk({ deleted: true });
 }

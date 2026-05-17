@@ -27,26 +27,26 @@ function user(role: UserRole, zona?: string): SessionUser {
 describe("canEditRoster", () => {
   it("super_admin puede editar cualquier zona", () => {
     expect(canEditRoster(user("super_admin"), "CENTRO")).toBe(true);
-    expect(canEditRoster(user("super_admin"), "N1")).toBe(true);
+    expect(canEditRoster(user("super_admin"), "NOROESTE")).toBe(true);
     expect(canEditRoster(user("super_admin"))).toBe(true);
   });
 
   it("delegado_zona solo edita su propia zona", () => {
     const zona = user("delegado_zona", "CENTRO");
     expect(canEditRoster(zona, "CENTRO")).toBe(true);
-    expect(canEditRoster(zona, "N1")).toBe(false);
+    expect(canEditRoster(zona, "NOROESTE")).toBe(false);
     expect(canEditRoster(zona, undefined)).toBe(false);
   });
 
-  it("delegado_zona alinea legacy VAL con competición LEV", () => {
+  it("delegado_zona alinea legacy VAL con competición MEDITERRANEO", () => {
     const delegado = user("delegado_zona", "VAL");
-    expect(canEditRoster(delegado, "LEV")).toBe(true);
-    expect(canEditRoster(delegado, "MAD")).toBe(false);
+    expect(canEditRoster(delegado, "MEDITERRANEO")).toBe(true);
+    expect(canEditRoster(delegado, "CENTRO")).toBe(false);
   });
 
   it("delegado_jueces edita tarima en cualquier zona (jefe nacional)", () => {
     expect(canEditRoster(user("delegado_jueces"), "CENTRO")).toBe(true);
-    expect(canEditRoster(user("delegado_jueces"), "N1")).toBe(true);
+    expect(canEditRoster(user("delegado_jueces"), "NOROESTE")).toBe(true);
     expect(canEditRoster(user("delegado_jueces"))).toBe(true);
   });
 

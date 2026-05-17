@@ -19,6 +19,7 @@ interface CalendarPreview {
   totalDetected: number;
   eligibleCount: number;
   duplicateCount: number;
+  dbDuplicateCount: number;
   toCreateCount: number;
   warnings: string[];
   entries: Array<{
@@ -47,7 +48,10 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
   const [preview, setPreview] = useState<CalendarPreview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [createdCount, setCreatedCount] = useState<number | null>(null);
+  const [applyResult, setApplyResult] = useState<{
+    created: number;
+    dedupeRemoved: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -55,7 +59,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
       setPreview(null);
       setError(null);
       setLoading(false);
-      setCreatedCount(null);
+      setApplyResult(null);
     }
   }, [open]);
 
@@ -96,7 +100,10 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
     setError(null);
     try {
       const res = await api.importCalendar(file, true);
-      setCreatedCount(res.created ?? 0);
+      setApplyResult({
+        created: res.created ?? 0,
+        dedupeRemoved: res.dedupeRemoved ?? 0,
+      });
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudieron crear los campeonatos");
@@ -169,14 +176,23 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
             </div>
           )}
 
-          {createdCount !== null && (
+          {applyResult !== null && (
             <div className="flex items-start gap-2 rounded-md border border-success-border bg-success-muted px-3 py-2 text-xs text-success">
               <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Se crearon {createdCount} competiciones. Ya disponibles en el listado.
+              <span>
+                {applyResult.dedupeRemoved > 0 && (
+                  <>
+                    Se eliminaron {applyResult.dedupeRemoved} duplicado
+                    {applyResult.dedupeRemoved !== 1 ? "s" : ""} en la base de datos.{" "}
+                  </>
+                )}
+                Se crearon {applyResult.created} competición
+                {applyResult.created !== 1 ? "es" : ""}. Ya disponibles en el listado.
+              </span>
             </div>
           )}
 
-          {preview && createdCount === null && (
+          {preview && applyResult === null && (
             <div className="space-y-3">
               <div className="grid gap-2 rounded-md border border-border bg-surface px-3 py-2 text-xs sm:grid-cols-2">
                 <div>
@@ -192,8 +208,12 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                   <span className="text-foreground">{preview.eligibleCount}</span>
                 </div>
                 <div>
-                  <span className="text-subtle-muted">Duplicadas (ya existen):</span>{" "}
+                  <span className="text-subtle-muted">Duplicadas (PDF vs BD):</span>{" "}
                   <span className="text-foreground">{preview.duplicateCount}</span>
+                </div>
+                <div>
+                  <span className="text-subtle-muted">Duplicados en BD (limpia al aplicar):</span>{" "}
+                  <span className="text-foreground">{preview.dbDuplicateCount}</span>
                 </div>
                 <div className="sm:col-span-2">
                   <span className="text-subtle-muted">A crear:</span>{" "}
@@ -256,7 +276,9 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
               </div>
 
               <p className="text-[11px] text-subtle-muted">
-                Aplicar creará solo las {preview.toCreateCount} competiciones marcadas como «nueva». Las duplicadas y «pendientes» se omiten.
+                Al aplicar: primero se eliminan duplicados en BD (mismo nombre, fecha y tipo; se
+                conserva el que más tarima tenga), luego se crean las {preview.toCreateCount}{" "}
+                marcadas «nueva». Las del PDF ya existentes y «pendientes» se omiten.
               </p>
             </div>
           )}
@@ -264,15 +286,23 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
 
         <div className="flex items-center justify-end gap-2 border-t border-border bg-surface px-6 py-3">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
-            {createdCount !== null ? "Cerrar" : "Cancelar"}
+            {applyResult !== null ? "Cerrar" : "Cancelar"}
           </Button>
-          {createdCount === null && (
+          {applyResult === null && (
             <Button
               type="button"
               onClick={apply}
-              disabled={!preview || loading || preview.toCreateCount === 0}
+              disabled={
+                !preview ||
+                loading ||
+                (preview.toCreateCount === 0 && preview.dbDuplicateCount === 0)
+              }
             >
-              {loading ? "Creando…" : `Crear ${preview?.toCreateCount ?? 0} competiciones`}
+              {loading
+                ? "Aplicando…"
+                : preview && preview.dbDuplicateCount > 0 && preview.toCreateCount === 0
+                  ? `Limpiar ${preview.dbDuplicateCount} duplicado${preview.dbDuplicateCount !== 1 ? "s" : ""}`
+                  : `Aplicar (${preview?.toCreateCount ?? 0} nuevas${preview && preview.dbDuplicateCount > 0 ? `, limpia ${preview.dbDuplicateCount} dup.` : ""})`}
             </Button>
           )}
         </div>

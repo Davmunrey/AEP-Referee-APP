@@ -5,11 +5,24 @@ import type {
   Competition,
   PromotionRequest,
   Referee,
+  RefereeArbitrajeStats,
   RefereeExam,
   RefereeReport,
   RegulationRule,
   RosterHistoryEntry,
 } from "@/lib/types";
+
+function mapArbitrajeStats(raw: unknown): RefereeArbitrajeStats | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const o = raw as Record<string, unknown>;
+  return {
+    aep1: (o.aep1 as Record<string, number>) ?? {},
+    aep2: (o.aep2 as Record<string, number>) ?? {},
+    aep3: (o.aep3 as Record<string, number>) ?? {},
+    ipf: Number(o.ipf ?? 0),
+    total: Number(o.total ?? 0),
+  };
+}
 
 /** Convierte ficha de juez (app) → columnas Postgres. */
 export function refereeToDbRow(
@@ -34,6 +47,10 @@ export function refereeToDbRow(
   if (patch.excelId !== undefined) row.excel_id = patch.excelId ?? null;
   if (patch.notas !== undefined) row.notas = patch.notas ?? null;
   if (patch.ultimoFecha !== undefined) row.ultimo_fecha = patch.ultimoFecha ?? null;
+  if (patch.excelMacroZone !== undefined) row.excel_macro_zone = patch.excelMacroZone ?? null;
+  if (patch.arbitrajeStats !== undefined) {
+    row.arbitraje_stats = patch.arbitrajeStats ?? null;
+  }
   return row;
 }
 
@@ -59,6 +76,10 @@ export function mapReferee(row: Record<string, unknown>): Referee {
     ultimoFecha: row.ultimo_fecha
       ? String(row.ultimo_fecha).slice(0, 10)
       : undefined,
+    excelMacroZone: row.excel_macro_zone
+      ? String(row.excel_macro_zone)
+      : undefined,
+    arbitrajeStats: mapArbitrajeStats(row.arbitraje_stats),
   };
 }
 

@@ -46,10 +46,10 @@ describe("parseAepCalendarText", () => {
 
   it("deduce zonas a partir de la provincia", () => {
     const madrid = parsed.entries.find((e) => /Black Crown/i.test(e.nombre));
-    expect(madrid?.zona).toBe("MAD");
+    expect(madrid?.zona).toBe("CENTRO");
 
     const malaga = parsed.entries.find((e) => /Guadalteba/i.test(e.nombre));
-    expect(malaga?.zona).toBe("SUR");
+    expect(malaga?.zona).toBe("ANDALUCIA");
   });
 
   it("excluye campeonatos europeos / mundiales", () => {

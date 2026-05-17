@@ -1,34 +1,27 @@
-import type { AepGeographicZoneId } from "@/lib/aep-zones";
+import {
+  deduceMacroZone,
+  resolveZoneCode,
+  type AepMacroZoneId,
+} from "@/lib/aep-zones";
 import type { EventType, RefereeLevel, RefereeStatus } from "@/lib/types";
 
-/** Códigos de zona en «Control jueces.xlsx» → zona geográfica AEP 2026. */
-export const EXCEL_ZONE_TO_GEOGRAPHIC: Record<string, AepGeographicZoneId> = {
-  "1-NOROESTE": "N1",
-  "1- NOROESTE": "N1",
-  "2- CENTRO": "CENTRO",
-  "2-CENTRO": "CENTRO",
-  "2- CENTRO ": "CENTRO",
-  "3- MEDITERRANEO": "LEV",
-  "3-MEDITERRANEO": "LEV",
-  "4- ANDALUCIA": "SUR",
-  "4-ANDALUCIA": "SUR",
-  "5- CANARIAS": "CAN",
-  "5-CANARIAS": "CAN",
-};
-
+/**
+ * Zona del juez/campeonato desde columna Excel «Zona».
+ * No se sobreescribe por localidad: el Excel manda (5 macrozonas).
+ */
 export function mapExcelZone(
   excelZone: string | null | undefined,
   localidad?: string | null,
   provincia?: string | null,
-): AepGeographicZoneId | undefined {
-  const loc = `${localidad ?? ""} ${provincia ?? ""}`.toLowerCase();
-  if (/\bmadrid\b/.test(loc)) return "MAD";
-  if (/\bbarcelona\b|\btarragona\b|\bgirona\b|\blleida\b/.test(loc)) return "CAT";
-  if (/\bcanarias\b|\blas palmas\b|\btenerife\b/.test(loc)) return "CAN";
+): AepMacroZoneId | undefined {
+  const fromExcel = resolveZoneCode(excelZone ?? undefined);
+  if (fromExcel) return fromExcel;
 
-  if (!excelZone) return undefined;
-  const key = excelZone.trim().replace(/\s+/g, " ");
-  return EXCEL_ZONE_TO_GEOGRAPHIC[key] ?? EXCEL_ZONE_TO_GEOGRAPHIC[key.toUpperCase()];
+  if (!excelZone?.trim()) {
+    return deduceMacroZone(provincia ?? undefined, localidad ?? "");
+  }
+
+  return undefined;
 }
 
 const LEVEL_MAP: Record<string, RefereeLevel> = {
@@ -58,10 +51,14 @@ export function mapExcelActivo(
 
 export function mapExcelEventType(raw: string | null | undefined): EventType | null {
   if (!raw) return null;
-  const u = raw.toUpperCase();
-  if (u.includes("AEP1")) return "AEP-1";
-  if (u.includes("AEP2")) return "AEP-2";
-  if (u.includes("AEP3")) return "AEP-3";
+  const u = raw.toUpperCase().replace(/\s+/g, "");
+  const has1 = u.includes("AEP1");
+  const has2 = u.includes("AEP2");
+  const has3 = u.includes("AEP3");
+  if (has3) return "AEP-3";
+  if (has2 && has1) return "AEP-2";
+  if (has2) return "AEP-2";
+  if (has1) return "AEP-1";
   return null;
 }
 

@@ -39,6 +39,10 @@ export interface Zone {
   name: string;
 }
 
+import type { RefereeArbitrajeStats } from "@/lib/judges-registry/arbitraje-stats";
+
+export type { RefereeArbitrajeStats };
+
 export interface Referee {
   id: string;
   nombre: string;
@@ -60,6 +64,9 @@ export interface Referee {
   excelId?: number;
   notas?: string;
   ultimoFecha?: string;
+  /** Etiqueta zona en Excel (ej. «2- CENTRO»); `zona` guarda el código macro canónico. */
+  excelMacroZone?: string;
+  arbitrajeStats?: RefereeArbitrajeStats;
 }
 
 export interface JudgesRegistryImportResult {
@@ -231,6 +238,7 @@ export interface DashboardPayload {
   health: OperationalHealth;
   insights: Insight[];
   coverage: EventCoverage[];
+  sanctionAlerts: SanctionAlert[];
   generatedAt: string;
 }
 
@@ -320,10 +328,65 @@ export interface RefereeReport {
   createdAt?: string;
 }
 
+export type SanctionStatus = "activa" | "cumplida" | "revocada";
+
+export type SanctionDurationPreset =
+  | "7d"
+  | "14d"
+  | "30d"
+  | "90d"
+  | "180d"
+  | "365d"
+  | "custom";
+
+export interface ZoneDelegate {
+  id: string;
+  nombre: string;
+  email: string;
+}
+
+export interface SanctionDelegateNotify {
+  delegates: ZoneDelegate[];
+  mailtoUrl: string;
+  notifiedAt?: string;
+}
+
+export interface RefereeSanction {
+  id: string;
+  refereeId: string;
+  refereeName: string;
+  zona: string;
+  motivo: string;
+  fechaInicio: string;
+  fechaFin: string;
+  status: SanctionStatus;
+  impuestaPorId?: string;
+  impuestaPorNombre: string;
+  revocadaPorNombre?: string;
+  revocadaAt?: string;
+  notas?: string;
+  delegateNotify: SanctionDelegateNotify;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SanctionAlert {
+  id: string;
+  refereeId: string;
+  refereeName: string;
+  zona: string;
+  zonaName: string;
+  fechaFin: string;
+  daysLeft: number;
+  kind: "activa" | "por_vencer";
+}
+
 export interface JudgeProfile {
   referee: Referee;
   exams: RefereeExam[];
   reports: RefereeReport[];
+  sanctions: RefereeSanction[];
+  activeSanction?: RefereeSanction;
   examsPassed: number;
   examsTotal: number;
   avgScore: number | null;

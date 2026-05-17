@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/data-table";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api/client";
+import { groupCompetitionDuplicates } from "@/lib/competition-dedup";
 import { selectFieldClassSm } from "@/lib/design-tokens";
 import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
@@ -43,10 +44,28 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState("TODOS");
   const [filterEstado, setFilterEstado] = useState("TODOS");
+  const [deduping, setDeduping] = useState(false);
 
   useEffect(() => {
     setEvents(initialEvents);
   }, [initialEvents]);
+
+  const duplicateGroups = useMemo(() => groupCompetitionDuplicates(events), [events]);
+  const duplicateIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const g of duplicateGroups) {
+      for (const e of g.events) ids.add(e.id);
+    }
+    return ids;
+  }, [duplicateGroups]);
+  const duplicateCount = duplicateGroups.reduce((n, g) => n + g.events.length - 1, 0);
+  const canDedupe = role === "super_admin" || role === "delegado_jueces";
+
+  const refreshEvents = async () => {
+    const fresh = await api.getCompetitions();
+    setEvents(fresh);
+    router.refresh();
+  };
 
   const filtered = useMemo(() => {
     return events.filter((e) => {
@@ -84,8 +103,7 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
     setConfirmDeleteId(null);
     try {
       await api.deleteCompetition(id);
-      setEvents((prev) => prev.filter((e) => e.id !== id));
-      router.refresh();
+      await refreshEvents();
     } catch (err) {
       alert(
         err instanceof Error
@@ -94,6 +112,26 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
       );
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const cleanDuplicates = async () => {
+    if (
+      !window.confirm(
+        `¿Eliminar ${duplicateCount} campeonato(s) duplicado(s)? Se conserva el que tenga más tarima asignada.`,
+      )
+    ) {
+      return;
+    }
+    setDeduping(true);
+    try {
+      const result = await api.removeCompetitionDuplicates();
+      await refreshEvents();
+      alert(`Listo: ${result.removed.length} eliminado(s), ${result.kept.length} conservado(s).`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "No se pudieron limpiar duplicados");
+    } finally {
+      setDeduping(false);
     }
   };
 
@@ -167,7 +205,27 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
             </Button>
           </>
         )}
+        {canDedupe && duplicateCount > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            disabled={deduping}
+            onClick={() => void cleanDuplicates()}
+          >
+            {deduping ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
+            Limpiar {duplicateCount} duplicado{duplicateCount !== 1 ? "s" : ""}
+          </Button>
+        )}
       </div>
+
+      {duplicateCount > 0 && (
+        <p className="border-b border-warning-border/30 bg-warning-subtle px-4 py-2 text-xs text-warning">
+          Hay {duplicateGroups.length} grupo(s) con el mismo nombre, fecha y tipo. Si borras uno y
+          sigue saliendo, es un duplicado con otro id — usa «Limpiar duplicados».
+        </p>
+      )}
 
       {pageRows.length === 0 ? (
         <EmptyState
@@ -209,8 +267,17 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
                   )}
                 >
                   <DataTableCell>
-                    <p className="font-medium text-foreground">{event.nombre}</p>
-                    <p className="text-xs text-subtle-muted">{event.sede}</p>
+                    <p className="font-medium text-foreground">
+                      {event.nombre}
+                      {duplicateIds.has(event.id) && (
+                        <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-[10px] font-semibold uppercase text-warning">
+                          Duplicado
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-subtle-muted">
+                      {event.sede} · <span className="font-mono">{event.id}</span>
+                    </p>
                   </DataTableCell>
                   <DataTableCell className="font-mono text-xs text-muted-foreground">
                     {formatDateRange(event.fecha, event.fechaFin)}

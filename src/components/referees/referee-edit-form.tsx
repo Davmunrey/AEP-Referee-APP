@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { selectFieldClass } from "@/lib/design-tokens";
 
-const STATUSES: RefereeStatus[] = ["Activo", "Inactivo", "Sancionado"];
+const STATUSES: RefereeStatus[] = ["Activo", "Inactivo"];
 
 interface RefereeEditFormProps {
   referee: Referee;
@@ -148,6 +148,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
               value={estado}
               onChange={(e) => setEstado(e.target.value as RefereeStatus)}
               className={selectFieldClass}
+              disabled={referee.estado === "Sancionado"}
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -155,6 +156,11 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
                 </option>
               ))}
             </select>
+            {referee.estado === "Sancionado" && (
+              <p className="mt-1 text-xs text-warning">
+                Sancionado — gestiona en el panel «Sanciones» (revocar o esperar fin).
+              </p>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

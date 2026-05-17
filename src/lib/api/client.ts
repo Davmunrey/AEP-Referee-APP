@@ -13,6 +13,8 @@ import type {
   ExamType,
   PromotionRequest,
   Referee,
+  RefereeSanction,
+  SanctionDurationPreset,
   RefereeExam,
   JudgesRegistryImportResult,
   RefereeLevel,
@@ -59,6 +61,33 @@ export const api = {
   updateReferee: (id: string, body: Partial<Referee>) =>
     request<Referee>(`/referees/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
 
+  listRefereeSanctions: (refereeId: string) =>
+    request<RefereeSanction[]>(`/referees/${refereeId}/sanctions`),
+
+  createRefereeSanction: (
+    refereeId: string,
+    body: {
+      motivo: string;
+      fechaInicio?: string;
+      duration: SanctionDurationPreset;
+      fechaFin?: string;
+      notas?: string;
+    },
+  ) =>
+    request<RefereeSanction>(`/referees/${refereeId}/sanctions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  revokeSanction: (sanctionId: string, motivo?: string) =>
+    request<RefereeSanction>(`/sanctions/${sanctionId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ action: "revoke", motivo }),
+    }),
+
+  markSanctionNotified: (sanctionId: string) =>
+    request<RefereeSanction>(`/sanctions/${sanctionId}/notify`, { method: "POST" }),
+
   getCompetitions: () => request<Competition[]>("/competitions"),
 
   createCompetition: (body: Partial<Competition>) =>
@@ -87,6 +116,7 @@ export const api = {
       totalDetected: number;
       eligibleCount: number;
       duplicateCount: number;
+      dbDuplicateCount: number;
       toCreateCount: number;
       warnings: string[];
       entries: Array<{
@@ -103,6 +133,7 @@ export const api = {
       }>;
     };
     created?: number;
+    dedupeRemoved?: number;
     errors?: string[];
   }> => {
     const fd = new FormData();
@@ -120,6 +151,7 @@ export const api = {
         totalDetected: number;
         eligibleCount: number;
         duplicateCount: number;
+        dbDuplicateCount: number;
         toCreateCount: number;
         warnings: string[];
         entries: Array<{
@@ -136,6 +168,7 @@ export const api = {
         }>;
       };
       created?: number;
+      dedupeRemoved?: number;
       errors?: string[];
     }>(res);
     if (isApiError(parsed)) throw new Error(parsed.error);
@@ -269,6 +302,29 @@ export const api = {
 
   deleteCompetition: (id: string) =>
     request<{ deleted: boolean }>(`/competitions/${id}`, { method: "DELETE" }),
+
+  getCompetitionDuplicates: () =>
+    request<{
+      groupCount: number;
+      duplicateCount: number;
+      groups: Array<{
+        key: string;
+        events: Array<{
+          id: string;
+          nombre: string;
+          fecha: string;
+          tipo: string;
+          confirmados: number;
+          estado: string;
+        }>;
+      }>;
+    }>("/competitions/dedupe"),
+
+  removeCompetitionDuplicates: () =>
+    request<{ removed: string[]; kept: string[]; groups: number }>(
+      "/competitions/dedupe",
+      { method: "POST" },
+    ),
 
   getPromotions: () => request<PromotionRequest[]>("/promotions"),
 
