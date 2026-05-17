@@ -80,6 +80,30 @@ async function loadAssignments(eventId: string): Promise<AssignmentsMap> {
   return assignmentsFromRows(data ?? []);
 }
 
+/**
+ * Carga TODAS las asignaciones de roster en una sola consulta y las agrupa por
+ * `competition_id` en memoria. Evita el patrón N+1 de llamar a
+ * `loadAssignments(eventId)` una vez por competición.
+ */
+async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>> {
+  const supabase = db();
+  const { data } = await supabase
+    .from("roster_assignments")
+    .select("competition_id, slot_key, referee_id");
+  const grouped = new Map<string, { slot_key: string; referee_id: string }[]>();
+  for (const row of data ?? []) {
+    const id = String(row.competition_id);
+    const bucket = grouped.get(id);
+    if (bucket) bucket.push(row);
+    else grouped.set(id, [row]);
+  }
+  const result = new Map<string, AssignmentsMap>();
+  for (const [id, rows] of grouped) {
+    result.set(id, assignmentsFromRows(rows));
+  }
+  return result;
+}
+
 async function syncCompetitionCoverage(eventId: string) {
   const supabase = db();
   const template = await getRosterTemplate();
@@ -147,36 +171,68 @@ async function applyHealthHistory(
   }
 }
 
-async function buildKpis(): Promise<DashboardKpi[]> {
-  const supabase = db();
-  const template = await getRosterTemplate();
-  const [{ data: referees }, { data: competitions }, { data: approvals }] = await Promise.all([
-    supabase.from("referees").select("estado"),
-    supabase.from("competitions").select("id, estado"),
-    supabase.from("approval_proposals").select("status"),
-  ]);
+/**
+ * Datos pre-cargados que `buildKpis` puede recibir para evitar consultas
+ * duplicadas. Cuando se omite, `buildKpis` los obtiene por sí mismo.
+ */
+type KpiInput = {
+  referees: { estado: string }[];
+  competitions: { id: string; estado: string }[];
+  approvals: { status: string }[];
+  /** Plazas sin cubrir por competición; clave = id de competición. */
+  openSlotsByCompetition: Map<string, number>;
+};
 
-  const active = (referees ?? []).filter((r) => r.estado === "Activo").length;
-  const pending = (approvals ?? []).filter((a) => a.status === "pendiente").length;
-  let openSlots = 0;
-  for (const c of competitions ?? []) {
-    const assignments = await loadAssignments(c.id);
-    openSlots += countOpenSlots(template, assignments);
+async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
+  let referees: { estado: string }[];
+  let competitions: { id: string; estado: string }[];
+  let approvals: { status: string }[];
+  let openSlotsByCompetition: Map<string, number>;
+
+  if (input) {
+    ({ referees, competitions, approvals, openSlotsByCompetition } = input);
+  } else {
+    const supabase = db();
+    const template = await getRosterTemplate();
+    const [refRes, compRes, apprRes, assignmentsByComp] = await Promise.all([
+      supabase.from("referees").select("estado"),
+      supabase.from("competitions").select("id, estado"),
+      supabase.from("approval_proposals").select("status"),
+      loadAllAssignments(),
+    ]);
+    referees = refRes.data ?? [];
+    competitions = compRes.data ?? [];
+    approvals = apprRes.data ?? [];
+    openSlotsByCompetition = new Map(
+      competitions.map((c) => [
+        c.id,
+        countOpenSlots(template, assignmentsByComp.get(c.id) ?? {}),
+      ]),
+    );
   }
-  const critical = (competitions ?? []).filter((c) => c.estado === "Crítico").length;
+
+  const active = referees.filter((r) => r.estado === "Activo").length;
+  const pending = approvals.filter((a) => a.status === "pendiente").length;
+  let openSlots = 0;
+  for (const c of competitions) {
+    openSlots += openSlotsByCompetition.get(c.id) ?? 0;
+  }
+  const critical = competitions.filter((c) => c.estado === "Crítico").length;
+  const refereesLength = referees.length;
+  const competitionsLength = competitions.length;
 
   return [
     {
       label: "Árbitros Activos",
       value: String(active),
-      sub: `/ ${referees?.length ?? 0} federados`,
+      sub: `/ ${refereesLength} federados`,
       trend: "cuota operativa 2026",
       trendDir: "up",
       accent: "neutral",
     },
     {
       label: "Próximas Competiciones",
-      value: String(competitions?.length ?? 0),
+      value: String(competitionsLength),
       sub: "campeonatos en calendario",
       trend: "AEP-1 · AEP-2 · AEP-3",
       trendDir: "up",
@@ -185,7 +241,7 @@ async function buildKpis(): Promise<DashboardKpi[]> {
     {
       label: "Plazas sin cubrir",
       value: String(openSlots),
-      sub: `en ${competitions?.length ?? 0} eventos`,
+      sub: `en ${competitionsLength} eventos`,
       trend: `${critical} eventos en estado crítico`,
       trendDir: critical > 0 ? "warn" : "flat",
       accent: "yellow",
@@ -210,9 +266,10 @@ export const supabaseDataService = {
 
   getDashboard: async (user: SessionUser): Promise<DashboardPayload> => {
     const supabase = db();
+    const isZoneScoped = user.role === "regional" && !!user.zona;
     let query = supabase.from("competitions").select("*").order("fecha", { ascending: true });
-    if (user.role === "regional" && user.zona) {
-      query = query.eq("zona", user.zona);
+    if (isZoneScoped) {
+      query = query.eq("zona", user.zona!);
     }
     const template = await getRosterTemplate();
     const [
@@ -221,6 +278,7 @@ export const supabaseDataService = {
       { data: referees },
       { data: approvals },
       { data: promotions },
+      assignmentsByComp,
     ] = await Promise.all([
       query,
       supabase
@@ -231,27 +289,26 @@ export const supabaseDataService = {
       supabase.from("referees").select("estado, disp"),
       supabase.from("approval_proposals").select("status"),
       supabase.from("promotion_requests").select("status"),
+      loadAllAssignments(),
     ]);
 
     const competitions = (competitionRows ?? []).map((r) =>
       mapCompetition(r as Record<string, unknown>),
     );
-    const coverage = await Promise.all(
-      competitions.map(async (c) => {
-        const assignments = await loadAssignments(c.id);
-        const filled = Object.values(assignments).filter(Boolean).length;
-        const open = countOpenSlots(template, assignments);
-        return {
-          id: c.id,
-          nombre: c.nombre,
-          fecha: c.fecha,
-          estado: c.estado,
-          filled,
-          open,
-          required: filled + open,
-        };
-      }),
-    );
+    const coverage = competitions.map((c) => {
+      const assignments = assignmentsByComp.get(c.id) ?? {};
+      const filled = Object.values(assignments).filter(Boolean).length;
+      const open = countOpenSlots(template, assignments);
+      return {
+        id: c.id,
+        nombre: c.nombre,
+        fecha: c.fecha,
+        estado: c.estado,
+        filled,
+        open,
+        required: filled + open,
+      };
+    });
     const activityItems = (activity ?? []).map((r) =>
       mapActivity(r as Record<string, unknown>),
     );
@@ -265,8 +322,32 @@ export const supabaseDataService = {
     });
     await applyHealthHistory(health);
 
+    // Las KPIs reflejan SIEMPRE el total nacional de competiciones, no el
+    // subconjunto filtrado por zona. Si la vista está acotada por zona,
+    // recuperamos la lista completa (solo `id, estado`).
+    let kpiCompetitions: { id: string; estado: string }[];
+    if (isZoneScoped) {
+      const { data: allComps } = await supabase
+        .from("competitions")
+        .select("id, estado");
+      kpiCompetitions = (allComps ?? []) as { id: string; estado: string }[];
+    } else {
+      kpiCompetitions = competitions.map((c) => ({ id: c.id, estado: c.estado }));
+    }
+    const kpiOpenSlots = new Map<string, number>(
+      kpiCompetitions.map((c) => [
+        c.id,
+        countOpenSlots(template, assignmentsByComp.get(c.id) ?? {}),
+      ]),
+    );
+
     return {
-      kpis: await buildKpis(),
+      kpis: await buildKpis({
+        referees: (referees ?? []) as { estado: string }[],
+        competitions: kpiCompetitions,
+        approvals: (approvals ?? []) as { status: string }[],
+        openSlotsByCompetition: kpiOpenSlots,
+      }),
       activity: activityItems,
       calendar: await getCalendarEvents(),
       upcomingCompetitions: competitions.slice(0, 6),
@@ -651,9 +732,10 @@ export const supabaseDataService = {
   getAnalytics: async (user?: SessionUser): Promise<AnalyticsPayload> => {
     const competitions = await supabaseDataService.getCompetitions(user);
     const template = await getRosterTemplate();
+    const assignmentsByComp = await loadAllAssignments();
     let openSlots = 0;
     for (const c of competitions) {
-      openSlots += countOpenSlots(template, await loadAssignments(c.id));
+      openSlots += countOpenSlots(template, assignmentsByComp.get(c.id) ?? {});
     }
     const supabase = db();
     const { data: referees } = await supabase.from("referees").select("*");
