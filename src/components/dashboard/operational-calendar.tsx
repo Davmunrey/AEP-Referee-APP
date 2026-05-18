@@ -126,7 +126,7 @@ export function OperationalCalendar({
             <div
               key={d}
               className={cn(
-                "border-r border-border/50 px-2 py-2 font-mono text-[10px] tracking-widest last:border-r-0",
+                "border-r border-border/50 px-2 py-1.5 font-mono text-[10px] tracking-widest last:border-r-0",
                 // Weekend tone (SAB=5, DOM=6)
                 idx >= 5 ? "text-muted-foreground/40" : "text-muted-foreground/60",
               )}
@@ -150,7 +150,7 @@ export function OperationalCalendar({
                 <div
                   key={`${wi}-${di}`}
                   className={cn(
-                    "relative min-h-[72px] border-b border-r border-border/50 last:border-r-0",
+                    "relative min-h-[64px] border-b border-r border-border/50 last:border-r-0 xl:min-h-[68px]",
                     otherMonth && "bg-surface/30 opacity-50",
                     isWeekend && !otherMonth && "bg-surface/40",
                   )}

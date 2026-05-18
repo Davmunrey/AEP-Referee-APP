@@ -21,10 +21,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { selectFieldClassSm } from "@/lib/design-tokens";
 import { api } from "@/lib/api/client";
+import { zoneUiName } from "@/lib/aep-zones";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 
 function zoneName(zones: Zone[], code: string) {
-  return zones.find((z) => z.code === code)?.name ?? code;
+  return zoneUiName(zones.find((z) => z.code === code)?.code ?? code);
 }
 
 interface RefereesDirectoryProps {
@@ -306,8 +307,7 @@ export function RefereesDirectory({
                       {referee.localidad ?? "—"}
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
-                      <span className="font-mono text-[10px] text-subtle-muted">{referee.zona}</span>
-                      <span className="ml-2">{zoneName(zones, referee.zona)}</span>
+                      {zoneName(zones, referee.zona)}
                     </td>
                     <td className="px-4 py-2.5">
                       <LevelBadge level={referee.nivel} />

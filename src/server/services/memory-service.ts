@@ -7,7 +7,7 @@ import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import { formatRosterExport } from "@/lib/roster-export";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
-import { getPresetForEventType, pruneAssignments } from "@/lib/roster-template";
+import { pruneAssignments } from "@/lib/roster-template";
 import type {
   AnalyticsPayload,
   AppMeta,
@@ -286,7 +286,7 @@ export const memoryDataService = {
     store.competitions.push(comp);
     store.assignments.set(id, {});
     store.slotFlags.set(id, {});
-    setEventTemplate(id, getPresetForEventType(input.tipo));
+    setEventTemplate(id, []);
     return comp;
   },
 
@@ -811,10 +811,7 @@ export const memoryDataService = {
     const store = getStore();
     let reports = store.reports.slice();
     if (user && user.role === "delegado_zona" && user.zona) {
-      const zoneRefs = new Set(
-        store.referees.filter((r) => r.zona === user.zona).map((r) => r.id),
-      );
-      reports = reports.filter((r) => zoneRefs.has(r.refereeId));
+      reports = reports.filter((r) => r.zona === user.zona);
     }
     if (refereeId) reports = reports.filter((r) => r.refereeId === refereeId);
     return reports.sort((a, b) =>
@@ -823,7 +820,10 @@ export const memoryDataService = {
   },
 
   createReport: async (input: {
-    refereeId: string;
+    subjectType: RefereeReport["subjectType"];
+    zona: string;
+    refereeId?: string;
+    competitionId?: string;
     titulo: string;
     tipo: ReportType;
     evento?: string;
@@ -832,12 +832,24 @@ export const memoryDataService = {
     autor: string;
   }): Promise<RefereeReport> => {
     const store = getStore();
-    const referee = store.referees.find((r) => r.id === input.refereeId);
-    if (!referee) throw new Error("Juez no encontrado");
+    const referee = input.refereeId
+      ? store.referees.find((r) => r.id === input.refereeId)
+      : undefined;
+    const competition = input.competitionId
+      ? store.competitions.find((c) => c.id === input.competitionId)
+      : undefined;
+    if (input.subjectType === "juez" && !referee) throw new Error("Juez no encontrado");
+    if (input.subjectType === "competicion" && !competition) {
+      throw new Error("Competición no encontrada");
+    }
     const report: RefereeReport = {
       id: `rep-${Date.now()}`,
-      refereeId: input.refereeId,
-      refereeName: referee.nombre,
+      subjectType: input.subjectType,
+      zona: referee?.zona ?? competition?.zona ?? input.zona,
+      refereeId: referee?.id,
+      refereeName: referee?.nombre,
+      competitionId: competition?.id,
+      competitionName: competition?.nombre,
       titulo: input.titulo,
       tipo: input.tipo,
       evento: input.evento,

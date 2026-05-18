@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api/client";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
-import type { RefereeReport, ReportType } from "@/lib/types";
+import type { RefereeReport, ReportSubjectType, ReportType } from "@/lib/types";
 import {
   ChevronDown,
   ChevronRight,
@@ -20,16 +20,16 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const REPORT_TYPES: ReportType[] = [
-  "Desempeño",
+  "Competición",
+  "Juez",
   "Incidencia",
   "Evaluación",
-  "Auto-informe",
 ];
 
 function typeBadge(t: ReportType) {
   if (t === "Incidencia") return <Badge variant="danger">{t}</Badge>;
   if (t === "Evaluación") return <Badge variant="warning">{t}</Badge>;
-  if (t === "Auto-informe") return <Badge variant="regional">{t}</Badge>;
+  if (t === "Competición") return <Badge variant="regional">{t}</Badge>;
   return <Badge variant="success">{t}</Badge>;
 }
 
@@ -42,6 +42,7 @@ function fmtDate(iso?: string) {
 interface ReportsManagerProps {
   reports: RefereeReport[];
   referees: { id: string; nombre: string }[];
+  competitions: { id: string; nombre: string }[];
   lockedRefereeId?: string;
   canEdit: boolean;
   canDelete: boolean;
@@ -50,6 +51,7 @@ interface ReportsManagerProps {
 export function ReportsManager({
   reports: initialReports,
   referees,
+  competitions,
   lockedRefereeId,
   canEdit,
   canDelete,
@@ -61,9 +63,13 @@ export function ReportsManager({
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());
 
+  const [subjectType, setSubjectType] = useState<ReportSubjectType>(
+    lockedRefereeId ? "juez" : "competicion",
+  );
   const [refereeId, setRefereeId] = useState(lockedRefereeId ?? "");
+  const [competitionId, setCompetitionId] = useState("");
   const [titulo, setTitulo] = useState("");
-  const [tipo, setTipo] = useState<ReportType>("Desempeño");
+  const [tipo, setTipo] = useState<ReportType>("Competición");
   const [evento, setEvento] = useState("");
   const [contenido, setContenido] = useState("");
   const [adjuntoUrl, setAdjuntoUrl] = useState("");
@@ -71,7 +77,7 @@ export function ReportsManager({
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitulo, setEditTitulo] = useState("");
-  const [editTipo, setEditTipo] = useState<ReportType>("Desempeño");
+  const [editTipo, setEditTipo] = useState<ReportType>("Competición");
   const [editEvento, setEditEvento] = useState("");
   const [editContenido, setEditContenido] = useState("");
   const [editAdjuntoUrl, setEditAdjuntoUrl] = useState("");
@@ -88,23 +94,35 @@ export function ReportsManager({
 
   const resetForm = () => {
     setTitulo("");
-    setTipo("Desempeño");
+    setTipo("Competición");
     setEvento("");
     setContenido("");
     setAdjuntoUrl("");
+    setCompetitionId("");
+    if (!lockedRefereeId) setSubjectType("competicion");
     if (!lockedRefereeId) setRefereeId("");
   };
 
   const submit = async () => {
-    if (!refereeId || !titulo.trim() || !contenido.trim()) {
-      setError("Selecciona un juez y completa título y contenido.");
+    if (!titulo.trim() || !contenido.trim()) {
+      setError("Completa título y contenido.");
+      return;
+    }
+    if (subjectType === "juez" && !refereeId) {
+      setError("Selecciona juez.");
+      return;
+    }
+    if (subjectType === "competicion" && !competitionId) {
+      setError("Selecciona competición.");
       return;
     }
     setBusy(true);
     setError(null);
     try {
       const report = await api.createReport({
-        refereeId,
+        subjectType,
+        refereeId: subjectType === "juez" ? refereeId : undefined,
+        competitionId: subjectType === "competicion" ? competitionId : undefined,
         titulo: titulo.trim(),
         tipo,
         evento: evento.trim() || undefined,
@@ -180,7 +198,7 @@ export function ReportsManager({
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <FileText className="h-4 w-4 text-primary" />
-          Informes del juez
+          Informes
           <span className="text-xs font-normal text-subtle-muted">
             ({reports.length})
           </span>
@@ -203,6 +221,19 @@ export function ReportsManager({
           <div className="grid gap-3 sm:grid-cols-2">
             {!lockedRefereeId && (
               <label className="text-xs">
+                <span className="friendly-label mb-1 block">Ámbito</span>
+                <select
+                  value={subjectType}
+                  onChange={(e) => setSubjectType(e.target.value as ReportSubjectType)}
+                  className={selectFieldClass}
+                >
+                  <option value="competicion">Competición</option>
+                  <option value="juez">Juez</option>
+                </select>
+              </label>
+            )}
+            {subjectType === "juez" && !lockedRefereeId && (
+              <label className="text-xs">
                 <span className="friendly-label mb-1 block">Juez</span>
                 <select
                   value={refereeId}
@@ -213,6 +244,23 @@ export function ReportsManager({
                   {referees.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {subjectType === "competicion" && (
+              <label className="text-xs">
+                <span className="friendly-label mb-1 block">Competición</span>
+                <select
+                  value={competitionId}
+                  onChange={(e) => setCompetitionId(e.target.value)}
+                  className={selectFieldClass}
+                >
+                  <option value="">— Seleccionar —</option>
+                  {competitions.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
                     </option>
                   ))}
                 </select>
@@ -237,7 +285,7 @@ export function ReportsManager({
               <input
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Informe de desempeño — Open Nacional"
+                placeholder="Informe de competición — Open Nacional"
                 className={selectFieldClass}
               />
             </label>
@@ -288,11 +336,11 @@ export function ReportsManager({
       <CardContent className="p-0">
         {reports.length === 0 && (
           <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-            <FileText className="h-10 w-10 text-border-strong" />
-            <div>
-              <p className="text-sm font-medium text-foreground-secondary">
-                Sin informes registrados
-              </p>
+          <FileText className="h-10 w-10 text-border-strong" />
+          <div>
+            <p className="text-sm font-medium text-foreground-secondary">
+              Sin informes registrados
+            </p>
               <p className="mt-0.5 text-xs text-subtle-muted">
                 {canEdit
                   ? "Usa «Subir informe» para registrar el primero."
@@ -339,7 +387,12 @@ export function ReportsManager({
                       )}
                     </span>
                     <span className="mt-0.5 block text-[11.5px] text-subtle-muted">
-                      {!lockedRefereeId && <>{report.refereeName} · </>}
+                      {!lockedRefereeId && report.subjectType === "juez" && report.refereeName && (
+                        <>{report.refereeName} · </>
+                      )}
+                      {!lockedRefereeId && report.subjectType === "competicion" && report.competitionName && (
+                        <>{report.competitionName} · </>
+                      )}
                       {report.autor} · {fmtDate(report.createdAt)}
                       {report.evento ? ` · ${report.evento}` : ""}
                     </span>

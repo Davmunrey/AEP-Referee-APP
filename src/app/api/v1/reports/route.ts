@@ -2,7 +2,7 @@ import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
-import type { ReportType } from "@/lib/types";
+import type { ReportSubjectType, ReportType } from "@/lib/types";
 
 export async function GET(request: Request) {
   const user = await requireApiUser();
@@ -22,7 +22,9 @@ export async function POST(request: Request) {
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const body = (await request.json().catch(() => null)) as {
+    subjectType?: ReportSubjectType;
     refereeId?: string;
+    competitionId?: string;
     titulo?: string;
     tipo?: ReportType;
     evento?: string;
@@ -32,14 +34,29 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
-  if (!body.refereeId || !body.titulo || !body.tipo || !body.contenido) {
+  if (!body.subjectType || !body.titulo || !body.tipo || !body.contenido) {
     return jsonError("Faltan campos obligatorios", 400);
   }
-  const scopeErr = await assertRefereeInUserZone(user, body.refereeId);
-  if (scopeErr) return scopeErr;
+  let zona: string | undefined;
+  if (body.subjectType === "juez") {
+    if (!body.refereeId) return jsonError("Juez obligatorio", 400);
+    const scopeErr = await assertRefereeInUserZone(user, body.refereeId);
+    if (scopeErr) return scopeErr;
+  } else {
+    if (!body.competitionId) return jsonError("Competición obligatoria", 400);
+    const competition = await dataService.getCompetition(body.competitionId);
+    if (!competition) return jsonError("Competición no encontrada", 404);
+    if (user.role === "delegado_zona" && user.zona && competition.zona !== user.zona) {
+      return jsonError("Fuera de tu zona", 403);
+    }
+    zona = competition.zona;
+  }
   try {
     const report = await dataService.createReport({
+      subjectType: body.subjectType,
+      zona: zona ?? user.zona ?? "NACIONAL",
       refereeId: body.refereeId,
+      competitionId: body.competitionId,
       titulo: body.titulo,
       tipo: body.tipo,
       evento: body.evento,

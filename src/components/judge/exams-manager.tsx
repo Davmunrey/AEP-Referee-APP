@@ -23,9 +23,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const EXAM_TYPES: ExamType[] = [
-  "Teórico",
-  "Práctico",
-  "Reglamento IPF",
+  "Nuevo juez",
+  "Ascenso IPF",
   "Recertificación",
 ];
 const LEVELS: RefereeLevel[] = [
@@ -69,7 +68,7 @@ export function ExamsManager({
 
   // Form fields
   const [refereeId, setRefereeId] = useState(lockedRefereeId ?? "");
-  const [tipo, setTipo] = useState<ExamType>("Reglamento IPF");
+  const [tipo, setTipo] = useState<ExamType>("Nuevo juez");
   const [nivelObjetivo, setNivelObjetivo] = useState<RefereeLevel>("Nacional");
   const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
   const [examinador, setExaminador] = useState("");
@@ -77,7 +76,7 @@ export function ExamsManager({
   const [notas, setNotas] = useState("");
 
   const resetForm = () => {
-    setTipo("Reglamento IPF");
+    setTipo("Nuevo juez");
     setNivelObjetivo("Nacional");
     setExaminador("");
     setPuntuacion("");

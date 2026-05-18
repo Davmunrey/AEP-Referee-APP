@@ -190,6 +190,11 @@ export function zoneDisplayName(code: string | null | undefined): string {
   return macroZoneName(resolved);
 }
 
+export function zoneUiName(code: string | null | undefined): string {
+  const raw = zoneDisplayName(code);
+  return raw.replace(/^\d+\-\s*/, "").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function normalizeZoneInput(zona?: string | null): string | null {
   return resolveZoneCode(zona) ?? null;
 }

@@ -48,3 +48,7 @@ next-env.d.ts
 
 # claude code worktrees / local
 .claude/
+
+# local agent tooling
+.codex/
+.cursor/rules/

@@ -3,10 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ROLE_LABELS, cloneTemplate, defaultPesajeRoles } from "@/lib/roster-template";
-import { COMPETICION_ROLES_AEP1, COMPETICION_ROLES_AEP2 } from "@/lib/mock-data";
+import { ROLE_LABELS, cloneTemplate } from "@/lib/roster-template";
 import type {
-  EventType,
   RoleKey,
   RosterCategoria,
   RosterGrupo,
@@ -22,7 +20,6 @@ const ROLE_KEYS = Object.keys(ROLE_LABELS) as RoleKey[];
 
 export interface RosterTemplateEditorProps {
   eventId: string;
-  eventType: EventType;
   initialTemplate: RosterSession[];
   onSave: (template: RosterSession[]) => void;
   onCancel: () => void;
@@ -34,11 +31,6 @@ function nextSessionId(sessions: RosterSession[]): string {
     .map((s) => parseInt(s.sesion.replace(/\D/g, ""), 10))
     .filter((n) => !Number.isNaN(n));
   return `S${nums.length ? Math.max(...nums) + 1 : 1}`;
-}
-
-function defaultRolesForType(tipo: EventType): RosterRole[] {
-  const src = tipo === "AEP-1" ? COMPETICION_ROLES_AEP1 : COMPETICION_ROLES_AEP2;
-  return src.map((r) => ({ ...r }));
 }
 
 function RoleRows({
@@ -133,7 +125,6 @@ function RoleRows({
 
 export function RosterTemplateEditor({
   eventId,
-  eventType,
   initialTemplate,
   onSave,
   onCancel,
@@ -322,8 +313,8 @@ export function RosterTemplateEditor({
         categorias: [{ genero: "Hombres", pesos: "" }],
         horarioCompeticion: "10:00 - 13:00",
         horarioPesaje: "08:00 - 09:30",
-        roles: defaultRolesForType(eventType),
-        pesajeRoles: defaultPesajeRoles(),
+        roles: [],
+        pesajeRoles: [],
       },
     ]);
   };

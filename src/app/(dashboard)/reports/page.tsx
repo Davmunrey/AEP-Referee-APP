@@ -12,14 +12,16 @@ export default async function ReportsPage() {
   const user = await getSession();
   if (!user) redirect("/sign-in");
 
-  const [reports, referees] = await Promise.all([
+  const [reports, referees, competitions] = await Promise.all([
     dataService.getReports(undefined, user),
     dataService.getReferees({ user }),
+    dataService.getCompetitions(user),
   ]);
 
   const incidencias = reports.filter((r) => r.tipo === "Incidencia").length;
   const evaluaciones = reports.filter((r) => r.tipo === "Evaluación").length;
-  const jueces = new Set(reports.map((r) => r.refereeId)).size;
+  const jueces = new Set(reports.map((r) => r.refereeId).filter(Boolean)).size;
+  const competiciones = reports.filter((r) => r.subjectType === "competicion").length;
 
   const stats: {
     label: string;
@@ -56,16 +58,23 @@ export default async function ReportsPage() {
       iconBg: "bg-primary-muted",
       Icon: Users,
     },
+    {
+      label: "Informes de competición",
+      value: competiciones,
+      tone: "text-info-soft",
+      iconBg: "bg-info-muted",
+      Icon: FileText,
+    },
   ];
 
   return (
     <PageShell>
       <PageHeader
         eyebrow="Gestión de jueces"
-        title="Informes de jueces"
-        description="Repositorio de informes de desempeño, incidencias y evaluaciones por juez"
+        title="Informes de zona"
+        description="Informes de jueces y competiciones. Delegado de zona ve su zona; nacional y superadmin ven todo."
       />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {stats.map((s) => (
           <Card key={s.label}>
             <CardContent className="flex items-center gap-3 px-4 py-3.5">
@@ -90,6 +99,7 @@ export default async function ReportsPage() {
       <ReportsManager
         reports={reports}
         referees={referees.map((r) => ({ id: r.id, nombre: r.nombre }))}
+        competitions={competitions.map((c) => ({ id: c.id, nombre: c.nombre }))}
         canEdit={user.role !== "solo_ver"}
         canDelete={user.role === "super_admin" || user.role === "delegado_jueces"}
       />

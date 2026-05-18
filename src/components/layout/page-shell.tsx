@@ -12,8 +12,8 @@ export function PageShell({ children, className, flush }: PageShellProps) {
   return (
     <div
       className={cn(
-        "mx-auto max-w-[1600px] space-y-6 pb-10",
-        flush ? "px-0 py-0" : "p-6",
+        "mx-auto max-w-[1360px] space-y-4 pb-6 xl:space-y-5 xl:pb-8",
+        flush ? "px-0 py-0" : "px-4 py-4 sm:px-5 sm:py-5 lg:px-6 xl:py-6",
         className,
       )}
     >

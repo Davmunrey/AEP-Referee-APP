@@ -39,21 +39,21 @@ function MicroTrend({ dir }: { dir: DashboardKpi["trendDir"] }) {
 
 export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
       {kpis.map((kpi) => {
         const style = kpiAccentTokens[kpi.accent];
         return (
           <Card key={kpi.label} className={cn("overflow-hidden border", style.border, style.glow)}>
             {/* Accent top strip */}
             <div className={cn("h-0.5 w-full", style.dot)} />
-            <CardHeader className="flex flex-row items-center gap-2 pb-1 pt-4">
+            <CardHeader className="flex flex-row items-center gap-2 pb-1 pt-3.5">
               <CardTitle className={cn("text-xs font-medium uppercase tracking-wider", tokens.text.muted)}>
                 {kpi.label}
               </CardTitle>
             </CardHeader>
-            <CardContent className="pb-4 pt-0">
+            <CardContent className="pb-3.5 pt-0">
               {/* Big number — strong hierarchy */}
-              <p className={cn("text-4xl font-bold tabular-nums tracking-tight", style.value)}>
+              <p className={cn("text-[2rem] font-bold tabular-nums tracking-tight xl:text-[2.2rem]", style.value)}>
                 {kpi.value}
               </p>
               <p className={cn("mt-1 text-[11px]", tokens.text.subtle)}>{kpi.sub}</p>
@@ -61,7 +61,7 @@ export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
               {/* Trend row */}
               <div
                 className={cn(
-                  "mt-3.5 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5",
+                  "mt-3 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5",
                   tokens.bg.surfaceHover,
                 )}
               >

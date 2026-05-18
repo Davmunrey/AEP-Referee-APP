@@ -71,9 +71,9 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
           {health.status}
         </span>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6 p-5 sm:flex-row sm:items-start">
+      <CardContent className="flex flex-col gap-5 p-4 sm:flex-row sm:items-start">
         {/* Gauge ring */}
-        <div className="relative mx-auto h-[140px] w-[140px] shrink-0">
+        <div className="relative mx-auto h-[126px] w-[126px] shrink-0 xl:h-[132px] xl:w-[132px]">
           <svg
             viewBox="0 0 128 128"
             className="h-full w-full -rotate-90"
@@ -105,7 +105,7 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-[2.4rem] font-bold leading-none tracking-tight", style.text)}>
+            <span className={cn("text-[2rem] font-bold leading-none tracking-tight xl:text-[2.2rem]", style.text)}>
               {health.score}
             </span>
             <span className="text-[9px] uppercase tracking-widest text-muted-foreground/50">
@@ -138,10 +138,10 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
 
         {/* Factors */}
         <div className="flex-1 space-y-1">
-          <p className="mb-3 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mb-2.5 text-[12px] leading-relaxed text-muted-foreground">
             {health.summary}
           </p>
-          <ul className="space-y-3">
+          <ul className="space-y-2.5">
             {health.factors.map((f) => (
               <li key={f.label}>
                 <div className="mb-1 flex items-baseline justify-between gap-2">

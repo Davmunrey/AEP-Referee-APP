@@ -66,7 +66,7 @@ export default async function ExamsPage() {
       <PageHeader
         eyebrow="Gestión de jueces"
         title="Exámenes de jueces"
-        description="Teoría, práctica, reglamento IPF y recertificaciones de la plantilla de jueces"
+        description="Altas de nuevos jueces, ascensos a categoría IPF y recertificaciones"
       />
       <p className="-mt-2 text-sm text-subtle-muted">{AEP_JUDGE_LICENSE_NOTE}</p>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

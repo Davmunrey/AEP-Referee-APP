@@ -8,7 +8,7 @@ import { RefereeEditForm } from "@/components/referees/referee-edit-form";
 import { RefereePromotionButton } from "@/components/referees/referee-promotion-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { resolveZoneCode } from "@/lib/aep-zones";
+import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -27,9 +27,10 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!user) redirect("/sign-in");
 
   const { id } = await params;
-  const [profile, meta] = await Promise.all([
+  const [profile, meta, competitions] = await Promise.all([
     dataService.getJudgeProfile(id),
     dataService.getMeta(user),
+    dataService.getCompetitions(user),
   ]);
   if (!profile) notFound();
 
@@ -48,8 +49,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
     const refZone = resolveZoneCode(referee.zona) ?? referee.zona;
     if (refZone !== userZone) notFound();
   }
-  const zoneName =
-    meta.zones.find((z) => z.code === referee.zona)?.name ?? referee.zona;
+  const zoneName = zoneUiName(referee.zona);
   const canEdit = user.role !== "solo_ver";
   const canSanction = canManageSanctions(user, referee.zona);
   const canDelete = user.role === "super_admin" || user.role === "delegado_jueces";
@@ -88,13 +88,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
             {/* Identity */}
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
-                {referee.zona} · {zoneName}
-                {referee.excelMacroZone && referee.excelMacroZone !== referee.zona && (
-                  <span className="font-normal normal-case text-muted-foreground">
-                    {" "}
-                    (Excel: {referee.excelMacroZone})
-                  </span>
-                )}
+                {zoneName}
               </p>
               <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
                 {referee.nombre}
@@ -166,9 +160,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="friendly-label mb-1">Zona</p>
-              <p className="text-sm text-foreground">
-                {referee.zona} · {zoneName}
-              </p>
+              <p className="text-sm text-foreground">{zoneName}</p>
             </div>
             <div>
               <p className="friendly-label mb-1">Nivel</p>
@@ -265,6 +257,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       <ReportsManager
         reports={reports}
         referees={[{ id: referee.id, nombre: referee.nombre }]}
+        competitions={competitions.map((c) => ({ id: c.id, nombre: c.nombre }))}
         lockedRefereeId={referee.id}
         canEdit={canEdit}
         canDelete={canDelete}

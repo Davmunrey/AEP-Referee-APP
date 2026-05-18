@@ -301,9 +301,8 @@ export interface RosterHistoryEntry {
 }
 
 export type ExamType =
-  | "Teórico"
-  | "Práctico"
-  | "Reglamento IPF"
+  | "Nuevo juez"
+  | "Ascenso IPF"
   | "Recertificación";
 export type ExamResult = "Aprobado" | "Suspenso" | "Pendiente";
 
@@ -323,15 +322,21 @@ export interface RefereeExam {
 }
 
 export type ReportType =
-  | "Desempeño"
+  | "Competición"
+  | "Juez"
   | "Incidencia"
-  | "Evaluación"
-  | "Auto-informe";
+  | "Evaluación";
+
+export type ReportSubjectType = "competicion" | "juez";
 
 export interface RefereeReport {
   id: string;
-  refereeId: string;
-  refereeName: string;
+  subjectType: ReportSubjectType;
+  zona?: string;
+  refereeId?: string;
+  refereeName?: string;
+  competitionId?: string;
+  competitionName?: string;
   titulo: string;
   tipo: ReportType;
   evento?: string;
