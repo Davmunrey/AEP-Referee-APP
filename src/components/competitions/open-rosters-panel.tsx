@@ -9,12 +9,12 @@ import { Progress } from "@/components/ui/progress";
 import { LayoutGrid } from "lucide-react";
 
 interface OpenRostersPanelProps {
-  events: Competition[];
+  competitions: Competition[];
   maxItems?: number;
 }
 
-export function OpenRostersPanel({ events, maxItems = 6 }: OpenRostersPanelProps) {
-  const active = listActiveTarimaCompetitions(events).slice(0, maxItems);
+export function OpenRostersPanel({ competitions, maxItems = 6 }: OpenRostersPanelProps) {
+  const active = listActiveTarimaCompetitions(competitions).slice(0, maxItems);
   if (active.length === 0) return null;
 
   return (

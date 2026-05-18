@@ -10,10 +10,10 @@ export async function GET() {
   const groups = await dataService.findCompetitionDuplicates(user);
   return jsonOk({
     groupCount: groups.length,
-    duplicateCount: groups.reduce((n, g) => n + g.events.length - 1, 0),
+    duplicateCount: groups.reduce((n, g) => n + g.competitions.length - 1, 0),
     groups: groups.map((g) => ({
       key: g.key,
-      events: g.events.map((e) => ({
+      competitions: g.competitions.map((e) => ({
         id: e.id,
         nombre: e.nombre,
         fecha: e.fecha,

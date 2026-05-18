@@ -21,7 +21,7 @@ export function competitionDedupKey(c: {
 
 export interface CompetitionDuplicateGroup {
   key: string;
-  events: Competition[];
+  competitions: Competition[];
 }
 
 export function groupCompetitionDuplicates(
@@ -36,9 +36,9 @@ export function groupCompetitionDuplicates(
   }
   return [...map.entries()]
     .filter(([, list]) => list.length > 1)
-    .map(([key, events]) => ({
+    .map(([key, competitions]) => ({
       key,
-      events: [...events].sort((a, b) => a.id.localeCompare(b.id)),
+      competitions: [...competitions].sort((a, b) => a.id.localeCompare(b.id)),
     }));
 }
 

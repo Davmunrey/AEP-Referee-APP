@@ -39,7 +39,7 @@ export default async function CompetitionsPage() {
         </div>
       </PageHeader>
 
-      <OpenRostersPanel events={competitions} />
+      <OpenRostersPanel competitions={competitions} />
 
       <Card>
         <CardHeader className="border-b border-border-muted pb-4">

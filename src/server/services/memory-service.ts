@@ -821,8 +821,8 @@ export const memoryDataService = {
     const removed: string[] = [];
     const kept: string[] = [];
     for (const group of groups) {
-      const toDrop = competitionsToRemoveInGroup(group.events);
-      const keep = group.events.find((e) => !toDrop.some((d) => d.id === e.id));
+      const toDrop = competitionsToRemoveInGroup(group.competitions);
+      const keep = group.competitions.find((e) => !toDrop.some((d) => d.id === e.id));
       if (keep) kept.push(keep.id);
       for (const c of toDrop) {
         if (await memoryDataService.deleteCompetition(c.id)) removed.push(c.id);
@@ -866,7 +866,7 @@ export const memoryDataService = {
       (a) => a.status === "pendiente",
     ).length;
     return {
-      events: competitions.length,
+      competitions: competitions.length,
       approvals,
       activeRosterHref: pickActiveRosterHref(competitions),
     };

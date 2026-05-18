@@ -204,7 +204,7 @@ async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
   const supabase = db();
   await supabase.from("roster_history").insert({
     id: `hist-${Date.now()}`,
-    event_id: entry.competitionId,
+    competition_id: entry.competitionId,
     at: entry.at,
     actor: entry.actor,
     action: entry.action,
@@ -818,7 +818,7 @@ export const supabaseDataService = {
     const { data: existing } = await supabase
       .from("approval_proposals")
       .select("*")
-      .eq("event_id", competitionId)
+      .eq("competition_id", competitionId)
       .eq("status", "pendiente")
       .maybeSingle();
 
@@ -831,8 +831,8 @@ export const supabaseDataService = {
     } else {
       await supabase.from("approval_proposals").insert({
         id: `apr-${Date.now()}`,
-        event_id: competitionId,
-        event_name: comp.nombre,
+        competition_id: competitionId,
+        competition_name: comp.nombre,
         zona: comp.zona ?? "—",
         submitted_by: actor,
         submitted_at: now,
@@ -854,7 +854,7 @@ export const supabaseDataService = {
     const { data } = await supabase
       .from("approval_proposals")
       .select("*")
-      .eq("event_id", competitionId)
+      .eq("competition_id", competitionId)
       .eq("status", "pendiente")
       .single();
     return data ? mapApproval(data as Record<string, unknown>) : undefined;
@@ -908,13 +908,13 @@ export const supabaseDataService = {
       })
       .eq("id", id);
 
-    const comp = await supabaseDataService.getCompetition(proposal.event_id);
+    const comp = await supabaseDataService.getCompetition(proposal.competition_id);
     if (comp) {
       if (approve) {
-        await supabase.from("roster_assignments").delete().eq("competition_id", proposal.event_id);
+        await supabase.from("roster_assignments").delete().eq("competition_id", proposal.competition_id);
         const assignments = proposal.assignments as AssignmentsMap;
         const rows = Object.entries(assignments).map(([slot_key, referee_id]) => ({
-          competition_id: proposal.event_id,
+          competition_id: proposal.competition_id,
           slot_key,
           referee_id,
         }));
@@ -926,12 +926,12 @@ export const supabaseDataService = {
             estado: "Completo",
             confirmados: Object.values(assignments).filter(Boolean).length,
           })
-          .eq("id", proposal.event_id);
+          .eq("id", proposal.competition_id);
       } else {
         await supabase
           .from("competitions")
           .update({ aprobacion: "Rechazado" })
-          .eq("id", proposal.event_id);
+          .eq("id", proposal.competition_id);
       }
     }
 
@@ -939,7 +939,7 @@ export const supabaseDataService = {
       tipo: approve ? "aprobacion" : "rechazo",
       actor: reviewer,
       accion: approve ? "aprobó roster para" : "rechazó propuesta para",
-      evento: proposal.event_name,
+      evento: proposal.competition_name,
       hace: "ahora",
     });
 
@@ -1161,7 +1161,7 @@ export const supabaseDataService = {
     const { data } = await supabase
       .from("roster_history")
       .select("*")
-      .eq("event_id", competitionId)
+      .eq("competition_id", competitionId)
       .order("at", { ascending: false });
     return (data ?? []).map((r) => mapHistory(r as Record<string, unknown>));
   },
@@ -1195,8 +1195,8 @@ export const supabaseDataService = {
   deleteCompetition: async (id: string): Promise<boolean> => {
     const supabase = db();
     await supabase.from("roster_assignments").delete().eq("competition_id", id);
-    await supabase.from("approval_proposals").delete().eq("event_id", id);
-    await supabase.from("roster_history").delete().eq("event_id", id);
+    await supabase.from("approval_proposals").delete().eq("competition_id", id);
+    await supabase.from("roster_history").delete().eq("competition_id", id);
     const { data, error } = await supabase
       .from("competitions")
       .delete()
@@ -1219,8 +1219,8 @@ export const supabaseDataService = {
     const removed: string[] = [];
     const kept: string[] = [];
     for (const group of groups) {
-      const toDrop = competitionsToRemoveInGroup(group.events);
-      const keep = group.events.find((e) => !toDrop.some((d) => d.id === e.id));
+      const toDrop = competitionsToRemoveInGroup(group.competitions);
+      const keep = group.competitions.find((e) => !toDrop.some((d) => d.id === e.id));
       if (keep) kept.push(keep.id);
       for (const c of toDrop) {
         const ok = await supabaseDataService.deleteCompetition(c.id);
@@ -1271,7 +1271,7 @@ export const supabaseDataService = {
       (a) => a.status === "pendiente",
     ).length;
     return {
-      events: competitions.length,
+      competitions: competitions.length,
       approvals,
       activeRosterHref: pickActiveRosterHref(competitions),
     };

@@ -43,7 +43,7 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
       href: "/competitions",
       label: "Campeonatos",
       icon: CalendarDays,
-      badge: counts.events > 0 ? counts.events : undefined,
+      badge: counts.competitions > 0 ? counts.competitions : undefined,
       match: (p) => p === "/competitions" || p === "/competitions/new",
     },
     {

@@ -338,7 +338,7 @@ export const api = {
       duplicateCount: number;
       groups: Array<{
         key: string;
-        events: Array<{
+        competitions: Array<{
           id: string;
           nombre: string;
           fecha: string;
