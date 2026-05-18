@@ -1,0 +1,33 @@
+import Link from "next/link";
+import { NewCompetitionForm } from "@/components/competitions/new-competition-form";
+import { PageHeader, PageShell } from "@/components/layout/page-shell";
+import { Button } from "@/components/ui/button";
+import { getSession } from "@/lib/auth/session";
+import { dataService } from "@/server/services";
+import { ArrowLeft } from "lucide-react";
+import { redirect } from "next/navigation";
+
+export default async function NewCompetitionPage() {
+  const user = await getSession();
+  if (!user) redirect("/sign-in");
+  if (user.role === "solo_ver") redirect("/competitions");
+
+  return (
+    <PageShell>
+      <Button variant="outline" size="sm" className="w-fit" asChild>
+        <Link href="/competitions">
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          Campeonatos
+        </Link>
+      </Button>
+
+      <PageHeader
+        eyebrow="Operaciones"
+        title="Nuevo campeonato"
+        description="Crea un campeonato en borrador y configura la tarima de jueces después."
+      />
+
+      <NewCompetitionForm zones={(await dataService.getMeta(user)).zones} defaultZona={user.zona} />
+    </PageShell>
+  );
+}

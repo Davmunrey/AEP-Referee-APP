@@ -13,8 +13,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
-  const { id: eventId } = await context.params;
-  const comp = await dataService.getCompetition(eventId);
+  const { id: competitionId } = await context.params;
+  const comp = await dataService.getCompetition(competitionId);
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
   if (isCompetitionPast(comp)) return jsonError("Campeonato finalizado: solo lectura", 423);
@@ -28,7 +28,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     intercambio: Boolean(body?.flags?.intercambio),
   };
 
-  const result = await dataService.setSlotFlags(eventId, slotKey, flags, user.nombre);
+  const result = await dataService.setSlotFlags(competitionId, slotKey, flags, user.nombre);
   if ("error" in result && result.error) return jsonError(result.error, 400);
   return jsonOk(result);
 }

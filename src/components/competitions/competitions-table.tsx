@@ -25,7 +25,7 @@ import { selectFieldClassSm } from "@/lib/design-tokens";
 import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
 
-interface EventsTableProps {
+interface CompetitionsTableProps {
   initialEvents: Competition[];
   role: UserRole;
   userZona?: string | null;
@@ -36,7 +36,7 @@ const EVENT_STATUSES: EventStatus[] = ["Completo", "Incompleto", "Crítico", "Bo
 const PAGE_SIZE = 20;
 const MAX_VISIBLE_PAGES = 5;
 
-export function EventsTable({ initialEvents, role, userZona }: EventsTableProps) {
+export function CompetitionsTable({ initialEvents, role, userZona }: CompetitionsTableProps) {
   const router = useRouter();
   const [events, setEvents] = useState(initialEvents);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -366,7 +366,7 @@ export function EventsTable({ initialEvents, role, userZona }: EventsTableProps)
                     ) : (
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/events/${event.id}`}>
+                          <Link href={`/competitions/${event.id}`}>
                             Montar tarima
                             <ArrowRight className="ml-1 h-3.5 w-3.5" />
                           </Link>

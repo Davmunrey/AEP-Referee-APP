@@ -37,13 +37,13 @@ import type {
 import {
   REGULATION_RULES,
   getCalendarEvents,
-  getEventTemplate,
+  getCompetitionTemplate,
   getLevels,
   getStore,
   getZones,
   pushActivity,
   pushHistory,
-  setEventTemplate,
+  setCompetitionTemplate,
 } from "@/server/store";
 
 /** Bitácora de salud en memoria (modo dev sin Supabase). */
@@ -55,14 +55,14 @@ function parseSlotKey(slotKey: string): { session: string; roleKey: string } | n
   return { session: parts[0]!, roleKey: parts[1]! };
 }
 
-function syncCompetitionCoverage(eventId: string) {
+function syncCompetitionCoverage(competitionId: string) {
   const store = getStore();
-  const comp = store.competitions.find((c) => c.id === eventId);
+  const comp = store.competitions.find((c) => c.id === competitionId);
   if (!comp) return;
-  const assignments = store.assignments.get(eventId) ?? {};
+  const assignments = store.assignments.get(competitionId) ?? {};
   const filled = Object.values(assignments).filter(Boolean).length;
   comp.confirmados = filled;
-  const open = countOpenSlots(getEventTemplate(eventId), assignments);
+  const open = countOpenSlots(getCompetitionTemplate(competitionId), assignments);
   if (open === 0) comp.estado = "Completo";
   else if (filled === 0) comp.estado = "Borrador";
   else if (open > 5) comp.estado = "Crítico";
@@ -109,7 +109,7 @@ function buildKpis(user?: SessionUser): DashboardKpi[] {
   let openSlots = 0;
   for (const c of competitions) {
     openSlots += countOpenSlots(
-      getEventTemplate(c.id),
+      getCompetitionTemplate(c.id),
       store.assignments.get(c.id) ?? {},
     );
   }
@@ -168,7 +168,7 @@ export const memoryDataService = {
     const coverage = competitions.map((c) => {
       const assignments = store.assignments.get(c.id) ?? {};
       const filled = Object.values(assignments).filter(Boolean).length;
-      const open = countOpenSlots(getEventTemplate(c.id), assignments);
+      const open = countOpenSlots(getCompetitionTemplate(c.id), assignments);
       return {
         id: c.id,
         nombre: c.nombre,
@@ -307,7 +307,7 @@ export const memoryDataService = {
     store.competitions.push(comp);
     store.assignments.set(id, {});
     store.slotFlags.set(id, {});
-    setEventTemplate(id, []);
+    setCompetitionTemplate(id, []);
     return comp;
   },
 
@@ -326,45 +326,45 @@ export const memoryDataService = {
   },
 
   getRoster: async (
-    eventId: string,
+    competitionId: string,
   ): Promise<
     { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap } | undefined
   > => {
-    if (!(await memoryDataService.getCompetition(eventId))) return undefined;
+    if (!(await memoryDataService.getCompetition(competitionId))) return undefined;
     const store = getStore();
-    if (!store.assignments.has(eventId)) store.assignments.set(eventId, {});
-    if (!store.slotFlags.has(eventId)) store.slotFlags.set(eventId, {});
+    if (!store.assignments.has(competitionId)) store.assignments.set(competitionId, {});
+    if (!store.slotFlags.has(competitionId)) store.slotFlags.set(competitionId, {});
     return {
-      template: getEventTemplate(eventId),
-      assignments: { ...store.assignments.get(eventId)! },
-      flags: { ...store.slotFlags.get(eventId)! },
+      template: getCompetitionTemplate(competitionId),
+      assignments: { ...store.assignments.get(competitionId)! },
+      flags: { ...store.slotFlags.get(competitionId)! },
     };
   },
 
   saveCompetitionTemplate: async (
-    eventId: string,
+    competitionId: string,
     template: RosterSession[],
     actor: string,
   ) => {
-    const comp = await memoryDataService.getCompetition(eventId);
+    const comp = await memoryDataService.getCompetition(competitionId);
     if (!comp) return undefined;
     const store = getStore();
-    setEventTemplate(eventId, template);
-    const assignments = store.assignments.get(eventId) ?? {};
-    const flags = store.slotFlags.get(eventId) ?? {};
+    setCompetitionTemplate(competitionId, template);
+    const assignments = store.assignments.get(competitionId) ?? {};
+    const flags = store.slotFlags.get(competitionId) ?? {};
     const pruned = pruneAssignments(template, assignments, flags);
-    store.assignments.set(eventId, pruned.assignments);
-    store.slotFlags.set(eventId, pruned.flags);
-    const idx = store.competitions.findIndex((c) => c.id === eventId);
+    store.assignments.set(competitionId, pruned.assignments);
+    store.slotFlags.set(competitionId, pruned.flags);
+    const idx = store.competitions.findIndex((c) => c.id === competitionId);
     if (idx >= 0) {
       store.competitions[idx] = {
         ...store.competitions[idx]!,
         sesiones: template.length,
       };
     }
-    syncCompetitionCoverage(eventId);
+    syncCompetitionCoverage(competitionId);
     pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Plantilla actualizada",
@@ -378,26 +378,26 @@ export const memoryDataService = {
   },
 
   setSlotFlags: async (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     flags: SlotFlags,
     actor: string,
   ): Promise<{ flags: FlagsMap } | { error: string }> => {
     const store = getStore();
-    const assignments = store.assignments.get(eventId) ?? {};
+    const assignments = store.assignments.get(competitionId) ?? {};
     if (!assignments[slotKey]) {
       return { error: "Asigna un juez antes de marcar flags" };
     }
-    const all = { ...(store.slotFlags.get(eventId) ?? {}) };
+    const all = { ...(store.slotFlags.get(competitionId) ?? {}) };
     const merged: SlotFlags = {
       compartido: Boolean(flags.compartido),
       intercambio: Boolean(flags.intercambio),
     };
     if (merged.compartido || merged.intercambio) all[slotKey] = merged;
     else delete all[slotKey];
-    store.slotFlags.set(eventId, all);
+    store.slotFlags.set(competitionId, all);
     pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Flags slot",
@@ -407,11 +407,11 @@ export const memoryDataService = {
   },
 
   validateAssign: async (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     refereeId: string,
   ): Promise<AssignValidation> => {
-    const comp = await memoryDataService.getCompetition(eventId);
+    const comp = await memoryDataService.getCompetition(competitionId);
     const referee = await memoryDataService.getReferee(refereeId);
     if (!comp || !referee) return { ok: false, error: "Datos no válidos" };
     const parsed = parseSlotKey(slotKey);
@@ -420,17 +420,17 @@ export const memoryDataService = {
   },
 
   assignReferee: async (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     refereeId: string,
     actor: string,
     slotFlags?: SlotFlags,
   ): Promise<{ assignments?: AssignmentsMap; flags?: FlagsMap; error?: string }> => {
-    const validation = await memoryDataService.validateAssign(eventId, slotKey, refereeId);
+    const validation = await memoryDataService.validateAssign(competitionId, slotKey, refereeId);
     if (!validation.ok) return { error: validation.error };
 
     const store = getStore();
-    const assignments = { ...(store.assignments.get(eventId) ?? {}) };
+    const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
     // El juez puede estar en varias sesiones; solo se libera su slot previo
     // dentro de la MISMA sesión.
     const session = slotKey.split("_")[0];
@@ -440,18 +440,18 @@ export const memoryDataService = {
       }
     }
     assignments[slotKey] = refereeId;
-    store.assignments.set(eventId, assignments);
-    const flagMap = { ...(store.slotFlags.get(eventId) ?? {}) };
+    store.assignments.set(competitionId, assignments);
+    const flagMap = { ...(store.slotFlags.get(competitionId) ?? {}) };
     if (slotFlags && (slotFlags.compartido || slotFlags.intercambio)) {
       flagMap[slotKey] = {
         compartido: Boolean(slotFlags.compartido),
         intercambio: Boolean(slotFlags.intercambio),
       };
     }
-    store.slotFlags.set(eventId, flagMap);
-    syncCompetitionCoverage(eventId);
+    store.slotFlags.set(competitionId, flagMap);
+    syncCompetitionCoverage(competitionId);
     pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Asignación",
@@ -464,20 +464,20 @@ export const memoryDataService = {
   },
 
   clearSlot: async (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     actor: string,
   ): Promise<AssignmentsMap | undefined> => {
     const store = getStore();
-    const assignments = { ...(store.assignments.get(eventId) ?? {}) };
+    const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
     delete assignments[slotKey];
-    store.assignments.set(eventId, assignments);
-    const flagMap = { ...(store.slotFlags.get(eventId) ?? {}) };
+    store.assignments.set(competitionId, assignments);
+    const flagMap = { ...(store.slotFlags.get(competitionId) ?? {}) };
     delete flagMap[slotKey];
-    store.slotFlags.set(eventId, flagMap);
-    syncCompetitionCoverage(eventId);
+    store.slotFlags.set(competitionId, flagMap);
+    syncCompetitionCoverage(competitionId);
     pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Liberó slot",
@@ -486,13 +486,13 @@ export const memoryDataService = {
     return { ...assignments };
   },
 
-  submitRoster: async (eventId: string, actor: string): Promise<ApprovalProposal | undefined> => {
-    const comp = await memoryDataService.getCompetition(eventId);
+  submitRoster: async (competitionId: string, actor: string): Promise<ApprovalProposal | undefined> => {
+    const comp = await memoryDataService.getCompetition(competitionId);
     if (!comp) return undefined;
     const store = getStore();
-    const assignments = { ...(store.assignments.get(eventId) ?? {}) };
+    const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
     const existing = store.approvals.find(
-      (a) => a.eventId === eventId && a.status === "pendiente",
+      (a) => a.competitionId === competitionId && a.status === "pendiente",
     );
     if (existing) {
       existing.assignments = assignments;
@@ -501,8 +501,8 @@ export const memoryDataService = {
     } else {
       store.approvals.unshift({
         id: `apr-${Date.now()}`,
-        eventId,
-        eventName: comp.nombre,
+        competitionId,
+        competitionName: comp.nombre,
         zona: comp.zona ?? "—",
         submittedBy: actor,
         submittedAt: new Date().toISOString(),
@@ -518,14 +518,14 @@ export const memoryDataService = {
       evento: comp.nombre,
       hace: "ahora",
     });
-    return store.approvals.find((a) => a.eventId === eventId && a.status === "pendiente");
+    return store.approvals.find((a) => a.competitionId === competitionId && a.status === "pendiente");
   },
 
-  saveDraft: async (eventId: string, actor: string) => {
-    const comp = await memoryDataService.getCompetition(eventId);
+  saveDraft: async (competitionId: string, actor: string) => {
+    const comp = await memoryDataService.getCompetition(competitionId);
     if (comp && comp.estado === "Borrador") comp.estado = "Incompleto";
     pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Guardó borrador",
@@ -555,10 +555,10 @@ export const memoryDataService = {
     proposal.reviewedAt = new Date().toISOString();
     proposal.comment = comment;
 
-    const comp = store.competitions.find((c) => c.id === proposal.eventId);
+    const comp = store.competitions.find((c) => c.id === proposal.competitionId);
     if (comp) {
       if (approve) {
-        store.assignments.set(proposal.eventId, { ...proposal.assignments });
+        store.assignments.set(proposal.competitionId, { ...proposal.assignments });
         comp.aprobacion = "Aprobado";
         comp.estado = "Completo";
         comp.confirmados = Object.values(proposal.assignments).filter(Boolean).length;
@@ -571,7 +571,7 @@ export const memoryDataService = {
       tipo: approve ? "aprobacion" : "rechazo",
       actor: reviewer,
       accion: approve ? "aprobó roster para" : "rechazó propuesta para",
-      evento: proposal.eventName,
+      evento: proposal.competitionName,
       hace: "ahora",
     });
     return proposal;
@@ -640,7 +640,7 @@ export const memoryDataService = {
     for (const c of competitions) {
       const year = yearFromIso(c.fecha);
       if (year == null) continue;
-      const template = getEventTemplate(c.id);
+      const template = getCompetitionTemplate(c.id);
       const assignments = store.assignments.get(c.id) ?? {};
       const requiredSlots = enumerateSlotKeys(template).length;
       const filledSlots = Object.values(assignments).filter(Boolean).length;
@@ -771,12 +771,12 @@ export const memoryDataService = {
     };
   },
 
-  getRosterHistory: async (eventId: string): Promise<RosterHistoryEntry[]> =>
-    getStore().history.filter((h) => h.eventId === eventId),
+  getRosterHistory: async (competitionId: string): Promise<RosterHistoryEntry[]> =>
+    getStore().history.filter((h) => h.competitionId === competitionId),
 
-  exportRoster: async (eventId: string) => {
-    const roster = await memoryDataService.getRoster(eventId);
-    const comp = await memoryDataService.getCompetition(eventId);
+  exportRoster: async (competitionId: string) => {
+    const roster = await memoryDataService.getRoster(competitionId);
+    const comp = await memoryDataService.getCompetition(competitionId);
     if (!roster || !comp) return null;
     const store = getStore();
     return formatRosterExport(

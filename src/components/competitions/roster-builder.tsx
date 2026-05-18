@@ -6,10 +6,10 @@ import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
 import { zoneUiName } from "@/lib/aep-zones";
 import { EventStatusBadge, EventTypeBadge, LevelBadge } from "@/components/aep/badges";
-import { RosterHeaderActions } from "@/components/events/roster-header-actions";
-import { RosterHelpPanel } from "@/components/events/roster-help-panel";
-import { RosterRevisionPanel } from "@/components/events/roster-revision-panel";
-import { RosterStepper } from "@/components/events/roster-stepper";
+import { RosterHeaderActions } from "@/components/competitions/roster-header-actions";
+import { RosterHelpPanel } from "@/components/competitions/roster-help-panel";
+import { RosterRevisionPanel } from "@/components/competitions/roster-revision-panel";
+import { RosterStepper } from "@/components/competitions/roster-stepper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,9 +46,9 @@ import {
   Info,
   X,
 } from "lucide-react";
-import { RosterHistoryPanel } from "@/components/events/roster-history-panel";
-import { RosterTemplateEditor } from "@/components/events/roster-template-editor";
-import { ScheduleImportDialog } from "@/components/events/schedule-import-dialog";
+import { RosterHistoryPanel } from "@/components/competitions/roster-history-panel";
+import { RosterTemplateEditor } from "@/components/competitions/roster-template-editor";
+import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
 import { FileUp } from "lucide-react";
 
 interface RosterBuilderProps {
@@ -299,7 +299,7 @@ export function RosterBuilder({
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <ScheduleImportDialog
-        eventId={event.id}
+        competitionId={event.id}
         open={importOpen}
         hasExistingTemplate={template.length > 0}
         onClose={() => setImportOpen(false)}
@@ -316,7 +316,7 @@ export function RosterBuilder({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <Button variant="outline" size="icon" asChild>
-              <Link href="/events" aria-label="Volver a campeonatos">
+              <Link href="/competitions" aria-label="Volver a campeonatos">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
@@ -382,10 +382,10 @@ export function RosterBuilder({
                   {isEditing ? "Volver a tarima" : "Editar plantilla"}
                 </Button>
               )}
-              <RosterHistoryPanel eventId={event.id} />
+              <RosterHistoryPanel competitionId={event.id} />
               {!readOnly && !isEditing && (
                 <RosterHeaderActions
-                  eventId={event.id}
+                  competitionId={event.id}
                   filledSlots={filledSlots}
                   totalSlots={totalSlots}
                   fillPct={fillPct}
@@ -596,7 +596,7 @@ export function RosterBuilder({
             <ScrollArea className="flex-1">
               <div className="p-4">
                 <RosterTemplateEditor
-                  eventId={event.id}
+                  competitionId={event.id}
                   initialTemplate={template}
                   onSave={saveTemplate}
                   onCancel={() => setIsEditing(false)}
@@ -1122,7 +1122,7 @@ function SlotGrid({
                               e.stopPropagation();
                               onToggleFlag(slotKey, "compartido");
                             }}
-                            title="Compartido (*) — el juez comparte sesión con otro evento"
+                            title="Compartido (*) — el juez comparte sesión con otra competición"
                             aria-pressed={slotFlags?.compartido ? "true" : "false"}
                             className={cn(
                               "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",

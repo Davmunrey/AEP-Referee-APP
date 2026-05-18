@@ -28,8 +28,8 @@ export async function POST(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
-  const { id: eventId } = await context.params;
-  const comp = await dataService.getCompetition(eventId);
+  const { id: competitionId } = await context.params;
+  const comp = await dataService.getCompetition(competitionId);
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) {
     return jsonError("Sin permiso en esta zona", 403);
@@ -105,7 +105,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const saved = await dataService.saveCompetitionTemplate(
-    eventId,
+    competitionId,
     template,
     user.nombre,
   );

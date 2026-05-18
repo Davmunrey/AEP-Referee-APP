@@ -14,12 +14,12 @@ import type {
 import { selectFieldClass } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, FileUp, Minus, Plus, Trash2 } from "lucide-react";
-import { ScheduleImportDialog } from "@/components/events/schedule-import-dialog";
+import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
 
 const ROLE_KEYS = Object.keys(ROLE_LABELS) as RoleKey[];
 
 export interface RosterTemplateEditorProps {
-  eventId: string;
+  competitionId: string;
   initialTemplate: RosterSession[];
   onSave: (template: RosterSession[]) => void;
   onCancel: () => void;
@@ -124,7 +124,7 @@ function RoleRows({
 }
 
 export function RosterTemplateEditor({
-  eventId,
+  competitionId,
   initialTemplate,
   onSave,
   onCancel,
@@ -374,7 +374,7 @@ export function RosterTemplateEditor({
       </div>
 
       <ScheduleImportDialog
-        eventId={eventId}
+        competitionId={competitionId}
         open={importOpen}
         hasExistingTemplate={sessions.length > 0}
         onClose={() => setImportOpen(false)}

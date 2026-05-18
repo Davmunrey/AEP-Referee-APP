@@ -36,7 +36,7 @@ function CoverageRing({ pct }: { pct: number }) {
 }
 
 interface RosterHeaderActionsProps {
-  eventId: string;
+  competitionId: string;
   filledSlots: number;
   totalSlots: number;
   fillPct: number;
@@ -50,7 +50,7 @@ interface RosterHeaderActionsProps {
 }
 
 export function RosterHeaderActions({
-  eventId,
+  competitionId,
   filledSlots,
   totalSlots,
   fillPct,
@@ -67,7 +67,7 @@ export function RosterHeaderActions({
   const coverageBarColor =
     fillPct >= 100 ? "bg-success" : fillPct >= 70 ? "bg-warning" : "bg-chart-danger";
 
-  const exportFilename = `acta-tarima-${eventId}.txt`;
+  const exportFilename = `acta-tarima-${competitionId}.txt`;
 
   return (
     <>
@@ -75,7 +75,7 @@ export function RosterHeaderActions({
         open={exportOpen}
         onClose={() => setExportOpen(false)}
         kind="roster_export"
-        fetchText={() => api.fetchRosterExportText(eventId)}
+        fetchText={() => api.fetchRosterExportText(competitionId)}
         filename={exportFilename}
         mime="text/plain;charset=utf-8"
         summaryStats={[
@@ -127,7 +127,7 @@ export function RosterHeaderActions({
           onClick={() => {
             startTransition(async () => {
               try {
-                const res = await api.saveDraft(eventId);
+                const res = await api.saveDraft(competitionId);
                 onStatus(res.message, false);
               } catch {
                 onStatus("Error al guardar el borrador", true);
@@ -169,7 +169,7 @@ export function RosterHeaderActions({
             if (!confirm(lines.join("\n"))) return;
             startTransition(async () => {
               try {
-                const res = await api.submitRoster(eventId);
+                const res = await api.submitRoster(competitionId);
                 onStatus(res.message, false);
               } catch {
                 onStatus("Error al enviar la propuesta", true);

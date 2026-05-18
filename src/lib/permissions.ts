@@ -1,7 +1,7 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import type { SessionUser } from "@/lib/types";
 
-/** Puede crear campeonatos y abrir el formulario `/events/new`. */
+/** Puede crear campeonatos y abrir el formulario `/competitions/new`. */
 export function canCreateCompetition(role: SessionUser["role"]): boolean {
   return (
     role === "super_admin" || role === "delegado_jueces" || role === "delegado_zona"

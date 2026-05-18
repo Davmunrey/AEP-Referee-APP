@@ -33,7 +33,7 @@ export async function POST() {
     return jsonError("Solo Super Admin o Delegado de Jueces pueden limpiar duplicados", 403);
   }
   const result = await dataService.removeDuplicateCompetitions(user);
-  revalidatePath("/events");
+  revalidatePath("/competitions");
   revalidatePath("/");
   return jsonOk(result);
 }

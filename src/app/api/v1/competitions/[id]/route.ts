@@ -11,9 +11,9 @@ export async function GET(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { id } = await context.params;
-  const event = await dataService.getCompetition(id);
-  if (!event) return jsonError("Competición no encontrada", 404);
-  return jsonOk(event);
+  const competition = await dataService.getCompetition(id);
+  if (!competition) return jsonError("Competición no encontrada", 404);
+  return jsonOk(competition);
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -27,13 +27,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
 
-  const event = await dataService.getCompetition(id);
-  if (!event) return jsonError("Competición no encontrada", 404);
+  const competition = await dataService.getCompetition(id);
+  if (!competition) return jsonError("Competición no encontrada", 404);
 
   // Un delegado de zona solo puede editar competiciones de SU zona
   // y no puede reasignar la competición a otra zona.
   if (user.role === "delegado_zona") {
-    if (event.zona !== user.zona) return jsonError("Sin permiso", 403);
+    if (competition.zona !== user.zona) return jsonError("Sin permiso", 403);
     if (body.zona !== undefined && body.zona !== user.zona) {
       return jsonError("No puedes mover competiciones a otra zona", 403);
     }
@@ -50,15 +50,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const event = await dataService.getCompetition(id);
-  if (!event) return jsonError("Competición no encontrada", 404);
-  if (user.role === "delegado_zona" && event.zona !== user.zona)
+  const competition = await dataService.getCompetition(id);
+  if (!competition) return jsonError("Competición no encontrada", 404);
+  if (user.role === "delegado_zona" && competition.zona !== user.zona)
     return jsonError("Sin permiso", 403);
 
   const ok = await dataService.deleteCompetition(id);
   if (!ok) return jsonError("No se pudo eliminar el campeonato en la base de datos", 500);
-  revalidatePath("/events");
+  revalidatePath("/competitions");
   revalidatePath("/");
-  revalidatePath(`/events/${id}`);
+  revalidatePath(`/competitions/${id}`);
   return jsonOk({ deleted: true });
 }

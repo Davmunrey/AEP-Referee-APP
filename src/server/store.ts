@@ -70,7 +70,7 @@ export function getRosterTemplate() {
   return PRESET_AEP1;
 }
 
-export function getEventTemplate(competitionId: string): RosterSession[] {
+export function getCompetitionTemplate(competitionId: string): RosterSession[] {
   const store = getStore();
   const existing = store.templates.get(competitionId);
   if (existing) return existing;
@@ -80,7 +80,7 @@ export function getEventTemplate(competitionId: string): RosterSession[] {
   return tpl;
 }
 
-export function setEventTemplate(competitionId: string, template: RosterSession[]) {
+export function setCompetitionTemplate(competitionId: string, template: RosterSession[]) {
   getStore().templates.set(competitionId, template);
 }
 

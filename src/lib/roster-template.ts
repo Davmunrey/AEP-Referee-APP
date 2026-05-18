@@ -6,7 +6,7 @@ import {
   cloneRosterRoles,
 } from "./mock-data";
 
-/** Preset por tipo de evento (cuadrantes reales AEP). */
+/** Preset por tipo de competición (cuadrantes reales AEP). */
 export function getPresetForEventType(tipo: EventType): RosterSession[] {
   switch (tipo) {
     case "AEP-1":

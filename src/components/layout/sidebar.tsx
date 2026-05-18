@@ -40,17 +40,18 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
   return [
     { href: "/", label: "Dashboard", icon: LayoutDashboard, match: (p) => p === "/" },
     {
-      href: "/events",
+      href: "/competitions",
       label: "Campeonatos",
       icon: CalendarDays,
       badge: counts.events > 0 ? counts.events : undefined,
-      match: (p) => p === "/events" || p === "/events/new",
+      match: (p) => p === "/competitions" || p === "/competitions/new",
     },
     {
       href: counts.activeRosterHref,
       label: "Tarima activa",
       icon: Layers,
-      match: (p) => p.startsWith("/events/") && p !== "/events" && p !== "/events/new",
+      match: (p) =>
+        p.startsWith("/competitions/") && p !== "/competitions" && p !== "/competitions/new",
     },
     {
       href: "/referees",

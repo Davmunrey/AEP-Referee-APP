@@ -160,7 +160,7 @@ export async function POST(request: Request) {
     }
   }
 
-  revalidatePath("/events");
+  revalidatePath("/competitions");
   revalidatePath("/");
   return jsonOk({
     preview,
