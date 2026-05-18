@@ -95,14 +95,14 @@ export const api = {
 
   getCompetition: (id: string) => request<Competition>(`/competitions/${id}`),
 
-  getRoster: (eventId: string) =>
+  getRoster: (competitionId: string) =>
     request<{ template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }>(
-      `/competitions/${eventId}/roster`,
+      `/competitions/${competitionId}/roster`,
     ),
 
-  saveTemplate: (eventId: string, template: RosterSession[]) =>
+  saveTemplate: (competitionId: string, template: RosterSession[]) =>
     request<{ template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }>(
-      `/competitions/${eventId}/roster/template`,
+      `/competitions/${competitionId}/roster/template`,
       { method: "PUT", body: JSON.stringify({ template }) },
     ),
 
@@ -197,8 +197,8 @@ export const api = {
     return parsed.data;
   },
 
-  fetchRosterExportText: async (eventId: string): Promise<string> => {
-    const res = await fetch(`${getApiBaseUrl()}/competitions/${eventId}/roster/export`, {
+  fetchRosterExportText: async (competitionId: string): Promise<string> => {
+    const res = await fetch(`${getApiBaseUrl()}/competitions/${competitionId}/roster/export`, {
       credentials: "include",
     });
     if (!res.ok) {
@@ -222,7 +222,7 @@ export const api = {
   },
 
   importSchedule: async (
-    eventId: string,
+    competitionId: string,
     file: File,
     apply = false,
   ): Promise<{
@@ -246,7 +246,7 @@ export const api = {
   }> => {
     const fd = new FormData();
     fd.append("file", file);
-    const path = `/competitions/${eventId}/roster/template/import${apply ? "?apply=true" : ""}`;
+    const path = `/competitions/${competitionId}/roster/template/import${apply ? "?apply=true" : ""}`;
     const res = await fetch(`${getApiBaseUrl()}${path}`, {
       method: "POST",
       credentials: "include",
@@ -277,46 +277,46 @@ export const api = {
     return parsed.data;
   },
 
-  setSlotFlags: (eventId: string, slotKey: string, flags: SlotFlags) =>
-    request<{ flags: FlagsMap }>(`/competitions/${eventId}/roster/flags`, {
+  setSlotFlags: (competitionId: string, slotKey: string, flags: SlotFlags) =>
+    request<{ flags: FlagsMap }>(`/competitions/${competitionId}/roster/flags`, {
       method: "PATCH",
       body: JSON.stringify({ slotKey, flags }),
     }),
 
-  getRosterHistory: (eventId: string) =>
-    request<RosterHistoryEntry[]>(`/competitions/${eventId}/roster/history`),
+  getRosterHistory: (competitionId: string) =>
+    request<RosterHistoryEntry[]>(`/competitions/${competitionId}/roster/history`),
 
   assignReferee: (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     refereeId: string,
     flags?: SlotFlags,
   ) =>
     request<{ assignments: AssignmentsMap; flags?: FlagsMap }>(
-      `/competitions/${eventId}/roster/assign`,
+      `/competitions/${competitionId}/roster/assign`,
       {
         method: "POST",
         body: JSON.stringify({ slotKey, refereeId, flags }),
       },
     ),
 
-  clearSlot: (eventId: string, slotKey: string) =>
-    request<{ assignments: AssignmentsMap }>(`/competitions/${eventId}/roster/clear`, {
+  clearSlot: (competitionId: string, slotKey: string) =>
+    request<{ assignments: AssignmentsMap }>(`/competitions/${competitionId}/roster/clear`, {
       method: "POST",
       body: JSON.stringify({ slotKey }),
     }),
 
-  saveDraft: (eventId: string) =>
-    request<{ message: string }>(`/competitions/${eventId}/roster/draft`, { method: "POST" }),
+  saveDraft: (competitionId: string) =>
+    request<{ message: string }>(`/competitions/${competitionId}/roster/draft`, { method: "POST" }),
 
-  submitRoster: (eventId: string) =>
+  submitRoster: (competitionId: string) =>
     request<{ message: string; proposal: ApprovalProposal }>(
-      `/competitions/${eventId}/roster/submit`,
+      `/competitions/${competitionId}/roster/submit`,
       { method: "POST" },
     ),
 
-  exportRosterUrl: (eventId: string) =>
-    `${getApiBaseUrl()}/competitions/${eventId}/roster/export`,
+  exportRosterUrl: (competitionId: string) =>
+    `${getApiBaseUrl()}/competitions/${competitionId}/roster/export`,
 
   getApprovals: () => request<ApprovalProposal[]>("/approvals"),
 

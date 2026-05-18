@@ -246,7 +246,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                   <DataTableRow key={e.id}>
                     <DataTableCell>
                       <Link
-                        href={`/events/${e.id}`}
+                        href={`/competitions/${e.id}`}
                         className="font-medium text-foreground hover:text-primary hover:underline"
                       >
                         {e.nombre}

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const assignRefereeSchema = z.object({
-  eventId: z.string().min(1),
+  competitionId: z.string().min(1),
   slotKey: z.string().min(1),
   refereeId: z.string().min(1),
   flags: z
@@ -13,7 +13,7 @@ export const assignRefereeSchema = z.object({
 });
 
 export const clearSlotSchema = z.object({
-  eventId: z.string().min(1),
+  competitionId: z.string().min(1),
   slotKey: z.string().min(1),
 });
 

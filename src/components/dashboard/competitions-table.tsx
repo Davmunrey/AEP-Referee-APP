@@ -7,7 +7,7 @@ import type { Competition } from "@/lib/types";
 import { formatDateRange } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 
-export function EventsTable({ competitions }: { competitions: Competition[] }) {
+export function CompetitionsTable({ competitions }: { competitions: Competition[] }) {
   const events = competitions;
 
   return (
@@ -73,7 +73,7 @@ export function EventsTable({ competitions }: { competitions: Competition[] }) {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/events/${event.id}`}>
+                        <Link href={`/competitions/${event.id}`}>
                           Gestionar
                           <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Link>

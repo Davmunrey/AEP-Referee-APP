@@ -48,7 +48,7 @@ function actionTextClass(action: string): string {
   return "text-foreground";
 }
 
-export function RosterHistoryPanel({ eventId }: { eventId: string }) {
+export function RosterHistoryPanel({ competitionId }: { competitionId: string }) {
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<RosterHistoryEntry[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,7 @@ export function RosterHistoryPanel({ eventId }: { eventId: string }) {
     if (entries !== null) return;
     setLoading(true);
     try {
-      const data = await api.getRosterHistory(eventId);
+      const data = await api.getRosterHistory(competitionId);
       setEntries(data);
     } catch {
       setEntries([]);

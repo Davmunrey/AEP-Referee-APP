@@ -190,7 +190,7 @@ export function OperationalCalendar({
                   {/* Event block */}
                   {evt && (
                     <Link
-                      href={`/events/${evt.id}`}
+                      href={`/competitions/${evt.id}`}
                       className="mx-1.5 mb-1.5 mt-0.5 block rounded-lg px-1.5 py-1 transition-colors hover:brightness-110"
                       style={{ background: statusCellBg[evt.estado] }}
                     >

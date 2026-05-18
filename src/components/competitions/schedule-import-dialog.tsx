@@ -34,7 +34,7 @@ interface ImportPreview {
 }
 
 interface ScheduleImportDialogProps {
-  eventId: string;
+  competitionId: string;
   open: boolean;
   onClose: () => void;
   onApplied: (template: RosterSession[]) => void;
@@ -42,7 +42,7 @@ interface ScheduleImportDialogProps {
 }
 
 export function ScheduleImportDialog({
-  eventId,
+  competitionId,
   open,
   onClose,
   onApplied,
@@ -80,7 +80,7 @@ export function ScheduleImportDialog({
     setTemplate(null);
     setConfirmReplace(false);
     try {
-      const res = await api.importSchedule(eventId, selected, false);
+      const res = await api.importSchedule(competitionId, selected, false);
       setPreview(res.preview);
       setTemplate(res.template);
     } catch (e) {
@@ -102,7 +102,7 @@ export function ScheduleImportDialog({
     setLoading(true);
     setError(null);
     try {
-      const res = await api.importSchedule(eventId, file, true);
+      const res = await api.importSchedule(competitionId, file, true);
       setApplied(true);
       await new Promise<void>((r) => setTimeout(r, 900));
       onApplied(res.template);

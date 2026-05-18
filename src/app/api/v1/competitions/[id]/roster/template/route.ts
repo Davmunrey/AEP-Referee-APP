@@ -13,8 +13,8 @@ export async function PUT(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
-  const { id: eventId } = await context.params;
-  const comp = await dataService.getCompetition(eventId);
+  const { id: competitionId } = await context.params;
+  const comp = await dataService.getCompetition(competitionId);
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
   if (isCompetitionPast(comp)) return jsonError("Campeonato finalizado: solo lectura", 423);
@@ -26,7 +26,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   const result = await dataService.saveCompetitionTemplate(
-    eventId,
+    competitionId,
     template,
     user.nombre,
   );

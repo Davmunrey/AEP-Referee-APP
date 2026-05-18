@@ -182,7 +182,7 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
         requeridos: nRequeridos,
         zona,
       });
-      router.push(`/events/${comp.id}`);
+      router.push(`/competitions/${comp.id}`);
       router.refresh();
     } catch (err) {
       setGlobalError(err instanceof Error ? err.message : "No se pudo crear el campeonato");
@@ -400,7 +400,7 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
               {loading ? "Creando…" : "Crear campeonato"}
             </Button>
             <Button type="button" variant="outline" asChild>
-              <Link href="/events">Cancelar</Link>
+              <Link href="/competitions">Cancelar</Link>
             </Button>
           </div>
         </form>

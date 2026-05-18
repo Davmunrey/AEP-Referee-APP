@@ -43,7 +43,7 @@ export function formatRosterExport(
     "ASOCIACIÓN ESPAÑOLA DE POWERLIFTING",
     "Acta de plantilla de jueces",
     "",
-    `Evento: ${comp.nombre}`,
+    `Campeonato: ${comp.nombre}`,
     `Tipo:   ${comp.tipo}`,
     `Fechas: ${comp.fecha} – ${comp.fechaFin}`,
     `Sede:   ${comp.sede}`,

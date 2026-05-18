@@ -47,7 +47,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
           Previsión de cobertura
         </CardTitle>
         <Link
-          href="/events"
+          href="/competitions"
           className="text-xs font-medium text-primary hover:text-primary/80"
         >
           Ver campeonatos →
@@ -65,7 +65,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
           return (
             <Link
               key={c.id}
-              href={`/events/${c.id}`}
+              href={`/competitions/${c.id}`}
               className="group block rounded-xl p-2.5 transition-colors hover:bg-surface-hover"
             >
               <div className="mb-2 flex items-center justify-between gap-3">

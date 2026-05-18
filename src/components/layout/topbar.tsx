@@ -6,7 +6,7 @@ import { useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { useEventCrumbLabel } from "@/components/layout/event-crumb-label";
+import { useCompetitionCrumbLabel } from "@/components/layout/competition-crumb-label";
 import { getPageMeta } from "@/lib/navigation";
 import type { CurrentUser } from "@/lib/types";
 
@@ -14,9 +14,9 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
   const pathname = usePathname();
   const router = useRouter();
   const meta = getPageMeta(pathname);
-  const eventIdCrumb = pathname.match(/^\/events\/([^/]+)$/)?.[1];
-  const eventCrumbLabel = useEventCrumbLabel(eventIdCrumb ?? "Campeonato");
-  const hideSearch = pathname.startsWith("/events/");
+  const competitionIdCrumb = pathname.match(/^\/competitions\/([^/]+)$/)?.[1];
+  const competitionCrumbLabel = useCompetitionCrumbLabel(competitionIdCrumb ?? "Campeonato");
+  const hideSearch = pathname.startsWith("/competitions/");
   const [query, setQuery] = useState("");
 
   const runSearch = () => {
@@ -32,7 +32,9 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
           {meta.crumbs.map((crumb, i) => {
             const isLast = i === meta.crumbs.length - 1;
             const label =
-              isLast && eventIdCrumb && eventIdCrumb !== "new" ? eventCrumbLabel : crumb.label;
+              isLast && competitionIdCrumb && competitionIdCrumb !== "new"
+                ? competitionCrumbLabel
+                : crumb.label;
             return (
               <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
                 {i > 0 && <ChevronRight className="h-3 w-3 text-subtle-muted" aria-hidden="true" />}
@@ -50,7 +52,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
             );
           })}
         </nav>
-        {meta.title && !pathname.startsWith("/events/") && (
+        {meta.title && !pathname.startsWith("/competitions/") && (
           <div className="hidden min-w-0 border-l border-border-muted pl-3 xl:block">
             <h1 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
               {meta.title}

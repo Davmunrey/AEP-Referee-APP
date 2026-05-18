@@ -154,10 +154,10 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       title: `${c.nombre} en estado crítico`,
       detail:
         d !== null && d >= 0
-          ? `${c.open} plazas sin cubrir y el evento es en ${d} día${d === 1 ? "" : "s"}.`
+          ? `${c.open} plazas sin cubrir y la competición es en ${d} día${d === 1 ? "" : "s"}.`
           : `${c.open} plazas sin cubrir. Asigna jueces cuanto antes.`,
       metric: `${c.open} libres`,
-      action: { label: "Completar plantilla", href: `/events/${c.id}` },
+      action: { label: "Completar plantilla", href: `/competitions/${c.id}` },
     });
   }
 
@@ -172,7 +172,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       title: `${c.nombre} se acerca`,
       detail: `Faltan ${d} día${d === 1 ? "" : "s"} y quedan ${c.open} plaza${c.open === 1 ? "" : "s"} por cubrir.`,
       metric: `${d}d`,
-      action: { label: "Revisar roster", href: `/events/${c.id}` },
+      action: { label: "Revisar roster", href: `/competitions/${c.id}` },
     });
   }
 

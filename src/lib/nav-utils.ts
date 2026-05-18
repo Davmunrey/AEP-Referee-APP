@@ -4,7 +4,7 @@ import type { Competition } from "@/lib/types";
 export function pickActiveRosterHref(
   competitions: Pick<Competition, "id" | "fecha" | "estado">[],
 ): string {
-  if (competitions.length === 0) return "/events";
+  if (competitions.length === 0) return "/competitions";
 
   const today = new Date().toISOString().slice(0, 10);
   const sorted = [...competitions].sort((a, b) => a.fecha.localeCompare(b.fecha));
@@ -15,5 +15,5 @@ export function pickActiveRosterHref(
     sorted.find((c) => c.fecha >= today) ??
     sorted[0];
 
-  return focus ? `/events/${focus.id}` : "/events";
+  return focus ? `/competitions/${focus.id}` : "/competitions";
 }

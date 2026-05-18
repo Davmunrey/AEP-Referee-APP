@@ -17,7 +17,7 @@ export const TRANSFER_PERMISSION_MATRIX: Record<
   "calendar" | "judges",
   { fn: "canImportCalendar" | "canImportJudgesRegistry"; entry: string }
 > = {
-  calendar: { fn: "canImportCalendar", entry: "events/page, calendar-import-button" },
+  calendar: { fn: "canImportCalendar", entry: "competitions/page, calendar-import-button" },
   judges: { fn: "canImportJudgesRegistry", entry: "referees/page, judges-registry-import" },
 };
 
@@ -55,7 +55,7 @@ export const TRANSFER_KIND_COPY: Record<TransferKind, TransferKindCopy> = {
   schedule: {
     title: "Importar horario del campeonato",
     subtitle:
-      "PDF del horario de este evento. Sustituye la plantilla de tarima (sesiones y plazas).",
+      "PDF del horario de esta competición. Sustituye la plantilla de tarima (sesiones y plazas).",
     uploadCta: "Seleccionar PDF del horario",
     applyCta: "Aplicar plantilla en la tarima",
     acceptedHint: "PDF · horario del campeonato",
@@ -76,7 +76,7 @@ export const TRANSFER_KIND_COPY: Record<TransferKind, TransferKindCopy> = {
   },
   analytics_export: {
     title: "Exportar estadísticas",
-    subtitle: "CSV con resumen de temporada, zonas y jueces.",
+    subtitle: "CSV con histórico anual, actividad por zona y campeonatos del año activo.",
     uploadCta: "",
     applyCta: "Descargar .csv",
     acceptedHint: "",

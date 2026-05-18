@@ -154,7 +154,7 @@ export function ApprovalsBoard({
   // Resolve real event status from competitions list
   const eventStatus =
     selected && competitions.length > 0
-      ? (competitions.find((c) => c.id === selected.eventId)?.estado ?? "Incompleto")
+      ? (competitions.find((c) => c.id === selected.competitionId)?.estado ?? "Incompleto")
       : "Incompleto";
 
   return (
@@ -227,7 +227,7 @@ export function ApprovalsBoard({
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium leading-tight text-foreground">{item.eventName}</p>
+                      <p className="font-medium leading-tight text-foreground">{item.competitionName}</p>
                       <StatusPill status={item.status} className="shrink-0" />
                     </div>
                     <p className="mt-1 text-xs text-subtle-muted">
@@ -291,7 +291,7 @@ export function ApprovalsBoard({
             <CardTitle className="text-sm">Detalle y diff de roster</CardTitle>
             {selected && (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/events/${selected.eventId}`}>Abrir tarima</Link>
+                <Link href={`/competitions/${selected.competitionId}`}>Abrir tarima</Link>
               </Button>
             )}
           </CardHeader>

@@ -3,7 +3,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { CoverageForecast } from "@/components/dashboard/coverage-forecast";
 import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import { DashboardLive } from "@/components/dashboard/dashboard-live";
-import { EventsTable } from "@/components/dashboard/events-table";
+import { CompetitionsTable } from "@/components/dashboard/competitions-table";
 import { HealthGauge } from "@/components/dashboard/health-gauge";
 import { InsightsPanel } from "@/components/dashboard/insights-panel";
 import { SanctionsAlerts } from "@/components/dashboard/sanctions-alerts";
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
       {/* Events table (wider) + Activity feed */}
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
         <div>
-          <EventsTable competitions={dashboard.upcomingCompetitions} />
+          <CompetitionsTable competitions={dashboard.upcomingCompetitions} />
         </div>
         <ActivityFeed activity={dashboard.activity} />
       </div>

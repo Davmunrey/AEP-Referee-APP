@@ -23,19 +23,19 @@ export function getPageMeta(pathname: string): PageMeta {
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Directorio" }],
     };
   }
-  if (pathname === "/events") {
+  if (pathname === "/competitions" || pathname === "/events") {
     return {
       title: "Campeonatos",
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Campeonatos" }],
     };
   }
-  if (pathname.startsWith("/events/")) {
+  if (pathname.startsWith("/competitions/") || pathname.startsWith("/events/")) {
     const id = pathname.split("/")[2];
     return {
       title: "Constructor de Tarima",
       crumbs: [
         { label: "AEP Tarima", href: "/" },
-        { label: "Campeonatos", href: "/events" },
+        { label: "Campeonatos", href: "/competitions" },
         { label: id ?? "Campeonato" },
       ],
     };
@@ -76,12 +76,12 @@ export function getPageMeta(pathname: string): PageMeta {
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Normativa IPF" }],
     };
   }
-  if (pathname === "/events/new") {
+  if (pathname === "/competitions/new" || pathname === "/events/new") {
     return {
       title: "Nuevo campeonato",
       crumbs: [
         { label: "AEP Tarima", href: "/" },
-        { label: "Campeonatos", href: "/events" },
+        { label: "Campeonatos", href: "/competitions" },
         { label: "Nuevo" },
       ],
     };

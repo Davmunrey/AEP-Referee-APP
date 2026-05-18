@@ -100,10 +100,10 @@ export const serverApi = {
       return serverRequest<Competition>(`/competitions/${id}`);
     }),
 
-  getRoster: (eventId: string) =>
+  getRoster: (competitionId: string) =>
     withUser(async () => {
       if (shouldUseInternalServices()) {
-        const roster = await dataService.getRoster(eventId);
+        const roster = await dataService.getRoster(competitionId);
         if (!roster) throw new Error("Competición no encontrada");
         return roster;
       }
@@ -111,7 +111,7 @@ export const serverApi = {
         template: RosterSession[];
         assignments: AssignmentsMap;
         flags: import("@/lib/types").FlagsMap;
-      }>(`/competitions/${eventId}/roster`);
+      }>(`/competitions/${competitionId}/roster`);
     }),
 
   getApprovals: () =>

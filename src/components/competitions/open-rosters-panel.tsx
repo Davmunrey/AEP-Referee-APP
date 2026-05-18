@@ -49,7 +49,7 @@ export function OpenRostersPanel({ events, maxItems = 6 }: OpenRostersPanelProps
                 {event.confirmados}/{event.requeridos} · {pct}%
               </p>
               <Button size="sm" className="mt-auto w-full gap-1" asChild>
-                <Link href={`/events/${event.id}`}>Montar tarima</Link>
+                <Link href={`/competitions/${event.id}`}>Montar tarima</Link>
               </Button>
             </li>
           );

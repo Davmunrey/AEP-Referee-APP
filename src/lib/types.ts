@@ -257,8 +257,8 @@ export interface DashboardPayload {
 
 export interface ApprovalProposal {
   id: string;
-  eventId: string;
-  eventName: string;
+  competitionId: string;
+  competitionName: string;
   zona: string;
   submittedBy: string;
   submittedAt: string;
@@ -293,7 +293,7 @@ export interface RegulationRule {
 
 export interface RosterHistoryEntry {
   id: string;
-  eventId: string;
+  competitionId: string;
   at: string;
   actor: string;
   action: string;

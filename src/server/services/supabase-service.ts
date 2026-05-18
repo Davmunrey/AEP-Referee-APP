@@ -83,12 +83,12 @@ function parseSlotKey(slotKey: string): { session: string; roleKey: string } | n
   return { session: parts[0]!, roleKey: parts[1]! };
 }
 
-async function getCompetitionTemplate(eventId: string): Promise<RosterSession[] | undefined> {
+async function getCompetitionTemplate(competitionId: string): Promise<RosterSession[] | undefined> {
   const supabase = db();
   const { data } = await supabase
     .from("competitions")
     .select("template, tipo")
-    .eq("id", eventId)
+    .eq("id", competitionId)
     .single();
   if (!data) return undefined;
   return normalizeCompetitionTemplate(
@@ -97,9 +97,9 @@ async function getCompetitionTemplate(eventId: string): Promise<RosterSession[] 
   );
 }
 
-async function persistCompetitionTemplate(eventId: string, template: RosterSession[]) {
+async function persistCompetitionTemplate(competitionId: string, template: RosterSession[]) {
   const supabase = db();
-  await supabase.from("competitions").update({ template }).eq("id", eventId);
+  await supabase.from("competitions").update({ template }).eq("id", competitionId);
 }
 
 async function getCalendarEvents(): Promise<Record<string, CalendarDayEvent>> {
@@ -113,12 +113,12 @@ async function getZones() {
   return (data ?? []).map((z) => ({ code: z.code, name: z.name }));
 }
 
-async function loadAssignments(eventId: string): Promise<AssignmentsMap> {
+async function loadAssignments(competitionId: string): Promise<AssignmentsMap> {
   const supabase = db();
   const { data } = await supabase
     .from("roster_assignments")
     .select("slot_key, referee_id")
-    .eq("competition_id", eventId);
+    .eq("competition_id", competitionId);
   return assignmentsFromRows(data ?? []);
 }
 
@@ -143,19 +143,19 @@ function validateExamLevel(
   }
 }
 
-async function loadFlags(eventId: string): Promise<FlagsMap> {
+async function loadFlags(competitionId: string): Promise<FlagsMap> {
   const supabase = db();
   const { data } = await supabase
     .from("roster_assignments")
     .select("slot_key, flags")
-    .eq("competition_id", eventId);
+    .eq("competition_id", competitionId);
   return flagsFromRows(data ?? []);
 }
 
 /**
  * Carga TODAS las asignaciones de roster en una sola consulta y las agrupa por
  * `competition_id` en memoria. Evita el patrón N+1 de llamar a
- * `loadAssignments(eventId)` una vez por competición.
+ * `loadAssignments(competitionId)` una vez por competición.
  */
 async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>> {
   const supabase = db();
@@ -176,17 +176,17 @@ async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>> {
   return result;
 }
 
-async function syncCompetitionCoverage(eventId: string) {
+async function syncCompetitionCoverage(competitionId: string) {
   const supabase = db();
-  const template = (await getCompetitionTemplate(eventId)) ?? [];
-  const assignments = await loadAssignments(eventId);
+  const template = (await getCompetitionTemplate(competitionId)) ?? [];
+  const assignments = await loadAssignments(competitionId);
   const filled = Object.values(assignments).filter(Boolean).length;
   const open = countOpenSlots(template, assignments);
   let estado: Competition["estado"] = "Incompleto";
   if (open === 0) estado = "Completo";
   else if (filled === 0) estado = "Borrador";
   else if (open > 5) estado = "Crítico";
-  await supabase.from("competitions").update({ confirmados: filled, estado }).eq("id", eventId);
+  await supabase.from("competitions").update({ confirmados: filled, estado }).eq("id", competitionId);
 }
 
 async function pushActivity(item: Omit<import("@/lib/types").ActivityItem, never>) {
@@ -204,7 +204,7 @@ async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
   const supabase = db();
   await supabase.from("roster_history").insert({
     id: `hist-${Date.now()}`,
-    event_id: entry.eventId,
+    event_id: entry.competitionId,
     at: entry.at,
     actor: entry.actor,
     action: entry.action,
@@ -626,63 +626,63 @@ export const supabaseDataService = {
     return mapCompetition(data as Record<string, unknown>);
   },
 
-  getRoster: async (eventId: string) => {
-    if (!(await supabaseDataService.getCompetition(eventId))) return undefined;
-    const template = await getCompetitionTemplate(eventId);
+  getRoster: async (competitionId: string) => {
+    if (!(await supabaseDataService.getCompetition(competitionId))) return undefined;
+    const template = await getCompetitionTemplate(competitionId);
     return {
       template: template ?? [],
-      assignments: await loadAssignments(eventId),
-      flags: await loadFlags(eventId),
+      assignments: await loadAssignments(competitionId),
+      flags: await loadFlags(competitionId),
     };
   },
 
   saveCompetitionTemplate: async (
-    eventId: string,
+    competitionId: string,
     template: RosterSession[],
     actor: string,
   ): Promise<
     | { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }
     | undefined
   > => {
-    const comp = await supabaseDataService.getCompetition(eventId);
+    const comp = await supabaseDataService.getCompetition(competitionId);
     if (!comp) return undefined;
 
-    await persistCompetitionTemplate(eventId, template);
+    await persistCompetitionTemplate(competitionId, template);
 
     const supabase = db();
     const validKeys = new Set(enumerateSlotKeys(template));
     const { data: existingRows } = await supabase
       .from("roster_assignments")
       .select("slot_key")
-      .eq("competition_id", eventId);
+      .eq("competition_id", competitionId);
     for (const row of existingRows ?? []) {
       if (!validKeys.has(row.slot_key)) {
         await supabase
           .from("roster_assignments")
           .delete()
-          .eq("competition_id", eventId)
+          .eq("competition_id", competitionId)
           .eq("slot_key", row.slot_key);
       }
     }
 
-    const assignments = await loadAssignments(eventId);
-    const flags = await loadFlags(eventId);
+    const assignments = await loadAssignments(competitionId);
+    const flags = await loadFlags(competitionId);
     const pruned = pruneAssignments(template, assignments, flags);
     for (const [slotKey, flagVal] of Object.entries(pruned.flags)) {
       await supabase
         .from("roster_assignments")
         .update({ flags: flagVal })
-        .eq("competition_id", eventId)
+        .eq("competition_id", competitionId)
         .eq("slot_key", slotKey);
     }
 
     await supabase
       .from("competitions")
       .update({ sesiones: template.length })
-      .eq("id", eventId);
-    await syncCompetitionCoverage(eventId);
+      .eq("id", competitionId);
+    await syncCompetitionCoverage(competitionId);
     await pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Plantilla actualizada",
@@ -692,12 +692,12 @@ export const supabaseDataService = {
   },
 
   setSlotFlags: async (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     flags: SlotFlags,
     actor: string,
   ): Promise<{ flags: FlagsMap } | { error: string }> => {
-    const assignments = await loadAssignments(eventId);
+    const assignments = await loadAssignments(competitionId);
     if (!assignments[slotKey]) {
       return { error: "Asigna un juez antes de marcar flags" };
     }
@@ -711,11 +711,11 @@ export const supabaseDataService = {
     await supabase
       .from("roster_assignments")
       .update({ flags: payload })
-      .eq("competition_id", eventId)
+      .eq("competition_id", competitionId)
       .eq("slot_key", slotKey);
-    const allFlags = await loadFlags(eventId);
+    const allFlags = await loadFlags(competitionId);
     await pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Flags slot",
@@ -725,11 +725,11 @@ export const supabaseDataService = {
   },
 
   validateAssign: async (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     refereeId: string,
   ): Promise<AssignValidation> => {
-    const comp = await supabaseDataService.getCompetition(eventId);
+    const comp = await supabaseDataService.getCompetition(competitionId);
     const referee = await supabaseDataService.getReferee(refereeId);
     if (!comp || !referee) return { ok: false, error: "Datos no válidos" };
     const parsed = parseSlotKey(slotKey);
@@ -738,17 +738,17 @@ export const supabaseDataService = {
   },
 
   assignReferee: async (
-    eventId: string,
+    competitionId: string,
     slotKey: string,
     refereeId: string,
     actor: string,
     slotFlags?: SlotFlags,
   ): Promise<{ assignments?: AssignmentsMap; flags?: FlagsMap; error?: string }> => {
-    const validation = await supabaseDataService.validateAssign(eventId, slotKey, refereeId);
+    const validation = await supabaseDataService.validateAssign(competitionId, slotKey, refereeId);
     if (!validation.ok) return { error: validation.error };
 
     const supabase = db();
-    const assignments = await loadAssignments(eventId);
+    const assignments = await loadAssignments(competitionId);
     // El juez puede estar en varias sesiones; solo se libera su slot previo
     // dentro de la MISMA sesión.
     const session = slotKey.split("_")[0];
@@ -757,12 +757,12 @@ export const supabaseDataService = {
         await supabase
           .from("roster_assignments")
           .delete()
-          .eq("competition_id", eventId)
+          .eq("competition_id", competitionId)
           .eq("slot_key", key);
         delete assignments[key];
       }
     }
-    const existingFlags = await loadFlags(eventId);
+    const existingFlags = await loadFlags(competitionId);
     const flagPayload =
       slotFlags && (slotFlags.compartido || slotFlags.intercambio)
         ? {
@@ -771,15 +771,15 @@ export const supabaseDataService = {
           }
         : existingFlags[slotKey] ?? {};
     await supabase.from("roster_assignments").upsert({
-      competition_id: eventId,
+      competition_id: competitionId,
       slot_key: slotKey,
       referee_id: refereeId,
       flags: flagPayload,
     });
     assignments[slotKey] = refereeId;
-    await syncCompetitionCoverage(eventId);
+    await syncCompetitionCoverage(competitionId);
     await pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Asignación",
@@ -787,21 +787,21 @@ export const supabaseDataService = {
     });
     return {
       assignments: { ...assignments },
-      flags: await loadFlags(eventId),
+      flags: await loadFlags(competitionId),
     };
   },
 
-  clearSlot: async (eventId: string, slotKey: string, actor: string) => {
+  clearSlot: async (competitionId: string, slotKey: string, actor: string) => {
     const supabase = db();
     await supabase
       .from("roster_assignments")
       .delete()
-      .eq("competition_id", eventId)
+      .eq("competition_id", competitionId)
       .eq("slot_key", slotKey);
-    const assignments = await loadAssignments(eventId);
-    await syncCompetitionCoverage(eventId);
+    const assignments = await loadAssignments(competitionId);
+    await syncCompetitionCoverage(competitionId);
     await pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Liberó slot",
@@ -810,15 +810,15 @@ export const supabaseDataService = {
     return { ...assignments };
   },
 
-  submitRoster: async (eventId: string, actor: string) => {
-    const comp = await supabaseDataService.getCompetition(eventId);
+  submitRoster: async (competitionId: string, actor: string) => {
+    const comp = await supabaseDataService.getCompetition(competitionId);
     if (!comp) return undefined;
-    const assignments = await loadAssignments(eventId);
+    const assignments = await loadAssignments(competitionId);
     const supabase = db();
     const { data: existing } = await supabase
       .from("approval_proposals")
       .select("*")
-      .eq("event_id", eventId)
+      .eq("event_id", competitionId)
       .eq("status", "pendiente")
       .maybeSingle();
 
@@ -831,7 +831,7 @@ export const supabaseDataService = {
     } else {
       await supabase.from("approval_proposals").insert({
         id: `apr-${Date.now()}`,
-        event_id: eventId,
+        event_id: competitionId,
         event_name: comp.nombre,
         zona: comp.zona ?? "—",
         submitted_by: actor,
@@ -843,7 +843,7 @@ export const supabaseDataService = {
     await supabase
       .from("competitions")
       .update({ aprobacion: "Propuesta enviada" })
-      .eq("id", eventId);
+      .eq("id", competitionId);
     await pushActivity({
       tipo: "propuesta",
       actor,
@@ -854,20 +854,20 @@ export const supabaseDataService = {
     const { data } = await supabase
       .from("approval_proposals")
       .select("*")
-      .eq("event_id", eventId)
+      .eq("event_id", competitionId)
       .eq("status", "pendiente")
       .single();
     return data ? mapApproval(data as Record<string, unknown>) : undefined;
   },
 
-  saveDraft: async (eventId: string, actor: string) => {
-    const comp = await supabaseDataService.getCompetition(eventId);
+  saveDraft: async (competitionId: string, actor: string) => {
+    const comp = await supabaseDataService.getCompetition(competitionId);
     if (comp?.estado === "Borrador") {
       const supabase = db();
-      await supabase.from("competitions").update({ estado: "Incompleto" }).eq("id", eventId);
+      await supabase.from("competitions").update({ estado: "Incompleto" }).eq("id", competitionId);
     }
     await pushHistory({
-      eventId,
+      competitionId,
       at: new Date().toISOString(),
       actor,
       action: "Guardó borrador",
@@ -1156,19 +1156,19 @@ export const supabaseDataService = {
     };
   },
 
-  getRosterHistory: async (eventId: string): Promise<RosterHistoryEntry[]> => {
+  getRosterHistory: async (competitionId: string): Promise<RosterHistoryEntry[]> => {
     const supabase = db();
     const { data } = await supabase
       .from("roster_history")
       .select("*")
-      .eq("event_id", eventId)
+      .eq("event_id", competitionId)
       .order("at", { ascending: false });
     return (data ?? []).map((r) => mapHistory(r as Record<string, unknown>));
   },
 
-  exportRoster: async (eventId: string) => {
-    const roster = await supabaseDataService.getRoster(eventId);
-    const comp = await supabaseDataService.getCompetition(eventId);
+  exportRoster: async (competitionId: string) => {
+    const roster = await supabaseDataService.getRoster(competitionId);
+    const comp = await supabaseDataService.getCompetition(competitionId);
     if (!roster || !comp) return null;
     const supabase = db();
     const { data: referees } = await supabase.from("referees").select("id, nombre, nivel");

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarPlus } from "lucide-react";
-import { CalendarImportDialog } from "@/components/events/calendar-import-dialog";
+import { CalendarImportDialog } from "@/components/competitions/calendar-import-dialog";
 
 export function CalendarImportButton() {
   const [open, setOpen] = useState(false);

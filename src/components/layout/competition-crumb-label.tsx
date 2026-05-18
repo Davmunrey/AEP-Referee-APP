@@ -4,23 +4,23 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { api } from "@/lib/api/client";
 
-/** Resolves competition title for `/events/[id]` breadcrumbs. */
-export function useEventCrumbLabel(fallback: string): string {
+/** Resuelve título de competición para breadcrumbs `/competitions/[id]`. */
+export function useCompetitionCrumbLabel(fallback: string): string {
   const pathname = usePathname();
   const [label, setLabel] = useState(fallback);
 
   useEffect(() => {
-    const match = pathname.match(/^\/events\/([^/]+)$/);
-    const id = match?.[1];
-    if (!id || id === "new") {
+    const match = pathname.match(/^\/competitions\/([^/]+)$/);
+    const competitionId = match?.[1];
+    if (!competitionId || competitionId === "new") {
       setLabel(fallback);
       return;
     }
     let cancelled = false;
     void api
-      .getCompetition(id)
-      .then((event) => {
-        if (!cancelled) setLabel(event.nombre);
+      .getCompetition(competitionId)
+      .then((competition) => {
+        if (!cancelled) setLabel(competition.nombre);
       })
       .catch(() => {
         if (!cancelled) setLabel(fallback);

@@ -5,30 +5,90 @@ export async function GET() {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
-  const [competitions, referees] = await Promise.all([
+  const [analytics, competitions] = await Promise.all([
+    dataService.getAnalytics(user),
     dataService.getCompetitions(user),
-    dataService.getReferees({ user }),
   ]);
+  const competitionsInSelectedYear = competitions.filter((c) =>
+    c.fecha.startsWith(String(analytics.selectedYear)),
+  );
+
+  const csv = (...values: Array<string | number>) =>
+    values.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
 
   const lines: string[] = [
-    "AEP Tarima — Resumen de temporada",
+    "AEP Tarima — Estadísticas",
     `Exportado: ${new Date().toISOString()}`,
+    `Año activo: ${analytics.selectedYear}`,
     "",
-    "CAMPEONATOS",
-    "Nombre,Tipo,Zona,Fecha,Estado,Confirmados,Requeridos,Cobertura%",
-    ...competitions.map((c) => {
-      const pct = c.requeridos > 0 ? Math.round((c.confirmados / c.requeridos) * 100) : 0;
-      return [c.nombre, c.tipo, c.zona ?? "", c.fecha, c.estado, c.confirmados, c.requeridos, `${pct}%`]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-        .join(",");
-    }),
+    "RESUMEN_AÑO",
+    "Año,Campeonatos,Campeonatos críticos,Plazas cubiertas,Plazas abiertas,Jueces asignados,Aprobaciones pendientes,Tasa rechazo",
+    csv(
+      analytics.selectedYear,
+      analytics.totals.competitions,
+      analytics.totals.criticalCompetitions,
+      analytics.totals.filledSlots,
+      analytics.totals.openSlots,
+      analytics.totals.uniqueAssignedReferees,
+      analytics.totals.pendingApprovals,
+      `${analytics.rejectionRate}%`,
+    ),
     "",
-    "JUECES",
-    "Nombre,Zona,Nivel,Estado,Eventos 2026",
-    ...referees.map((r) =>
-      [r.nombre, r.zona, r.nivel, r.estado, r.eventos]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-        .join(","),
+    "HISTORICO_POR_AÑO",
+    "Año,Campeonatos,Campeonatos críticos,Plazas totales,Plazas cubiertas,Cobertura,Jueces asignados",
+    ...analytics.yearlyHistory.map((row) =>
+      csv(
+        row.year,
+        row.competitions,
+        row.criticalCompetitions,
+        row.requiredSlots,
+        row.filledSlots,
+        `${row.requiredSlots > 0 ? Math.round((row.filledSlots / row.requiredSlots) * 100) : 0}%`,
+        row.uniqueAssignedReferees,
+      ),
+    ),
+    "",
+    "ACTIVIDAD_POR_ZONA_AÑO_ACTIVO",
+    "Zona,Código,Campeonatos,Campeonatos críticos,Plazas totales,Plazas cubiertas,Cobertura,Jueces asignados,Jueces activos",
+    ...analytics.activityByZone.map((row) =>
+      csv(
+        row.name,
+        row.zona,
+        row.competitions,
+        row.criticalCompetitions,
+        row.requiredSlots,
+        row.filledSlots,
+        `${row.requiredSlots > 0 ? Math.round((row.filledSlots / row.requiredSlots) * 100) : 0}%`,
+        row.uniqueAssignedReferees,
+        row.activeReferees,
+      ),
+    ),
+    "",
+    "JUECES_MAS_ASIGNADOS_AÑO_ACTIVO",
+    "Nombre,Nivel,Campeonatos asignados,Plazas asignadas",
+    ...analytics.topReferees.map((row) =>
+      csv(row.nombre, row.nivel, row.assignedCompetitions, row.assignedSlots),
+    ),
+    "",
+    "CAMPEONATOS_AÑO_ACTIVO",
+    "Nombre,Tipo,Zona,Fecha,Estado,Plazas cubiertas,Plazas totales,Cobertura",
+    ...competitionsInSelectedYear.map((c) =>
+      csv(
+        c.nombre,
+        c.tipo,
+        c.zona ?? "",
+        c.fecha,
+        c.estado,
+        c.confirmados,
+        c.requeridos,
+        `${c.requeridos > 0 ? Math.round((c.confirmados / c.requeridos) * 100) : 0}%`,
+      ),
+    ),
+    "",
+    "CAMPEONATOS_CRITICOS_AÑO_ACTIVO",
+    "Nombre,Tipo,Zona,Fecha,Estado",
+    ...analytics.criticalEvents.map((c) =>
+      csv(c.nombre, c.tipo, c.zona ?? "", c.fecha, c.estado),
     ),
   ];
 

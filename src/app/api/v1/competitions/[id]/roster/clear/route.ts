@@ -13,20 +13,20 @@ export async function POST(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
-  const { id: eventId } = await context.params;
-  const comp = await dataService.getCompetition(eventId);
+  const { id: competitionId } = await context.params;
+  const comp = await dataService.getCompetition(competitionId);
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
   if (isCompetitionPast(comp)) return jsonError("Campeonato finalizado: solo lectura", 423);
 
   const body = await request.json();
-  const parsed = clearSlotSchema.safeParse({ eventId, slotKey: body.slotKey });
+  const parsed = clearSlotSchema.safeParse({ competitionId, slotKey: body.slotKey });
   if (!parsed.success) {
     return jsonError("Datos de slot inválidos", 400, parsed.error.flatten());
   }
 
   const assignments = await dataService.clearSlot(
-    parsed.data.eventId,
+    parsed.data.competitionId,
     parsed.data.slotKey,
     user.nombre,
   );
