@@ -20,6 +20,22 @@ export function getPresetForEventType(tipo: EventType): RosterSession[] {
   }
 }
 
+export function isPresetTemplate(
+  template: RosterSession[] | null | undefined,
+  tipo: EventType,
+): boolean {
+  if (!template || template.length === 0) return false;
+  return JSON.stringify(template) === JSON.stringify(getPresetForEventType(tipo));
+}
+
+export function normalizeCompetitionTemplate(
+  template: RosterSession[] | null | undefined,
+  tipo: EventType,
+): RosterSession[] {
+  if (!template || template.length === 0) return [];
+  return isPresetTemplate(template, tipo) ? [] : cloneTemplate(template);
+}
+
 export function cloneTemplate(sessions: RosterSession[]): RosterSession[] {
   return sessions.map((s) => ({
     ...s,

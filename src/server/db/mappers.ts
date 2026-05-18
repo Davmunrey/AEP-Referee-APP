@@ -194,8 +194,12 @@ export function mapExam(row: Record<string, unknown>): RefereeExam {
 export function mapReport(row: Record<string, unknown>): RefereeReport {
   return {
     id: String(row.id),
-    refereeId: String(row.referee_id),
-    refereeName: String(row.referee_name),
+    subjectType: (row.subject_type as RefereeReport["subjectType"]) ?? "juez",
+    zona: row.zona ? String(row.zona) : undefined,
+    refereeId: row.referee_id ? String(row.referee_id) : undefined,
+    refereeName: row.referee_name ? String(row.referee_name) : undefined,
+    competitionId: row.competition_id ? String(row.competition_id) : undefined,
+    competitionName: row.competition_name ? String(row.competition_name) : undefined,
     titulo: String(row.titulo),
     tipo: row.tipo as RefereeReport["tipo"],
     evento: row.evento ? String(row.evento) : undefined,

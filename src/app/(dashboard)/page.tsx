@@ -33,22 +33,22 @@ export default async function DashboardPage() {
       <SanctionsAlerts alerts={dashboard.sanctionAlerts} />
 
       {/* Health + Insights side-by-side on large screens */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(320px,0.92fr)_minmax(0,1.08fr)]">
         <HealthGauge health={dashboard.health} />
         <InsightsPanel insights={dashboard.insights} />
       </div>
 
       {/* Calendar (wider) + Coverage forecast */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
+        <div>
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>
         <CoverageForecast coverage={dashboard.coverage} />
       </div>
 
       {/* Events table (wider) + Activity feed */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
+        <div>
           <EventsTable competitions={dashboard.upcomingCompetitions} />
         </div>
         <ActivityFeed activity={dashboard.activity} />

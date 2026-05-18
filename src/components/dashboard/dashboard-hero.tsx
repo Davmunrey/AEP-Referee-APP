@@ -36,26 +36,26 @@ export function DashboardHero({
   const canCreate = canCreateCompetition(user.role);
 
   return (
-    <div className="glass-panel-soft rounded-3xl p-6 sm:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-6">
+    <div className="glass-panel-soft rounded-[1.6rem] p-4 sm:p-5 xl:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         {/* Left: greeting + context */}
-        <div className="flex min-w-0 max-w-2xl items-start gap-5">
+        <div className="flex min-w-0 max-w-[44rem] items-start gap-3.5">
           <Image
             src="/assets/aep-mark.png"
             alt="AEP"
-            width={64}
-            height={64}
+            width={48}
+            height={48}
             className="hidden shrink-0 rounded-2xl sm:block"
             priority
           />
           <div className="min-w-0">
-            <p className="friendly-label mb-2 text-[11px] uppercase tracking-widest text-muted-foreground/70">
+            <p className="friendly-label mb-1 text-[10px] uppercase tracking-widest text-muted-foreground/70">
               Panel operativo · {quarter}
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            <h1 className="text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.75rem] xl:text-[1.9rem]">
               {greet(user.nombre)}
             </h1>
-            <p className="mt-2.5 text-[14.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
               {pendingApprovals && Number(pendingApprovals.value) > 0 ? (
                 <>
                   Tienes{" "}
@@ -89,7 +89,7 @@ export function DashboardHero({
               <Link
                 href={nextAction.action.href}
                 className={cn(
-                  "mt-4 inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[12px] font-medium transition-colors",
+                  "mt-3 inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[11.5px] font-medium transition-colors",
                   nextAction.severity === "crítico"
                     ? "border-destructive/30 bg-destructive-muted text-destructive hover:bg-destructive-muted/70"
                     : "border-warning/30 bg-warning-muted text-warning hover:bg-warning-muted/70",
@@ -103,7 +103,7 @@ export function DashboardHero({
         </div>
 
         {/* Right: actions */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 xl:max-w-[26rem] xl:justify-end">
           {/* Quick-action row */}
           <Button variant="outline" size="sm" className="gap-1.5 rounded-xl" asChild>
             <Link href="/referees">

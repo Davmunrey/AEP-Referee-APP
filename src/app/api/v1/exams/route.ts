@@ -1,3 +1,4 @@
+import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
   ) {
     return jsonError("Faltan campos obligatorios", 400);
   }
+  const scopeErr = await assertRefereeInUserZone(user, body.refereeId);
+  if (scopeErr) return scopeErr;
   const puntuacionMaxima =
     body.puntuacionMaxima != null ? Math.max(1, Math.round(body.puntuacionMaxima)) : 100;
   let puntuacion: number | undefined;

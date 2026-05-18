@@ -16,7 +16,7 @@ import { LEVELS } from "@/lib/mock-data";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import {
   enumerateSlotKeys,
-  getPresetForEventType,
+  normalizeCompetitionTemplate,
   pruneAssignments,
 } from "@/lib/roster-template";
 import type { CalendarDayEvent } from "@/lib/types";
@@ -91,8 +91,10 @@ async function getCompetitionTemplate(eventId: string): Promise<RosterSession[] 
     .eq("id", eventId)
     .single();
   if (!data) return undefined;
-  if (data.template) return data.template as RosterSession[];
-  return getPresetForEventType(data.tipo as Competition["tipo"]);
+  return normalizeCompetitionTemplate(
+    (data.template as RosterSession[] | null) ?? null,
+    data.tipo as Competition["tipo"],
+  );
 }
 
 async function persistCompetitionTemplate(eventId: string, template: RosterSession[]) {
@@ -253,9 +255,10 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
     approvals = apprRes.data ?? [];
     openSlotsByCompetition = new Map(
       competitions.map((c) => {
-        const tpl =
-          (c.template as RosterSession[] | null) ??
-          getPresetForEventType(c.tipo as Competition["tipo"]);
+        const tpl = normalizeCompetitionTemplate(
+          c.template as RosterSession[] | null,
+          c.tipo as Competition["tipo"],
+        );
         return [c.id, countOpenSlots(tpl, assignmentsByComp.get(c.id) ?? {})];
       }),
     );
@@ -346,8 +349,10 @@ export const supabaseDataService = {
     const templateByComp = new Map(
       (competitionRows ?? []).map((r) => {
         const row = r as { id: string; template: RosterSession[] | null; tipo: string };
-        const tpl =
-          row.template ?? getPresetForEventType(row.tipo as Competition["tipo"]);
+        const tpl = normalizeCompetitionTemplate(
+          row.template,
+          row.tipo as Competition["tipo"],
+        );
         return [row.id, tpl] as const;
       }),
     );
@@ -408,8 +413,10 @@ export const supabaseDataService = {
     }
     const kpiOpenSlots = new Map<string, number>(
       kpiCompetitions.map((c) => {
-        const tpl =
-          c.template ?? getPresetForEventType(c.tipo as Competition["tipo"]);
+        const tpl = normalizeCompetitionTemplate(
+          c.template,
+          c.tipo as Competition["tipo"],
+        );
         return [c.id, countOpenSlots(tpl, assignmentsByComp.get(c.id) ?? {})];
       }),
     );
@@ -558,7 +565,6 @@ export const supabaseDataService = {
       return Number.isFinite(n) ? Math.max(max, n) : max;
     }, 0);
     const id = `evt-${String(maxNum + 1).padStart(3, "0")}`;
-    const template = getPresetForEventType(input.tipo);
     const row = {
       id,
       nombre: input.nombre,
@@ -572,7 +578,7 @@ export const supabaseDataService = {
       estado: "Borrador",
       aprobacion: "Sin propuesta",
       zona: normalizeZoneInput(input.zona),
-      template,
+      template: [],
     };
     const { data, error } = await supabase.from("competitions").insert(row).select().single();
     if (error) throw error;
@@ -965,15 +971,12 @@ export const supabaseDataService = {
     const templateById = new Map(
       (compTemplates ?? []).map((row) => {
         const r = row as { id: string; template: RosterSession[] | null; tipo: string };
-        return [
-          r.id,
-          r.template ?? getPresetForEventType(r.tipo as Competition["tipo"]),
-        ] as const;
+        return [r.id, normalizeCompetitionTemplate(r.template, r.tipo as Competition["tipo"])] as const;
       }),
     );
     let openSlots = 0;
     for (const c of competitions) {
-      const tpl = templateById.get(c.id) ?? getPresetForEventType(c.tipo);
+      const tpl = templateById.get(c.id) ?? [];
       openSlots += countOpenSlots(tpl, assignmentsByComp.get(c.id) ?? {});
     }
     const { data: referees } = await supabase.from("referees").select("*");
@@ -1254,21 +1257,16 @@ export const supabaseDataService = {
       .select("*")
       .order("created_at", { ascending: false });
     if (refereeId) query = query.eq("referee_id", refereeId);
-    if (user && user.role === "delegado_zona" && user.zona) {
-      const { data: zoneRefs } = await supabase
-        .from("referees")
-        .select("id")
-        .eq("zona", user.zona);
-      const ids = (zoneRefs ?? []).map((r) => (r as { id: string }).id);
-      if (ids.length === 0) return [];
-      query = query.in("referee_id", ids);
-    }
+    if (user && user.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
     const { data } = await query;
     return (data ?? []).map((r) => mapReport(r as Record<string, unknown>));
   },
 
   createReport: async (input: {
-    refereeId: string;
+    subjectType: RefereeReport["subjectType"];
+    zona: string;
+    refereeId?: string;
+    competitionId?: string;
     titulo: string;
     tipo: ReportType;
     evento?: string;
@@ -1277,16 +1275,38 @@ export const supabaseDataService = {
     autor: string;
   }): Promise<RefereeReport> => {
     const supabase = db();
-    const { data: ref } = await supabase
-      .from("referees")
-      .select("nombre")
-      .eq("id", input.refereeId)
-      .single();
-    if (!ref) throw new Error("Juez no encontrado");
+    let refereeName: string | null = null;
+    let competitionName: string | null = null;
+    let zona = input.zona;
+    if (input.subjectType === "juez") {
+      if (!input.refereeId) throw new Error("Juez obligatorio");
+      const { data: ref } = await supabase
+        .from("referees")
+        .select("nombre, zona")
+        .eq("id", input.refereeId)
+        .single();
+      if (!ref) throw new Error("Juez no encontrado");
+      refereeName = String(ref.nombre);
+      zona = String(ref.zona ?? zona);
+    } else {
+      if (!input.competitionId) throw new Error("Competición obligatoria");
+      const { data: comp } = await supabase
+        .from("competitions")
+        .select("nombre, zona")
+        .eq("id", input.competitionId)
+        .single();
+      if (!comp) throw new Error("Competición no encontrada");
+      competitionName = String(comp.nombre);
+      zona = String(comp.zona ?? zona);
+    }
     const row = {
       id: `rep-${Date.now()}`,
-      referee_id: input.refereeId,
-      referee_name: ref.nombre,
+      subject_type: input.subjectType,
+      zona,
+      referee_id: input.refereeId ?? null,
+      referee_name: refereeName,
+      competition_id: input.competitionId ?? null,
+      competition_name: competitionName,
       titulo: input.titulo,
       tipo: input.tipo,
       evento: input.evento ?? null,
@@ -1303,8 +1323,8 @@ export const supabaseDataService = {
     await pushActivity({
       tipo: "cambio",
       actor: input.autor,
-      accion: `subió el informe «${input.titulo}» de`,
-      evento: ref.nombre,
+      accion: `subió informe «${input.titulo}» de`,
+      evento: refereeName ?? competitionName ?? "competición",
       hace: "ahora",
     });
     return mapReport(data as Record<string, unknown>);

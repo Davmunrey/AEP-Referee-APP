@@ -423,7 +423,9 @@ export const api = {
     ),
 
   createReport: (body: {
-    refereeId: string;
+    subjectType: "competicion" | "juez";
+    refereeId?: string;
+    competitionId?: string;
     titulo: string;
     tipo: ReportType;
     evento?: string;

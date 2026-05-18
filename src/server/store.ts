@@ -1,6 +1,6 @@
 import { LEVELS, PRESET_AEP1, ZONES } from "@/lib/mock-data";
 import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
-import { getPresetForEventType } from "@/lib/roster-template";
+import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type {
   ActivityItem,
   ApprovalProposal,
@@ -75,7 +75,7 @@ export function getEventTemplate(competitionId: string): RosterSession[] {
   const existing = store.templates.get(competitionId);
   if (existing) return existing;
   const comp = store.competitions.find((c) => c.id === competitionId);
-  const tpl = comp ? getPresetForEventType(comp.tipo) : PRESET_AEP1;
+  const tpl = comp ? normalizeCompetitionTemplate([], comp.tipo) : [];
   store.templates.set(competitionId, tpl);
   return tpl;
 }

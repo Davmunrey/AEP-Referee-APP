@@ -95,6 +95,12 @@
     @apply antialiased scroll-smooth;
   }
 
+  @media (min-width: 1280px) and (max-width: 1512px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "ss01", "ss02";

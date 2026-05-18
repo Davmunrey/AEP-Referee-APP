@@ -136,7 +136,7 @@ export function Sidebar({
         href={item.href}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150 focus-ring",
+          "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium transition-all duration-150 focus-ring",
           active
             ? "bg-surface-active text-foreground nav-glow-active"
             : "text-muted-foreground hover:bg-surface hover:text-foreground active:bg-surface-hover",
@@ -184,24 +184,24 @@ export function Sidebar({
     <aside
       className={cn(
         "flex h-full flex-col border-r border-border-muted bg-sidebar/95 backdrop-blur-xl transition-[width] duration-200 ease-out",
-        collapsed ? "w-[72px]" : "w-[248px]",
+        collapsed ? "w-[68px]" : "w-[224px] xl:w-[232px]",
       )}
     >
-      <div className={cn("border-b border-border-muted px-4 py-5", collapsed && "px-3")}>
+      <div className={cn("border-b border-border-muted px-4 py-4", collapsed && "px-2.5")}>
         <AepLogo collapsed={collapsed} />
       </div>
 
-      <div className={cn("px-3 pt-4", collapsed && "px-2")}>
+      <div className={cn("px-3 pt-3", collapsed && "px-2")}>
         <OrgSwitcher collapsed={collapsed} org={orgLabel} subtitle={orgSubtitle} />
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto pb-2">
-        <nav className="mt-6 flex flex-col gap-1 px-3">
+        <nav className="mt-5 flex flex-col gap-1 px-3">
           {!collapsed && <p className="friendly-label mb-2 px-3">Operaciones</p>}
           {primaryNav.map((item) => renderLink(item))}
         </nav>
 
-        <nav className="mt-6 flex flex-col gap-1 px-3">
+        <nav className="mt-5 flex flex-col gap-1 px-3">
           {!collapsed && <p className="friendly-label mb-2 px-3">Gestión</p>}
           {secondaryNav.map((item) => renderLink(item))}
         </nav>
@@ -209,19 +209,19 @@ export function Sidebar({
 
       <div className={cn("border-t border-border-muted p-3", collapsed && "px-2")}>
         {!collapsed ? (
-          <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border-muted bg-surface-hover p-3">
-            <Avatar className="h-9 w-9 ring-2 ring-primary/20">
+          <div className="mb-3 flex items-center gap-2.5 rounded-2xl border border-border-muted bg-surface-hover p-2.5">
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
               <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
                 {currentUser.iniciales}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{currentUser.nombre}</p>
+              <p className="truncate text-[13px] font-medium text-foreground">{currentUser.nombre}</p>
               <p className="truncate text-[11px] text-subtle-muted">{currentUser.rol}</p>
             </div>
           </div>
         ) : (
-          <Avatar className="mx-auto mb-3 h-9 w-9 ring-2 ring-primary/20">
+          <Avatar className="mx-auto mb-3 h-8 w-8 ring-2 ring-primary/20">
             <AvatarFallback className="bg-primary/15 text-xs text-primary">
               {currentUser.iniciales}
             </AvatarFallback>

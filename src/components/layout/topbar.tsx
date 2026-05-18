@@ -26,7 +26,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border-muted bg-sidebar/80 px-6 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-sidebar/80 px-4 sm:px-5 lg:px-6 backdrop-blur-xl">
       <div className="flex min-w-0 items-center gap-3">
         <nav className="hidden items-center gap-1.5 text-[12px] text-subtle-muted md:flex">
           {meta.crumbs.map((crumb, i) => {
@@ -51,8 +51,8 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
           })}
         </nav>
         {meta.title && !pathname.startsWith("/events/") && (
-          <div className="hidden min-w-0 border-l border-border-muted pl-4 lg:block">
-            <h1 className="truncate text-base font-semibold tracking-tight text-foreground">
+          <div className="hidden min-w-0 border-l border-border-muted pl-3 xl:block">
+            <h1 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
               {meta.title}
             </h1>
             {meta.subtitle && <p className="text-xs text-subtle-muted">{meta.subtitle}</p>}
@@ -62,7 +62,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
 
       <div className="flex items-center gap-2.5">
         {!hideSearch && (
-          <div className="relative hidden max-w-xs md:block">
+          <div className="relative hidden max-w-xs lg:block">
             <Search
               className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-subtle-muted"
               aria-hidden="true"
@@ -75,7 +75,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
               onKeyDown={(e) => {
                 if (e.key === "Enter") runSearch();
               }}
-              className="h-9 w-64 rounded-full border-border bg-surface pl-9 text-xs transition-all duration-150 hover:border-border-strong focus-visible:border-primary-border focus-visible:w-72"
+              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-all duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60 xl:focus-visible:w-[17rem]"
               aria-label="Buscar jueces — pulsa Enter"
             />
           </div>
@@ -84,7 +84,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
           <p className="text-xs font-medium text-foreground">{currentUser.nombre}</p>
           <p className="max-w-[140px] truncate text-[10px] text-subtle-muted">{currentUser.rol}</p>
         </div>
-        <Avatar className="h-9 w-9 ring-2 ring-border">
+        <Avatar className="h-8 w-8 ring-2 ring-border">
           <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
             {currentUser.iniciales}
           </AvatarFallback>
