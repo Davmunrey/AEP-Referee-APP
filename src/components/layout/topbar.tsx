@@ -15,7 +15,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
   const router = useRouter();
   const meta = getPageMeta(pathname);
   const eventIdCrumb = pathname.match(/^\/events\/([^/]+)$/)?.[1];
-  const eventCrumbLabel = useEventCrumbLabel(eventIdCrumb ?? "Evento");
+  const eventCrumbLabel = useEventCrumbLabel(eventIdCrumb ?? "Campeonato");
   const hideSearch = pathname.startsWith("/events/");
   const [query, setQuery] = useState("");
 

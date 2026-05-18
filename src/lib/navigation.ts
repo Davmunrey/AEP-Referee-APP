@@ -36,7 +36,7 @@ export function getPageMeta(pathname: string): PageMeta {
       crumbs: [
         { label: "AEP Tarima", href: "/" },
         { label: "Campeonatos", href: "/events" },
-        { label: id ?? "Evento" },
+        { label: id ?? "Campeonato" },
       ],
     };
   }
@@ -66,7 +66,7 @@ export function getPageMeta(pathname: string): PageMeta {
   }
   if (pathname === "/reports") {
     return {
-      title: "Sandbox de informes",
+      title: "Informes",
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Informes" }],
     };
   }

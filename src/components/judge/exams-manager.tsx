@@ -43,10 +43,23 @@ function resultBadge(r: ExamResult) {
 
 interface ExamsManagerProps {
   exams: RefereeExam[];
-  referees: { id: string; nombre: string }[];
+  referees: { id: string; nombre: string; nivel?: RefereeLevel }[];
   lockedRefereeId?: string;
   canEdit: boolean;
   canDelete: boolean;
+}
+
+function allowedLevelsForExam(
+  tipo: ExamType,
+  currentLevel?: RefereeLevel,
+): RefereeLevel[] {
+  if (tipo === "Nuevo juez") return ["Regional"];
+  if (tipo === "Ascenso IPF") {
+    if (currentLevel === "IPF Cat. 2") return ["IPF Cat. 1"];
+    if (currentLevel === "IPF Cat. 1") return ["IPF Cat. 1"];
+    return ["IPF Cat. 2", "IPF Cat. 1"];
+  }
+  return currentLevel ? [currentLevel] : LEVELS;
 }
 
 export function ExamsManager({
@@ -74,10 +87,12 @@ export function ExamsManager({
   const [examinador, setExaminador] = useState("");
   const [puntuacion, setPuntuacion] = useState("");
   const [notas, setNotas] = useState("");
+  const selectedReferee = referees.find((r) => r.id === refereeId);
+  const availableLevels = allowedLevelsForExam(tipo, selectedReferee?.nivel);
 
   const resetForm = () => {
     setTipo("Nuevo juez");
-    setNivelObjetivo("Nacional");
+    setNivelObjetivo("Regional");
     setExaminador("");
     setPuntuacion("");
     setNotas("");
@@ -175,7 +190,13 @@ export function ExamsManager({
                 <span className="friendly-label mb-1 block">Juez</span>
                 <select
                   value={refereeId}
-                  onChange={(e) => setRefereeId(e.target.value)}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    const nextRef = referees.find((r) => r.id === nextId);
+                    const nextLevels = allowedLevelsForExam(tipo, nextRef?.nivel);
+                    setRefereeId(nextId);
+                    setNivelObjetivo(nextLevels[0] ?? "Regional");
+                  }}
                   className={selectFieldClass}
                 >
                   <option value="">— Seleccionar —</option>
@@ -191,7 +212,12 @@ export function ExamsManager({
               <span className="friendly-label mb-1 block">Tipo de examen</span>
               <select
                 value={tipo}
-                onChange={(e) => setTipo(e.target.value as ExamType)}
+                onChange={(e) => {
+                  const nextTipo = e.target.value as ExamType;
+                  const nextLevels = allowedLevelsForExam(nextTipo, selectedReferee?.nivel);
+                  setTipo(nextTipo);
+                  setNivelObjetivo(nextLevels[0] ?? "Regional");
+                }}
                 className={selectFieldClass}
               >
                 {EXAM_TYPES.map((t) => (
@@ -208,7 +234,7 @@ export function ExamsManager({
                 onChange={(e) => setNivelObjetivo(e.target.value as RefereeLevel)}
                 className={selectFieldClass}
               >
-                {LEVELS.map((l) => (
+                {availableLevels.map((l) => (
                   <option key={l} value={l}>
                     {l}
                   </option>

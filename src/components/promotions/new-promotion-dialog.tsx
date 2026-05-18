@@ -6,7 +6,7 @@ import { LevelBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
-import type { Referee, RefereeLevel, Zone } from "@/lib/types";
+import type { Referee, RefereeLevel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ArrowRight, TrendingUp, X } from "lucide-react";
 
@@ -21,28 +21,22 @@ interface FormState {
   refereeId: string;
   toLevel: RefereeLevel | "";
   motivo: string;
-  zona: string;
 }
 
-function buildInitialForm(eligible: Referee[], userZona: string | undefined, zones: Zone[]): FormState {
+function buildInitialForm(eligible: Referee[]): FormState {
   const first = eligible[0];
   const levels = first ? higherLevels(first.nivel) : [];
   return {
     refereeId: first?.id ?? "",
     toLevel: (levels[0] ?? "") as RefereeLevel | "",
     motivo: "",
-    zona: userZona ?? first?.zona ?? zones[0]?.code ?? "",
   };
 }
 
 export function NewPromotionDialog({
   referees,
-  zones,
-  userZona,
 }: {
   referees: Referee[];
-  zones: Zone[];
-  userZona?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -54,7 +48,7 @@ export function NewPromotionDialog({
     (r) => r.estado === "Activo" && higherLevels(r.nivel).length > 0,
   );
 
-  const [form, setForm] = useState<FormState>(() => buildInitialForm(eligible, userZona, zones));
+  const [form, setForm] = useState<FormState>(() => buildInitialForm(eligible));
 
   const selectedRef = eligible.find((r) => r.id === form.refereeId);
   const availableLevels = selectedRef ? higherLevels(selectedRef.nivel) : [];
@@ -71,10 +65,9 @@ export function NewPromotionDialog({
       refereeId: first?.id ?? "",
       toLevel: (levels[0] ?? "") as RefereeLevel | "",
       motivo: "",
-      zona: userZona ?? first?.zona ?? zones[0]?.code ?? "",
     });
     setError(null);
-  }, [open, referees, userZona, zones]);
+  }, [open, referees]);
 
   // Escape key + initial focus
   useEffect(() => {
@@ -94,7 +87,6 @@ export function NewPromotionDialog({
       ...f,
       refereeId: id,
       toLevel: levels[0] ?? "",
-      zona: userZona ?? ref?.zona ?? f.zona,
     }));
   };
 
@@ -107,7 +99,6 @@ export function NewPromotionDialog({
         await api.createPromotion({
           refereeId: form.refereeId,
           toLevel: form.toLevel as RefereeLevel,
-          zona: form.zona,
           motivo: form.motivo || undefined,
         });
         setOpen(false);
@@ -215,24 +206,6 @@ export function NewPromotionDialog({
             )}
           </div>
 
-          {/* Zona (only when user has no fixed zone) */}
-          {!userZona && (
-            <div>
-              <label className="friendly-label mb-1 block">Zona</label>
-              <select
-                className={`${selectFieldClass} w-full`}
-                value={form.zona}
-                onChange={(e) => setForm((f) => ({ ...f, zona: e.target.value }))}
-              >
-                {zones.map((z) => (
-                  <option key={z.code} value={z.code}>
-                    {z.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           {/* Motivo — textarea for longer descriptions */}
           <div>
             <label className="friendly-label mb-1 block">
@@ -240,7 +213,7 @@ export function NewPromotionDialog({
               <span className="font-normal text-subtle-muted">(opcional)</span>
             </label>
             <textarea
-              placeholder="Ej. 6 eventos completados como central en AEP-2, nivel técnico demostrado…"
+              placeholder="Ej. 6 competiciones completadas como central en AEP-2, nivel técnico demostrado…"
               value={form.motivo}
               onChange={(e) => setForm((f) => ({ ...f, motivo: e.target.value }))}
               className={textareaFieldClass}

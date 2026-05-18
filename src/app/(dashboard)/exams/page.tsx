@@ -93,7 +93,7 @@ export default async function ExamsPage() {
       </div>
       <ExamsManager
         exams={exams}
-        referees={referees.map((r) => ({ id: r.id, nombre: r.nombre }))}
+        referees={referees.map((r) => ({ id: r.id, nombre: r.nombre, nivel: r.nivel }))}
         canEdit={user.role !== "solo_ver"}
         canDelete={user.role === "super_admin" || user.role === "delegado_jueces"}
       />

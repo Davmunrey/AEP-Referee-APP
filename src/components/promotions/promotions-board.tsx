@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { api } from "@/lib/api/client";
 import { textareaFieldClass } from "@/lib/design-tokens";
-import type { PromotionRequest, Referee, Zone } from "@/lib/types";
+import type { PromotionRequest, Referee } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -70,15 +70,11 @@ export function PromotionsBoard({
   canReview,
   canCreate,
   referees,
-  zones,
-  userZona,
 }: {
   initial: PromotionRequest[];
   canReview: boolean;
   canCreate: boolean;
   referees: Referee[];
-  zones: Zone[];
-  userZona?: string;
 }) {
   const [items, setItems] = useState(initial);
   const [pending, startTransition] = useTransition();
@@ -185,7 +181,7 @@ export function PromotionsBoard({
           description={`${pendingCount} solicitudes pendientes · Regional → Nacional → IPF · revisión centralizada`}
         />
         {canCreate && (
-          <NewPromotionDialog referees={referees} zones={zones} userZona={userZona} />
+          <NewPromotionDialog referees={referees} />
         )}
       </div>
 

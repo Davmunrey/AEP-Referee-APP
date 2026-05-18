@@ -20,17 +20,18 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const REPORT_TYPES: ReportType[] = [
-  "Competición",
-  "Juez",
+  "General",
   "Incidencia",
   "Evaluación",
 ];
 
-function typeBadge(t: ReportType) {
+function typeBadge(t: ReportType, subjectType: ReportSubjectType) {
+  if (t === "General" || t === "Competición" || t === "Juez") {
+    return <Badge variant={subjectType === "competicion" ? "regional" : "success"}>General</Badge>;
+  }
   if (t === "Incidencia") return <Badge variant="danger">{t}</Badge>;
   if (t === "Evaluación") return <Badge variant="warning">{t}</Badge>;
-  if (t === "Competición") return <Badge variant="regional">{t}</Badge>;
-  return <Badge variant="success">{t}</Badge>;
+  return <Badge variant="success">General</Badge>;
 }
 
 function fmtDate(iso?: string) {
@@ -69,7 +70,7 @@ export function ReportsManager({
   const [refereeId, setRefereeId] = useState(lockedRefereeId ?? "");
   const [competitionId, setCompetitionId] = useState("");
   const [titulo, setTitulo] = useState("");
-  const [tipo, setTipo] = useState<ReportType>("Competición");
+  const [tipo, setTipo] = useState<ReportType>("General");
   const [evento, setEvento] = useState("");
   const [contenido, setContenido] = useState("");
   const [adjuntoUrl, setAdjuntoUrl] = useState("");
@@ -77,7 +78,7 @@ export function ReportsManager({
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitulo, setEditTitulo] = useState("");
-  const [editTipo, setEditTipo] = useState<ReportType>("Competición");
+  const [editTipo, setEditTipo] = useState<ReportType>("General");
   const [editEvento, setEditEvento] = useState("");
   const [editContenido, setEditContenido] = useState("");
   const [editAdjuntoUrl, setEditAdjuntoUrl] = useState("");
@@ -94,7 +95,7 @@ export function ReportsManager({
 
   const resetForm = () => {
     setTitulo("");
-    setTipo("Competición");
+    setTipo("General");
     setEvento("");
     setContenido("");
     setAdjuntoUrl("");
@@ -125,7 +126,7 @@ export function ReportsManager({
         competitionId: subjectType === "competicion" ? competitionId : undefined,
         titulo: titulo.trim(),
         tipo,
-        evento: evento.trim() || undefined,
+        evento: subjectType === "juez" ? evento.trim() || undefined : undefined,
         contenido: contenido.trim(),
         adjuntoUrl: adjuntoUrl.trim() || undefined,
       });
@@ -179,7 +180,9 @@ export function ReportsManager({
       const updated = await api.updateReport(reportId, {
         titulo: editTitulo.trim(),
         tipo: editTipo,
-        evento: editEvento.trim() || undefined,
+        evento: reports.find((r) => r.id === reportId)?.subjectType === "juez"
+          ? editEvento.trim() || undefined
+          : undefined,
         contenido: editContenido.trim(),
         adjuntoUrl: editAdjuntoUrl.trim() || undefined,
       });
@@ -224,7 +227,13 @@ export function ReportsManager({
                 <span className="friendly-label mb-1 block">Ámbito</span>
                 <select
                   value={subjectType}
-                  onChange={(e) => setSubjectType(e.target.value as ReportSubjectType)}
+                  onChange={(e) => {
+                    const next = e.target.value as ReportSubjectType;
+                    setSubjectType(next);
+                    setEvento("");
+                    if (next === "competicion") setRefereeId("");
+                    if (next === "juez") setCompetitionId("");
+                  }}
                   className={selectFieldClass}
                 >
                   <option value="competicion">Competición</option>
@@ -267,7 +276,7 @@ export function ReportsManager({
               </label>
             )}
             <label className="text-xs">
-              <span className="friendly-label mb-1 block">Tipo de informe</span>
+              <span className="friendly-label mb-1 block">Categoría</span>
               <select
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value as ReportType)}
@@ -285,26 +294,42 @@ export function ReportsManager({
               <input
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Informe de competición — Open Nacional"
+                placeholder={
+                  subjectType === "competicion"
+                    ? "Informe general de competición"
+                    : "Informe general de juez"
+                }
                 className={selectFieldClass}
               />
             </label>
-            <label className="text-xs">
-              <span className="friendly-label mb-1 block">Evento (opcional)</span>
-              <input
-                value={evento}
-                onChange={(e) => setEvento(e.target.value)}
-                placeholder="Campeonato de España 2026"
-                className={selectFieldClass}
-              />
-            </label>
+            {subjectType === "juez" && (
+              <label className="text-xs">
+                <span className="friendly-label mb-1 block">Competición asociada (opcional)</span>
+                <select
+                  value={evento}
+                  onChange={(e) => setEvento(e.target.value)}
+                  className={selectFieldClass}
+                >
+                  <option value="">— Ninguna —</option>
+                  {competitions.map((c) => (
+                    <option key={c.id} value={c.nombre}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
           <label className="block text-xs">
             <span className="friendly-label mb-1 block">Contenido del informe</span>
             <textarea
               value={contenido}
               onChange={(e) => setContenido(e.target.value)}
-              placeholder="Redacta aquí el informe del juez…"
+              placeholder={
+                subjectType === "competicion"
+                  ? "Redacta aquí el informe de la competición…"
+                  : "Redacta aquí el informe del juez…"
+              }
               className={textareaFieldClass}
               rows={5}
             />
@@ -375,7 +400,7 @@ export function ReportsManager({
                       <span className="text-[13px] font-semibold text-foreground">
                         {report.titulo}
                       </span>
-                      {typeBadge(report.tipo)}
+                      {typeBadge(report.tipo, report.subjectType)}
                       {report.adjuntoUrl && (
                         <span
                           className="text-primary"
@@ -394,7 +419,7 @@ export function ReportsManager({
                         <>{report.competitionName} · </>
                       )}
                       {report.autor} · {fmtDate(report.createdAt)}
-                      {report.evento ? ` · ${report.evento}` : ""}
+                      {report.subjectType === "juez" && report.evento ? ` · ${report.evento}` : ""}
                     </span>
                     {/* Content preview when collapsed */}
                     {!isOpen && (
@@ -421,7 +446,7 @@ export function ReportsManager({
                             />
                           </label>
                           <label className="block text-xs">
-                            <span className="friendly-label mb-1 block">Tipo</span>
+                            <span className="friendly-label mb-1 block">Categoría</span>
                             <select
                               value={editTipo}
                               onChange={(e) => setEditTipo(e.target.value as ReportType)}
@@ -432,15 +457,25 @@ export function ReportsManager({
                               ))}
                             </select>
                           </label>
-                          <label className="block text-xs">
-                            <span className="friendly-label mb-1 block">Evento (opcional)</span>
-                            <input
-                              value={editEvento}
-                              onChange={(e) => setEditEvento(e.target.value)}
-                              placeholder="Campeonato de España 2026"
-                              className={selectFieldClass}
-                            />
-                          </label>
+                          {report.subjectType === "juez" && (
+                            <label className="block text-xs">
+                              <span className="friendly-label mb-1 block">
+                                Competición asociada (opcional)
+                              </span>
+                              <select
+                                value={editEvento}
+                                onChange={(e) => setEditEvento(e.target.value)}
+                                className={selectFieldClass}
+                              >
+                                <option value="">— Ninguna —</option>
+                                {competitions.map((c) => (
+                                  <option key={c.id} value={c.nombre}>
+                                    {c.nombre}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          )}
                           <label className="block text-xs">
                             <span className="friendly-label mb-1 block">Enlace adjunto (opcional)</span>
                             <input

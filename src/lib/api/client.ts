@@ -360,7 +360,6 @@ export const api = {
   createPromotion: (body: {
     refereeId: string;
     toLevel: string;
-    zona: string;
     motivo?: string;
   }) =>
     request<PromotionRequest>("/promotions", {
