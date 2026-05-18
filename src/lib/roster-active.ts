@@ -2,8 +2,8 @@ import { isCompetitionPast } from "@/lib/competition-status";
 import type { Competition } from "@/lib/types";
 
 /** Campeonatos donde aún se puede montar o completar tarima (no finalizados por fecha). */
-export function listActiveTarimaCompetitions(events: Competition[]): Competition[] {
-  return events
+export function listActiveTarimaCompetitions(competitions: Competition[]): Competition[] {
+  return competitions
     .filter((e) => !isCompetitionPast(e))
     .sort((a, b) => {
       const pctA = a.requeridos > 0 ? a.confirmados / a.requeridos : 0;
@@ -13,7 +13,9 @@ export function listActiveTarimaCompetitions(events: Competition[]): Competition
     });
 }
 
-export function rosterCoveragePct(event: Pick<Competition, "confirmados" | "requeridos">): number {
-  if (event.requeridos <= 0) return 0;
-  return Math.round((event.confirmados / event.requeridos) * 100);
+export function rosterCoveragePct(
+  competition: Pick<Competition, "confirmados" | "requeridos">,
+): number {
+  if (competition.requeridos <= 0) return 0;
+  return Math.round((competition.confirmados / competition.requeridos) * 100);
 }

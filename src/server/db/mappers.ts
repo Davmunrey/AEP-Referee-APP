@@ -103,8 +103,8 @@ export function mapCompetition(row: Record<string, unknown>): Competition {
 export function mapApproval(row: Record<string, unknown>): ApprovalProposal {
   return {
     id: String(row.id),
-    competitionId: String(row.event_id),
-    competitionName: String(row.event_name),
+    competitionId: String(row.competition_id),
+    competitionName: String(row.competition_name),
     zona: String(row.zona),
     submittedBy: String(row.submitted_by),
     submittedAt: String(row.submitted_at),
@@ -155,7 +155,7 @@ export function mapActivity(row: Record<string, unknown>): ActivityItem {
 export function mapHistory(row: Record<string, unknown>): RosterHistoryEntry {
   return {
     id: String(row.id),
-    competitionId: String(row.event_id),
+    competitionId: String(row.competition_id),
     at: String(row.at),
     actor: String(row.actor),
     action: String(row.action),

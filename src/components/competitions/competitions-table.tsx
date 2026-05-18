@@ -66,11 +66,11 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
   const duplicateIds = useMemo(() => {
     const ids = new Set<string>();
     for (const g of duplicateGroups) {
-      for (const e of g.events) ids.add(e.id);
+      for (const e of g.competitions) ids.add(e.id);
     }
     return ids;
   }, [duplicateGroups]);
-  const duplicateCount = duplicateGroups.reduce((n, g) => n + g.events.length - 1, 0);
+  const duplicateCount = duplicateGroups.reduce((n, g) => n + g.competitions.length - 1, 0);
   const canDedupe = role === "super_admin" || role === "delegado_jueces";
 
   const refreshEvents = async () => {

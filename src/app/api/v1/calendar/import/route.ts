@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   const existing = await dataService.getCompetitions(user);
   const dbDuplicateGroups = await dataService.findCompetitionDuplicates(user);
   const dbDuplicateCount = dbDuplicateGroups.reduce(
-    (n, g) => n + g.events.length - 1,
+    (n, g) => n + g.competitions.length - 1,
     0,
   );
 

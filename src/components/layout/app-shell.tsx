@@ -11,7 +11,7 @@ import { TopBar } from "./topbar";
 const COLLAPSE_KEY = "aep-tarima:sidebar-collapsed";
 
 export interface NavCounts {
-  events: number;
+  competitions: number;
   approvals: number;
   activeRosterHref: string;
 }
@@ -43,7 +43,7 @@ export function AppShell({
       .then(([competitions, approvals]) => {
         if (cancelled) return;
         setLiveNavCounts({
-          events: competitions.length,
+          competitions: competitions.length,
           approvals: approvals.filter((a) => a.status === "pendiente").length,
           activeRosterHref: pickActiveRosterHref(competitions),
         });
