@@ -322,6 +322,7 @@ export interface RefereeExam {
 }
 
 export type ReportType =
+  | "General"
   | "Competición"
   | "Juez"
   | "Incidencia"
@@ -412,14 +413,43 @@ export interface JudgeProfile {
 }
 
 export interface AnalyticsPayload {
-  coverageByZone: { zona: string; name: string; pct: number; eventos: number }[];
-  topReferees: { id: string; nombre: string; eventos: number; nivel: RefereeLevel }[];
+  availableYears: number[];
+  selectedYear: number;
+  yearlyHistory: {
+    year: number;
+    competitions: number;
+    criticalCompetitions: number;
+    requiredSlots: number;
+    filledSlots: number;
+    uniqueAssignedReferees: number;
+  }[];
+  activityByZone: {
+    zona: string;
+    name: string;
+    competitions: number;
+    criticalCompetitions: number;
+    requiredSlots: number;
+    filledSlots: number;
+    uniqueAssignedReferees: number;
+    activeReferees: number;
+  }[];
+  topReferees: {
+    id: string;
+    nombre: string;
+    nivel: RefereeLevel;
+    assignedCompetitions: number;
+    assignedSlots: number;
+  }[];
   rejectionRate: number;
   criticalEvents: Competition[];
   totals: {
+    competitions: number;
+    criticalCompetitions: number;
     activeReferees: number;
     totalReferees: number;
     pendingApprovals: number;
+    uniqueAssignedReferees: number;
+    filledSlots: number;
     openSlots: number;
   };
 }

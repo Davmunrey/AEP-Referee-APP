@@ -115,7 +115,6 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                 <RefereePromotionButton
                   refereeId={referee.id}
                   currentLevel={referee.nivel}
-                  zona={referee.zona}
                 />
                 <Button variant="outline" size="sm" asChild>
                   <a href="#edit-form">
@@ -171,11 +170,11 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
               <StatusBadge status={referee.estado} />
             </div>
             <div>
-              <p className="friendly-label mb-1">Eventos 2026</p>
+              <p className="friendly-label mb-1">Competiciones 2026</p>
               <p className="font-mono text-sm text-foreground">{referee.eventos}</p>
             </div>
             <div>
-              <p className="friendly-label mb-1">Último evento</p>
+              <p className="friendly-label mb-1">Última competición</p>
               <p className="text-sm text-foreground">{referee.ultimo}</p>
             </div>
             <div>
@@ -248,7 +247,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
 
       <ExamsManager
         exams={exams}
-        referees={[{ id: referee.id, nombre: referee.nombre }]}
+        referees={[{ id: referee.id, nombre: referee.nombre, nivel: referee.nivel }]}
         lockedRefereeId={referee.id}
         canEdit={canEdit}
         canDelete={canDelete}

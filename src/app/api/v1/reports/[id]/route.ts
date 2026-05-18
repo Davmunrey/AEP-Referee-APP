@@ -9,6 +9,7 @@ interface RouteContext {
 }
 
 const ALLOWED_TIPOS: ReadonlyArray<ReportType> = [
+  "General",
   "Competición",
   "Juez",
   "Incidencia",

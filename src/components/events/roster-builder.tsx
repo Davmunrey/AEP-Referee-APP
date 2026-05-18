@@ -166,17 +166,11 @@ export function RosterBuilder({
       if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
       if (search && !r.nombre.toLowerCase().includes(search.toLowerCase())) return false;
+      if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, event.tipo, regulations)) {
+        return false;
+      }
       return true;
     });
-    if (selectedRoleKey) {
-      list.sort((a, b) => {
-        const aOk = !getAssignabilityReason(a, selectedRoleKey, event.tipo, regulations);
-        const bOk = !getAssignabilityReason(b, selectedRoleKey, event.tipo, regulations);
-        if (aOk && !bOk) return -1;
-        if (!aOk && bOk) return 1;
-        return 0;
-      });
-    }
     return list;
   }, [filterZona, filterNivel, search, referees, selectedRoleKey, regulations, event.tipo]);
 
@@ -442,7 +436,7 @@ export function RosterBuilder({
       ) : workflowStep === "plantilla" && !isEditing && totalSlots === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
           <p className="max-w-md text-sm text-muted-foreground">
-            Este campeonato aún no tiene plantilla de tarima. Importa el horario PDF de este evento
+            Este campeonato aún no tiene plantilla de tarima. Importa el horario PDF de esta competición
             o define sesiones y plazas manualmente.
           </p>
           {canEdit && (

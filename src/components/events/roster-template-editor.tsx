@@ -347,7 +347,7 @@ export function RosterTemplateEditor({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-subtle-muted">
-          Edita sesiones, días, categorías, horarios y roles. Guardar actualiza la plantilla del evento.
+          Edita sesiones, días, categorías, horarios y roles. Guardar actualiza la plantilla del campeonato.
         </p>
         <div className="flex gap-2">
           <Button

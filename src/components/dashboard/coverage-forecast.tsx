@@ -50,7 +50,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
           href="/events"
           className="text-xs font-medium text-primary hover:text-primary/80"
         >
-          Ver eventos →
+          Ver campeonatos →
         </Link>
       </CardHeader>
       <CardContent className="space-y-1 p-3">

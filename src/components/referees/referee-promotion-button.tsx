@@ -15,10 +15,9 @@ const MOTIVO_MAX = 300;
 interface RefereePromotionButtonProps {
   refereeId: string;
   currentLevel: RefereeLevel;
-  zona: string;
 }
 
-export function RefereePromotionButton({ refereeId, currentLevel, zona }: RefereePromotionButtonProps) {
+export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromotionButtonProps) {
   const idx = LEVEL_ORDER.indexOf(currentLevel);
   const higherLevels = idx >= 0 ? LEVEL_ORDER.slice(idx + 1) : [];
   const [open, setOpen] = useState(false);
@@ -46,7 +45,7 @@ export function RefereePromotionButton({ refereeId, currentLevel, zona }: Refere
     setError(null);
     startTransition(async () => {
       try {
-        await api.createPromotion({ refereeId, toLevel, zona, motivo: motivo || undefined });
+        await api.createPromotion({ refereeId, toLevel, motivo: motivo || undefined });
         setOpen(false);
         setMotivo("");
         router.refresh();
@@ -132,7 +131,7 @@ export function RefereePromotionButton({ refereeId, currentLevel, zona }: Refere
               <textarea
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value.slice(0, MOTIVO_MAX))}
-                placeholder="Ej. 6 eventos como central en AEP-2, examen teórico aprobado…"
+                placeholder="Ej. 6 competiciones como central en AEP-2, examen teórico aprobado…"
                 className={textareaFieldClass}
                 rows={3}
                 maxLength={MOTIVO_MAX}

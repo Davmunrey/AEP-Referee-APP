@@ -24,7 +24,7 @@ export default async function EventsPage() {
       <PageHeader
         eyebrow="Operaciones"
         title="Campeonatos"
-        description={`${events.length} eventos en temporada · gestión de plantillas de jueces`}
+        description={`${events.length} campeonatos en calendario · gestión de plantillas de jueces`}
       >
         <div className="flex flex-wrap gap-2">
           {canImportCalendar(user.role) && <CalendarImportButton />}

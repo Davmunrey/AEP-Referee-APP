@@ -13,7 +13,7 @@ export function EventsTable({ competitions }: { competitions: Competition[] }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Plantillas de jueces — próximos eventos</CardTitle>
+        <CardTitle>Plantillas de jueces — próximos campeonatos</CardTitle>
         <span className="text-xs text-subtle-muted">Estado de completitud del roster</span>
       </CardHeader>
       <CardContent className="p-0">
@@ -21,7 +21,7 @@ export function EventsTable({ competitions }: { competitions: Competition[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-subtle-muted">
-                <th className="px-6 py-3 font-medium">Evento</th>
+                <th className="px-6 py-3 font-medium">Campeonato</th>
                 <th className="px-6 py-3 font-medium">Fechas</th>
                 <th className="px-6 py-3 font-medium">Tipo</th>
                 <th className="px-6 py-3 font-medium">Completitud</th>
