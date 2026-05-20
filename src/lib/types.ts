@@ -347,6 +347,19 @@ export interface RefereeReport {
   createdAt?: string;
 }
 
+export interface RefereeCompetitionHistoryItem {
+  competitionId: string;
+  competitionName: string;
+  tipo: EventType;
+  fecha: string;
+  fechaFin: string;
+  sede: string;
+  estado: EventStatus;
+  aprobacion: string;
+  roles: string[];
+  slotCount: number;
+}
+
 export type SanctionStatus = "activa" | "cumplida" | "revocada";
 
 export type SanctionDurationPreset =
@@ -406,6 +419,7 @@ export interface JudgeProfile {
   reports: RefereeReport[];
   sanctions: RefereeSanction[];
   activeSanction?: RefereeSanction;
+  competitionHistory: RefereeCompetitionHistoryItem[];
   examsPassed: number;
   examsTotal: number;
   avgScore: number | null;

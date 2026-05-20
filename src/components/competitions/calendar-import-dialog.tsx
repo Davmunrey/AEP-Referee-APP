@@ -159,7 +159,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
       {loading && !preview && !applyResult ? (
         <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Procesando PDF…
+          Procesando calendario…
         </div>
       ) : null}
 

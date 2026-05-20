@@ -2,6 +2,7 @@ import { isSanctionActive } from "@/lib/sanctions";
 import type {
   JudgeProfile,
   Referee,
+  RefereeCompetitionHistoryItem,
   RefereeExam,
   RefereeReport,
   RefereeSanction,
@@ -13,6 +14,7 @@ export function computeJudgeProfile(
   exams: RefereeExam[],
   reports: RefereeReport[],
   sanctions: RefereeSanction[] = [],
+  competitionHistory: RefereeCompetitionHistoryItem[] = [],
 ): JudgeProfile {
   const sortedExams = [...exams].sort((a, b) => b.fecha.localeCompare(a.fecha));
   const sortedReports = [...reports].sort((a, b) =>
@@ -36,6 +38,7 @@ export function computeJudgeProfile(
     reports: sortedReports,
     sanctions: sortedSanctions,
     activeSanction,
+    competitionHistory: [...competitionHistory].sort((a, b) => b.fecha.localeCompare(a.fecha)),
     examsPassed: passed,
     examsTotal: exams.length,
     avgScore,

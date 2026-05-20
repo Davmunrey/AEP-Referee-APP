@@ -52,7 +52,7 @@ import { ScheduleImportDialog } from "@/components/competitions/schedule-import-
 import { FileUp } from "lucide-react";
 
 interface RosterBuilderProps {
-  event: Competition;
+  competition: Competition;
   template: RosterSession[];
   initialAssignments: AssignmentsMap;
   initialFlags?: FlagsMap;
@@ -72,7 +72,7 @@ function zoneName(zones: Zone[], code: string) {
 }
 
 export function RosterBuilder({
-  event,
+  competition,
   template: initialTemplate,
   initialAssignments,
   initialFlags = {},
@@ -141,7 +141,7 @@ export function RosterBuilder({
   const checkViolation = (roleKey: RoleKey, refereeId: string) => {
     const referee = getReferee(refereeId);
     if (!referee) return undefined;
-    return findRegulationViolation(roleKey, event.tipo, referee.nivel, regulations);
+    return findRegulationViolation(roleKey, competition.tipo, referee.nivel, regulations);
   };
 
   const violationCount = useMemo(
@@ -149,11 +149,11 @@ export function RosterBuilder({
       countRegulationViolations(
         template,
         assignments,
-        event.tipo,
+        competition.tipo,
         (id) => referees.find((r) => r.id === id)?.nivel,
         regulations,
       ),
-    [assignments, template, regulations, event.tipo, referees],
+    [assignments, template, regulations, competition.tipo, referees],
   );
 
   const selectedRoleKey = selectedSlot
@@ -166,13 +166,13 @@ export function RosterBuilder({
       if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
       if (search && !r.nombre.toLowerCase().includes(search.toLowerCase())) return false;
-      if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, event.tipo, regulations)) {
+      if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) {
         return false;
       }
       return true;
     });
     return list;
-  }, [filterZona, filterNivel, search, referees, selectedRoleKey, regulations, event.tipo]);
+  }, [filterZona, filterNivel, search, referees, selectedRoleKey, regulations, competition.tipo]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
     const snapshot = assignments;
@@ -201,7 +201,7 @@ export function RosterBuilder({
     }
     startTransition(async () => {
       try {
-        const res = await api.assignReferee(event.id, slotKey, refereeId);
+        const res = await api.assignReferee(competition.id, slotKey, refereeId);
         setAssignments(res.assignments);
         if (res.flags) setFlags(res.flags);
         setStatusMsg(null);
@@ -224,7 +224,7 @@ export function RosterBuilder({
     });
     startTransition(async () => {
       try {
-        const res = await api.clearSlot(event.id, slotKey);
+        const res = await api.clearSlot(competition.id, slotKey);
         setAssignments(res.assignments);
       } catch (err) {
         setStatusMsg(formatApiError(err, "No se pudo quitar la asignación"));
@@ -253,7 +253,7 @@ export function RosterBuilder({
     setFlags((prev) => ({ ...prev, [slotKey]: next }));
     startTransition(async () => {
       try {
-        const res = await api.setSlotFlags(event.id, slotKey, next);
+        const res = await api.setSlotFlags(competition.id, slotKey, next);
         setFlags(res.flags);
       } catch (err) {
         setFlags(snapshot);
@@ -267,7 +267,7 @@ export function RosterBuilder({
     setSavingTemplate(true);
     startTransition(async () => {
       try {
-        const res = await api.saveTemplate(event.id, next);
+        const res = await api.saveTemplate(competition.id, next);
         setTemplate(res.template);
         setAssignments(res.assignments);
         setFlags(res.flags);
@@ -299,7 +299,7 @@ export function RosterBuilder({
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <ScheduleImportDialog
-        competitionId={event.id}
+        competitionId={competition.id}
         open={importOpen}
         hasExistingTemplate={template.length > 0}
         onClose={() => setImportOpen(false)}
@@ -322,8 +322,8 @@ export function RosterBuilder({
             </Button>
             <div>
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <EventTypeBadge tipo={event.tipo} />
-                <EventStatusBadge status={event.estado} />
+                <EventTypeBadge tipo={competition.tipo} />
+                <EventStatusBadge status={competition.estado} />
                 {isPast && (
                   <span
                     className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
@@ -332,11 +332,11 @@ export function RosterBuilder({
                     Cerrado
                   </span>
                 )}
-                <span className="text-xs text-subtle-muted">{event.aprobacion}</span>
+                <span className="text-xs text-subtle-muted">{competition.aprobacion}</span>
               </div>
-              <h1 className="text-xl font-semibold text-foreground">{event.nombre}</h1>
+              <h1 className="text-xl font-semibold text-foreground">{competition.nombre}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {event.fecha} → {event.fechaFin} · {event.sede}
+                {competition.fecha} → {competition.fechaFin} · {competition.sede}
               </p>
             </div>
           </div>
@@ -382,10 +382,10 @@ export function RosterBuilder({
                   {isEditing ? "Volver a tarima" : "Editar plantilla"}
                 </Button>
               )}
-              <RosterHistoryPanel competitionId={event.id} />
+              <RosterHistoryPanel competitionId={competition.id} />
               {!readOnly && !isEditing && (
                 <RosterHeaderActions
-                  competitionId={event.id}
+                  competitionId={competition.id}
                   filledSlots={filledSlots}
                   totalSlots={totalSlots}
                   fillPct={fillPct}
@@ -552,7 +552,7 @@ export function RosterBuilder({
                     ? getAssignabilityReason(
                         referee,
                         selectedRoleKey,
-                        event.tipo,
+                        competition.tipo,
                         regulations,
                       )
                     : null;
@@ -596,7 +596,7 @@ export function RosterBuilder({
             <ScrollArea className="flex-1">
               <div className="p-4">
                 <RosterTemplateEditor
-                  competitionId={event.id}
+                  competitionId={competition.id}
                   initialTemplate={template}
                   onSave={saveTemplate}
                   onCancel={() => setIsEditing(false)}

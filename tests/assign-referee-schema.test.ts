@@ -4,7 +4,7 @@ import { assignRefereeSchema, clearSlotSchema } from "@/lib/validations";
 describe("assignRefereeSchema", () => {
   it("accepts valid assign payload", () => {
     const parsed = assignRefereeSchema.parse({
-      eventId: "evt-1",
+      competitionId: "comp-1",
       slotKey: "S1_central_0",
       refereeId: "ref-1",
     });
@@ -14,7 +14,7 @@ describe("assignRefereeSchema", () => {
   it("rejects empty refereeId", () => {
     expect(() =>
       assignRefereeSchema.parse({
-        eventId: "evt-1",
+        competitionId: "comp-1",
         slotKey: "S1_central_0",
         refereeId: "",
       }),
@@ -24,6 +24,6 @@ describe("assignRefereeSchema", () => {
 
 describe("clearSlotSchema", () => {
   it("requires slotKey", () => {
-    expect(() => clearSlotSchema.parse({ eventId: "e1", slotKey: "" })).toThrow();
+    expect(() => clearSlotSchema.parse({ competitionId: "c1", slotKey: "" })).toThrow();
   });
 });

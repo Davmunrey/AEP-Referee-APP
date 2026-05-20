@@ -36,11 +36,11 @@ describe("competition-dedup", () => {
     ];
     const groups = groupCompetitionDuplicates(list);
     expect(groups).toHaveLength(1);
-    expect(groups[0]!.events).toHaveLength(2);
+    expect(groups[0]!.competitions).toHaveLength(2);
     expect(competitionDedupKey(list[0]!)).toBe(competitionDedupKey(list[1]!));
   });
 
-  it("keeps event with more confirmados", () => {
+  it("keeps competition with more confirmados", () => {
     const group = [
       comp({ id: "evt-001", nombre: "X", fecha: "2026-01-01", confirmados: 1 }),
       comp({ id: "evt-002", nombre: "X", fecha: "2026-01-01", confirmados: 5 }),

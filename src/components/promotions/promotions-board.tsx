@@ -261,7 +261,7 @@ export function PromotionsBoard({
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-foreground">{p.refereeName}</p>
                             <p className="mt-0.5 text-xs text-subtle-muted">
-                              {p.zona} · {p.eventosCompletados} eventos ·{" "}
+                              {p.zona} · {p.eventosCompletados} arbitrajes ·{" "}
                               {p.submittedAt.slice(0, 10)}
                             </p>
 

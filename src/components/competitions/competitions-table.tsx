@@ -26,7 +26,7 @@ import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
 
 interface CompetitionsTableProps {
-  initialEvents: Competition[];
+  initialCompetitions: Competition[];
   role: UserRole;
   userZona?: string | null;
 }
@@ -36,9 +36,9 @@ const EVENT_STATUSES: EventStatus[] = ["Completo", "Incompleto", "Crítico", "Bo
 const PAGE_SIZE = 20;
 const MAX_VISIBLE_PAGES = 5;
 
-export function CompetitionsTable({ initialEvents, role, userZona }: CompetitionsTableProps) {
+export function CompetitionsTable({ initialCompetitions, role, userZona }: CompetitionsTableProps) {
   const router = useRouter();
-  const [events, setEvents] = useState(initialEvents);
+  const [competitions, setCompetitions] = useState(initialCompetitions);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -52,17 +52,17 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
 
   const zoneOptions = useMemo(() => {
     const codes = new Set<string>();
-    for (const e of events) {
+    for (const e of competitions) {
       if (e.zona) codes.add(e.zona);
     }
     return [...codes].sort();
-  }, [events]);
+  }, [competitions]);
 
   useEffect(() => {
-    setEvents(initialEvents);
-  }, [initialEvents]);
+    setCompetitions(initialCompetitions);
+  }, [initialCompetitions]);
 
-  const duplicateGroups = useMemo(() => groupCompetitionDuplicates(events), [events]);
+  const duplicateGroups = useMemo(() => groupCompetitionDuplicates(competitions), [competitions]);
   const duplicateIds = useMemo(() => {
     const ids = new Set<string>();
     for (const g of duplicateGroups) {
@@ -75,12 +75,12 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
 
   const refreshEvents = async () => {
     const fresh = await api.getCompetitions();
-    setEvents(fresh);
+    setCompetitions(fresh);
     router.refresh();
   };
 
   const filtered = useMemo(() => {
-    return events.filter((e) => {
+    return competitions.filter((e) => {
       if (filterTipo !== "TODOS" && e.tipo !== filterTipo) return false;
       if (filterEstado !== "TODOS" && e.estado !== filterEstado) return false;
       if (filterZona !== "TODOS" && e.zona !== filterZona) return false;
@@ -92,7 +92,7 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
         return false;
       return true;
     });
-  }, [events, filterTipo, filterEstado, filterZona, search]);
+  }, [competitions, filterTipo, filterEstado, filterZona, search]);
 
   useEffect(() => {
     setPage(1);
@@ -105,9 +105,9 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
     [filtered, safeCurrentPage],
   );
 
-  const canDelete = (event: Competition) => {
+  const canDelete = (competition: Competition) => {
     if (role === "super_admin" || role === "delegado_jueces") return true;
-    if (role === "delegado_zona") return event.zona === userZona;
+    if (role === "delegado_zona") return competition.zona === userZona;
     return false;
   };
 
@@ -225,7 +225,7 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
         {hasFilters && (
           <>
             <span className="ml-auto text-xs text-subtle-muted">
-              {filtered.length} de {events.length} resultado{filtered.length !== 1 ? "s" : ""}
+              {filtered.length} de {competitions.length} resultado{filtered.length !== 1 ? "s" : ""}
             </span>
             <Button
               variant="ghost"
@@ -285,16 +285,16 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
             </DataTableHeaderRow>
           </DataTableHead>
           <DataTableBody>
-            {pageRows.map((event) => {
+            {pageRows.map((competition) => {
               const pct =
-                event.requeridos > 0
-                  ? Math.round((event.confirmados / event.requeridos) * 100)
+                competition.requeridos > 0
+                  ? Math.round((competition.confirmados / competition.requeridos) * 100)
                   : 0;
-              const isConfirmingDelete = confirmDeleteId === event.id;
-              const isPast = isCompetitionPast(event);
+              const isConfirmingDelete = confirmDeleteId === competition.id;
+              const isPast = isCompetitionPast(competition);
               return (
                 <DataTableRow
-                  key={event.id}
+                  key={competition.id}
                   className={cn(
                     "group transition-colors duration-150",
                     isConfirmingDelete && "bg-destructive/5",
@@ -302,39 +302,37 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
                 >
                   <DataTableCell>
                     <p className="font-medium text-foreground">
-                      {event.nombre}
+                      {competition.nombre}
                       {isPast && (
                         <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
                           Solo lectura
                         </span>
                       )}
-                      {duplicateIds.has(event.id) && (
+                      {duplicateIds.has(competition.id) && (
                         <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-[10px] font-semibold uppercase text-warning">
                           Duplicado
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-subtle-muted">
-                      {event.sede} · <span className="font-mono">{event.id}</span>
-                    </p>
+                    <p className="text-xs text-subtle-muted">{competition.sede}</p>
                   </DataTableCell>
                   <DataTableCell className="font-mono text-xs text-muted-foreground">
-                    {formatDateRange(event.fecha, event.fechaFin)}
+                    {formatDateRange(competition.fecha, competition.fechaFin)}
                   </DataTableCell>
                   <DataTableCell>
-                    <EventTypeBadge tipo={event.tipo} />
+                    <EventTypeBadge tipo={competition.tipo} />
                   </DataTableCell>
                   <DataTableCell className="font-mono text-[11px] uppercase text-muted-foreground">
-                    {event.zona ?? "—"}
+                    {competition.zona ?? "—"}
                   </DataTableCell>
                   <DataTableCell className="min-w-[140px]">
                     <Progress value={pct} />
                     <p className="mt-1 text-[11px] text-subtle-muted">
-                      {event.confirmados}/{event.requeridos} · {pct}%
+                      {competition.confirmados}/{competition.requeridos} · {pct}%
                     </p>
                   </DataTableCell>
                   <DataTableCell>
-                    <EventStatusBadge status={event.estado} />
+                    <EventStatusBadge status={competition.estado} />
                   </DataTableCell>
                   <DataTableCell className="text-right">
                     {isConfirmingDelete ? (
@@ -344,10 +342,10 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
                           variant="destructive"
                           size="sm"
                           className="h-7 gap-1 px-2 text-xs"
-                          disabled={deletingId === event.id}
-                          onClick={() => void deleteEvent(event.id)}
+                          disabled={deletingId === competition.id}
+                          onClick={() => void deleteEvent(competition.id)}
                         >
-                          {deletingId === event.id ? (
+                          {deletingId === competition.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
                             <Check className="h-3 w-3" />
@@ -366,19 +364,19 @@ export function CompetitionsTable({ initialEvents, role, userZona }: Competition
                     ) : (
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/competitions/${event.id}`}>
+                          <Link href={`/competitions/${competition.id}`}>
                             Montar tarima
                             <ArrowRight className="ml-1 h-3.5 w-3.5" />
                           </Link>
                         </Button>
-                        {canDelete(event) && (
+                        {canDelete(competition) && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                            disabled={deletingId === event.id}
-                            onClick={() => setConfirmDeleteId(event.id)}
-                            aria-label={`Eliminar ${event.nombre}`}
+                            disabled={deletingId === competition.id}
+                            onClick={() => setConfirmDeleteId(competition.id)}
+                            aria-label={`Eliminar ${competition.nombre}`}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

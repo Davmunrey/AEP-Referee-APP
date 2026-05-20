@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseAepCalendarText } from "@/lib/calendar-parser";
+import { parseAepCalendarCsv, parseAepCalendarText } from "@/lib/calendar-parser";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = readFileSync(
@@ -96,5 +96,33 @@ EUROPEAN Masters Classic Powerlifting ChampionshipsPlace OuluFinlandEPFMASTERsPR
     );
     expect(european?.tipo).toBeNull();
     expect(european?.esEspaña).toBe(false);
+  });
+
+  it("parsea CSV oficial con fechas variables y multilinea", () => {
+    const csv = `,,CALENDARIO de COMPETICIONES 2026,,,,,,
+,FECHA,COMPETICIONES 1º TRIMESTRE 2026,LOCALIDAD,ORGANIZADOR,NIVEL,DIVISIONES,PBM,R/E
+MAY,15-16-17 may,Campeonato de ESPAÑA JUNIOR,"Las Torres de Cotillas
+(Murcia)",Myrthea,AEP1,JUN,P,R
+JUN,20-21 jun,"ESTE-2, Campeonato SudEste: Murcia-Valencia-Baleares",Chiva,Fuerza Isabel,AEP2,OPEN,P-B,R-E
+OCT,OCT - NOV **,Copa de ESPAÑA de POWERLIFTING,,Insane Powerlifting,AEP1,OPEN,P,R
+,pendiente,AEP 3 - Tarragona,Tarragona,Moonstone,AEP3,OPEN,P-B,R`;
+    const parsedCsv = parseAepCalendarCsv(csv);
+    const junior = parsedCsv.entries.find((e) => /JUNIOR/i.test(e.nombre));
+    expect(junior?.fechaInicio).toBe("2026-05-15");
+    expect(junior?.fechaFin).toBe("2026-05-17");
+    expect(junior?.zona).toBe("MEDITERRANEO");
+
+    const sudeste = parsedCsv.entries.find((e) => /SudEste/i.test(e.nombre));
+    expect(sudeste?.tipo).toBe("AEP-2");
+    expect(sudeste?.zona).toBe("MEDITERRANEO");
+
+    const variable = parsedCsv.entries.find((e) => /POWERLIFTING/i.test(e.nombre));
+    expect(variable?.fechaInicio).toBe("2026-10-01");
+    expect(variable?.fechaFin).toBe("2026-11-30");
+    expect(variable?.pendiente).toBe(true);
+
+    const pending = parsedCsv.entries.find((e) => /Tarragona/i.test(e.nombre));
+    expect(pending?.fechaInicio).toBeNull();
+    expect(pending?.esEspaña).toBe(true);
   });
 });

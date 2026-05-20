@@ -93,9 +93,9 @@ export const serverApi = {
   getCompetition: (id: string) =>
     withUser(async () => {
       if (shouldUseInternalServices()) {
-        const event = await dataService.getCompetition(id);
-        if (!event) throw new Error("Competición no encontrada");
-        return event;
+        const competition = await dataService.getCompetition(id);
+        if (!competition) throw new Error("Competición no encontrada");
+        return competition;
       }
       return serverRequest<Competition>(`/competitions/${id}`);
     }),

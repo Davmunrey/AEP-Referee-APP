@@ -270,7 +270,7 @@ describe("buildIntelligence — insights", () => {
     expect(insights).toHaveLength(6);
   });
 
-  it("uses singular noun wording for an event one day away with one open slot", () => {
+  it("uses singular noun wording for an competition one day away with one open slot", () => {
     const input = emptyInput({
       coverage: [
         coverage({ id: "tom", estado: "Incompleto", open: 1, filled: 5, fecha: dateFromNow(1) }),
@@ -295,7 +295,7 @@ describe("buildIntelligence — insights", () => {
     expect(soon?.detail).toContain("3 plazas ");
   });
 
-  it("ignores past-dated events for the imminent-event insight", () => {
+  it("ignores past-dated events for the imminent-competition insight", () => {
     const input = emptyInput({
       coverage: [
         coverage({ id: "past", estado: "Incompleto", open: 2, filled: 4, fecha: dateFromNow(-3) }),

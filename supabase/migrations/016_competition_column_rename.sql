@@ -1,11 +1,35 @@
-ALTER TABLE approval_proposals
-  RENAME COLUMN event_id TO competition_id;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'approval_proposals'
+      AND column_name = 'event_id'
+  ) THEN
+    ALTER TABLE approval_proposals RENAME COLUMN event_id TO competition_id;
+  END IF;
 
-ALTER TABLE approval_proposals
-  RENAME COLUMN event_name TO competition_name;
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'approval_proposals'
+      AND column_name = 'event_name'
+  ) THEN
+    ALTER TABLE approval_proposals RENAME COLUMN event_name TO competition_name;
+  END IF;
 
-ALTER TABLE roster_history
-  RENAME COLUMN event_id TO competition_id;
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'roster_history'
+      AND column_name = 'event_id'
+  ) THEN
+    ALTER TABLE roster_history RENAME COLUMN event_id TO competition_id;
+  END IF;
+END $$;
 
 DROP INDEX IF EXISTS approval_proposals_status_idx;
 CREATE INDEX IF NOT EXISTS approval_proposals_status_idx ON approval_proposals(status);

@@ -24,11 +24,11 @@ describe("roster-active", () => {
   });
 
   it("listActiveTarimaCompetitions sorts by lower coverage first", () => {
-    const events = [
+    const competitions = [
       comp({ id: "a", nombre: "A", confirmados: 8, requeridos: 10, fechaFin: "2026-12-31" }),
       comp({ id: "b", nombre: "B", confirmados: 2, requeridos: 10, fechaFin: "2026-12-31" }),
     ];
-    const active = listActiveTarimaCompetitions(events);
+    const active = listActiveTarimaCompetitions(competitions);
     expect(active.map((e) => e.id)).toEqual(["b", "a"]);
   });
 });

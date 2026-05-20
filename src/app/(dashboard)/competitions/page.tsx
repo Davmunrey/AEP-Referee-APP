@@ -46,7 +46,7 @@ export default async function CompetitionsPage() {
           <CardTitle>Todos los campeonatos</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <CompetitionsTable initialEvents={competitions} role={user.role} userZona={user.zona} />
+          <CompetitionsTable initialCompetitions={competitions} role={user.role} userZona={user.zona} />
         </CardContent>
       </Card>
     </PageShell>

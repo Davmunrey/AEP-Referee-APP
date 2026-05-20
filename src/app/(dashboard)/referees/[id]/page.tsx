@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LevelBadge, StatusBadge } from "@/components/aep/badges";
+import { EventTypeBadge, LevelBadge, StatusBadge } from "@/components/aep/badges";
 import { ExamsManager } from "@/components/judge/exams-manager";
 import { ReportsManager } from "@/components/judge/reports-manager";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
@@ -40,6 +40,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
     reports,
     sanctions,
     activeSanction,
+    competitionHistory,
     examsPassed,
     examsTotal,
     avgScore,
@@ -55,6 +56,8 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   const canDelete = user.role === "super_admin" || user.role === "delegado_jueces";
 
   const trayectoria = [
+    { label: "Campeonatos", value: competitionHistory.length },
+    { label: "Plazas reales", value: competitionHistory.reduce((n, c) => n + c.slotCount, 0) },
     { label: "Exámenes", value: examsTotal },
     { label: "Aprobados", value: examsPassed },
     { label: "Nota media", value: avgScore != null ? `${avgScore}/100` : "—" },
@@ -138,6 +141,50 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         <RefereeArbitrajePanel stats={referee.arbitrajeStats} />
       )}
 
+      <Card className="overflow-hidden p-0">
+        <CardHeader className="border-b border-border-muted">
+          <CardTitle className="text-sm font-semibold">Historial real de campeonatos</CardTitle>
+          <p className="text-xs text-subtle-muted">
+            Fuente: asignaciones guardadas en tarimas aprobadas o en borrador.
+          </p>
+        </CardHeader>
+        <CardContent className="p-0">
+          {competitionHistory.length === 0 ? (
+            <p className="px-5 py-6 text-sm text-subtle-muted">
+              Sin campeonatos asignados en tarima.
+            </p>
+          ) : (
+            <div className="divide-y divide-border-muted">
+              {competitionHistory.map((item) => (
+                <Link
+                  key={item.competitionId}
+                  href={`/competitions/${item.competitionId}`}
+                  className="grid gap-2 px-5 py-3 transition-colors hover:bg-surface-hover md:grid-cols-[minmax(0,1fr)_120px_120px]"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <EventTypeBadge tipo={item.tipo} />
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {item.competitionName}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-subtle-muted">
+                      {item.sede} · {item.roles.join(", ")}
+                    </p>
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground md:text-right">
+                    {item.fecha}
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground md:text-right">
+                    {item.slotCount} plaza{item.slotCount === 1 ? "" : "s"}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {(canSanction || sanctions.length > 0 || activeSanction) && (
         <RefereeSanctionsPanel
           refereeId={referee.id}
@@ -170,7 +217,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
               <StatusBadge status={referee.estado} />
             </div>
             <div>
-              <p className="friendly-label mb-1">Competiciones 2026</p>
+              <p className="friendly-label mb-1">Plazas Excel 2026</p>
               <p className="font-mono text-sm text-foreground">{referee.eventos}</p>
             </div>
             <div>

@@ -28,7 +28,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
 
   return (
     <RosterBuilder
-      event={competition}
+      competition={competition}
       template={roster.template}
       initialAssignments={roster.assignments}
       initialFlags={roster.flags ?? {}}
