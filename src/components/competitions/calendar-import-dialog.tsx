@@ -237,7 +237,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
           </div>
           <div className="max-h-72 overflow-auto rounded-md border border-border">
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-muted text-subtle-muted">
+              <thead className="sticky top-0 z-20 border-b border-border bg-muted text-subtle-muted shadow-sm">
                 <tr>
                   <th className="w-10 px-2 py-1.5 text-left">
                     <span className="sr-only">Importar</span>
