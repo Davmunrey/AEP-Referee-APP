@@ -912,15 +912,14 @@ function RefereeCard({
     >
       <GripVertical
         className={cn(
-          "h-4 w-4 shrink-0 transition-colors",
+          "h-3.5 w-3.5 shrink-0 transition-colors",
           highlight ? "text-primary" : "text-subtle-muted",
         )}
       />
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-        {referee.iniciales}
-      </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-foreground">{referee.nombre}</p>
+        <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-foreground">
+          {referee.nombre}
+        </p>
         <p className="text-[11px] text-subtle-muted">{zoneName(zones, referee.zona)}</p>
         <p className="mt-0.5 font-mono text-[10px] text-subtle-muted">
           {referee.eventos} arb.
