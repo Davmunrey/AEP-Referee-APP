@@ -228,9 +228,9 @@ export function ScheduleImportDialog({
             </div>
           ) : null}
 
-          <div className="max-h-64 overflow-auto rounded-md border border-border">
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 z-20 border-b border-border bg-muted shadow-sm">
+          <div className="transfer-preview-scroll rounded-md border border-border">
+            <table className="transfer-preview-table w-full text-xs">
+              <thead>
                 <tr>
                   <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Día</th>
                   <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Sesión</th>

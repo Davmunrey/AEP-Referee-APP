@@ -70,7 +70,7 @@ export function TransferDialogShell({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-3"
       role="presentation"
       onClick={onClose}
     >
@@ -80,18 +80,18 @@ export function TransferDialogShell({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "transfer-enter flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-border-muted/80 bg-card/95 shadow-card backdrop-blur-md",
+          "transfer-enter flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-2xl border border-border-muted/80 bg-card/95 shadow-card backdrop-blur-md",
           maxWidthClass,
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-border-muted px-6 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-border-muted px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <h2 id={titleId} className="text-lg font-semibold text-foreground">
+            <h2 id={titleId} className="text-base font-semibold text-foreground sm:text-lg">
               {title}
             </h2>
             {subtitle ? (
-              <p className="mt-1 text-sm text-foreground-secondary">{subtitle}</p>
+              <p className="mt-0.5 text-xs text-foreground-secondary sm:text-sm">{subtitle}</p>
             ) : null}
           </div>
           <Button
@@ -105,9 +105,9 @@ export function TransferDialogShell({
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">{children}</div>
         {footer ? (
-          <div className="border-t border-border-muted px-6 py-4">{footer}</div>
+          <div className="border-t border-border-muted px-4 py-3 sm:px-5">{footer}</div>
         ) : null}
       </div>
     </div>
