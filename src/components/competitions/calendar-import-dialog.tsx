@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/data-transfer/file-drop-zone";
@@ -24,6 +24,7 @@ interface CalendarPreview {
   toCreateCount: number;
   warnings: string[];
   entries: Array<{
+    key: string;
     rawDate: string;
     fechaInicio: string | null;
     fechaFin: string | null;
@@ -34,6 +35,9 @@ interface CalendarPreview {
     zona?: string;
     pendiente: boolean;
     nuevo: boolean;
+    importable: boolean;
+    selected: boolean;
+    reason: string;
   }>;
 }
 
@@ -49,6 +53,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
   const [preview, setPreview] = useState<CalendarPreview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [applyResult, setApplyResult] = useState<{
     created: number;
     dedupeRemoved: number;
@@ -59,6 +64,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
       setFile(null);
       setPreview(null);
       setError(null);
+      setSelectedKeys(new Set());
       setLoading(false);
       setApplyResult(null);
     }
@@ -74,6 +80,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
     try {
       const res = await api.importCalendar(selected, false);
       setPreview(res.preview);
+      setSelectedKeys(new Set(res.preview.entries.filter((e) => e.importable).map((e) => e.key)));
     } catch (e) {
       setError(formatApiError(e, "Error procesando el calendario"));
     } finally {
@@ -92,7 +99,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
     setLoading(true);
     setError(null);
     try {
-      const res = await api.importCalendar(file, true);
+      const res = await api.importCalendar(file, true, [...selectedKeys]);
       setApplyResult({
         created: res.created ?? 0,
         dedupeRemoved: res.dedupeRemoved ?? 0,
@@ -105,17 +112,35 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
     }
   };
 
-  const canApply =
-    !!preview && (preview.toCreateCount > 0 || preview.dbDuplicateCount > 0);
+  const importableCount = useMemo(
+    () => preview?.entries.filter((e) => e.importable).length ?? 0,
+    [preview],
+  );
+  const selectedCount = selectedKeys.size;
+  const canApply = !!preview && (selectedCount > 0 || preview.dbDuplicateCount > 0);
 
   const applyLabel =
     preview && preview.dbDuplicateCount > 0 && preview.toCreateCount === 0
       ? `Limpiar ${preview.dbDuplicateCount} duplicado${preview.dbDuplicateCount !== 1 ? "s" : ""}`
-      : `Aplicar (${preview?.toCreateCount ?? 0} nuevas${
+      : `Aplicar (${selectedCount} seleccionada${selectedCount !== 1 ? "s" : ""}${
           preview && preview.dbDuplicateCount > 0
             ? `, limpia ${preview.dbDuplicateCount} dup.`
             : ""
         })`;
+
+  const toggleKey = (key: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const selectAllImportable = () => {
+    if (!preview) return;
+    setSelectedKeys(new Set(preview.entries.filter((e) => e.importable).map((e) => e.key)));
+  };
 
   const footer = (
     <div className="flex items-center justify-end gap-2">
@@ -191,20 +216,39 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
               { label: "Elegibles", value: preview.eligibleCount },
               { label: "Dup. PDF/BD", value: preview.duplicateCount, tone: "warning" },
               { label: "Dup. en BD", value: preview.dbDuplicateCount, tone: "warning" },
-              { label: "A crear", value: preview.toCreateCount, tone: "success" },
+              { label: "Importables", value: importableCount, tone: "success" },
+              { label: "Seleccionadas", value: selectedCount, tone: "success" },
             ]}
           />
           <TransferWarnings warnings={preview.warnings} />
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border-muted bg-surface/60 px-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              Preview completa: {preview.entries.length} filas detectadas. Solo se crearán las
+              seleccionadas.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={selectAllImportable}>
+                Seleccionar importables
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedKeys(new Set())}>
+                Quitar selección
+              </Button>
+            </div>
+          </div>
           <div className="max-h-72 overflow-auto rounded-md border border-border">
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-muted text-subtle-muted">
                 <tr>
+                  <th className="w-10 px-2 py-1.5 text-left">
+                    <span className="sr-only">Importar</span>
+                  </th>
                   <th className="px-2 py-1.5 text-left">Fecha</th>
                   <th className="px-2 py-1.5 text-left">Tipo</th>
                   <th className="px-2 py-1.5 text-left">Nombre</th>
                   <th className="px-2 py-1.5 text-left">Localidad</th>
                   <th className="px-2 py-1.5 text-left">Zona</th>
                   <th className="px-2 py-1.5 text-left">Estado</th>
+                  <th className="px-2 py-1.5 text-left">Motivo</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,18 +258,32 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                     className="transfer-row-stagger border-t border-border"
                     style={{ animationDelay: `${Math.min(i, 7) * 40}ms` }}
                   >
+                    <td className="px-2 py-1.5 align-top">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-border text-primary accent-primary disabled:opacity-30"
+                        checked={selectedKeys.has(e.key)}
+                        disabled={!e.importable}
+                        aria-label={`Importar ${e.nombre}`}
+                        onChange={() => toggleKey(e.key)}
+                      />
+                    </td>
                     <td className="px-2 py-1.5 font-mono text-[10.5px] text-muted-foreground">
                       {e.fechaInicio ?? "pendiente"}
                       {e.fechaFin && e.fechaFin !== e.fechaInicio && ` → ${e.fechaFin}`}
                     </td>
-                    <td className="px-2 py-1.5 text-foreground">{e.tipo}</td>
+                    <td className="px-2 py-1.5 text-foreground">{e.tipo ?? "—"}</td>
                     <td className="px-2 py-1.5 text-foreground">{e.nombre}</td>
                     <td className="px-2 py-1.5 text-muted-foreground">{e.localidad}</td>
                     <td className="px-2 py-1.5 font-mono text-[10.5px] text-muted-foreground">
                       {e.zona ?? "—"}
                     </td>
                     <td className="px-2 py-1.5 text-[10.5px]">
-                      {e.pendiente ? (
+                      {selectedKeys.has(e.key) ? (
+                        <span className="rounded bg-success-muted px-1.5 py-0.5 text-success">
+                          seleccionada
+                        </span>
+                      ) : e.pendiente ? (
                         <span className="rounded bg-warning-muted px-1.5 py-0.5 text-warning">
                           pendiente
                         </span>
@@ -237,6 +295,9 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                         <span className="text-subtle-muted">duplicada</span>
                       )}
                     </td>
+                    <td className="px-2 py-1.5 text-[10.5px] text-subtle-muted">
+                      {e.reason}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -244,8 +305,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
           </div>
           <p className="text-[11px] text-subtle-muted">
             Al aplicar: primero se eliminan duplicados en BD (mismo nombre, fecha y tipo; se
-            conserva el que más tarima tenga), luego se crean las {preview.toCreateCount} marcadas
-            «nueva».
+            conserva el que más tarima tenga), luego se crean solo las filas seleccionadas.
           </p>
         </div>
       ) : null}

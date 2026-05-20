@@ -14,6 +14,24 @@ import { dataService } from "@/server/services";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
+function calendarEntryKey(entry: {
+  rawDate: string;
+  nombre: string;
+  tipo: string | null;
+  localidad: string;
+}) {
+  return [
+    entry.rawDate,
+    entry.nombre,
+    entry.tipo ?? "sin-tipo",
+    entry.localidad,
+  ]
+    .join("|")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /**
  * Importa el PDF/CSV del Calendario AEP anual y crea (en preview / apply) las competiciones de
  * ámbito español (AEP1/AEP2/AEP3). Solo `super_admin` y `delegado_jueces` pueden ejecutar.
@@ -40,6 +58,20 @@ export async function POST(request: Request) {
     formData = await request.formData();
   } catch {
     return jsonError("Se esperaba multipart/form-data", 400);
+  }
+
+  const selectedKeysRaw = formData.get("selectedKeys");
+  let selectedKeys: Set<string> | null = null;
+  if (typeof selectedKeysRaw === "string" && selectedKeysRaw.trim()) {
+    try {
+      const parsedKeys = JSON.parse(selectedKeysRaw);
+      if (!Array.isArray(parsedKeys) || parsedKeys.some((k) => typeof k !== "string")) {
+        return jsonError("Selección inválida", 400);
+      }
+      selectedKeys = new Set(parsedKeys);
+    } catch {
+      return jsonError("Selección inválida", 400);
+    }
   }
 
   const file = formData.get("file");
@@ -96,7 +128,7 @@ export async function POST(request: Request) {
 
   const existingKeys = new Set(existing.map((c) => competitionDedupKey(c)));
 
-  const toCreate = elegibles.filter((e) => {
+  const importable = elegibles.filter((e) => {
     if (!e.fechaInicio || !e.tipo) return false;
     const key = competitionDedupKey({
       nombre: e.nombre,
@@ -105,29 +137,24 @@ export async function POST(request: Request) {
     });
     return !existingKeys.has(key);
   });
+  const toCreate = selectedKeys
+    ? importable.filter((e) => selectedKeys.has(calendarEntryKey(e)))
+    : importable;
 
   const preview = {
     filename,
     year: parsed.year,
     totalDetected: parsed.entries.length,
     eligibleCount: elegibles.length,
-    duplicateCount: elegibles.length - toCreate.length,
+    duplicateCount: elegibles.length - importable.length,
     dbDuplicateCount,
     toCreateCount: toCreate.length,
     warnings: parsed.warnings,
-    entries: elegibles.map((e) => ({
-      rawDate: e.rawDate,
-      fechaInicio: e.fechaInicio,
-      fechaFin: e.fechaFin,
-      nombre: e.nombre,
-      localidad: e.localidad,
-      organizador: e.organizador,
-      tipo: e.tipo,
-      zona: e.zona,
-      pendiente: e.pendiente,
-      nuevo: !!(
+    entries: parsed.entries.map((e) => {
+      const isNew = !!(
         e.fechaInicio &&
         e.tipo &&
+        e.esEspaña &&
         !existingKeys.has(
           competitionDedupKey({
             nombre: e.nombre,
@@ -135,8 +162,29 @@ export async function POST(request: Request) {
             tipo: e.tipo,
           }),
         )
-      ),
-    })),
+      );
+      const importableEntry = isNew && e.esEspaña && e.tipo !== null;
+      let reason = "Lista para importar";
+      if (!e.esEspaña || !e.tipo) reason = "Fuera de scope AEP España";
+      else if (!e.fechaInicio) reason = "Sin fecha exacta";
+      else if (!isNew) reason = "Ya existe en BD";
+      return {
+        key: calendarEntryKey(e),
+        rawDate: e.rawDate,
+        fechaInicio: e.fechaInicio,
+        fechaFin: e.fechaFin,
+        nombre: e.nombre,
+        localidad: e.localidad,
+        organizador: e.organizador,
+        tipo: e.tipo,
+        zona: e.zona,
+        pendiente: e.pendiente,
+        nuevo: isNew,
+        importable: importableEntry,
+        selected: selectedKeys ? selectedKeys.has(calendarEntryKey(e)) : importableEntry,
+        reason,
+      };
+    }),
   };
 
   if (!apply) return jsonOk({ preview });
