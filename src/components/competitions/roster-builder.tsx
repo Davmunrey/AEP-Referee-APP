@@ -328,16 +328,16 @@ export function RosterBuilder({
         }}
       />
       {/* Page header */}
-      <div className="glass-panel-soft border-b border-border-muted px-6 py-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <Button variant="outline" size="icon" asChild>
+      <div className="glass-panel-soft border-b border-border-muted px-4 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" asChild>
               <Link href="/competitions" aria-label="Volver a campeonatos">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-            <div>
-              <div className="mb-2 flex flex-wrap items-center gap-2">
+            <div className="min-w-0">
+              <div className="mb-1 flex flex-wrap items-center gap-1.5">
                 <EventTypeBadge tipo={competition.tipo} />
                 <EventStatusBadge status={competition.estado} />
                 {isPast && (
@@ -350,27 +350,29 @@ export function RosterBuilder({
                 )}
                 <span className="text-xs text-subtle-muted">{competition.aprobacion}</span>
               </div>
-              <h1 className="text-xl font-semibold text-foreground">{competition.nombre}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h1 className="truncate text-lg font-semibold leading-tight text-foreground">
+                {competition.nombre}
+              </h1>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {competition.fecha} → {competition.fechaFin} · {competition.sede}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex min-w-0 flex-col items-end gap-1.5">
             {violationCount > 0 && (
-              <p className="flex items-center gap-1.5 rounded-lg border border-warning-border bg-warning-subtle px-3 py-1.5 text-xs font-semibold text-warning">
+              <p className="flex items-center gap-1.5 rounded-md border border-warning-border bg-warning-subtle px-2.5 py-1 text-[11px] font-semibold text-warning">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {violationCount} violación{violationCount > 1 ? "es" : ""} de normativa
               </p>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
               {canEdit && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-1.5"
+                  className="h-8 gap-1.5 px-2.5 text-xs"
                   onClick={() => setImportOpen(true)}
                   disabled={pending || savingTemplate}
                   title="Importar horario de este campeonato (PDF)"
@@ -384,7 +386,7 @@ export function RosterBuilder({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-1.5"
+                  className="h-8 gap-1.5 px-2.5 text-xs"
                   onClick={() => setQuadrantImportOpen(true)}
                   disabled={pending || savingTemplate || template.length === 0}
                   title="Importar cuadrante de jueces (PDF)"
@@ -398,6 +400,7 @@ export function RosterBuilder({
                   type="button"
                   variant={isEditing ? "default" : "outline"}
                   size="sm"
+                  className="h-8 px-2.5 text-xs"
                   onClick={() => {
                     if (isEditing) {
                       setIsEditing(false);
@@ -498,10 +501,10 @@ export function RosterBuilder({
           </p>
         </div>
       ) : (
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,300px)_1fr] xl:grid-cols-[minmax(0,340px)_1fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]">
         {(workflowStep === "asignacion" || isEditing) && (
         <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
-          <div className="border-b border-border p-4">
+          <div className="border-b border-border p-3">
             <h2 className="text-sm font-semibold text-foreground-secondary">
               Jueces disponibles
             </h2>
@@ -533,12 +536,12 @@ export function RosterBuilder({
                 </Button>
               </div>
             )}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2 grid gap-2">
               <Input
                 placeholder="Buscar por nombre..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="max-w-xs"
+                className="h-9"
               />
               <select
                 value={filterZona}
@@ -575,7 +578,7 @@ export function RosterBuilder({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <ul className="space-y-1.5 p-3">
+            <ul className="space-y-1.5 p-2.5">
               {availableReferees.map((referee) => {
                 const blockedReason =
                   selectedRoleKey && selectedSlot
@@ -636,7 +639,7 @@ export function RosterBuilder({
             </ScrollArea>
           ) : (
             <>
-              <div className="border-b border-border px-5 py-3">
+              <div className="border-b border-border px-4 py-2.5">
                 <h2 className="text-sm font-semibold text-foreground-secondary">
                   Fin de semana · {template.length} sesión{template.length !== 1 ? "es" : ""}
                 </h2>
@@ -645,20 +648,20 @@ export function RosterBuilder({
                 </p>
               </div>
               <div className="flex-1 overflow-y-auto">
-                <div className="space-y-4 p-4">
+                <div className="space-y-3 p-3">
                   <div className="grid gap-3 2xl:grid-cols-2">
                     {groupedSessions.map(([dia, sesiones]) => (
                       <section
                         key={dia}
-                        className="rounded-2xl border border-border-muted bg-surface/30 p-3.5"
+                        className="rounded-xl border border-border-muted bg-surface/30 p-3"
                       >
                         <div className="mb-3 flex items-center gap-2">
                           <span className="h-2 w-2 rounded-full bg-primary" />
-                          <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
                             {dia}
                           </h3>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {sesiones.map((session) => (
                             <SessionOverviewCard
                               key={session.sesion}
@@ -802,7 +805,7 @@ function RefereeCard({
       onDragEnd={onDragEnd}
       onClick={() => !locked && onClick()}
       className={cn(
-        "flex cursor-grab items-center gap-2.5 rounded-lg border border-border bg-surface/80 px-3 py-2 transition-all duration-100 active:cursor-grabbing",
+        "flex cursor-grab items-center gap-2 rounded-lg border border-border bg-surface/80 px-2.5 py-1.5 transition-all duration-100 active:cursor-grabbing",
         assigned && "opacity-60",
         locked && "cursor-default",
         dragging && "scale-95 opacity-40 shadow-none",
@@ -821,8 +824,8 @@ function RefereeCard({
         {referee.iniciales}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{referee.nombre}</p>
-        <p className="text-xs text-subtle-muted">{zoneName(zones, referee.zona)}</p>
+        <p className="truncate text-[13px] font-medium text-foreground">{referee.nombre}</p>
+        <p className="text-[11px] text-subtle-muted">{zoneName(zones, referee.zona)}</p>
         <p className="mt-0.5 font-mono text-[10px] text-subtle-muted">
           {referee.eventos} arb.
           {topRoles.length > 0 &&
@@ -944,7 +947,7 @@ function SessionOverviewCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full rounded-xl border px-3 py-3 text-left transition-all focus-ring",
+        "w-full rounded-lg border px-2.5 py-2 text-left transition-all focus-ring",
         active
           ? "border-primary bg-primary/8 shadow-sm"
           : "border-border bg-background/75 hover:border-border-strong hover:bg-surface",
@@ -955,9 +958,9 @@ function SessionOverviewCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs font-semibold text-primary">{session.sesion}</span>
-            <span className="text-sm font-semibold text-foreground">{session.nombre}</span>
+            <span className="text-[13px] font-semibold text-foreground">{session.nombre}</span>
           </div>
-          <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 line-clamp-1 text-[10.5px] leading-snug text-muted-foreground">
             {summarizeSessionCategories(session)}
           </p>
         </div>
@@ -965,7 +968,7 @@ function SessionOverviewCard({
           {filled}/{slots}
         </span>
       </div>
-      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-subtle-muted">
+      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-[10.5px] text-subtle-muted">
         <span>Comp. {session.horarioCompeticion}</span>
         <span>Pesaje {session.horarioPesaje}</span>
         {groupsCount > 0 && <span>{groupsCount} grupo{groupsCount > 1 ? "s" : ""}</span>}
@@ -1017,11 +1020,11 @@ function SlotGrid({
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {roles.map((role) => (
         <div key={role.key}>
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
               {role.rol}
             </p>
             <span className="font-mono text-[10px] text-subtle-muted">
@@ -1032,7 +1035,7 @@ function SlotGrid({
               /{role.slots}
             </span>
           </div>
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: role.slots }).map((_, idx) => {
               const slotKey = `${sesion}_${role.key}_${idx}`;
               const refereeId = assignments[slotKey];
@@ -1069,7 +1072,7 @@ function SlotGrid({
                     onSelectSlot(isSelected ? null : slotKey);
                   }}
                   className={cn(
-                    "relative rounded-lg border-2 p-2.5 transition-all duration-100",
+                    "relative rounded-lg border-2 p-2 transition-all duration-100",
                     !readOnly && "cursor-pointer",
                     isDropTarget
                       ? "border-primary bg-primary/10 shadow-md"
@@ -1089,7 +1092,7 @@ function SlotGrid({
                       {/* Referee name + flags indicator */}
                       <div className="flex items-start justify-between gap-1">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground">
+                          <p className="truncate text-[13px] font-semibold text-foreground">
                             {referee.nombre}
                             {slotFlags?.compartido && (
                               <span
@@ -1130,7 +1133,7 @@ function SlotGrid({
                       </div>
 
                       {/* Level + violation */}
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <LevelBadge level={referee.nivel} />
                         {violation && (
                           <span
@@ -1145,7 +1148,7 @@ function SlotGrid({
 
                       {/* Flag toolbar */}
                       {!readOnly && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
+                        <div className="mt-1.5 flex flex-wrap gap-1">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1186,7 +1189,7 @@ function SlotGrid({
                       )}
                     </>
                   ) : (
-                    <div className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-center">
+                    <div className="flex min-h-[42px] flex-col items-center justify-center gap-0.5 text-center">
                       {isDropTarget ? (
                         <p className="text-xs font-medium text-primary">Soltar aquí</p>
                       ) : isSelected ? (
@@ -1265,7 +1268,7 @@ function SessionBlock({
 
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-surface/40 shadow-sm">
-      <header className="flex items-start gap-3 p-4">
+      <header className="flex items-start gap-2.5 p-3">
         {/* Collapse toggle */}
         <button
           type="button"
@@ -1283,7 +1286,7 @@ function SessionBlock({
 
         <div className="min-w-0 flex-1">
           <p className="font-mono text-xs text-primary">{session.sesion}</p>
-          <h3 className="font-semibold text-foreground">{session.nombre}</h3>
+          <h3 className="text-sm font-semibold text-foreground">{session.nombre}</h3>
           <div className="mt-1 flex flex-wrap gap-1">
             {(session.categorias ?? []).map((c, i) => (
               <span
@@ -1316,7 +1319,7 @@ function SessionBlock({
         </div>
 
         {/* Progress mini-bar */}
-        <div className="min-w-[90px] shrink-0">
+        <div className="min-w-[72px] shrink-0">
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className={cn("h-full rounded-full transition-all duration-500", barColor)}
@@ -1330,7 +1333,7 @@ function SessionBlock({
       </header>
 
       {!collapsed && (
-        <div className="border-t border-border-muted px-4 pb-4 pt-3">
+        <div className="border-t border-border-muted px-3 pb-3 pt-2.5">
           {/* Competition roles group heading */}
           <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-foreground-secondary">
             Competición
@@ -1340,7 +1343,7 @@ function SessionBlock({
           {pesajeRoles.length > 0 && (
             <>
               {/* Pesaje separator */}
-              <div className="my-4 flex items-center gap-2">
+              <div className="my-3 flex items-center gap-2">
                 <div className="flex-1 border-t border-border-muted" />
                 <p className="text-[10.5px] font-semibold uppercase tracking-wider text-primary">
                   Pesaje · {session.horarioPesaje}

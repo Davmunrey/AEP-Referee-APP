@@ -32,7 +32,7 @@ export function RosterStepper({
 
   return (
     <nav
-      className="flex flex-wrap items-center gap-1 border-b border-border-muted bg-surface/50 px-4 py-3"
+      className="flex flex-wrap items-center gap-1 border-b border-border-muted bg-surface/50 px-4 py-2"
       aria-label="Pasos del constructor de tarima"
     >
       {STEPS.map((step, i) => {
@@ -44,7 +44,7 @@ export function RosterStepper({
             {i > 0 && (
               <span
                 className={cn(
-                  "mx-1 hidden h-px w-6 sm:block",
+                  "mx-1 hidden h-px w-5 sm:block",
                   isPast || done ? "bg-primary/40" : "bg-border",
                 )}
                 aria-hidden
@@ -55,7 +55,7 @@ export function RosterStepper({
               disabled={disabled}
               onClick={() => onChange(step)}
               className={cn(
-                "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-ring",
+                "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-ring",
                 isCurrent && "border-primary bg-primary/10 text-primary",
                 !isCurrent && done && "border-success-border bg-success-subtle text-success",
                 !isCurrent && !done && "border-border bg-surface text-muted-foreground hover:border-border-strong",
@@ -65,7 +65,7 @@ export function RosterStepper({
             >
               <span
                 className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
+                  "flex h-[18px] w-[18px] items-center justify-center rounded-full text-[10px] font-bold",
                   isCurrent && "bg-primary text-primary-foreground",
                   !isCurrent && done && "bg-success text-success-foreground",
                   !isCurrent && !done && "bg-muted text-muted-foreground",
