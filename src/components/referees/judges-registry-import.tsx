@@ -183,7 +183,7 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
           {preview.sampleReferees.length > 0 ? (
             <div className="rounded-md border border-border">
               <table className="w-full text-xs">
-                <thead className="bg-muted">
+                <thead className="border-b border-border bg-muted">
                   <tr>
                     <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Nombre</th>
                     <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Zona</th>

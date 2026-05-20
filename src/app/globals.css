@@ -242,7 +242,7 @@
   }
 
   .transfer-row-stagger {
-    animation: transfer-fade-in 220ms ease-out both;
+    animation: transfer-row-fade-in 180ms ease-out both;
   }
 
   @keyframes transfer-fade-in {
@@ -253,6 +253,15 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes transfer-row-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 
