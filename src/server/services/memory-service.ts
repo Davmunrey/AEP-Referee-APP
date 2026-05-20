@@ -528,6 +528,26 @@ export const memoryDataService = {
     return { ...assignments };
   },
 
+  clearRosterAssignments: async (
+    competitionId: string,
+    actor: string,
+  ): Promise<{ assignments: AssignmentsMap; flags: FlagsMap } | undefined> => {
+    const comp = await memoryDataService.getCompetition(competitionId);
+    if (!comp) return undefined;
+    const store = getStore();
+    store.assignments.set(competitionId, {});
+    store.slotFlags.set(competitionId, {});
+    syncCompetitionCoverage(competitionId);
+    pushHistory({
+      competitionId,
+      at: new Date().toISOString(),
+      actor,
+      action: "Asignaciones vaciadas",
+      detail: "Todos los huecos liberados",
+    });
+    return { assignments: {}, flags: {} };
+  },
+
   submitRoster: async (competitionId: string, actor: string): Promise<ApprovalProposal | undefined> => {
     const comp = await memoryDataService.getCompetition(competitionId);
     if (!comp) return undefined;
