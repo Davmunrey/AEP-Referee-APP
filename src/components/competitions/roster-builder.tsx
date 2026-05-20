@@ -44,11 +44,13 @@ import {
   ChevronUp,
   GripVertical,
   Info,
+  UsersRound,
   X,
 } from "lucide-react";
 import { RosterHistoryPanel } from "@/components/competitions/roster-history-panel";
 import { RosterTemplateEditor } from "@/components/competitions/roster-template-editor";
 import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
+import { QuadrantImportDialog } from "@/components/competitions/quadrant-import-dialog";
 import { FileUp } from "lucide-react";
 
 interface RosterBuilderProps {
@@ -91,6 +93,7 @@ export function RosterBuilder({
   const [isEditing, setIsEditing] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [quadrantImportOpen, setQuadrantImportOpen] = useState(false);
   const [filterZona, setFilterZona] = useState(defaultZonaFilter);
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [search, setSearch] = useState("");
@@ -311,6 +314,19 @@ export function RosterBuilder({
           setStatusIsError(false);
         }}
       />
+      <QuadrantImportDialog
+        competitionId={competition.id}
+        open={quadrantImportOpen}
+        onClose={() => setQuadrantImportOpen(false)}
+        onApplied={(nextAssignments, nextFlags) => {
+          setAssignments(nextAssignments);
+          if (nextFlags) setFlags(nextFlags);
+          setQuadrantImportOpen(false);
+          setWorkflowStep("asignacion");
+          setStatusMsg("Cuadrante aplicado");
+          setStatusIsError(false);
+        }}
+      />
       {/* Page header */}
       <div className="glass-panel-soft border-b border-border-muted px-6 py-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -361,6 +377,20 @@ export function RosterBuilder({
                 >
                   <FileUp className="h-3.5 w-3.5" />
                   Importar horario
+                </Button>
+              )}
+              {canEdit && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setQuadrantImportOpen(true)}
+                  disabled={pending || savingTemplate || template.length === 0}
+                  title="Importar cuadrante de jueces (PDF)"
+                >
+                  <UsersRound className="h-3.5 w-3.5" />
+                  Importar cuadrante
                 </Button>
               )}
               {canEdit && (
