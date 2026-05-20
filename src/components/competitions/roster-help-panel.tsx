@@ -8,7 +8,7 @@ export function RosterHelpPanel() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-border-muted bg-muted/30 px-4 py-2">
+    <div className="border-b border-border-muted bg-muted/30 px-4 py-1.5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

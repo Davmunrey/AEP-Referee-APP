@@ -97,20 +97,20 @@ export function RosterHeaderActions({
           },
         ]}
       />
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
         {/* Coverage card with ring + bar */}
-        <div className="flex items-center gap-3 rounded-md border border-border bg-surface px-4 py-2">
+        <div className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-wider text-subtle-muted">
               Cobertura
             </p>
-            <p className="font-mono text-base font-medium tabular-nums text-foreground">
+            <p className="font-mono text-sm font-medium tabular-nums text-foreground">
               {filledSlots}
               <span className="text-subtle-muted">/{totalSlots}</span>
             </p>
             {/* Linear progress bar */}
-            <div className="mt-1.5 h-1 w-20 overflow-hidden rounded-full bg-muted">
+            <div className="mt-1 h-1 w-16 overflow-hidden rounded-full bg-muted">
               <div
                 className={cn("h-full rounded-full transition-all duration-500", coverageBarColor)}
                 style={{ width: `${fillPct}%` }}
@@ -123,6 +123,7 @@ export function RosterHeaderActions({
         <Button
           variant="outline"
           size="sm"
+          className="h-8 px-2.5 text-xs"
           disabled={pending}
           onClick={() => {
             startTransition(async () => {
@@ -141,7 +142,7 @@ export function RosterHeaderActions({
         <Button
           variant="outline"
           size="sm"
-          className="gap-1.5"
+          className="h-8 gap-1.5 px-2.5 text-xs"
           disabled={pending}
           onClick={() => setExportOpen(true)}
         >
@@ -153,7 +154,7 @@ export function RosterHeaderActions({
         <Button
           size="sm"
           className={cn(
-            "gap-1.5 font-semibold shadow-sm transition-all",
+            "h-8 gap-1.5 px-2.5 text-xs font-semibold shadow-sm transition-all",
             fillPct >= 100 && "animate-pulse",
           )}
           disabled={pending}

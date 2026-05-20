@@ -117,11 +117,10 @@ function splitBlocks(text: string): string[] {
 }
 
 function findRoleAnchor(block: string): number {
-  let found = -1;
   for (const match of block.matchAll(new RegExp(ROLE_ANCHOR_RE, "gi"))) {
-    if (match.index != null) found = match.index;
+    if (match.index != null) return match.index;
   }
-  return found;
+  return -1;
 }
 
 function uniqueSessions(block: string): string[] {
@@ -165,6 +164,50 @@ function assignSlot(
 function roleOrderForTemplate(template: RosterSession[]): RoleKey[] {
   const hasJury = template.some((s) => s.roles.some((r) => r.key === "jurado"));
   return hasJury ? COMP_ROLE_ORDER_AEP1 : COMP_ROLE_ORDER_AEP2;
+}
+
+function splitAssignmentRegions(
+  assignmentText: string,
+  sessions: string[],
+): { competicion: string; pesaje: string } {
+  const sessionSet = new Set(sessions.map((s) => s.toUpperCase()));
+  const positions = [...assignmentText.matchAll(SESSION_RE)]
+    .map((match) => ({
+      index: match.index ?? -1,
+      session: `S${Number(match[1])}`.toUpperCase(),
+    }))
+    .filter((match) => match.index >= 0 && sessionSet.has(match.session))
+    .sort((a, b) => a.index - b.index);
+
+  if (positions.length === 0) return { competicion: assignmentText, pesaje: "" };
+
+  const clusters: Array<{ start: number; end: number }> = [];
+  for (const pos of positions) {
+    const last = clusters.at(-1);
+    if (!last || pos.index - last.end > 160) {
+      clusters.push({ start: pos.index, end: pos.index });
+    } else {
+      last.end = pos.index;
+    }
+  }
+
+  if (clusters.length >= 2) {
+    return {
+      competicion: assignmentText.slice(clusters[0]!.start, clusters[1]!.start),
+      pesaje: assignmentText.slice(clusters[1]!.start),
+    };
+  }
+
+  const pesajeMatches = [...assignmentText.matchAll(/PESAJE|Pesaje y Revisión/gi)];
+  const pesajeIdx = pesajeMatches.at(-1)?.index ?? -1;
+  if (pesajeIdx >= 0) {
+    return {
+      competicion: assignmentText.slice(0, pesajeIdx),
+      pesaje: assignmentText.slice(pesajeIdx),
+    };
+  }
+
+  return { competicion: assignmentText, pesaje: "" };
 }
 
 function makeCandidate(input: {
@@ -216,11 +259,17 @@ export function parseQuadrantAssignments(
     if (sessions.length === 0) continue;
 
     const anchor = findRoleAnchor(block);
-    const assignmentText = anchor >= 0 ? block.slice(0, anchor) : block;
-    const pesajeMatches = [...assignmentText.matchAll(/PESAJE|Pesaje y Revisión/gi)];
-    const pesajeIdx = pesajeMatches.at(-1)?.index ?? -1;
-    const compText = pesajeIdx >= 0 ? assignmentText.slice(0, pesajeIdx) : assignmentText;
-    const pesajeText = pesajeIdx >= 0 ? assignmentText.slice(pesajeIdx) : "";
+    if (anchor < 0) {
+      warnings.push(
+        "Se omitió un bloque con sesiones pero sin leyenda de roles. Puede ser horario, no cuadrante.",
+      );
+      continue;
+    }
+    const assignmentText = block.slice(0, anchor);
+    const { competicion: compText, pesaje: pesajeText } = splitAssignmentRegions(
+      assignmentText,
+      sessions,
+    );
 
     const compHits = findNameHits(compText.replace(TIME_RE, " "), referees);
     const pesajeHits = findNameHits(pesajeText.replace(TIME_RE, " "), referees);
