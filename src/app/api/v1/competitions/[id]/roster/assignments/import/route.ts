@@ -14,7 +14,7 @@ interface RouteContext {
 }
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 120;
 
 function parseSelectedKeys(raw: FormDataEntryValue | null): Set<string> | null {
   if (typeof raw !== "string" || !raw.trim()) return null;

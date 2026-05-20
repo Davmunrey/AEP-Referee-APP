@@ -59,7 +59,7 @@ interface RosterBuilderProps {
   initialAssignments: AssignmentsMap;
   initialFlags?: FlagsMap;
   canEdit?: boolean;
-  /** Campeonato finalizado (`fechaFin < hoy`) — modo lectura forzado. */
+  /** Campeonato finalizado (`fechaFin < hoy`) — contexto histórico visual. */
   isPast?: boolean;
   referees: Referee[];
   zones: Zone[];
@@ -343,9 +343,9 @@ export function RosterBuilder({
                 {isPast && (
                   <span
                     className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
-                    title="Campeonato finalizado — solo lectura"
+                    title="Campeonato finalizado — editable con permisos para cargar histórico"
                   >
-                    Cerrado
+                    Histórico
                   </span>
                 )}
                 <span className="text-xs text-subtle-muted">{competition.aprobacion}</span>

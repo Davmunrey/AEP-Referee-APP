@@ -162,7 +162,7 @@ export const AEP_GUIDE_SECTIONS = [
   {
     id: "niveles",
     title: "Estructura AEP-1 / AEP-2 / AEP-3",
-    body: "Progresión local → regional/clasificatorio → nacional. Los campeonatos finalizados quedan en solo lectura en la tarima.",
+    body: "Progresión local → regional/clasificatorio → nacional. Los campeonatos finalizados se marcan como históricos, pero pueden corregirse con permisos.",
   },
   {
     id: "docs",
