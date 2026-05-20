@@ -2,7 +2,7 @@ import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import type { JudgesRegistryImportApplyResult } from "@/lib/types";
 import { importJudgesRegistryToMemory } from "@/server/services/import-judges-registry";
-import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
+import { countOpenSlots, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import { formatRosterExport } from "@/lib/roster-export";
@@ -473,14 +473,9 @@ export const memoryDataService = {
 
     const store = getStore();
     const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
-    // El juez puede estar en varias sesiones; solo se libera su slot previo
-    // dentro de la MISMA sesión.
-    const session = slotKey.split("_")[0];
-    for (const key of Object.keys(assignments)) {
-      if (assignments[key] === refereeId && key.split("_")[0] === session) {
-        delete assignments[key];
-      }
-    }
+    const template = getCompetitionTemplate(competitionId);
+    const operation = validateRosterOperation({ template, assignments, slotKey, refereeId });
+    if (!operation.ok) return { error: operation.error };
     assignments[slotKey] = refereeId;
     store.assignments.set(competitionId, assignments);
     const flagMap = { ...(store.slotFlags.get(competitionId) ?? {}) };
