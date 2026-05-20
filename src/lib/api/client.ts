@@ -287,6 +287,80 @@ export const api = {
     return parsed.data;
   },
 
+  importQuadrantAssignments: async (
+    competitionId: string,
+    file: File,
+    apply = false,
+    selectedKeys?: string[],
+  ): Promise<{
+    preview: {
+      filename: string;
+      pages: number;
+      detectedCount: number;
+      importableCount: number;
+      selectedCount: number;
+      warnings: string[];
+      candidates: Array<{
+        key: string;
+        session: string;
+        roleKey: string;
+        roleLabel: string;
+        slotKey: string | null;
+        refereeId: string | null;
+        refereeName: string;
+        matchedName?: string;
+        confidence: "alta" | "media" | "baja";
+        importable: boolean;
+        selected: boolean;
+        reason: string;
+      }>;
+    };
+    applied?: number;
+    errors?: string[];
+    assignments?: AssignmentsMap;
+    flags?: FlagsMap;
+  }> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    if (selectedKeys) fd.append("selectedKeys", JSON.stringify(selectedKeys));
+    const path = `/competitions/${competitionId}/roster/assignments/import${apply ? "?apply=true" : ""}`;
+    const res = await fetch(`${getApiBaseUrl()}${path}`, {
+      method: "POST",
+      credentials: "include",
+      body: fd,
+    });
+    const parsed = await parseApiResponse<{
+      preview: {
+        filename: string;
+        pages: number;
+        detectedCount: number;
+        importableCount: number;
+        selectedCount: number;
+        warnings: string[];
+        candidates: Array<{
+          key: string;
+          session: string;
+          roleKey: string;
+          roleLabel: string;
+          slotKey: string | null;
+          refereeId: string | null;
+          refereeName: string;
+          matchedName?: string;
+          confidence: "alta" | "media" | "baja";
+          importable: boolean;
+          selected: boolean;
+          reason: string;
+        }>;
+      };
+      applied?: number;
+      errors?: string[];
+      assignments?: AssignmentsMap;
+      flags?: FlagsMap;
+    }>(res);
+    if (isApiError(parsed)) throw new Error(parsed.error);
+    return parsed.data;
+  },
+
   setSlotFlags: (competitionId: string, slotKey: string, flags: SlotFlags) =>
     request<{ flags: FlagsMap }>(`/competitions/${competitionId}/roster/flags`, {
       method: "PATCH",
