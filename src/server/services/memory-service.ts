@@ -24,6 +24,7 @@ import type {
   JudgeProfile,
   PromotionRequest,
   Referee,
+  RefereeCompetitionHistoryItem,
   RefereeExam,
   RefereeLevel,
   RefereeReport,
@@ -34,6 +35,7 @@ import type {
   RosterSession,
   SessionUser,
 } from "@/lib/types";
+import { ROLE_LABELS } from "@/lib/roster-template";
 import {
   REGULATION_RULES,
   getCalendarEvents,
@@ -90,6 +92,46 @@ function validateExamLevel(
   }
 }
 
+function roleLabelFromSlot(slotKey: string): string {
+  const role = slotKey.split("_")[1] as keyof typeof ROLE_LABELS | undefined;
+  return role ? ROLE_LABELS[role] ?? role : "Rol";
+}
+
+function buildMemoryCompetitionHistory(refereeId: string): RefereeCompetitionHistoryItem[] {
+  const store = getStore();
+  const byCompetition = new Map<string, { roles: Set<string>; slotCount: number }>();
+  for (const [competitionId, assignments] of store.assignments.entries()) {
+    for (const [slotKey, assignedRefereeId] of Object.entries(assignments)) {
+      if (assignedRefereeId !== refereeId) continue;
+      const bucket = byCompetition.get(competitionId) ?? {
+        roles: new Set<string>(),
+        slotCount: 0,
+      };
+      bucket.roles.add(roleLabelFromSlot(slotKey));
+      bucket.slotCount += 1;
+      byCompetition.set(competitionId, bucket);
+    }
+  }
+  return [...byCompetition.entries()]
+    .map(([competitionId, agg]) => {
+      const comp = store.competitions.find((c) => c.id === competitionId);
+      if (!comp) return null;
+      return {
+        competitionId,
+        competitionName: comp.nombre,
+        tipo: comp.tipo,
+        fecha: comp.fecha,
+        fechaFin: comp.fechaFin,
+        sede: comp.sede,
+        estado: comp.estado,
+        aprobacion: comp.aprobacion,
+        roles: [...agg.roles].sort((a, b) => a.localeCompare(b, "es")),
+        slotCount: agg.slotCount,
+      } satisfies RefereeCompetitionHistoryItem;
+    })
+    .filter((item): item is RefereeCompetitionHistoryItem => Boolean(item));
+}
+
 function buildKpis(user?: SessionUser): DashboardKpi[] {
   const store = getStore();
   const isZoneScoped =
@@ -137,8 +179,8 @@ function buildKpis(user?: SessionUser): DashboardKpi[] {
     {
       label: "Plazas sin cubrir",
       value: String(openSlots),
-      sub: `en ${competitions.length} eventos`,
-      trend: `${critical} eventos en estado crítico`,
+      sub: `en ${competitions.length} campeonatos`,
+      trend: `${critical} campeonatos en estado crítico`,
       trendDir: critical > 0 ? "warn" : "flat",
       accent: "yellow",
     },
@@ -1037,7 +1079,13 @@ export const memoryDataService = {
       memoryDataService.getReports(refereeId),
     ]);
     const sanctions = store.sanctions.filter((s) => s.refereeId === refereeId);
-    return computeJudgeProfile(referee, exams, reports, sanctions);
+    return computeJudgeProfile(
+      referee,
+      exams,
+      reports,
+      sanctions,
+      buildMemoryCompetitionHistory(refereeId),
+    );
   },
 
   listRefereeSanctions: async (refereeId: string) => {

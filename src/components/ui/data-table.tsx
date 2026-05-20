@@ -19,7 +19,7 @@ export function DataTableHeaderRow({
   return (
     <tr
       className={cn(
-        "border-b border-border bg-surface/50 text-left text-[11px] font-semibold uppercase tracking-widest text-subtle-muted",
+        "border-b border-border bg-surface/50 text-left text-[11px] font-semibold uppercase tracking-wide text-subtle-muted",
         className,
       )}
       {...props}

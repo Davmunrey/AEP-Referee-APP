@@ -20,7 +20,7 @@ describe("roster API validations", () => {
   it("assignRefereeSchema requires slot and referee", () => {
     expect(() =>
       assignRefereeSchema.parse({
-        eventId: "e1",
+        competitionId: "c1",
         slotKey: "",
         refereeId: "r1",
       }),
@@ -28,8 +28,8 @@ describe("roster API validations", () => {
   });
 
   it("clearSlotSchema parses", () => {
-    expect(clearSlotSchema.parse({ eventId: "e1", slotKey: "s1" })).toEqual({
-      eventId: "e1",
+    expect(clearSlotSchema.parse({ competitionId: "c1", slotKey: "s1" })).toEqual({
+      competitionId: "c1",
       slotKey: "s1",
     });
   });

@@ -151,7 +151,7 @@ export function ApprovalsBoard({
   const allSlotKeys = selected ? Object.keys(selected.assignments) : [];
   const assignments = selected ? Object.entries(selected.assignments) : [];
 
-  // Resolve real event status from competitions list
+  // Resolve real competition status from competitions list
   const eventStatus =
     selected && competitions.length > 0
       ? (competitions.find((c) => c.id === selected.competitionId)?.estado ?? "Incompleto")

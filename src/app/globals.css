@@ -185,7 +185,7 @@
   }
 
   .friendly-label {
-    @apply text-xs font-medium uppercase tracking-widest text-muted-foreground;
+    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
   }
 
   .focus-ring {

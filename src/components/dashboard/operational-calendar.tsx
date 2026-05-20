@@ -16,7 +16,7 @@ const MONTHS_ES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-/** Color for event dot / top strip by status */
+/** Color for competition dot / top strip by status */
 const statusDot: Record<EventStatus, string> = {
   Completo: "bg-success",
   Incompleto: "bg-warning",

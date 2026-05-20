@@ -8,8 +8,6 @@ import { formatDateRange } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 
 export function CompetitionsTable({ competitions }: { competitions: Competition[] }) {
-  const events = competitions;
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -30,7 +28,7 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
               </tr>
             </thead>
             <tbody>
-              {events.length === 0 && (
+              {competitions.length === 0 && (
                 <tr>
                   <td
                     colSpan={6}
@@ -40,22 +38,22 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
                   </td>
                 </tr>
               )}
-              {events.map((event) => {
-                const pct = event.requeridos > 0 ? Math.round((event.confirmados / event.requeridos) * 100) : 0;
+              {competitions.map((competition) => {
+                const pct = competition.requeridos > 0 ? Math.round((competition.confirmados / competition.requeridos) * 100) : 0;
                 return (
                   <tr
-                    key={event.id}
+                    key={competition.id}
                     className="border-b border-border/60 transition-colors hover:bg-muted/30"
                   >
                     <td className="px-6 py-4">
-                      <p className="font-medium text-foreground">{event.nombre}</p>
-                      <p className="text-xs text-subtle-muted">{event.sede}</p>
+                      <p className="font-medium text-foreground">{competition.nombre}</p>
+                      <p className="text-xs text-subtle-muted">{competition.sede}</p>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
-                      {formatDateRange(event.fecha, event.fechaFin)}
+                      {formatDateRange(competition.fecha, competition.fechaFin)}
                     </td>
                     <td className="px-6 py-4">
-                      <EventTypeBadge tipo={event.tipo} />
+                      <EventTypeBadge tipo={competition.tipo} />
                     </td>
                     <td className="px-6 py-4 min-w-[140px]">
                       <div className="flex items-center gap-2">
@@ -65,15 +63,15 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
                         </span>
                       </div>
                       <p className="mt-1 text-[11px] text-subtle-muted">
-                        {event.confirmados}/{event.requeridos} confirmados
+                        {competition.confirmados}/{competition.requeridos} confirmados
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <EventStatusBadge status={event.estado} />
+                      <EventStatusBadge status={competition.estado} />
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/competitions/${event.id}`}>
+                        <Link href={`/competitions/${competition.id}`}>
                           Gestionar
                           <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Link>

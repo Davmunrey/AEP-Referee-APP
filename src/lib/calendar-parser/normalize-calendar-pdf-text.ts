@@ -184,9 +184,13 @@ function splitGluedHeaders(line: string): string[] | null {
 function isDateLine(line: string): boolean {
   return (
     /^pendiente$/i.test(line) ||
-    /^\d{1,2}-[a-záéíóú]{3}$/i.test(line) ||
-    /^\d{1,2}-\d{1,2}\s+[a-záéíóú]{3}$/i.test(line) ||
-    /^\d{1,2}-\d{1,2}\s+[a-záéíóú]{3}-[a-záéíóú]{3}$/i.test(line)
+    /^sin confirmar$/i.test(line) ||
+    /^variable(?:\s+\*\*)?$/i.test(line) ||
+    /^[a-záéíóú]{3,5}\s*-\s*[a-záéíóú]{3,5}(?:\s+\*\*)?$/i.test(line) ||
+    /^\d{1,2}-[a-záéíóú]{3,5}$/i.test(line) ||
+    /^\d{1,2}(?:-\d{1,2})*-\d{1,2}\s+[a-záéíóú]{3,5}$/i.test(line) ||
+    /^\d{1,2}-\d{1,2}\s+[a-záéíóú]{3,5}-[a-záéíóú]{3,5}$/i.test(line) ||
+    /^\d{1,2}\s+[a-záéíóú]{3,5}\s*-\s*\d{1,2}\s+[a-záéíóú]{3,5}$/i.test(line)
   );
 }
 

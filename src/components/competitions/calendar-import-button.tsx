@@ -13,7 +13,7 @@ export function CalendarImportButton() {
         variant="outline"
         className="gap-1.5"
         onClick={() => setOpen(true)}
-        title="Importar calendario AEP en PDF y crear competiciones de ámbito español"
+        title="Importar calendario AEP en PDF/CSV y crear competiciones de ámbito español"
       >
         <CalendarPlus className="h-4 w-4" />
         Importar calendario AEP

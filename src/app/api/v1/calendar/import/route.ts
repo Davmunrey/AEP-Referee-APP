@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
-import { parseAepCalendarText } from "@/lib/calendar-parser";
+import { parseAepCalendarCsv, parseAepCalendarText } from "@/lib/calendar-parser";
 import { competitionDedupKey } from "@/lib/competition-dedup";
 import {
   MAX_PDF_BYTES,
@@ -15,7 +15,7 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 /**
- * Importa el PDF del Calendario AEP anual y crea (en preview / apply) las competiciones de
+ * Importa el PDF/CSV del Calendario AEP anual y crea (en preview / apply) las competiciones de
  * ámbito español (AEP1/AEP2/AEP3). Solo `super_admin` y `delegado_jueces` pueden ejecutar.
  *
  * Filtros aplicados al crear:
@@ -44,34 +44,39 @@ export async function POST(request: Request) {
 
   const file = formData.get("file");
   if (!(file instanceof Blob)) {
-    return jsonError("Falta el campo 'file' con el PDF", 400);
+    return jsonError("Falta el campo 'file' con el calendario", 400);
   }
   const filename =
     file instanceof File && typeof file.name === "string" ? file.name : "calendario.pdf";
+  const isCsv =
+    /\.csv$/i.test(filename) ||
+    ["text/csv", "application/csv", "application/vnd.ms-excel"].includes(file.type);
 
-  const mimeError = validatePdfMime(file.type);
-  if (mimeError) return jsonError(mimeError, 400);
+  const mimeError = isCsv ? null : validatePdfMime(file.type);
+  if (mimeError) return jsonError("Formato no válido. Sube PDF o CSV del calendario AEP", 400);
   if (file.size > MAX_PDF_BYTES) {
     return jsonError(
-      `El PDF excede el tamaño máximo (${Math.round(MAX_PDF_BYTES / 1024 / 1024)} MB)`,
+      `El archivo excede el tamaño máximo (${Math.round(MAX_PDF_BYTES / 1024 / 1024)} MB)`,
       400,
     );
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  let text = "";
+  let parsed;
   try {
-    const extracted = await extractPdfText(buffer);
-    text = extracted.text;
+    if (isCsv) {
+      parsed = parseAepCalendarCsv(buffer.toString("utf8"));
+    } else {
+      const extracted = await extractPdfText(buffer);
+      parsed = parseAepCalendarText(extracted.text);
+    }
   } catch (e) {
     return jsonError(
-      `No se pudo leer el PDF: ${e instanceof Error ? e.message : "error desconocido"}`,
+      `No se pudo leer el calendario: ${e instanceof Error ? e.message : "error desconocido"}`,
       400,
     );
   }
-
-  const parsed = parseAepCalendarText(text);
 
   // Filtro España: tipo AEP-1/2/3 y no extranjero.
   const elegibles = parsed.entries.filter((e) => e.esEspaña && e.tipo !== null);

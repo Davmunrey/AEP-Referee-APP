@@ -41,7 +41,7 @@ export const AEP_COMPETITION_LEVELS: {
     summary: "Entrada al sistema competitivo AEP.",
     bullets: [
       "Cualquier atleta afiliado puede participar; la plaza la concede el club organizador.",
-      "El organizador indica si el evento dura uno o dos días.",
+      "El organizador indica si el campeonato dura uno o dos días.",
       "Premios: solo atletas con menos de 85 puntos IPF GL.",
       "Cuota inscripción campeonato: 30 € (además de licencia anual).",
     ],

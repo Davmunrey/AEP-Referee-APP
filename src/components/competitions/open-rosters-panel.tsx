@@ -29,27 +29,27 @@ export function OpenRostersPanel({ competitions, maxItems = 6 }: OpenRostersPane
         </p>
       </div>
       <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {active.map((event) => {
-          const pct = rosterCoveragePct(event);
+        {active.map((competition) => {
+          const pct = rosterCoveragePct(competition);
           return (
             <li
-              key={event.id}
+              key={competition.id}
               className="flex flex-col gap-2 rounded-md border border-border-muted bg-background p-3"
             >
               <div className="flex flex-wrap items-center gap-1.5">
-                <EventTypeBadge tipo={event.tipo} />
-                <EventStatusBadge status={event.estado} />
+                <EventTypeBadge tipo={competition.tipo} />
+                <EventStatusBadge status={competition.estado} />
               </div>
-              <p className="line-clamp-2 text-sm font-medium text-foreground">{event.nombre}</p>
+              <p className="line-clamp-2 text-sm font-medium text-foreground">{competition.nombre}</p>
               <p className="text-[11px] text-subtle-muted">
-                {event.fecha} · {event.sede}
+                {competition.fecha} · {competition.sede}
               </p>
               <Progress value={pct} className="h-1.5" />
               <p className="font-mono text-[10px] text-subtle-muted">
-                {event.confirmados}/{event.requeridos} · {pct}%
+                {competition.confirmados}/{competition.requeridos} · {pct}%
               </p>
               <Button size="sm" className="mt-auto w-full gap-1" asChild>
-                <Link href={`/competitions/${event.id}`}>Montar tarima</Link>
+                <Link href={`/competitions/${competition.id}`}>Montar tarima</Link>
               </Button>
             </li>
           );

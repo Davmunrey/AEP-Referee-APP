@@ -85,8 +85,8 @@ CREATE TABLE roster_assignments (
 -- Propuestas de aprobación
 CREATE TABLE approval_proposals (
   id TEXT PRIMARY KEY,
-  event_id TEXT NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
-  event_name TEXT NOT NULL,
+  competition_id TEXT NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+  competition_name TEXT NOT NULL,
   zona TEXT NOT NULL,
   submitted_by TEXT NOT NULL,
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -127,7 +127,7 @@ CREATE TABLE activity_log (
 -- Historial de tarima
 CREATE TABLE roster_history (
   id TEXT PRIMARY KEY,
-  event_id TEXT NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+  competition_id TEXT NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
   at TIMESTAMPTZ NOT NULL DEFAULT now(),
   actor TEXT NOT NULL,
   action TEXT NOT NULL,

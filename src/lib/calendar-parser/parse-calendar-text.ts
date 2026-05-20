@@ -12,6 +12,7 @@ const MONTHS_ES: Record<string, number> = {
   jul: 7,
   ago: 8,
   sep: 9,
+  sept: 9,
   set: 9,
   oct: 10,
   nov: 11,
@@ -31,10 +32,13 @@ const NIVEL_VALID = new Set([
 
 import { deduceGeographicZone } from "@/lib/aep-zones";
 
-const DATE_SINGLE_RE = /^(\d{1,2})-([a-záéíóú]{3})$/i;
-const DATE_RANGE_SAME_RE = /^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3})$/i;
+const DATE_SINGLE_RE = /^(\d{1,2})-([a-záéíóú]{3,5})$/i;
+const DATE_RANGE_SAME_RE = /^(\d{1,2})(?:-\d{1,2})*-(\d{1,2})\s+([a-záéíóú]{3,5})$/i;
 const DATE_RANGE_CROSS_RE =
-  /^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3})-([a-záéíóú]{3})$/i;
+  /^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3,5})-([a-záéíóú]{3,5})$/i;
+const DATE_RANGE_SPACED_CROSS_RE =
+  /^(\d{1,2})\s+([a-záéíóú]{3,5})\s*-\s*(\d{1,2})\s+([a-záéíóú]{3,5})$/i;
+const DATE_MONTH_RANGE_RE = /^([a-záéíóú]{3,5})\s*-\s*([a-záéíóú]{3,5})(?:\s+\*\*)?$/i;
 
 const HEADER_LINE_RE = /^(FECHA|LOCALIDAD|ORGANIZADOR|NIVEL|DIVISIONES|COMPETICIONES.*TRIMESTRE.*\d{4}|FINAL DE A[ÑN]O|EVENTO PATROCINADO|ASOCIACI[ÓO]N\s+ESPA[ÑN]OLA.*POWERLIFTING|CALENDARIO\s+de\s+COMPETICIONES\s+\d{4}|\*\s+Actualizado.*$)/i;
 
@@ -52,9 +56,13 @@ function isHeaderLine(line: string): boolean {
 function isDateLine(line: string): boolean {
   return (
     /^pendiente$/i.test(line) ||
+    /^sin confirmar$/i.test(line) ||
+    /^variable(?:\s+\*\*)?$/i.test(line) ||
     DATE_SINGLE_RE.test(line) ||
     DATE_RANGE_SAME_RE.test(line) ||
-    DATE_RANGE_CROSS_RE.test(line)
+    DATE_RANGE_CROSS_RE.test(line) ||
+    DATE_RANGE_SPACED_CROSS_RE.test(line) ||
+    DATE_MONTH_RANGE_RE.test(line)
   );
 }
 
@@ -63,7 +71,7 @@ function parseDate(
   year: number,
 ): { start: string | null; end: string | null; pendiente: boolean } {
   const trimmed = raw.trim();
-  if (/^pendiente$/i.test(trimmed))
+  if (/^(pendiente|sin confirmar|variable(?:\s+\*\*)?)$/i.test(trimmed))
     return { start: null, end: null, pendiente: true };
 
   const single = trimmed.match(DATE_SINGLE_RE);
@@ -100,6 +108,35 @@ function parseDate(
       start: `${year}-${pad2(startMonth)}-${pad2(startDay)}`,
       end: `${year}-${pad2(endMonth)}-${pad2(endDay)}`,
       pendiente: false,
+    };
+  }
+
+  const spacedCross = trimmed.match(DATE_RANGE_SPACED_CROSS_RE);
+  if (spacedCross) {
+    const startDay = Number(spacedCross[1]);
+    const endDay = Number(spacedCross[3]);
+    const startMonth = MONTHS_ES[spacedCross[2].toLowerCase()];
+    const endMonth = MONTHS_ES[spacedCross[4].toLowerCase()];
+    if (!startMonth || !endMonth)
+      return { start: null, end: null, pendiente: false };
+    return {
+      start: `${year}-${pad2(startMonth)}-${pad2(startDay)}`,
+      end: `${year}-${pad2(endMonth)}-${pad2(endDay)}`,
+      pendiente: false,
+    };
+  }
+
+  const monthRange = trimmed.replace(/\*\*/g, "").trim().match(DATE_MONTH_RANGE_RE);
+  if (monthRange) {
+    const startMonth = MONTHS_ES[monthRange[1].toLowerCase()];
+    const endMonth = MONTHS_ES[monthRange[2].toLowerCase()];
+    if (!startMonth || !endMonth)
+      return { start: null, end: null, pendiente: true };
+    const endDay = new Date(year, endMonth, 0).getDate();
+    return {
+      start: `${year}-${pad2(startMonth)}-01`,
+      end: `${year}-${pad2(endMonth)}-${pad2(endDay)}`,
+      pendiente: true,
     };
   }
 

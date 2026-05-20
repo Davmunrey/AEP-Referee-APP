@@ -36,6 +36,7 @@ import type {
   JudgeProfile,
   PromotionRequest,
   Referee,
+  RefereeCompetitionHistoryItem,
   RefereeExam,
   RefereeLevel,
   RefereeReport,
@@ -57,6 +58,7 @@ import {
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
 import { formatRosterExport } from "@/lib/roster-export";
+import { ROLE_LABELS } from "@/lib/roster-template";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assignmentsFromRows,
@@ -75,6 +77,29 @@ import {
 
 function db() {
   return createAdminClient();
+}
+
+let approvalCompetitionColumnPromise: Promise<boolean> | null = null;
+let historyCompetitionColumnPromise: Promise<boolean> | null = null;
+
+async function hasApprovalCompetitionColumns(): Promise<boolean> {
+  approvalCompetitionColumnPromise ??= Promise.resolve(
+    db()
+      .from("approval_proposals")
+      .select("competition_id, competition_name")
+      .limit(1),
+  ).then(({ error }) => !error);
+  return approvalCompetitionColumnPromise;
+}
+
+async function hasHistoryCompetitionColumn(): Promise<boolean> {
+  historyCompetitionColumnPromise ??= Promise.resolve(
+    db()
+      .from("roster_history")
+      .select("competition_id")
+      .limit(1),
+  ).then(({ error }) => !error);
+  return historyCompetitionColumnPromise;
 }
 
 function parseSlotKey(slotKey: string): { session: string; roleKey: string } | null {
@@ -143,6 +168,61 @@ function validateExamLevel(
   }
 }
 
+function roleLabelFromSlot(slotKey: string): string {
+  const role = slotKey.split("_")[1] as keyof typeof ROLE_LABELS | undefined;
+  return role ? ROLE_LABELS[role] ?? role : "Rol";
+}
+
+async function loadRefereeCompetitionHistory(
+  refereeId: string,
+): Promise<RefereeCompetitionHistoryItem[]> {
+  const supabase = db();
+  const { data: assignmentRows } = await supabase
+    .from("roster_assignments")
+    .select("competition_id, slot_key")
+    .eq("referee_id", refereeId);
+
+  const grouped = new Map<string, { roles: Set<string>; slotCount: number }>();
+  for (const row of assignmentRows ?? []) {
+    const competitionId = String(row.competition_id);
+    const bucket = grouped.get(competitionId) ?? {
+      roles: new Set<string>(),
+      slotCount: 0,
+    };
+    bucket.roles.add(roleLabelFromSlot(String(row.slot_key)));
+    bucket.slotCount += 1;
+    grouped.set(competitionId, bucket);
+  }
+
+  const ids = [...grouped.keys()];
+  if (ids.length === 0) return [];
+
+  const { data: competitionRows } = await supabase
+    .from("competitions")
+    .select("id, nombre, tipo, fecha, fecha_fin, sede, estado, aprobacion")
+    .in("id", ids);
+
+  return (competitionRows ?? [])
+    .map((row) => {
+      const id = String(row.id);
+      const agg = grouped.get(id);
+      if (!agg) return null;
+      return {
+        competitionId: id,
+        competitionName: String(row.nombre),
+        tipo: row.tipo as Competition["tipo"],
+        fecha: String(row.fecha),
+        fechaFin: String(row.fecha_fin),
+        sede: String(row.sede),
+        estado: row.estado as Competition["estado"],
+        aprobacion: String(row.aprobacion),
+        roles: [...agg.roles].sort((a, b) => a.localeCompare(b, "es")),
+        slotCount: agg.slotCount,
+      } satisfies RefereeCompetitionHistoryItem;
+    })
+    .filter((item): item is RefereeCompetitionHistoryItem => Boolean(item));
+}
+
 async function loadFlags(competitionId: string): Promise<FlagsMap> {
   const supabase = db();
   const { data } = await supabase
@@ -202,9 +282,12 @@ async function pushActivity(item: Omit<import("@/lib/types").ActivityItem, never
 
 async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
   const supabase = db();
+  const competitionColumn = (await hasHistoryCompetitionColumn())
+    ? "competition_id"
+    : "event_id";
   await supabase.from("roster_history").insert({
     id: `hist-${Date.now()}`,
-    competition_id: entry.competitionId,
+    [competitionColumn]: entry.competitionId,
     at: entry.at,
     actor: entry.actor,
     action: entry.action,
@@ -315,8 +398,8 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
     {
       label: "Plazas sin cubrir",
       value: String(openSlots),
-      sub: `en ${competitionsLength} eventos`,
-      trend: `${critical} eventos en estado crítico`,
+      sub: `en ${competitionsLength} campeonatos`,
+      trend: `${critical} campeonatos en estado crítico`,
       trendDir: critical > 0 ? "warn" : "flat",
       accent: "yellow",
     },
@@ -815,10 +898,13 @@ export const supabaseDataService = {
     if (!comp) return undefined;
     const assignments = await loadAssignments(competitionId);
     const supabase = db();
+    const hasCompetitionColumns = await hasApprovalCompetitionColumns();
+    const competitionIdColumn = hasCompetitionColumns ? "competition_id" : "event_id";
+    const competitionNameColumn = hasCompetitionColumns ? "competition_name" : "event_name";
     const { data: existing } = await supabase
       .from("approval_proposals")
       .select("*")
-      .eq("competition_id", competitionId)
+      .eq(competitionIdColumn, competitionId)
       .eq("status", "pendiente")
       .maybeSingle();
 
@@ -831,8 +917,8 @@ export const supabaseDataService = {
     } else {
       await supabase.from("approval_proposals").insert({
         id: `apr-${Date.now()}`,
-        competition_id: competitionId,
-        competition_name: comp.nombre,
+        [competitionIdColumn]: competitionId,
+        [competitionNameColumn]: comp.nombre,
         zona: comp.zona ?? "—",
         submitted_by: actor,
         submitted_at: now,
@@ -854,7 +940,7 @@ export const supabaseDataService = {
     const { data } = await supabase
       .from("approval_proposals")
       .select("*")
-      .eq("competition_id", competitionId)
+      .eq(competitionIdColumn, competitionId)
       .eq("status", "pendiente")
       .single();
     return data ? mapApproval(data as Record<string, unknown>) : undefined;
@@ -908,13 +994,15 @@ export const supabaseDataService = {
       })
       .eq("id", id);
 
-    const comp = await supabaseDataService.getCompetition(proposal.competition_id);
+    const proposalCompetitionId = String(proposal.competition_id ?? proposal.event_id);
+    const proposalCompetitionName = String(proposal.competition_name ?? proposal.event_name);
+    const comp = await supabaseDataService.getCompetition(proposalCompetitionId);
     if (comp) {
       if (approve) {
-        await supabase.from("roster_assignments").delete().eq("competition_id", proposal.competition_id);
+        await supabase.from("roster_assignments").delete().eq("competition_id", proposalCompetitionId);
         const assignments = proposal.assignments as AssignmentsMap;
         const rows = Object.entries(assignments).map(([slot_key, referee_id]) => ({
-          competition_id: proposal.competition_id,
+          competition_id: proposalCompetitionId,
           slot_key,
           referee_id,
         }));
@@ -926,12 +1014,12 @@ export const supabaseDataService = {
             estado: "Completo",
             confirmados: Object.values(assignments).filter(Boolean).length,
           })
-          .eq("id", proposal.competition_id);
+          .eq("id", proposalCompetitionId);
       } else {
         await supabase
           .from("competitions")
           .update({ aprobacion: "Rechazado" })
-          .eq("id", proposal.competition_id);
+          .eq("id", proposalCompetitionId);
       }
     }
 
@@ -939,7 +1027,7 @@ export const supabaseDataService = {
       tipo: approve ? "aprobacion" : "rechazo",
       actor: reviewer,
       accion: approve ? "aprobó roster para" : "rechazó propuesta para",
-      evento: proposal.competition_name,
+      evento: proposalCompetitionName,
       hace: "ahora",
     });
 
@@ -1158,10 +1246,11 @@ export const supabaseDataService = {
 
   getRosterHistory: async (competitionId: string): Promise<RosterHistoryEntry[]> => {
     const supabase = db();
+    const competitionColumn = (await hasHistoryCompetitionColumn()) ? "competition_id" : "event_id";
     const { data } = await supabase
       .from("roster_history")
       .select("*")
-      .eq("competition_id", competitionId)
+      .eq(competitionColumn, competitionId)
       .order("at", { ascending: false });
     return (data ?? []).map((r) => mapHistory(r as Record<string, unknown>));
   },
@@ -1194,9 +1283,15 @@ export const supabaseDataService = {
 
   deleteCompetition: async (id: string): Promise<boolean> => {
     const supabase = db();
+    const approvalCompetitionColumn = (await hasApprovalCompetitionColumns())
+      ? "competition_id"
+      : "event_id";
+    const historyCompetitionColumn = (await hasHistoryCompetitionColumn())
+      ? "competition_id"
+      : "event_id";
     await supabase.from("roster_assignments").delete().eq("competition_id", id);
-    await supabase.from("approval_proposals").delete().eq("competition_id", id);
-    await supabase.from("roster_history").delete().eq("competition_id", id);
+    await supabase.from("approval_proposals").delete().eq(approvalCompetitionColumn, id);
+    await supabase.from("roster_history").delete().eq(historyCompetitionColumn, id);
     const { data, error } = await supabase
       .from("competitions")
       .delete()
@@ -1511,12 +1606,13 @@ export const supabaseDataService = {
   ): Promise<JudgeProfile | undefined> => {
     const referee = await supabaseDataService.getReferee(refereeId);
     if (!referee) return undefined;
-    const [exams, reports, sanctions] = await Promise.all([
+    const [exams, reports, sanctions, competitionHistory] = await Promise.all([
       supabaseDataService.getExams(refereeId),
       supabaseDataService.getReports(refereeId),
       listRefereeSanctions(refereeId),
+      loadRefereeCompetitionHistory(refereeId),
     ]);
-    return computeJudgeProfile(referee, exams, reports, sanctions);
+    return computeJudgeProfile(referee, exams, reports, sanctions, competitionHistory);
   },
 
   listRefereeSanctions,

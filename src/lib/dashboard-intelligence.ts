@@ -77,7 +77,7 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
   const active = referees.filter((r) => r.estado === "Activo").length;
   const availableScore = total > 0 ? (active / total) * 100 : 100;
 
-  // Eventos inminentes (≤21 días) con plazas abiertas penalizan la urgencia.
+  // Campeonatos inminentes (≤21 días) con plazas abiertas penalizan la urgencia.
   const urgentOpen = coverage
     .filter((c) => {
       const d = daysUntil(c.fecha, now);
@@ -94,13 +94,13 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
       detail: `${totalFilled}/${totalReq} plazas asignadas`,
     },
     {
-      label: "Estabilidad de eventos",
+      label: "Estabilidad de campeonatos",
       score: clampScore(criticalScore),
       weight: 0.24,
       detail:
         criticalEvents > 0
           ? `${criticalEvents} de ${totalEvents} en estado crítico`
-          : `${totalEvents} eventos sin alertas`,
+          : `${totalEvents} campeonatos sin alertas`,
     },
     {
       label: "Urgencia operativa",
@@ -108,7 +108,7 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
       weight: 0.18,
       detail:
         urgentOpen > 0
-          ? `${urgentOpen} plazas abiertas en eventos ≤21 días`
+          ? `${urgentOpen} plazas abiertas en campeonatos ≤21 días`
           : "sin urgencias a corto plazo",
     },
     {
@@ -145,7 +145,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
   const { coverage, approvals, promotions, referees } = input;
   const insights: Insight[] = [];
 
-  // 1 — Eventos críticos: máxima prioridad.
+  // 1 — Campeonatos críticos: máxima prioridad.
   for (const c of coverage.filter((e) => e.estado === "Crítico")) {
     const d = daysUntil(c.fecha, now);
     insights.push({
@@ -161,7 +161,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
     });
   }
 
-  // 2 — Eventos inminentes con plazas abiertas (aún no críticos).
+  // 2 — Campeonatos inminentes con plazas abiertas (aún no críticos).
   for (const c of coverage) {
     if (c.estado === "Crítico" || c.open === 0) continue;
     const d = daysUntil(c.fecha, now);
@@ -223,7 +223,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       id: "all-clear",
       severity: "ok",
       title: "Operación bajo control",
-      detail: "No hay eventos críticos ni cuellos de botella. Buen momento para planificar la temporada.",
+      detail: "No hay campeonatos críticos ni cuellos de botella. Buen momento para planificar la temporada.",
     });
   }
 

@@ -47,10 +47,10 @@ export const TRANSFER_KIND_COPY: Record<TransferKind, TransferKindCopy> = {
   calendar: {
     title: "Importar calendario AEP",
     subtitle:
-      "PDF del calendario anual. Crea campeonatos en el listado; no sustituye la plantilla de tarima.",
-    uploadCta: "Seleccionar PDF del calendario",
+      "PDF o CSV del calendario anual. Crea campeonatos en el listado; no sustituye la plantilla de tarima.",
+    uploadCta: "Seleccionar calendario",
     applyCta: "Crear campeonatos en el listado",
-    acceptedHint: "PDF · calendario anual AEP",
+    acceptedHint: "PDF / CSV · calendario anual AEP",
   },
   schedule: {
     title: "Importar horario del campeonato",
@@ -84,7 +84,7 @@ export const TRANSFER_KIND_COPY: Record<TransferKind, TransferKindCopy> = {
 };
 
 const MIME_BY_KIND: Partial<Record<TransferKind, string>> = {
-  calendar: "application/pdf",
+  calendar: "application/pdf,text/csv,.csv",
   schedule: "application/pdf",
   judges:
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel",
