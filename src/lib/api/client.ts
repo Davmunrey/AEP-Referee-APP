@@ -390,6 +390,18 @@ export const api = {
       body: JSON.stringify({ slotKey }),
     }),
 
+  clearRosterAssignments: (competitionId: string) =>
+    request<{ assignments: AssignmentsMap; flags: FlagsMap }>(
+      `/competitions/${competitionId}/roster/clear`,
+      { method: "DELETE" },
+    ),
+
+  clearRosterTemplate: (competitionId: string) =>
+    request<{ template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }>(
+      `/competitions/${competitionId}/roster/template`,
+      { method: "DELETE" },
+    ),
+
   saveDraft: (competitionId: string) =>
     request<{ message: string }>(`/competitions/${competitionId}/roster/draft`, { method: "POST" }),
 

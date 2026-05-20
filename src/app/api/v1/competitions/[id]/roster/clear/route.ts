@@ -30,3 +30,17 @@ export async function POST(request: Request, context: RouteContext) {
   );
   return jsonOk({ assignments });
 }
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const user = await requireApiUser();
+  if (!isSessionUser(user)) return user;
+
+  const { id: competitionId } = await context.params;
+  const comp = await dataService.getCompetition(competitionId);
+  if (!comp) return jsonError("Competición no encontrada", 404);
+  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
+
+  const result = await dataService.clearRosterAssignments(competitionId, user.nombre);
+  if (!result) return jsonError("No se pudieron borrar las asignaciones", 400);
+  return jsonOk(result);
+}

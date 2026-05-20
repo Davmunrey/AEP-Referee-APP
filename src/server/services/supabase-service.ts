@@ -893,6 +893,25 @@ export const supabaseDataService = {
     return { ...assignments };
   },
 
+  clearRosterAssignments: async (
+    competitionId: string,
+    actor: string,
+  ): Promise<{ assignments: AssignmentsMap; flags: FlagsMap } | undefined> => {
+    const comp = await supabaseDataService.getCompetition(competitionId);
+    if (!comp) return undefined;
+    const supabase = db();
+    await supabase.from("roster_assignments").delete().eq("competition_id", competitionId);
+    await syncCompetitionCoverage(competitionId);
+    await pushHistory({
+      competitionId,
+      at: new Date().toISOString(),
+      actor,
+      action: "Asignaciones vaciadas",
+      detail: "Todos los huecos liberados",
+    });
+    return { assignments: {}, flags: {} };
+  },
+
   submitRoster: async (competitionId: string, actor: string) => {
     const comp = await supabaseDataService.getCompetition(competitionId);
     if (!comp) return undefined;

@@ -44,6 +44,7 @@ import {
   ChevronUp,
   GripVertical,
   Info,
+  Trash2,
   UsersRound,
   X,
 } from "lucide-react";
@@ -287,6 +288,73 @@ export function RosterBuilder({
     });
   };
 
+  const clearAllAssignments = () => {
+    if (readOnly || filledSlots === 0 || pending) return;
+    if (
+      !confirm(
+        `¿Vaciar todas las asignaciones de jueces de ${competition.nombre}?\n\nLa plantilla se mantiene, solo se liberan los huecos.`,
+      )
+    ) {
+      return;
+    }
+    const snapshotAssignments = assignments;
+    const snapshotFlags = flags;
+    setAssignments({});
+    setFlags({});
+    setSelectedSlot(null);
+    startTransition(async () => {
+      try {
+        const res = await api.clearRosterAssignments(competition.id);
+        setAssignments(res.assignments);
+        setFlags(res.flags);
+        setStatusMsg("Asignaciones borradas");
+        setStatusIsError(false);
+      } catch (err) {
+        setAssignments(snapshotAssignments);
+        setFlags(snapshotFlags);
+        setStatusMsg(formatApiError(err, "No se pudieron borrar las asignaciones"));
+        setStatusIsError(true);
+      }
+    });
+  };
+
+  const clearTemplateAndAssignments = () => {
+    if (readOnly || template.length === 0 || pending || savingTemplate) return;
+    if (
+      !confirm(
+        `¿Borrar la plantilla de tarima de ${competition.nombre}?\n\nEsto elimina sesiones, huecos y asignaciones. Podrás importar el horario de nuevo.`,
+      )
+    ) {
+      return;
+    }
+    const snapshotTemplate = template;
+    const snapshotAssignments = assignments;
+    const snapshotFlags = flags;
+    setTemplate([]);
+    setAssignments({});
+    setFlags({});
+    setSelectedSlot(null);
+    setActiveSessionKey(null);
+    setWorkflowStep("plantilla");
+    startTransition(async () => {
+      try {
+        const res = await api.clearRosterTemplate(competition.id);
+        setTemplate(res.template);
+        setAssignments(res.assignments);
+        setFlags(res.flags);
+        setIsEditing(false);
+        setStatusMsg("Plantilla borrada");
+        setStatusIsError(false);
+      } catch (err) {
+        setTemplate(snapshotTemplate);
+        setAssignments(snapshotAssignments);
+        setFlags(snapshotFlags);
+        setStatusMsg(formatApiError(err, "No se pudo borrar la plantilla"));
+        setStatusIsError(true);
+      }
+    });
+  };
+
   const isDragging = draggedId !== null;
   const groupedSessions = useMemo(() => groupSessionsByDay(template), [template]);
   const activeSession =
@@ -379,6 +447,34 @@ export function RosterBuilder({
                 >
                   <FileUp className="h-3.5 w-3.5" />
                   Importar horario
+                </Button>
+              )}
+              {canEdit && filledSlots > 0 && !isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 border-warning-border px-2.5 text-xs text-warning hover:bg-warning-subtle"
+                  onClick={clearAllAssignments}
+                  disabled={pending || savingTemplate}
+                  title="Vaciar todas las asignaciones sin borrar la plantilla"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Vaciar jueces
+                </Button>
+              )}
+              {canEdit && template.length > 0 && !isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 border-destructive/40 px-2.5 text-xs text-destructive hover:bg-destructive/10"
+                  onClick={clearTemplateAndAssignments}
+                  disabled={pending || savingTemplate}
+                  title="Borrar plantilla, sesiones y asignaciones"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Borrar plantilla
                 </Button>
               )}
               {canEdit && (
