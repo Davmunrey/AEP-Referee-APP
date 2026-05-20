@@ -956,6 +956,16 @@ function summarizeSessionCategories(session: RosterSession) {
   return categories || "Sin categorías";
 }
 
+function summarizeSessionGroups(session: RosterSession) {
+  return (session.grupos ?? [])
+    .map((g) => {
+      const categories = g.categorias.map((c) => `${c.genero} ${c.pesos}`).join(" · ");
+      const total = typeof g.levantadores === "number" ? ` (${g.levantadores} lev.)` : "";
+      return `${g.nombre}: ${categories || "—"}${total}`;
+    })
+    .join(" · ");
+}
+
 function slotRoleEntries(session: RosterSession) {
   return [...session.roles, ...(session.pesajeRoles ?? [])];
 }
@@ -1116,11 +1126,14 @@ function SlotGrid({
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   return (
-    <div className="space-y-2.5">
+    <div className="grid gap-2 2xl:grid-cols-2">
       {roles.map((role) => (
-        <div key={role.key}>
+        <div
+          key={role.key}
+          className="rounded-lg border border-border-muted bg-background/55 p-2"
+        >
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-subtle-muted">
               {role.rol}
             </p>
             <span className="font-mono text-[10px] text-subtle-muted">
@@ -1131,7 +1144,7 @@ function SlotGrid({
               /{role.slots}
             </span>
           </div>
-          <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-2 min-[1800px]:grid-cols-3">
             {Array.from({ length: role.slots }).map((_, idx) => {
               const slotKey = `${sesion}_${role.key}_${idx}`;
               const refereeId = assignments[slotKey];
@@ -1168,7 +1181,7 @@ function SlotGrid({
                     onSelectSlot(isSelected ? null : slotKey);
                   }}
                   className={cn(
-                    "relative rounded-lg border-2 p-2 transition-all duration-100",
+                    "relative rounded-md border p-2 transition-all duration-100",
                     !readOnly && "cursor-pointer",
                     isDropTarget
                       ? "border-primary bg-primary/10 shadow-md"
@@ -1188,7 +1201,7 @@ function SlotGrid({
                       {/* Referee name + flags indicator */}
                       <div className="flex items-start justify-between gap-1">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] font-semibold text-foreground">
+                          <p className="truncate text-[12.5px] font-semibold text-foreground">
                             {referee.nombre}
                             {slotFlags?.compartido && (
                               <span
@@ -1346,6 +1359,7 @@ function SessionBlock({
   const { filled, slots, pct } = sessionProgress(session, assignments);
   const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
   const pesajeRoles = session.pesajeRoles ?? [];
+  const groupsSummary = summarizeSessionGroups(session);
 
   const grid = {
     sesion: session.sesion,
@@ -1364,11 +1378,11 @@ function SessionBlock({
 
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-surface/40 shadow-sm">
-      <header className="flex items-start gap-2.5 p-3">
+      <header className="grid gap-2 border-b border-border-muted p-2.5 lg:grid-cols-[auto_minmax(0,1.15fr)_minmax(0,2fr)_auto] lg:items-center">
         {/* Collapse toggle */}
         <button
           type="button"
-          className="mt-0.5 rounded text-subtle-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="rounded text-subtle-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           aria-label={collapsed ? "Expandir sesión" : "Colapsar sesión"}
           aria-expanded={!collapsed}
           onClick={() => setCollapsed((v) => !v)}
@@ -1380,42 +1394,30 @@ function SessionBlock({
           )}
         </button>
 
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-xs text-primary">{session.sesion}</p>
-          <h3 className="text-sm font-semibold text-foreground">{session.nombre}</h3>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {(session.categorias ?? []).map((c, i) => (
-              <span
-                key={i}
-                className="rounded bg-surface-active px-1.5 py-0.5 text-[10.5px] text-foreground-secondary"
-              >
-                {c.genero} {c.pesos}
-              </span>
-            ))}
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-baseline gap-2">
+            <span className="font-mono text-xs font-semibold text-primary">{session.sesion}</span>
+            <h3 className="truncate text-sm font-semibold text-foreground">{session.nombre}</h3>
           </div>
-          <p className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-subtle-muted">
-            <span>Competición {session.horarioCompeticion}</span>
+          <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-subtle-muted">
+            <span>Comp. {session.horarioCompeticion}</span>
             <span>Pesaje {session.horarioPesaje}</span>
           </p>
-          {session.grupos && session.grupos.length > 0 && (
-            <ul className="mt-1.5 space-y-0.5 text-[11px] text-foreground-secondary">
-              {session.grupos.map((g, gi) => (
-                <li key={gi} className="flex flex-wrap gap-1">
-                  <span className="font-mono text-subtle-muted">{g.nombre}:</span>
-                  <span>
-                    {g.categorias.map((c) => `${c.genero} ${c.pesos}`).join(" · ") || "—"}
-                  </span>
-                  {typeof g.levantadores === "number" && (
-                    <span className="text-subtle-muted">({g.levantadores} lev.)</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+        </div>
+
+        <div className="min-w-0">
+          <p className="truncate text-[11px] text-foreground-secondary">
+            {summarizeSessionCategories(session)}
+          </p>
+          {groupsSummary ? (
+            <p className="mt-1 truncate text-[10.5px] text-subtle-muted" title={groupsSummary}>
+              {groupsSummary}
+            </p>
+          ) : null}
         </div>
 
         {/* Progress mini-bar */}
-        <div className="min-w-[72px] shrink-0">
+        <div className="min-w-[86px] shrink-0">
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className={cn("h-full rounded-full transition-all duration-500", barColor)}
@@ -1429,9 +1431,9 @@ function SessionBlock({
       </header>
 
       {!collapsed && (
-        <div className="border-t border-border-muted px-3 pb-3 pt-2.5">
+        <div className="px-2.5 pb-2.5 pt-2">
           {/* Competition roles group heading */}
-          <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-foreground-secondary">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-secondary">
             Competición
           </p>
           <SlotGrid roles={session.roles} {...grid} />
@@ -1439,9 +1441,9 @@ function SessionBlock({
           {pesajeRoles.length > 0 && (
             <>
               {/* Pesaje separator */}
-              <div className="my-3 flex items-center gap-2">
+              <div className="my-2.5 flex items-center gap-2">
                 <div className="flex-1 border-t border-border-muted" />
-                <p className="text-[10.5px] font-semibold uppercase tracking-wider text-primary">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
                   Pesaje · {session.horarioPesaje}
                 </p>
                 <div className="flex-1 border-t border-border-muted" />
