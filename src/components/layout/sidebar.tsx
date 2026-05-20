@@ -137,24 +137,37 @@ export function Sidebar({
         href={item.href}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium transition-all duration-150 focus-ring",
-          active
-            ? "bg-surface-active text-foreground nav-glow-active"
-            : "text-muted-foreground hover:bg-surface hover:text-foreground active:bg-surface-hover",
+          "group relative flex items-center text-[12.5px] font-medium transition-colors duration-150 focus-ring",
+          collapsed
+            ? "mx-auto h-11 w-11 justify-center rounded-xl p-0"
+            : "gap-2.5 rounded-xl px-3 py-2",
+          active && !collapsed && "bg-surface-active text-foreground nav-glow-active",
+          active && collapsed && "bg-primary/8 text-primary ring-1 ring-primary/25",
+          !active &&
+            "text-muted-foreground hover:bg-surface hover:text-foreground active:bg-surface-hover",
         )}
         title={collapsed ? item.label : undefined}
       >
-        {active && (
+        {active && !collapsed && (
           <span
             aria-hidden="true"
             className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary shadow-glow-primary"
           />
         )}
+        {active && collapsed && (
+          <span
+            aria-hidden="true"
+            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
+          />
+        )}
         <span
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-150",
-            active
+            "flex shrink-0 items-center justify-center transition-colors duration-150",
+            collapsed ? "h-9 w-9 rounded-xl" : "h-8 w-8 rounded-lg",
+            active && !collapsed
               ? "bg-primary/15 text-primary"
+              : active && collapsed
+                ? "bg-transparent text-primary"
               : "bg-transparent text-subtle-muted group-hover:bg-surface group-hover:text-foreground-secondary",
           )}
         >
@@ -185,30 +198,30 @@ export function Sidebar({
     <aside
       className={cn(
         "flex h-full flex-col border-r border-border-muted bg-sidebar/95 backdrop-blur-xl transition-[width] duration-200 ease-out",
-        collapsed ? "w-[68px]" : "w-[224px] xl:w-[232px]",
+        collapsed ? "w-16" : "w-[224px] xl:w-[232px]",
       )}
     >
-      <div className={cn("border-b border-border-muted px-4 py-4", collapsed && "px-2.5")}>
-        <AepLogo collapsed={collapsed} />
+      <div className={cn("border-b border-border-muted px-4 py-4", collapsed && "px-0")}>
+        <AepLogo collapsed={collapsed} className={collapsed ? "justify-center" : undefined} />
       </div>
 
-      <div className={cn("px-3 pt-3", collapsed && "px-2")}>
+      <div className={cn("px-3 pt-3", collapsed && "px-0")}>
         <OrgSwitcher collapsed={collapsed} org={orgLabel} subtitle={orgSubtitle} />
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto pb-2">
-        <nav className="mt-5 flex flex-col gap-1 px-3">
+        <nav className={cn("mt-5 flex flex-col gap-1", collapsed ? "px-0" : "px-3")}>
           {!collapsed && <p className="friendly-label mb-2 px-3">Operaciones</p>}
           {primaryNav.map((item) => renderLink(item))}
         </nav>
 
-        <nav className="mt-5 flex flex-col gap-1 px-3">
+        <nav className={cn("mt-5 flex flex-col gap-1", collapsed ? "px-0" : "px-3")}>
           {!collapsed && <p className="friendly-label mb-2 px-3">Gestión</p>}
           {secondaryNav.map((item) => renderLink(item))}
         </nav>
       </div>
 
-      <div className={cn("border-t border-border-muted p-3", collapsed && "px-2")}>
+      <div className={cn("border-t border-border-muted p-3", collapsed && "px-0")}>
         {!collapsed ? (
           <div className="mb-3 flex items-center gap-2.5 rounded-2xl border border-border-muted bg-surface-hover p-2.5">
             <Avatar className="h-8 w-8 ring-2 ring-primary/20">
@@ -243,7 +256,10 @@ export function Sidebar({
           variant="ghost"
           size={collapsed ? "icon" : "default"}
           onClick={onToggle}
-          className="w-full justify-center rounded-xl text-subtle-muted hover:bg-surface focus-ring"
+          className={cn(
+            "justify-center rounded-xl text-subtle-muted hover:bg-surface focus-ring",
+            collapsed ? "mx-auto h-9 w-9" : "w-full",
+          )}
           aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
