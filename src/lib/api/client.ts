@@ -109,6 +109,7 @@ export const api = {
   importCalendar: async (
     file: File,
     apply = false,
+    selectedKeys?: string[],
   ): Promise<{
     preview: {
       filename: string;
@@ -120,6 +121,7 @@ export const api = {
       toCreateCount: number;
       warnings: string[];
       entries: Array<{
+        key: string;
         rawDate: string;
         fechaInicio: string | null;
         fechaFin: string | null;
@@ -130,6 +132,9 @@ export const api = {
         zona?: string;
         pendiente: boolean;
         nuevo: boolean;
+        importable: boolean;
+        selected: boolean;
+        reason: string;
       }>;
     };
     created?: number;
@@ -138,6 +143,7 @@ export const api = {
   }> => {
     const fd = new FormData();
     fd.append("file", file);
+    if (selectedKeys) fd.append("selectedKeys", JSON.stringify(selectedKeys));
     const path = `/calendar/import${apply ? "?apply=true" : ""}`;
     const res = await fetch(`${getApiBaseUrl()}${path}`, {
       method: "POST",
@@ -155,6 +161,7 @@ export const api = {
         toCreateCount: number;
         warnings: string[];
         entries: Array<{
+          key: string;
           rawDate: string;
           fechaInicio: string | null;
           fechaFin: string | null;
@@ -165,6 +172,9 @@ export const api = {
           zona?: string;
           pendiente: boolean;
           nuevo: boolean;
+          importable: boolean;
+          selected: boolean;
+          reason: string;
         }>;
       };
       created?: number;
