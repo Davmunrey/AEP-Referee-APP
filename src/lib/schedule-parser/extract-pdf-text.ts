@@ -1,3 +1,11 @@
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
+
 /** Tamaño máximo aceptado para PDFs de horario (5 MB). */
 export const MAX_PDF_BYTES = 5 * 1024 * 1024;
 
@@ -10,6 +18,56 @@ const ACCEPTED_MIME = new Set([
 export interface PdfExtractionResult {
   text: string;
   pages: number;
+}
+
+function usableText(text: string): boolean {
+  return text.replace(/\s+/g, "").length >= 40;
+}
+
+async function commandExists(command: string): Promise<boolean> {
+  try {
+    await execFileAsync("which", [command], { timeout: 3000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function extractWithPdftotext(pdfPath: string): Promise<string> {
+  if (!(await commandExists("pdftotext"))) return "";
+  const outPath = `${pdfPath}.txt`;
+  try {
+    await execFileAsync("pdftotext", ["-layout", pdfPath, outPath], { timeout: 15000 });
+    return await readFile(outPath, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+async function extractWithMacVisionOcr(pdfPath: string, workDir: string): Promise<string> {
+  if (!(await commandExists("pdftoppm")) || !(await commandExists("swift"))) return "";
+  const dir = join(workDir, "ocr-pages");
+  await mkdir(dir, { recursive: true });
+  const prefix = join(dir, "page");
+  try {
+    await execFileAsync("pdftoppm", ["-png", "-r", "200", pdfPath, prefix], {
+      timeout: 30000,
+      maxBuffer: 1024 * 1024,
+    });
+    const files = (await readdir(dir))
+      .filter((f) => f.endsWith(".png"))
+      .sort()
+      .map((f) => join(dir, f));
+    if (files.length === 0) return "";
+    const script = resolve(process.cwd(), "scripts/vision-ocr.swift");
+    const { stdout } = await execFileAsync("swift", [script, ...files], {
+      timeout: 90000,
+      maxBuffer: 8 * 1024 * 1024,
+    });
+    return stdout;
+  } catch {
+    return "";
+  }
 }
 
 /**
@@ -29,7 +87,20 @@ export async function extractPdfText(
     default: (b: Buffer) => Promise<{ text: string; numpages: number }>;
   };
   const result = await mod.default(buf);
-  return { text: result.text, pages: result.numpages };
+  if (usableText(result.text)) return { text: result.text, pages: result.numpages };
+
+  const dir = await mkdtemp(join(tmpdir(), "aep-pdf-"));
+  try {
+    const pdfPath = join(dir, "input.pdf");
+    await writeFile(pdfPath, buf);
+    const pdftotext = await extractWithPdftotext(pdfPath);
+    if (usableText(pdftotext)) return { text: pdftotext, pages: result.numpages };
+    const ocr = await extractWithMacVisionOcr(pdfPath, dir);
+    if (usableText(ocr)) return { text: ocr, pages: result.numpages };
+    return { text: result.text || pdftotext || ocr, pages: result.numpages };
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 }
 
 /** Valida MIME y devuelve un mensaje legible si no es aceptable. */

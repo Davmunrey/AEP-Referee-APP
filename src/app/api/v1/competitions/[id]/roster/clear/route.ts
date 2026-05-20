@@ -1,4 +1,3 @@
-import { isCompetitionPast } from "@/lib/competition-status";
 import { canEditRoster } from "@/lib/auth/session";
 import { clearSlotSchema } from "@/lib/validations";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
@@ -17,7 +16,6 @@ export async function POST(request: Request, context: RouteContext) {
   const comp = await dataService.getCompetition(competitionId);
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
-  if (isCompetitionPast(comp)) return jsonError("Campeonato finalizado: solo lectura", 423);
 
   const body = await request.json();
   const parsed = clearSlotSchema.safeParse({ competitionId, slotKey: body.slotKey });

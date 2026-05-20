@@ -24,7 +24,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
   if (user.role === "delegado_zona" && competition.zona !== user.zona) notFound();
 
   const isPast = isCompetitionPast(competition);
-  const canEdit = canEditRoster(user, competition.zona) && !isPast;
+  const canEdit = canEditRoster(user, competition.zona);
 
   return (
     <RosterBuilder

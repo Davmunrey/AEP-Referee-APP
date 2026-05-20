@@ -2,8 +2,8 @@ import type { Competition } from "@/lib/types";
 
 /**
  * Devuelve `true` si la fecha fin del campeonato es anterior a hoy (UTC).
- * Campeonatos pasados pasan a modo solo lectura: no se puede editar plantilla,
- * asignaciones, flags ni enviar a aprobación.
+ * Se usa como contexto visual ("finalizado"), no como bloqueo de edición:
+ * cuadrantes históricos y correcciones pueden cargarse con permisos.
  */
 export function isCompetitionPast(competition: Pick<Competition, "fechaFin" | "fecha">): boolean {
   const reference = competition.fechaFin || competition.fecha;

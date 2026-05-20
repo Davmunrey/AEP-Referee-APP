@@ -23,15 +23,11 @@ describe("checkRosterMutationAllowed", () => {
     if (!r.ok) expect(r.status).toBe(403);
   });
 
-  it("423 when competition is past", () => {
+  it("allows past competitions for historical corrections", () => {
     const r = checkRosterMutationAllowed(
       { fecha: "2020-01-01", fechaFin: "2020-01-02" },
       true,
     );
-    expect(r.ok).toBe(false);
-    if (!r.ok) {
-      expect(r.status).toBe(423);
-      expect(r.error).toContain("solo lectura");
-    }
+    expect(r).toEqual({ ok: true });
   });
 });

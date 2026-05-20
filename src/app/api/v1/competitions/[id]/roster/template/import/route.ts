@@ -17,7 +17,7 @@ interface RouteContext {
 }
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 120;
 
 /**
  * Importa un horario AEP en PDF y devuelve la plantilla generada (`RosterSession[]`).
