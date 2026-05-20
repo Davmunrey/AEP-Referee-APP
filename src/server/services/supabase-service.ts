@@ -1,4 +1,4 @@
-import { countOpenSlots, validateAssignment } from "@/lib/roster-rules";
+import { countOpenSlots, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
@@ -832,19 +832,9 @@ export const supabaseDataService = {
 
     const supabase = db();
     const assignments = await loadAssignments(competitionId);
-    // El juez puede estar en varias sesiones; solo se libera su slot previo
-    // dentro de la MISMA sesión.
-    const session = slotKey.split("_")[0];
-    for (const key of Object.keys(assignments)) {
-      if (assignments[key] === refereeId && key.split("_")[0] === session) {
-        await supabase
-          .from("roster_assignments")
-          .delete()
-          .eq("competition_id", competitionId)
-          .eq("slot_key", key);
-        delete assignments[key];
-      }
-    }
+    const template = (await getCompetitionTemplate(competitionId)) ?? [];
+    const operation = validateRosterOperation({ template, assignments, slotKey, refereeId });
+    if (!operation.ok) return { error: operation.error };
     const existingFlags = await loadFlags(competitionId);
     const flagPayload =
       slotFlags && (slotFlags.compartido || slotFlags.intercambio)

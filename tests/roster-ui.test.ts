@@ -5,6 +5,7 @@ import {
   countRosterSlots,
   findRegulationViolation,
   getAssignabilityReason,
+  getRecommendationWarning,
 } from "@/lib/roster-ui";
 import type { Referee, RegulationRule, RosterSession } from "@/lib/types";
 
@@ -12,7 +13,7 @@ const template: RosterSession[] = [
   {
     sesion: "S1",
     dia: "Día 1",
-    roles: [{ rol: "Central", slots: 1, key: "central" }],
+    roles: [{ rol: "Jurado", slots: 1, key: "jurado" }],
     pesajeRoles: [],
   },
 ];
@@ -30,9 +31,9 @@ const referee: Referee = {
 
 const regulations: RegulationRule[] = [
   {
-    rol: "Central",
-    roleKey: "central",
-    minLevel: "Nacional",
+    rol: "Jurado",
+    roleKey: "jurado",
+    minLevel: "IPF Cat. 2",
     eventTypes: ["AEP-1"],
   },
 ];
@@ -44,11 +45,11 @@ describe("roster-ui", () => {
   });
 
   it("detects regulation violation", () => {
-    const rule = findRegulationViolation("central", "AEP-1", "Regional", regulations);
-    expect(rule?.minLevel).toBe("Nacional");
+    const rule = findRegulationViolation("jurado", "AEP-1", "Regional", regulations);
+    expect(rule?.minLevel).toBe("IPF Cat. 2");
   });
 
-  it("getAssignabilityReason returns normativa message", () => {
+  it("getAssignabilityReason ignores level warnings", () => {
     const nacional: Referee = { ...referee, nivel: "Nacional" };
     const juradoRegs: RegulationRule[] = [
       {
@@ -59,13 +60,16 @@ describe("roster-ui", () => {
       },
     ];
     const reason = getAssignabilityReason(nacional, "jurado", "AEP-1", juradoRegs);
-    expect(reason).toContain("Normativa");
+    expect(reason).toBeNull();
+    expect(getRecommendationWarning(nacional, "jurado", "AEP-1", juradoRegs)).toContain(
+      "Recomendado",
+    );
   });
 
   it("countRegulationViolations tallies assigned slots below min level", () => {
     const count = countRegulationViolations(
       template,
-      { S1_central_0: "r1" },
+      { S1_jurado_0: "r1" },
       "AEP-1",
       () => "Regional",
       regulations,

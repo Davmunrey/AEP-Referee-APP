@@ -1,4 +1,8 @@
-import { validateAssignment } from "@/lib/roster-rules";
+import {
+  isBelowRecommendedLevel,
+  validateAssignment,
+  validateRosterOperation,
+} from "@/lib/roster-rules";
 import type {
   AssignmentsMap,
   EventType,
@@ -21,6 +25,7 @@ export function findRegulationViolation(
   nivel: RefereeLevel,
   regulations: RegulationRule[],
 ): RegulationRule | undefined {
+  if (roleKey !== "jurado") return undefined;
   return regulations.find(
     (r) =>
       r.roleKey === roleKey &&
@@ -36,11 +41,32 @@ export function getAssignabilityReason(
   eventType: EventType,
   regulations: RegulationRule[],
 ): string | null {
+  void regulations;
   const base = validateAssignment(referee, roleKey, eventType);
   if (!base.ok) return base.error ?? "No se puede asignar";
-  const reg = findRegulationViolation(roleKey, eventType, referee.nivel, regulations);
-  if (reg) return `Normativa: mínimo ${reg.minLevel} (${reg.rol})`;
   return null;
+}
+
+export function getRecommendationWarning(
+  referee: Referee,
+  roleKey: RoleKey,
+  eventType: EventType,
+  regulations: RegulationRule[],
+): string | null {
+  const reg = findRegulationViolation(roleKey, eventType, referee.nivel, regulations);
+  if (reg) return `Recomendado ${reg.minLevel} para ${reg.rol}`;
+  if (isBelowRecommendedLevel(referee.nivel, roleKey)) return "Recomendado IPF Cat. para jurado";
+  return null;
+}
+
+export function getOperationalBlockReason(input: {
+  template: RosterSession[];
+  assignments: AssignmentsMap;
+  slotKey: string;
+  refereeId: string;
+}): string | null {
+  const validation = validateRosterOperation(input);
+  return validation.ok ? null : validation.error ?? "No se puede asignar";
 }
 
 export function countRosterSlots(template: RosterSession[]): number {

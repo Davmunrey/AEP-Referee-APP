@@ -2,9 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   minLevelForRole,
   validateAssignment,
+  validateRosterOperation,
   countOpenSlots,
 } from "@/lib/roster-rules";
-import type { Referee } from "@/lib/types";
+import type { Referee, RosterSession } from "@/lib/types";
 
 function referee(over: Partial<Referee> = {}): Referee {
   return {
@@ -22,22 +23,14 @@ function referee(over: Partial<Referee> = {}): Referee {
 }
 
 describe("minLevelForRole", () => {
-  it("requires Nacional for central/lateral in non-AEP-1 events", () => {
+  it("does not require category level for central/lateral", () => {
     expect(minLevelForRole("central", "AEP-2")).toBe("Nacional");
     expect(minLevelForRole("lateral", "AEP-3")).toBe("Nacional");
   });
 
-  it("requires Regional for jurado in non-AEP-1 events", () => {
-    expect(minLevelForRole("jurado", "AEP-2")).toBe("Regional");
-  });
-
-  it("escalates central/lateral to IPF Cat. 2 for AEP-1 events", () => {
-    expect(minLevelForRole("central", "AEP-1")).toBe("IPF Cat. 2");
-    expect(minLevelForRole("lateral", "AEP-1")).toBe("IPF Cat. 2");
-  });
-
-  it("escalates jurado to Nacional for AEP-1 events", () => {
-    expect(minLevelForRole("jurado", "AEP-1")).toBe("Nacional");
+  it("recommends IPF Cat. 2 for jurado", () => {
+    expect(minLevelForRole("jurado", "AEP-2")).toBe("IPF Cat. 2");
+    expect(minLevelForRole("jurado", "AEP-1")).toBe("IPF Cat. 2");
   });
 
   it("defaults non-judging roles to Regional", () => {
@@ -69,14 +62,9 @@ describe("validateAssignment", () => {
     expect(v).toHaveProperty("error", "El juez no está disponible");
   });
 
-  it("rejects a referee below the role's minimum level", () => {
+  it("does not reject a referee below the role's recommended level", () => {
     const v = validateAssignment(referee({ nivel: "Regional" }), "central", "AEP-2");
-    expect(v.ok).toBe(false);
-    if (!v.ok) {
-      expect(v.error).toContain("Nivel mínimo");
-      expect(v.error).toContain("Nacional");
-      expect(v.error).toContain("Regional");
-    }
+    expect(v.ok).toBe(true);
   });
 
   it("accepts a referee meeting the exact minimum level", () => {
@@ -89,9 +77,8 @@ describe("validateAssignment", () => {
     expect(v.ok).toBe(true);
   });
 
-  it("enforces the stricter AEP-1 level requirement", () => {
-    // Nacional is fine for central in AEP-2 but not in AEP-1 (needs IPF Cat. 2).
-    expect(validateAssignment(referee({ nivel: "Nacional" }), "central", "AEP-1").ok).toBe(false);
+  it("allows Nacional in AEP-1 central because category is only a warning", () => {
+    expect(validateAssignment(referee({ nivel: "Nacional" }), "central", "AEP-1").ok).toBe(true);
     expect(validateAssignment(referee({ nivel: "IPF Cat. 2" }), "central", "AEP-1").ok).toBe(true);
   });
 
@@ -103,6 +90,70 @@ describe("validateAssignment", () => {
     );
     expect(v.ok).toBe(false);
     expect(v).toHaveProperty("error", "El juez no está activo");
+  });
+});
+
+describe("validateRosterOperation", () => {
+  const rosterTemplate: RosterSession[] = [
+    {
+      sesion: "S1",
+      nombre: "Sesión 1",
+      dia: "Viernes",
+      categorias: [],
+      horarioCompeticion: "",
+      horarioPesaje: "",
+      roles: [
+        { rol: "Juez Central", key: "central", slots: 1 },
+        { rol: "Jurado", key: "jurado", slots: 3 },
+      ],
+      pesajeRoles: [
+        { rol: "Pesaje", key: "pesaje", slots: 1 },
+        { rol: "Control Equipamiento", key: "equipamiento", slots: 1 },
+      ],
+    },
+    {
+      sesion: "S2",
+      nombre: "Sesión 2",
+      dia: "Viernes",
+      categorias: [],
+      horarioCompeticion: "",
+      horarioPesaje: "",
+      roles: [{ rol: "Juez Central", key: "central", slots: 1 }],
+      pesajeRoles: [
+        { rol: "Pesaje", key: "pesaje", slots: 1 },
+        { rol: "Control Equipamiento", key: "equipamiento", slots: 1 },
+      ],
+    },
+  ];
+
+  it("blocks same referee in same role twice in same session", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_jurado_0: "r1" },
+      slotKey: "S1_jurado_1",
+      refereeId: "r1",
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("allows same referee in different roles in same session", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_central_0: "r1" },
+      slotKey: "S1_jurado_0",
+      refereeId: "r1",
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("blocks tarima/jurado followed by next-session pesaje/material", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_jurado_0: "r1" },
+      slotKey: "S2_equipamiento_0",
+      refereeId: "r1",
+    });
+    expect(result.ok).toBe(false);
   });
 });
 

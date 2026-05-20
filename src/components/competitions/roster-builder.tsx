@@ -32,6 +32,8 @@ import {
   countRegulationViolations,
   findRegulationViolation,
   getAssignabilityReason,
+  getOperationalBlockReason,
+  getRecommendationWarning,
   type RosterWorkflowStep,
 } from "@/lib/roster-ui";
 import { cn } from "@/lib/utils";
@@ -173,28 +175,53 @@ export function RosterBuilder({
       if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) {
         return false;
       }
+      if (
+        selectedSlot &&
+        getOperationalBlockReason({
+          template,
+          assignments,
+          slotKey: selectedSlot,
+          refereeId: r.id,
+        })
+      ) {
+        return false;
+      }
       return true;
     });
     return list;
-  }, [filterZona, filterNivel, search, referees, selectedRoleKey, regulations, competition.tipo]);
+  }, [
+    assignments,
+    competition.tipo,
+    filterNivel,
+    filterZona,
+    referees,
+    regulations,
+    search,
+    selectedRoleKey,
+    selectedSlot,
+    template,
+  ]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
+    const operationalBlock = getOperationalBlockReason({
+      template,
+      assignments,
+      slotKey,
+      refereeId,
+    });
+    if (operationalBlock) {
+      setStatusMsg(operationalBlock);
+      setStatusIsError(true);
+      return;
+    }
     const snapshot = assignments;
     const session = slotKey.split("_")[0];
     const sessionTemplate = template.find((item) => item.sesion === session);
     const nextAssignments = { ...snapshot };
-    for (const key of Object.keys(nextAssignments)) {
-      if (nextAssignments[key] === refereeId && key.split("_")[0] === session) delete nextAssignments[key];
-    }
     nextAssignments[slotKey] = refereeId;
 
     setAssignments(() => {
       const next = { ...snapshot };
-      // Un juez puede estar en varias sesiones; solo se libera su slot
-      // anterior DENTRO de la misma sesión (no puede ocupar 2 a la vez).
-      for (const k of Object.keys(next)) {
-        if (next[k] === refereeId && k.split("_")[0] === session) delete next[k];
-      }
       next[slotKey] = refereeId;
       return next;
     });
@@ -683,6 +710,21 @@ export function RosterBuilder({
                         selectedRoleKey,
                         competition.tipo,
                         regulations,
+                      ) ??
+                      getOperationalBlockReason({
+                        template,
+                        assignments,
+                        slotKey: selectedSlot,
+                        refereeId: referee.id,
+                      })
+                    : null;
+                const warningReason =
+                  selectedRoleKey && !blockedReason
+                    ? getRecommendationWarning(
+                        referee,
+                        selectedRoleKey,
+                        competition.tipo,
+                        regulations,
                       )
                     : null;
                 return (
@@ -693,6 +735,7 @@ export function RosterBuilder({
                   assigned={assignedIds.has(referee.id)}
                   dragging={draggedId === referee.id}
                   blockedReason={blockedReason}
+                  warningReason={warningReason}
                   onDragStart={() => setDraggedId(referee.id)}
                   onDragEnd={() => setDraggedId(null)}
                   onClick={() => onQuickAssign(referee.id)}
@@ -867,6 +910,7 @@ function RefereeCard({
   assigned,
   dragging,
   blockedReason,
+  warningReason,
   onDragStart,
   onDragEnd,
   onClick,
@@ -879,6 +923,7 @@ function RefereeCard({
   assigned: boolean;
   dragging: boolean;
   blockedReason?: string | null;
+  warningReason?: string | null;
   onDragStart: () => void;
   onDragEnd: () => void;
   onClick: () => void;
@@ -928,6 +973,9 @@ function RefereeCard({
         </p>
         {blockedReason && (
           <p className="mt-1 text-[10px] font-medium text-warning">{blockedReason}</p>
+        )}
+        {warningReason && !blockedReason && (
+          <p className="mt-1 text-[10px] font-medium text-warning">{warningReason}</p>
         )}
       </div>
       <LevelBadge level={referee.nivel} />
