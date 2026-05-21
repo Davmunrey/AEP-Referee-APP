@@ -19,6 +19,15 @@ interface RouteContext {
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
+function parseSelectedKeys(raw: FormDataEntryValue | null): Set<string> | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const parsed = JSON.parse(raw) as unknown;
+  if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string")) {
+    throw new Error("Selección inválida");
+  }
+  return new Set(parsed);
+}
+
 /**
  * Importa un horario AEP en PDF y devuelve la plantilla generada (`RosterSession[]`).
  * `multipart/form-data` con campo `file`. Query opcional `?apply=true` para persistir
@@ -43,6 +52,13 @@ export async function POST(request: Request, context: RouteContext) {
     formData = await request.formData();
   } catch {
     return jsonError("Se esperaba multipart/form-data", 400);
+  }
+
+  let selectedKeys: Set<string> | null = null;
+  try {
+    selectedKeys = parseSelectedKeys(formData.get("selectedKeys"));
+  } catch (e) {
+    return jsonError(e instanceof Error ? e.message : "Selección inválida", 400);
   }
 
   const file = formData.get("file");
@@ -80,6 +96,9 @@ export async function POST(request: Request, context: RouteContext) {
   const parsed = parseAepHorarioText(text);
   const tipo: EventType = parsed.header.tipo ?? fileMeta.tipo ?? comp.tipo;
   const template = parsedToRosterTemplate(parsed, tipo);
+  const selectedTemplate = selectedKeys
+    ? template.filter((session) => selectedKeys.has(session.sesion))
+    : template;
 
   if (template.length === 0) {
     return jsonError("El PDF no contenía sesiones reconocibles", 422, {
@@ -98,15 +117,20 @@ export async function POST(request: Request, context: RouteContext) {
     warnings: parsed.warnings,
     tipoDetected: tipo,
     sessionCount: template.length,
+    selectedCount: selectedTemplate.length,
   };
 
   if (!apply) {
     return jsonOk({ preview, template });
   }
 
+  if (selectedTemplate.length === 0) {
+    return jsonError("Selecciona al menos una sesión para aplicar", 400, { preview });
+  }
+
   const saved = await dataService.saveCompetitionTemplate(
     competitionId,
-    template,
+    selectedTemplate,
     user.nombre,
   );
   if (!saved) return jsonError("No se pudo guardar la plantilla", 400);

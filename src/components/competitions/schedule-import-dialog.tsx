@@ -56,6 +56,7 @@ export function ScheduleImportDialog({
   const [error, setError] = useState<string | null>(null);
   const [applied, setApplied] = useState(false);
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!open) {
@@ -66,6 +67,7 @@ export function ScheduleImportDialog({
       setLoading(false);
       setApplied(false);
       setConfirmReplace(false);
+      setSelectedKeys(new Set());
     }
   }, [open]);
 
@@ -79,10 +81,12 @@ export function ScheduleImportDialog({
     setPreview(null);
     setTemplate(null);
     setConfirmReplace(false);
+    setSelectedKeys(new Set());
     try {
       const res = await api.importSchedule(competitionId, selected, false);
       setPreview(res.preview);
       setTemplate(res.template);
+      setSelectedKeys(new Set(res.template.map((session) => session.sesion)));
     } catch (e) {
       setError(formatApiError(e, "Error procesando el PDF"));
     } finally {
@@ -102,7 +106,12 @@ export function ScheduleImportDialog({
     setLoading(true);
     setError(null);
     try {
-      const res = await api.importSchedule(competitionId, file, true);
+      const res = await api.importSchedule(
+        competitionId,
+        file,
+        true,
+        [...selectedKeys],
+      );
       setApplied(true);
       await new Promise<void>((r) => setTimeout(r, 900));
       onApplied(res.template);
@@ -112,9 +121,21 @@ export function ScheduleImportDialog({
     }
   };
 
-  const slotCount = template ? countScheduleSlots(template) : 0;
+  const selectedTemplate = template
+    ? template.filter((session) => selectedKeys.has(session.sesion))
+    : [];
+  const slotCount = countScheduleSlots(selectedTemplate);
   const canApply =
-    !!template && template.length > 0 && (!needsReplaceConfirm || confirmReplace) && !applied;
+    selectedTemplate.length > 0 && (!needsReplaceConfirm || confirmReplace) && !applied;
+
+  const toggleSession = (key: string) => {
+    setSelectedKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const footer = (
     <div className="flex items-center justify-end gap-2">
@@ -179,6 +200,7 @@ export function ScheduleImportDialog({
           <TransferPreviewStats
             items={[
               { label: "Sesiones", value: preview.sessionCount, tone: "success" },
+              { label: "Seleccionadas", value: selectedTemplate.length, tone: "success" },
               { label: "Plazas", value: slotCount, tone: "success" },
               { label: "Páginas", value: preview.pages },
               { label: "Tipo", value: preview.tipoDetected },
@@ -232,6 +254,7 @@ export function ScheduleImportDialog({
             <table className="transfer-preview-table w-full text-xs">
               <thead>
                 <tr>
+                  <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Sel.</th>
                   <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Día</th>
                   <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Sesión</th>
                   <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Categorías</th>
@@ -246,6 +269,14 @@ export function ScheduleImportDialog({
                     className="transfer-row-stagger border-t border-border hover:bg-muted/40"
                     style={{ animationDelay: `${Math.min(i, 7) * 40}ms` }}
                   >
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedKeys.has(s.sesion)}
+                        onChange={() => toggleSession(s.sesion)}
+                        aria-label={`Seleccionar ${s.sesion}`}
+                      />
+                    </td>
                     <td className="px-2 py-1.5 text-foreground">{s.dia}</td>
                     <td className="px-2 py-1.5 font-medium text-foreground">{s.sesion}</td>
                     <td className="px-2 py-1.5 text-foreground">

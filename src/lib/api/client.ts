@@ -235,6 +235,7 @@ export const api = {
     competitionId: string,
     file: File,
     apply = false,
+    selectedKeys?: string[],
   ): Promise<{
     preview: {
       filename: string;
@@ -256,6 +257,7 @@ export const api = {
   }> => {
     const fd = new FormData();
     fd.append("file", file);
+    if (selectedKeys) fd.append("selectedKeys", JSON.stringify(selectedKeys));
     const path = `/competitions/${competitionId}/roster/template/import${apply ? "?apply=true" : ""}`;
     const res = await fetch(`${getApiBaseUrl()}${path}`, {
       method: "POST",

@@ -49,6 +49,7 @@
 | P2-1 | Aprobaciones inbox mejorado | Medio |
 | P2-2 | Dashboard alertas → deep link tarima | Bajo |
 | P2-3 | Ascensos / promociones polish | Bajo |
+| P2-4 | Gate producción `npm run verify` | Alto |
 
 ## P3 — Limpieza
 
@@ -64,3 +65,13 @@ Backlog P0 ejecutado en Fase 3. P1 cerrado en misma iteración. P2/P3 diferidos 
 ## Fase 4
 
 `npm test` (**142**) y `npm run build` OK. Playwright no configurado en repo.
+
+## Fase 5 — Hardening producción
+
+| ID | Ítem | Estado |
+|----|------|--------|
+| PR-1 | Script `audit:prod` para auth API, RBAC, imports preview, docs y migraciones | Done |
+| PR-2 | Script `verify` como gate único antes de push | Done |
+| PR-3 | Documento `docs/PRODUCTION-READINESS.md` con criterio 100% | Done |
+| PR-4 | E2E browser real login → tarima → export | Pendiente |
+| PR-5 | Validación Supabase remoto + backup/restore | Pendiente |
