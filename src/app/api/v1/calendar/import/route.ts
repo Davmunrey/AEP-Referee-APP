@@ -2,6 +2,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { parseAepCalendarCsv, parseAepCalendarText } from "@/lib/calendar-parser";
 import { competitionDedupKey } from "@/lib/competition-dedup";
+import { parseSelectedImportKeys } from "@/lib/import-security";
 import {
   MAX_PDF_BYTES,
   extractPdfText,
@@ -64,11 +65,7 @@ export async function POST(request: Request) {
   let selectedKeys: Set<string> | null = null;
   if (typeof selectedKeysRaw === "string" && selectedKeysRaw.trim()) {
     try {
-      const parsedKeys = JSON.parse(selectedKeysRaw);
-      if (!Array.isArray(parsedKeys) || parsedKeys.some((k) => typeof k !== "string")) {
-        return jsonError("Selección inválida", 400);
-      }
-      selectedKeys = new Set(parsedKeys);
+      selectedKeys = parseSelectedImportKeys(selectedKeysRaw);
     } catch {
       return jsonError("Selección inválida", 400);
     }

@@ -1,141 +1,54 @@
-# Componentes UI — AEP Tarima
+# Componentes
 
 ## Layout
 
-| Componente | Archivo | Uso |
-|------------|---------|-----|
-| `AppShell` | `layout/app-shell.tsx` | Sidebar + topbar + main |
-| `Sidebar` | `layout/sidebar.tsx` | Navegación; **Tarima activa** usa `activeRosterHref` (no duplica `/events`) |
-| `TopBar` | `layout/topbar.tsx` | Breadcrumbs y título de página |
-| `useEventCrumbLabel` | `layout/event-crumb-label.tsx` | Nombre del campeonato en breadcrumb (no id crudo) |
-| `PageShell` | `layout/page-shell.tsx` | Contenedor con `max-w` y padding unificado |
-| `PageHeader` | `layout/page-shell.tsx` | Eyebrow + título + descripción + slot de acciones |
+| Componente | Uso |
+|---|---|
+| `AppShell` | Shell dashboard |
+| `Sidebar` | Navegación colapsable |
+| `Topbar` | Breadcrumb y usuario |
 
-## UI genéricos (shadcn/ui)
+## Dashboard
 
-| Componente | Notas |
-|------------|-------|
-| `Button` | Variantes: default, outline, ghost, destructive. `focus-ring` y `rounded-xl` |
-| `Card` | Superficie base. Variantes `glass-panel-soft` para destacados |
-| `Input` | `focus-visible:ring-2`, borde semántico |
-| `Badge` | Colores por tipo de nivel y estado |
-| `Progress` | Barra de progreso con color dinámico |
-| `DataTable` | Tabla estructurada con head, body, row, cell, headcell |
-| `StatCard` | Tarjeta KPI con acento de color (dashboard + analytics) |
-| `StatusPill` | Indicador de estado de workflow (pendiente/aprobado/rechazado) |
-| `EmptyState` | Estado vacío con icono, título y descripción opcionales |
+| Componente | Uso |
+|---|---|
+| `DashboardLive` | Refresco |
+| `KpiCards` | KPIs |
+| `HealthGauge` | Salud operativa |
+| `InsightsPanel` | Recomendaciones |
+| `CoverageForecast` | Cobertura próxima |
+| `OperationalCalendar` | Calendario |
 
-## Transferencias de datos (`components/data-transfer/`)
+## Campeonatos/tarima
 
-Shell compartido para imports/exports (permisos y copy en `src/lib/import-export-ui.ts`):
+| Componente | Uso |
+|---|---|
+| `CompetitionsTable` | Listado |
+| `OpenRostersPanel` | Tarimas abiertas |
+| `CalendarImportDialog` | Import calendario |
+| `RosterBuilder` | Asignación |
+| `RosterTemplateEditor` | Plantilla |
+| `ScheduleImportDialog` | Horario PDF |
+| `AssignmentImportDialog` | Cuadrante PDF |
+| `ExportPreviewDialog` | Export |
+| `RosterRevisionPanel` | Revisión |
+| `RosterHistoryPanel` | Historial |
 
-| Componente | Descripción |
-|------------|-------------|
-| `TransferDialogShell` | Modal con stepper, focus trap, animación `transfer-enter` |
-| `TransferStepper` | Pasos Subir → Revisar → Aplicar |
-| `FileDropZone` | Arrastrar/soltar + selector de archivo con MIME validado |
-| `TransferPreviewStats` | KPIs de vista previa (sesiones, plazas, jueces…) |
-| `TransferWarnings` | Lista de avisos de parseo o datos |
-| `TransferResultBanner` | Resultado tras aplicar import |
-| `ExportPreviewDialog` | Vista previa TXT/CSV, copiar portapapeles, descarga blob |
-| `ScrollArea` | Área scrollable con scrollbar personalizado |
-| `Avatar` | Avatar con fallback de iniciales |
-| `DropdownMenu` | Menú desplegable (Radix) |
+## Datos
 
-## Badges de dominio AEP (`components/aep/badges.tsx`)
+| Componente | Uso |
+|---|---|
+| `TransferDialogShell` | Shell común import/export |
+| `FileDropZone` | Subida |
+| `ImportPreviewTable` | Vista previa |
 
-| Componente | Descripción |
-|------------|-------------|
-| `LevelBadge` | Nivel de jueces (Regional / Nacional / IPF Cat. 2 / IPF Cat. 1) |
-| `StatusBadge` | Estado de juez (Activo / Inactivo / Sancionado) |
-| `EventTypeBadge` | Tipo de campeonato (AEP-1 / AEP-2 / AEP-3) |
-| `EventStatusBadge` | Estado de campeonato (Completo / Incompleto / Crítico / Borrador) |
-| `ActivityTypeBadge` | Tipo de actividad en el feed (propuesta / aprobación / ascenso…) |
+## Jueces
 
-## Componentes de módulo
-
-### Dashboard
-| Componente | Descripción |
-|------------|-------------|
-| `DashboardHero` | Saludo personalizado, acciones rápidas (exportar, nuevo campeonato) |
-| `KpiCards` | Grid de 4 KPIs con tendencia y acento de color |
-| `OperationalCalendar` | Calendario mensual navegable, eventos marcados por estado |
-| `ActivityFeed` | Feed de últimas acciones (asignaciones, aprobaciones, ascensos) |
-| `EventsTable` (dashboard) | Tabla de próximos eventos con cobertura |
-| `DashboardLive` | Barra de control en vivo: auto-refresca el árbol de servidor cada 60 s, con pausa y refresco manual |
-| `HealthGauge` | Anillo SVG del índice de salud operativa 0–100 con 5 factores ponderados y delta vs. captura previa |
-| `InsightsPanel` | Recomendaciones auto-generadas, priorizadas por severidad, con enlaces de acción |
-| `CoverageForecast` | Previsión de cobertura por evento: barra de progreso y días restantes con color de riesgo |
-
-### Campeonatos
-| Componente | Descripción |
-|------------|-------------|
-| `EventsTable` (events) | Tabla completa con filtros, paginación y borrado |
-| `OpenRostersPanel` | Tarimas abiertas con enlace directo al constructor |
-| `CalendarImportDialog` | Import calendario AEP (wizard compartido) |
-| `ScheduleImportDialog` | Import horario PDF; confirmación si reemplaza plantilla |
-| `RosterStepper` | Plantilla \| Asignación \| Revisión |
-| `RosterHelpPanel` | Ayuda contextual «Cómo montar una tarima» |
-| `RosterRevisionPanel` | Resumen de huecos y violaciones antes de enviar |
-| `NewCompetitionForm` | Formulario de creación con validación de fechas y guard de unload |
-| `RosterTemplateEditor` | Editor inline de plantilla: sesiones, días, categorías, horarios, roles de pista y pesaje |
-| `RosterBuilder` | Constructor: drag & drop, flags `*`/`↑↓`, validación normativa, historial. `canEdit` desactiva edición |
-| `RosterHeaderActions` | Cabecera: cobertura, editar plantilla, borrador, exportar TXT (preview dialog), enviar aprobación |
-| `RosterHistoryPanel` | Historial de cambios (fetch lazy) |
-| `SessionBlock` | Bloque de sesión con slots y progreso |
-
-### Jueces / Jueces
-| Componente | Descripción |
-|------------|-------------|
-| `RefereesDirectory` | Directorio con filtros (zona/nivel/estado/búsqueda) y paginación |
-| `JudgesRegistryImport` | Excel «Control jueces»: upload → preview API (`apply=false`) → aplicar (`apply=true`) |
-| `NewRefereeDialog` | Modal de alta de juez (Escape/backdrop para cerrar) |
-| `RefereeEditForm` | Formulario de edición de ficha de jueces |
-| `RefereePromotionButton` | Botón + modal para solicitar ascenso (valida nivel superior) |
-| `ExamsManager` | Registro y calificación de exámenes de jueces. Reusable: acoplado a un juez (ficha) o global (`/exams`) |
-| `ReportsManager` | Subida y consulta de informes de juez (sandbox). Reusable: acoplado o global (`/reports`) |
-
-### Aprobaciones
-| Componente | Descripción |
-|------------|-------------|
-| `ApprovalsBoard` | Cola de propuestas + diff de asignaciones + revisión |
-
-### Ascensos
-| Componente | Descripción |
-|------------|-------------|
-| `PromotionsBoard` | Lista de solicitudes con acciones de revisión |
-| `NewPromotionDialog` | Modal de nueva solicitud de ascenso |
-
-### Normativa
-| Componente | Descripción |
-|------------|-------------|
-| `RegulationsView` | Tres pestañas: Guía AEP 2026, Matriz jueces, Reglamento IPF |
-| `AepGuidePanel` | Zonas geográficas 2026, estructura AEP-1/2/3, cuotas |
-| `RegulationMatrixPanel` | Tabla de nivel mínimo por rol y tipo |
-| `IpfArticleList` | Lista acordeón de artículos de un capítulo IPF con expand/collapse (auto-expandido al buscar) |
-
-### Estadísticas
-| Componente | Descripción |
-|------------|-------------|
-| `AnalyticsDashboard` | Cobertura por zona, top jueces, críticos, totales + exportar |
-
-### Administración
-| Componente | Descripción |
-|------------|-------------|
-| `UsersAdmin` | Alta/baja/activación + edición (rol, zona, nombre), búsqueda, filtros (rol/zona/estado), columna `created_at`, modal de credenciales generadas tras crear usuario (`canManageUsers`: `super_admin`, `delegado_jueces`) |
-
-### Sign-in / auth
-| Componente | Descripción |
-|------------|-------------|
-| `SignInPage` | Solo login (cuentas invitadas); enlace "¿Olvidaste tu contraseña?" → `resetPasswordForEmail` |
-
-## Accesibilidad
-
-- Todos los modales (incl. `TransferDialogShell` y `ExportPreviewDialog`) tienen `role="dialog"`, `aria-modal="true"`, `aria-labelledby` y **focus trap**
-- Animaciones de transferencia respetan `prefers-reduced-motion` (`.transfer-enter` en `globals.css`)
-- Escape y click en backdrop cierran todos los modales
-- `focus-ring` en todos los elementos interactivos (inputs, selects, botones)
-- `aria-label` en botones sin texto visible (iconos), `aria-pressed` en toggles
-- Skip link "Saltar al contenido principal" → `#main-content`
-- `htmlFor`/`id` correctos en todos los formularios (`referee-edit-form`, etc.)
-- `Empty states` descriptivos que distinguen "lista vacía" de "sin resultados con filtro"
+| Componente | Uso |
+|---|---|
+| `RefereesDirectory` | Directorio |
+| `RefereeEditForm` | Edición |
+| `ExamsManager` | Exámenes |
+| `ReportsManager` | Informes |
+| `PromotionsBoard` | Ascensos |
+| `UsersAdmin` | Usuarios |

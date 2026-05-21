@@ -1,119 +1,51 @@
-# Arquitectura — AEP Tarima
+# Arquitectura
 
-## Visión general
-
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Browser    │────▶│  Next.js 15 App  │────▶│  /api/v1/*      │
-│  (React 19) │     │ Supabase Middlew.│     │  Route Handlers │
-└─────────────┘     └──────────────────┘     └────────┬────────┘
-                                                       │
-                                              ┌────────▼────────┐
-                                              │  dataService    │
-                                              └────────┬────────┘
-                              ┌────────────────────────┴──────────────┐
-                     ┌────────▼────────┐                    ┌─────────▼───────┐
-                     │  supabase-service│                    │ memory-service  │
-                     └─────────────────┘                    └─────────────────┘
+```text
+Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
+                                      \-> memory service solo dev sin Supabase
 ```
 
 ## Capas
 
-### Presentación (`src/app`, `src/components`)
+| Capa | Ruta |
+|---|---|
+| UI server/client | `src/app`, `src/components` |
+| API | `src/app/api/v1/**/route.ts` |
+| Auth/RBAC | `src/lib/auth`, `src/lib/supabase` |
+| Dominio | `src/lib` |
+| Servicios | `src/server/services` |
+| DB | `supabase/migrations` |
+| Tests | `tests` |
 
-- **App Router** — `src/app/(dashboard)/*`
-- **Server Components** — datos vía `dataService`
-- **Client** — tarima, editor de plantilla, formularios (`"use client"`)
+## Dominio principal
 
-### API (`src/app/api/v1`)
+- `Competition`: campeonato real AEP.
+- `RosterSession`: sesión de tarima dentro de un campeonato.
+- `RosterAssignment`: juez asignado a slot.
+- `Referee`: juez.
+- `Report`: informe de juez o competición.
+- `Exam`: nuevo juez, IPF, recertificación.
+- `PromotionRequest`: ascenso.
 
-Handlers REST → `dataService`. Rutas de tarima relevantes:
+## Tarima
 
-| Ruta | Métodos |
-|------|---------|
-| `/competitions/[id]/roster` | GET |
-| `/competitions/[id]/roster/template` | PUT |
-| `/competitions/[id]/roster/flags` | PATCH |
-| `/competitions/[id]/roster/assign` | POST |
-| `/competitions/[id]/roster/clear` | POST |
-| `/competitions/[id]/roster/draft` | POST |
-| `/competitions/[id]/roster/submit` | POST |
-| `/competitions/[id]/roster/export` | GET |
-| `/competitions/[id]/roster/history` | GET |
+1. Campeonato obtiene plantilla guardada (`competitions.template`) o preset por tipo.
+2. Usuario puede importar horario PDF o editar plantilla manual.
+3. Usuario importa cuadrante PDF o asigna manual.
+4. API valida zona, rol y solapes.
+5. Borrador, historial y aprobación quedan trazados.
 
-Lista completa en [`API.md`](./API.md).
+## Imports
 
-### Servicio de datos (`src/server`)
+- Calendario anual: PDF/CSV -> preview -> selección -> crear campeonatos.
+- Horario competición: PDF -> preview sesiones -> selección -> guardar plantilla.
+- Cuadrante jueces: PDF -> preview candidatos -> selección -> asignar.
+- Registro jueces: XLSX -> preview -> upsert/replace.
 
-- **`services/index.ts`** — Supabase vs memoria según env
-- **`supabase-service.ts`** — Postgres + service role
-- **`memory-service.ts`** — desarrollo sin Supabase
-- **`db/mappers.ts`** — filas ↔ tipos TS
+## Seguridad
 
-### Dominio tarima (`src/lib`)
-
-| Módulo | Rol |
-|--------|-----|
-| `roster-template.ts` | `getPresetForEventType`, `enumerateSlotKeys`, `pruneAssignments` |
-| `roster-rules.ts` | Validación nivel mínimo |
-| `roster-export.ts` | Acta TXT con flags `*` / `↑↓` |
-| `mock-data.ts` | Presets AEP-1/2/3 de plantilla (sin datos demo de jueces/eventos) |
-| `permissions.ts` | `canCreateCompetition`, `canImportCalendar`, `canImportJudgesRegistry`, … |
-| `nav-utils.ts` | `pickActiveRosterHref` — enlace «Tarima activa» sin duplicar `/events` |
-| `calendar-from-competitions.ts` | Eventos de calendario derivados de `competitions` en BD |
-| `judges-registry/` | Parser e import del Excel «Control jueces» |
-
-## Plantilla por evento
-
-1. **Lectura:** `getCompetitionTemplate(eventId)` — si `competitions.template` es null, preset por `tipo`.
-2. **Escritura:** `saveCompetitionTemplate` — persiste JSON, ejecuta `pruneAssignments` (elimina asignaciones/flags de slots que ya no existen).
-3. **Flags:** `setSlotFlags` — actualiza `roster_assignments.flags` por `slot_key`; exige juez asignado.
-
-## RBAC
-
-| Rol | Tarima / plantilla | Aprobar | Usuarios |
-|-----|-------------------|---------|----------|
-| `super_admin` | toda federación | sí | sí |
-| `delegado_jueces` | toda federación | sí | sí |
-| `delegado_zona` | su `zona` | no | no |
-| `solo_ver` | lectura | no | no |
-
-Helpers: `src/lib/auth/session.ts` — `canEditRoster`, `canApprove`, etc.; reglas de producto en `src/lib/permissions.ts`.
-
-Primer registro → `super_admin`. Detalle: [`AUTH.md`](./AUTH.md).
-
-## Flujo de tarima
-
-1. Delegado abre `/events/[id]` — ve plantilla (guardada o preset).
-2. Opcional: **Importar PDF** desde la cabecera → `POST .../roster/template/import?apply=true`. Genera plantilla con sesiones + grupos.
-3. Opcional: **Editar plantilla** → `PUT .../roster/template`. Cancelar pide confirmación si hay cambios sin guardar.
-4. Asigna jueces → `POST .../assign`; flags → `PATCH .../flags`.
-5. Validación normativa en cliente (`roster-rules`); `violationCount` cubre `roles` + `pesajeRoles`.
-6. Borrador o **Enviar a aprobación** → `approval_proposals`.
-7. `super_admin` / `delegado_jueces` aprueban en `/approvals`.
-
-## Inteligencia del dashboard
-
-`getDashboard()` + `buildIntelligence()` — salud 0–100 e insights sin entrada manual. `health_snapshots` (004) para histórico.
-
-KPIs filtrados por zona para `delegado_zona` tanto en modo Supabase (vía `getCompetitions(user)`) como en modo memoria (`buildKpis(user)` desde la auditoría).
-
-## Validaciones clave
-
-- Nivel mínimo por rol y tipo (matriz AEP). Cubre roles de competición y de pesaje.
-- Un juez, un slot activo.
-- Solo jueces activos y disponibles en pool.
-- Rechazo de aprobación con comentario obligatorio.
-- Rechazo de ascenso con comentario obligatorio (paridad con aprobaciones).
-- Confirmación si roster incompleto al enviar.
-- `delegado_zona` no puede crear/editar jueces fuera de su zona ni mover jueces entre zonas.
-- Importar PDF: solo `application/pdf` o `application/x-pdf`, máx 5 MB.
-- Import Excel jueces: preview obligatoria (`apply=false`) antes de persistir (`apply=true`).
-- Export TXT/CSV: cliente descarga vía fetch + blob (no navegación directa a URL API).
-
-## Import / export (UI compartida)
-
-- `src/lib/import-export-ui.ts` — permisos por rol, copy diferenciado calendario vs horario, helpers MIME/stats.
-- `src/components/data-transfer/*` — shell de diálogo, stepper, drop zone, preview stats, export preview.
-- `src/lib/judges-registry/import-preview.ts` — construcción de preview para Excel maestro.
-- Admin no puede desactivar/eliminar su propia cuenta ni cambiarse el rol.
+- Middleware protege rutas privadas.
+- API privada exige `requireApiUser`.
+- Mutaciones exigen RBAC explícito.
+- Supabase cliente anon/authenticated no lee tablas sensibles por RLS.
+- Service role solo en servidor.

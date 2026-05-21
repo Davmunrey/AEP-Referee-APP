@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { hasPdfSignature } from "@/lib/import-security";
 
 const execFileAsync = promisify(execFile);
 
@@ -83,6 +84,9 @@ export async function extractPdfText(
     );
   }
   const buf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  if (!hasPdfSignature(buf)) {
+    throw new Error("Formato PDF no válido");
+  }
   const mod = (await import("pdf-parse/lib/pdf-parse.js")) as {
     default: (b: Buffer) => Promise<{ text: string; numpages: number }>;
   };

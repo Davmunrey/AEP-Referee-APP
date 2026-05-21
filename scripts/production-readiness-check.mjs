@@ -38,6 +38,9 @@ const packageJson = JSON.parse(read("package.json"));
 for (const script of ["lint", "test", "build"]) {
   if (!packageJson.scripts?.[script]) fail("PKG-01", `Falta script npm: ${script}`);
 }
+for (const script of ["audit:prod", "audit:security", "verify", "e2e"]) {
+  if (!packageJson.scripts?.[script]) fail("PKG-02", `Falta script npm: ${script}`);
+}
 
 const apiRoutes = walk(join(root, "src/app/api/v1"), (file) => file.endsWith("route.ts"));
 const publicApi = new Set([
@@ -93,7 +96,8 @@ for (const doc of [
   "docs/DATABASE.md",
   "docs/DEPLOY.md",
   "docs/GUIA-USO.md",
-  "docs/AUDIT-BACKLOG.md",
+  "docs/AUDIT.md",
+  "docs/PRODUCTION-READINESS.md",
 ]) {
   if (!exists(doc)) fail("DOC-01", `${doc} no existe`);
 }
