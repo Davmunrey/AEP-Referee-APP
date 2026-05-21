@@ -48,12 +48,28 @@ describe("judges registry maps", () => {
 });
 
 describe("parseJudgesRegistryXlsx", () => {
+  it("rejects non-xlsx input before parser work", () => {
+    const bad = new TextEncoder().encode("not an xlsx").buffer;
+    expect(() => parseJudgesRegistryXlsx(bad)).toThrow(/Formato Excel no válido/);
+  });
+
+  it("rejects oversized xlsx input", () => {
+    const bad = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00]).buffer;
+    expect(() => parseJudgesRegistryXlsx(bad, { maxBytes: 4 })).toThrow(/demasiado grande/);
+  });
+
   if (!existsSync(MASTER_XLSX)) {
     it.skip("local Control jueces.xlsx not found", () => {});
     return;
   }
 
-  const parsed = parseJudgesRegistryXlsx(readFileSync(MASTER_XLSX).buffer);
+  const localBuffer = readFileSync(MASTER_XLSX);
+  const parsed = parseJudgesRegistryXlsx(
+    localBuffer.buffer.slice(
+      localBuffer.byteOffset,
+      localBuffer.byteOffset + localBuffer.byteLength,
+    ),
+  );
 
   it("parses judges from Datos sheet", () => {
     expect(parsed.referees.length).toBeGreaterThanOrEqual(80);
