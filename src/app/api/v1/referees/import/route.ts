@@ -39,6 +39,9 @@ export async function POST(request: Request) {
 
   const filename =
     file instanceof File && file.name ? file.name : "Control jueces.xlsx";
+  if (!/\.xlsx$/i.test(filename)) {
+    return jsonError("Formato no válido. Sube Excel .xlsx", 400);
+  }
 
   const buffer = await file.arrayBuffer();
   let parsed;

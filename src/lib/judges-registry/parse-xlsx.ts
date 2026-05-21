@@ -14,6 +14,12 @@ import { excelDateToIso, parseCompetitionDateRange } from "./parse-dates";
 
 export { excelDateToIso, parseCompetitionDateRange } from "./parse-dates";
 
+const DEFAULT_MAX_XLSX_BYTES = 8 * 1024 * 1024;
+const MAX_WORKSHEETS = 12;
+const MAX_ROWS_PER_SHEET = 2000;
+const MAX_COLUMNS_PER_SHEET = 80;
+const REQUIRED_SHEET = "Datos";
+
 export interface ParsedRegistryReferee {
   excelId: number;
   id: string;
@@ -51,10 +57,38 @@ export interface ParsedJudgesRegistry {
   warnings: string[];
 }
 
+export interface ParseJudgesRegistryOptions {
+  maxBytes?: number;
+}
+
+function byteLength(buffer: ArrayBuffer): number {
+  return buffer.byteLength;
+}
+
+function assertReasonableXlsxInput(buffer: ArrayBuffer, options?: ParseJudgesRegistryOptions) {
+  const maxBytes = options?.maxBytes ?? DEFAULT_MAX_XLSX_BYTES;
+  if (byteLength(buffer) > maxBytes) {
+    throw new Error(`Excel demasiado grande: máximo ${Math.round(maxBytes / 1024 / 1024)} MB`);
+  }
+
+  const head = new Uint8Array(buffer.slice(0, 4));
+  const zipSignature = head[0] === 0x50 && head[1] === 0x4b;
+  if (!zipSignature) {
+    throw new Error("Formato Excel no válido: se esperaba .xlsx");
+  }
+}
+
 function sheetRows(wb: XLSX.WorkBook, name: string): unknown[][] {
   const ws = wb.Sheets[name];
   if (!ws) return [];
-  return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null }) as unknown[][];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null }) as unknown[][];
+  if (rows.length > MAX_ROWS_PER_SHEET) {
+    throw new Error(`Hoja «${name}» demasiado grande: máximo ${MAX_ROWS_PER_SHEET} filas`);
+  }
+  if (rows.some((row) => row.length > MAX_COLUMNS_PER_SHEET)) {
+    throw new Error(`Hoja «${name}» demasiado ancha: máximo ${MAX_COLUMNS_PER_SHEET} columnas`);
+  }
+  return rows;
 }
 
 function asString(v: unknown): string | undefined {
@@ -198,12 +232,20 @@ export function parseCampeonatos26(
   return out;
 }
 
-export function parseJudgesRegistryXlsx(buffer: ArrayBuffer): ParsedJudgesRegistry {
+export function parseJudgesRegistryXlsx(
+  buffer: ArrayBuffer,
+  options?: ParseJudgesRegistryOptions,
+): ParsedJudgesRegistry {
+  assertReasonableXlsxInput(buffer, options);
   const wb = XLSX.read(buffer, { type: "array", cellDates: true });
   const warnings: string[] = [];
 
-  if (!wb.SheetNames.includes("Datos")) {
-    warnings.push("Falta hoja «Datos»");
+  if (wb.SheetNames.length > MAX_WORKSHEETS) {
+    throw new Error(`Excel con demasiadas hojas: máximo ${MAX_WORKSHEETS}`);
+  }
+
+  if (!wb.SheetNames.includes(REQUIRED_SHEET)) {
+    throw new Error(`Falta hoja «${REQUIRED_SHEET}»`);
   }
 
   const arbitrajeById = parseArbitrajes2026Sheet(sheetRows(wb, "Arbitrajes2026"));

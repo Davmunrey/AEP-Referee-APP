@@ -76,5 +76,6 @@ Backlog P0 ejecutado en Fase 3. P1 cerrado en misma iteración. P2/P3 diferidos 
 | PR-4 | E2E browser smoke con Playwright | Done |
 | PR-5 | Validación Supabase remoto solo lectura | Done |
 | PR-6 | Backup JSON Supabase + verificación local | Done |
-| PR-7 | Restore controlado desde backup | Pendiente |
+| PR-7 | Restore dry-run desde backup contra esquema remoto | Done |
 | PR-8 | E2E completo login → tarima → export con credenciales CI | Pendiente |
+| PR-9 | Sustituir `xlsx` o mantener mitigación documentada | Done (mitigado) |

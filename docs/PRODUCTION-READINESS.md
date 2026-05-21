@@ -52,9 +52,10 @@ Requiere `.env.local` con Supabase URL, anon key y service role. Valida:
 ```bash
 npm run db:backup
 npm run db:backup:verify
+npm run db:restore:dry-run
 ```
 
-Genera JSON en `backups/` (ignorado por git) con tablas críticas. No restaura ni modifica datos.
+Genera JSON en `backups/` (ignorado por git) con tablas críticas. `restore:dry-run` valida que el backup sea restaurable contra esquema remoto sin escribir datos.
 
 ## Checks cubiertos
 
@@ -71,8 +72,8 @@ Genera JSON en `backups/` (ignorado por git) con tablas críticas. No restaura n
 - E2E browser real pendiente: login, importar calendario, importar cuadrante, asignar, exportar.
 - Parser PDF escaneado/OCR pendiente: PDFs imagen requieren motor OCR externo o preprocesado.
 - Auditoría Supabase remota pendiente: validar políticas aplicadas en proyecto, no solo migraciones locales.
-- Restore operativo pendiente: backup ya automatizable, restore destructivo requiere prueba controlada.
-- `xlsx` mantiene advisories sin fix upstream; mitigación actual: uso server-side, imports autorizados, límite tamaño. Sustituir librería si se abre import a usuarios no confiables.
+- Restore destructivo pendiente: dry-run ya existe; aplicar restore real solo en staging vacía.
+- `xlsx` mantiene advisories sin fix upstream; mitigación actual: uso server-side, imports autorizados, extensión `.xlsx`, firma ZIP, límite 8 MB, límite hojas/filas/columnas. Sustituir librería si se abre import a usuarios no confiables.
 - Advisory `next/postcss`: `npm audit fix --force` propone downgrade roto; esperar parche compatible Next 15 o mitigación upstream.
 
 ## Criterio para decir “100%”

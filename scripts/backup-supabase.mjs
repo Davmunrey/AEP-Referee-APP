@@ -95,10 +95,36 @@ function verifyBackup() {
   for (const table of tables) console.log(`${table}: ${parsed.tables[table].length}`);
 }
 
+async function restoreDryRun() {
+  requireEnv();
+  const file = process.argv[3] ?? latestBackupPath();
+  const parsed = JSON.parse(readFileSync(file, "utf8"));
+  const client = createClient(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const missing = tables.filter((table) => !Array.isArray(parsed.tables?.[table]));
+  if (missing.length) throw new Error(`Backup incompleto: ${missing.join(", ")}`);
+
+  console.log(`Restore dry-run: ${file}`);
+  for (const table of tables) {
+    const rows = parsed.tables[table];
+    const { error } = await client.from(table).select("*", { count: "exact", head: true });
+    if (error) throw new Error(`${table}: ${error.message}`);
+    const sample = rows[0];
+    if (sample && (typeof sample !== "object" || Array.isArray(sample))) {
+      throw new Error(`${table}: filas inválidas`);
+    }
+    console.log(`${table}: ${rows.length} filas listas`);
+  }
+  console.log("Restore dry-run OK. No se modificó la BD.");
+}
+
 try {
   if (mode === "create") await createBackup();
   else if (mode === "verify") verifyBackup();
-  else throw new Error("Uso: backup-supabase.mjs [create|verify] [backup.json]");
+  else if (mode === "restore-dry-run") await restoreDryRun();
+  else throw new Error("Uso: backup-supabase.mjs [create|verify|restore-dry-run] [backup.json]");
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
