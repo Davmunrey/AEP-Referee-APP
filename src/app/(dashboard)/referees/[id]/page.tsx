@@ -145,14 +145,21 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         <CardHeader className="border-b border-border-muted">
           <CardTitle className="text-sm font-semibold">Historial real de campeonatos</CardTitle>
           <p className="text-xs text-subtle-muted">
-            Fuente: asignaciones guardadas en tarimas aprobadas o en borrador.
+            Fuente: cuadrantes y asignaciones guardadas en tarima.
           </p>
         </CardHeader>
         <CardContent className="p-0">
           {competitionHistory.length === 0 ? (
-            <p className="px-5 py-6 text-sm text-subtle-muted">
-              Sin campeonatos asignados en tarima.
-            </p>
+            <div className="px-5 py-6">
+              <p className="text-sm font-medium text-foreground">
+                Sin historial detallado de tarima.
+              </p>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-subtle-muted">
+                El Excel solo aporta recuento agregado por rol. Para ver en qué campeonato,
+                sesión y puesto estuvo este juez, importa o aplica un cuadrante en su
+                competición.
+              </p>
+            </div>
           ) : (
             <div className="divide-y divide-border-muted">
               {competitionHistory.map((item) => (
