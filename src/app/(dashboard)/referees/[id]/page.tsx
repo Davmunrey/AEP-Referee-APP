@@ -159,7 +159,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                 <Link
                   key={item.competitionId}
                   href={`/competitions/${item.competitionId}`}
-                  className="grid gap-2 px-5 py-3 transition-colors hover:bg-surface-hover md:grid-cols-[minmax(0,1fr)_120px_120px]"
+                  className="grid gap-3 px-5 py-3 transition-colors hover:bg-surface-hover md:grid-cols-[minmax(0,1fr)_120px_120px]"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -169,8 +169,20 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                       </p>
                     </div>
                     <p className="mt-1 text-xs text-subtle-muted">
-                      {item.sede} · {item.roles.join(", ")}
+                      {item.sede}
                     </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {item.positions.map((position) => (
+                        <span
+                          key={position.slotKey}
+                          className="rounded-full border border-border-muted bg-surface px-2 py-1 text-[11px] font-medium text-muted-foreground"
+                        >
+                          {position.session} · {position.roleLabel} · Hueco {position.slotIndex + 1}
+                          {position.flags?.compartido ? " · *" : ""}
+                          {position.flags?.intercambio ? " · ↑↓" : ""}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <div className="font-mono text-xs text-muted-foreground md:text-right">
                     {item.fecha}

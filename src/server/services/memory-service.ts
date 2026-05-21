@@ -8,6 +8,7 @@ import { computeJudgeProfile } from "@/lib/judge-stats";
 import { formatRosterExport } from "@/lib/roster-export";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import { enumerateSlotKeys, pruneAssignments } from "@/lib/roster-template";
+import { buildRefereeCompetitionHistory } from "@/lib/referee-competition-history";
 import type {
   AnalyticsPayload,
   AppMeta,
@@ -35,7 +36,6 @@ import type {
   RosterSession,
   SessionUser,
 } from "@/lib/types";
-import { ROLE_LABELS } from "@/lib/roster-template";
 import {
   REGULATION_RULES,
   getCalendarEvents,
@@ -92,44 +92,17 @@ function validateExamLevel(
   }
 }
 
-function roleLabelFromSlot(slotKey: string): string {
-  const role = slotKey.split("_")[1] as keyof typeof ROLE_LABELS | undefined;
-  return role ? ROLE_LABELS[role] ?? role : "Rol";
-}
-
 function buildMemoryCompetitionHistory(refereeId: string): RefereeCompetitionHistoryItem[] {
   const store = getStore();
-  const byCompetition = new Map<string, { roles: Set<string>; slotCount: number }>();
+  const rows: Array<{ competitionId: string; slotKey: string; flags?: SlotFlags }> = [];
   for (const [competitionId, assignments] of store.assignments.entries()) {
+    const flags = store.slotFlags.get(competitionId) ?? {};
     for (const [slotKey, assignedRefereeId] of Object.entries(assignments)) {
       if (assignedRefereeId !== refereeId) continue;
-      const bucket = byCompetition.get(competitionId) ?? {
-        roles: new Set<string>(),
-        slotCount: 0,
-      };
-      bucket.roles.add(roleLabelFromSlot(slotKey));
-      bucket.slotCount += 1;
-      byCompetition.set(competitionId, bucket);
+      rows.push({ competitionId, slotKey, flags: flags[slotKey] });
     }
   }
-  return [...byCompetition.entries()]
-    .map(([competitionId, agg]) => {
-      const comp = store.competitions.find((c) => c.id === competitionId);
-      if (!comp) return null;
-      return {
-        competitionId,
-        competitionName: comp.nombre,
-        tipo: comp.tipo,
-        fecha: comp.fecha,
-        fechaFin: comp.fechaFin,
-        sede: comp.sede,
-        estado: comp.estado,
-        aprobacion: comp.aprobacion,
-        roles: [...agg.roles].sort((a, b) => a.localeCompare(b, "es")),
-        slotCount: agg.slotCount,
-      } satisfies RefereeCompetitionHistoryItem;
-    })
-    .filter((item): item is RefereeCompetitionHistoryItem => Boolean(item));
+  return buildRefereeCompetitionHistory(store.competitions, rows);
 }
 
 function buildKpis(user?: SessionUser): DashboardKpi[] {

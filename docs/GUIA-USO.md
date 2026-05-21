@@ -38,7 +38,8 @@ Reglas actuales:
 ## Jueces
 
 - Directorio: buscar, filtrar, abrir ficha.
-- Ficha: datos, sanciones, exámenes, informes, ascenso.
+- Ficha: datos, historial real por campeonato, sanciones, exámenes, informes, ascenso.
+- Historial real muestra competición, sesión, rol ocupado, hueco y marcas de compartido/intercambio.
 - Importar registro XLSX solo nacional.
 
 ## Informes

@@ -35,6 +35,13 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 4. API valida zona, rol y solapes.
 5. Borrador, historial y aprobación quedan trazados.
 
+## Historial de juez
+
+- Fuente única: `roster_assignments`.
+- Cada slot se interpreta como `sesion_rol_indice`.
+- La ficha de juez agrega por campeonato y conserva posiciones exactas: sesión, rol, hueco y flags de compartido/intercambio.
+- El mismo helper de dominio alimenta Supabase y memoria dev para evitar divergencias.
+
 ## Imports
 
 - Calendario anual: PDF/CSV -> preview -> selección -> crear campeonatos.

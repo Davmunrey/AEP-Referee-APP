@@ -19,6 +19,7 @@ App en beta operativa. No 100% final: queda parser OCR/cuadrantes con documentos
 | Usuarios | OK | Gestión restringida a nacional/superadmin |
 | Informes | OK | Scope por zona/nacional |
 | Exámenes/ascensos | OK | Modelo restringido a nuevos jueces, IPF, recertificación y ascensos |
+| Ficha juez | OK | Historial real por campeonato con sesión, rol, hueco y flags desde `roster_assignments` |
 
 ## Ciberseguridad
 
@@ -50,3 +51,9 @@ npm run audit:remote
 ```
 
 GitHub CI ejecuta verify, browser smoke y Supabase readiness en cada push a `main`.
+
+Últimos gates locales aplicados:
+
+- `npm run verify`: 40 rutas API, 4 rutas import, seguridad, lint, 155 tests y build Next OK.
+- `npm run e2e`: 3 tests Playwright OK en viewport 14".
+- `npm run audit:remote`: Supabase readiness OK; 15 tablas; único usuario activo permitido `davidmunozrey@gmail.com`.

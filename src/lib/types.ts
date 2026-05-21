@@ -360,7 +360,17 @@ export interface RefereeCompetitionHistoryItem {
   estado: EventStatus;
   aprobacion: string;
   roles: string[];
+  positions: RefereeCompetitionPosition[];
   slotCount: number;
+}
+
+export interface RefereeCompetitionPosition {
+  slotKey: string;
+  session: string;
+  roleKey: RoleKey;
+  roleLabel: string;
+  slotIndex: number;
+  flags?: SlotFlags;
 }
 
 export type SanctionStatus = "activa" | "cumplida" | "revocada";
