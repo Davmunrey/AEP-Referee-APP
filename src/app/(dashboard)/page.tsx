@@ -9,6 +9,7 @@ import { InsightsPanel } from "@/components/dashboard/insights-panel";
 import { SanctionsAlerts } from "@/components/dashboard/sanctions-alerts";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { OperationalCalendar } from "@/components/dashboard/operational-calendar";
+import { PriorityRadar } from "@/components/dashboard/priority-radar";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
@@ -38,21 +39,22 @@ export default async function DashboardPage() {
         <InsightsPanel insights={dashboard.insights} />
       </div>
 
-      {/* Calendar (wider) + Coverage forecast */}
+      {/* Priority radar + Coverage forecast */}
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
+        <PriorityRadar coverage={dashboard.coverage} />
+        <CoverageForecast coverage={dashboard.coverage} />
+      </div>
+
+      {/* Calendar */}
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
         <div>
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>
-        <CoverageForecast coverage={dashboard.coverage} />
-      </div>
-
-      {/* Events table (wider) + Activity feed */}
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
-        <div>
-          <CompetitionsTable competitions={dashboard.upcomingCompetitions} />
-        </div>
         <ActivityFeed activity={dashboard.activity} />
       </div>
+
+      {/* Events table */}
+      <CompetitionsTable competitions={dashboard.upcomingCompetitions} />
     </PageShell>
   );
 }
