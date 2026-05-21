@@ -17,6 +17,45 @@ El gate ejecuta:
 - `npm run test`: suite Vitest.
 - `npm run build`: build producción.
 
+## Gate browser
+
+```bash
+npm run e2e
+```
+
+Cobertura:
+
+- Usuario no autenticado redirige a `/sign-in`.
+- Login inválido muestra error claro.
+- Si existen `E2E_EMAIL` y `E2E_PASSWORD`, ejecuta smoke autenticado y verifica dashboard sin overflow horizontal en viewport Mac 14”.
+
+Instalación navegador:
+
+```bash
+npm run e2e:install
+```
+
+## Gate Supabase remoto
+
+```bash
+npm run audit:remote
+```
+
+Requiere `.env.local` con Supabase URL, anon key y service role. Valida:
+
+- Tablas críticas accesibles por service role.
+- Usuarios activos dentro de allowlist `READINESS_ALLOWED_EMAILS` (por defecto `davidmunozrey@gmail.com`).
+- Cliente anon sin sesión no puede leer filas de tablas sensibles.
+
+## Backup
+
+```bash
+npm run db:backup
+npm run db:backup:verify
+```
+
+Genera JSON en `backups/` (ignorado por git) con tablas críticas. No restaura ni modifica datos.
+
 ## Checks cubiertos
 
 - Todas las rutas `src/app/api/v1/**/route.ts` salvo login deben exigir sesión con `requireApiUser`.
@@ -32,7 +71,9 @@ El gate ejecuta:
 - E2E browser real pendiente: login, importar calendario, importar cuadrante, asignar, exportar.
 - Parser PDF escaneado/OCR pendiente: PDFs imagen requieren motor OCR externo o preprocesado.
 - Auditoría Supabase remota pendiente: validar políticas aplicadas en proyecto, no solo migraciones locales.
-- Backup/restore operativo pendiente: script probado contra dump real antes de producción.
+- Restore operativo pendiente: backup ya automatizable, restore destructivo requiere prueba controlada.
+- `xlsx` mantiene advisories sin fix upstream; mitigación actual: uso server-side, imports autorizados, límite tamaño. Sustituir librería si se abre import a usuarios no confiables.
+- Advisory `next/postcss`: `npm audit fix --force` propone downgrade roto; esperar parche compatible Next 15 o mitigación upstream.
 
 ## Criterio para decir “100%”
 
@@ -42,3 +83,5 @@ El gate ejecuta:
 - Usuario delegado_zona validado contra permisos de zona.
 - Export roster y analytics validado por usuario final.
 - Restore probado desde backup reciente.
+- `npm run e2e` OK con credenciales reales.
+- `npm run audit:remote` OK contra Supabase producción.

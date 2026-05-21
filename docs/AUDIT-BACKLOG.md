@@ -73,5 +73,8 @@ Backlog P0 ejecutado en Fase 3. P1 cerrado en misma iteración. P2/P3 diferidos 
 | PR-1 | Script `audit:prod` para auth API, RBAC, imports preview, docs y migraciones | Done |
 | PR-2 | Script `verify` como gate único antes de push | Done |
 | PR-3 | Documento `docs/PRODUCTION-READINESS.md` con criterio 100% | Done |
-| PR-4 | E2E browser real login → tarima → export | Pendiente |
-| PR-5 | Validación Supabase remoto + backup/restore | Pendiente |
+| PR-4 | E2E browser smoke con Playwright | Done |
+| PR-5 | Validación Supabase remoto solo lectura | Done |
+| PR-6 | Backup JSON Supabase + verificación local | Done |
+| PR-7 | Restore controlado desde backup | Pendiente |
+| PR-8 | E2E completo login → tarima → export con credenciales CI | Pendiente |
