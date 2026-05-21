@@ -35,24 +35,47 @@ const TIME_RE = /\d{1,2}:\d{2}\s*-\s*\d{1,2}:?\d{2}/g;
 
 const COMP_ROLE_ORDER_AEP2: RoleKey[] = [
   "central",
-  "control",
+  "speaker",
   "lateral",
   "lateral",
   "ordenador",
-  "speaker",
+  "control",
 ];
 const COMP_ROLE_ORDER_AEP1: RoleKey[] = [
   "central",
-  "control",
+  "speaker",
   "lateral",
   "lateral",
   "ordenador",
-  "speaker",
+  "control",
   "jurado",
   "jurado",
   "jurado",
 ];
-const PESAJE_ROLE_ORDER: RoleKey[] = ["pesaje", "equipamiento", "pesaje", "equipamiento"];
+const MIXED_ROLE_ORDER_AEP1: RoleKey[] = [
+  "central",
+  "speaker",
+  "lateral",
+  "lateral",
+  "ordenador",
+  "control",
+  "pesaje",
+  "equipamiento",
+  "jurado",
+  "jurado",
+  "jurado",
+];
+const MIXED_ROLE_ORDER_AEP2: RoleKey[] = [
+  "central",
+  "speaker",
+  "lateral",
+  "lateral",
+  "ordenador",
+  "control",
+  "pesaje",
+  "equipamiento",
+];
+const PESAJE_ROLE_ORDER: RoleKey[] = ["pesaje", "equipamiento"];
 
 function stripAccents(raw: string): string {
   return raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -166,6 +189,11 @@ function roleOrderForTemplate(template: RosterSession[]): RoleKey[] {
   return hasJury ? COMP_ROLE_ORDER_AEP1 : COMP_ROLE_ORDER_AEP2;
 }
 
+function mixedRoleOrderForTemplate(template: RosterSession[]): RoleKey[] {
+  const hasJury = template.some((s) => s.roles.some((r) => r.key === "jurado"));
+  return hasJury ? MIXED_ROLE_ORDER_AEP1 : MIXED_ROLE_ORDER_AEP2;
+}
+
 function splitAssignmentRegions(
   assignmentText: string,
   sessions: string[],
@@ -276,11 +304,18 @@ export function parseQuadrantAssignments(
     const colCount = sessions.length;
     if (colCount === 0) continue;
 
+    const hasPesajeLegend = /PESAJE|CONTROL\s+DE\s+EQUIPAMIENTO/i.test(block.slice(anchor));
+    const shouldUseMixedOrder = pesajeHits.length === 0 && hasPesajeLegend;
+    const effectiveCompOrder = shouldUseMixedOrder
+      ? mixedRoleOrderForTemplate(template)
+      : compOrder;
+
     compHits.forEach((hit, idx) => {
       const row = Math.floor(idx / colCount);
       const col = idx % colCount;
       const session = sessions[col] ?? sessions[0]!;
-      const roleKey = compOrder[row] ?? compOrder[compOrder.length - 1]!;
+      const roleKey =
+        effectiveCompOrder[row] ?? effectiveCompOrder[effectiveCompOrder.length - 1]!;
       const slotKey = assignSlot(template, usedSlots, session, roleKey);
       candidates.push(makeCandidate({ hit, session, roleKey, slotKey, index: idx, kind: "competicion" }));
     });
