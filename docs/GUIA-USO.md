@@ -40,6 +40,7 @@ Reglas actuales:
 - Directorio: buscar, filtrar, abrir ficha.
 - Ficha: datos, historial real por campeonato, sanciones, exámenes, informes, ascenso.
 - Historial real muestra competición, sesión, rol ocupado, hueco y marcas de compartido/intercambio.
+- Resumen Excel 2026 es agregado por rol; no sustituye al historial por campeonato.
 - Importar registro XLSX solo nacional.
 
 ## Informes

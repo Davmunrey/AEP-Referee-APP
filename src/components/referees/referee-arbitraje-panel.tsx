@@ -16,10 +16,10 @@ export function RefereeArbitrajePanel({ stats }: { stats: RefereeArbitrajeStats 
     <Card>
       <CardHeader>
         <CardTitle className="text-sm font-semibold">
-          Carga por rol 2026
+          Resumen Excel 2026
         </CardTitle>
         <p className="text-xs text-subtle-muted">
-          Plazas registradas en Excel:{" "}
+          Recuento agregado por rol, sin campeonato concreto:{" "}
           <span className="font-mono font-semibold text-foreground">{stats.total}</span>
           {stats.ipf > 0 && (
             <>
