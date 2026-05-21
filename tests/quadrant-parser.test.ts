@@ -113,4 +113,53 @@ describe("parseQuadrantAssignments", () => {
     expect(parsed.candidates).toEqual([]);
     expect(parsed.warnings.join(" ")).toContain("sin leyenda de roles");
   });
+
+  it("asigna cuadrantes AEP con bloque único según orden real de colores", () => {
+    const names = [
+      "Ana Vázquez Perez",
+      "Isa Garcia",
+      "Herminio Muedra Alarcón",
+      "Alejandro Pérez García",
+      "Yerai Vega",
+      "Ceila Alonso",
+      "Javi Ruiz",
+      "Raquel Martín Tomás",
+      "Sergio Álvarez Delgado",
+    ];
+    const parsed = parseQuadrantAssignments(
+      `
+        Página 1 de 1
+        S1
+        Hombres
+        -74kg (C) -83kg (C)
+        12:30 - 15:45
+        Ana Vázquez
+        Isa Garcia
+        Herminio Muedra
+        Alejandro Pérez
+        Yerai Vega
+        Ceila Alonso
+        Javi Ruiz
+        Raquel Martín
+        Sergio Álvarez
+        JUEZ CENTRAL SPEAKER / MESA PESAJE
+        JUEZ LATERAL JUEZ CONTROL CONTROL DE EQUIPAMIENTO
+        ORDENADOR JURADO
+      `,
+      names.map(referee),
+      template(["S1"]),
+    );
+
+    const byRef = new Map(parsed.candidates.map((c) => [c.refereeName, c.roleKey]));
+
+    expect(byRef.get("Ana Vázquez Perez")).toBe("central");
+    expect(byRef.get("Isa Garcia")).toBe("speaker");
+    expect(byRef.get("Herminio Muedra Alarcón")).toBe("lateral");
+    expect(byRef.get("Alejandro Pérez García")).toBe("lateral");
+    expect(byRef.get("Yerai Vega")).toBe("ordenador");
+    expect(byRef.get("Ceila Alonso")).toBe("control");
+    expect(byRef.get("Javi Ruiz")).toBe("pesaje");
+    expect(byRef.get("Raquel Martín Tomás")).toBe("equipamiento");
+    expect(byRef.get("Sergio Álvarez Delgado")).toBe("jurado");
+  });
 });
