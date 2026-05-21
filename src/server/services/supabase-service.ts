@@ -58,7 +58,7 @@ import {
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
 import { formatRosterExport } from "@/lib/roster-export";
-import { ROLE_LABELS } from "@/lib/roster-template";
+import { buildRefereeCompetitionHistory } from "@/lib/referee-competition-history";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assignmentsFromRows,
@@ -168,33 +168,21 @@ function validateExamLevel(
   }
 }
 
-function roleLabelFromSlot(slotKey: string): string {
-  const role = slotKey.split("_")[1] as keyof typeof ROLE_LABELS | undefined;
-  return role ? ROLE_LABELS[role] ?? role : "Rol";
-}
-
 async function loadRefereeCompetitionHistory(
   refereeId: string,
 ): Promise<RefereeCompetitionHistoryItem[]> {
   const supabase = db();
   const { data: assignmentRows } = await supabase
     .from("roster_assignments")
-    .select("competition_id, slot_key")
+    .select("competition_id, slot_key, flags")
     .eq("referee_id", refereeId);
 
-  const grouped = new Map<string, { roles: Set<string>; slotCount: number }>();
-  for (const row of assignmentRows ?? []) {
-    const competitionId = String(row.competition_id);
-    const bucket = grouped.get(competitionId) ?? {
-      roles: new Set<string>(),
-      slotCount: 0,
-    };
-    bucket.roles.add(roleLabelFromSlot(String(row.slot_key)));
-    bucket.slotCount += 1;
-    grouped.set(competitionId, bucket);
-  }
-
-  const ids = [...grouped.keys()];
+  const assignments = (assignmentRows ?? []).map((row) => ({
+    competitionId: String(row.competition_id),
+    slotKey: String(row.slot_key),
+    flags: row.flags as Record<string, unknown> | null,
+  }));
+  const ids = [...new Set(assignments.map((row) => row.competitionId))];
   if (ids.length === 0) return [];
 
   const { data: competitionRows } = await supabase
@@ -202,25 +190,21 @@ async function loadRefereeCompetitionHistory(
     .select("id, nombre, tipo, fecha, fecha_fin, sede, estado, aprobacion")
     .in("id", ids);
 
-  return (competitionRows ?? [])
-    .map((row) => {
-      const id = String(row.id);
-      const agg = grouped.get(id);
-      if (!agg) return null;
-      return {
-        competitionId: id,
-        competitionName: String(row.nombre),
-        tipo: row.tipo as Competition["tipo"],
-        fecha: String(row.fecha),
-        fechaFin: String(row.fecha_fin),
-        sede: String(row.sede),
-        estado: row.estado as Competition["estado"],
-        aprobacion: String(row.aprobacion),
-        roles: [...agg.roles].sort((a, b) => a.localeCompare(b, "es")),
-        slotCount: agg.slotCount,
-      } satisfies RefereeCompetitionHistoryItem;
-    })
-    .filter((item): item is RefereeCompetitionHistoryItem => Boolean(item));
+  const competitions = (competitionRows ?? []).map((row) => ({
+    id: String(row.id),
+    nombre: String(row.nombre),
+    tipo: row.tipo as Competition["tipo"],
+    fecha: String(row.fecha),
+    fechaFin: String(row.fecha_fin),
+    sede: String(row.sede),
+    sesiones: 0,
+    requeridos: 0,
+    confirmados: 0,
+    estado: row.estado as Competition["estado"],
+    aprobacion: String(row.aprobacion),
+  }));
+
+  return buildRefereeCompetitionHistory(competitions, assignments);
 }
 
 async function loadFlags(competitionId: string): Promise<FlagsMap> {
