@@ -1,109 +1,40 @@
-# Base de datos (Supabase Postgres)
+# Base de datos
 
-## Migraciones
+Supabase Postgres. Migraciones en `supabase/migrations`.
 
-Ejecuta en orden en el SQL Editor de Supabase (o `supabase db push`):
-
-```
-supabase/migrations/001_initial_schema.sql
-supabase/migrations/003_supabase_auth.sql
-supabase/migrations/004_health_snapshots.sql
-supabase/migrations/005_judge_management.sql
-supabase/migrations/006_roles_rebrand.sql      # user_role: super_admin, delegado_*, solo_ver
-supabase/migrations/007_rls_hardening.sql
-supabase/migrations/008_per_event_roster_template.sql
-supabase/migrations/009_geographic_zones.sql
-supabase/migrations/010_referees_registry_fields.sql
-supabase/migrations/011_invite_only_auth.sql
-```
-
-Las migraciones 004+ usan patrones idempotentes donde aplica. Sin 004/005 la app degrada con listas vacías en exámenes/informes/salud.
-
-`009` define las 8 zonas geográficas AEP 2026 (`N1`, `N2`, `CENTRO`, `MAD`, `CAT`, `LEV`, `SUR`, `CAN`). `010` añade columnas del registro Excel en `referees` (`excel_id`, licencia, localidad, etc.).
-
-## Tablas principales
+## Tablas críticas
 
 | Tabla | Uso |
-|-------|-----|
-| `zones` | Códigos de zona geográfica AEP 2026 (`N1`, `N2`, `CENTRO`, `MAD`, `CAT`, `LEV`, `SUR`, `CAN`) |
-| `profiles` | Perfil 1:1 con `auth.users` (`role`, `zona`, `activo`) |
-| `referees` | Directorio de jueces (`excel_id` único tras importación del maestro) |
-| `competitions` | Campeonatos; **`template` JSONB** — plantilla de sesiones por evento |
-| `roster_assignments` | `slot_key` → `referee_id`; **`flags` JSONB** — `{ compartido, intercambio }` |
-| `approval_proposals` | Propuestas de tarima |
+|---|---|
+| `profiles` | Usuario app + rol |
+| `referees` | Jueces |
+| `competitions` | Campeonatos + plantilla JSON |
+| `roster_assignments` | Slots asignados |
+| `approval_proposals` | Propuestas aprobación |
 | `promotion_requests` | Ascensos |
-| `activity_log` | Feed del dashboard |
-| `roster_history` | Auditoría de tarima |
-| `regulation_rules` | Normativa IPF/AEP |
-| `app_config` | JSON legacy (`roster_template`, calendario) |
-| `health_snapshots` | Bitácora de salud operativa |
-| `referee_exams` | Exámenes de jueces |
-| `referee_reports` | Informes de juez |
-
-### Columnas nuevas (008)
-
-| Columna | Tipo | Comportamiento |
-|---------|------|----------------|
-| `competitions.template` | `JSONB` nullable | `RosterSession[]`. `NULL` → preset por `tipo` en aplicación |
-| `roster_assignments.flags` | `JSONB` default `{}` | Flags por slot; solo con asignación activa |
-
-RLS en 008: sin políticas nuevas; la API usa **service role** + RBAC en handlers.
-
-## Roles (`user_role`)
-
-Definidos en `006_roles_rebrand.sql`:
-
-- `super_admin`
-- `delegado_jueces`
-- `delegado_zona`
-- `solo_ver`
+| `exams` | Exámenes |
+| `reports` | Informes |
+| `regulation_rules` | Normativa |
+| `referee_sanctions` | Sanciones |
 
 ## RLS
 
-Políticas con `public.current_profile()` para filtrar por rol y zona. Rutas `/api/v1/admin/*` y operaciones de servidor usan **service role**.
+Modelo: cliente anon/authenticated no accede directo a datos sensibles. App lee/escribe vía route handlers server-side con service role y RBAC propio.
 
-## Seed
+## Compat legacy
 
-```bash
-npm run db:seed
-```
+Migraciones iniciales conservan nombres históricos `event_*`; runtime usa `competition_*`. No reescribir historial de migraciones si producción ya las aplicó.
 
-Pobla **zonas**, **normativa** (`regulation_rules`) y referencia de preset de plantilla. **No** inserta jueces ni campeonatos ficticios. No crea usuarios auth (registro manual o `/admin/users`).
-
-### Importar registro maestro de jueces
+## Backup
 
 ```bash
-npm run db:import-judges -- "/ruta/Copia de Control jueces.xlsx"
+npm run db:backup
+npm run db:backup:verify
+npm run db:restore:dry-run
 ```
 
-Hojas: `Datos`, `Arbitrajes2026`, `Campeonatos26`. Upsert por `excel_id`. También disponible en UI: **Directorio → Importar registro**.
+Backups van a `backups/`, ignorado por git.
 
-### Limpiar datos demo legacy
+## Dev sin Supabase
 
-Si quedaron jueces seed (`j001`–`j016`) u actividad ficticia:
-
-```bash
-npm run db:cleanup-demo
-```
-
-## Backfill de plantillas (opción A)
-
-Copia presets AEP-1/2/3 en filas con `template IS NULL`:
-
-```bash
-npm run db:backfill-templates
-```
-
-Equivalente SQL (generado desde `src/lib/mock-data.ts`):
-
-```sql
-UPDATE competitions SET template = '<preset AEP-1 JSON>'::jsonb
-  WHERE tipo = 'AEP-1' AND template IS NULL;
--- idem AEP-2, AEP-3
-```
-
-Tras el backfill, la UI edita la copia persistida; el preset en código solo aplica si `template` sigue siendo `NULL`.
-
-## Desarrollo sin Supabase
-
-Sin `NEXT_PUBLIC_SUPABASE_*`, `dataService` usa `memory-service.ts`. No usar en Vercel.
+Si faltan `NEXT_PUBLIC_SUPABASE_*`, `dataService` usa memoria. No usar en producción.

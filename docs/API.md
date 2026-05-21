@@ -1,147 +1,86 @@
-# API REST — `/api/v1`
+# API `/api/v1`
 
-Base URL en local: `http://localhost:3000/api/v1`
-
-Todas las rutas (salvo `auth`) requieren sesión Supabase Auth activa (cookie `sb-*-auth-token`).
+Todas las rutas privadas usan sesión Supabase por cookie. Respuesta estándar:
 
 ```json
-{ "data": <T> }          // éxito
-{ "error": "mensaje" }   // error
+{ "data": {} }
+{ "error": "mensaje" }
 ```
 
-## Autenticación
+## Auth
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `POST` | `/auth/login` | Login email/contraseña |
-| `POST` | `/auth/logout` | Cierra sesión |
-| `POST` | `/auth/signout` | Alias de cierre de sesión |
-| `GET` | `/auth/me` | Usuario y perfil actual |
+| Método | Ruta | Uso |
+|---|---|---|
+| `GET` | `/auth/me` | Perfil actual |
+| `POST` | `/auth/logout` | Cerrar sesión |
+| `POST` | `/auth/signout` | Alias cierre sesión |
+| `POST` | `/auth/login` | Legacy 410; login real vive en `/sign-in` |
 
-## Meta y dashboard
+## Datos base
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/meta` | Zonas, niveles y usuario actual |
-| `GET` | `/dashboard` | KPIs, salud, insights, cobertura, calendario, actividad |
-
-## Jueces
-
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/referees` | todos | Listado (zona filtrada para `delegado_zona`) |
-| `POST` | `/referees` | no `solo_ver` | Crear juez. `delegado_zona` solo puede crear jueces en su propia zona (validado en servidor). |
-| `GET` | `/referees/:id` | todos | Detalle |
-| `PATCH` | `/referees/:id` | no `solo_ver` | Actualizar. `delegado_zona` solo puede editar jueces de su zona y no puede moverlos a otra. |
-| `DELETE` | `/referees/:id` | `super_admin`, `delegado_jueces` | Eliminar |
-| `POST` | `/referees/import` | `canImportJudgesRegistry` | `multipart/form-data` con `file` (.xlsx). `?apply=false` (default) solo preview; `?apply=true` upsert; `?replace=true` opcional |
-
-### Importar registro de jueces (detalle)
-
-| Query | Comportamiento |
-|-------|----------------|
-| `apply=false` (default) | Vista previa — no escribe en BD |
-| `apply=true` | Aplica upsert/replace |
-| `replace=true` | Con `apply=true`, reemplaza por `excel_id` |
-
-Preview: `{ preview: { newCount, updatedCount, skippedCount, championships[], warnings[], sampleRows[] }, imported: 0, ... }`.  
-Apply: `{ preview: null, imported, updated, skipped, championships, warnings[] }`.
-
-### Informes
-
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/reports` | sesión | Listado (`?refereeId=` opcional); filtrado por zona |
-| `POST` | `/reports` | no `solo_ver` | Crear informe |
-| `PATCH` | `/reports/:id` | no `solo_ver` | Editar título, tipo, evento, contenido, adjunto |
-| `DELETE` | `/reports/:id` | `canAdminJudges` | Eliminar |
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/meta` | sesión |
+| `GET` | `/dashboard` | sesión |
+| `GET` | `/analytics` | sesión |
+| `GET` | `/analytics/export` | sesión |
+| `GET` | `/regulations` | sesión |
 
 ## Campeonatos
 
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/competitions` | todos | Listado |
-| `POST` | `/competitions` | `canEditRoster` | Crear |
-| `GET` | `/competitions/:id` | todos | Detalle |
-| `PATCH` | `/competitions/:id` | `canEditRoster` | Actualizar |
-| `DELETE` | `/competitions/:id` | `canEditRoster` | Eliminar |
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/competitions` | sesión |
+| `POST` | `/competitions` | `canEditRoster` |
+| `GET` | `/competitions/:id` | sesión |
+| `PATCH` | `/competitions/:id` | `canEditRoster` |
+| `DELETE` | `/competitions/:id` | `canEditRoster` |
+| `POST` | `/competitions/dedupe` | nacional |
+| `POST` | `/calendar/import` | `super_admin`, `delegado_jueces` |
 
-### Importar Calendario AEP
+`/calendar/import` acepta PDF/CSV, devuelve preview, y con `?apply=true` crea solo filas seleccionadas.
 
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `POST` | `/calendar/import` | `super_admin`, `delegado_jueces` | `multipart/form-data` con `file` (PDF AEP). Devuelve `{ preview }` con todas las entradas detectadas. Con `?apply=true` crea las competiciones de ámbito español (AEP-1/2/3) que no existan ya. Límite 5 MB. |
+## Tarima
 
-Filtro España aplicado: nivel ∈ {AEP1, AEP2, AEP3} y localidad/organizador no extranjeros (excluye EPF, IPF, Finland, Malta, Slovenia…). Detección de duplicados por `(nombre + fechaInicio)`. Entradas marcadas como `pendiente` se omiten al aplicar.
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/competitions/:id/roster` | sesión |
+| `PUT` | `/competitions/:id/roster/template` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/template/import` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/assignments/import` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/assign` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/clear` | `canEditRoster` |
+| `PATCH` | `/competitions/:id/roster/flags` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/draft` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/submit` | `canEditRoster` |
+| `GET` | `/competitions/:id/roster/export` | sesión |
+| `GET` | `/competitions/:id/roster/history` | sesión |
 
-### Lock por fecha
+Competiciones pasadas quedan lectura por UI y API mutadora devuelve `423`.
 
-Todas las rutas mutadoras de tarima (`PUT .../template`, `POST .../template/import`, `PATCH .../flags`, `POST .../assign|clear|draft|submit`) devuelven **`423 Locked`** si `fechaFin < hoy`. Mensaje: `"Campeonato finalizado: solo lectura"`. La UI muestra badge **«Cerrado»** y oculta los controles de edición.
+## Jueces
 
-## Tarima (roster)
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/referees` | sesión |
+| `POST` | `/referees` | no `solo_ver`; zona limitada para delegado |
+| `GET` | `/referees/:id` | sesión |
+| `PATCH` | `/referees/:id` | no `solo_ver`; zona limitada |
+| `DELETE` | `/referees/:id` | nacional |
+| `POST` | `/referees/import` | nacional |
+| `GET/POST` | `/referees/:id/sanctions` | sesión / gestor |
 
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/competitions/:id/roster` | todos | `{ template, assignments, flags }` |
-| `PUT` | `/competitions/:id/roster/template` | `canEditRoster` | `{ template: RosterSession[] }` — guarda plantilla; purga slots huérfanos |
-| `POST` | `/competitions/:id/roster/template/import` | `canEditRoster` | `multipart/form-data` con campo `file` (PDF AEP). Devuelve `{ preview, template }`. Con `?apply=true` persiste vía `saveCompetitionTemplate`. Límite 5 MB. |
-| `PATCH` | `/competitions/:id/roster/flags` | `canEditRoster` | `{ slotKey, flags: { compartido?, intercambio? } }` — requiere juez en slot |
-| `POST` | `/competitions/:id/roster/assign` | `canEditRoster` | `{ slotKey, refereeId, flags? }` |
-| `POST` | `/competitions/:id/roster/clear` | `canEditRoster` | `{ slotKey }` |
-| `POST` | `/competitions/:id/roster/draft` | `canEditRoster` | Guardar borrador + historial |
-| `POST` | `/competitions/:id/roster/submit` | `canEditRoster` | Enviar a aprobación |
-| `GET` | `/competitions/:id/roster/export` | todos | TXT del acta (UI: preview + blob vía `fetchRosterExportText`) |
-| `GET` | `/competitions/:id/roster/history` | todos | Historial de cambios |
+## Exámenes, informes, ascensos
 
-**`slotKey`:** `{sesion}_{roleKey}_{indice}` — ej. `S1_central_0`, `S1_jurado_2`.
+| Recurso | Rutas | Permiso |
+|---|---|---|
+| Exámenes | `/exams`, `/exams/:id` | gestor zona/nacional |
+| Informes | `/reports`, `/reports/:id` | zona/nacional; delete nacional |
+| Ascensos | `/promotions`, `/promotions/:id/review` | crear gestor; revisar nacional |
+| Aprobaciones | `/approvals`, `/approvals/:id/review` | revisar nacional |
 
-**Plantilla:** si `competitions.template` es `NULL`, el servicio devuelve el preset según `tipo` (AEP-1/2/3) desde `getPresetForEventType()`.
+## Seguridad import
 
-## Aprobaciones
-
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/approvals` | todos | Cola (nacional: todas; zona: su zona) |
-| `POST` | `/approvals/:id/review` | `canApprove` | `{ approve, comment? }` — comentario obligatorio al rechazar |
-
-## Ascensos
-
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/promotions` | todos | Listado (filtrado por zona para `delegado_zona`) |
-| `POST` | `/promotions` | no `solo_ver` | Solicitar ascenso |
-| `POST` | `/promotions/:id/review` | `canReviewPromotions` | `{ approve, comment? }` — **comentario obligatorio al rechazar** (paridad con aprobaciones) |
-
-## Exámenes e informes
-
-Tanto `GET /exams` como `GET /reports` aplican **scoping por zona** automáticamente: un `delegado_zona` solo ve exámenes/informes de jueces de su zona.
-
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/exams` | todos | `?refereeId=` opcional. Filtrado por zona para `delegado_zona`. |
-| `POST` | `/exams` | no `solo_ver` | Crear examen |
-| `PATCH` | `/exams/:id` | no `solo_ver` | Calificar / editar |
-| `DELETE` | `/exams/:id` | `canAdminJudges` | Eliminar |
-| `GET` | `/reports` | todos | `?refereeId=` opcional. Filtrado por zona para `delegado_zona`. |
-| `POST` | `/reports` | no `solo_ver` | Subir informe |
-| `PATCH` | `/reports/:id` | no `solo_ver` | Editar campos: `titulo`, `tipo`, `evento`, `contenido`, `adjuntoUrl` |
-| `DELETE` | `/reports/:id` | `canAdminJudges` | Eliminar |
-
-## Estadísticas y normativa
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/analytics` | Métricas de temporada |
-| `GET` | `/analytics/export` | CSV (UI: preview + blob vía `fetchAnalyticsExportText`) |
-| `GET` | `/regulations` | Matriz normativa (requiere sesión) |
-
-## Administración
-
-`canManageUsers` cubre `super_admin` y `delegado_jueces`.
-
-| Método | Ruta | Permisos | Descripción |
-|--------|------|----------|-------------|
-| `GET` | `/admin/users` | `canManageUsers` | Lista usuarios con `created_at` |
-| `POST` | `/admin/users` | `canManageUsers` | Crear usuario `{ email, password, nombre, role, zona?, rolLabel? }` |
-| `PATCH` | `/admin/users/:id` | `canManageUsers` | `{ activo?, role?, zona?, nombre?, rolLabel? }` — guards anti-self-demote |
-| `DELETE` | `/admin/users/:id` | `canManageUsers` | Eliminar (no permite borrar la propia cuenta) |
+- PDF: MIME, máximo 5 MB, firma `%PDF-`, extracción con timeout.
+- XLSX: máximo 8 MB, firma ZIP, máximo 12 hojas, 2000 filas/hoja, 80 columnas/fila.
+- Selección import: máximo 500 claves, 160 caracteres por clave.

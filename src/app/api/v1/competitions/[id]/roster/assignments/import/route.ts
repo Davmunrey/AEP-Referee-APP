@@ -1,6 +1,7 @@
 import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { parseSelectedImportKeys } from "@/lib/import-security";
 import {
   MAX_PDF_BYTES,
   extractPdfText,
@@ -15,15 +16,6 @@ interface RouteContext {
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
-
-function parseSelectedKeys(raw: FormDataEntryValue | null): Set<string> | null {
-  if (typeof raw !== "string" || !raw.trim()) return null;
-  const parsed = JSON.parse(raw) as unknown;
-  if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string")) {
-    throw new Error("Selección inválida");
-  }
-  return new Set(parsed);
-}
 
 export async function POST(request: Request, context: RouteContext) {
   const user = await requireApiUser();
@@ -45,7 +37,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   let selectedKeys: Set<string> | null = null;
   try {
-    selectedKeys = parseSelectedKeys(formData.get("selectedKeys"));
+    selectedKeys = parseSelectedImportKeys(formData.get("selectedKeys"));
   } catch (e) {
     return jsonError(e instanceof Error ? e.message : "Selección inválida", 400);
   }
