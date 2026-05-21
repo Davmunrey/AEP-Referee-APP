@@ -157,6 +157,9 @@ export interface CalendarDayEvent {
   label: string;
   tipo: EventType;
   estado: EventStatus;
+  fecha: string;
+  fechaFin: string;
+  rangePosition: "single" | "start" | "middle" | "end";
 }
 
 export interface DashboardKpi {
