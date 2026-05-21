@@ -31,13 +31,6 @@ const statusCellBg: Record<EventStatus, string> = {
   Borrador: "rgba(122,114,105,0.07)",
 };
 
-const rangeLabel: Record<CalendarDayEvent["rangePosition"], string> = {
-  single: "",
-  start: "Inicio",
-  middle: "Continúa",
-  end: "Fin",
-};
-
 function buildWeeks(year: number, month: number): { day: number; month: number; year: number }[][] {
   const firstDay = new Date(year, month, 1);
   const startOffset = (firstDay.getDay() + 6) % 7;
@@ -207,14 +200,7 @@ export function OperationalCalendar({
                       style={{ background: statusCellBg[evt.estado] }}
                       title={`${evt.label} · ${evt.fecha}${evt.fechaFin !== evt.fecha ? ` → ${evt.fechaFin}` : ""}`}
                     >
-                      <div className="flex items-center gap-1">
-                        <EventTypeBadge tipo={evt.tipo} />
-                        {rangeLabel[evt.rangePosition] ? (
-                          <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            {rangeLabel[evt.rangePosition]}
-                          </span>
-                        ) : null}
-                      </div>
+                      <EventTypeBadge tipo={evt.tipo} />
                       <p className="mt-0.5 truncate text-[10px] font-medium leading-tight text-foreground/70">
                         {evt.label}
                       </p>
