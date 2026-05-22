@@ -46,6 +46,7 @@ const apiRoutes = walk(join(root, "src/app/api/v1"), (file) => file.endsWith("ro
 const publicApi = new Set([
   "src/app/api/v1/auth/login/route.ts",
   "src/app/api/v1/auth/logout/route.ts",
+  "src/app/api/v1/auth/password/route.ts",
   "src/app/api/v1/auth/signout/route.ts",
 ]);
 

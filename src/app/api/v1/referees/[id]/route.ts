@@ -1,5 +1,6 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { Referee } from "@/lib/types";
@@ -12,6 +13,8 @@ export async function GET(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { id } = await context.params;
+  const scopeErr = await assertRefereeInUserZone(user, id);
+  if (scopeErr) return scopeErr;
   const referee = await dataService.getReferee(id);
   if (!referee) return jsonError("Juez no encontrado", 404);
   return jsonOk(referee);

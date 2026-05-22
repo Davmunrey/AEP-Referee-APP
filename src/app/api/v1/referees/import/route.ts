@@ -63,6 +63,9 @@ export async function POST(request: Request) {
   if (!apply) {
     return jsonOk({ preview: previewPayload });
   }
+  if (replace && request.headers.get("x-confirm-registry-replace") !== "true") {
+    return jsonError("Confirma explícitamente el reemplazo total del registro", 409);
+  }
 
   const result = await dataService.importJudgesRegistry(parsed, { replace });
 

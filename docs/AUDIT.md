@@ -1,6 +1,6 @@
 # QA y seguridad
 
-Fecha: 2026-05-21. Alcance: repo local + CI GitHub + flujos usuario comunes.
+Fecha: 2026-05-22. Alcance: repo local + CI GitHub + flujos usuario comunes.
 
 ## Veredicto
 
@@ -30,9 +30,15 @@ App en beta operativa. No 100% final: queda parser OCR/cuadrantes con documentos
 | RBAC mutaciones | OK, auditado por `audit:prod` |
 | RLS Supabase | OK, deny-by-default en migraciones |
 | Headers seguridad | OK: nosniff, DENY iframe, referrer policy, permissions policy, HSTS |
+| Cache API | OK: JSON API privada fuerza `Cache-Control: private, no-store` |
+| Login brute force | Mitigado: rate-limit app IP+email + Supabase Auth 429 |
+| Enumeración login | OK: mensaje genérico para cualquier fallo |
+| Sesión | Mitigado: TTL cookie 7 días; `HttpOnly` pendiente de auth server-side |
+| RBAC zona | OK: referee, roster, history/export, exams, sanctions |
+| Admin users | OK: solo `super_admin` puede tocar otro `super_admin` |
 | Secrets | OK: GitHub Secrets, no valores en repo |
 | Imports PDF | OK: MIME, tamaño, firma `%PDF-`, timeout extractor |
-| Imports XLSX | Mitigado: auth nacional, tamaño 8 MB, firma ZIP, límites hojas/filas/columnas |
+| Imports XLSX | Mitigado: auth nacional, confirmación explícita replace, tamaño 8 MB, firma ZIP, límites hojas/filas/columnas |
 | Dependencias | OK salvo `xlsx` sin fix upstream, aceptado por `audit:security` con mitigación |
 
 ## Riesgos vivos
@@ -40,7 +46,7 @@ App en beta operativa. No 100% final: queda parser OCR/cuadrantes con documentos
 - `xlsx` mantiene advisories sin versión npm segura pública. Mantener uso solo server-side y nacional. Sustituir cuando exista alternativa viable.
 - OCR depende de herramientas locales (`pdftotext`, `pdftoppm`, `swift`) y puede variar por host.
 - Falta e2e happy-path completo: importar horario, importar cuadrante, aplicar, exportar.
-- CSP estricta no activada para evitar romper Next inline scripts; pendiente hardening report-only antes de enforce.
+- CSP estricta sigue en modo report-only por Next inline scripts; pasar a enforce tras observar reportes.
 
 ## Gates obligatorios
 
@@ -54,6 +60,6 @@ GitHub CI ejecuta verify, browser smoke y Supabase readiness en cada push a `mai
 
 Últimos gates locales aplicados:
 
-- `npm run verify`: 40 rutas API, 4 rutas import, seguridad, lint, 155 tests y build Next OK.
+- `npm run verify`: 41 rutas API, 4 rutas import, seguridad, lint, 155 tests y build Next OK.
 - `npm run e2e`: 3 tests Playwright OK en viewport 14".
 - `npm run audit:remote`: Supabase readiness OK; 15 tablas; único usuario activo permitido `davidmunozrey@gmail.com`.
