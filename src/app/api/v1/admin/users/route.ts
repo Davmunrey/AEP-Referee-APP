@@ -52,6 +52,9 @@ export async function POST(request: Request) {
   if (!VALID_ROLES.includes(role)) {
     return jsonError("Rol no válido", 400);
   }
+  if (role === "super_admin" && user.role !== "super_admin") {
+    return jsonError("Solo Super Admin puede crear otro Super Admin", 403);
+  }
   if (role === "delegado_zona" && !zona) {
     return jsonError("Los delegados de zona requieren zona", 400);
   }

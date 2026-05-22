@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { getApiBaseUrl } from "@/lib/api/config";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -46,19 +47,41 @@ export default function SignInPage() {
     setError(null);
     setInfo(null);
     const supabase = createClient();
+    const emailNormalized = email.trim().toLowerCase();
 
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    if (err) {
-      setError(
-        err.message.includes("Invalid login")
-          ? "Email o contraseña incorrectos. Si crees que tu cuenta debería existir, contacta con el equipo de jueces."
-          : err.message.includes("Email not confirmed")
-            ? "Confirma tu email antes de iniciar sesión."
-            : err.message,
-      );
+    const limitRes = await fetch(`${getApiBaseUrl()}/auth/password`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "check", email: emailNormalized }),
+    });
+    if (!limitRes.ok) {
+      setError("Demasiados intentos. Espera unos minutos antes de reintentar.");
       setLoading(false);
       return;
     }
+
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: emailNormalized,
+      password,
+    });
+    if (err) {
+      await fetch(`${getApiBaseUrl()}/auth/password`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "fail", email: emailNormalized }),
+      }).catch(() => null);
+      setError("Email o contraseña incorrectos.");
+      setLoading(false);
+      return;
+    }
+    await fetch(`${getApiBaseUrl()}/auth/password`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "success", email: emailNormalized }),
+    }).catch(() => null);
     router.push("/");
     router.refresh();
   };

@@ -200,6 +200,7 @@ export const api = {
     const res = await fetch(`${getApiBaseUrl()}${path}`, {
       method: "POST",
       credentials: "include",
+      headers: replace && apply ? { "x-confirm-registry-replace": "true" } : undefined,
       body: fd,
     });
     const parsed = await parseApiResponse<JudgesRegistryImportResult>(res);

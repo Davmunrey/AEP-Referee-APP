@@ -29,6 +29,16 @@ export async function PATCH(request: Request, context: RouteContext) {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
   const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", id)
+    .maybeSingle();
+  if (!target) return jsonError("Usuario no encontrado", 404);
+  const targetRole = String(target.role ?? "");
+  if (targetRole === "super_admin" && user.role !== "super_admin") {
+    return jsonError("Solo Super Admin puede modificar a otro Super Admin", 403);
+  }
 
   const patch: Record<string, unknown> = {};
   if (typeof body.activo === "boolean") {
@@ -45,6 +55,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     // Evita que un admin se quite a sí mismo el rol super_admin.
     if (id === user.id && body.role !== "super_admin") {
       return jsonError("No puedes cambiar tu propio rol", 400);
+    }
+    if (body.role === "super_admin" && user.role !== "super_admin") {
+      return jsonError("Solo Super Admin puede asignar rol Super Admin", 403);
     }
     patch.role = body.role;
   }
@@ -78,6 +91,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return jsonError("No puedes eliminar tu propia cuenta", 400);
   }
   const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", id)
+    .maybeSingle();
+  if (!target) return jsonError("Usuario no encontrado", 404);
+  if (String(target.role ?? "") === "super_admin" && user.role !== "super_admin") {
+    return jsonError("Solo Super Admin puede eliminar a otro Super Admin", 403);
+  }
 
   // Borra el usuario de auth y verifica el resultado.
   const { error: authError } = await admin.auth.admin.deleteUser(id);

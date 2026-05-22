@@ -116,6 +116,18 @@ export async function getActiveSanction(
   return list.find((s) => isSanctionActive(s));
 }
 
+export async function getRefereeSanction(
+  sanctionId: string,
+): Promise<RefereeSanction | undefined> {
+  const supabase = db();
+  const { data } = await supabase
+    .from("referee_sanctions")
+    .select("*")
+    .eq("id", sanctionId)
+    .maybeSingle();
+  return data ? mapSanction(data as Record<string, unknown>) : undefined;
+}
+
 export async function createRefereeSanction(input: {
   refereeId: string;
   refereeName: string;

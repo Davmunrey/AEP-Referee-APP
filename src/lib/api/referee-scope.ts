@@ -14,3 +14,16 @@ export async function assertRefereeInUserZone(
   }
   return null;
 }
+
+/** 403 si delegado_zona intenta leer/actuar sobre competición fuera de su zona. */
+export async function assertCompetitionInUserZone(
+  user: SessionUser,
+  competitionId: string,
+): Promise<Response | null> {
+  if (user.role !== "delegado_zona" || !user.zona) return null;
+  const competition = await dataService.getCompetition(competitionId);
+  if (!competition || competition.zona !== user.zona) {
+    return jsonError("Sin permiso para esta competición", 403);
+  }
+  return null;
+}

@@ -13,6 +13,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
+  const visibleExam = (await dataService.getExams(undefined, user)).find((exam) => exam.id === id);
+  if (!visibleExam) return jsonError("Examen no encontrado", 404);
   const body = (await request.json().catch(() => null)) as {
     resultado?: ExamResult;
     puntuacion?: number;
@@ -41,6 +43,8 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
+  const visibleExam = (await dataService.getExams(undefined, user)).find((exam) => exam.id === id);
+  if (!visibleExam) return jsonError("Examen no encontrado", 404);
   const ok = await dataService.deleteExam(id);
   if (!ok) return jsonError("Examen no encontrado", 404);
   return jsonOk({ deleted: true });
