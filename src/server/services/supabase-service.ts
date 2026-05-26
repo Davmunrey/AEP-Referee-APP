@@ -585,13 +585,44 @@ export const supabaseDataService = {
       });
 
     if (params?.forDate) {
-      const { data: unavail } = await supabase
-        .from("referee_availability")
-        .select("referee_id")
-        .lte("fecha_inicio", params.forDate)
-        .gte("fecha_fin", params.forDate);
+      const windowEnd = new Date(params.forDate);
+      windowEnd.setDate(windowEnd.getDate() + 30);
+      const windowEndStr = windowEnd.toISOString().slice(0, 10);
+
+      const [{ data: unavail }, { data: upcomingComps }] = await Promise.all([
+        supabase
+          .from("referee_availability")
+          .select("referee_id")
+          .lte("fecha_inicio", params.forDate)
+          .gte("fecha_fin", params.forDate),
+        supabase
+          .from("competitions")
+          .select("id")
+          .gte("fecha", params.forDate)
+          .lte("fecha", windowEndStr),
+      ]);
+
       const unavailIds = new Set((unavail ?? []).map((u) => String(u.referee_id)));
-      return filtered.map((r) => ({ ...r, unavailableOnDate: unavailIds.has(r.id) }));
+      const upcomingByReferee = new Map<string, Set<string>>();
+
+      if (upcomingComps && upcomingComps.length > 0) {
+        const { data: upcomingAssignments } = await supabase
+          .from("roster_assignments")
+          .select("referee_id, competition_id")
+          .in("competition_id", upcomingComps.map((c) => (c as { id: string }).id));
+        for (const a of upcomingAssignments ?? []) {
+          const rid = String((a as { referee_id: string }).referee_id);
+          const cid = String((a as { competition_id: string }).competition_id);
+          if (!upcomingByReferee.has(rid)) upcomingByReferee.set(rid, new Set());
+          upcomingByReferee.get(rid)!.add(cid);
+        }
+      }
+
+      return filtered.map((r) => ({
+        ...r,
+        unavailableOnDate: unavailIds.has(r.id),
+        upcomingCount30d: upcomingByReferee.get(r.id)?.size ?? 0,
+      }));
     }
 
     return filtered;

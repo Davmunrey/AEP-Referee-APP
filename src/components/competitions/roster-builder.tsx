@@ -997,11 +997,24 @@ function RefereeCard({
             ✕ no disponible esta fecha
           </p>
         )}
-        {referee.eventos >= 8 && !blockedReason && !referee.unavailableOnDate && (
-          <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-            ↑ alta carga ({referee.eventos} arb.)
-          </p>
-        )}
+        {!blockedReason && !referee.unavailableOnDate && (() => {
+          const upcoming = referee.upcomingCount30d;
+          if (upcoming != null && upcoming >= 3) {
+            return (
+              <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                ↑ {upcoming} camp. próx. 30 días
+              </p>
+            );
+          }
+          if (upcoming == null && referee.eventos >= 8) {
+            return (
+              <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                ↑ alta carga ({referee.eventos} arb.)
+              </p>
+            );
+          }
+          return null;
+        })()}
       </div>
       <LevelBadge level={referee.nivel} />
       {assigned && <Check className="h-3.5 w-3.5 shrink-0 text-success" />}
