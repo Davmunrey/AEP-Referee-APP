@@ -131,7 +131,7 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
       subtitle={copy.subtitle}
       titleId="judges-import-title"
       footer={footer}
-      maxWidthClass="max-w-lg"
+      maxWidthClass="max-w-3xl"
     >
       <TransferStepper step={step} />
 
@@ -186,8 +186,11 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
                 <thead>
                   <tr>
                     <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Nombre</th>
-                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Zona</th>
                     <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Nivel</th>
+                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Zona</th>
+                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Localidad</th>
+                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Género</th>
+                    <th className="px-2 py-2 text-left font-semibold text-subtle-muted">Tel.</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -198,8 +201,11 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
                       style={{ animationDelay: `${Math.min(i, 7) * 40}ms` }}
                     >
                       <td className="px-2 py-1.5 text-foreground">{r.nombre}</td>
-                      <td className="px-2 py-1.5 text-muted-foreground">{r.zona}</td>
                       <td className="px-2 py-1.5 text-muted-foreground">{r.nivel}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{r.zona}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{r.localidad ?? "—"}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{r.genero ?? "—"}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{r.telefono ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -13,12 +13,13 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
   if (!user) redirect("/sign-in");
 
   const { id } = await params;
+  const competitionPre = await dataService.getCompetition(id);
   const [competition, roster, meta, regulations, referees] = await Promise.all([
-    dataService.getCompetition(id),
+    Promise.resolve(competitionPre),
     dataService.getRoster(id),
     dataService.getMeta(user),
     dataService.getRegulations(),
-    dataService.getReferees({ user }),
+    dataService.getReferees({ forDate: competitionPre?.fecha }),
   ]);
   if (!competition || !roster) notFound();
   if (user.role === "delegado_zona" && competition.zona !== user.zona) notFound();
@@ -32,6 +33,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       template={roster.template}
       initialAssignments={roster.assignments}
       initialFlags={roster.flags ?? {}}
+      initialCrossZoneMap={roster.crossZoneMap ?? {}}
       canEdit={canEdit}
       isPast={isPast}
       referees={referees}
@@ -39,7 +41,9 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       levels={meta.levels}
       regulations={regulations}
       defaultZonaFilter={
-        user.role === "delegado_zona" && competition.zona ? competition.zona : "TODAS"
+        user.role === "delegado_zona" && competition.zona
+          ? competition.zona
+          : "TODAS"
       }
     />
   );

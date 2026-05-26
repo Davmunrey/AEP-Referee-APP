@@ -216,6 +216,21 @@ async function loadFlags(competitionId: string): Promise<FlagsMap> {
   return flagsFromRows(data ?? []);
 }
 
+async function loadCrossZoneMap(
+  competitionId: string,
+): Promise<import("@/lib/types").CrossZoneMap> {
+  const supabase = db();
+  const { data } = await supabase
+    .from("roster_assignments")
+    .select("slot_key, cross_zone")
+    .eq("competition_id", competitionId);
+  const map: import("@/lib/types").CrossZoneMap = {};
+  for (const row of data ?? []) {
+    if (row.cross_zone) map[String(row.slot_key)] = true;
+  }
+  return map;
+}
+
 /**
  * Carga TODAS las asignaciones de roster en una sola consulta y las agrupa por
  * `competition_id` en memoria. Evita el patrón N+1 de llamar a
@@ -355,9 +370,17 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
   const active = referees.filter((r) => r.estado === "Activo").length;
   const pending = approvals.filter((a) => a.status === "pendiente").length;
   let openSlots = 0;
+  let requiredSlots = 0;
   for (const c of competitions) {
+    const tpl = normalizeCompetitionTemplate(
+      c.template as RosterSession[] | null,
+      c.tipo as Competition["tipo"],
+    );
     openSlots += openSlotsByCompetition.get(c.id) ?? 0;
+    requiredSlots += enumerateSlotKeys(tpl).length;
   }
+  const filledSlots = requiredSlots - openSlots;
+  const coveragePct = requiredSlots > 0 ? Math.round((filledSlots / requiredSlots) * 100) : 0;
   const critical = competitions.filter((c) => c.estado === "Crítico").length;
   const refereesLength = referees.length;
   const competitionsLength = competitions.length;
@@ -394,6 +417,14 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
       trend: "esperan revisión nacional",
       trendDir: "flat",
       accent: "blue",
+    },
+    {
+      label: "Cobertura Nacional",
+      value: `${coveragePct}%`,
+      sub: `${filledSlots} / ${requiredSlots} plazas`,
+      trend: coveragePct >= 80 ? "cobertura óptima" : coveragePct >= 50 ? "cobertura parcial" : "cobertura baja",
+      trendDir: coveragePct >= 80 ? "up" : coveragePct >= 50 ? "warn" : "down",
+      accent: coveragePct >= 80 ? "blue" : coveragePct >= 50 ? "yellow" : "red",
     },
   ];
 }
@@ -534,11 +565,13 @@ export const supabaseDataService = {
     estado?: string;
     q?: string;
     user?: SessionUser;
+    /** ISO date (YYYY-MM-DD) — when provided, marks referees unavailable on that date. */
+    forDate?: string;
   }): Promise<Referee[]> => {
     await expireStaleSanctions();
     const supabase = db();
     const { data } = await supabase.from("referees").select("*").order("nombre");
-    return (data ?? [])
+    const filtered = (data ?? [])
       .map((r) => mapReferee(r as Record<string, unknown>))
       .filter((r) => {
         if (params?.user?.role === "delegado_zona" && params.user.zona && r.zona !== params.user.zona) {
@@ -550,6 +583,18 @@ export const supabaseDataService = {
         if (params?.q && !r.nombre.toLowerCase().includes(params.q.toLowerCase())) return false;
         return true;
       });
+
+    if (params?.forDate) {
+      const { data: unavail } = await supabase
+        .from("referee_availability")
+        .select("referee_id")
+        .lte("fecha_inicio", params.forDate)
+        .gte("fecha_fin", params.forDate);
+      const unavailIds = new Set((unavail ?? []).map((u) => String(u.referee_id)));
+      return filtered.map((r) => ({ ...r, unavailableOnDate: unavailIds.has(r.id) }));
+    }
+
+    return filtered;
   },
 
   getReferee: async (id: string) => {
@@ -696,10 +741,16 @@ export const supabaseDataService = {
   getRoster: async (competitionId: string) => {
     if (!(await supabaseDataService.getCompetition(competitionId))) return undefined;
     const template = await getCompetitionTemplate(competitionId);
+    const [assignments, flags, crossZoneMap] = await Promise.all([
+      loadAssignments(competitionId),
+      loadFlags(competitionId),
+      loadCrossZoneMap(competitionId),
+    ]);
     return {
       template: template ?? [],
-      assignments: await loadAssignments(competitionId),
-      flags: await loadFlags(competitionId),
+      assignments,
+      flags,
+      crossZoneMap,
     };
   },
 
@@ -810,8 +861,13 @@ export const supabaseDataService = {
     refereeId: string,
     actor: string,
     slotFlags?: SlotFlags,
-  ): Promise<{ assignments?: AssignmentsMap; flags?: FlagsMap; error?: string }> => {
-    const validation = await supabaseDataService.validateAssign(competitionId, slotKey, refereeId);
+    crossZoneReason?: string,
+  ): Promise<{ assignments?: AssignmentsMap; flags?: FlagsMap; crossZoneMap?: import("@/lib/types").CrossZoneMap; error?: string }> => {
+    const [validation, comp, referee] = await Promise.all([
+      supabaseDataService.validateAssign(competitionId, slotKey, refereeId),
+      supabaseDataService.getCompetition(competitionId),
+      supabaseDataService.getReferee(refereeId),
+    ]);
     if (!validation.ok) return { error: validation.error };
 
     const supabase = db();
@@ -819,6 +875,7 @@ export const supabaseDataService = {
     const template = (await getCompetitionTemplate(competitionId)) ?? [];
     const operation = validateRosterOperation({ template, assignments, slotKey, refereeId });
     if (!operation.ok) return { error: operation.error };
+
     const existingFlags = await loadFlags(competitionId);
     const flagPayload =
       slotFlags && (slotFlags.compartido || slotFlags.intercambio)
@@ -827,11 +884,17 @@ export const supabaseDataService = {
             intercambio: Boolean(slotFlags.intercambio),
           }
         : existingFlags[slotKey] ?? {};
+
+    const isCrossZone =
+      !!comp?.zona && !!referee?.zona && comp.zona !== referee.zona;
+
     await supabase.from("roster_assignments").upsert({
       competition_id: competitionId,
       slot_key: slotKey,
       referee_id: refereeId,
       flags: flagPayload,
+      cross_zone: isCrossZone,
+      cross_zone_reason: isCrossZone ? (crossZoneReason ?? null) : null,
     });
     assignments[slotKey] = refereeId;
     await syncCompetitionCoverage(competitionId);
@@ -839,12 +902,13 @@ export const supabaseDataService = {
       competitionId,
       at: new Date().toISOString(),
       actor,
-      action: "Asignación",
-      detail: `${slotKey} → ${refereeId}`,
+      action: isCrossZone ? "Asignación cross-zona" : "Asignación",
+      detail: `${slotKey} → ${refereeId}${isCrossZone ? ` (${referee.zona})` : ""}`,
     });
     return {
       assignments: { ...assignments },
       flags: await loadFlags(competitionId),
+      crossZoneMap: await loadCrossZoneMap(competitionId),
     };
   },
 
@@ -1212,16 +1276,54 @@ export const supabaseDataService = {
       }));
     const selectedYearAgg = yearAgg.get(selectedYear);
 
+    // Cross-zone assignment stats for the selected year
+    const selectedYearCompetitionIds = competitions
+      .filter((c) => yearFromIso(c.fecha) === selectedYear)
+      .map((c) => c.id);
+
+    const { data: crossZoneRows } = selectedYearCompetitionIds.length > 0
+      ? await supabase
+          .from("roster_assignments")
+          .select("competition_id")
+          .eq("cross_zone", true)
+          .in("competition_id", selectedYearCompetitionIds)
+      : { data: [] };
+
+    const crossZoneByComp = new Map<string, number>();
+    for (const row of crossZoneRows ?? []) {
+      const id = String(row.competition_id);
+      crossZoneByComp.set(id, (crossZoneByComp.get(id) ?? 0) + 1);
+    }
+
+    const crossZoneByZone = new Map<string, number>();
+    for (const c of competitions) {
+      if (yearFromIso(c.fecha) !== selectedYear || !c.zona) continue;
+      const count = crossZoneByComp.get(c.id) ?? 0;
+      if (count > 0) crossZoneByZone.set(c.zona, (crossZoneByZone.get(c.zona) ?? 0) + count);
+    }
+
+    const totalCrossZoneSlots = [...crossZoneByZone.values()].reduce((a, n) => a + n, 0);
+    const filledForYear = selectedYearAgg?.filledSlots ?? 0;
+
+    const activityByZoneWithCrossZone = activityByZone.map((z) => ({
+      ...z,
+      crossZoneSlots: crossZoneByZone.get(z.zona) ?? 0,
+    }));
+
     return {
       availableYears: years,
       selectedYear,
       yearlyHistory,
-      activityByZone,
+      activityByZone: activityByZoneWithCrossZone,
       topReferees,
       rejectionRate,
       criticalEvents: competitions.filter(
         (c) => c.estado === "Crítico" && yearFromIso(c.fecha) === selectedYear,
       ),
+      crossZoneSummary: {
+        totalCrossZoneSlots,
+        pctOfFilledSlots: filledForYear > 0 ? Math.round((totalCrossZoneSlots / filledForYear) * 100) : 0,
+      },
       totals: {
         competitions: selectedYearAgg?.competitions ?? 0,
         criticalCompetitions: selectedYearAgg?.criticalCompetitions ?? 0,
@@ -1271,6 +1373,59 @@ export const supabaseDataService = {
   deleteReferee: async (id: string): Promise<boolean> => {
     const supabase = db();
     const { error } = await supabase.from("referees").delete().eq("id", id);
+    return !error;
+  },
+
+  getRefereeAvailability: async (refereeId: string) => {
+    const supabase = db();
+    const { data } = await supabase
+      .from("referee_availability")
+      .select("*")
+      .eq("referee_id", refereeId)
+      .order("fecha_inicio");
+    return (data ?? []).map((row) => ({
+      id: String(row.id),
+      refereeId: String(row.referee_id),
+      fechaInicio: String(row.fecha_inicio),
+      fechaFin: String(row.fecha_fin),
+      notas: row.notas ? String(row.notas) : undefined,
+      createdBy: row.created_by ? String(row.created_by) : undefined,
+      createdAt: row.created_at ? String(row.created_at) : undefined,
+    }));
+  },
+
+  addRefereeUnavailability: async (
+    refereeId: string,
+    input: { fechaInicio: string; fechaFin: string; notas?: string },
+    actor: string,
+  ) => {
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("referee_availability")
+      .insert({
+        referee_id: refereeId,
+        fecha_inicio: input.fechaInicio,
+        fecha_fin: input.fechaFin,
+        notas: input.notas ?? null,
+        created_by: actor,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return {
+      id: String(data.id),
+      refereeId: String(data.referee_id),
+      fechaInicio: String(data.fecha_inicio),
+      fechaFin: String(data.fecha_fin),
+      notas: data.notas ? String(data.notas) : undefined,
+      createdBy: data.created_by ? String(data.created_by) : undefined,
+      createdAt: data.created_at ? String(data.created_at) : undefined,
+    };
+  },
+
+  removeRefereeUnavailability: async (id: string): Promise<boolean> => {
+    const supabase = db();
+    const { error } = await supabase.from("referee_availability").delete().eq("id", id);
     return !error;
   },
 

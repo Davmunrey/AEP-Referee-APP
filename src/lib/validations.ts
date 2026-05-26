@@ -10,6 +10,7 @@ export const assignRefereeSchema = z.object({
       intercambio: z.boolean().optional(),
     })
     .optional(),
+  crossZoneReason: z.string().max(500).optional(),
 });
 
 export const clearSlotSchema = z.object({

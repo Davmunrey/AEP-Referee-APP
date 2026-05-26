@@ -43,6 +43,16 @@ import type { RefereeArbitrajeStats } from "@/lib/judges-registry/arbitraje-stat
 
 export type { RefereeArbitrajeStats };
 
+export interface RefereeUnavailabilityPeriod {
+  id: string;
+  refereeId: string;
+  fechaInicio: string;
+  fechaFin: string;
+  notas?: string;
+  createdBy?: string;
+  createdAt?: string;
+}
+
 export interface Referee {
   id: string;
   nombre: string;
@@ -67,6 +77,8 @@ export interface Referee {
   /** Etiqueta zona en Excel (ej. «2- CENTRO»); `zona` guarda el código macro canónico. */
   excelMacroZone?: string;
   arbitrajeStats?: RefereeArbitrajeStats;
+  /** Set when loading referees for a specific competition date — true if any unavailability period overlaps. */
+  unavailableOnDate?: boolean;
 }
 
 export interface JudgesRegistryImportPreview {
@@ -74,7 +86,16 @@ export interface JudgesRegistryImportPreview {
   refereeCount: number;
   competitionCount: number;
   warnings: string[];
-  sampleReferees: Array<{ nombre: string; zona: string; nivel: string }>;
+  sampleReferees: Array<{
+    nombre: string;
+    zona: string;
+    nivel: string;
+    localidad?: string;
+    telefono?: string;
+    genero?: string;
+    antiguedad?: string;
+    notas?: string;
+  }>;
   replaceRequested: boolean;
 }
 
@@ -180,6 +201,9 @@ export interface SlotFlags {
 }
 
 export type FlagsMap = Record<string, SlotFlags>;
+
+/** Mapa slot_key → true para slots asignados con juez de fuera de zona. */
+export type CrossZoneMap = Record<string, boolean>;
 
 export interface CurrentUser {
   nombre: string;
@@ -459,7 +483,14 @@ export interface AnalyticsPayload {
     filledSlots: number;
     uniqueAssignedReferees: number;
     activeReferees: number;
+    /** Slots filled by referees from another zone in competitions of this zone. */
+    crossZoneSlots?: number;
   }[];
+  /** Global cross-zone assignment summary for the selected year. */
+  crossZoneSummary?: {
+    totalCrossZoneSlots: number;
+    pctOfFilledSlots: number;
+  };
   topReferees: {
     id: string;
     nombre: string;

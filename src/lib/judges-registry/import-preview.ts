@@ -15,6 +15,11 @@ export function buildJudgesRegistryImportPreview(
       nombre: r.nombre,
       zona: r.zona,
       nivel: r.nivel,
+      localidad: r.localidad,
+      telefono: r.telefono,
+      genero: r.genero,
+      antiguedad: r.antiguedad,
+      notas: r.notas,
     })),
     replaceRequested,
   };

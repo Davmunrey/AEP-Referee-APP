@@ -19,7 +19,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import type { AnalyticsPayload } from "@/lib/types";
 import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-dialog";
 import { api } from "@/lib/api/client";
-import { AlertTriangle, CalendarRange, Download, MapPin, Trophy, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, CalendarRange, Download, MapPin, Trophy, Users } from "lucide-react";
 
 function pct(filled: number, required: number) {
   if (required <= 0) return 0;
@@ -63,6 +63,16 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         <StatCard label="Plazas abiertas" accent="red" value={data.totals.openSlots} />
         <StatCard label="Aprobaciones pendientes" accent="neutral" value={data.totals.pendingApprovals} />
       </div>
+
+      {data.crossZoneSummary && data.crossZoneSummary.totalCrossZoneSlots > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm dark:border-orange-900/40 dark:bg-orange-950/30">
+          <ArrowLeftRight className="h-4 w-4 shrink-0 text-orange-500" aria-hidden="true" />
+          <span className="text-orange-700 dark:text-orange-300">
+            <strong>{data.crossZoneSummary.totalCrossZoneSlots}</strong> plazas asignadas a jueces de otra zona este año
+            ({data.crossZoneSummary.pctOfFilledSlots}% del total cubierto)
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -119,9 +129,9 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                 <DataTableHeaderRow>
                   <DataTableHeadCell>Zona</DataTableHeadCell>
                   <DataTableHeadCell className="text-right">Camp.</DataTableHeadCell>
-                  <DataTableHeadCell className="text-right">Plazas</DataTableHeadCell>
                   <DataTableHeadCell className="text-right">Cubiertas</DataTableHeadCell>
                   <DataTableHeadCell className="text-right">Jueces</DataTableHeadCell>
+                  <DataTableHeadCell className="text-right" title="Plazas cubiertas por jueces de otra zona">⟳ Ext.</DataTableHeadCell>
                 </DataTableHeaderRow>
               </DataTableHead>
               <DataTableBody>
@@ -134,12 +144,18 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                       </div>
                     </DataTableCell>
                     <DataTableCell className="text-right">{row.competitions}</DataTableCell>
-                    <DataTableCell className="text-right">{row.requiredSlots}</DataTableCell>
                     <DataTableCell className="text-right">
-                      {row.filledSlots} ({pct(row.filledSlots, row.requiredSlots)}%)
+                      {row.filledSlots}/{row.requiredSlots} ({pct(row.filledSlots, row.requiredSlots)}%)
                     </DataTableCell>
                     <DataTableCell className="text-right">
                       {row.uniqueAssignedReferees}/{row.activeReferees}
+                    </DataTableCell>
+                    <DataTableCell className="text-right">
+                      {(row.crossZoneSlots ?? 0) > 0 ? (
+                        <span className="font-semibold text-orange-500">{row.crossZoneSlots}</span>
+                      ) : (
+                        <span className="text-subtle-muted">—</span>
+                      )}
                     </DataTableCell>
                   </DataTableRow>
                 ))}
