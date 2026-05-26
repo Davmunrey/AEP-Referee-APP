@@ -343,7 +343,7 @@ export const memoryDataService = {
   getRoster: async (
     competitionId: string,
   ): Promise<
-    { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap } | undefined
+    { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap; crossZoneMap: import("@/lib/types").CrossZoneMap } | undefined
   > => {
     if (!(await memoryDataService.getCompetition(competitionId))) return undefined;
     const store = getStore();
@@ -353,6 +353,7 @@ export const memoryDataService = {
       template: getCompetitionTemplate(competitionId),
       assignments: { ...store.assignments.get(competitionId)! },
       flags: { ...store.slotFlags.get(competitionId)! },
+      crossZoneMap: {},
     };
   },
 
@@ -828,6 +829,20 @@ export const memoryDataService = {
     store.referees.splice(idx, 1);
     return true;
   },
+
+  getRefereeAvailability: async (_refereeId: string) => [],
+  addRefereeUnavailability: async (
+    refereeId: string,
+    input: { fechaInicio: string; fechaFin: string; notas?: string },
+    _actor: string,
+  ) => ({
+    id: crypto.randomUUID(),
+    refereeId,
+    fechaInicio: input.fechaInicio,
+    fechaFin: input.fechaFin,
+    notas: input.notas,
+  }),
+  removeRefereeUnavailability: async (_id: string): Promise<boolean> => true,
 
   deleteCompetition: async (id: string): Promise<boolean> => {
     const store = getStore();

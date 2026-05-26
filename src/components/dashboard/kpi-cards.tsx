@@ -39,7 +39,7 @@ function MicroTrend({ dir }: { dir: DashboardKpi["trendDir"] }) {
 
 export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
       {kpis.map((kpi) => {
         const style = kpiAccentTokens[kpi.accent];
         return (

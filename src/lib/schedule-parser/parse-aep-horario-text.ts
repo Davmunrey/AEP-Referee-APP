@@ -7,14 +7,28 @@ import type {
   ParsedSession,
 } from "./types";
 
+/**
+ * Matches AEP weekday+date lines. Accepts:
+ *  - Full names with or without accent: "Miércoles" or "Miercoles", "Sábado" or "Sabado"
+ *  - Abbreviated: "Lun.", "Mar.", "Mié.", "Jue.", "Vie.", "Sáb.", "Dom."
+ *  - Optional comma/dot after weekday
+ *  - Day followed by " de <month> de <year>"
+ */
 const DAY_RE =
-  /^(Lunes|Martes|Miércoles|Jueves|Viernes|Sábado|Domingo),\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}$/i;
+  /^(?:Lun(?:es)?\.?|Mar(?:tes)?\.?|Mi[eé](?:r(?:coles)?)?\.?|Jue(?:ves)?\.?|Vie(?:rnes)?\.?|S[aá]b(?:ado)?\.?|Dom(?:ingo)?\.?)[,.]?\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}$/i;
 /** Acepta el resto de la línea tras los dos puntos como categoría inline. */
 const SESSION_RE = /^SESI[ÓO]N\s+(\d+)\s*:\s*(.*)$/i;
 /** Igual: el resto tras `:` puede ser la categoría del grupo (pdf-parse a veces los une). */
 const GROUP_RE = /^\*?\s*Grupo\s+(\d+)\s*:\s*(.*)$/i;
+/**
+ * Matches AEP schedule lines. Accepts:
+ *  - "Pesaje HH:MM - HH:MM / Inicio HH:MM / Fin HH:MM"
+ *  - Colons after keywords: "Pesaje: ...", "Inicio: ...", "Fin: ..."
+ *  - En-dash (–) or hyphen (-) in time ranges
+ *  - Optional spaces around separators
+ */
 const SCHEDULE_RE =
-  /Pesaje\s+(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\s*\/\s*Inicio\s+(\d{1,2}:\d{2})\s*\/\s*Fin\s+(\d{1,2}:\d{2})/i;
+  /Pesaje:?\s+(\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2})\s*[/]\s*Inicio:?\s+(\d{1,2}:\d{2})\s*[/]\s*Fin:?\s+(\d{1,2}:\d{2})/i;
 const LEV_RE = /^(\d+)\s+lev\.?$/i;
 /** Cola "N lev." al final de una línea; usado para extraer el total y limpiar la categoría. */
 const LEV_TAIL_RE = /(\d+)\s+lev\.?\s*$/i;
@@ -90,7 +104,7 @@ function extractLevTail(s: string): { text: string; total?: number } {
 }
 
 function normalizeRange(range: string): string {
-  return range.replace(/\s*-\s*/, " - ").trim();
+  return range.replace(/\s*[-–]\s*/, " - ").trim();
 }
 
 function competicionRange(inicio: string, fin: string): string {

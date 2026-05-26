@@ -5,6 +5,7 @@ import type {
   AppMeta,
   ApprovalProposal,
   AssignmentsMap,
+  CrossZoneMap,
   FlagsMap,
   SlotFlags,
   Competition,
@@ -13,6 +14,7 @@ import type {
   ExamType,
   PromotionRequest,
   Referee,
+  RefereeUnavailabilityPeriod,
   RefereeSanction,
   SanctionDurationPreset,
   RefereeExam,
@@ -63,6 +65,23 @@ export const api = {
 
   listRefereeSanctions: (refereeId: string) =>
     request<RefereeSanction[]>(`/referees/${refereeId}/sanctions`),
+
+  listRefereeAvailability: (refereeId: string) =>
+    request<{ periods: RefereeUnavailabilityPeriod[] }>(`/referees/${refereeId}/availability`),
+
+  addRefereeUnavailability: (
+    refereeId: string,
+    body: { fechaInicio: string; fechaFin: string; notas?: string },
+  ) =>
+    request<{ period: RefereeUnavailabilityPeriod }>(`/referees/${refereeId}/availability`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  removeRefereeUnavailability: (refereeId: string, periodId: string) =>
+    request<{ ok: boolean }>(`/referees/${refereeId}/availability/${periodId}`, {
+      method: "DELETE",
+    }),
 
   createRefereeSanction: (
     refereeId: string,
@@ -378,12 +397,13 @@ export const api = {
     slotKey: string,
     refereeId: string,
     flags?: SlotFlags,
+    crossZoneReason?: string,
   ) =>
-    request<{ assignments: AssignmentsMap; flags?: FlagsMap }>(
+    request<{ assignments: AssignmentsMap; flags?: FlagsMap; crossZoneMap?: CrossZoneMap }>(
       `/competitions/${competitionId}/roster/assign`,
       {
         method: "POST",
-        body: JSON.stringify({ slotKey, refereeId, flags }),
+        body: JSON.stringify({ slotKey, refereeId, flags, crossZoneReason }),
       },
     ),
 

@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type {
   AssignmentsMap,
   Competition,
+  CrossZoneMap,
   FlagsMap,
   Referee,
   RefereeLevel,
@@ -61,6 +62,7 @@ interface RosterBuilderProps {
   template: RosterSession[];
   initialAssignments: AssignmentsMap;
   initialFlags?: FlagsMap;
+  initialCrossZoneMap?: CrossZoneMap;
   canEdit?: boolean;
   /** Campeonato finalizado (`fechaFin < hoy`) — contexto histórico visual. */
   isPast?: boolean;
@@ -81,6 +83,7 @@ export function RosterBuilder({
   template: initialTemplate,
   initialAssignments,
   initialFlags = {},
+  initialCrossZoneMap = {},
   canEdit = false,
   isPast = false,
   referees,
@@ -93,6 +96,7 @@ export function RosterBuilder({
   const [template, setTemplate] = useState(initialTemplate);
   const [assignments, setAssignments] = useState(initialAssignments);
   const [flags, setFlags] = useState<FlagsMap>(initialFlags);
+  const [crossZoneMap, setCrossZoneMap] = useState<CrossZoneMap>(initialCrossZoneMap);
   const [isEditing, setIsEditing] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -171,7 +175,10 @@ export function RosterBuilder({
       if (r.estado !== "Activo" || !r.disp) return false;
       if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
-      if (search && !r.nombre.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (!r.nombre.toLowerCase().includes(q) && !(r.iniciales ?? "").toLowerCase().includes(q)) return false;
+      }
       if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) {
         return false;
       }
@@ -235,6 +242,7 @@ export function RosterBuilder({
         const res = await api.assignReferee(competition.id, slotKey, refereeId);
         setAssignments(res.assignments);
         if (res.flags) setFlags(res.flags);
+        if (res.crossZoneMap) setCrossZoneMap(res.crossZoneMap);
         setStatusMsg(null);
         setStatusIsError(false);
       } catch (err) {
@@ -736,6 +744,7 @@ export function RosterBuilder({
                   dragging={draggedId === referee.id}
                   blockedReason={blockedReason}
                   warningReason={warningReason}
+                  competitionZona={competition.zona}
                   onDragStart={() => setDraggedId(referee.id)}
                   onDragEnd={() => setDraggedId(null)}
                   onClick={() => onQuickAssign(referee.id)}
@@ -876,6 +885,7 @@ export function RosterBuilder({
                         session={activeSession}
                         assignments={assignments}
                         flags={flags}
+                        crossZoneMap={crossZoneMap}
                         getReferee={getReferee}
                         selectedSlot={selectedSlot}
                         onSelectSlot={setSelectedSlot}
@@ -911,6 +921,7 @@ function RefereeCard({
   dragging,
   blockedReason,
   warningReason,
+  competitionZona,
   onDragStart,
   onDragEnd,
   onClick,
@@ -924,6 +935,7 @@ function RefereeCard({
   dragging: boolean;
   blockedReason?: string | null;
   warningReason?: string | null;
+  competitionZona?: string;
   onDragStart: () => void;
   onDragEnd: () => void;
   onClick: () => void;
@@ -935,6 +947,7 @@ function RefereeCard({
   const topRoles = referee.arbitrajeStats
     ? topArbitrajeRoles(referee.arbitrajeStats, 2)
     : [];
+  const isFromOtherZone = !!competitionZona && referee.zona !== competitionZona;
   return (
     <li
       draggable={!locked}
@@ -965,7 +978,9 @@ function RefereeCard({
         <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-foreground">
           {referee.nombre}
         </p>
-        <p className="text-[11px] text-subtle-muted">{zoneName(zones, referee.zona)}</p>
+        <p className={cn("text-[11px]", isFromOtherZone ? "font-semibold text-orange-500" : "text-subtle-muted")}>
+          {isFromOtherZone ? `⟳ ${zoneName(zones, referee.zona)}` : zoneName(zones, referee.zona)}
+        </p>
         <p className="mt-0.5 font-mono text-[10px] text-subtle-muted">
           {referee.eventos} arb.
           {topRoles.length > 0 &&
@@ -976,6 +991,16 @@ function RefereeCard({
         )}
         {warningReason && !blockedReason && (
           <p className="mt-1 text-[10px] font-medium text-warning">{warningReason}</p>
+        )}
+        {referee.unavailableOnDate && (
+          <p className="mt-1 text-[10px] font-medium text-red-500 dark:text-red-400">
+            ✕ no disponible esta fecha
+          </p>
+        )}
+        {referee.eventos >= 8 && !blockedReason && !referee.unavailableOnDate && (
+          <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+            ↑ alta carga ({referee.eventos} arb.)
+          </p>
         )}
       </div>
       <LevelBadge level={referee.nivel} />
@@ -1144,6 +1169,7 @@ interface SlotGridProps {
   roles: RosterRole[];
   assignments: AssignmentsMap;
   flags: FlagsMap;
+  crossZoneMap?: CrossZoneMap;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -1160,6 +1186,7 @@ function SlotGrid({
   roles,
   assignments,
   flags,
+  crossZoneMap = {},
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -1200,6 +1227,7 @@ function SlotGrid({
               const isDropTarget = dragOverKey === slotKey;
               const violation = refereeId ? checkViolation(role.key, refereeId) : undefined;
               const slotFlags = flags[slotKey];
+              const isCrossZone = !!crossZoneMap[slotKey];
 
               return (
                 <div
@@ -1288,9 +1316,17 @@ function SlotGrid({
                         )}
                       </div>
 
-                      {/* Level + violation */}
+                      {/* Level + violation + cross-zone */}
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <LevelBadge level={referee.nivel} />
+                        {isCrossZone && (
+                          <span
+                            title={`Juez de fuera de zona (${referee.zona})`}
+                            className="flex items-center gap-0.5 rounded border border-orange-400/60 bg-orange-50 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 dark:bg-orange-950 dark:text-orange-400"
+                          >
+                            ⟳ {referee.zona}
+                          </span>
+                        )}
                         {violation && (
                           <span
                             title={`Mínimo ${violation.minLevel} para ${violation.rol}`}
@@ -1377,6 +1413,7 @@ function SessionBlock({
   session,
   assignments,
   flags,
+  crossZoneMap = {},
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -1391,6 +1428,7 @@ function SessionBlock({
   session: RosterSession;
   assignments: AssignmentsMap;
   flags: FlagsMap;
+  crossZoneMap?: CrossZoneMap;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -1412,6 +1450,7 @@ function SessionBlock({
     sesion: session.sesion,
     assignments,
     flags,
+    crossZoneMap,
     getReferee,
     selectedSlot,
     onSelectSlot,
