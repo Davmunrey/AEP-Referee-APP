@@ -43,16 +43,6 @@ import type { RefereeArbitrajeStats } from "@/lib/judges-registry/arbitraje-stat
 
 export type { RefereeArbitrajeStats };
 
-export interface RefereeUnavailabilityPeriod {
-  id: string;
-  refereeId: string;
-  fechaInicio: string;
-  fechaFin: string;
-  notas?: string;
-  createdBy?: string;
-  createdAt?: string;
-}
-
 export interface Referee {
   id: string;
   nombre: string;
@@ -77,10 +67,6 @@ export interface Referee {
   /** Etiqueta zona en Excel (ej. «2- CENTRO»); `zona` guarda el código macro canónico. */
   excelMacroZone?: string;
   arbitrajeStats?: RefereeArbitrajeStats;
-  /** Set when loading referees for a specific competition date — true if any unavailability period overlaps. */
-  unavailableOnDate?: boolean;
-  /** Number of distinct competitions already assigned in the 30 days from the loaded competition date. */
-  upcomingCount30d?: number;
 }
 
 export interface JudgesRegistryImportPreview {

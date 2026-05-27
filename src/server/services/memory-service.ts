@@ -830,19 +830,9 @@ export const memoryDataService = {
     return true;
   },
 
-  getRefereeAvailability: async (_refereeId: string) => [],
-  addRefereeUnavailability: async (
-    refereeId: string,
-    input: { fechaInicio: string; fechaFin: string; notas?: string },
-    _actor: string,
-  ) => ({
-    id: crypto.randomUUID(),
-    refereeId,
-    fechaInicio: input.fechaInicio,
-    fechaFin: input.fechaFin,
-    notas: input.notas,
-  }),
-  removeRefereeUnavailability: async (_id: string): Promise<boolean> => true,
+  getCompetitionAvailability: async (_competitionId: string): Promise<string[]> => [],
+  addCompetitionAvailability: async (_competitionId: string, _refereeId: string, _actor: string): Promise<void> => {},
+  removeCompetitionAvailability: async (_competitionId: string, _refereeId: string): Promise<void> => {},
 
   deleteCompetition: async (id: string): Promise<boolean> => {
     const store = getStore();

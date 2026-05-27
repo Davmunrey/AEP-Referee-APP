@@ -14,7 +14,6 @@ import type {
   ExamType,
   PromotionRequest,
   Referee,
-  RefereeUnavailabilityPeriod,
   RefereeSanction,
   SanctionDurationPreset,
   RefereeExam,
@@ -66,20 +65,17 @@ export const api = {
   listRefereeSanctions: (refereeId: string) =>
     request<RefereeSanction[]>(`/referees/${refereeId}/sanctions`),
 
-  listRefereeAvailability: (refereeId: string) =>
-    request<{ periods: RefereeUnavailabilityPeriod[] }>(`/referees/${refereeId}/availability`),
+  getCompetitionAvailability: (competitionId: string) =>
+    request<{ confirmedIds: string[] }>(`/competitions/${competitionId}/availability`),
 
-  addRefereeUnavailability: (
-    refereeId: string,
-    body: { fechaInicio: string; fechaFin: string; notas?: string },
-  ) =>
-    request<{ period: RefereeUnavailabilityPeriod }>(`/referees/${refereeId}/availability`, {
+  addCompetitionAvailability: (competitionId: string, refereeId: string) =>
+    request<{ ok: boolean }>(`/competitions/${competitionId}/availability`, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ refereeId }),
     }),
 
-  removeRefereeUnavailability: (refereeId: string, periodId: string) =>
-    request<{ ok: boolean }>(`/referees/${refereeId}/availability/${periodId}`, {
+  removeCompetitionAvailability: (competitionId: string, refereeId: string) =>
+    request<{ ok: boolean }>(`/competitions/${competitionId}/availability/${refereeId}`, {
       method: "DELETE",
     }),
 

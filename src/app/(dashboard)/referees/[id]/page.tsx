@@ -15,7 +15,6 @@ import { ArrowLeft, Pencil } from "lucide-react";
 import { redirect } from "next/navigation";
 import { RefereeArbitrajePanel } from "@/components/referees/referee-arbitraje-panel";
 import { RefereeSanctionsPanel } from "@/components/referees/referee-sanctions-panel";
-import { RefereeAvailabilityPanel } from "@/components/referees/referee-availability-panel";
 import { canManageSanctions } from "@/lib/permissions";
 import { DeleteRefereeButton } from "./delete-referee-button";
 
@@ -28,11 +27,10 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!user) redirect("/sign-in");
 
   const { id } = await params;
-  const [profile, meta, competitions, availabilityPeriods] = await Promise.all([
+  const [profile, meta, competitions] = await Promise.all([
     dataService.getJudgeProfile(id),
     dataService.getMeta(user),
     dataService.getCompetitions(user),
-    dataService.getRefereeAvailability(id),
   ]);
   if (!profile) notFound();
 
@@ -217,11 +215,6 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         />
       )}
 
-      <RefereeAvailabilityPanel
-        refereeId={referee.id}
-        initialPeriods={availabilityPeriods}
-        canEdit={canEdit}
-      />
 
       {/* Data + Trajectory two-column layout */}
       <div className="grid gap-4 lg:grid-cols-5">

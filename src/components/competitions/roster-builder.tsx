@@ -48,6 +48,7 @@ import {
   GripVertical,
   Info,
   Trash2,
+  Users,
   UsersRound,
   X,
 } from "lucide-react";
@@ -55,6 +56,7 @@ import { RosterHistoryPanel } from "@/components/competitions/roster-history-pan
 import { RosterTemplateEditor } from "@/components/competitions/roster-template-editor";
 import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
 import { QuadrantImportDialog } from "@/components/competitions/quadrant-import-dialog";
+import { CompetitionAvailabilityDialog } from "@/components/competitions/competition-availability-dialog";
 import { FileUp } from "lucide-react";
 
 interface RosterBuilderProps {
@@ -70,6 +72,8 @@ interface RosterBuilderProps {
   zones: Zone[];
   levels: RefereeLevel[];
   regulations?: RegulationRule[];
+  /** IDs de jueces que confirmaron disponibilidad para este campeonato. */
+  initialConfirmedIds?: string[];
   /** Zona por defecto en filtro de jueces (delegado_zona → su zona). */
   defaultZonaFilter?: string;
 }
@@ -90,6 +94,7 @@ export function RosterBuilder({
   zones,
   levels,
   regulations = [],
+  initialConfirmedIds = [],
   defaultZonaFilter = "TODAS",
 }: RosterBuilderProps) {
   const readOnly = !canEdit;
@@ -104,6 +109,9 @@ export function RosterBuilder({
   const [filterZona, setFilterZona] = useState(defaultZonaFilter);
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [search, setSearch] = useState("");
+  const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set(initialConfirmedIds));
+  const [filterOnlyConfirmed, setFilterOnlyConfirmed] = useState(false);
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [activeSessionKey, setActiveSessionKey] = useState<string | null>(
     initialTemplate[0]?.sesion ?? null,
   );
@@ -173,6 +181,7 @@ export function RosterBuilder({
   const availableReferees = useMemo(() => {
     const list = referees.filter((r) => {
       if (r.estado !== "Activo" || !r.disp) return false;
+      if (filterOnlyConfirmed && !confirmedIds.has(r.id)) return false;
       if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
       if (search) {
@@ -199,7 +208,9 @@ export function RosterBuilder({
   }, [
     assignments,
     competition.tipo,
+    confirmedIds,
     filterNivel,
+    filterOnlyConfirmed,
     filterZona,
     referees,
     regulations,
@@ -403,6 +414,7 @@ export function RosterBuilder({
       : null;
 
   return (
+    <>
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <ScheduleImportDialog
         competitionId={competition.id}
@@ -667,6 +679,32 @@ export function RosterBuilder({
                 </Button>
               </div>
             )}
+            <div className="mt-2 flex items-center gap-2">
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-medium text-foreground-secondary transition-colors hover:bg-surface-hover"
+                >
+                  <Users className="h-3 w-3" />
+                  Disponibilidad
+                  {confirmedIds.size > 0 && (
+                    <span className="rounded-full bg-success/20 px-1.5 text-[10px] font-semibold text-success">
+                      {confirmedIds.size}
+                    </span>
+                  )}
+                </button>
+              )}
+              {confirmedIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFilterOnlyConfirmed((v) => !v)}
+                  className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${filterOnlyConfirmed ? "border-success/40 bg-success/10 text-success" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
+                >
+                  Solo confirmados
+                </button>
+              )}
+            </div>
             <div className="mt-2 grid gap-2">
               <Input
                 placeholder="Buscar por nombre..."
@@ -751,6 +789,7 @@ export function RosterBuilder({
                   highlight={!!selectedSlot && !readOnly}
                   isDragging={isDragging}
                   readOnly={readOnly}
+                  isConfirmed={confirmedIds.has(referee.id)}
                 />
                 );
               })}
@@ -911,6 +950,24 @@ export function RosterBuilder({
       </div>
       )}
     </div>
+    {availabilityOpen && (
+      <CompetitionAvailabilityDialog
+        competitionId={competition.id}
+        referees={referees}
+        zones={zones}
+        confirmedIds={confirmedIds}
+        canEdit={canEdit}
+        onClose={() => setAvailabilityOpen(false)}
+        onToggle={(id, confirmed) =>
+          setConfirmedIds((prev) => {
+            const next = new Set(prev);
+            confirmed ? next.add(id) : next.delete(id);
+            return next;
+          })
+        }
+      />
+    )}
+    </>
   );
 }
 
@@ -928,6 +985,7 @@ function RefereeCard({
   highlight,
   isDragging,
   readOnly = false,
+  isConfirmed = false,
 }: {
   zones: Zone[];
   referee: Referee;
@@ -942,6 +1000,7 @@ function RefereeCard({
   highlight: boolean;
   isDragging: boolean;
   readOnly?: boolean;
+  isConfirmed?: boolean;
 }) {
   const locked = readOnly || !!blockedReason;
   const topRoles = referee.arbitrajeStats
@@ -975,9 +1034,14 @@ function RefereeCard({
         )}
       />
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-foreground">
-          {referee.nombre}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className="line-clamp-1 text-[13px] font-semibold leading-snug text-foreground">
+            {referee.nombre}
+          </p>
+          {isConfirmed && (
+            <span className="shrink-0 rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-success">✓</span>
+          )}
+        </div>
         <p className={cn("text-[11px]", isFromOtherZone ? "font-semibold text-orange-500" : "text-subtle-muted")}>
           {isFromOtherZone ? `⟳ ${zoneName(zones, referee.zona)}` : zoneName(zones, referee.zona)}
         </p>
@@ -992,29 +1056,11 @@ function RefereeCard({
         {warningReason && !blockedReason && (
           <p className="mt-1 text-[10px] font-medium text-warning">{warningReason}</p>
         )}
-        {referee.unavailableOnDate && (
-          <p className="mt-1 text-[10px] font-medium text-red-500 dark:text-red-400">
-            ✕ no disponible esta fecha
+        {referee.eventos >= 8 && !blockedReason && (
+          <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+            ↑ alta carga ({referee.eventos} arb.)
           </p>
         )}
-        {!blockedReason && !referee.unavailableOnDate && (() => {
-          const upcoming = referee.upcomingCount30d;
-          if (upcoming != null && upcoming >= 3) {
-            return (
-              <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-                ↑ {upcoming} camp. próx. 30 días
-              </p>
-            );
-          }
-          if (upcoming == null && referee.eventos >= 8) {
-            return (
-              <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-                ↑ alta carga ({referee.eventos} arb.)
-              </p>
-            );
-          }
-          return null;
-        })()}
       </div>
       <LevelBadge level={referee.nivel} />
       {assigned && <Check className="h-3.5 w-3.5 shrink-0 text-success" />}
