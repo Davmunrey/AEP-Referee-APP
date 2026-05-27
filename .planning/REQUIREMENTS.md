@@ -1,42 +1,41 @@
-# Requirements — v1.1 AEP Referee APP Full Feature Upgrade
+# Requirements — v1.2 AEP Referee APP Quality & Completeness
 
-## Cross-Zone Judge Selection
+## Competition Edit
 
-- [ ] **ZONE-01**: Delegado puede marcar un slot como "solicitar juez de fuera de zona"
-- [ ] **ZONE-02**: Roster builder muestra badge visual en jueces asignados de otra zona
-- [ ] **ZONE-03**: Filtro de jueces incluye opción "Todas las zonas" independientemente del rol
-- [ ] **ZONE-04**: Super_admin/delegado_jueces puede asignar juez de cualquier zona a cualquier campeonato
-- [ ] **ZONE-05**: Delegado_zona puede solicitar cross-zona (queda pendiente aprobación)
-- [ ] **ZONE-06**: API valida y registra `cross_zone` flag en roster_assignments
+- [ ] **COMP-01**: Usuario puede editar nombre, tipo, fecha inicio, fecha fin, sede y zona de un campeonato existente desde su página de detalle
+- [ ] **COMP-02**: Formulario de edición valida todos los campos con las mismas reglas que el formulario de creación
+- [ ] **COMP-03**: `delegado_zona` solo puede editar campeonatos de su propia zona; no puede reasignarlo a otra zona; `solo_ver` no puede editar
 
-## Schedule Builder
+## Test Suite Correctness
 
-- [ ] **SCHED-01**: Usuario puede crear sesiones manualmente (nombre, día, hora pesaje, hora inicio)
-- [ ] **SCHED-02**: Plantilla de tarima editable directamente sin importar PDF
-- [ ] **SCHED-03**: Cambios en plantilla persisten en DB como template por campeonato
-- [ ] **SCHED-04**: Parser PDF mejorado reconoce más variantes de formato AEP
+- [ ] **TEST-01**: `judge-stats.test.ts` usa valores válidos de `ExamType` (`"Nuevo juez"`, `"Ascenso IPF"`, `"Recertificación"`) y `ReportType` (`"Evaluación"`)
+- [ ] **TEST-02**: `roster-ui.test.ts` — fixture `RosterSession` incluye todos los campos obligatorios: `nombre`, `categorias`, `horarioCompeticion`, `horarioPesaje`
+- [ ] **TEST-03**: `roster-ui.test.ts` — fixture `Referee` incluye campo obligatorio `ultimo`
+- [ ] **TEST-04**: `roster-ui.test.ts` — fixture `RegulationRule` incluye campos obligatorios `id` y `note`
+- [ ] **TEST-05**: `judges-import-preview.test.ts` — fixture de `ParsedRegistryReferee` incluye los 8 campos requeridos (`excelId`, `id`, `nombre`, `nivel`, `zona`, `estado`, `disp`, `eventos`, `ultimo`)
+- [ ] **TEST-06**: `npx tsc --noEmit` sale sin errores en toda la suite de tests
 
-## Import Improvements
+## File Refactoring
 
-- [ ] **IMP-01**: Import Excel reconoce campos: localidad, telefono, genero, antiguedad, notas
-- [ ] **IMP-02**: Import muestra preview con todos los campos antes de confirmar
-- [ ] **IMP-03**: Parser horario PDF reconoce eventos multi-día correctamente
-- [ ] **IMP-04**: Warnings claros cuando campos no se pueden parsear
+- [ ] **REFACTOR-01**: `roster-builder.tsx` (1603 líneas) dividido en sub-componentes; cada archivo < 500 líneas; comportamiento externo idéntico
+- [ ] **REFACTOR-02**: `supabase-service.ts` (1740 líneas) dividido en módulos por dominio; interfaz pública sin cambios
+- [ ] **REFACTOR-03**: `memory-service.ts` (1118 líneas) dividido siguiendo la misma estructura que `supabase-service` refactorizado
 
-## Judge Availability
+## GSD Artifacts
 
-- [ ] **AVAIL-01**: Juez tiene campo de disponibilidad por rango de fechas
-- [ ] **AVAIL-02**: Roster builder muestra jueces no disponibles en fecha del campeonato
-- [ ] **AVAIL-03**: Filtro por disponibilidad en selector de jueces
+- [ ] **GSD-01**: `MILESTONES.md` creado en `.planning/` con el historial de v1.1 (6 fases, 23 requisitos)
 
-## Analytics & Dashboard
+## Out of Scope
 
-- [ ] **ANAL-01**: Estadísticas muestran actividad cross-zona (jueces fuera de zona)
-- [ ] **ANAL-02**: Dashboard muestra cobertura por zona en próximas competiciones
-- [ ] **ANAL-03**: Export CSV desde analytics
+- Nuevas funcionalidades de producto (v1.3+)
+- Migraciones de base de datos adicionales
+- Tests nuevos más allá de corregir los existentes
 
-## UX Refinements
+## Traceability
 
-- [ ] **UX-01**: Badge de nivel en selector de jueces más visible
-- [ ] **UX-02**: Warning cuando juez lleva muchos campeonatos consecutivos
-- [ ] **UX-03**: Búsqueda de jueces por iniciales además de nombre
+| REQ-ID | Phase |
+|--------|-------|
+| COMP-01, COMP-02, COMP-03 | Phase 7 |
+| TEST-01 – TEST-06 | Phase 8 |
+| REFACTOR-01 – REFACTOR-03 | Phase 9 |
+| GSD-01 | Phase 9 |
