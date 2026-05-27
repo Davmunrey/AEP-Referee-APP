@@ -565,13 +565,11 @@ export const supabaseDataService = {
     estado?: string;
     q?: string;
     user?: SessionUser;
-    /** ISO date (YYYY-MM-DD) — when provided, marks referees unavailable on that date. */
-    forDate?: string;
   }): Promise<Referee[]> => {
     await expireStaleSanctions();
     const supabase = db();
     const { data } = await supabase.from("referees").select("*").order("nombre");
-    const filtered = (data ?? [])
+    return (data ?? [])
       .map((r) => mapReferee(r as Record<string, unknown>))
       .filter((r) => {
         if (params?.user?.role === "delegado_zona" && params.user.zona && r.zona !== params.user.zona) {
@@ -583,49 +581,6 @@ export const supabaseDataService = {
         if (params?.q && !r.nombre.toLowerCase().includes(params.q.toLowerCase())) return false;
         return true;
       });
-
-    if (params?.forDate) {
-      const windowEnd = new Date(params.forDate);
-      windowEnd.setDate(windowEnd.getDate() + 30);
-      const windowEndStr = windowEnd.toISOString().slice(0, 10);
-
-      const [{ data: unavail }, { data: upcomingComps }] = await Promise.all([
-        supabase
-          .from("referee_availability")
-          .select("referee_id")
-          .lte("fecha_inicio", params.forDate)
-          .gte("fecha_fin", params.forDate),
-        supabase
-          .from("competitions")
-          .select("id")
-          .gte("fecha", params.forDate)
-          .lte("fecha", windowEndStr),
-      ]);
-
-      const unavailIds = new Set((unavail ?? []).map((u) => String(u.referee_id)));
-      const upcomingByReferee = new Map<string, Set<string>>();
-
-      if (upcomingComps && upcomingComps.length > 0) {
-        const { data: upcomingAssignments } = await supabase
-          .from("roster_assignments")
-          .select("referee_id, competition_id")
-          .in("competition_id", upcomingComps.map((c) => (c as { id: string }).id));
-        for (const a of upcomingAssignments ?? []) {
-          const rid = String((a as { referee_id: string }).referee_id);
-          const cid = String((a as { competition_id: string }).competition_id);
-          if (!upcomingByReferee.has(rid)) upcomingByReferee.set(rid, new Set());
-          upcomingByReferee.get(rid)!.add(cid);
-        }
-      }
-
-      return filtered.map((r) => ({
-        ...r,
-        unavailableOnDate: unavailIds.has(r.id),
-        upcomingCount30d: upcomingByReferee.get(r.id)?.size ?? 0,
-      }));
-    }
-
-    return filtered;
   },
 
   getReferee: async (id: string) => {
@@ -1407,57 +1362,32 @@ export const supabaseDataService = {
     return !error;
   },
 
-  getRefereeAvailability: async (refereeId: string) => {
+  getCompetitionAvailability: async (competitionId: string): Promise<string[]> => {
     const supabase = db();
     const { data } = await supabase
-      .from("referee_availability")
-      .select("*")
-      .eq("referee_id", refereeId)
-      .order("fecha_inicio");
-    return (data ?? []).map((row) => ({
-      id: String(row.id),
-      refereeId: String(row.referee_id),
-      fechaInicio: String(row.fecha_inicio),
-      fechaFin: String(row.fecha_fin),
-      notas: row.notas ? String(row.notas) : undefined,
-      createdBy: row.created_by ? String(row.created_by) : undefined,
-      createdAt: row.created_at ? String(row.created_at) : undefined,
-    }));
+      .from("competition_availability")
+      .select("referee_id")
+      .eq("competition_id", competitionId);
+    return (data ?? []).map((row) => String(row.referee_id));
   },
 
-  addRefereeUnavailability: async (
-    refereeId: string,
-    input: { fechaInicio: string; fechaFin: string; notas?: string },
-    actor: string,
-  ) => {
+  addCompetitionAvailability: async (competitionId: string, refereeId: string, actor: string): Promise<void> => {
     const supabase = db();
-    const { data, error } = await supabase
-      .from("referee_availability")
-      .insert({
-        referee_id: refereeId,
-        fecha_inicio: input.fechaInicio,
-        fecha_fin: input.fechaFin,
-        notas: input.notas ?? null,
-        created_by: actor,
-      })
-      .select()
-      .single();
+    const { error } = await supabase.from("competition_availability").upsert(
+      { competition_id: competitionId, referee_id: refereeId, created_by: actor },
+      { onConflict: "competition_id,referee_id" },
+    );
     if (error) throw new Error(error.message);
-    return {
-      id: String(data.id),
-      refereeId: String(data.referee_id),
-      fechaInicio: String(data.fecha_inicio),
-      fechaFin: String(data.fecha_fin),
-      notas: data.notas ? String(data.notas) : undefined,
-      createdBy: data.created_by ? String(data.created_by) : undefined,
-      createdAt: data.created_at ? String(data.created_at) : undefined,
-    };
   },
 
-  removeRefereeUnavailability: async (id: string): Promise<boolean> => {
+  removeCompetitionAvailability: async (competitionId: string, refereeId: string): Promise<void> => {
     const supabase = db();
-    const { error } = await supabase.from("referee_availability").delete().eq("id", id);
-    return !error;
+    const { error } = await supabase
+      .from("competition_availability")
+      .delete()
+      .eq("competition_id", competitionId)
+      .eq("referee_id", refereeId);
+    if (error) throw new Error(error.message);
   },
 
   deleteCompetition: async (id: string): Promise<boolean> => {
