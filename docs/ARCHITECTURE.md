@@ -49,6 +49,17 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 - Cuadrante jueces: PDF -> preview candidatos -> selección -> asignar.
 - Registro jueces: XLSX -> preview -> upsert/replace.
 
+## Capa de servicios (v1.2)
+
+`src/server/services/` usa barrel pattern: cada archivo principal re-exporta módulos de dominio.
+
+| Barrel | Módulos de dominio |
+|---|---|
+| `supabase-service.ts` | `supabase-referees`, `supabase-competitions`, `supabase-roster`, `supabase-analytics`, `supabase-exams`, `supabase-helpers` |
+| `memory-service.ts` | `memory-referees`, `memory-competitions`, `memory-analytics`, `memory-admin`, `memory-helpers` |
+
+Todos los archivos ≤ 500 líneas. Módulos reciben funciones como args para evitar imports circulares.
+
 ## Seguridad
 
 - Middleware protege rutas privadas.
@@ -56,3 +67,4 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 - Mutaciones exigen RBAC explícito.
 - Supabase cliente anon/authenticated no lee tablas sensibles por RLS.
 - Service role solo en servidor.
+- `parseApiResponse` valida `content-type: application/json` antes de llamar `.json()` para evitar crash en respuestas HTML de error.

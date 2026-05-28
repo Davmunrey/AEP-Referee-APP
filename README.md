@@ -6,6 +6,7 @@ Producción: [https://aep-tarima.vercel.app/](https://aep-tarima.vercel.app/)
 
 ## Estado
 
+- Versión: **v1.2** (2026-05-28) — ver changelog en `.planning/STATE.md`
 - Producto: beta operativa, no solo MVP.
 - CI GitHub: `verify`, Playwright smoke, Supabase readiness.
 - Auth: Supabase email/contraseña, sin registro público UI.

@@ -26,13 +26,26 @@
 | `CompetitionsTable` | Listado |
 | `OpenRostersPanel` | Tarimas abiertas |
 | `CalendarImportDialog` | Import calendario |
-| `RosterBuilder` | Asignación |
+| `EditCompetitionDialog` | Edición inline de campeonato |
+| `RosterBuilder` | Asignación (orquestador, ≤500 líneas) |
 | `RosterTemplateEditor` | Plantilla |
 | `ScheduleImportDialog` | Horario PDF |
 | `AssignmentImportDialog` | Cuadrante PDF |
 | `ExportPreviewDialog` | Export |
 | `RosterRevisionPanel` | Revisión |
 | `RosterHistoryPanel` | Historial |
+| `CompetitionAvailabilityDialog` | Confirmación disponibilidad jueces |
+
+### Sub-componentes RosterBuilder (v1.2)
+
+| Componente | Uso |
+|---|---|
+| `RosterCompetitionHeader` | Cabecera con info competición y acciones |
+| `RosterRefereePanelLeft` | Panel izquierdo: filtros + lista jueces |
+| `RefereeCard` | Tarjeta individual juez con badges y drag |
+| `SlotGrid` | Grid de slots por sesión/rol |
+| `SessionBlock` | Bloque sesión expandible |
+| `SessionOverviewCard` | Tarjeta resumen sesión (barra progreso) |
 
 ## Datos
 
