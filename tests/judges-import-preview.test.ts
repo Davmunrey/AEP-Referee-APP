@@ -4,9 +4,15 @@ import { buildJudgesRegistryImportPreview } from "@/lib/judges-registry";
 describe("buildJudgesRegistryImportPreview", () => {
   it("builds preview payload with sample cap and replace flag", () => {
     const referees = Array.from({ length: 8 }, (_, i) => ({
+      excelId: i + 1,
+      id: `r${i}`,
       nombre: `Juez ${i}`,
-      zona: "CENTRO",
+      zona: "CENTRO" as const,
       nivel: "Regional" as const,
+      estado: "Activo" as const,
+      disp: true,
+      eventos: 0,
+      ultimo: "2025-01-01",
     }));
 
     const preview = buildJudgesRegistryImportPreview(

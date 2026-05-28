@@ -1,17 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
-import { zoneUiName } from "@/lib/aep-zones";
-import { EventStatusBadge, EventTypeBadge, LevelBadge } from "@/components/aep/badges";
-import { RosterHeaderActions } from "@/components/competitions/roster-header-actions";
 import { RosterHelpPanel } from "@/components/competitions/roster-help-panel";
 import { RosterRevisionPanel } from "@/components/competitions/roster-revision-panel";
 import { RosterStepper } from "@/components/competitions/roster-stepper";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type {
   AssignmentsMap,
@@ -22,42 +17,28 @@ import type {
   RefereeLevel,
   RegulationRule,
   RoleKey,
-  RosterRole,
   RosterSession,
   SlotFlags,
   Zone,
 } from "@/lib/types";
-import { selectFieldClass } from "@/lib/design-tokens";
-import { topArbitrajeRoles } from "@/lib/judges-registry/arbitraje-stats";
 import {
   countRegulationViolations,
   findRegulationViolation,
   getAssignabilityReason,
   getOperationalBlockReason,
-  getRecommendationWarning,
   type RosterWorkflowStep,
 } from "@/lib/roster-ui";
 import { cn } from "@/lib/utils";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Check,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  GripVertical,
-  Info,
-  Trash2,
-  Users,
-  UsersRound,
-  X,
-} from "lucide-react";
-import { RosterHistoryPanel } from "@/components/competitions/roster-history-panel";
+import { ChevronRight, FileUp } from "lucide-react";
 import { RosterTemplateEditor } from "@/components/competitions/roster-template-editor";
 import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
 import { QuadrantImportDialog } from "@/components/competitions/quadrant-import-dialog";
 import { CompetitionAvailabilityDialog } from "@/components/competitions/competition-availability-dialog";
-import { FileUp } from "lucide-react";
+import { EditCompetitionDialog } from "@/components/competitions/edit-competition-dialog";
+import { RosterCompetitionHeader } from "./roster-competition-header";
+import { RosterRefereePanelLeft } from "./roster-referee-panel";
+import { SessionBlock, SessionOverviewCard } from "./roster-session-block";
+import { collectOpenSlots, describeSlot, findNextOpenSlot, groupSessionsByDay } from "./roster-session-helpers";
 
 interface RosterBuilderProps {
   competition: Competition;
@@ -66,20 +47,14 @@ interface RosterBuilderProps {
   initialFlags?: FlagsMap;
   initialCrossZoneMap?: CrossZoneMap;
   canEdit?: boolean;
-  /** Campeonato finalizado (`fechaFin < hoy`) — contexto histórico visual. */
+  /** Campeonato finalizado — contexto histórico visual. */
   isPast?: boolean;
   referees: Referee[];
   zones: Zone[];
   levels: RefereeLevel[];
   regulations?: RegulationRule[];
-  /** IDs de jueces que confirmaron disponibilidad para este campeonato. */
   initialConfirmedIds?: string[];
-  /** Zona por defecto en filtro de jueces (delegado_zona → su zona). */
   defaultZonaFilter?: string;
-}
-
-function zoneName(zones: Zone[], code: string) {
-  return zoneUiName(zones.find((z) => z.code === code)?.code ?? code);
 }
 
 export function RosterBuilder({
@@ -112,9 +87,8 @@ export function RosterBuilder({
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set(initialConfirmedIds));
   const [filterOnlyConfirmed, setFilterOnlyConfirmed] = useState(false);
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
-  const [activeSessionKey, setActiveSessionKey] = useState<string | null>(
-    initialTemplate[0]?.sesion ?? null,
-  );
+  const [editCompetitionOpen, setEditCompetitionOpen] = useState(false);
+  const [activeSessionKey, setActiveSessionKey] = useState<string | null>(initialTemplate[0]?.sesion ?? null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
@@ -123,10 +97,7 @@ export function RosterBuilder({
   const [workflowStep, setWorkflowStep] = useState<RosterWorkflowStep>("asignacion");
 
   const totalSlots = template.reduce(
-    (acc, s) =>
-      acc +
-      s.roles.reduce((a, r) => a + r.slots, 0) +
-      (s.pesajeRoles ?? []).reduce((a, r) => a + r.slots, 0),
+    (acc, s) => acc + s.roles.reduce((a, r) => a + r.slots, 0) + (s.pesajeRoles ?? []).reduce((a, r) => a + r.slots, 0),
     0,
   );
   const filledSlots = Object.values(assignments).filter(Boolean).length;
@@ -135,181 +106,90 @@ export function RosterBuilder({
   const plantillaDone = totalSlots > 0;
   const asignacionDone = filledSlots > 0;
 
-  useEffect(() => {
-    if (totalSlots === 0) setWorkflowStep("plantilla");
-  }, [totalSlots]);
+  useEffect(() => { if (totalSlots === 0) setWorkflowStep("plantilla"); }, [totalSlots]);
 
   useEffect(() => {
-    if (template.length === 0) {
-      setActiveSessionKey(null);
-      return;
-    }
-    if (!activeSessionKey || !template.some((session) => session.sesion === activeSessionKey)) {
+    if (template.length === 0) { setActiveSessionKey(null); return; }
+    if (!activeSessionKey || !template.some((s) => s.sesion === activeSessionKey)) {
       setActiveSessionKey(template[0]?.sesion ?? null);
     }
   }, [template, activeSessionKey]);
 
-  const assignedIds = useMemo(
-    () => new Set(Object.values(assignments).filter(Boolean)),
-    [assignments],
-  );
-
+  const assignedIds = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
   const getReferee = (id: string) => referees.find((r) => r.id === id);
-
   const checkViolation = (roleKey: RoleKey, refereeId: string) => {
-    const referee = getReferee(refereeId);
-    if (!referee) return undefined;
-    return findRegulationViolation(roleKey, competition.tipo, referee.nivel, regulations);
+    const ref = getReferee(refereeId);
+    if (!ref) return undefined;
+    return findRegulationViolation(roleKey, competition.tipo, ref.nivel, regulations);
   };
-
   const violationCount = useMemo(
-    () =>
-      countRegulationViolations(
-        template,
-        assignments,
-        competition.tipo,
-        (id) => referees.find((r) => r.id === id)?.nivel,
-        regulations,
-      ),
+    () => countRegulationViolations(template, assignments, competition.tipo, (id) => referees.find((r) => r.id === id)?.nivel, regulations),
     [assignments, template, regulations, competition.tipo, referees],
   );
+  const selectedRoleKey = selectedSlot ? (selectedSlot.split("_")[1] as RoleKey | undefined) : undefined;
 
-  const selectedRoleKey = selectedSlot
-    ? (selectedSlot.split("_")[1] as RoleKey | undefined)
-    : undefined;
-
-  const availableReferees = useMemo(() => {
-    const list = referees.filter((r) => {
-      if (r.estado !== "Activo" || !r.disp) return false;
-      if (filterOnlyConfirmed && !confirmedIds.has(r.id)) return false;
-      if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
-      if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (!r.nombre.toLowerCase().includes(q) && !(r.iniciales ?? "").toLowerCase().includes(q)) return false;
-      }
-      if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) {
-        return false;
-      }
-      if (
-        selectedSlot &&
-        getOperationalBlockReason({
-          template,
-          assignments,
-          slotKey: selectedSlot,
-          refereeId: r.id,
-        })
-      ) {
-        return false;
-      }
-      return true;
-    });
-    return list;
-  }, [
-    assignments,
-    competition.tipo,
-    confirmedIds,
-    filterNivel,
-    filterOnlyConfirmed,
-    filterZona,
-    referees,
-    regulations,
-    search,
-    selectedRoleKey,
-    selectedSlot,
-    template,
-  ]);
+  const availableReferees = useMemo(() => referees.filter((r) => {
+    if (r.estado !== "Activo" || !r.disp) return false;
+    if (filterOnlyConfirmed && !confirmedIds.has(r.id)) return false;
+    if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
+    if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!r.nombre.toLowerCase().includes(q) && !(r.iniciales ?? "").toLowerCase().includes(q)) return false;
+    }
+    if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) return false;
+    if (selectedSlot && getOperationalBlockReason({ template, assignments, slotKey: selectedSlot, refereeId: r.id })) return false;
+    return true;
+  }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, referees, regulations, search, selectedRoleKey, selectedSlot, template]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
-    const operationalBlock = getOperationalBlockReason({
-      template,
-      assignments,
-      slotKey,
-      refereeId,
-    });
-    if (operationalBlock) {
-      setStatusMsg(operationalBlock);
-      setStatusIsError(true);
-      return;
-    }
+    const block = getOperationalBlockReason({ template, assignments, slotKey, refereeId });
+    if (block) { setStatusMsg(block); setStatusIsError(true); return; }
     const snapshot = assignments;
     const session = slotKey.split("_")[0];
-    const sessionTemplate = template.find((item) => item.sesion === session);
-    const nextAssignments = { ...snapshot };
-    nextAssignments[slotKey] = refereeId;
-
-    setAssignments(() => {
-      const next = { ...snapshot };
-      next[slotKey] = refereeId;
-      return next;
-    });
-    if (sessionTemplate) {
-      setSelectedSlot(findNextOpenSlot(sessionTemplate, nextAssignments, slotKey));
-    } else {
-      setSelectedSlot(null);
-    }
+    const sessionTpl = template.find((item) => item.sesion === session);
+    const nextAssignments = { ...snapshot, [slotKey]: refereeId };
+    setAssignments(() => ({ ...snapshot, [slotKey]: refereeId }));
+    if (sessionTpl) setSelectedSlot(findNextOpenSlot(sessionTpl, nextAssignments, slotKey));
+    else setSelectedSlot(null);
     startTransition(async () => {
       try {
         const res = await api.assignReferee(competition.id, slotKey, refereeId);
         setAssignments(res.assignments);
         if (res.flags) setFlags(res.flags);
         if (res.crossZoneMap) setCrossZoneMap(res.crossZoneMap);
-        setStatusMsg(null);
-        setStatusIsError(false);
+        setStatusMsg(null); setStatusIsError(false);
       } catch (err) {
-        // Revertir la actualización optimista al estado previo.
-        setAssignments(snapshot);
-        setSelectedSlot(slotKey);
-        setStatusMsg(formatApiError(err, "No se pudo guardar la asignación"));
-        setStatusIsError(true);
+        setAssignments(snapshot); setSelectedSlot(slotKey);
+        setStatusMsg(formatApiError(err, "No se pudo guardar la asignación")); setStatusIsError(true);
       }
     });
   };
 
   const persistClear = (slotKey: string) => {
-    setAssignments((prev) => {
-      const next = { ...prev };
-      delete next[slotKey];
-      return next;
-    });
+    setAssignments((prev) => { const next = { ...prev }; delete next[slotKey]; return next; });
     startTransition(async () => {
-      try {
-        const res = await api.clearSlot(competition.id, slotKey);
-        setAssignments(res.assignments);
-      } catch (err) {
-        setStatusMsg(formatApiError(err, "No se pudo quitar la asignación"));
-        setStatusIsError(true);
-      }
+      try { const res = await api.clearSlot(competition.id, slotKey); setAssignments(res.assignments); }
+      catch (err) { setStatusMsg(formatApiError(err, "No se pudo quitar la asignación")); setStatusIsError(true); }
     });
   };
 
   const onDrop = (slotKey: string, refereeId: string) => {
     if (readOnly) return;
     persistAssign(slotKey, refereeId);
-    setDraggedId(null);
-    setSelectedSlot(null);
+    setDraggedId(null); setSelectedSlot(null);
   };
 
-  const onQuickAssign = (refereeId: string) => {
-    if (!selectedSlot || readOnly) return;
-    persistAssign(selectedSlot, refereeId);
-  };
+  const onQuickAssign = (refereeId: string) => { if (!selectedSlot || readOnly) return; persistAssign(selectedSlot, refereeId); };
 
   const toggleFlag = (slotKey: string, field: keyof SlotFlags) => {
     if (readOnly || !assignments[slotKey]) return;
-    const current = flags[slotKey] ?? {};
-    const next: SlotFlags = { ...current, [field]: !current[field] };
+    const next: SlotFlags = { ...(flags[slotKey] ?? {}), [field]: !(flags[slotKey]?.[field]) };
     const snapshot = flags;
     setFlags((prev) => ({ ...prev, [slotKey]: next }));
     startTransition(async () => {
-      try {
-        const res = await api.setSlotFlags(competition.id, slotKey, next);
-        setFlags(res.flags);
-      } catch (err) {
-        setFlags(snapshot);
-        setStatusMsg(formatApiError(err, "No se pudieron guardar los marcadores del slot"));
-        setStatusIsError(true);
-      }
+      try { const res = await api.setSlotFlags(competition.id, slotKey, next); setFlags(res.flags); }
+      catch (err) { setFlags(snapshot); setStatusMsg(formatApiError(err, "No se pudieron guardar los marcadores del slot")); setStatusIsError(true); }
     });
   };
 
@@ -318,1286 +198,236 @@ export function RosterBuilder({
     startTransition(async () => {
       try {
         const res = await api.saveTemplate(competition.id, next);
-        setTemplate(res.template);
-        setAssignments(res.assignments);
-        setFlags(res.flags);
-        setIsEditing(false);
-        setWorkflowStep("asignacion");
-        setStatusMsg("Plantilla guardada");
-        setStatusIsError(false);
-      } catch (err) {
-        setStatusMsg(formatApiError(err, "No se pudo guardar la plantilla"));
-        setStatusIsError(true);
-      } finally {
-        setSavingTemplate(false);
-      }
+        setTemplate(res.template); setAssignments(res.assignments); setFlags(res.flags);
+        setIsEditing(false); setWorkflowStep("asignacion");
+        setStatusMsg("Plantilla guardada"); setStatusIsError(false);
+      } catch (err) { setStatusMsg(formatApiError(err, "No se pudo guardar la plantilla")); setStatusIsError(true); }
+      finally { setSavingTemplate(false); }
     });
   };
 
   const clearAllAssignments = () => {
     if (readOnly || filledSlots === 0 || pending) return;
-    if (
-      !confirm(
-        `¿Vaciar todas las asignaciones de jueces de ${competition.nombre}?\n\nLa plantilla se mantiene, solo se liberan los huecos.`,
-      )
-    ) {
-      return;
-    }
-    const snapshotAssignments = assignments;
-    const snapshotFlags = flags;
-    setAssignments({});
-    setFlags({});
-    setSelectedSlot(null);
+    if (!confirm(`¿Vaciar todas las asignaciones de jueces de ${competition.nombre}?\n\nLa plantilla se mantiene, solo se liberan los huecos.`)) return;
+    const sa = assignments; const sf = flags;
+    setAssignments({}); setFlags({}); setSelectedSlot(null);
     startTransition(async () => {
-      try {
-        const res = await api.clearRosterAssignments(competition.id);
-        setAssignments(res.assignments);
-        setFlags(res.flags);
-        setStatusMsg("Asignaciones borradas");
-        setStatusIsError(false);
-      } catch (err) {
-        setAssignments(snapshotAssignments);
-        setFlags(snapshotFlags);
-        setStatusMsg(formatApiError(err, "No se pudieron borrar las asignaciones"));
-        setStatusIsError(true);
-      }
+      try { const res = await api.clearRosterAssignments(competition.id); setAssignments(res.assignments); setFlags(res.flags); setStatusMsg("Asignaciones borradas"); setStatusIsError(false); }
+      catch (err) { setAssignments(sa); setFlags(sf); setStatusMsg(formatApiError(err, "No se pudieron borrar las asignaciones")); setStatusIsError(true); }
     });
   };
 
   const clearTemplateAndAssignments = () => {
     if (readOnly || template.length === 0 || pending || savingTemplate) return;
-    if (
-      !confirm(
-        `¿Borrar la plantilla de tarima de ${competition.nombre}?\n\nEsto elimina sesiones, huecos y asignaciones. Podrás importar el horario de nuevo.`,
-      )
-    ) {
-      return;
-    }
-    const snapshotTemplate = template;
-    const snapshotAssignments = assignments;
-    const snapshotFlags = flags;
-    setTemplate([]);
-    setAssignments({});
-    setFlags({});
-    setSelectedSlot(null);
-    setActiveSessionKey(null);
-    setWorkflowStep("plantilla");
+    if (!confirm(`¿Borrar la plantilla de tarima de ${competition.nombre}?\n\nEsto elimina sesiones, huecos y asignaciones. Podrás importar el horario de nuevo.`)) return;
+    const st = template; const sa = assignments; const sf = flags;
+    setTemplate([]); setAssignments({}); setFlags({}); setSelectedSlot(null); setActiveSessionKey(null); setWorkflowStep("plantilla");
     startTransition(async () => {
       try {
         const res = await api.clearRosterTemplate(competition.id);
-        setTemplate(res.template);
-        setAssignments(res.assignments);
-        setFlags(res.flags);
-        setIsEditing(false);
-        setStatusMsg("Plantilla borrada");
-        setStatusIsError(false);
-      } catch (err) {
-        setTemplate(snapshotTemplate);
-        setAssignments(snapshotAssignments);
-        setFlags(snapshotFlags);
-        setStatusMsg(formatApiError(err, "No se pudo borrar la plantilla"));
-        setStatusIsError(true);
-      }
+        setTemplate(res.template); setAssignments(res.assignments); setFlags(res.flags);
+        setIsEditing(false); setStatusMsg("Plantilla borrada"); setStatusIsError(false);
+      } catch (err) { setTemplate(st); setAssignments(sa); setFlags(sf); setStatusMsg(formatApiError(err, "No se pudo borrar la plantilla")); setStatusIsError(true); }
     });
   };
 
   const isDragging = draggedId !== null;
   const groupedSessions = useMemo(() => groupSessionsByDay(template), [template]);
-  const activeSession =
-    template.find((session) => session.sesion === activeSessionKey) ?? template[0] ?? null;
-  const activeSessionPendingSlots = activeSession
-    ? collectOpenSlots(activeSession, assignments)
-    : [];
-  const selectedSlotMeta =
-    selectedSlot && activeSession
-      ? describeSlot(activeSession, selectedSlot)
-      : null;
+  const activeSession = template.find((s) => s.sesion === activeSessionKey) ?? template[0] ?? null;
+  const activeSessionPendingSlots = activeSession ? collectOpenSlots(activeSession, assignments) : [];
+  const selectedSlotMeta = selectedSlot && activeSession ? describeSlot(activeSession, selectedSlot) : null;
 
   return (
     <>
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <ScheduleImportDialog
-        competitionId={competition.id}
-        open={importOpen}
-        hasExistingTemplate={template.length > 0}
-        onClose={() => setImportOpen(false)}
-        onApplied={(tpl) => {
-          setTemplate(tpl);
-          setImportOpen(false);
-          setWorkflowStep("asignacion");
-          setStatusMsg("Plantilla importada desde PDF");
-          setStatusIsError(false);
-        }}
-      />
-      <QuadrantImportDialog
-        competitionId={competition.id}
-        open={quadrantImportOpen}
-        onClose={() => setQuadrantImportOpen(false)}
-        onApplied={(nextAssignments, nextFlags) => {
-          setAssignments(nextAssignments);
-          if (nextFlags) setFlags(nextFlags);
-          setQuadrantImportOpen(false);
-          setWorkflowStep("asignacion");
-          setStatusMsg("Cuadrante aplicado");
-          setStatusIsError(false);
-        }}
-      />
-      {/* Page header */}
-      <div className="glass-panel-soft border-b border-border-muted px-4 py-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" asChild>
-              <Link href="/competitions" aria-label="Volver a campeonatos">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <div className="min-w-0">
-              <div className="mb-1 flex flex-wrap items-center gap-1.5">
-                <EventTypeBadge tipo={competition.tipo} />
-                <EventStatusBadge status={competition.estado} />
-                {isPast && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
-                    title="Campeonato finalizado — editable con permisos para cargar histórico"
-                  >
-                    Histórico
-                  </span>
-                )}
-                <span className="text-xs text-subtle-muted">{competition.aprobacion}</span>
-              </div>
-              <h1 className="truncate text-lg font-semibold leading-tight text-foreground">
-                {competition.nombre}
-              </h1>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {competition.fecha} → {competition.fechaFin} · {competition.sede}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex min-w-0 flex-col items-end gap-1.5">
-            {violationCount > 0 && (
-              <p className="flex items-center gap-1.5 rounded-md border border-warning-border bg-warning-subtle px-2.5 py-1 text-[11px] font-semibold text-warning">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                {violationCount} violación{violationCount > 1 ? "es" : ""} de normativa
-              </p>
-            )}
-            <div className="flex flex-wrap items-center justify-end gap-1.5">
-              {canEdit && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 px-2.5 text-xs"
-                  onClick={() => setImportOpen(true)}
-                  disabled={pending || savingTemplate}
-                  title="Importar horario de este campeonato (PDF)"
-                >
-                  <FileUp className="h-3.5 w-3.5" />
-                  Importar horario
-                </Button>
-              )}
-              {canEdit && filledSlots > 0 && !isEditing && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 border-warning-border px-2.5 text-xs text-warning hover:bg-warning-subtle"
-                  onClick={clearAllAssignments}
-                  disabled={pending || savingTemplate}
-                  title="Vaciar todas las asignaciones sin borrar la plantilla"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Vaciar jueces
-                </Button>
-              )}
-              {canEdit && template.length > 0 && !isEditing && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 border-destructive/40 px-2.5 text-xs text-destructive hover:bg-destructive/10"
-                  onClick={clearTemplateAndAssignments}
-                  disabled={pending || savingTemplate}
-                  title="Borrar plantilla, sesiones y asignaciones"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Borrar plantilla
-                </Button>
-              )}
-              {canEdit && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 px-2.5 text-xs"
-                  onClick={() => setQuadrantImportOpen(true)}
-                  disabled={pending || savingTemplate || template.length === 0}
-                  title="Importar cuadrante de jueces (PDF)"
-                >
-                  <UsersRound className="h-3.5 w-3.5" />
-                  Importar cuadrante
-                </Button>
-              )}
-              {canEdit && (
-                <Button
-                  type="button"
-                  variant={isEditing ? "default" : "outline"}
-                  size="sm"
-                  className="h-8 px-2.5 text-xs"
-                  onClick={() => {
-                    if (isEditing) {
-                      setIsEditing(false);
-                      setWorkflowStep(totalSlots > 0 ? "asignacion" : "plantilla");
-                    } else {
-                      setIsEditing(true);
-                      setWorkflowStep("plantilla");
-                    }
-                  }}
-                  disabled={pending || savingTemplate}
-                >
-                  {isEditing ? "Volver a tarima" : "Editar plantilla"}
-                </Button>
-              )}
-              <RosterHistoryPanel competitionId={competition.id} />
-              {!readOnly && !isEditing && (
-                <RosterHeaderActions
-                  competitionId={competition.id}
-                  filledSlots={filledSlots}
-                  totalSlots={totalSlots}
-                  fillPct={fillPct}
-                  violationCount={violationCount}
-                  openSlots={openSlots}
-                  pending={pending}
-                  statusMsg={statusMsg}
-                  statusIsError={statusIsError}
-                  onStatus={(msg, isError) => {
-                    setStatusMsg(msg);
-                    setStatusIsError(isError ?? false);
-                  }}
-                  startTransition={startTransition}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {!readOnly && (
-        <>
-          <RosterHelpPanel />
-          <RosterStepper
-            current={isEditing ? "plantilla" : workflowStep}
-            onChange={(step) => {
-              setIsEditing(false);
-              setWorkflowStep(step);
-            }}
-            disabled={pending || savingTemplate}
-            plantillaDone={plantillaDone}
-            asignacionDone={asignacionDone}
-          />
-        </>
-      )}
-
-      {workflowStep === "revision" && !isEditing && !readOnly ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <RosterRevisionPanel
-            filledSlots={filledSlots}
-            totalSlots={totalSlots}
-            fillPct={fillPct}
-            violationCount={violationCount}
-            openSlots={openSlots}
-            onGoAssign={() => setWorkflowStep("asignacion")}
-          />
-        </div>
-      ) : workflowStep === "plantilla" && !isEditing && totalSlots === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-          <p className="max-w-md text-sm text-muted-foreground">
-            Este campeonato aún no tiene plantilla de tarima. Importa el horario PDF de esta competición
-            o define sesiones y plazas manualmente.
-          </p>
-          {canEdit && (
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                type="button"
-                className="gap-1.5"
-                onClick={() => setImportOpen(true)}
-                disabled={pending}
-              >
-                <FileUp className="h-3.5 w-3.5" />
-                Importar horario (PDF)
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsEditing(true);
-                  setWorkflowStep("plantilla");
-                }}
-                disabled={pending}
-              >
-                Crear plantilla manual
-              </Button>
-            </div>
-          )}
-          <p className="text-[11px] text-subtle-muted">
-            El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.
-          </p>
-        </div>
-      ) : (
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]">
-        {(workflowStep === "asignacion" || isEditing) && (
-        <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
-          <div className="border-b border-border p-3">
-            <h2 className="text-sm font-semibold text-foreground-secondary">
-              Jueces disponibles
-            </h2>
-            <p className="mt-0.5 text-xs text-subtle-muted">
-              {selectedSlot && !readOnly ? (
-                <span className="font-medium text-primary">
-                  {selectedSlotMeta
-                    ? `${selectedSlotMeta.sessionLabel} · ${selectedSlotMeta.roleLabel} ${selectedSlotMeta.slotNumber}`
-                    : "Slot seleccionado"}{" "}
-                  — haz clic en un juez para asignar
-                </span>
-              ) : (
-                "Arrastra o selecciona un slot primero"
-              )}
-            </p>
-            {selectedSlot && !readOnly && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
-                <span className="text-[11px] text-primary">
-                  Selección activa para asignación rápida
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2 text-[11px]"
-                  onClick={() => setSelectedSlot(null)}
-                >
-                  Cancelar selección
-                </Button>
-              </div>
-            )}
-            <div className="mt-2 flex items-center gap-2">
-              {canEdit && (
-                <button
-                  type="button"
-                  onClick={() => setAvailabilityOpen(true)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-medium text-foreground-secondary transition-colors hover:bg-surface-hover"
-                >
-                  <Users className="h-3 w-3" />
-                  Disponibilidad
-                  {confirmedIds.size > 0 && (
-                    <span className="rounded-full bg-success/20 px-1.5 text-[10px] font-semibold text-success">
-                      {confirmedIds.size}
-                    </span>
-                  )}
-                </button>
-              )}
-              {confirmedIds.size > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setFilterOnlyConfirmed((v) => !v)}
-                  className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${filterOnlyConfirmed ? "border-success/40 bg-success/10 text-success" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
-                >
-                  Solo confirmados
-                </button>
-              )}
-            </div>
-            <div className="mt-2 grid gap-2">
-              <Input
-                placeholder="Buscar por nombre..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9"
-              />
-              <select
-                value={filterZona}
-                onChange={(e) => setFilterZona(e.target.value)}
-                className={selectFieldClass}
-                aria-label="Filtrar por zona"
-              >
-                <option value="TODAS">Todas las zonas</option>
-                {zones.map((z) => (
-                  <option key={z.code} value={z.code}>
-                    {z.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={filterNivel}
-                onChange={(e) => setFilterNivel(e.target.value)}
-                className={selectFieldClass}
-                aria-label="Filtrar por nivel"
-              >
-                <option value="TODOS">Todos los niveles</option>
-                {levels.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <p className="mt-2 font-mono text-[10px] text-subtle-muted">
-              {availableReferees.length} jueces
-              {" · "}
-              {availableReferees.filter((r) => assignedIds.has(r.id)).length} ya en tarima
-            </p>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <ul className="space-y-1.5 p-2.5">
-              {availableReferees.map((referee) => {
-                const blockedReason =
-                  selectedRoleKey && selectedSlot
-                    ? getAssignabilityReason(
-                        referee,
-                        selectedRoleKey,
-                        competition.tipo,
-                        regulations,
-                      ) ??
-                      getOperationalBlockReason({
-                        template,
-                        assignments,
-                        slotKey: selectedSlot,
-                        refereeId: referee.id,
-                      })
-                    : null;
-                const warningReason =
-                  selectedRoleKey && !blockedReason
-                    ? getRecommendationWarning(
-                        referee,
-                        selectedRoleKey,
-                        competition.tipo,
-                        regulations,
-                      )
-                    : null;
-                return (
-                <RefereeCard
-                  key={referee.id}
-                  zones={zones}
-                  referee={referee}
-                  assigned={assignedIds.has(referee.id)}
-                  dragging={draggedId === referee.id}
-                  blockedReason={blockedReason}
-                  warningReason={warningReason}
-                  competitionZona={competition.zona}
-                  onDragStart={() => setDraggedId(referee.id)}
-                  onDragEnd={() => setDraggedId(null)}
-                  onClick={() => onQuickAssign(referee.id)}
-                  highlight={!!selectedSlot && !readOnly}
-                  isDragging={isDragging}
-                  readOnly={readOnly}
-                  isConfirmed={confirmedIds.has(referee.id)}
-                />
-                );
-              })}
-              {availableReferees.length === 0 && (
-                <li className="py-8 text-center text-xs text-subtle-muted">
-                  Sin coincidencias. Ajusta los filtros.
-                </li>
-              )}
-            </ul>
-          </div>
-
-          <div className="border-t border-border bg-background px-3 py-2">
-            <p className="flex items-start gap-2 text-[10.5px] leading-snug text-subtle-muted">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Arrastra un juez a un hueco, o haz clic en el hueco y luego en el juez.
-            </p>
-          </div>
-        </section>
+      <div className="flex h-[calc(100vh-4rem)] flex-col">
+        <ScheduleImportDialog
+          competitionId={competition.id}
+          open={importOpen}
+          hasExistingTemplate={template.length > 0}
+          onClose={() => setImportOpen(false)}
+          onApplied={(tpl) => { setTemplate(tpl); setImportOpen(false); setWorkflowStep("asignacion"); setStatusMsg("Plantilla importada desde PDF"); setStatusIsError(false); }}
+        />
+        <QuadrantImportDialog
+          competitionId={competition.id}
+          open={quadrantImportOpen}
+          onClose={() => setQuadrantImportOpen(false)}
+          onApplied={(nextAssignments, nextFlags) => { setAssignments(nextAssignments); if (nextFlags) setFlags(nextFlags); setQuadrantImportOpen(false); setWorkflowStep("asignacion"); setStatusMsg("Cuadrante aplicado"); setStatusIsError(false); }}
+        />
+        <RosterCompetitionHeader
+          competition={competition} isPast={isPast} canEdit={canEdit}
+          violationCount={violationCount} filledSlots={filledSlots} totalSlots={totalSlots}
+          fillPct={fillPct} openSlots={openSlots} pending={pending} savingTemplate={savingTemplate}
+          isEditing={isEditing} statusMsg={statusMsg} statusIsError={statusIsError}
+          templateLength={template.length}
+          onOpenEdit={() => setEditCompetitionOpen(true)}
+          onOpenImport={() => setImportOpen(true)}
+          onOpenQuadrant={() => setQuadrantImportOpen(true)}
+          clearAllAssignments={clearAllAssignments}
+          clearTemplateAndAssignments={clearTemplateAndAssignments}
+          onStatus={(msg, isError) => { setStatusMsg(msg); setStatusIsError(isError ?? false); }}
+          startTransition={startTransition}
+          onToggleEditing={() => {
+            if (isEditing) { setIsEditing(false); setWorkflowStep(totalSlots > 0 ? "asignacion" : "plantilla"); }
+            else { setIsEditing(true); setWorkflowStep("plantilla"); }
+          }}
+        />
+        {!readOnly && (
+          <>
+            <RosterHelpPanel />
+            <RosterStepper
+              current={isEditing ? "plantilla" : workflowStep}
+              onChange={(step) => { setIsEditing(false); setWorkflowStep(step); }}
+              disabled={pending || savingTemplate}
+              plantillaDone={plantillaDone}
+              asignacionDone={asignacionDone}
+            />
+          </>
         )}
-
-        {/* ── Right pane: acta ── */}
-        <section className="flex flex-col overflow-hidden">
-          {isEditing ? (
-            <ScrollArea className="flex-1">
-              <div className="p-4">
-                <RosterTemplateEditor
-                  competitionId={competition.id}
-                  initialTemplate={template}
-                  onSave={saveTemplate}
-                  onCancel={() => setIsEditing(false)}
-                  saving={savingTemplate}
-                />
+        {workflowStep === "revision" && !isEditing && !readOnly ? (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <RosterRevisionPanel filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} />
+          </div>
+        ) : workflowStep === "plantilla" && !isEditing && totalSlots === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+            <p className="max-w-md text-sm text-muted-foreground">
+              Este campeonato aún no tiene plantilla de tarima. Importa el horario PDF de esta competición o define sesiones y plazas manualmente.
+            </p>
+            {canEdit && (
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button type="button" className="gap-1.5" onClick={() => setImportOpen(true)} disabled={pending}>
+                  <FileUp className="h-3.5 w-3.5" />Importar horario (PDF)
+                </Button>
+                <Button type="button" variant="outline" onClick={() => { setIsEditing(true); setWorkflowStep("plantilla"); }} disabled={pending}>
+                  Crear plantilla manual
+                </Button>
               </div>
-            </ScrollArea>
-          ) : (
-            <>
-              <div className="border-b border-border px-4 py-2.5">
-                <h2 className="text-sm font-semibold text-foreground-secondary">
-                  Fin de semana · {template.length} sesión{template.length !== 1 ? "es" : ""}
-                </h2>
-                <p className="text-xs text-subtle-muted">
-                  Vista global por día arriba; detalle operativo abajo
-                </p>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <div className="space-y-3 p-3">
-                  <div className="grid gap-3 2xl:grid-cols-2">
-                    {groupedSessions.map(([dia, sesiones]) => (
-                      <section
-                        key={dia}
-                        className="rounded-xl border border-border-muted bg-surface/30 p-3"
-                      >
-                        <div className="mb-3 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-primary" />
-                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                            {dia}
-                          </h3>
-                        </div>
-                        <div className="space-y-1.5">
-                          {sesiones.map((session) => (
-                            <SessionOverviewCard
-                              key={session.sesion}
-                              session={session}
-                              assignments={assignments}
-                              active={activeSession?.sesion === session.sesion}
-                              onClick={() => {
-                                setActiveSessionKey(session.sesion);
-                                setSelectedSlot(null);
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </section>
-                    ))}
+            )}
+            <p className="text-[11px] text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
+          </div>
+        ) : (
+          <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]">
+            {(workflowStep === "asignacion" || isEditing) && (
+              <RosterRefereePanelLeft
+                referees={availableReferees} assignedIds={assignedIds}
+                canEdit={canEdit} readOnly={readOnly}
+                selectedSlot={selectedSlot} selectedSlotMeta={selectedSlotMeta}
+                confirmedIds={confirmedIds} filterOnlyConfirmed={filterOnlyConfirmed}
+                filterZona={filterZona} filterNivel={filterNivel} search={search}
+                zones={zones} levels={levels} isDragging={isDragging} draggedId={draggedId}
+                competitionTipo={competition.tipo} competitionZona={competition.zona}
+                regulations={regulations} template={template} assignments={assignments}
+                selectedRoleKey={selectedRoleKey}
+                onSelectSlot={setSelectedSlot} onAvailabilityOpen={() => setAvailabilityOpen(true)}
+                onFilterZona={setFilterZona} onFilterNivel={setFilterNivel}
+                onSearch={setSearch} onFilterConfirmed={setFilterOnlyConfirmed}
+                onDragStart={(id) => setDraggedId(id)} onDragEnd={() => setDraggedId(null)}
+                onQuickAssign={onQuickAssign}
+              />
+            )}
+            <section className="flex flex-col overflow-hidden">
+              {isEditing ? (
+                <ScrollArea className="flex-1">
+                  <div className="p-4">
+                    <RosterTemplateEditor competitionId={competition.id} initialTemplate={template} onSave={saveTemplate} onCancel={() => setIsEditing(false)} saving={savingTemplate} />
                   </div>
-
-                  {activeSession ? (
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-subtle-muted">
-                            Sesión activa
-                          </p>
-                          <h3 className="text-sm font-semibold text-foreground">
-                            {activeSession.sesion} · {activeSession.nombre}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-subtle-muted">
-                          Edita esta sesión sin perder la vista global del fin de semana
-                        </p>
-                      </div>
-                      {!readOnly && (
-                        <div className="rounded-2xl border border-border-muted bg-surface/25 p-3">
-                          <div className="mb-2 flex items-center justify-between gap-2">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-subtle-muted">
-                              Huecos pendientes
-                            </p>
-                            <span className="font-mono text-[11px] text-subtle-muted">
-                              {activeSessionPendingSlots.length} sin cubrir
-                            </span>
-                          </div>
-                          {activeSessionPendingSlots.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {activeSessionPendingSlots.map((slot) => (
-                                <button
-                                  key={slot.slotKey}
-                                  type="button"
-                                  onClick={() => setSelectedSlot(slot.slotKey)}
-                                  className={cn(
-                                    "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors focus-ring",
-                                    selectedSlot === slot.slotKey
-                                      ? "border-primary bg-primary/10 text-primary"
-                                      : "border-border bg-background text-muted-foreground hover:border-border-strong hover:bg-surface",
-                                  )}
-                                >
-                                  <span className="font-mono">{slot.sessionLabel}</span>
-                                  <ChevronRight className="h-3 w-3" />
-                                  <span>{slot.roleLabel}</span>
-                                  <span className="font-mono">{slot.slotNumber}</span>
-                                </button>
+                </ScrollArea>
+              ) : (
+                <>
+                  <div className="border-b border-border px-4 py-2.5">
+                    <h2 className="text-sm font-semibold text-foreground-secondary">Fin de semana · {template.length} sesión{template.length !== 1 ? "es" : ""}</h2>
+                    <p className="text-xs text-subtle-muted">Vista global por día arriba; detalle operativo abajo</p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="space-y-3 p-3">
+                      <div className="grid gap-3 2xl:grid-cols-2">
+                        {groupedSessions.map(([dia, sesiones]) => (
+                          <section key={dia} className="rounded-xl border border-border-muted bg-surface/30 p-3">
+                            <div className="mb-3 flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-primary" />
+                              <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{dia}</h3>
+                            </div>
+                            <div className="space-y-1.5">
+                              {sesiones.map((session) => (
+                                <SessionOverviewCard
+                                  key={session.sesion} session={session} assignments={assignments}
+                                  active={activeSession?.sesion === session.sesion}
+                                  onClick={() => { setActiveSessionKey(session.sesion); setSelectedSlot(null); }}
+                                />
                               ))}
                             </div>
-                          ) : (
-                            <p className="text-xs text-success">
-                              Sesión completa. Ya no quedan huecos por cubrir.
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      <SessionBlock
-                        key={activeSession.sesion}
-                        session={activeSession}
-                        assignments={assignments}
-                        flags={flags}
-                        crossZoneMap={crossZoneMap}
-                        getReferee={getReferee}
-                        selectedSlot={selectedSlot}
-                        onSelectSlot={setSelectedSlot}
-                        onDrop={onDrop}
-                        onClear={persistClear}
-                        onToggleFlag={toggleFlag}
-                        checkViolation={checkViolation}
-                        readOnly={readOnly}
-                        isDragging={isDragging}
-                        defaultExpanded
-                      />
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-border-strong bg-background/50 px-4 py-8 text-center text-xs text-subtle-muted">
-                      Define una plantilla para empezar a montar el fin de semana.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </section>
-      </div>
-      )}
-    </div>
-    {availabilityOpen && (
-      <CompetitionAvailabilityDialog
-        competitionId={competition.id}
-        referees={referees}
-        zones={zones}
-        confirmedIds={confirmedIds}
-        canEdit={canEdit}
-        onClose={() => setAvailabilityOpen(false)}
-        onToggle={(id, confirmed) =>
-          setConfirmedIds((prev) => {
-            const next = new Set(prev);
-            confirmed ? next.add(id) : next.delete(id);
-            return next;
-          })
-        }
-      />
-    )}
-    </>
-  );
-}
-
-function RefereeCard({
-  zones,
-  referee,
-  assigned,
-  dragging,
-  blockedReason,
-  warningReason,
-  competitionZona,
-  onDragStart,
-  onDragEnd,
-  onClick,
-  highlight,
-  isDragging,
-  readOnly = false,
-  isConfirmed = false,
-}: {
-  zones: Zone[];
-  referee: Referee;
-  assigned: boolean;
-  dragging: boolean;
-  blockedReason?: string | null;
-  warningReason?: string | null;
-  competitionZona?: string;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onClick: () => void;
-  highlight: boolean;
-  isDragging: boolean;
-  readOnly?: boolean;
-  isConfirmed?: boolean;
-}) {
-  const locked = readOnly || !!blockedReason;
-  const topRoles = referee.arbitrajeStats
-    ? topArbitrajeRoles(referee.arbitrajeStats, 2)
-    : [];
-  const isFromOtherZone = !!competitionZona && referee.zona !== competitionZona;
-  return (
-    <li
-      draggable={!locked}
-      onDragStart={(e) => {
-        if (locked) return;
-        e.dataTransfer.setData("text/plain", referee.id);
-        onDragStart();
-      }}
-      onDragEnd={onDragEnd}
-      onClick={() => !locked && onClick()}
-      className={cn(
-        "flex cursor-grab items-center gap-2 rounded-lg border border-border bg-surface/80 px-2.5 py-1.5 transition-all duration-100 active:cursor-grabbing",
-        assigned && "opacity-60",
-        locked && "cursor-default",
-        dragging && "scale-95 opacity-40 shadow-none",
-        !locked && highlight && "cursor-pointer border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10 hover:shadow-sm",
-        !locked && isDragging && !dragging && "hover:border-success/50 hover:bg-success/5",
-        !locked && !highlight && !isDragging && "hover:border-border-strong hover:bg-surface hover:shadow-sm",
-      )}
-    >
-      <GripVertical
-        className={cn(
-          "h-3.5 w-3.5 shrink-0 transition-colors",
-          highlight ? "text-primary" : "text-subtle-muted",
-        )}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className="line-clamp-1 text-[13px] font-semibold leading-snug text-foreground">
-            {referee.nombre}
-          </p>
-          {isConfirmed && (
-            <span className="shrink-0 rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-success">✓</span>
-          )}
-        </div>
-        <p className={cn("text-[11px]", isFromOtherZone ? "font-semibold text-orange-500" : "text-subtle-muted")}>
-          {isFromOtherZone ? `⟳ ${zoneName(zones, referee.zona)}` : zoneName(zones, referee.zona)}
-        </p>
-        <p className="mt-0.5 font-mono text-[10px] text-subtle-muted">
-          {referee.eventos} arb.
-          {topRoles.length > 0 &&
-            ` · ${topRoles.map((r) => `${r.count}× ${r.role}`).join(", ")}`}
-        </p>
-        {blockedReason && (
-          <p className="mt-1 text-[10px] font-medium text-warning">{blockedReason}</p>
-        )}
-        {warningReason && !blockedReason && (
-          <p className="mt-1 text-[10px] font-medium text-warning">{warningReason}</p>
-        )}
-        {referee.eventos >= 8 && !blockedReason && (
-          <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-            ↑ alta carga ({referee.eventos} arb.)
-          </p>
-        )}
-      </div>
-      <LevelBadge level={referee.nivel} />
-      {assigned && <Check className="h-3.5 w-3.5 shrink-0 text-success" />}
-    </li>
-  );
-}
-
-/** Agrupa sesiones por día preservando el orden. */
-function groupSessionsByDay(sessions: RosterSession[]): [string, RosterSession[]][] {
-  const groups: [string, RosterSession[]][] = [];
-  for (const s of sessions) {
-    const dia = s.dia || "Sesiones";
-    const existing = groups.find(([d]) => d === dia);
-    if (existing) existing[1].push(s);
-    else groups.push([dia, [s]]);
-  }
-  return groups;
-}
-
-function summarizeSessionCategories(session: RosterSession) {
-  const categories = (session.categorias ?? [])
-    .map((category) => `${category.genero} ${category.pesos}`)
-    .join(" · ");
-  return categories || "Sin categorías";
-}
-
-function summarizeSessionGroups(session: RosterSession) {
-  return (session.grupos ?? [])
-    .map((g) => {
-      const categories = g.categorias.map((c) => `${c.genero} ${c.pesos}`).join(" · ");
-      const total = typeof g.levantadores === "number" ? ` (${g.levantadores} lev.)` : "";
-      return `${g.nombre}: ${categories || "—"}${total}`;
-    })
-    .join(" · ");
-}
-
-function slotRoleEntries(session: RosterSession) {
-  return [...session.roles, ...(session.pesajeRoles ?? [])];
-}
-
-function sessionProgress(session: RosterSession, assignments: AssignmentsMap) {
-  const allRoles = slotRoleEntries(session);
-  const slots = allRoles.reduce((a, r) => a + r.slots, 0);
-  let filled = 0;
-  for (const role of allRoles) {
-    for (let i = 0; i < role.slots; i++) {
-      if (assignments[`${session.sesion}_${role.key}_${i}`]) filled++;
-    }
-  }
-  const pct = slots > 0 ? Math.round((filled / slots) * 100) : 0;
-  return { filled, slots, pct };
-}
-
-function findNextOpenSlot(
-  session: RosterSession,
-  assignments: AssignmentsMap,
-  afterSlotKey?: string,
-) {
-  const orderedSlots = slotRoleEntries(session).flatMap((role) =>
-    Array.from({ length: role.slots }, (_, idx) => `${session.sesion}_${role.key}_${idx}`),
-  );
-
-  if (orderedSlots.length === 0) return null;
-  const startIndex = afterSlotKey ? orderedSlots.indexOf(afterSlotKey) : -1;
-  const rotated =
-    startIndex >= 0
-      ? [...orderedSlots.slice(startIndex + 1), ...orderedSlots.slice(0, startIndex + 1)]
-      : orderedSlots;
-
-  return rotated.find((slotKey) => !assignments[slotKey]) ?? null;
-}
-
-function describeSlot(session: RosterSession, slotKey: string) {
-  const [, roleKey, slotIndexRaw] = slotKey.split("_");
-  const role = slotRoleEntries(session).find((entry) => entry.key === roleKey);
-  if (!role) return null;
-  return {
-    slotKey,
-    sessionLabel: session.sesion,
-    roleLabel: role.rol,
-    slotNumber: Number(slotIndexRaw) + 1,
-  };
-}
-
-function collectOpenSlots(session: RosterSession, assignments: AssignmentsMap) {
-  return slotRoleEntries(session).flatMap((role) =>
-    Array.from({ length: role.slots }, (_, idx) => {
-      const slotKey = `${session.sesion}_${role.key}_${idx}`;
-      if (assignments[slotKey]) return null;
-      return {
-        slotKey,
-        sessionLabel: session.sesion,
-        roleLabel: role.rol,
-        slotNumber: idx + 1,
-      };
-    }).filter(Boolean) as Array<{
-      slotKey: string;
-      sessionLabel: string;
-      roleLabel: string;
-      slotNumber: number;
-    }>,
-  );
-}
-
-function SessionOverviewCard({
-  session,
-  assignments,
-  active,
-  onClick,
-}: {
-  session: RosterSession;
-  assignments: AssignmentsMap;
-  active: boolean;
-  onClick: () => void;
-}) {
-  const { filled, slots, pct } = sessionProgress(session, assignments);
-  const groupsCount = session.grupos?.length ?? 0;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "w-full rounded-lg border px-2.5 py-2 text-left transition-all focus-ring",
-        active
-          ? "border-primary bg-primary/8 shadow-sm"
-          : "border-border bg-background/75 hover:border-border-strong hover:bg-surface",
-      )}
-      aria-pressed={active}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs font-semibold text-primary">{session.sesion}</span>
-            <span className="text-[13px] font-semibold text-foreground">{session.nombre}</span>
-          </div>
-          <p className="mt-0.5 line-clamp-1 text-[10.5px] leading-snug text-muted-foreground">
-            {summarizeSessionCategories(session)}
-          </p>
-        </div>
-        <span className="shrink-0 rounded-full bg-surface-hover px-2 py-1 font-mono text-[11px] text-foreground-secondary">
-          {filled}/{slots}
-        </span>
-      </div>
-      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-[10.5px] text-subtle-muted">
-        <span>Comp. {session.horarioCompeticion}</span>
-        <span>Pesaje {session.horarioPesaje}</span>
-        {groupsCount > 0 && <span>{groupsCount} grupo{groupsCount > 1 ? "s" : ""}</span>}
-      </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn(
-            "h-full rounded-full transition-all duration-300",
-            pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
-          )}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </button>
-  );
-}
-
-interface SlotGridProps {
-  sesion: string;
-  roles: RosterRole[];
-  assignments: AssignmentsMap;
-  flags: FlagsMap;
-  crossZoneMap?: CrossZoneMap;
-  getReferee: (id: string) => Referee | undefined;
-  selectedSlot: string | null;
-  onSelectSlot: (key: string | null) => void;
-  onDrop: (slotKey: string, refereeId: string) => void;
-  onClear: (slotKey: string) => void;
-  onToggleFlag: (slotKey: string, field: keyof SlotFlags) => void;
-  checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
-  readOnly: boolean;
-  isDragging: boolean;
-}
-
-function SlotGrid({
-  sesion,
-  roles,
-  assignments,
-  flags,
-  crossZoneMap = {},
-  getReferee,
-  selectedSlot,
-  onSelectSlot,
-  onDrop,
-  onClear,
-  onToggleFlag,
-  checkViolation,
-  readOnly,
-  isDragging,
-}: SlotGridProps) {
-  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
-
-  return (
-    <div className="grid gap-2 2xl:grid-cols-2">
-      {roles.map((role) => (
-        <div
-          key={role.key}
-          className="rounded-lg border border-border-muted bg-background/55 p-2"
-        >
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-subtle-muted">
-              {role.rol}
-            </p>
-            <span className="font-mono text-[10px] text-subtle-muted">
-              {Array.from({ length: role.slots }).filter((_, idx) => {
-                const slotKey = `${sesion}_${role.key}_${idx}`;
-                return assignments[slotKey];
-              }).length}
-              /{role.slots}
-            </span>
-          </div>
-          <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-2 min-[1800px]:grid-cols-3">
-            {Array.from({ length: role.slots }).map((_, idx) => {
-              const slotKey = `${sesion}_${role.key}_${idx}`;
-              const refereeId = assignments[slotKey];
-              const referee = refereeId ? getReferee(refereeId) : undefined;
-              const isSelected = selectedSlot === slotKey;
-              const isDropTarget = dragOverKey === slotKey;
-              const violation = refereeId ? checkViolation(role.key, refereeId) : undefined;
-              const slotFlags = flags[slotKey];
-              const isCrossZone = !!crossZoneMap[slotKey];
-
-              return (
-                <div
-                  key={slotKey}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOverKey(slotKey);
-                  }}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    setDragOverKey(slotKey);
-                  }}
-                  onDragLeave={(e) => {
-                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                      setDragOverKey(null);
-                    }
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverKey(null);
-                    const id = e.dataTransfer.getData("text/plain");
-                    if (id) onDrop(slotKey, id);
-                  }}
-                  onClick={() => {
-                    if (readOnly) return;
-                    onSelectSlot(isSelected ? null : slotKey);
-                  }}
-                  className={cn(
-                    "relative rounded-md border p-2 transition-all duration-100",
-                    !readOnly && "cursor-pointer",
-                    isDropTarget
-                      ? "border-primary bg-primary/10 shadow-md"
-                      : isSelected
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : violation
-                          ? "border-warning-border bg-warning-subtle"
-                          : referee
-                            ? "border-border-strong bg-muted/40"
-                            : isDragging
-                              ? "border-dashed border-success/50 bg-success/5 hover:border-success hover:bg-success/10"
-                              : "border-dashed border-border-strong bg-background/50 hover:border-primary/50 hover:bg-primary/5",
-                  )}
-                >
-                  {referee ? (
-                    <>
-                      {/* Referee name + flags indicator */}
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[12.5px] font-semibold text-foreground">
-                            {referee.nombre}
-                            {slotFlags?.compartido && (
-                              <span
-                                className="ml-1 font-mono text-primary"
-                                title="Compartido entre sesiones"
-                              >
-                                *
-                              </span>
-                            )}
-                            {slotFlags?.intercambio && (
-                              <span
-                                className="ml-0.5 font-mono text-accent"
-                                title="Intercambio de jueces"
-                              >
-                                ↑↓
-                              </span>
-                            )}
-                          </p>
-                          <p className="mt-0.5 text-[10px] text-subtle-muted">
-                            Hueco {idx + 1}
-                          </p>
-                        </div>
-                        {!readOnly && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0 text-subtle-muted hover:text-foreground"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onClear(slotKey);
-                            }}
-                            aria-label="Quitar asignación"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
+                          </section>
+                        ))}
                       </div>
-
-                      {/* Level + violation + cross-zone */}
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <LevelBadge level={referee.nivel} />
-                        {isCrossZone && (
-                          <span
-                            title={`Juez de fuera de zona (${referee.zona})`}
-                            className="flex items-center gap-0.5 rounded border border-orange-400/60 bg-orange-50 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 dark:bg-orange-950 dark:text-orange-400"
-                          >
-                            ⟳ {referee.zona}
-                          </span>
-                        )}
-                        {violation && (
-                          <span
-                            title={`Mínimo ${violation.minLevel} para ${violation.rol}`}
-                            className="flex items-center gap-1 rounded border border-warning-border bg-warning-muted px-1.5 py-0.5 text-[10px] font-semibold text-warning"
-                          >
-                            <AlertTriangle className="h-3 w-3" />
-                            min. {violation.minLevel}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Flag toolbar */}
-                      {!readOnly && (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onToggleFlag(slotKey, "compartido");
-                            }}
-                            title="Compartido (*) — el juez comparte sesión con otra competición"
-                            aria-pressed={slotFlags?.compartido ? "true" : "false"}
-                            className={cn(
-                              "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",
-                              slotFlags?.compartido
-                                ? "border-primary bg-primary text-white"
-                                : "border-border bg-background text-subtle-muted hover:border-primary/50 hover:text-primary",
-                            )}
-                          >
-                            <span>*</span>
-                            <span className="hidden text-[9px] sm:inline">Comp.</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onToggleFlag(slotKey, "intercambio");
-                            }}
-                            title="Intercambio (↑↓) — juez en intercambio con otra federación"
-                            aria-pressed={slotFlags?.intercambio ? "true" : "false"}
-                            className={cn(
-                              "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",
-                              slotFlags?.intercambio
-                                ? "border-accent bg-accent text-white"
-                                : "border-border bg-background text-subtle-muted hover:border-accent/50 hover:text-accent",
-                            )}
-                          >
-                            <span>↑↓</span>
-                            <span className="hidden text-[9px] sm:inline">Interc.</span>
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex min-h-[42px] flex-col items-center justify-center gap-0.5 text-center">
-                      {isDropTarget ? (
-                        <p className="text-xs font-medium text-primary">Soltar aquí</p>
-                      ) : isSelected ? (
-                        <>
-                          <p className="text-xs font-medium text-primary">Hueco {idx + 1}</p>
-                          <p className="text-[10px] text-primary/80">Elige un juez a la izquierda</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-[11px] text-subtle-muted">Hueco {idx + 1}</p>
+                      {activeSession ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-subtle-muted">Sesión activa</p>
+                              <h3 className="text-sm font-semibold text-foreground">{activeSession.sesion} · {activeSession.nombre}</h3>
+                            </div>
+                            <p className="text-xs text-subtle-muted">Edita esta sesión sin perder la vista global del fin de semana</p>
+                          </div>
                           {!readOnly && (
-                            <p className="text-[10px] text-subtle-muted/70">clic o arrastra</p>
+                            <div className="rounded-2xl border border-border-muted bg-surface/25 p-3">
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-subtle-muted">Huecos pendientes</p>
+                                <span className="font-mono text-[11px] text-subtle-muted">{activeSessionPendingSlots.length} sin cubrir</span>
+                              </div>
+                              {activeSessionPendingSlots.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {activeSessionPendingSlots.map((slot) => (
+                                    <button
+                                      key={slot.slotKey} type="button" onClick={() => setSelectedSlot(slot.slotKey)}
+                                      className={cn(
+                                        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors focus-ring",
+                                        selectedSlot === slot.slotKey ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:border-border-strong hover:bg-surface",
+                                      )}
+                                    >
+                                      <span className="font-mono">{slot.sessionLabel}</span>
+                                      <ChevronRight className="h-3 w-3" />
+                                      <span>{slot.roleLabel}</span>
+                                      <span className="font-mono">{slot.slotNumber}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-success">Sesión completa. Ya no quedan huecos por cubrir.</p>
+                              )}
+                            </div>
                           )}
-                        </>
+                          <SessionBlock
+                            key={activeSession.sesion} session={activeSession}
+                            assignments={assignments} flags={flags} crossZoneMap={crossZoneMap}
+                            getReferee={getReferee} selectedSlot={selectedSlot}
+                            onSelectSlot={setSelectedSlot} onDrop={onDrop} onClear={persistClear}
+                            onToggleFlag={toggleFlag} checkViolation={checkViolation}
+                            readOnly={readOnly} isDragging={isDragging} defaultExpanded
+                          />
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-border-strong bg-background/50 px-4 py-8 text-center text-xs text-subtle-muted">
+                          Define una plantilla para empezar a montar el fin de semana.
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                </>
+              )}
+            </section>
           </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SessionBlock({
-  session,
-  assignments,
-  flags,
-  crossZoneMap = {},
-  getReferee,
-  selectedSlot,
-  onSelectSlot,
-  onDrop,
-  onClear,
-  onToggleFlag,
-  checkViolation,
-  readOnly = false,
-  isDragging,
-  defaultExpanded = false,
-}: {
-  session: RosterSession;
-  assignments: AssignmentsMap;
-  flags: FlagsMap;
-  crossZoneMap?: CrossZoneMap;
-  getReferee: (id: string) => Referee | undefined;
-  selectedSlot: string | null;
-  onSelectSlot: (key: string | null) => void;
-  onDrop: (slotKey: string, refereeId: string) => void;
-  onClear: (slotKey: string) => void;
-  onToggleFlag: (slotKey: string, field: keyof SlotFlags) => void;
-  checkViolation: (roleKey: RoleKey, refereeId: string) => RegulationRule | undefined;
-  readOnly?: boolean;
-  isDragging: boolean;
-  defaultExpanded?: boolean;
-}) {
-  const [collapsed, setCollapsed] = useState(!defaultExpanded);
-  const { filled, slots, pct } = sessionProgress(session, assignments);
-  const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
-  const pesajeRoles = session.pesajeRoles ?? [];
-  const groupsSummary = summarizeSessionGroups(session);
-
-  const grid = {
-    sesion: session.sesion,
-    assignments,
-    flags,
-    crossZoneMap,
-    getReferee,
-    selectedSlot,
-    onSelectSlot,
-    onDrop,
-    onClear,
-    onToggleFlag,
-    checkViolation,
-    readOnly,
-    isDragging,
-  };
-
-  return (
-    <article className="overflow-hidden rounded-xl border border-border bg-surface/40 shadow-sm">
-      <header className="grid gap-2 border-b border-border-muted p-2.5 lg:grid-cols-[auto_minmax(0,1.15fr)_minmax(0,2fr)_auto] lg:items-center">
-        {/* Collapse toggle */}
-        <button
-          type="button"
-          className="rounded text-subtle-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label={collapsed ? "Expandir sesión" : "Colapsar sesión"}
-          aria-expanded={!collapsed}
-          onClick={() => setCollapsed((v) => !v)}
-        >
-          {collapsed ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronUp className="h-4 w-4" />
-          )}
-        </button>
-
-        <div className="min-w-0">
-          <div className="flex min-w-0 items-baseline gap-2">
-            <span className="font-mono text-xs font-semibold text-primary">{session.sesion}</span>
-            <h3 className="truncate text-sm font-semibold text-foreground">{session.nombre}</h3>
-          </div>
-          <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-subtle-muted">
-            <span>Comp. {session.horarioCompeticion}</span>
-            <span>Pesaje {session.horarioPesaje}</span>
-          </p>
-        </div>
-
-        <div className="min-w-0">
-          <p className="truncate text-[11px] text-foreground-secondary">
-            {summarizeSessionCategories(session)}
-          </p>
-          {groupsSummary ? (
-            <p className="mt-1 truncate text-[10.5px] text-subtle-muted" title={groupsSummary}>
-              {groupsSummary}
-            </p>
-          ) : null}
-        </div>
-
-        {/* Progress mini-bar */}
-        <div className="min-w-[86px] shrink-0">
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn("h-full rounded-full transition-all duration-500", barColor)}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-subtle-muted">
-            {filled}/{slots}
-          </p>
-        </div>
-      </header>
-
-      {!collapsed && (
-        <div className="px-2.5 pb-2.5 pt-2">
-          {/* Competition roles group heading */}
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-secondary">
-            Competición
-          </p>
-          <SlotGrid roles={session.roles} {...grid} />
-
-          {pesajeRoles.length > 0 && (
-            <>
-              {/* Pesaje separator */}
-              <div className="my-2.5 flex items-center gap-2">
-                <div className="flex-1 border-t border-border-muted" />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
-                  Pesaje · {session.horarioPesaje}
-                </p>
-                <div className="flex-1 border-t border-border-muted" />
-              </div>
-              <SlotGrid roles={pesajeRoles} {...grid} />
-            </>
-          )}
-        </div>
+        )}
+      </div>
+      <EditCompetitionDialog competition={competition} zones={zones} open={editCompetitionOpen} onClose={() => setEditCompetitionOpen(false)} />
+      {availabilityOpen && (
+        <CompetitionAvailabilityDialog
+          competitionId={competition.id} referees={referees} zones={zones}
+          confirmedIds={confirmedIds} canEdit={canEdit}
+          onClose={() => setAvailabilityOpen(false)}
+          onToggle={(id, confirmed) =>
+            setConfirmedIds((prev) => { const next = new Set(prev); confirmed ? next.add(id) : next.delete(id); return next; })
+          }
+        />
       )}
-    </article>
+    </>
   );
 }

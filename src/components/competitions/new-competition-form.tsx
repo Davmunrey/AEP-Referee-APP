@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 import { AlertCircle, CalendarRange, Loader2 } from "lucide-react";
+import { FieldErrors, validateField } from "@/lib/competition-validation";
 
 const EVENT_TYPES: EventType[] = ["AEP-1", "AEP-2", "AEP-3"];
 
@@ -22,15 +23,6 @@ const TYPE_DEFAULTS: Record<EventType, { sesiones: string; requeridos: string }>
 };
 
 const TYPE_DESC = AEP_COMPETITION_TYPE_DESC;
-
-interface FieldErrors {
-  nombre?: string;
-  fecha?: string;
-  fechaFin?: string;
-  sede?: string;
-  sesiones?: string;
-  requeridos?: string;
-}
 
 interface NewCompetitionFormProps {
   zones: Zone[];
@@ -56,31 +48,6 @@ function FieldError({ message }: { message?: string }) {
       {message}
     </p>
   );
-}
-
-function validateField(field: string, value: string, fechaStart?: string): string | undefined {
-  switch (field) {
-    case "nombre":
-      return value.trim() === "" ? "El nombre es obligatorio" : undefined;
-    case "sede":
-      return value.trim() === "" ? "La sede es obligatoria" : undefined;
-    case "fecha":
-      return value === "" ? "La fecha de inicio es obligatoria" : undefined;
-    case "fechaFin":
-      if (value && fechaStart && value < fechaStart)
-        return "La fecha fin no puede ser anterior al inicio";
-      return undefined;
-    case "sesiones": {
-      const n = Math.round(Number(value));
-      if (!Number.isFinite(n) || n < 1 || n > 6) return "Entre 1 y 6 sesiones";
-      return undefined;
-    }
-    case "requeridos": {
-      const n = Math.round(Number(value));
-      if (!Number.isFinite(n) || n < 1) return "Mínimo 1 plaza requerida";
-      return undefined;
-    }
-  }
 }
 
 export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormProps) {
