@@ -110,6 +110,9 @@ export const api = {
 
   getCompetition: (id: string) => request<Competition>(`/competitions/${id}`),
 
+  updateCompetition: (id: string, body: Partial<Pick<Competition, "nombre" | "tipo" | "fecha" | "fechaFin" | "sede" | "zona">>) =>
+    request<Competition>(`/competitions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+
   getRoster: (competitionId: string) =>
     request<{ template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }>(
       `/competitions/${competitionId}/roster`,

@@ -12,7 +12,11 @@ import type { Referee, RegulationRule, RosterSession } from "@/lib/types";
 const template: RosterSession[] = [
   {
     sesion: "S1",
+    nombre: "Sesión 1",
     dia: "Día 1",
+    categorias: [],
+    horarioCompeticion: "10:00 - 13:00",
+    horarioPesaje: "08:00 - 09:30",
     roles: [{ rol: "Jurado", slots: 1, key: "jurado" }],
     pesajeRoles: [],
   },
@@ -27,14 +31,17 @@ const referee: Referee = {
   estado: "Activo",
   disp: true,
   eventos: 1,
+  ultimo: "2025-01-01",
 };
 
 const regulations: RegulationRule[] = [
   {
+    id: "reg-1",
     rol: "Jurado",
     roleKey: "jurado",
     minLevel: "IPF Cat. 2",
     eventTypes: ["AEP-1"],
+    note: "",
   },
 ];
 
@@ -53,10 +60,12 @@ describe("roster-ui", () => {
     const nacional: Referee = { ...referee, nivel: "Nacional" };
     const juradoRegs: RegulationRule[] = [
       {
+        id: "reg-1",
         rol: "Jurado",
         roleKey: "jurado",
         minLevel: "IPF Cat. 2",
         eventTypes: ["AEP-1"],
+        note: "",
       },
     ];
     const reason = getAssignabilityReason(nacional, "jurado", "AEP-1", juradoRegs);
