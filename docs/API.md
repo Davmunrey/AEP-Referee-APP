@@ -79,6 +79,16 @@ Competiciones pasadas quedan lectura por UI y API mutadora devuelve `423`.
 | Ascensos | `/promotions`, `/promotions/:id/review` | crear gestor; revisar nacional |
 | Aprobaciones | `/approvals`, `/approvals/:id/review` | revisar nacional |
 
+## Disponibilidad por campeonato
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/competitions/:id/availability` | sesión |
+| `POST` | `/competitions/:id/availability` | no `solo_ver` |
+| `DELETE` | `/competitions/:id/availability/:refereeId` | no `solo_ver` |
+
+`GET` devuelve `{ confirmedIds: string[] }`. `POST` acepta `{ refereeId: string }`. Errores devuelven JSON `{ error: string }` incluso ante excepciones internas.
+
 ## Seguridad import
 
 - PDF: MIME, máximo 5 MB, firma `%PDF-`, extracción con timeout.

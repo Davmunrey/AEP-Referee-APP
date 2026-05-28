@@ -16,6 +16,7 @@ Supabase Postgres. Migraciones en `supabase/migrations`.
 | `reports` | Informes |
 | `regulation_rules` | Normativa |
 | `referee_sanctions` | Sanciones |
+| `competition_availability` | Jueces confirmados disponibles por campeonato (migration 018) |
 
 ## RLS
 
