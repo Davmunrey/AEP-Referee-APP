@@ -19,6 +19,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const body = bodySchema.safeParse(await req.json());
   if (!body.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
-  await dataService.addCompetitionAvailability(id, body.data.refereeId, user.nombre);
-  return NextResponse.json({ ok: true });
+  try {
+    await dataService.addCompetitionAvailability(id, body.data.refereeId, user.nombre);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 });
+  }
 }
