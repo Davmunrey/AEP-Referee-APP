@@ -139,17 +139,11 @@ export interface RosterSession {
   nombre: string;
   /** Día al que pertenece la sesión — agrupa columnas (ej. "Viernes 15 may"). */
   dia: string;
-  /** Categorías que compiten en la sesión. */
   categorias: RosterCategoria[];
-  /** Horario de competición (ej. "12:30 - 15:45"). */
   horarioCompeticion: string;
-  /** Horario de pesaje y revisión de equipamiento (ej. "10:30 - 12:00"). */
   horarioPesaje: string;
-  /** Roles de competición (9 plazas). */
   roles: RosterRole[];
-  /** Roles del bloque de pesaje y revisión de equipamiento. */
   pesajeRoles: RosterRole[];
-  /** Grupos opcionales — desglose por sesión (Grupo 1, Grupo 2…). */
   grupos?: RosterGrupo[];
 }
 
@@ -242,7 +236,6 @@ export interface OperationalHealth {
   status: HealthStatus;
   summary: string;
   factors: HealthFactor[];
-  /** Variación del índice frente a la captura anterior (retroalimentación). */
   delta?: number;
   previousScore?: number;
 }
@@ -385,28 +378,8 @@ export interface RefereeCompetitionPosition {
   flags?: SlotFlags;
 }
 
-export type SanctionStatus = "activa" | "cumplida" | "revocada";
-
-export type SanctionDurationPreset =
-  | "7d"
-  | "14d"
-  | "30d"
-  | "90d"
-  | "180d"
-  | "365d"
-  | "custom";
-
-export interface ZoneDelegate {
-  id: string;
-  nombre: string;
-  email: string;
-}
-
-export interface SanctionDelegateNotify {
-  delegates: ZoneDelegate[];
-  mailtoUrl: string;
-  notifiedAt?: string;
-}
+export type { SanctionStatus, SanctionDurationPreset, ZoneDelegate, SanctionDelegateNotify } from "./types/sanction-support";
+export type { AssignValidation, IpfArticle, IpfChapter } from "./types/ipf";
 
 export interface RefereeSanction {
   id: string;
@@ -416,13 +389,13 @@ export interface RefereeSanction {
   motivo: string;
   fechaInicio: string;
   fechaFin: string;
-  status: SanctionStatus;
+  status: import("./types/sanction-support").SanctionStatus;
   impuestaPorId?: string;
   impuestaPorNombre: string;
   revocadaPorNombre?: string;
   revocadaAt?: string;
   notas?: string;
-  delegateNotify: SanctionDelegateNotify;
+  delegateNotify: import("./types/sanction-support").SanctionDelegateNotify;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -471,10 +444,8 @@ export interface AnalyticsPayload {
     filledSlots: number;
     uniqueAssignedReferees: number;
     activeReferees: number;
-    /** Slots filled by referees from another zone in competitions of this zone. */
     crossZoneSlots?: number;
   }[];
-  /** Global cross-zone assignment summary for the selected year. */
   crossZoneSummary?: {
     totalCrossZoneSlots: number;
     pctOfFilledSlots: number;
@@ -498,21 +469,4 @@ export interface AnalyticsPayload {
     filledSlots: number;
     openSlots: number;
   };
-}
-
-export interface AssignValidation {
-  ok: boolean;
-  error?: string;
-}
-
-export interface IpfArticle {
-  num: string;
-  title?: string;
-  text: string;
-}
-
-export interface IpfChapter {
-  num: string;
-  title: string;
-  articles: IpfArticle[];
 }
