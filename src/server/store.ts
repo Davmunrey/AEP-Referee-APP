@@ -1,3 +1,4 @@
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { LEVELS, PRESET_AEP1, ZONES } from "@/lib/mock-data";
 import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
@@ -52,6 +53,9 @@ function createStore(): AppStore {
 }
 
 export function getStore(): AppStore {
+  if (isSupabaseConfigured()) {
+    throw new Error("getStore() no debe usarse con Supabase activo — usa supabaseDataService");
+  }
   if (!globalStore.__aepStore) {
     globalStore.__aepStore = createStore();
   }
