@@ -2,10 +2,11 @@
 DROP TABLE IF EXISTS referee_availability;
 
 -- Per-competition availability: judges who confirmed via WhatsApp
+-- Note: competitions.id and referees.id are text in this project (not uuid)
 CREATE TABLE IF NOT EXISTS competition_availability (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  competition_id  UUID        NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
-  referee_id      UUID        NOT NULL REFERENCES referees(id) ON DELETE CASCADE,
+  id              TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  competition_id  TEXT        NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+  referee_id      TEXT        NOT NULL REFERENCES referees(id) ON DELETE CASCADE,
   created_by      TEXT,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT competition_availability_unique UNIQUE (competition_id, referee_id)
