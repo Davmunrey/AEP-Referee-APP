@@ -59,7 +59,12 @@ export function AppShell({
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(COLLAPSE_KEY);
-      if (stored === "1") setCollapsed(true);
+      if (stored === "1") {
+        setCollapsed(true);
+      } else if (stored === null && window.innerWidth < 1024) {
+        // Auto-collapse on tablet/iPad (first visit, no saved preference)
+        setCollapsed(true);
+      }
     } catch {
       // ignore — Safari private mode, etc.
     }

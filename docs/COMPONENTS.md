@@ -55,6 +55,15 @@
 | `FileDropZone` | Subida |
 | `ImportPreviewTable` | Vista previa |
 
+## Disponibilidad
+
+| Componente | Uso |
+|---|---|
+| `CompetitionAvailabilityDialog` | Modal para confirmar/quitar disponibilidad de un juez en un campeonato |
+| `RefereeAvailabilityPanel` | Panel en tarima: muestra confirmados, filtra "solo confirmados", llama a `/availability` |
+
+La disponibilidad se gestiona a nivel de campeonato (tabla `competition_availability`, migration 019). El filtro "solo confirmados" en tarima filtra la lista de jueces disponibles a los que confirmaron.
+
 ## Jueces
 
 | Componente | Uso |
@@ -65,3 +74,7 @@
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |
 | `UsersAdmin` | Usuarios |
+
+## Responsive
+
+El `AppShell` auto-colapsa el sidebar en `< 1024px` (primer render en tablet/iPad) para liberar espacio. El usuario puede expandirlo manualmente y la preferencia se persiste en localStorage (`aep-tarima:sidebar-collapsed`).
