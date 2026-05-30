@@ -1,0 +1,103 @@
+{
+  "name": "feature-pipeline",
+  "pattern": "orchestrator",
+  "description": "Implementa una feature completa en AEP: research → arquitectura → código → tests → revisión",
+  "timeout_total_s": 1800,
+  "context_budget": {
+    "max_tokens_per_agent": 80000,
+    "handoff_max_lines": 150
+  },
+  "input": {
+    "fields": ["feature_description", "acceptance_criteria", "affected_modules"],
+    "example": {
+      "feature_description": "Añadir notificaciones push cuando un árbitro es asignado a un campeonato",
+      "acceptance_criteria": ["Email enviado al árbitro", "UI muestra badge de notificación pendiente"],
+      "affected_modules": ["competitions/roster", "referees", "notifications"]
+    }
+  },
+  "steps": [
+    {
+      "id": "researcher",
+      "agent": "Explore",
+      "role": "Mapea el codebase relevante para la feature. Lee archivos clave, identifica patrones existentes (auth, API routes, dataService), lista los archivos a crear/modificar.",
+      "timeout_s": 180,
+      "outputs": {
+        "relevant_files": "Lista de rutas afectadas con descripción de 1 línea",
+        "patterns_to_follow": "Auth pattern, route-utils, dataService, tipos relevantes",
+        "constraints": "Reglas del proyecto (500 líneas, no secrets, CLAUDE.md)",
+        "open_questions": "Decisiones de diseño que necesita el architect"
+      },
+      "handoff_to": "architect"
+    },
+    {
+      "id": "architect",
+      "agent": "architect-reviewer",
+      "role": "Diseña la solución basándose en el research. Produce un plan ejecutable: qué crear, qué modificar, interfaces de datos, flujo de autenticación, esquema DB si aplica.",
+      "timeout_s": 240,
+      "inputs_from": "researcher",
+      "required_inputs": ["relevant_files", "patterns_to_follow", "constraints"],
+      "outputs": {
+        "files_to_create": "Rutas nuevas con propósito y líneas estimadas",
+        "files_to_modify": "Rutas existentes con diff conceptual",
+        "data_contracts": "Interfaces TypeScript nuevas/modificadas",
+        "db_changes": "Migración SQL si aplica (null si no hay)",
+        "implementation_order": "Secuencia de pasos para el coder"
+      },
+      "validation": "El plan no debe superar 500 líneas por archivo. Debe usar requireApiUser/isSessionUser/jsonOk/jsonError. Sin secrets en código.",
+      "handoff_to": "coder"
+    },
+    {
+      "id": "coder",
+      "agent": "fullstack-developer",
+      "role": "Implementa exactamente lo que especifica el architect. Sigue los patrones AEP: auth con requireApiUser(), dataService dual-layer, mensajes de error en español, sin comentarios obvios.",
+      "timeout_s": 600,
+      "inputs_from": "architect",
+      "required_inputs": ["files_to_create", "files_to_modify", "data_contracts", "implementation_order"],
+      "outputs": {
+        "files_changed": "Lista de archivos creados/modificados",
+        "build_status": "npx tsc --noEmit — debe ser limpio",
+        "notes_for_tester": "Edge cases a cubrir, datos de prueba necesarios"
+      },
+      "constraints": [
+        "Cada archivo < 500 líneas",
+        "No crear documentación a menos que se pida",
+        "No commit — solo escritura de archivos"
+      ],
+      "handoff_to": "tester"
+    },
+    {
+      "id": "tester",
+      "agent": "qa-expert",
+      "role": "Escribe y ejecuta tests para la feature. Prioriza: happy path, auth (solo_ver bloqueado, zona incorrecta bloqueada), validación de input. Usa Vitest.",
+      "timeout_s": 300,
+      "inputs_from": "coder",
+      "required_inputs": ["files_changed", "notes_for_tester"],
+      "outputs": {
+        "tests_written": "Rutas de archivos de test nuevos/modificados",
+        "test_results": "npm test — debe ser 155+ tests pasando, 0 failing",
+        "coverage_gaps": "Casos no cubiertos con justificación"
+      },
+      "validation": "Si algún test falla, STOP — no pasar a reviewer",
+      "handoff_to": "reviewer"
+    },
+    {
+      "id": "reviewer",
+      "agent": "code-reviewer",
+      "role": "Revisión final: seguridad, calidad, adherencia a patrones AEP. Busca: inyección SQL, XSS, auth bypass, archivos > 500 líneas, mensajes en inglés, imports de secrets.",
+      "timeout_s": 180,
+      "inputs_from": "tester",
+      "required_inputs": ["tests_written", "test_results"],
+      "outputs": {
+        "verdict": "SHIP | REVISE | BLOCK",
+        "blocking_issues": "Issues que impiden merge (seguridad, tests rotos)",
+        "suggestions": "Mejoras no bloqueantes",
+        "commit_message": "Mensaje de commit listo para usar"
+      }
+    }
+  ],
+  "failure_policy": {
+    "on_step_timeout": "retry_once_then_fail",
+    "on_validation_fail": "stop_pipeline_report_step",
+    "on_reviewer_block": "return_to_coder_with_issues"
+  }
+}
