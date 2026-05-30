@@ -30,23 +30,26 @@ type NameHit = {
 
 const PAGE_RE = /(?:Página\s+\d+\s+de\s+\d+|Página\s+\d+\s+de|(?=TARIMA\s+\d+))/gi;
 const SESSION_RE = /\bS(?:ESI[ÓO]N\s*)?(\d{1,2})\b/gi;
-const ROLE_ANCHOR_RE = /JUEZ\s+CENTRAL|Central|Lateral|Ordenador|Jurado|SPEAKER/i;
+// Etiquetas individuales de rol — usadas para detectar el bloque leyenda
+const ROLE_LABEL_RE = /JUEZ\s+(?:CENTRAL|LATERAL)|ORDENADOR|CONTROL\s+TARIMA|SPEAKER|LIFTINGCAST|OPENLIFTER|CONTROL\s+DE\s+EQUIPAMIENTO|PESAJE\s+Y\s+REVISI[ÓO]N/gi;
 const TIME_RE = /\d{1,2}:\d{2}\s*-\s*\d{1,2}:?\d{2}/g;
 
+// Orden real confirmado con cuadrantes AEP oficiales:
+// Central → Lateral → Lateral → Ordenador → Speaker/Mesa → Control
 const COMP_ROLE_ORDER_AEP2: RoleKey[] = [
   "central",
-  "speaker",
   "lateral",
   "lateral",
   "ordenador",
+  "speaker",
   "control",
 ];
 const COMP_ROLE_ORDER_AEP1: RoleKey[] = [
   "central",
-  "speaker",
   "lateral",
   "lateral",
   "ordenador",
+  "speaker",
   "control",
   "jurado",
   "jurado",
@@ -54,10 +57,10 @@ const COMP_ROLE_ORDER_AEP1: RoleKey[] = [
 ];
 const MIXED_ROLE_ORDER_AEP1: RoleKey[] = [
   "central",
-  "speaker",
   "lateral",
   "lateral",
   "ordenador",
+  "speaker",
   "control",
   "pesaje",
   "equipamiento",
@@ -67,10 +70,10 @@ const MIXED_ROLE_ORDER_AEP1: RoleKey[] = [
 ];
 const MIXED_ROLE_ORDER_AEP2: RoleKey[] = [
   "central",
-  "speaker",
   "lateral",
   "lateral",
   "ordenador",
+  "speaker",
   "control",
   "pesaje",
   "equipamiento",
@@ -139,11 +142,24 @@ function splitBlocks(text: string): string[] {
     .filter((b) => b.length > 80);
 }
 
+/**
+ * Encuentra el inicio del bloque leyenda de roles.
+ * Busca el primer punto donde 2+ etiquetas de rol aparecen dentro de 200 chars
+ * (bloque leyenda), ignorando matches aislados que puedan estar en la misma
+ * fila que nombres de jueces (leyenda lateral en algunos cuadrantes AEP).
+ */
 function findRoleAnchor(block: string): number {
-  for (const match of block.matchAll(new RegExp(ROLE_ANCHOR_RE, "gi"))) {
-    if (match.index != null) return match.index;
+  const matches = [...block.matchAll(ROLE_LABEL_RE)].filter(
+    (m) => m.index != null,
+  ) as Array<RegExpMatchArray & { index: number }>;
+  if (matches.length === 0) return -1;
+  // Busca cluster: dos matches con menos de 200 chars entre sí
+  for (let i = 0; i < matches.length - 1; i++) {
+    const gap = (matches[i + 1]!.index) - (matches[i]!.index + matches[i]![0].length);
+    if (gap <= 200) return matches[i]!.index;
   }
-  return -1;
+  // Fallback: último match aislado (leyenda al final del doc)
+  return matches.at(-1)!.index;
 }
 
 function uniqueSessions(block: string): string[] {
