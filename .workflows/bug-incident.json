@@ -1,0 +1,75 @@
+{
+  "name": "bug-incident",
+  "pattern": "sequential",
+  "description": "Diagnostica y parchea un bug en AEP: investigar → reproducir → parchear → verificar",
+  "timeout_total_s": 900,
+  "context_budget": {
+    "max_tokens_per_agent": 60000,
+    "handoff_max_lines": 80
+  },
+  "input": {
+    "fields": ["bug_description", "reproduction_steps", "error_output", "affected_route_or_component"],
+    "example": {
+      "bug_description": "POST /api/v1/competitions/:id/availability devuelve 500 cuando el árbitro no existe",
+      "reproduction_steps": ["Login como delegado_zona", "POST con refereeId inexistente", "Recibe 500 en lugar de 404"],
+      "error_output": "TypeError: Cannot read properties of undefined (reading 'zona')",
+      "affected_route_or_component": "src/app/api/v1/competitions/[id]/availability/route.ts"
+    }
+  },
+  "steps": [
+    {
+      "id": "investigator",
+      "agent": "debugger",
+      "role": "Localiza la causa raíz del bug. Lee el archivo afectado y sus dependencias (dataService, auth helpers). Traza el flujo de ejecución hasta el error. NO modifica código.",
+      "timeout_s": 180,
+      "outputs": {
+        "root_cause": "Explicación de 2-3 frases de por qué falla",
+        "failing_line": "Archivo:línea donde ocurre el error",
+        "fix_strategy": "Approach recomendado (null check, early return, validación, etc.)",
+        "regression_risk": "Otros lugares que podrían romperse con el fix",
+        "minimal_repro": "Comando o test mínimo que reproduce el error"
+      },
+      "handoff_to": "patcher"
+    },
+    {
+      "id": "patcher",
+      "agent": "debugger",
+      "role": "Aplica el fix mínimo necesario. No refactoriza, no añade features. Sigue el patrón AEP: jsonError en español, validación antes de acceso a datos, sin romper otros flujos.",
+      "timeout_s": 300,
+      "inputs_from": "investigator",
+      "required_inputs": ["root_cause", "failing_line", "fix_strategy", "regression_risk"],
+      "constraints": [
+        "Fix quirúrgico — modifica solo lo necesario",
+        "No superar el archivo las 500 líneas tras el fix",
+        "Mensaje de error en español si se añade uno nuevo",
+        "TypeScript limpio: npx tsc --noEmit sin errores"
+      ],
+      "outputs": {
+        "files_patched": "Lista de archivos modificados",
+        "diff_summary": "Descripción concisa del cambio",
+        "build_clean": "true/false — resultado de tsc --noEmit"
+      },
+      "handoff_to": "verifier"
+    },
+    {
+      "id": "verifier",
+      "agent": "qa-expert",
+      "role": "Confirma que el fix funciona y no introduce regresiones. Ejecuta el test suite completo. Si el bug no tenía test, escribe uno que habría capturado el error.",
+      "timeout_s": 240,
+      "inputs_from": ["investigator", "patcher"],
+      "required_inputs": ["minimal_repro", "files_patched"],
+      "outputs": {
+        "test_results": "npm test — resultado completo",
+        "regression_test_added": "Ruta del test nuevo (null si ya existía)",
+        "verdict": "FIXED | PARTIAL | STILL_FAILING",
+        "commit_message": "fix: <descripción concisa del bug resuelto>"
+      },
+      "validation": "Si verdict != FIXED, retornar a patcher con contexto adicional. Máximo 2 iteraciones."
+    }
+  ],
+  "failure_policy": {
+    "on_step_timeout": "fail_fast_report",
+    "on_verifier_partial": "return_to_patcher_max_2",
+    "on_verifier_still_failing": "escalate_to_human"
+  }
+}
