@@ -2,21 +2,42 @@
 
 Supabase Postgres. Migraciones en `supabase/migrations`.
 
+## Tipos de ID
+
+**Todos los IDs son `TEXT`, no `UUID`.** Los PKs usan `gen_random_uuid()::text` — se generan como UUID pero se almacenan como texto. Las FKs deben ser `TEXT NOT NULL REFERENCES`. Cualquier migración nueva debe seguir este patrón para evitar errores de tipo incompatible en Supabase (`foreign key constraint cannot be implemented — incompatible types: uuid and text`).
+
 ## Tablas críticas
 
-| Tabla | Uso |
-|---|---|
-| `profiles` | Usuario app + rol |
-| `referees` | Jueces |
-| `competitions` | Campeonatos + plantilla JSON |
-| `roster_assignments` | Slots asignados |
-| `approval_proposals` | Propuestas aprobación |
-| `promotion_requests` | Ascensos |
-| `exams` | Exámenes |
-| `reports` | Informes |
-| `regulation_rules` | Normativa |
-| `referee_sanctions` | Sanciones |
-| `competition_availability` | Jueces confirmados disponibles por campeonato (migration 018) |
+| Tabla | Migración | Uso |
+|---|---|---|
+| `profiles` | 003 | Usuario app + rol |
+| `referees` | 001 | Jueces |
+| `competitions` | 001 | Campeonatos + plantilla JSON |
+| `roster_assignments` | 008 | Slots asignados |
+| `approval_proposals` | 001 | Propuestas aprobación |
+| `promotion_requests` | 001 | Ascensos |
+| `exams` | 001 | Exámenes |
+| `reports` | 001 | Informes |
+| `regulation_rules` | 001 | Normativa |
+| `referee_sanctions` | 014 | Sanciones |
+| `competition_availability` | 019 | Jueces confirmados disponibles por campeonato |
+
+### `competition_availability` (migration 019)
+
+Reemplaza `referee_availability` (eliminada en 019). Registra qué jueces confirmaron disponibilidad para un campeonato concreto.
+
+```sql
+CREATE TABLE competition_availability (
+  id              TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  competition_id  TEXT  NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+  referee_id      TEXT  NOT NULL REFERENCES referees(id) ON DELETE CASCADE,
+  created_by      TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT competition_availability_unique UNIQUE (competition_id, referee_id)
+);
+```
+
+Índices en `competition_id` y `referee_id`. RLS: anon sin acceso; authenticated full CRUD.
 
 ## RLS
 

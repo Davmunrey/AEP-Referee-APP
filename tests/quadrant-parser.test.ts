@@ -114,7 +114,7 @@ describe("parseQuadrantAssignments", () => {
     expect(parsed.warnings.join(" ")).toContain("sin leyenda de roles");
   });
 
-  it("asigna cuadrantes AEP con bloque único según orden real de colores", () => {
+  it("asigna cuadrantes AEP con bloque único según orden real AEP", () => {
     const names = [
       "Ana Vázquez Perez",
       "Isa Garcia",
@@ -152,11 +152,12 @@ describe("parseQuadrantAssignments", () => {
 
     const byRef = new Map(parsed.candidates.map((c) => [c.refereeName, c.roleKey]));
 
+    // Orden real AEP: central → lateral → lateral → ordenador → speaker → control
     expect(byRef.get("Ana Vázquez Perez")).toBe("central");
-    expect(byRef.get("Isa Garcia")).toBe("speaker");
+    expect(byRef.get("Isa Garcia")).toBe("lateral");
     expect(byRef.get("Herminio Muedra Alarcón")).toBe("lateral");
-    expect(byRef.get("Alejandro Pérez García")).toBe("lateral");
-    expect(byRef.get("Yerai Vega")).toBe("ordenador");
+    expect(byRef.get("Alejandro Pérez García")).toBe("ordenador");
+    expect(byRef.get("Yerai Vega")).toBe("speaker");
     expect(byRef.get("Ceila Alonso")).toBe("control");
     expect(byRef.get("Javi Ruiz")).toBe("pesaje");
     expect(byRef.get("Raquel Martín Tomás")).toBe("equipamiento");
