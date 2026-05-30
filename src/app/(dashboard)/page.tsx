@@ -34,19 +34,19 @@ export default async function DashboardPage() {
       <SanctionsAlerts alerts={dashboard.sanctionAlerts} />
 
       {/* Health + Insights side-by-side on large screens */}
-      <div className="grid gap-4 2xl:grid-cols-[minmax(320px,0.92fr)_minmax(0,1.08fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(320px,0.92fr)_minmax(0,1.08fr)]">
         <HealthGauge health={dashboard.health} />
         <InsightsPanel insights={dashboard.insights} />
       </div>
 
       {/* Priority radar + Coverage forecast */}
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
         <PriorityRadar coverage={dashboard.coverage} />
         <CoverageForecast coverage={dashboard.coverage} />
       </div>
 
       {/* Calendar */}
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
         <div>
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>

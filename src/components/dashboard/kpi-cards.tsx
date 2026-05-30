@@ -39,7 +39,7 @@ function MicroTrend({ dir }: { dir: DashboardKpi["trendDir"] }) {
 
 export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {kpis.map((kpi) => {
         const style = kpiAccentTokens[kpi.accent];
         return (
@@ -53,7 +53,7 @@ export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
             </CardHeader>
             <CardContent className="pb-3.5 pt-0">
               {/* Big number — strong hierarchy */}
-              <p className={cn("text-[2rem] font-bold tabular-nums tracking-tight xl:text-[2.2rem]", style.value)}>
+              <p className={cn("text-[1.7rem] font-bold tabular-nums tracking-tight xl:text-[1.85rem] 2xl:text-[2.2rem]", style.value)}>
                 {kpi.value}
               </p>
               <p className={cn("mt-1 text-[11px]", tokens.text.subtle)}>{kpi.sub}</p>

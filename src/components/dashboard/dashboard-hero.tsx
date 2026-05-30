@@ -36,7 +36,7 @@ export function DashboardHero({
   const canCreate = canCreateCompetition(user.role);
 
   return (
-    <div className="glass-panel-soft rounded-[1.6rem] p-4 sm:p-5 xl:p-6">
+    <div className="glass-panel-soft rounded-[1.6rem] p-4 sm:p-5 xl:p-5 2xl:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         {/* Left: greeting + context */}
         <div className="flex min-w-0 max-w-[44rem] items-start gap-3.5">
@@ -52,7 +52,7 @@ export function DashboardHero({
             <p className="friendly-label mb-1 text-[10px] uppercase tracking-widest text-muted-foreground/70">
               Panel operativo · {quarter}
             </p>
-            <h1 className="text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.75rem] xl:text-[1.9rem]">
+            <h1 className="text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.65rem] xl:text-[1.75rem] 2xl:text-[1.9rem]">
               {greet(user.nombre)}
             </h1>
             <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
