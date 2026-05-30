@@ -5,7 +5,8 @@ import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-d
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, Download, Loader2, Send } from "lucide-react";
+import { Check, Download, FileText, Loader2, Send } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api/config";
 import type { TransitionStartFunction } from "react";
 
 function CoverageRing({ pct }: { pct: number }) {
@@ -148,6 +149,22 @@ export function RosterHeaderActions({
         >
           <Download className="h-3.5 w-3.5" />
           Exportar
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 px-2.5 text-xs"
+          disabled={pending}
+          onClick={() => {
+            window.open(
+              `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant`,
+              "_blank",
+            );
+          }}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Cuadrante PDF
         </Button>
 
         {/* Highlighted submit button with brand color */}
