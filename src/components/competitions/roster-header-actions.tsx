@@ -5,7 +5,7 @@ import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-d
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, Download, FileSpreadsheet, FileText, Loader2, Send } from "lucide-react";
+import { Check, Download, FileSpreadsheet, FileText, Loader2, Send, Share2 } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api/config";
 import type { TransitionStartFunction } from "react";
 
@@ -181,6 +181,24 @@ export function RosterHeaderActions({
         >
           <FileSpreadsheet className="h-3.5 w-3.5" />
           Excel
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 px-2.5 text-xs"
+          disabled={pending}
+          onClick={() => {
+            const url = `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant`;
+            const msg =
+              `Cuadrante de jueces — ${fillPct}% cubierto (${filledSlots}/${totalSlots} plazas)` +
+              (openSlots > 0 ? `, ${openSlots} huecos` : "") +
+              `.\nCuadrante: ${url}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+          }}
+        >
+          <Share2 className="h-3.5 w-3.5" />
+          WhatsApp
         </Button>
 
         {/* Highlighted submit button with brand color */}
