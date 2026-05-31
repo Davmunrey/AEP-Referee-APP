@@ -305,7 +305,7 @@ export function RosterBuilder({
             <p className="text-[11px] text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
           </div>
         ) : (
-          <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]">
+          <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(0,240px)_1fr] lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]">
             {(workflowStep === "asignacion" || isEditing) && (
               <RosterRefereePanelLeft
                 referees={availableReferees} assignedIds={assignedIds}
