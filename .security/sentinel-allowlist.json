@@ -1,0 +1,8 @@
+{
+  "_comment": "Excepciones de MCP Sentinel para este proyecto. Solo falsos positivos legítimos.",
+  "paths": [
+    "scripts/migration-status.mjs"
+  ],
+  "domains": [],
+  "commands": []
+}

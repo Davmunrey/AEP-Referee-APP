@@ -21,6 +21,7 @@
     "db:seed": "npx tsx --env-file=.env.local scripts/seed.ts",
     "db:backup": "node --env-file=.env.local scripts/backup-supabase.mjs create",
     "db:backup:verify": "node scripts/backup-supabase.mjs verify",
+    "migration:status": "node scripts/migration-status.mjs",
     "db:restore:dry-run": "node --env-file=.env.local scripts/backup-supabase.mjs restore-dry-run",
     "db:backfill-templates": "npx tsx --env-file=.env.local scripts/backfill-templates.ts",
     "db:import-judges": "npx tsx --env-file=.env.local scripts/import-judges-registry.ts",
