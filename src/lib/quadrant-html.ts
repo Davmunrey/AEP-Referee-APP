@@ -10,15 +10,15 @@ interface RefInfo {
  * El rol NO se rotula por columna: se identifica por el COLOR de la fila + leyenda.
  */
 const ROLE_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
-  central: { bg: "#FF0000", fg: "#FFFFFF", label: "CENTRAL" },
+  central: { bg: "#FF0000", fg: "#000000", label: "CENTRAL" },
   lateral: { bg: "#FFFF00", fg: "#000000", label: "LATERAL" },
-  ordenador: { bg: "#92D050", fg: "#000000", label: "LIFTINGCAST / OPENLIFTER" },
-  liftingcast: { bg: "#92D050", fg: "#000000", label: "LIFTINGCAST / OPENLIFTER" },
-  speaker: { bg: "#ED7D31", fg: "#FFFFFF", label: "MESA" },
-  mesa: { bg: "#ED7D31", fg: "#FFFFFF", label: "MESA" },
-  control: { bg: "#00B050", fg: "#FFFFFF", label: "CONTROL" },
-  pesaje: { bg: "#F8CBAD", fg: "#000000", label: "PESAJE" },
-  equipamiento: { bg: "#8EAADB", fg: "#FFFFFF", label: "EQUIPAMIENTO" },
+  ordenador: { bg: "#FFC000", fg: "#000000", label: "ORDENADOR" }, // naranja claro
+  liftingcast: { bg: "#92D050", fg: "#000000", label: "LIFTINGCAST/OPENLIFTER" },
+  speaker: { bg: "#ED7D31", fg: "#000000", label: "MESA/SPEAKER" }, // naranja oscuro
+  mesa: { bg: "#ED7D31", fg: "#000000", label: "MESA/SPEAKER" },
+  control: { bg: "#00B050", fg: "#000000", label: "CONTROL" },
+  pesaje: { bg: "#A6611A", fg: "#000000", label: "PESAJE" }, // marrón
+  equipamiento: { bg: "#8EAADB", fg: "#000000", label: "EQUIPAMIENTO" },
   jurado: { bg: "#BFBFBF", fg: "#000000", label: "JURADO" },
   material: { bg: "#D9D9D9", fg: "#000000", label: "MATERIAL" },
 };
@@ -29,7 +29,7 @@ const LEGEND_ORDER: RoleKey[] = [
   "control",
   "pesaje",
   "lateral",
-  "liftingcast",
+  "ordenador",
   "equipamiento",
   "mesa",
 ];
