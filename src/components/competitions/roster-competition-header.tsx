@@ -6,7 +6,14 @@ import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { RosterHeaderActions } from "@/components/competitions/roster-header-actions";
 import { RosterHistoryPanel } from "@/components/competitions/roster-history-panel";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowLeft, FileUp, Pencil, Trash2, UsersRound } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AlertTriangle, ArrowLeft, ChevronDown, FileUp, Layers, Pencil, Trash2, UsersRound } from "lucide-react";
 import type { TransitionStartFunction } from "react";
 
 interface RosterCompetitionHeaderProps {
@@ -113,73 +120,67 @@ export function RosterCompetitionHeader({
             </p>
           )}
           <div className="flex flex-wrap items-center justify-end gap-1.5">
-            {canEdit && (
+            {canEdit && isEditing && (
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 px-2.5 text-xs"
-                onClick={onOpenImport}
-                disabled={pending || savingTemplate}
-                title="Importar horario de este campeonato (PDF)"
-              >
-                <FileUp className="h-3.5 w-3.5" />
-                Importar horario
-              </Button>
-            )}
-            {canEdit && filledSlots > 0 && !isEditing && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 border-warning-border px-2.5 text-xs text-warning hover:bg-warning-subtle"
-                onClick={clearAllAssignments}
-                disabled={pending || savingTemplate}
-                title="Vaciar todas las asignaciones sin borrar la plantilla"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Vaciar jueces
-              </Button>
-            )}
-            {canEdit && templateLength > 0 && !isEditing && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 border-destructive/40 px-2.5 text-xs text-destructive hover:bg-destructive/10"
-                onClick={clearTemplateAndAssignments}
-                disabled={pending || savingTemplate}
-                title="Borrar plantilla, sesiones y asignaciones"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Borrar plantilla
-              </Button>
-            )}
-            {canEdit && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 px-2.5 text-xs"
-                onClick={onOpenQuadrant}
-                disabled={pending || savingTemplate || templateLength === 0}
-                title="Importar cuadrante de jueces (PDF)"
-              >
-                <UsersRound className="h-3.5 w-3.5" />
-                Importar cuadrante
-              </Button>
-            )}
-            {canEdit && (
-              <Button
-                type="button"
-                variant={isEditing ? "default" : "outline"}
+                variant="default"
                 size="sm"
                 className="h-8 px-2.5 text-xs"
                 onClick={onToggleEditing}
                 disabled={pending || savingTemplate}
               >
-                {isEditing ? "Volver a tarima" : "Editar plantilla"}
+                Volver a tarima
               </Button>
+            )}
+            {canEdit && !isEditing && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2.5 text-xs"
+                    disabled={pending || savingTemplate}
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                    Plantilla
+                    <ChevronDown className="h-3 w-3 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onSelect={onOpenImport}>
+                    <FileUp className="mr-2 h-3.5 w-3.5" />
+                    Importar horario
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={onOpenQuadrant} disabled={templateLength === 0}>
+                    <UsersRound className="mr-2 h-3.5 w-3.5" />
+                    Importar cuadrante
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={onToggleEditing}>
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Editar plantilla
+                  </DropdownMenuItem>
+                  {(filledSlots > 0 || templateLength > 0) && <DropdownMenuSeparator />}
+                  {filledSlots > 0 && (
+                    <DropdownMenuItem
+                      onSelect={clearAllAssignments}
+                      className="text-warning focus:text-warning"
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      Vaciar jueces
+                    </DropdownMenuItem>
+                  )}
+                  {templateLength > 0 && (
+                    <DropdownMenuItem
+                      onSelect={clearTemplateAndAssignments}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      Borrar plantilla
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             <RosterHistoryPanel competitionId={competition.id} />
             {!readOnly && !isEditing && (
