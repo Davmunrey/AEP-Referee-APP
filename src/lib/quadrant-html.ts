@@ -176,8 +176,9 @@ export function generateQuadrantHtml(
   .doc-tipo { display: inline-block; background: #1a1a6e; color: #fff; font-size: 7pt; font-weight: 700; padding: 1px 7px; border-radius: 3px; margin-left: 6px; }
 
   /* ── Table ───────────────────────────────── */
-  .cuadrante { width: 100%; border-collapse: collapse; margin-bottom: 10px; break-inside: avoid; }
-  .cuadrante th, .cuadrante td { border: 1px solid #bbb; padding: 3px 5px; vertical-align: middle; }
+  .cuadrante { width: 100%; border-collapse: collapse; margin-bottom: 10px; break-inside: avoid; table-layout: fixed; }
+  .cuadrante th, .cuadrante td { border: 1px solid #bbb; padding: 3px 5px; vertical-align: middle; overflow-wrap: break-word; word-break: break-word; }
+  .cell-session, .cell-name { width: auto; }
   .hdr-day th { background: #1a1a6e; color: #fff; font-size: 8pt; font-weight: 700; text-align: center; }
   .hdr-day .cell-role { background: #f0f0f0; color: #111; font-size: 7pt; }
   .hdr-cat td { background: #e8ecf8; font-size: 7.5pt; text-align: center; font-style: italic; color: #333; }
