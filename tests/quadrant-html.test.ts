@@ -67,8 +67,14 @@ describe("generateQuadrantHtml", () => {
     expect(html).toContain('<td class="cell-name"></td>');
   });
 
-  it("incluye sección de pesaje y control de equipamiento", () => {
-    expect(html).toContain("PESAJE Y CONTROL DE EQUIPAMIENTO");
+  it("oculta filas de rol vacías en todas las sesiones (jurado sin asignar)", () => {
+    // template AEP1 tiene jurado pero el fixture no asigna ninguno -> fila no debe aparecer
+    expect(html).not.toContain("Jurado 1");
+  });
+
+  it("incluye sección de pesaje solo si hay asignación", () => {
+    // fixture tiene pesaje sin asignar -> sección omitida
+    expect(html).not.toContain("PESAJE Y CONTROL DE EQUIPAMIENTO");
   });
 
   it("agrupa por día y lista las sesiones como columnas", () => {
