@@ -81,4 +81,9 @@ describe("generateQuadrantHtml", () => {
     expect(html).toContain("window.print()");
     expect(html).toContain("A4 landscape");
   });
+
+  it("fuerza impresión de colores de fondo (print-color-adjust)", () => {
+    // sin esto el navegador descarta cabecera azul/pesaje verde/franjas rol al guardar PDF
+    expect(html).toContain("print-color-adjust: exact");
+  });
 });

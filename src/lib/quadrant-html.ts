@@ -163,8 +163,9 @@ export function generateQuadrantHtml(
 <title>Cuadrante – ${esc(comp.nombre)}</title>
 <style>
   @page { size: A4 landscape; margin: 10mm 12mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: #111; background: #fff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: #111; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
   /* ── Header ─────────────────────────────── */
   .doc-header { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #1a1a6e; padding-bottom: 8px; margin-bottom: 10px; }
