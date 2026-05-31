@@ -5,7 +5,7 @@ import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-d
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, Download, FileText, Loader2, Send } from "lucide-react";
+import { Check, Download, FileSpreadsheet, FileText, Loader2, Send } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api/config";
 import type { TransitionStartFunction } from "react";
 
@@ -165,6 +165,22 @@ export function RosterHeaderActions({
         >
           <FileText className="h-3.5 w-3.5" />
           Cuadrante PDF
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 px-2.5 text-xs"
+          disabled={pending}
+          onClick={() => {
+            window.open(
+              `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant.xlsx`,
+              "_blank",
+            );
+          }}
+        >
+          <FileSpreadsheet className="h-3.5 w-3.5" />
+          Excel
         </Button>
 
         {/* Highlighted submit button with brand color */}
