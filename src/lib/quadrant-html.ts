@@ -207,6 +207,7 @@ export function generateQuadrantHtml(
   /* ── Print button ────────────────────────── */
   .print-btn { position: fixed; top: 12px; right: 12px; padding: 8px 18px; background: #1a1a6e; color: #fff; border: none; border-radius: 6px; font-size: 11pt; cursor: pointer; z-index: 999; }
   .print-btn:hover { background: #131055; }
+  .empty-note { padding: 24px; text-align: center; color: #777; font-size: 10pt; border: 1px dashed #ccc; border-radius: 8px; margin: 16px 0; }
 </style>
 </head>
 <body>
@@ -221,7 +222,7 @@ export function generateQuadrantHtml(
   </div>
 </div>
 
-${tableSections.join("\n")}
+${tableSections.length > 0 ? tableSections.join("\n") : `<p class="empty-note">Sin plantilla de tarima. Importa el horario o crea la plantilla antes de exportar el cuadrante.</p>`}
 
 <div class="doc-footer">
   <span>Cuadrante oficial AEP · ${esc(comp.nombre)}</span>
