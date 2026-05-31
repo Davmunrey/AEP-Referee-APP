@@ -98,11 +98,11 @@ export function generateQuadrantHtml(
 
     let compRows = "";
     for (const { key, roleLabel, slotIndex } of allRoles) {
+      const cells = sessions.map((s) => refCell(s.sesion, key, slotIndex, assignments, flags, refLookup));
+      // Posición sin ocupar en ninguna sesión -> ocultar fila (que no aparezca nada)
+      if (cells.every((c) => c === "")) continue;
       compRows += `<tr class="role-row role-${esc(key)}"><td class="cell-role">${esc(roleLabel)}</td>`;
-      for (const s of sessions) {
-        const cell = refCell(s.sesion, key, slotIndex, assignments, flags, refLookup);
-        compRows += `<td class="cell-name">${esc(cell)}</td>`;
-      }
+      for (const cell of cells) compRows += `<td class="cell-name">${esc(cell)}</td>`;
       compRows += "</tr>";
     }
 
@@ -135,14 +135,16 @@ export function generateQuadrantHtml(
           }
         }
       }
+      let pesajeBody = "";
       for (const { key, roleLabel, slotIndex } of pesajeRoles) {
-        pesajeRows += `<tr class="role-row role-pesaje-row"><td class="cell-role">${esc(roleLabel)}</td>`;
-        for (const s of sessions) {
-          const cell = refCell(s.sesion, key, slotIndex, assignments, flags, refLookup);
-          pesajeRows += `<td class="cell-name">${esc(cell)}</td>`;
-        }
-        pesajeRows += "</tr>";
+        const cells = sessions.map((s) => refCell(s.sesion, key, slotIndex, assignments, flags, refLookup));
+        if (cells.every((c) => c === "")) continue;
+        pesajeBody += `<tr class="role-row role-pesaje-row"><td class="cell-role">${esc(roleLabel)}</td>`;
+        for (const cell of cells) pesajeBody += `<td class="cell-name">${esc(cell)}</td>`;
+        pesajeBody += "</tr>";
       }
+      // Si ninguna fila de pesaje tiene asignación, omitir toda la sección
+      pesajeRows = pesajeBody ? pesajeRows + pesajeBody : "";
     }
 
     tableSections.push(`
