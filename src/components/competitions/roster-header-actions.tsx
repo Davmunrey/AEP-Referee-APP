@@ -5,8 +5,14 @@ import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-d
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, Download, FileSpreadsheet, FileText, Loader2, Send, Share2 } from "lucide-react";
+import { Check, ChevronDown, Download, FileSpreadsheet, FileText, Loader2, Send, Share2 } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api/config";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { TransitionStartFunction } from "react";
 
 function CoverageRing({ pct }: { pct: number }) {
@@ -140,66 +146,50 @@ export function RosterHeaderActions({
           Guardar borrador
         </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 px-2.5 text-xs"
-          disabled={pending}
-          onClick={() => setExportOpen(true)}
-        >
-          <Download className="h-3.5 w-3.5" />
-          Exportar
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 px-2.5 text-xs"
-          disabled={pending}
-          onClick={() => {
-            window.open(
-              `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant?print=1`,
-              "_blank",
-            );
-          }}
-        >
-          <FileText className="h-3.5 w-3.5" />
-          Cuadrante PDF
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 px-2.5 text-xs"
-          disabled={pending}
-          onClick={() => {
-            window.open(
-              `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant.xlsx`,
-              "_blank",
-            );
-          }}
-        >
-          <FileSpreadsheet className="h-3.5 w-3.5" />
-          Excel
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 px-2.5 text-xs"
-          disabled={pending}
-          onClick={() => {
-            const url = `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant`;
-            const msg =
-              `Cuadrante de jueces — ${fillPct}% cubierto (${filledSlots}/${totalSlots} plazas)` +
-              (openSlots > 0 ? `, ${openSlots} huecos` : "") +
-              `.\nCuadrante: ${url}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
-          }}
-        >
-          <Share2 className="h-3.5 w-3.5" />
-          WhatsApp
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" disabled={pending}>
+              <Download className="h-3.5 w-3.5" />
+              Exportar
+              <ChevronDown className="h-3 w-3 opacity-60" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onSelect={() =>
+                window.open(`${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant?print=1`, "_blank")
+              }
+            >
+              <FileText className="mr-2 h-3.5 w-3.5" />
+              Cuadrante PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() =>
+                window.open(`${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant.xlsx`, "_blank")
+              }
+            >
+              <FileSpreadsheet className="mr-2 h-3.5 w-3.5" />
+              Cuadrante Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setExportOpen(true)}>
+              <Download className="mr-2 h-3.5 w-3.5" />
+              Acta (texto)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                const url = `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant`;
+                const msg =
+                  `Cuadrante de jueces — ${fillPct}% cubierto (${filledSlots}/${totalSlots} plazas)` +
+                  (openSlots > 0 ? `, ${openSlots} huecos` : "") +
+                  `.\nCuadrante: ${url}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+              }}
+            >
+              <Share2 className="mr-2 h-3.5 w-3.5" />
+              Compartir WhatsApp
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Highlighted submit button with brand color */}
         <Button
