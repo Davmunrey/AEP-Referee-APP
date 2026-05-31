@@ -4,10 +4,11 @@ import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { parseSelectedImportKeys } from "@/lib/import-security";
 import {
   MAX_PDF_BYTES,
-  extractPdfText,
+  extractPdfLayoutText,
   validatePdfMime,
 } from "@/lib/schedule-parser";
 import { parseQuadrantAssignments } from "@/lib/quadrant-parser";
+import { looksLikeLayout, parseQuadrantLayout } from "@/lib/quadrant-layout-parser";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -59,10 +60,12 @@ export async function POST(request: Request, context: RouteContext) {
   const buffer = Buffer.from(await file.arrayBuffer());
   let pages = 0;
   let text = "";
+  let isLayout = false;
   try {
-    const extracted = await extractPdfText(buffer);
+    const extracted = await extractPdfLayoutText(buffer);
     text = extracted.text;
     pages = extracted.pages;
+    isLayout = extracted.layout;
   } catch (e) {
     return jsonError(
       `No se pudo leer el PDF: ${e instanceof Error ? e.message : "error desconocido"}`,
@@ -76,7 +79,15 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const referees = await dataService.getReferees({ user });
-  const parsed = parseQuadrantAssignments(text, referees, roster.template);
+  // Parser por geometría de columnas si el texto conserva la rejilla (-layout);
+  // si no detecta candidatos, cae al parser plano heurístico.
+  let parsed =
+    isLayout && looksLikeLayout(text)
+      ? parseQuadrantLayout(text, referees, roster.template)
+      : parseQuadrantAssignments(text, referees, roster.template);
+  if (parsed.candidates.length === 0) {
+    parsed = parseQuadrantAssignments(text, referees, roster.template);
+  }
   const defaultSelected = new Set(
     parsed.candidates.filter((c) => c.importable).map((c) => c.key),
   );
