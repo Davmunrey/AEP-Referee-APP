@@ -54,9 +54,19 @@ Todas las rutas privadas usan sesión Supabase por cookie. Respuesta estándar:
 | `POST` | `/competitions/:id/roster/draft` | `canEditRoster` |
 | `POST` | `/competitions/:id/roster/submit` | `canEditRoster` |
 | `GET` | `/competitions/:id/roster/export` | sesión |
+| `GET` | `/competitions/:id/roster/quadrant` | sesión |
+| `GET` | `/competitions/:id/roster/quadrant.xlsx` | sesión |
 | `GET` | `/competitions/:id/roster/history` | sesión |
 
 Competiciones pasadas quedan lectura por UI y API mutadora devuelve `423`.
+
+### Export de cuadrante
+
+- `roster/export` → `text/plain` (acta de texto).
+- `roster/quadrant` → `text/html` con el cuadrante en formato oficial AEP (portrait, roles por color + leyenda, pesaje, botón Imprimir→PDF). Posiciones sin asignar en blanco; filas/pesaje vacíos ocultos.
+- `roster/quadrant.xlsx` → `.xlsx` (una hoja por día, roles=filas, sesiones=columnas).
+
+Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.ts` (testeada). Los nombres se resuelven server-side con `createAdminClient`; ambas rutas validan sesión y zona.
 
 ## Jueces
 
