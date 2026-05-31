@@ -56,7 +56,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         </button>
       </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard label={`Campeonatos ${data.selectedYear}`} accent="blue" value={data.totals.competitions} />
         <StatCard label="Jueces asignados" accent="neutral" value={data.totals.uniqueAssignedReferees} />
         <StatCard label="Plazas cubiertas" accent="yellow" value={data.totals.filledSlots} />
