@@ -107,6 +107,47 @@ export async function extractPdfText(
   }
 }
 
+export interface PdfLayoutResult extends PdfExtractionResult {
+  /** true si el texto procede de `pdftotext -layout` (rejilla por columnas). */
+  layout: boolean;
+}
+
+/**
+ * Extrae texto PREFIRIENDO `pdftotext -layout`, que conserva la geometría de
+ * columnas — imprescindible para cuadrantes (rejilla roles×sesiones). Cae a
+ * pdf-parse plano si pdftotext no está disponible (p. ej. en serverless).
+ */
+export async function extractPdfLayoutText(
+  buffer: Buffer | Uint8Array,
+): Promise<PdfLayoutResult> {
+  if (buffer.byteLength > MAX_PDF_BYTES) {
+    throw new Error(
+      `El PDF excede el tamaño máximo (${Math.round(MAX_PDF_BYTES / 1024 / 1024)} MB)`,
+    );
+  }
+  const buf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  if (!hasPdfSignature(buf)) throw new Error("Formato PDF no válido");
+
+  const dir = await mkdtemp(join(tmpdir(), "aep-pdf-"));
+  try {
+    const pdfPath = join(dir, "input.pdf");
+    await writeFile(pdfPath, buf);
+    const layoutText = await extractWithPdftotext(pdfPath);
+    if (usableText(layoutText)) {
+      const pages = (layoutText.match(/\f/g)?.length ?? 0) + 1;
+      return { text: layoutText, pages, layout: true };
+    }
+  } catch {
+    // continúa al fallback plano
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+
+  // Fallback: pdf-parse plano (sin geometría) + OCR si hace falta.
+  const flat = await extractPdfText(buf);
+  return { ...flat, layout: false };
+}
+
 /** Valida MIME y devuelve un mensaje legible si no es aceptable. */
 export function validatePdfMime(mime: string | undefined): string | null {
   if (!mime) return null;

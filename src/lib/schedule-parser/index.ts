@@ -3,6 +3,7 @@ export { parsedToRosterTemplate } from "./to-roster-template";
 export { parseScheduleFilename } from "./parse-filename";
 export {
   extractPdfText,
+  extractPdfLayoutText,
   validatePdfMime,
   MAX_PDF_BYTES,
 } from "./extract-pdf-text";
@@ -16,4 +17,4 @@ export type {
   ParsedHorario,
   ParsedSession,
 } from "./types";
-export type { PdfExtractionResult } from "./extract-pdf-text";
+export type { PdfExtractionResult, PdfLayoutResult } from "./extract-pdf-text";
