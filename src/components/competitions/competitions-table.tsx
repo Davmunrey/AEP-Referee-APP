@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CalendarDays, Check, Loader2, Trash2, X } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, FileText, Loader2, Trash2, X } from "lucide-react";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/data-table";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api/client";
+import { getApiBaseUrl } from "@/lib/api/config";
 import { isCompetitionPast } from "@/lib/competition-status";
 import { groupCompetitionDuplicates } from "@/lib/competition-dedup";
 import { selectFieldClassSm } from "@/lib/design-tokens";
@@ -363,6 +364,21 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                       </div>
                     ) : (
                       <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                          onClick={() =>
+                            window.open(
+                              `${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`,
+                              "_blank",
+                            )
+                          }
+                          aria-label={`Cuadrante PDF de ${competition.nombre}`}
+                          title="Cuadrante PDF"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                        </Button>
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/competitions/${competition.id}`}>
                             Montar tarima
