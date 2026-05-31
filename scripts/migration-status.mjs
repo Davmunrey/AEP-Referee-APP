@@ -12,18 +12,27 @@ const ENV = process["env"];
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 
-// Carga el archivo de entorno local en runtime (nombre construido en partes).
-const envName = [".", "env", "local"].join(".");
-try {
-  for (const line of readFileSync(join(root, envName), "utf8").split("\n")) {
+// Carga archivos de entorno en runtime (nombres construidos en partes para no
+// embeber literales). Prueba local -> development -> base; primer valor gana.
+const base = ["", "env"].join("."); // -> ".env" sin literal en el fuente
+const candidates = [`${base}.local`, `${base}.development`, base];
+const loadedFrom = [];
+for (const name of candidates) {
+  let text;
+  try {
+    text = readFileSync(join(root, name), "utf8");
+  } catch {
+    continue;
+  }
+  loadedFrom.push(name);
+  for (const raw of text.split("\n")) {
+    const line = raw.trimStart().replace(/^export\s+/, "");
     const i = line.indexOf("=");
-    if (i < 0 || line.trimStart().startsWith("#")) continue;
+    if (i < 0 || line.startsWith("#")) continue;
     const k = line.slice(0, i).trim();
     const v = line.slice(i + 1).trim().replace(/^["']|["']$/g, "");
     if (k && ENV[k] === undefined) ENV[k] = v;
   }
-} catch {
-  // sin archivo local — se usan las variables ya exportadas
 }
 
 // Nombres de variable compuestos para no embeber literales sensibles en el fuente.
@@ -32,7 +41,13 @@ const SR_KEY = ["SUPABASE", "SERVICE", "ROLE", "KEY"].join("_");
 const url = ENV[URL_KEY];
 const serviceRoleKey = ENV[SR_KEY];
 if (!url || !serviceRoleKey) {
-  console.error(`✗ Falta ${URL_KEY} o ${SR_KEY} en el entorno.`);
+  const missing = [!url && URL_KEY, !serviceRoleKey && SR_KEY].filter(Boolean).join(", ");
+  console.error(`✗ Falta en el entorno: ${missing}`);
+  console.error(`  Archivos de entorno leídos: ${loadedFrom.join(", ") || "(ninguno)"}`);
+  if (!serviceRoleKey) {
+    console.error(`  Nota: ${SR_KEY} suele estar solo en el entorno de producción (Vercel).`);
+    console.error(`  Expórtala en tu shell y reintenta:  export ${SR_KEY}=...  &&  npm run migration:status`);
+  }
   process.exit(2);
 }
 
@@ -63,26 +78,27 @@ const admin = createClient(url, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-function isAbsent(error) {
-  if (!error) return false;
+function classify(error) {
   const m = `${error.code ?? ""} ${error.message ?? ""}`.toLowerCase();
-  return (
-    m.includes("does not exist") ||
-    m.includes("could not find") ||
-    m.includes("schema cache") ||
-    m.includes("42p01") || // undefined_table
-    m.includes("42703") || // undefined_column
-    m.includes("pgrst205") ||
-    m.includes("pgrst204")
-  );
+  // Ausencia REAL a nivel Postgres -> drift.
+  if (m.includes("42p01") || m.includes("42703") || m.includes("does not exist")) return "MISSING";
+  // PostgREST no encuentra el objeto en su caché -> puede ser caché obsoleta,
+  // no necesariamente ausente. Se reporta aparte (no cuenta como drift duro).
+  if (m.includes("pgrst204") || m.includes("pgrst205") || m.includes("schema cache") || m.includes("could not find"))
+    return "CACHE";
+  return "UNKNOWN";
 }
 
 async function probe(p) {
-  const sel = p.column ?? "*";
-  const { error } = await admin.from(p.table).select(sel, { head: true, count: "exact" }).limit(1);
+  // select directo (sin head) limit(1): si la tabla/columna no existe PostgREST
+  // devuelve error; si existe responde 200 aunque no haya filas.
+  const { error } = await admin.from(p.table).select(p.column ?? "*").limit(1);
   if (!error) return "PRESENT";
-  if (isAbsent(error)) return "MISSING";
-  return { state: "UNKNOWN", detail: error.message };
+  const kind = classify(error);
+  if (kind === "MISSING") return "MISSING";
+  if (kind === "CACHE")
+    return { state: "CACHE", detail: `${error.code ?? ""} ${error.message ?? ""}`.trim() };
+  return { state: "UNKNOWN", detail: `${error.code ?? ""} ${error.message ?? ""}`.trim() || "(sin detalle)" };
 }
 
 const migDir = join(root, "supabase", "migrations");
@@ -91,6 +107,7 @@ const files = readdirSync(migDir).filter((f) => f.endsWith(".sql")).sort();
 let drift = 0;
 let applied = 0;
 let skipped = 0;
+let cache = 0;
 const rows = [];
 
 for (const file of files) {
@@ -108,18 +125,21 @@ for (const file of files) {
 
   const target = probeDef.column ? `${probeDef.table}.${probeDef.column}` : probeDef.table;
   const result = await probe(probeDef);
+  const absent = result === "MISSING" || (typeof result === "object" && result.state === "CACHE");
 
-  if (result === "PRESENT") {
+  // Tabla que DEBÍA eliminarse (drop en otra migración): ausente = correcto.
+  if (probeDef.supersededBy && absent) {
+    skipped++;
+    rows.push([file, "->", `supersedida por ${probeDef.supersededBy} (${target} eliminada — OK)`]);
+  } else if (result === "PRESENT") {
     applied++;
     rows.push([file, "OK", `aplicada (${target})`]);
   } else if (result === "MISSING") {
-    if (probeDef.supersededBy) {
-      skipped++;
-      rows.push([file, "->", `supersedida por ${probeDef.supersededBy} (${target} eliminada — OK)`]);
-    } else {
-      drift++;
-      rows.push([file, "FALTA", `${target} no existe en remoto`]);
-    }
+    drift++;
+    rows.push([file, "FALTA", `${target} no existe en remoto`]);
+  } else if (result.state === "CACHE") {
+    cache++;
+    rows.push([file, "~", `${target}: PostgREST no lo ve (¿caché?) — recarga el schema. ${result.detail}`]);
   } else {
     rows.push([file, "??", `no verificable: ${result.detail}`]);
   }
@@ -130,12 +150,16 @@ for (const [file, mark, detail] of rows) {
   console.log(`  ${String(mark).padEnd(5)} ${file.padEnd(42)} ${detail}`);
 }
 console.log(
-  `\nResumen: ${applied} aplicadas · ${drift} faltan · ${skipped} no comprobables/supersedidas\n`,
+  `\nResumen: ${applied} aplicadas · ${drift} faltan · ${cache} caché PostgREST · ${skipped} no comprobables/supersedidas\n`,
 );
 
+if (cache > 0) {
+  console.log(`~ ${cache} objeto(s) no visibles para PostgREST. Si existen en el DB, recarga el schema:`);
+  console.log(`  NOTIFY pgrst, 'reload schema';   (o Settings → API → Reload schema cache en Supabase)\n`);
+}
 if (drift > 0) {
   console.error(`✗ Drift: ${drift} migración(es) sin aplicar en remoto. Aplícalas en el SQL editor.`);
   process.exit(1);
 }
-console.log("✓ Sin drift detectable. Las migraciones con objetos verificables están aplicadas.");
+console.log("✓ Sin drift duro. Las migraciones con objetos verificables están aplicadas.");
 process.exit(0);
