@@ -118,6 +118,7 @@ export function generateQuadrantHtml(
   assignments: AssignmentsMap,
   refLookup: (id: string) => RefInfo | undefined,
   flags: FlagsMap = {},
+  autoPrint = false,
 ): string {
   // Agrupa sesiones por día
   const dayOrder: string[] = [];
@@ -269,6 +270,7 @@ ${tables.length > 0 ? `<div class="legend">${legendChips}</div>
 </div>` : ""}
 
 <div class="doc-footer">Cuadrante oficial AEP · ${esc(comp.nombre)}</div>
+${autoPrint ? `<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});</script>` : ""}
 </body>
 </html>`;
 }
