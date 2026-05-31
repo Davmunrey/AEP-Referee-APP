@@ -1,18 +1,27 @@
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
+import { canEditRoster } from "@/lib/auth/session";
+import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string; refereeId: string }> },
 ) {
-  const user = await getSession();
-  if (!user || user.role === "solo_ver") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const user = await requireApiUser();
+  if (!isSessionUser(user)) return user;
+  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
+
   const { id, refereeId } = await params;
+
+  // Delegados de zona solo pueden gestionar disponibilidad en su propia zona
+  const comp = await dataService.getCompetition(id);
+  if (!comp) return jsonError("Competición no encontrada", 404);
+  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
+
   try {
     await dataService.removeCompetitionAvailability(id, refereeId);
-    return NextResponse.json({ ok: true });
+    return jsonOk({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 });
+    return jsonError(err instanceof Error ? err.message : "Error al eliminar disponibilidad", 500);
   }
 }
