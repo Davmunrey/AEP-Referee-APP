@@ -101,6 +101,13 @@ describe("generateQuadrantHtml", () => {
     expect(html).toContain("print-color-adjust: exact");
   });
 
+  it("autoPrint inyecta apertura automática del diálogo de impresión", () => {
+    const auto = generateQuadrantHtml(comp, template, assignments, (id) => refs[id], flags, true);
+    expect(auto).toContain('addEventListener("load"');
+    // sin autoPrint no se auto-imprime (solo el botón manual)
+    expect(html).not.toContain('addEventListener("load"');
+  });
+
   it("plantilla vacía -> nota en vez de doc en blanco", () => {
     const empty = generateQuadrantHtml(comp, [], {}, () => undefined, {});
     expect(empty).toContain("Sin plantilla de tarima");

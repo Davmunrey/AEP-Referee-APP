@@ -9,10 +9,11 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
+  const autoPrint = new URL(request.url).searchParams.get("print") === "1";
   const { id } = await context.params;
   const scopeErr = await assertCompetitionInUserZone(user, id);
   if (scopeErr) return scopeErr;
@@ -40,6 +41,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return r ? { nombre: String(r.nombre), nivel: String(r.nivel) } : undefined;
     },
     roster.flags,
+    autoPrint,
   );
 
   return new Response(html, {

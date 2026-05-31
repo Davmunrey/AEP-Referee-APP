@@ -158,7 +158,7 @@ export function RosterHeaderActions({
           disabled={pending}
           onClick={() => {
             window.open(
-              `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant`,
+              `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant?print=1`,
               "_blank",
             );
           }}
