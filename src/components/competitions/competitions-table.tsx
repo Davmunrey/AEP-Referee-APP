@@ -273,6 +273,98 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           }
         />
       ) : (
+        <>
+        {/* Mobile card list */}
+        <div className="divide-y divide-border/50 md:hidden">
+          {pageRows.map((competition) => {
+            const pct =
+              competition.requeridos > 0
+                ? Math.round((competition.confirmados / competition.requeridos) * 100)
+                : 0;
+            const isPast = isCompetitionPast(competition);
+            const isConfirmingDelete = confirmDeleteId === competition.id;
+            return (
+              <div key={competition.id} className="space-y-2 px-4 py-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{competition.nombre}</p>
+                    <p className="truncate text-xs text-subtle-muted">{competition.sede}</p>
+                  </div>
+                  <EventStatusBadge status={competition.estado} />
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                  <EventTypeBadge tipo={competition.tipo} />
+                  <span className="font-mono">{formatDateRange(competition.fecha, competition.fechaFin)}</span>
+                  {competition.zona && <span className="font-mono uppercase">· {competition.zona}</span>}
+                  {isPast && (
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                      Solo lectura
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <Progress value={pct} />
+                  <p className="mt-1 text-[11px] text-subtle-muted">
+                    {competition.confirmados}/{competition.requeridos} · {pct}%
+                  </p>
+                </div>
+                {isConfirmingDelete ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-destructive">¿Eliminar?</span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-7 gap-1 px-2 text-xs"
+                      disabled={deletingId === competition.id}
+                      onClick={() => void deleteEvent(competition.id)}
+                    >
+                      {deletingId === competition.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                      Sí
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setConfirmDeleteId(null)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <Button variant="outline" size="sm" className="h-8 flex-1 text-xs" asChild>
+                      <Link href={`/competitions/${competition.id}`}>
+                        Montar tarima
+                        <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={() =>
+                        window.open(`${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`, "_blank")
+                      }
+                      aria-label={`Cuadrante PDF de ${competition.nombre}`}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                    </Button>
+                    {canDelete(competition) && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        disabled={deletingId === competition.id}
+                        onClick={() => setConfirmDeleteId(competition.id)}
+                        aria-label={`Eliminar ${competition.nombre}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block">
         <DataTable>
           <DataTableHead>
             <DataTableHeaderRow>
@@ -405,6 +497,8 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
             })}
           </DataTableBody>
         </DataTable>
+        </div>
+        </>
       )}
 
       {totalPages > 1 && (
