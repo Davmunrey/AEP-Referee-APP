@@ -1,16 +1,49 @@
-import type { AssignmentsMap, Competition, FlagsMap, RosterSession } from "@/lib/types";
-import { ROLE_LABELS } from "@/lib/roster-template";
+import type { AssignmentsMap, Competition, FlagsMap, RoleKey, RosterSession } from "@/lib/types";
 
 interface RefInfo {
   nombre: string;
   nivel: string;
 }
 
+/**
+ * Estilo por rol — replica EXACTO la leyenda de colores del cuadrante oficial AEP.
+ * El rol NO se rotula por columna: se identifica por el COLOR de la fila + leyenda.
+ */
+const ROLE_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
+  central: { bg: "#FF0000", fg: "#FFFFFF", label: "CENTRAL" },
+  lateral: { bg: "#FFFF00", fg: "#000000", label: "LATERAL" },
+  ordenador: { bg: "#92D050", fg: "#000000", label: "LIFTINGCAST / OPENLIFTER" },
+  liftingcast: { bg: "#92D050", fg: "#000000", label: "LIFTINGCAST / OPENLIFTER" },
+  speaker: { bg: "#ED7D31", fg: "#FFFFFF", label: "MESA" },
+  mesa: { bg: "#ED7D31", fg: "#FFFFFF", label: "MESA" },
+  control: { bg: "#00B050", fg: "#FFFFFF", label: "CONTROL" },
+  pesaje: { bg: "#F8CBAD", fg: "#000000", label: "PESAJE" },
+  equipamiento: { bg: "#8EAADB", fg: "#FFFFFF", label: "EQUIPAMIENTO" },
+  jurado: { bg: "#BFBFBF", fg: "#000000", label: "JURADO" },
+  material: { bg: "#D9D9D9", fg: "#000000", label: "MATERIAL" },
+};
+
+// Orden de la leyenda (como aparece en el cuadrante oficial)
+const LEGEND_ORDER: RoleKey[] = [
+  "central",
+  "control",
+  "pesaje",
+  "lateral",
+  "liftingcast",
+  "equipamiento",
+  "mesa",
+];
+
+function styleFor(key: string): { bg: string; fg: string; label: string } {
+  return ROLE_STYLE[key] ?? { bg: "#FFFFFF", fg: "#000000", label: key.toUpperCase() };
+}
+
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function refCell(
+/** Nombre + sufijos de flag: `*` compartido, `↑↓` intercambio. Vacío si no asignado. */
+function refName(
   sesion: string,
   roleKey: string,
   slotIndex: number,
@@ -24,13 +57,59 @@ function refCell(
   const ref = refLookup(refId);
   if (!ref) return "";
   const f = flags[slotKey];
-  const badge = f?.compartido ? " *" : f?.intercambio ? " ↑↓" : "";
-  return `${esc(ref.nombre)}${badge}`;
+  const sfx: string[] = [];
+  if (f?.compartido) sfx.push("*");
+  if (f?.intercambio) sfx.push("↑↓");
+  return sfx.length ? `${ref.nombre} ${sfx.join(" ")}` : ref.nombre;
 }
 
 function categoriaLabel(s: RosterSession): string {
-  const cats = (s.categorias ?? []).map((c) => `${c.genero} ${c.pesos}`).join(" · ");
-  return cats || s.nombre;
+  const cats = (s.categorias ?? []).map((c) => `${c.genero} ${c.pesos}`).join(" ");
+  return (cats || s.nombre).toUpperCase();
+}
+
+interface RoleSlot {
+  key: RoleKey;
+  slotIndex: number;
+}
+
+/** Lista ordenada de (rol, slot) presentes en un grupo de sesiones, sin duplicar. */
+function collectRoles(sessions: RosterSession[], pesaje: boolean): RoleSlot[] {
+  const out: RoleSlot[] = [];
+  const seen = new Set<string>();
+  for (const s of sessions) {
+    const roles = pesaje ? s.pesajeRoles ?? [] : s.roles;
+    for (const role of roles) {
+      for (let i = 0; i < role.slots; i++) {
+        const uid = `${role.key}_${i}`;
+        if (!seen.has(uid)) {
+          seen.add(uid);
+          out.push({ key: role.key, slotIndex: i });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** Una fila de N celdas (una por sesión). Devuelve "" si todas vacías -> fila omitida. */
+function roleRow(
+  sessions: RosterSession[],
+  rs: RoleSlot,
+  assignments: AssignmentsMap,
+  flags: FlagsMap,
+  refLookup: (id: string) => RefInfo | undefined,
+): string {
+  const st = styleFor(rs.key);
+  const cells = sessions.map((s) => refName(s.sesion, rs.key, rs.slotIndex, assignments, flags, refLookup));
+  if (cells.every((c) => c === "")) return "";
+  let row = "<tr>";
+  for (const name of cells) {
+    row += name
+      ? `<td class="cell-name" style="background:${st.bg};color:${st.fg}">${esc(name)}</td>`
+      : `<td class="cell-name"></td>`;
+  }
+  return row + "</tr>";
 }
 
 export function generateQuadrantHtml(
@@ -40,7 +119,7 @@ export function generateQuadrantHtml(
   refLookup: (id: string) => RefInfo | undefined,
   flags: FlagsMap = {},
 ): string {
-  // Group sessions by day
+  // Agrupa sesiones por día
   const dayOrder: string[] = [];
   const byDay = new Map<string, RosterSession[]>();
   for (const s of template) {
@@ -49,114 +128,76 @@ export function generateQuadrantHtml(
     byDay.get(dia)!.push(s);
   }
 
-  // Build table sections per day
-  const tableSections: string[] = [];
+  const usedRoleKeys = new Set<string>();
+  const tables: string[] = [];
 
   for (const dia of dayOrder) {
     const sessions = byDay.get(dia)!;
-    const colCount = sessions.length;
-    const hasPesaje = sessions.some((s) => (s.pesajeRoles ?? []).length > 0);
+    const n = sessions.length;
 
-    // Header row: day + session names
-    let headerRow = `<tr class="hdr-day"><th class="cell-role">${esc(dia)}</th>`;
+    // Cabecera del día (span todas las columnas de sesión)
+    let html = `<table class="cuadrante"><tbody>`;
+    html += `<tr><td class="cell-day" colspan="${n}">${esc(dia)}</td></tr>`;
+
+    // Fila de sesiones: SESIÓN N + categoría
+    html += `<tr>`;
     for (const s of sessions) {
-      headerRow += `<th class="cell-session">${esc(s.sesion)}</th>`;
+      const num = s.sesion.replace(/^S/i, "");
+      html += `<td class="cell-sess"><span class="sess-n">SESIÓN ${esc(num)}</span><span class="sess-cat">${esc(categoriaLabel(s))}</span></td>`;
     }
-    headerRow += "</tr>";
+    html += `</tr>`;
 
-    // Categories row
-    let catRow = `<tr class="hdr-cat"><td class="cell-role"></td>`;
-    for (const s of sessions) {
-      catRow += `<td class="cell-session cell-cat">${esc(categoriaLabel(s))}</td>`;
-    }
-    catRow += "</tr>";
+    // Horario competición (rojo)
+    html += `<tr>`;
+    for (const s of sessions) html += `<td class="cell-time">${esc(s.horarioCompeticion ?? "")}</td>`;
+    html += `</tr>`;
 
-    // Horario competición row
-    let timeRow = `<tr class="hdr-time"><td class="cell-role"></td>`;
-    for (const s of sessions) {
-      timeRow += `<td class="cell-session cell-time">${esc(s.horarioCompeticion ?? "")}</td>`;
-    }
-    timeRow += "</tr>";
-
-    // Competition roles — collect unique role+slot combos from all sessions
-    const allRoles: Array<{ key: string; roleLabel: string; slotIndex: number }> = [];
-    const seenRoles = new Set<string>();
-    for (const s of sessions) {
-      for (const role of s.roles) {
-        for (let i = 0; i < role.slots; i++) {
-          const uid = `${role.key}_${i}`;
-          if (!seenRoles.has(uid)) {
-            seenRoles.add(uid);
-            const label = role.slots > 1
-              ? `${ROLE_LABELS[role.key] ?? role.rol} ${i + 1}`
-              : (ROLE_LABELS[role.key] ?? role.rol);
-            allRoles.push({ key: role.key, roleLabel: label, slotIndex: i });
-          }
-        }
-      }
+    // Filas de rol (competición) coloreadas
+    for (const rs of collectRoles(sessions, false)) {
+      const r = roleRow(sessions, rs, assignments, flags, refLookup);
+      if (r) { html += r; usedRoleKeys.add(rs.key); }
     }
 
-    let compRows = "";
-    for (const { key, roleLabel, slotIndex } of allRoles) {
-      const cells = sessions.map((s) => refCell(s.sesion, key, slotIndex, assignments, flags, refLookup));
-      // Posición sin ocupar en ninguna sesión -> ocultar fila (que no aparezca nada)
-      if (cells.every((c) => c === "")) continue;
-      compRows += `<tr class="role-row role-${esc(key)}"><td class="cell-role">${esc(roleLabel)}</td>`;
-      for (const cell of cells) compRows += `<td class="cell-name">${esc(cell)}</td>`;
-      compRows += "</tr>";
+    // Bloque pesaje (si hay asignaciones)
+    const pesajeSlots = collectRoles(sessions, true);
+    let pesajeBody = "";
+    for (const rs of pesajeSlots) {
+      const r = roleRow(sessions, rs, assignments, flags, refLookup);
+      if (r) { pesajeBody += r; usedRoleKeys.add(rs.key); }
+    }
+    if (pesajeBody) {
+      html += `<tr><td class="cell-gap" colspan="${n}"></td></tr>`;
+      html += `<tr>`;
+      for (const s of sessions) html += `<td class="cell-time">${esc(s.horarioPesaje ?? "")}</td>`;
+      html += `</tr>`;
+      html += pesajeBody;
     }
 
-    // Pesaje section
-    let pesajeRows = "";
-    if (hasPesaje) {
-      pesajeRows += `<tr class="pesaje-sep"><td class="cell-pesaje-hdr" colspan="${colCount + 1}">PESAJE Y CONTROL DE EQUIPAMIENTO</td></tr>`;
-
-      // Pesaje horario row
-      let pesajeTimeRow = `<tr class="hdr-time"><td class="cell-role"></td>`;
-      for (const s of sessions) {
-        pesajeTimeRow += `<td class="cell-session cell-time">${esc(s.horarioPesaje ?? "")}</td>`;
-      }
-      pesajeTimeRow += "</tr>";
-      pesajeRows += pesajeTimeRow;
-
-      const pesajeRoles: Array<{ key: string; roleLabel: string; slotIndex: number }> = [];
-      const seenP = new Set<string>();
-      for (const s of sessions) {
-        for (const role of (s.pesajeRoles ?? [])) {
-          for (let i = 0; i < role.slots; i++) {
-            const uid = `${role.key}_${i}`;
-            if (!seenP.has(uid)) {
-              seenP.add(uid);
-              const label = role.slots > 1
-                ? `${ROLE_LABELS[role.key] ?? role.rol} ${i + 1}`
-                : (ROLE_LABELS[role.key] ?? role.rol);
-              pesajeRoles.push({ key: role.key, roleLabel: label, slotIndex: i });
-            }
-          }
-        }
-      }
-      let pesajeBody = "";
-      for (const { key, roleLabel, slotIndex } of pesajeRoles) {
-        const cells = sessions.map((s) => refCell(s.sesion, key, slotIndex, assignments, flags, refLookup));
-        if (cells.every((c) => c === "")) continue;
-        pesajeBody += `<tr class="role-row role-pesaje-row"><td class="cell-role">${esc(roleLabel)}</td>`;
-        for (const cell of cells) pesajeBody += `<td class="cell-name">${esc(cell)}</td>`;
-        pesajeBody += "</tr>";
-      }
-      // Si ninguna fila de pesaje tiene asignación, omitir toda la sección
-      pesajeRows = pesajeBody ? pesajeRows + pesajeBody : "";
-    }
-
-    tableSections.push(`
-      <table class="cuadrante">
-        <thead>${headerRow}${catRow}${timeRow}</thead>
-        <tbody>${compRows}${pesajeRows}</tbody>
-      </table>`);
+    html += `</tbody></table>`;
+    tables.push(html);
   }
+
+  // Leyenda de colores (solo roles usados, en orden oficial)
+  const legendKeys = LEGEND_ORDER.filter((k) => usedRoleKeys.has(k));
+  // añade cualquier rol usado no contemplado en LEGEND_ORDER
+  for (const k of usedRoleKeys) {
+    if (!legendKeys.includes(k as RoleKey)) legendKeys.push(k as RoleKey);
+  }
+  const legendChips = legendKeys
+    .map((k) => {
+      const st = styleFor(k);
+      return `<span class="leg-chip" style="background:${st.bg};color:${st.fg}">${esc(st.label)}</span>`;
+    })
+    .join("");
 
   const fechaRange = comp.fecha === comp.fechaFin || !comp.fechaFin
     ? comp.fecha
-    : `${comp.fecha} – ${comp.fechaFin}`;
+    : `${comp.fecha} - ${comp.fechaFin}`;
+  const hoy = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  const body = tables.length > 0
+    ? tables.join("\n")
+    : `<p class="empty-note">Sin plantilla de tarima. Importa el horario o crea la plantilla antes de exportar el cuadrante.</p>`;
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -164,52 +205,45 @@ export function generateQuadrantHtml(
 <meta charset="utf-8"/>
 <title>Cuadrante – ${esc(comp.nombre)}</title>
 <style>
-  @page { size: A4 landscape; margin: 10mm 12mm; }
+  @page { size: A4 portrait; margin: 12mm 14mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: #111; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; background: #fff; }
 
-  /* ── Header ─────────────────────────────── */
-  .doc-header { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #1a1a6e; padding-bottom: 8px; margin-bottom: 10px; }
-  .doc-header img { height: 44px; width: auto; }
-  .doc-header-text { flex: 1; }
-  .doc-org { font-size: 8pt; font-weight: 700; letter-spacing: .04em; color: #1a1a6e; text-transform: uppercase; }
-  .doc-title { font-size: 13pt; font-weight: 900; color: #111; line-height: 1.2; margin: 2px 0; }
-  .doc-meta { font-size: 7.5pt; color: #555; }
-  .doc-tipo { display: inline-block; background: #1a1a6e; color: #fff; font-size: 7pt; font-weight: 700; padding: 1px 7px; border-radius: 3px; margin-left: 6px; }
+  /* ── Cabecera ─────────────────────────────── */
+  .doc-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 4px; }
+  .doc-header img { height: 56px; width: auto; }
+  .doc-header-text { flex: 1; line-height: 1.25; }
+  .doc-org { font-size: 11pt; font-weight: 700; color: #000; }
+  .doc-title { font-size: 12pt; font-weight: 700; color: #000; }
+  .doc-sub { font-size: 9.5pt; color: #000; }
+  .doc-loc { font-size: 9.5pt; font-weight: 700; color: #1F4E79; }
+  .doc-date { text-align: right; color: #C00000; font-weight: 700; font-size: 9.5pt; margin: 2px 0 14px; }
 
-  /* ── Table ───────────────────────────────── */
-  .cuadrante { width: 100%; border-collapse: collapse; margin-bottom: 10px; break-inside: avoid; table-layout: fixed; }
-  .cuadrante th, .cuadrante td { border: 1px solid #bbb; padding: 3px 5px; vertical-align: middle; overflow-wrap: break-word; word-break: break-word; }
-  .cell-session, .cell-name { width: auto; }
-  .hdr-day th { background: #1a1a6e; color: #fff; font-size: 8pt; font-weight: 700; text-align: center; }
-  .hdr-day .cell-role { background: #f0f0f0; color: #111; font-size: 7pt; }
-  .hdr-cat td { background: #e8ecf8; font-size: 7.5pt; text-align: center; font-style: italic; color: #333; }
-  .hdr-time td { background: #f5f5f5; font-size: 7pt; text-align: center; color: #666; }
-  .cell-role { width: 110px; font-weight: 700; font-size: 7.5pt; background: #f9f9f9; color: #1a1a6e; white-space: nowrap; }
-  .cell-session { text-align: center; }
-  .cell-cat { font-size: 7pt; }
-  .cell-time { font-size: 7pt; }
-  .cell-name { text-align: center; font-size: 8pt; min-height: 16px; }
-  .cell-pesaje-hdr { background: #2e6b2e; color: #fff; font-weight: 700; font-size: 7.5pt; text-align: center; padding: 3px 5px; }
+  /* ── Tabla cuadrante ──────────────────────── */
+  .cuadrante { width: 100%; border-collapse: collapse; margin: 0 auto 18px; table-layout: fixed; border: 1.5px solid #000; }
+  .cuadrante td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; overflow-wrap: break-word; word-break: break-word; }
+  .cell-day { font-weight: 700; font-size: 9.5pt; padding: 4px; background: #fff; }
+  .cell-sess { font-weight: 700; font-size: 8pt; padding: 4px 3px; }
+  .cell-sess .sess-n { display: block; }
+  .cell-sess .sess-cat { display: block; font-weight: 700; }
+  .cell-time { color: #C00000; font-weight: 700; font-size: 8.5pt; }
+  .cell-name { font-weight: 700; font-size: 8.5pt; height: 19px; }
+  .cell-gap { height: 14px; background: #fff; border-left: 1px solid #000; border-right: 1px solid #000; }
 
-  /* Role accent strips */
-  .role-central .cell-role   { border-left: 3px solid #1a1a6e; }
-  .role-lateral .cell-role   { border-left: 3px solid #4a6fa5; }
-  .role-ordenador .cell-role { border-left: 3px solid #8b5cf6; }
-  .role-speaker .cell-role   { border-left: 3px solid #d97706; }
-  .role-control .cell-role   { border-left: 3px solid #dc2626; }
-  .role-jurado .cell-role    { border-left: 3px solid #64748b; }
-  .role-pesaje-row .cell-role { border-left: 3px solid #2e6b2e; }
+  /* ── Leyenda ──────────────────────────────── */
+  .legend { display: flex; flex-wrap: wrap; gap: 0; justify-content: center; margin: 14px auto 10px; max-width: 80%; }
+  .leg-chip { display: inline-block; min-width: 150px; text-align: center; font-weight: 700; font-size: 8.5pt; padding: 4px 8px; border: 1px solid #000; }
 
-  /* ── Footer ─────────────────────────────── */
-  .doc-footer { margin-top: 6px; border-top: 1px solid #ddd; padding-top: 4px; font-size: 6.5pt; color: #888; display: flex; justify-content: space-between; }
-  @media print { .no-print { display: none; } }
-
-  /* ── Print button ────────────────────────── */
-  .print-btn { position: fixed; top: 12px; right: 12px; padding: 8px 18px; background: #1a1a6e; color: #fff; border: none; border-radius: 6px; font-size: 11pt; cursor: pointer; z-index: 999; }
-  .print-btn:hover { background: #131055; }
+  /* ── Notas ────────────────────────────────── */
+  .notes { margin: 10px auto; font-size: 8.5pt; font-weight: 700; text-align: center; line-height: 1.8; }
   .empty-note { padding: 24px; text-align: center; color: #777; font-size: 10pt; border: 1px dashed #ccc; border-radius: 8px; margin: 16px 0; }
+
+  /* ── Footer + botón ───────────────────────── */
+  .doc-footer { margin-top: 8px; text-align: center; font-size: 8pt; color: #555; }
+  @media print { .no-print { display: none; } }
+  .print-btn { position: fixed; top: 12px; right: 12px; padding: 8px 18px; background: #C00000; color: #fff; border: none; border-radius: 6px; font-size: 11pt; cursor: pointer; z-index: 999; }
+  .print-btn:hover { background: #9c0000; }
 </style>
 </head>
 <body>
@@ -218,18 +252,23 @@ export function generateQuadrantHtml(
 <div class="doc-header">
   <img src="/assets/aep-mark.png" alt="AEP" onerror="this.style.display='none'"/>
   <div class="doc-header-text">
-    <div class="doc-org">Asociación Española de Powerlifting</div>
-    <div class="doc-title">${esc(comp.nombre)}<span class="doc-tipo">${esc(comp.tipo)}</span></div>
-    <div class="doc-meta">${esc(comp.sede)} &nbsp;·&nbsp; ${esc(fechaRange)}</div>
+    <div class="doc-org">ASOCIACIÓN ESPAÑOLA de POWERLIFTING</div>
+    <div class="doc-title">${esc(comp.nombre)}</div>
+    <div class="doc-sub">${esc(comp.tipo)}</div>
+    <div class="doc-loc">${esc(comp.sede)} - ${esc(fechaRange)}</div>
   </div>
 </div>
+<div class="doc-date">${esc(hoy)}</div>
 
-${tableSections.length > 0 ? tableSections.join("\n") : `<p class="empty-note">Sin plantilla de tarima. Importa el horario o crea la plantilla antes de exportar el cuadrante.</p>`}
+${body}
 
-<div class="doc-footer">
-  <span>Cuadrante oficial AEP · ${esc(comp.nombre)}</span>
-  <span>Generado: ${new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}</span>
-</div>
+${tables.length > 0 ? `<div class="legend">${legendChips}</div>
+<div class="notes">
+  <div>* &nbsp;Compartiendo funciones con otra Sesión</div>
+  <div>↑↓ &nbsp;Intercambio de funciones según esté en el pesaje hombres o mujeres</div>
+</div>` : ""}
+
+<div class="doc-footer">Cuadrante oficial AEP · ${esc(comp.nombre)}</div>
 </body>
 </html>`;
 }

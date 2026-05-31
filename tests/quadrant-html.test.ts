@@ -46,7 +46,7 @@ describe("generateQuadrantHtml", () => {
   const html = generateQuadrantHtml(comp, template, assignments, (id) => refs[id], flags);
 
   it("incluye cabecera AEP con logo, competición, tipo, sede y fechas", () => {
-    expect(html).toContain("Asociación Española de Powerlifting");
+    expect(html).toContain("ASOCIACIÓN ESPAÑOLA de POWERLIFTING");
     expect(html).toContain("aep-mark.png");
     expect(html).toContain("II Campeonato Intend Power");
     expect(html).toContain("AEP-2");
@@ -77,19 +77,27 @@ describe("generateQuadrantHtml", () => {
     expect(html).not.toContain("PESAJE Y CONTROL DE EQUIPAMIENTO");
   });
 
-  it("agrupa por día y lista las sesiones como columnas", () => {
+  it("agrupa por día y rotula las sesiones (SESIÓN N)", () => {
     expect(html).toContain("Sábado 28 feb");
-    expect(html).toContain(">S1<");
-    expect(html).toContain(">S2<");
+    expect(html).toContain("SESIÓN 1");
+    expect(html).toContain("SESIÓN 2");
   });
 
-  it("botón imprimir presente para guardar como PDF", () => {
+  it("colorea filas por rol como el cuadrante oficial AEP", () => {
+    expect(html).toContain("#FF0000"); // CENTRAL rojo
+    expect(html).toContain("#FFFF00"); // LATERAL amarillo
+    expect(html).toContain("leg-chip"); // leyenda de colores presente
+    expect(html).toContain("Compartiendo funciones"); // nota *
+    expect(html).toContain("Intercambio de funciones"); // nota ↑↓
+  });
+
+  it("formato vertical A4 (portrait) como el original", () => {
     expect(html).toContain("window.print()");
-    expect(html).toContain("A4 landscape");
+    expect(html).toContain("A4 portrait");
   });
 
   it("fuerza impresión de colores de fondo (print-color-adjust)", () => {
-    // sin esto el navegador descarta cabecera azul/pesaje verde/franjas rol al guardar PDF
+    // sin esto el navegador descarta los colores de rol al guardar PDF
     expect(html).toContain("print-color-adjust: exact");
   });
 
