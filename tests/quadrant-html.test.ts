@@ -86,4 +86,10 @@ describe("generateQuadrantHtml", () => {
     // sin esto el navegador descarta cabecera azul/pesaje verde/franjas rol al guardar PDF
     expect(html).toContain("print-color-adjust: exact");
   });
+
+  it("plantilla vacía -> nota en vez de doc en blanco", () => {
+    const empty = generateQuadrantHtml(comp, [], {}, () => undefined, {});
+    expect(empty).toContain("Sin plantilla de tarima");
+    expect(empty).toContain(comp.nombre); // cabecera sigue presente
+  });
 });
