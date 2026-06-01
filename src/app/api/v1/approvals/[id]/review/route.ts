@@ -1,6 +1,7 @@
 import { canApprove } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { notifyApprovalReviewed } from "@/server/notifications/notify";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -17,7 +18,11 @@ export async function POST(request: Request, context: RouteContext) {
   const approve = Boolean(body.approve);
   const comment = body.comment ? String(body.comment) : undefined;
 
-  const result = await dataService.reviewApproval(id, approve, user.nombre, comment);
+  const result = await dataService.reviewApproval(id, approve, user.nombre, user.id, comment);
   if (!result) return jsonError("Propuesta no encontrada", 404);
+  // Best-effort: avisa al remitente del resultado (no-op sin APNs).
+  if (result.submittedById) {
+    await notifyApprovalReviewed(result.submittedById, result.competitionName, approve, comment);
+  }
   return jsonOk(result);
 }

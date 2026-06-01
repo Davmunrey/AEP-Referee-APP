@@ -53,6 +53,8 @@ export interface Referee {
   ultimo: string;
   disp: boolean;
   iniciales: string;
+  /** Cuenta de usuario del juez (profiles.id), si está registrado; para push. */
+  userId?: string;
   email?: string;
   licencia?: string;
   localidad?: string;
@@ -269,11 +271,14 @@ export interface ApprovalProposal {
   competitionName: string;
   zona: string;
   submittedBy: string;
+  /** UUID (profiles.id) del remitente, si se conoce; para notificarle. */
+  submittedById?: string;
   submittedAt: string;
   status: ApprovalStatus;
   assignments: AssignmentsMap;
   comment?: string;
   reviewedBy?: string;
+  reviewedById?: string;
   reviewedAt?: string;
 }
 

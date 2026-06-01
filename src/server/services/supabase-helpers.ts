@@ -21,6 +21,7 @@ export function db() {
 }
 
 let approvalCompetitionColumnPromise: Promise<boolean> | null = null;
+let approvalSubmitterColumnPromise: Promise<boolean> | null = null;
 let historyCompetitionColumnPromise: Promise<boolean> | null = null;
 
 export async function hasApprovalCompetitionColumns(): Promise<boolean> {
@@ -31,6 +32,17 @@ export async function hasApprovalCompetitionColumns(): Promise<boolean> {
       .limit(1),
   ).then(({ error }) => !error);
   return approvalCompetitionColumnPromise;
+}
+
+/** ¿Existen las columnas submitted_by_id / reviewed_by_id? (migración 022) */
+export async function hasApprovalSubmitterColumns(): Promise<boolean> {
+  approvalSubmitterColumnPromise ??= Promise.resolve(
+    db()
+      .from("approval_proposals")
+      .select("submitted_by_id, reviewed_by_id")
+      .limit(1),
+  ).then(({ error }) => !error);
+  return approvalSubmitterColumnPromise;
 }
 
 export async function hasHistoryCompetitionColumn(): Promise<boolean> {
