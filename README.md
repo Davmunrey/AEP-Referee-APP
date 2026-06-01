@@ -7,8 +7,8 @@
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/producción-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v1.2-22c55e?style=for-the-badge&labelColor=0d1117" />
-  <img alt="Tests" src="https://img.shields.io/badge/tests-155%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v1.3-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-198%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
 <p align="center">
@@ -39,7 +39,8 @@ AEP Tarima centraliza toda la operativa de jueces de la Asociación Española de
 | Área | Capacidades |
 |---|---|
 | **Campeonatos** | Creación manual, import calendario anual PDF/CSV, edición inline, deduplicación |
-| **Tarima** | Plantilla por tipo/campeonato, import horario PDF, cuadrante PDF, drag-and-drop, flags, borrador → aprobación |
+| **Tarima** | Plantilla por tipo/campeonato, import horario PDF, **import cuadrante PDF (4 formatos AEP)**, drag-and-drop, flags, borrador → aprobación |
+| **Export cuadrante** | **PDF formato oficial AEP** (colores por rol), **Excel**, compartir por **WhatsApp** |
 | **Jueces** | Directorio, ficha completa, sanciones, disponibilidad, historial de tarimas |
 | **Disponibilidad** | Por campeonato, confirmación manual, filtro "solo confirmados" en asignación |
 | **Cross-zone** | Auto-detección servidor, badge naranja, columna analytics, banner en tarima |
@@ -47,7 +48,8 @@ AEP Tarima centraliza toda la operativa de jueces de la Asociación Española de
 | **Informes** | Por juez o competición, visibilidad por zona o nacional |
 | **Ascensos** | Solicitud, revisión nacional, historial |
 | **Analytics** | Histórico anual, KPIs (cobertura, carga, cross-zone), export CSV |
-| **Usuarios** | Gestión de roles, solo `super_admin` y `delegado_jueces` |
+| **Usuarios** | Gestión de roles (`super_admin`/`delegado_jueces`), **reset de contraseñas** |
+| **Contraseñas** | Cambio propio (cualquier rol) + reset por admin (sin conocer la actual) |
 
 ## Roles
 
@@ -73,7 +75,7 @@ Browser
 - **UI**: Next.js 15, Tailwind CSS, Radix UI, Lucide, design tokens centralizados
 - **Auth**: Supabase email/contraseña — sin registro público
 - **DB**: Supabase Postgres — migraciones en `supabase/migrations/`
-- **Tests**: Vitest — 155 tests, 27 archivos
+- **Tests**: Vitest — 198 tests, 35 archivos
 - **CI**: GitHub Actions — verify, Playwright smoke, Supabase readiness
 - **Deploy**: Vercel (automático desde `main`)
 
