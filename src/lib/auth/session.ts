@@ -1,7 +1,9 @@
 import type { User } from "@supabase/supabase-js";
+import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { verifyAccessToken } from "@/lib/supabase/token";
 import { profileToSessionUser, type ProfileRow } from "@/lib/auth/profile";
 import { resolveZoneCode } from "@/lib/aep-zones";
 import type { SessionUser } from "@/lib/types";
@@ -56,14 +58,8 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
   return (data as ProfileRow) ?? null;
 }
 
-export async function getSession(): Promise<SessionUser | null> {
-  if (!isSupabaseConfigured()) return null;
-
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
-
-  const admin = createAdminClient();
+/** Resuelve el perfil de la app (y RBAC) para un usuario auth de Supabase. */
+async function resolveSessionUser(admin: AdminClient, user: User): Promise<SessionUser | null> {
   let { data: profile } = await admin
     .from("profiles")
     .select("id, email, nombre, rol_label, iniciales, role, zona, activo")
@@ -76,6 +72,42 @@ export async function getSession(): Promise<SessionUser | null> {
 
   if (!profile || !(profile as ProfileRow).activo) return null;
   return profileToSessionUser(profile as ProfileRow);
+}
+
+/**
+ * Token Bearer presentado por un cliente nativo (app móvil), si lo hay.
+ * Devuelve el usuario auth de Supabase verificado, o null.
+ */
+async function userFromBearer(): Promise<User | null> {
+  const authHeader = (await headers()).get("authorization");
+  if (!authHeader) return null;
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
+  const token = match?.[1]?.trim();
+  if (!token) return null;
+  return verifyAccessToken(token);
+}
+
+/**
+ * Sesión del usuario actual. Acepta dos transportes de autenticación:
+ *  1. Token Bearer (clientes nativos — app móvil iOS).
+ *  2. Cookie de sesión Supabase SSR (web), sin cambios.
+ * Ambos producen un SessionUser idéntico, con el mismo RBAC.
+ */
+export async function getSession(): Promise<SessionUser | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  // 1) Cliente nativo: token Bearer (app móvil).
+  let user = await userFromBearer();
+
+  // 2) Web: sesión por cookie (Supabase SSR).
+  if (!user) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return null;
+    user = data.user;
+  }
+
+  return resolveSessionUser(createAdminClient(), user);
 }
 
 /**
