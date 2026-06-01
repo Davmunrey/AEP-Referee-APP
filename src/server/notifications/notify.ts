@@ -57,3 +57,39 @@ export async function notifyRosterSubmitted(
     threadId: "approvals",
   });
 }
+
+/** Avisa a un juez de que ha sido asignado a una tarima. */
+export async function notifyRefereeAssigned(
+  refereeUserId: string,
+  competitionName: string,
+  competitionId: string,
+): Promise<void> {
+  if (!isApnsConfigured()) return;
+  await notifyUsers([refereeUserId], {
+    title: "Asignado a una tarima",
+    body: `Te han asignado a ${competitionName}.`,
+    type: "assignment",
+    data: { competitionId },
+    threadId: `competition_${competitionId}`,
+  });
+}
+
+/** Avisa al remitente de que su propuesta de tarima fue resuelta. */
+export async function notifyApprovalReviewed(
+  submitterUserId: string,
+  competitionName: string,
+  approved: boolean,
+  reviewerComment?: string,
+): Promise<void> {
+  if (!isApnsConfigured()) return;
+  await notifyUsers([submitterUserId], {
+    title: approved ? "Tarima aprobada" : "Tarima rechazada",
+    body: approved
+      ? `Tu propuesta para ${competitionName} ha sido aprobada.`
+      : `Tu propuesta para ${competitionName} ha sido rechazada.${
+          reviewerComment ? ` Motivo: ${reviewerComment}` : ""
+        }`,
+    type: approved ? "approval_approved" : "approval_rejected",
+    threadId: "approvals",
+  });
+}

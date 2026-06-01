@@ -79,13 +79,13 @@ export const supabaseDataService = {
   clearSlot: rosterService.clearSlot,
   clearRosterAssignments: (competitionId: string, actor: string) =>
     rosterService.clearRosterAssignments(competitionId, actor, competitionService.getCompetition),
-  submitRoster: (competitionId: string, actor: string) =>
-    rosterService.submitRoster(competitionId, actor, competitionService.getCompetition),
+  submitRoster: (competitionId: string, actor: string, userId?: string) =>
+    rosterService.submitRoster(competitionId, actor, userId, competitionService.getCompetition),
   saveDraft: (competitionId: string, actor: string) =>
     rosterService.saveDraft(competitionId, actor, competitionService.getCompetition),
   getApprovals: rosterService.getApprovals,
-  reviewApproval: (id: string, approve: boolean, reviewer: string, comment?: string) =>
-    rosterService.reviewApproval(id, approve, reviewer, competitionService.getCompetition, comment),
+  reviewApproval: (id: string, approve: boolean, reviewer: string, reviewerId?: string, comment?: string) =>
+    rosterService.reviewApproval(id, approve, reviewer, reviewerId, competitionService.getCompetition, comment),
   getRosterHistory: rosterService.getRosterHistory,
   exportRoster: (competitionId: string) =>
     rosterService.exportRoster(

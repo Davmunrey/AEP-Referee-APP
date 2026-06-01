@@ -21,7 +21,12 @@ vi.mock("@/lib/supabase/admin", () => ({
   }),
 }));
 
-import { approverUserIds, notifyUsers } from "@/server/notifications/notify";
+import {
+  approverUserIds,
+  notifyApprovalReviewed,
+  notifyRefereeAssigned,
+  notifyUsers,
+} from "@/server/notifications/notify";
 
 const note = { title: "t", body: "b", type: "approval_pending" };
 
@@ -66,6 +71,39 @@ describe("notifyUsers", () => {
   it("nunca lanza aunque el envío falle", async () => {
     sendApnsPush.mockRejectedValue(new Error("APNs caído"));
     await expect(notifyUsers(["u1"], note)).resolves.toBeUndefined();
+  });
+});
+
+describe("notifyRefereeAssigned", () => {
+  it("envía al juez asignado con tipo 'assignment'", async () => {
+    await notifyRefereeAssigned("ref-user", "Open Centro", "c1");
+    expect(sendApnsPush).toHaveBeenCalledWith(
+      [{ apnsToken: "tok", environment: "production" }],
+      expect.objectContaining({ type: "assignment", data: { competitionId: "c1" } }),
+    );
+  });
+
+  it("no-op si APNs no está configurado", async () => {
+    isApnsConfigured.mockReturnValue(false);
+    await notifyRefereeAssigned("ref-user", "Open Centro", "c1");
+    expect(deviceTokensForUsers).not.toHaveBeenCalled();
+  });
+});
+
+describe("notifyApprovalReviewed", () => {
+  it("título y tipo de aprobada", async () => {
+    await notifyApprovalReviewed("sub-user", "Open Centro", true);
+    expect(sendApnsPush).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ type: "approval_approved", title: "Tarima aprobada" }),
+    );
+  });
+
+  it("incluye el motivo cuando se rechaza con comentario", async () => {
+    await notifyApprovalReviewed("sub-user", "Open Centro", false, "Faltan jurados");
+    const note = sendApnsPush.mock.calls[0][1];
+    expect(note.type).toBe("approval_rejected");
+    expect(note.body).toContain("Faltan jurados");
   });
 });
 

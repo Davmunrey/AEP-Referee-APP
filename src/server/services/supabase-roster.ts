@@ -20,6 +20,7 @@ import {
   db,
   getCompetitionTemplate,
   hasApprovalCompetitionColumns,
+  hasApprovalSubmitterColumns,
   loadAssignments,
   loadCrossZoneMap,
   loadFlags,
@@ -247,6 +248,7 @@ export const rosterService = {
   submitRoster: async (
     competitionId: string,
     actor: string,
+    userId: string | undefined,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
   ) => {
     const comp = await getCompetitionFn(competitionId);
@@ -254,8 +256,10 @@ export const rosterService = {
     const assignments = await loadAssignments(competitionId);
     const supabase = db();
     const hasCompetitionColumns = await hasApprovalCompetitionColumns();
+    const hasSubmitterColumns = await hasApprovalSubmitterColumns();
     const competitionIdColumn = hasCompetitionColumns ? "competition_id" : "event_id";
     const competitionNameColumn = hasCompetitionColumns ? "competition_name" : "event_name";
+    const submitterId = hasSubmitterColumns ? { submitted_by_id: userId ?? null } : {};
     const { data: existing } = await supabase
       .from("approval_proposals")
       .select("*")
@@ -267,7 +271,7 @@ export const rosterService = {
     if (existing) {
       await supabase
         .from("approval_proposals")
-        .update({ assignments, submitted_at: now, submitted_by: actor })
+        .update({ assignments, submitted_at: now, submitted_by: actor, ...submitterId })
         .eq("id", existing.id);
     } else {
       await supabase.from("approval_proposals").insert({
@@ -276,6 +280,7 @@ export const rosterService = {
         [competitionNameColumn]: comp.nombre,
         zona: comp.zona ?? "—",
         submitted_by: actor,
+        ...submitterId,
         submitted_at: now,
         status: "pendiente",
         assignments,
@@ -334,6 +339,7 @@ export const rosterService = {
     id: string,
     approve: boolean,
     reviewer: string,
+    reviewerId: string | undefined,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
     comment?: string,
   ): Promise<ApprovalProposal | undefined> => {
@@ -347,9 +353,12 @@ export const rosterService = {
 
     const now = new Date().toISOString();
     const status = approve ? "aprobado" : "rechazado";
+    const reviewerIdCol = (await hasApprovalSubmitterColumns())
+      ? { reviewed_by_id: reviewerId ?? null }
+      : {};
     await supabase
       .from("approval_proposals")
-      .update({ status, reviewed_by: reviewer, reviewed_at: now, comment: comment ?? null })
+      .update({ status, reviewed_by: reviewer, reviewed_at: now, comment: comment ?? null, ...reviewerIdCol })
       .eq("id", id);
 
     const proposalCompetitionId = String(proposal.competition_id ?? proposal.event_id);

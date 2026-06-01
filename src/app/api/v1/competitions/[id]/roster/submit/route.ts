@@ -30,7 +30,7 @@ export async function POST(_request: Request, context: RouteContext) {
     return jsonError(`Completa todos los huecos antes de enviar (${open} pendientes)`, 400);
   }
 
-  const proposal = await dataService.submitRoster(id, user.nombre);
+  const proposal = await dataService.submitRoster(id, user.nombre, user.id);
   if (!proposal) return jsonError("No se pudo enviar", 400);
   // Best-effort: avisa al comité nacional (no-op si APNs no está configurado).
   await notifyRosterSubmitted(comp.nombre, comp.id);
