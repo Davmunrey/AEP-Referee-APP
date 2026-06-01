@@ -239,11 +239,23 @@ export function Sidebar({
             </div>
           </div>
         ) : (
-          <Avatar className="mx-auto mb-3 h-8 w-8 ring-2 ring-primary/20">
-            <AvatarFallback className="bg-primary/15 text-xs text-primary">
-              {currentUser.iniciales}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex flex-col items-center gap-1">
+            <Avatar className="mb-1 h-8 w-8 ring-2 ring-primary/20">
+              <AvatarFallback className="bg-primary/15 text-xs text-primary">
+                {currentUser.iniciales}
+              </AvatarFallback>
+            </Avatar>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-subtle-muted hover:text-foreground focus-ring"
+              onClick={() => setPwdOpen(true)}
+              aria-label="Cambiar contraseña"
+              title="Cambiar contraseña"
+            >
+              <KeyRound className="h-4 w-4" />
+            </Button>
+          </div>
         )}
         {!collapsed && (
           <>
