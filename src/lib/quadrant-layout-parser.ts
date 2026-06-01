@@ -79,6 +79,7 @@ interface Column {
 // Cabeceras de sesión: "SESIÓN 1", "SESION 2" o la forma corta "S1".
 const SN_RE = /\bSESI[OÓ]N\s*(\d{1,2})\b|\bS(\d{1,2})\b/gi;
 const TIME_RANGE_RE = /\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:?\d{2}/;
+const TIME_RANGE_G = /\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:?\d{2}/g;
 const CATEGORY_RE = /^(?:Hombres|Mujeres|[-+]?\d{1,3}\s*kg|[-+]\d|\(?(?:Todas|raw|RAW))/i;
 const PESAJE_MARKER_RE = /PESAJE\s*y?\s*(?:REVISI[ÓO]N|CONTROL)|REVISI[ÓO]N\s+EQUIPAMIENTO/i;
 const LEGEND_RE = /JUEZ\s+CENTRAL|JUEZ\s+LATERAL|ORDENADOR|SPEAKER|JUEZ\s+CONTROL|JURADO|CONTROL\s+DE\s+EQUIPAMIENTO/i;
@@ -170,9 +171,51 @@ function roleLabel(key: RoleKey): string {
   return ROLE_LABELS[key] ?? key;
 }
 
-/** ¿La línea parece una rejilla de cuadrante con layout (varias columnas Sn)? */
+/** Centros x de los rangos horarios de una línea (define las columnas reales). */
+function timeColumns(line: string): number[] {
+  const centers: number[] = [];
+  for (const m of line.matchAll(TIME_RANGE_G)) {
+    centers.push((m.index ?? 0) + m[0].length / 2);
+  }
+  return centers;
+}
+
+/**
+ * Construye las columnas finales mapeando las etiquetas de sesión acumuladas a
+ * los centros del time-row (que siempre está alineado, aunque las cabeceras
+ * estén escalonadas en diagonal). Cae a las propias cabeceras si no hay horario.
+ */
+function buildColumns(sessionTokens: Column[], timeCenters: number[]): Column[] {
+  if (timeCenters.length === 0) {
+    return [...sessionTokens].sort((a, b) => a.center - b.center);
+  }
+  const cols: Column[] = [];
+  for (const center of timeCenters) {
+    // Sesión cuya cabecera está más cerca de este centro horario.
+    let best: Column | null = null;
+    let bestDist = Infinity;
+    for (const s of sessionTokens) {
+      const d = Math.abs(s.center - center);
+      if (d < bestDist) {
+        bestDist = d;
+        best = s;
+      }
+    }
+    if (best && !cols.some((c) => c.label === best!.label)) {
+      cols.push({ label: best.label, center });
+    }
+  }
+  return cols.length > 0 ? cols : [...sessionTokens].sort((a, b) => a.center - b.center);
+}
+
+/** ¿El texto parece una rejilla de cuadrante? (varias sesiones o time-row múltiple) */
 export function looksLikeLayout(text: string): boolean {
-  return text.split(/\r?\n/).some((l) => detectColumns(l).length >= 2);
+  const lines = text.split(/\r?\n/);
+  if (lines.some((l) => timeColumns(l).length >= 2)) return true;
+  // Cabeceras de sesión escalonadas: cuenta etiquetas únicas en todo el texto.
+  const labels = new Set<string>();
+  for (const l of lines) for (const c of detectColumns(l)) labels.add(c.label);
+  return labels.size >= 2;
 }
 
 export function parseQuadrantLayout(
@@ -196,16 +239,14 @@ export function parseQuadrantLayout(
     const lines = page.split(/\r?\n/);
     let cols: Column[] = [];
     let mode: "comp" | "pesaje" = "comp";
-    // El marcador de pesaje precede a la cabecera del bloque de pesaje; al ver la
-    // cabecera consumimos el flag. Así cada bloque resetea a 'comp' salvo que un
-    // marcador de pesaje lo preceda — robusto sin depender de saltos de página.
     let pesajePending = false;
-    // Filas de horario vistas desde la última cabecera. La 1ª inicia el cuerpo de
-    // competición; la 2ª (mismas columnas, sin nueva cabecera) inicia el de pesaje.
-    // Cubre cuadrantes con una sola cabecera y dos bloques horarios (AEP-2/3).
     let timeRowsInBlock = 0;
     let inBody = false;
     let roleIndex = 0;
+    // Etiquetas de sesión acumuladas desde el último time-row. Las cabeceras
+    // pueden estar escalonadas (diagonal); se mapean a las columnas reales
+    // (centros del time-row) cuando aparece el horario.
+    let sessionTokens: Column[] = [];
 
     for (const rawLine of lines) {
       const line = rawLine.replace(/\s+$/, "");
@@ -213,33 +254,44 @@ export function parseQuadrantLayout(
         continue;
       }
 
-      // Marcador de pesaje: el siguiente bloque de sesiones es de pesaje.
+      // Marcador explícito de pesaje (AEP-1): el siguiente bloque es de pesaje.
       if (PESAJE_MARKER_RE.test(line)) {
         pesajePending = true;
         inBody = false;
         continue;
       }
 
-      // Cabecera de sesiones (S1 S2 …): nuevo bloque.
-      const headerCols = detectColumns(line);
-      if (headerCols.length >= 2) {
-        cols = headerCols.filter((c) => validSessions.has(c.label.toUpperCase()));
-        if (cols.length === 0) cols = headerCols; // sesiones no en plantilla: avisaremos
-        mode = pesajePending ? "pesaje" : "comp";
-        pesajePending = false;
-        timeRowsInBlock = 0;
-        inBody = false;
+      // Fila de horarios: define las columnas REALES y abre el cuerpo de jueces.
+      // La 2ª fila de horario del bloque (sin nuevas cabeceras) inicia el pesaje.
+      const timeCenters = timeColumns(line);
+      if (timeCenters.length >= 1 && TIME_RANGE_RE.test(line)) {
+        if (sessionTokens.length > 0) {
+          // Nuevo bloque: construir columnas mapeando sesiones a los horarios.
+          cols = buildColumns(sessionTokens, timeCenters);
+          sessionTokens = [];
+          timeRowsInBlock = 1;
+          mode = pesajePending ? "pesaje" : "comp";
+          pesajePending = false;
+        } else {
+          // Mismo bloque, 2º horario -> pesaje sobre las mismas columnas.
+          timeRowsInBlock += 1;
+          if (timeRowsInBlock >= 2 && mode === "comp") mode = "pesaje";
+          // Reajusta los centros por si el time-row de pesaje desplaza columnas.
+          if (cols.length === timeCenters.length) {
+            cols = cols.map((c, i) => ({ label: c.label, center: timeCenters[i]! }));
+          }
+        }
+        inBody = cols.length > 0;
         roleIndex = 0;
         continue;
       }
 
-      // Fila de horarios: marca el inicio del cuerpo de jueces. La 2ª fila de
-      // horario bajo la misma cabecera inicia el bloque de pesaje.
-      if (TIME_RANGE_RE.test(line)) {
-        timeRowsInBlock += 1;
-        if (timeRowsInBlock >= 2 && mode === "comp") mode = "pesaje";
-        inBody = cols.length > 0;
-        roleIndex = 0;
+      // Acumula etiquetas de sesión (cabecera, posiblemente escalonada).
+      const headerCols = detectColumns(line);
+      if (headerCols.length >= 1 && !inBody) {
+        for (const c of headerCols) {
+          if (!sessionTokens.some((s) => s.label === c.label)) sessionTokens.push(c);
+        }
         continue;
       }
 
