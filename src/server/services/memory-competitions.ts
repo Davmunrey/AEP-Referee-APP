@@ -1,7 +1,7 @@
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { countOpenSlots, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
-import { enumerateSlotKeys, pruneAssignments } from "@/lib/roster-template";
+import { pruneAssignments } from "@/lib/roster-template";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import type {
   ApprovalProposal,
@@ -24,7 +24,7 @@ import {
   pushHistory,
   setCompetitionTemplate,
 } from "@/server/store";
-import { buildKpis, healthHistory, parseSlotKey, syncCompetitionCoverage, yearFromIso } from "./memory-helpers";
+import { buildKpis, healthHistory, parseSlotKey, syncCompetitionCoverage } from "./memory-helpers";
 import { getReferee } from "./memory-referees";
 
 export async function getDashboard(user: SessionUser): Promise<DashboardPayload> {
