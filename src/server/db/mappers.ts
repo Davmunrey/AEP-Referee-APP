@@ -38,6 +38,7 @@ export function refereeToDbRow(
   if (patch.ultimo != null) row.ultimo = patch.ultimo;
   if (patch.disp != null) row.disp = patch.disp;
   if (patch.iniciales != null) row.iniciales = patch.iniciales;
+  if (patch.userId !== undefined) row.user_id = patch.userId ?? null;
   if (patch.email !== undefined) row.email = patch.email ?? null;
   if (patch.licencia !== undefined) row.licencia = patch.licencia ?? null;
   if (patch.localidad !== undefined) row.localidad = patch.localidad ?? null;
@@ -65,6 +66,7 @@ export function mapReferee(row: Record<string, unknown>): Referee {
     ultimo: String(row.ultimo),
     disp: Boolean(row.disp),
     iniciales: String(row.iniciales),
+    userId: row.user_id ? String(row.user_id) : undefined,
     email: row.email ? String(row.email) : undefined,
     licencia: row.licencia ? String(row.licencia) : undefined,
     localidad: row.localidad ? String(row.localidad) : undefined,
@@ -107,11 +109,13 @@ export function mapApproval(row: Record<string, unknown>): ApprovalProposal {
     competitionName: String(row.competition_name ?? row.event_name),
     zona: String(row.zona),
     submittedBy: String(row.submitted_by),
+    submittedById: row.submitted_by_id ? String(row.submitted_by_id) : undefined,
     submittedAt: String(row.submitted_at),
     status: row.status as ApprovalProposal["status"],
     assignments: (row.assignments ?? {}) as AssignmentsMap,
     comment: row.comment ? String(row.comment) : undefined,
     reviewedBy: row.reviewed_by ? String(row.reviewed_by) : undefined,
+    reviewedById: row.reviewed_by_id ? String(row.reviewed_by_id) : undefined,
     reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
   };
 }
