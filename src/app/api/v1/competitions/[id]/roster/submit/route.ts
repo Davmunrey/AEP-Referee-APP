@@ -2,6 +2,7 @@ import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { countOpenSlots } from "@/lib/roster-rules";
+import { notifyRosterSubmitted } from "@/server/notifications/notify";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -31,6 +32,8 @@ export async function POST(_request: Request, context: RouteContext) {
 
   const proposal = await dataService.submitRoster(id, user.nombre);
   if (!proposal) return jsonError("No se pudo enviar", 400);
+  // Best-effort: avisa al comité nacional (no-op si APNs no está configurado).
+  await notifyRosterSubmitted(comp.nombre, comp.id);
   return jsonOk({
     message: "Propuesta enviada a aprobación nacional",
     proposal,
