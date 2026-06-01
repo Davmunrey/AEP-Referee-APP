@@ -10,6 +10,17 @@
 - Reset: enlace "¿Olvidaste tu contraseña?".
 - Sesión: cookies `sb-*-auth-token`, TTL app 7 días. Cookie Supabase browser no puede ser `HttpOnly` sin cambiar a auth server-side completa.
 
+## Gestión de contraseñas
+
+| Acción | Ruta | Quién | Verificación |
+|---|---|---|---|
+| Cambiar la propia | `POST /auth/change-password` | Cualquier rol autenticado | Exige la contraseña actual (`signInWithPassword`) antes de actualizar |
+| Reset de otro usuario | `POST /admin/users/:id/password` | `canManageUsers` | Sin conocer la actual; solo `super_admin` puede resetear a otro `super_admin` |
+
+- UI self-change: botón "Cambiar contraseña" en el sidebar (expandido y colapsado).
+- UI admin-reset: icono llave por fila en Usuarios.
+- `change-password` es self-service: exige sesión pero no lleva guard RBAC (solo actúa sobre la cuenta del llamante). Marcada como `selfServiceApi` en el readiness check.
+
 ## Roles
 
 | Rol | Permisos |

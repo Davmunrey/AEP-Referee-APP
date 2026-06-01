@@ -49,19 +49,32 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 - Cuadrante jueces: PDF -> preview candidatos -> selección -> asignar.
 - Registro jueces: XLSX -> preview -> upsert/replace.
 
-### Parser de cuadrantes (`src/lib/quadrant-parser.ts`)
+### Parser de cuadrantes (`src/lib/quadrant-layout-parser.ts`)
 
-Extrae asignaciones de jueces de PDFs AEP. Orden de roles confirmado con cuadrantes oficiales (AEP1, AEP2, AEP3):
+Extrae asignaciones de jueces de PDFs AEP por **geometría de columnas**. El cuadrante
+es una rejilla: filas = roles, columnas = sesiones. Cada nombre se asigna a la columna
+(sesión) más cercana por posición de carácter — robusto ante celdas vacías en cualquier
+posición (el parser plano anterior las desplazaba y mezclaba roles).
 
-```
-Central → Lateral → Lateral → Ordenador → Speaker/Mesa → Control [→ Jurado ×3 en AEP1]
-```
+Pasos:
+1. **Columnas reales**: se derivan de los CENTROS del time-row (siempre alineado), no de
+   la cabecera — cubre cuadrantes con cabeceras escalonadas en diagonal.
+2. **Etiquetas de sesión**: detecta `SESIÓN N` / `SESION N` / `Sn`, acumuladas aunque
+   estén en líneas distintas, y se mapean a la columna más cercana.
+3. **Pesaje**: el 2º time-row del bloque (o el marcador `PESAJE y REVISIÓN`) inicia el
+   bloque de pesaje sobre las mismas columnas.
+4. **Fila → rol**: expande los roles de la plantilla en orden
+   (Central → Lateral×2 → Ordenador → Speaker/Mesa → Control [→ Jurado×3 en AEP-1]).
+5. **Flags**: `*` = compartido, `↑↓` = intercambio.
+6. **Match de nombres**: aliases normalizados (sin acentos/puntuación).
 
-El texto del PDF se organiza por columnas (sesiones) × filas (roles). El parser detecta:
-1. **Sesiones**: regex `S(\d+)` o `SESIÓN N`.
-2. **Ancla de leyenda**: cluster de 2+ etiquetas de rol dentro de 200 chars — separa la zona de asignaciones del bloque de leyenda lateral.
-3. **Región pesaje**: split entre asignaciones de tarima y pesaje/equipamiento por cluster de sesiones o keyword `PESAJE`.
-4. **Match de nombres**: aliases normalizados (sin acentos, sin puntuación) ordenados por longitud descendente para evitar solapamientos parciales.
+Formatos soportados: rejilla `S1 S2 S3` (AEP-1), `SESION N` con pesaje por 2º horario
+(AEP-2/3), cabeceras escalonadas (VISODESANJUAN). Los escaneados (imagen, 0 texto) fallan
+con aviso accionable. `quadrant-parser.ts` (plano) queda como fallback heurístico.
+
+**Extracción** (`extract-pdf-text.ts`, `extractPdfLayoutText`): prefiere `pdftotext -layout`
+(local/CI) → reconstrucción geométrica con **pdf.js** desde las posiciones x/y (JS puro,
+funciona en Vercel serverless) → pdf-parse plano + OCR como último recurso.
 
 ### Parser de horarios (`src/lib/schedule-parser/`)
 

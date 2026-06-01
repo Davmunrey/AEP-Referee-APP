@@ -68,12 +68,23 @@ La disponibilidad se gestiona a nivel de campeonato (tabla `competition_availabi
 
 | Componente | Uso |
 |---|---|
-| `RefereesDirectory` | Directorio |
+| `RefereesDirectory` | Directorio (con vista card en móvil) |
 | `RefereeEditForm` | Edición |
 | `ExamsManager` | Exámenes |
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |
 | `UsersAdmin` | Usuarios |
+| `EditUserDialog` | Editar usuario (nombre, rol, zona) |
+| `PasswordDialog` | Cambiar/resetear contraseña (modo `self` / `admin`) |
+
+## Export de cuadrante
+
+| Lib / Ruta | Uso |
+|---|---|
+| `quadrant-html.ts` | Genera HTML formato oficial AEP (colores por rol, portrait, leyenda) |
+| `quadrant-excel.ts` | Genera `.xlsx` (hoja por día, roles=filas, sesiones=columnas) |
+| `quadrant-layout-parser.ts` | Parser de import por geometría de columnas (4 formatos AEP) |
+| Botones | "Cuadrante PDF" / "Excel" / "WhatsApp" en cabecera de tarima; icono PDF en lista de campeonatos |
 
 ## Responsive
 

@@ -15,6 +15,15 @@ Todas las rutas privadas usan sesión Supabase por cookie. Respuesta estándar:
 | `POST` | `/auth/logout` | Cerrar sesión |
 | `POST` | `/auth/signout` | Alias cierre sesión |
 | `POST` | `/auth/login` | Legacy 410; login real vive en `/sign-in` |
+| `POST` | `/auth/password` | Rate-limit pre-login (público) |
+| `POST` | `/auth/change-password` | Cambiar la propia contraseña (sesión; verifica la actual) |
+
+## Contraseñas
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `POST` | `/auth/change-password` | sesión (self-service) — body `{ currentPassword, newPassword }` |
+| `POST` | `/admin/users/:id/password` | `canManageUsers` — body `{ password }`; solo super_admin resetea a otro super_admin |
 
 ## Datos base
 
