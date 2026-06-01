@@ -287,7 +287,10 @@ export function parseQuadrantAssignments(
   if (text.trim().length < 50) {
     return {
       candidates: [],
-      warnings: ["PDF sin texto extraíble. Sube versión exportada con texto o CSV/Excel."],
+      warnings: [
+        "Este PDF es una imagen escaneada (sin texto). Vuelve a exportarlo desde el " +
+          "documento original con texto seleccionable, o asigna los jueces a mano en la tarima.",
+      ],
     };
   }
 
@@ -347,7 +350,10 @@ export function parseQuadrantAssignments(
   }
 
   if (candidates.length === 0) {
-    warnings.push("No se detectaron asignaciones. Puede ser PDF escaneado o formato no soportado.");
+    warnings.push(
+      "No se detectaron asignaciones. Si el PDF es escaneado o de formato no estándar, " +
+        "asigna los jueces a mano en la tarima.",
+    );
   }
 
   return { candidates, warnings };
