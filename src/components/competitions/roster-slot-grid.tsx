@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, X } from "lucide-react";
 import { LevelBadge } from "@/components/aep/badges";
 import { cn } from "@/lib/utils";
-import { sessionProgress, summarizeSessionCategories, slotRoleEntries } from "./roster-session-helpers";
+import { sessionProgress, summarizeSessionCategories } from "./roster-session-helpers";
 
 export interface SlotGridProps {
   sesion: string;

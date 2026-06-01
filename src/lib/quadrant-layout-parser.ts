@@ -228,7 +228,6 @@ export function parseQuadrantLayout(
   const usedSlots = new Set<string>();
 
   const templateBySession = new Map(template.map((s) => [s.sesion.toUpperCase(), s]));
-  const validSessions = new Set(template.map((s) => s.sesion.toUpperCase()));
 
   // Separa páginas por form-feed (pdftotext) o cae a una sola.
   const pages = text.includes("\f") ? text.split("\f") : [text];

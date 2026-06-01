@@ -424,7 +424,12 @@ export function RosterBuilder({
           confirmedIds={confirmedIds} canEdit={canEdit}
           onClose={() => setAvailabilityOpen(false)}
           onToggle={(id, confirmed) =>
-            setConfirmedIds((prev) => { const next = new Set(prev); confirmed ? next.add(id) : next.delete(id); return next; })
+            setConfirmedIds((prev) => {
+              const next = new Set(prev);
+              if (confirmed) next.add(id);
+              else next.delete(id);
+              return next;
+            })
           }
         />
       )}
