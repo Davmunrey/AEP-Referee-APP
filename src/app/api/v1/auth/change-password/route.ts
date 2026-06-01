@@ -1,9 +1,17 @@
+import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 
-/** Self-service: el usuario autenticado cambia su propia contraseña. */
+/**
+ * Self-service: el usuario autenticado cambia SU PROPIA contraseña.
+ * Requiere sesión (requireApiUser) pero no lleva guard RBAC a propósito —
+ * solo actúa sobre la cuenta del propio llamante, verificando antes la
+ * contraseña actual. Listada como self-service en el readiness check.
+ */
 export async function POST(request: Request) {
+  const user = await requireApiUser();
+  if (!isSessionUser(user)) return user;
   if (!isSupabaseConfigured()) return jsonError("Supabase no configurado", 503);
 
   const body = (await request.json().catch(() => null)) as {
@@ -19,12 +27,9 @@ export async function POST(request: Request) {
   if (newPassword === currentPassword) {
     return jsonError("La nueva contraseña debe ser distinta de la actual", 400);
   }
+  if (!user.email) return jsonError("La cuenta no tiene email asociado", 400);
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.email) return jsonError("No autenticado", 401);
 
   // Verifica la contraseña actual antes de permitir el cambio.
   const { error: verifyError } = await supabase.auth.signInWithPassword({
