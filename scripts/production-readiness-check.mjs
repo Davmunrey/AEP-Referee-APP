@@ -50,6 +50,12 @@ const publicApi = new Set([
   "src/app/api/v1/auth/signout/route.ts",
 ]);
 
+// Rutas self-service: EXIGEN sesión (sujetas a API-01) pero no llevan guard
+// RBAC porque solo operan sobre la cuenta del propio llamante.
+const selfServiceApi = new Set([
+  "src/app/api/v1/auth/change-password/route.ts",
+]);
+
 for (const file of apiRoutes) {
   const rel = relative(root, file);
   const src = readFileSync(file, "utf8");
@@ -62,7 +68,7 @@ for (const file of apiRoutes) {
     /can(EditRoster|Manage|Approve|Admin|Review)|canManageSanctions|user\.role|checkRefereeScope/.test(
       src,
     );
-  if (mutates && !publicApi.has(rel) && !hasAuthz) {
+  if (mutates && !publicApi.has(rel) && !selfServiceApi.has(rel) && !hasAuthz) {
     fail("API-02", `${rel} muta datos sin guard RBAC explícito`);
   }
 }
