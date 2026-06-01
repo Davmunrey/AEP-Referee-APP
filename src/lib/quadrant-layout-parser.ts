@@ -76,7 +76,8 @@ interface Column {
   center: number;
 }
 
-const SN_RE = /\bS(\d{1,2})\b/g;
+// Cabeceras de sesión: "SESIÓN 1", "SESION 2" o la forma corta "S1".
+const SN_RE = /\bSESI[OÓ]N\s*(\d{1,2})\b|\bS(\d{1,2})\b/gi;
 const TIME_RANGE_RE = /\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:?\d{2}/;
 const CATEGORY_RE = /^(?:Hombres|Mujeres|[-+]?\d{1,3}\s*kg|[-+]\d|\(?(?:Todas|raw|RAW))/i;
 const PESAJE_MARKER_RE = /PESAJE\s*y?\s*(?:REVISI[ÓO]N|CONTROL)|REVISI[ÓO]N\s+EQUIPAMIENTO/i;
@@ -89,7 +90,9 @@ function detectColumns(line: string): Column[] {
   const cols: Column[] = [];
   const seen = new Set<string>();
   for (const m of line.matchAll(SN_RE)) {
-    const label = `S${Number(m[1])}`;
+    const num = Number(m[1] ?? m[2]); // grupo 1 = "SESIÓN N"; grupo 2 = "Sn"
+    if (!num) continue;
+    const label = `S${num}`;
     if (seen.has(label)) continue;
     seen.add(label);
     cols.push({ label, center: (m.index ?? 0) + m[0].length / 2 });
@@ -197,6 +200,10 @@ export function parseQuadrantLayout(
     // cabecera consumimos el flag. Así cada bloque resetea a 'comp' salvo que un
     // marcador de pesaje lo preceda — robusto sin depender de saltos de página.
     let pesajePending = false;
+    // Filas de horario vistas desde la última cabecera. La 1ª inicia el cuerpo de
+    // competición; la 2ª (mismas columnas, sin nueva cabecera) inicia el de pesaje.
+    // Cubre cuadrantes con una sola cabecera y dos bloques horarios (AEP-2/3).
+    let timeRowsInBlock = 0;
     let inBody = false;
     let roleIndex = 0;
 
@@ -220,13 +227,17 @@ export function parseQuadrantLayout(
         if (cols.length === 0) cols = headerCols; // sesiones no en plantilla: avisaremos
         mode = pesajePending ? "pesaje" : "comp";
         pesajePending = false;
+        timeRowsInBlock = 0;
         inBody = false;
         roleIndex = 0;
         continue;
       }
 
-      // Fila de horarios: marca el inicio del cuerpo de jueces.
+      // Fila de horarios: marca el inicio del cuerpo de jueces. La 2ª fila de
+      // horario bajo la misma cabecera inicia el bloque de pesaje.
       if (TIME_RANGE_RE.test(line)) {
+        timeRowsInBlock += 1;
+        if (timeRowsInBlock >= 2 && mode === "comp") mode = "pesaje";
         inBody = cols.length > 0;
         roleIndex = 0;
         continue;
