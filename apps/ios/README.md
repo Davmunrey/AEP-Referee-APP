@@ -13,19 +13,26 @@ siendo el sistema principal; esta app es un cliente adicional que consume el
 ```
 apps/ios/
 ├── README.md                ← este archivo
-└── AEPTarimaCore/           ← Swift Package (Foundation puro, sin deps)
-    ├── Package.swift
-    ├── Sources/AEPTarimaCore/
-    │   ├── Models/          ← Codable que espejan src/lib/types.ts
-    │   │   (Enums, Referee, Competition, Roster, Approval, Session, Push)
-    │   └── Networking/      ← APIClient, Endpoint, APIError, envelope, TokenProvider
-    └── Tests/AEPTarimaCoreTests/   ← decoding + endpoints (XCTest)
+├── project.yml              ← XcodeGen: genera AEPTarima.xcodeproj
+├── AEPTarimaCore/           ← Swift Package (Foundation puro, sin deps)
+│   ├── Package.swift
+│   ├── Sources/AEPTarimaCore/
+│   │   ├── Models/          ← Codable que espejan src/lib/types.ts
+│   │   └── Networking/      ← APIClient, Endpoint, APIError, envelope, TokenProvider
+│   └── Tests/AEPTarimaCoreTests/   ← decoding + endpoints (XCTest)
+└── AEPTarima/               ← target de app SwiftUI
+    ├── Info.plist
+    ├── Config/Config.xcconfig      ← API_HOST, SUPABASE_HOST, SUPABASE_ANON_KEY
+    ├── App/                 ← AEPTarimaApp, RootView, AppConfig
+    ├── Auth/                ← SessionStore, SupabaseTokenProvider, BiometricService
+    └── Features/
+        ├── Auth/LoginView.swift
+        └── Home/HomeView.swift, HomeViewModel.swift
 ```
 
 `AEPTarimaCore` es **Foundation puro**: compila y se testea sin Xcode con
-`swift build` / `swift test`. Contiene lo reutilizable y determinista (modelos
-+ red). Las piezas con dependencias nativas (Supabase SDK, GRDB) y la UI viven
-en el target de app, que depende de este paquete.
+`swift build` / `swift test`. El target `AEPTarima` (SwiftUI) depende del núcleo
+y añade las piezas nativas (Supabase SDK para auth, GRDB para offline) y la UI.
 
 ## Arquitectura (resumen del plan)
 
@@ -46,29 +53,26 @@ en el target de app, que depende de este paquete.
 
 ## Puesta en marcha en el Mac
 
-1. **Crear el target de app** en Xcode: *File ▸ New ▸ Project ▸ iOS App*
-   (SwiftUI, nombre `AEPTarima`, iOS 17+). Guárdalo en `apps/ios/AEPTarima/`.
-2. **Añadir el paquete local:** *File ▸ Add Package Dependencies ▸ Add Local* →
-   selecciona `apps/ios/AEPTarimaCore`. Enlaza `AEPTarimaCore` al target.
-3. **Dependencias del target de app** (SPM remoto):
-   - `supabase-community/supabase-swift` (solo Auth: tokens).
-   - `groue/GRDB.swift` (caché offline).
-4. **Capabilities:** Push Notifications + Background Modes (Remote
-   notifications); Face ID usa `LocalAuthentication` (añade `NSFaceIDUsageDescription`).
-5. **Configuración** (Info.plist / xcconfig):
-   - `API_BASE_URL` → `https://<tu-deploy>.vercel.app/api/v1`
-   - `SUPABASE_URL`, `SUPABASE_ANON_KEY` (para el SDK de auth)
-6. **Estructura sugerida del target de app:**
+1. **Genera el proyecto** con XcodeGen (el `project.yml` ya define target,
+   dependencias SPM —Supabase, GRDB— y la app):
+   ```bash
+   brew install xcodegen
+   cd apps/ios
+   xcodegen generate
+   open AEPTarima.xcodeproj
    ```
-   AEPTarima/
-     App/            AEPTarimaApp.swift, AppEnvironment (DI)
-     Auth/           SupabaseTokenProvider (implementa TokenProvider), Keychain, BiometricService
-     Persistence/    GRDB cache (CacheRepository, migraciones)
-     Push/           PushManager (APNs), NotificationRouter
-     DesignSystem/   colores/tipografía espejo de src/lib/design-tokens.ts
-     Features/       Dashboard, Competitions, Roster, Referees, Approvals,
-                     Promotions, Exams, Reports, Analytics, Regulations, Admin, Scan
-   ```
+2. **Rellena `AEPTarima/Config/Config.xcconfig`** con tu despliegue:
+   - `API_HOST` (sin esquema), `SUPABASE_HOST`, `SUPABASE_ANON_KEY`.
+   - Las URLs `https://…` se componen en código (`AppConfig`), porque `.xcconfig`
+     no permite escribir `//`.
+3. **Firma:** selecciona tu *Team* en *Signing & Capabilities* (el bundle id por
+   defecto es `es.aep.tarima`). Las capabilities de Push y Background ya están en
+   el Info.plist; añade el *entitlement* de Push Notifications al firmar.
+4. **Compila y ejecuta** en un simulador/dispositivo. El vertical slice actual:
+   login (Supabase) → `/meta` → tabs Campeonatos (`/competitions`) + Perfil
+   (toggle Face ID, cerrar sesión).
+
+> El núcleo se puede testear aparte sin el proyecto: `cd AEPTarimaCore && swift test`.
 
 ## Ejemplo de uso del núcleo
 
