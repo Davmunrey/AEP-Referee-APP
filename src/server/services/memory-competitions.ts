@@ -308,7 +308,11 @@ export async function clearRosterAssignments(
   return { assignments: {}, flags: {} };
 }
 
-export async function submitRoster(competitionId: string, actor: string): Promise<ApprovalProposal | undefined> {
+export async function submitRoster(
+  competitionId: string,
+  actor: string,
+  userId?: string,
+): Promise<ApprovalProposal | undefined> {
   const comp = await getCompetition(competitionId);
   if (!comp) return undefined;
   const store = getStore();
@@ -320,6 +324,7 @@ export async function submitRoster(competitionId: string, actor: string): Promis
     existing.assignments = assignments;
     existing.submittedAt = new Date().toISOString();
     existing.submittedBy = actor;
+    existing.submittedById = userId;
   } else {
     store.approvals.unshift({
       id: `apr-${Date.now()}`,
@@ -327,6 +332,7 @@ export async function submitRoster(competitionId: string, actor: string): Promis
       competitionName: comp.nombre,
       zona: comp.zona ?? "—",
       submittedBy: actor,
+      submittedById: userId,
       submittedAt: new Date().toISOString(),
       status: "pendiente",
       assignments,
@@ -366,6 +372,7 @@ export async function reviewApproval(
   id: string,
   approve: boolean,
   reviewer: string,
+  reviewerId?: string,
   comment?: string,
 ): Promise<ApprovalProposal | undefined> {
   const store = getStore();
@@ -374,6 +381,7 @@ export async function reviewApproval(
 
   proposal.status = approve ? "aprobado" : "rechazado";
   proposal.reviewedBy = reviewer;
+  proposal.reviewedById = reviewerId;
   proposal.reviewedAt = new Date().toISOString();
   proposal.comment = comment;
 
