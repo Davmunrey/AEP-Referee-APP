@@ -193,6 +193,10 @@ export function parseQuadrantLayout(
     const lines = page.split(/\r?\n/);
     let cols: Column[] = [];
     let mode: "comp" | "pesaje" = "comp";
+    // El marcador de pesaje precede a la cabecera del bloque de pesaje; al ver la
+    // cabecera consumimos el flag. Así cada bloque resetea a 'comp' salvo que un
+    // marcador de pesaje lo preceda — robusto sin depender de saltos de página.
+    let pesajePending = false;
     let inBody = false;
     let roleIndex = 0;
 
@@ -204,7 +208,7 @@ export function parseQuadrantLayout(
 
       // Marcador de pesaje: el siguiente bloque de sesiones es de pesaje.
       if (PESAJE_MARKER_RE.test(line)) {
-        mode = "pesaje";
+        pesajePending = true;
         inBody = false;
         continue;
       }
@@ -214,6 +218,8 @@ export function parseQuadrantLayout(
       if (headerCols.length >= 2) {
         cols = headerCols.filter((c) => validSessions.has(c.label.toUpperCase()));
         if (cols.length === 0) cols = headerCols; // sesiones no en plantilla: avisaremos
+        mode = pesajePending ? "pesaje" : "comp";
+        pesajePending = false;
         inBody = false;
         roleIndex = 0;
         continue;

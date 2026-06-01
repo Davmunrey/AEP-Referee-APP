@@ -125,4 +125,20 @@ describe("parseQuadrantLayout", () => {
   it("no genera warnings de rejilla", () => {
     expect(warnings.join(" ")).not.toContain("No se detectó rejilla");
   });
+
+  it("multi-bloque sin form-feed: el 2º bloque comp NO se trata como pesaje", () => {
+    // Simula salida de pdf.js (páginas concatenadas sin \f): comp+pesaje (S1-S3), luego comp (S4-S6).
+    const page2 = `                S4                                 S5                                    S6
+             Hombres                            Hombres                               Hombres
+           09:00 - 11:00                      11:30 - 13:30                         14:00 - 16:00
+             Marta Gomez                        Yerai Vega                           Ana Vazquez`;
+    const multi = LAYOUT + "\n" + page2;
+    const tplAll = [tpl("S1"), tpl("S2"), tpl("S3"), tpl("S4"), tpl("S5"), tpl("S6")];
+    const out = parseQuadrantLayout(multi, referees, tplAll);
+    const get = (k: string) => out.candidates.find((c) => c.slotKey === k)?.refereeName;
+    // El 2º bloque debe ir a central (competición), NO a pesaje.
+    expect(get("S4_central_0")).toBe("Marta Gómez Álvarez");
+    expect(get("S5_central_0")).toBe("Yerai Vega Soto");
+    expect(get("S6_central_0")).toBe("Ana Vázquez Perez");
+  });
 });

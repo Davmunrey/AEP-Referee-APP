@@ -107,6 +107,78 @@ export async function extractPdfText(
   }
 }
 
+interface TextItem {
+  str: string;
+  width?: number;
+  transform: number[]; // [a, b, c, d, x, y]
+}
+
+/** Puntos PDF por columna de carácter (≈ ancho medio de carácter). */
+const CHAR_W = 4.6;
+/** Tolerancia vertical para agrupar ítems en la misma fila. */
+const ROW_TOL = 3;
+
+/**
+ * Reconstruye texto con geometría de columnas a partir de las posiciones x/y de
+ * pdf.js (vía el callback `pagerender` de pdf-parse). Equivale a `pdftotext
+ * -layout` pero en JS puro — funciona en serverless (Vercel) sin binarios.
+ */
+function renderPageWithLayout(pageData: {
+  getTextContent: (opts: unknown) => Promise<{ items: TextItem[] }>;
+}): Promise<string> {
+  return pageData
+    .getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false })
+    .then((content) => {
+      const items = content.items.filter((it) => it.str && it.str.trim().length > 0);
+      if (items.length === 0) return "";
+
+      // Agrupa ítems en filas por coordenada y (de arriba a abajo).
+      const rows: Array<{ y: number; items: TextItem[] }> = [];
+      for (const it of items) {
+        const y = it.transform[5];
+        let row = rows.find((r) => Math.abs(r.y - y) <= ROW_TOL);
+        if (!row) {
+          row = { y, items: [] };
+          rows.push(row);
+        }
+        row.items.push(it);
+      }
+      rows.sort((a, b) => b.y - a.y); // y mayor = más arriba
+
+      const minX = Math.min(...items.map((it) => it.transform[4]));
+
+      const lines = rows.map((row) => {
+        row.items.sort((a, b) => a.transform[4] - b.transform[4]);
+        let line = "";
+        for (const it of row.items) {
+          const col = Math.max(0, Math.round((it.transform[4] - minX) / CHAR_W));
+          if (col > line.length) line += " ".repeat(col - line.length);
+          line += it.str;
+        }
+        return line.replace(/\s+$/, "");
+      });
+      return lines.join("\n");
+    });
+}
+
+/** Extrae texto con geometría reconstruida desde pdf.js (sirve en Vercel). */
+async function extractWithPdfjsLayout(buf: Buffer): Promise<string> {
+  try {
+    const mod = (await import("pdf-parse/lib/pdf-parse.js")) as {
+      default: (
+        b: Buffer,
+        opts: { pagerender: (p: unknown) => Promise<string> },
+      ) => Promise<{ text: string }>;
+    };
+    const result = await mod.default(buf, {
+      pagerender: (p) => renderPageWithLayout(p as Parameters<typeof renderPageWithLayout>[0]),
+    });
+    return result.text ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export interface PdfLayoutResult extends PdfExtractionResult {
   /** true si el texto procede de `pdftotext -layout` (rejilla por columnas). */
   layout: boolean;
@@ -128,6 +200,7 @@ export async function extractPdfLayoutText(
   const buf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
   if (!hasPdfSignature(buf)) throw new Error("Formato PDF no válido");
 
+  // 1) pdftotext -layout (mejor calidad cuando está disponible: local/CI).
   const dir = await mkdtemp(join(tmpdir(), "aep-pdf-"));
   try {
     const pdfPath = join(dir, "input.pdf");
@@ -138,12 +211,19 @@ export async function extractPdfLayoutText(
       return { text: layoutText, pages, layout: true };
     }
   } catch {
-    // continúa al fallback plano
+    // continúa al siguiente método
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
 
-  // Fallback: pdf-parse plano (sin geometría) + OCR si hace falta.
+  // 2) Reconstrucción geométrica con pdf.js (JS puro — funciona en Vercel).
+  const jsLayout = await extractWithPdfjsLayout(buf);
+  if (usableText(jsLayout)) {
+    const pages = (jsLayout.match(/\f/g)?.length ?? 0) + 1;
+    return { text: jsLayout, pages, layout: true };
+  }
+
+  // 3) Fallback: pdf-parse plano (sin geometría) + OCR si hace falta.
   const flat = await extractPdfText(buf);
   return { ...flat, layout: false };
 }
