@@ -4,9 +4,8 @@ import { useState } from "react";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AepGuidePanel } from "@/components/regulations/aep-guide-panel";
-import { RegulationMatrixPanel } from "@/components/regulations/regulation-matrix-panel";
 import { AEP_GUIDE_META } from "@/lib/aep-guide-2026";
-import type { IpfChapter, RegulationRule } from "@/lib/types";
+import type { IpfChapter } from "@/lib/types";
 import { IPF_CHAPTERS } from "@/lib/ipf-chapters";
 import { cn } from "@/lib/utils";
 import {
@@ -128,19 +127,14 @@ function IpfArticleList({
   );
 }
 
-type RegulationsTab = "ipf" | "guide" | "matrix";
+type RegulationsTab = "ipf" | "guide";
 
 const TABS: { id: RegulationsTab; label: string }[] = [
   { id: "ipf", label: "Reglamento IPF" },
   { id: "guide", label: `Guía AEP ${AEP_GUIDE_META.season}` },
-  { id: "matrix", label: "Matriz jueces" },
 ];
 
-interface RegulationsViewProps {
-  rules: RegulationRule[];
-}
-
-export function RegulationsView({ rules }: RegulationsViewProps) {
+export function RegulationsView() {
   const [tab, setTab] = useState<RegulationsTab>("ipf");
   const [openChapters, setOpenChapters] = useState<Set<string>>(
     new Set(IPF_CHAPTERS.map((c) => c.num)),
@@ -177,10 +171,6 @@ export function RegulationsView({ rules }: RegulationsViewProps) {
     guide: {
       title: `Guía AEP ${AEP_GUIDE_META.season}`,
       description: "Zonas, niveles competitivos, cuotas y marcas mínimas (diciembre 2025)",
-    },
-    matrix: {
-      title: "Matriz de jueces AEP",
-      description: "Nivel mínimo por rol y tipo de campeonato en la tarima",
     },
   };
 
@@ -219,8 +209,6 @@ export function RegulationsView({ rules }: RegulationsViewProps) {
       </div>
 
       {tab === "guide" && <AepGuidePanel />}
-
-      {tab === "matrix" && <RegulationMatrixPanel rules={rules} />}
 
       {tab === "ipf" && (
       <>
