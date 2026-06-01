@@ -13,15 +13,18 @@ import {
   ChevronRight,
   ClipboardList,
   GraduationCap,
+  KeyRound,
   Layers,
   LayoutDashboard,
   LogOut,
   UserCog,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 import { AepLogo } from "@/components/aep/logo";
 import { OrgSwitcher } from "@/components/aep/org-switcher";
 import { Button } from "@/components/ui/button";
+import { PasswordDialog } from "@/components/admin/password-dialog";
 
 import type { NavCounts } from "@/components/layout/app-shell";
 import type { SessionUser } from "@/lib/types";
@@ -121,6 +124,7 @@ export function Sidebar({
   const secondaryNav = buildSecondaryNav(navCounts, canSeeUsers);
   const pathname = usePathname();
   const router = useRouter();
+  const [pwdOpen, setPwdOpen] = useState(false);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -242,15 +246,26 @@ export function Sidebar({
           </Avatar>
         )}
         {!collapsed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-destructive focus-ring"
-            onClick={() => void handleSignOut()}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Cerrar sesión
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-1 w-full justify-start gap-2 text-subtle-muted hover:text-foreground focus-ring"
+              onClick={() => setPwdOpen(true)}
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Cambiar contraseña
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-destructive focus-ring"
+              onClick={() => void handleSignOut()}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Cerrar sesión
+            </Button>
+          </>
         )}
         <Button
           variant="ghost"
@@ -266,6 +281,14 @@ export function Sidebar({
           {!collapsed && <span className="ml-2 text-xs">Colapsar</span>}
         </Button>
       </div>
+
+      {pwdOpen && (
+        <PasswordDialog
+          mode="self"
+          subject={currentUser.nombre}
+          onClose={() => setPwdOpen(false)}
+        />
+      )}
     </aside>
   );
 }

@@ -24,4 +24,18 @@ export const adminApi = {
 
   deleteUser: (id: string) =>
     request<{ deleted: boolean }>(`/admin/users/${id}`, { method: "DELETE" }),
+
+  /** Admin: resetea la contraseña de cualquier usuario (sin conocer la actual). */
+  resetUserPassword: (id: string, password: string) =>
+    request<{ updated: boolean }>(`/admin/users/${id}/password`, {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    }),
+
+  /** Self: cambia la propia contraseña verificando la actual. */
+  changeOwnPassword: (currentPassword: string, newPassword: string) =>
+    request<{ updated: boolean }>(`/auth/change-password`, {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
 };

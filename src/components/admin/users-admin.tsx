@@ -21,8 +21,9 @@ import { api } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS } from "@/lib/types";
 import type { UserRole } from "@/lib/types";
-import { Loader2, Pencil, Trash2, Users } from "lucide-react";
+import { KeyRound, Loader2, Pencil, Trash2, Users } from "lucide-react";
 import { EditUserDialog } from "./edit-user-dialog";
+import { PasswordDialog } from "./password-dialog";
 import type { EditFormState } from "./edit-user-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { CredentialsBanner } from "./credentials-banner";
@@ -87,6 +88,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
   const [filterEstado, setFilterEstado] = useState<"todos" | "activo" | "inactivo">("todos");
   const [search, setSearch] = useState("");
   const [editUser, setEditUser] = useState<ProfileRow | null>(null);
+  const [pwdUser, setPwdUser] = useState<{ id: string; subject: string } | null>(null);
   const [editForm, setEditForm] = useState<EditFormState>({
     nombre: "",
     rolLabel: "",
@@ -414,6 +416,9 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
                       <Button variant="outline" size="sm" disabled={actionId === u.id} aria-label={`Editar ${u.nombre}`} onClick={() => handleEditClick(u)}>
                         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                       </Button>
+                      <Button variant="outline" size="sm" disabled={actionId === u.id} aria-label={`Resetear contraseña de ${u.nombre}`} title="Resetear contraseña" onClick={() => setPwdUser({ id: u.id, subject: `${u.nombre} · ${u.email}` })}>
+                        <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={actionId === u.id} aria-label={`Eliminar ${u.nombre}`} onClick={() => setDeleteConfirm({ id: u.id, nombre: u.nombre })}>
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
@@ -436,6 +441,15 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           onFormChange={(patch) => setEditForm((f) => ({ ...f, ...patch }))}
           onSubmit={(e) => void doEdit(e)}
           onClose={() => setEditUser(null)}
+        />
+      )}
+
+      {pwdUser && (
+        <PasswordDialog
+          mode="admin"
+          userId={pwdUser.id}
+          subject={pwdUser.subject}
+          onClose={() => setPwdUser(null)}
         />
       )}
 
