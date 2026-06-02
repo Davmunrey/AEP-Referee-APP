@@ -10,6 +10,12 @@ struct HomeView: View {
         TabView {
             CompetitionsTab(user: user)
                 .tabItem { Label("Campeonatos", systemImage: "calendar") }
+            RefereesView()
+                .tabItem { Label("Jueces", systemImage: "person.3") }
+            ApprovalsView(user: user)
+                .tabItem { Label("Aprobaciones", systemImage: "checkmark.seal") }
+            PromotionsView(user: user)
+                .tabItem { Label("Ascensos", systemImage: "arrow.up.circle") }
             ProfileTab(user: user)
                 .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
         }
