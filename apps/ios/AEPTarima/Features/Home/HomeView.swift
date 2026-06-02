@@ -45,8 +45,12 @@ private struct CompetitionsTab: View {
                     VStack(spacing: 0) {
                         if model?.isOffline == true { OfflineBanner() }
                         if let comps = model?.competitions, !comps.isEmpty {
-                            List(comps) { CompetitionRow(competition: $0) }
-                                .listStyle(.insetGrouped)
+                            List(comps) { competition in
+                                NavigationLink(value: competition) {
+                                    CompetitionRow(competition: competition)
+                                }
+                            }
+                            .listStyle(.insetGrouped)
                         } else {
                             ContentUnavailableView("Sin campeonatos", systemImage: "calendar.badge.exclamationmark")
                         }
@@ -62,6 +66,9 @@ private struct CompetitionsTab: View {
                 }
             }
             .navigationTitle("Campeonatos")
+            .navigationDestination(for: Competition.self) { competition in
+                CompetitionDetailView(competition: competition, user: user)
+            }
             .refreshable { await model?.load() }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
