@@ -4,19 +4,26 @@ import AEPTarimaCore
 /// Pantalla principal autenticada (vertical slice de la Fase 1). Más adelante
 /// se amplía con Dashboard, Tarima, Directorio, etc. (ver plan).
 struct HomeView: View {
+    @Environment(SessionStore.self) private var session
     let user: SessionUser
 
     var body: some View {
-        TabView {
+        @Bindable var router = session.router
+        TabView(selection: $router.selectedTab) {
             CompetitionsTab(user: user)
+                .tag(HomeTab.competitions)
                 .tabItem { Label("Campeonatos", systemImage: "calendar") }
             RefereesView()
+                .tag(HomeTab.referees)
                 .tabItem { Label("Jueces", systemImage: "person.3") }
             ApprovalsView(user: user)
+                .tag(HomeTab.approvals)
                 .tabItem { Label("Aprobaciones", systemImage: "checkmark.seal") }
             PromotionsView(user: user)
+                .tag(HomeTab.promotions)
                 .tabItem { Label("Ascensos", systemImage: "arrow.up.circle") }
             ProfileTab(user: user)
+                .tag(HomeTab.profile)
                 .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
         }
     }
