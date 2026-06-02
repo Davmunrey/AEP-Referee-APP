@@ -27,6 +27,8 @@
 	</array>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Usa Face ID para entrar de forma rápida y segura en AEP Tarima.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Se usa la cámara para escanear cuadrantes y calendarios en PDF.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
