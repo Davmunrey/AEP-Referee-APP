@@ -74,4 +74,19 @@ public extension Endpoint {
         let escaped = token.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? token
         return Endpoint(.delete, "/devices/\(escaped)")
     }
+
+    // Exámenes, ascensos, informes (lectura; filtrables por juez).
+    static func exams(refereeId: String? = nil) -> Endpoint {
+        let items = refereeId.map { [URLQueryItem(name: "refereeId", value: $0)] } ?? []
+        return Endpoint(.get, "/exams", query: items)
+    }
+    static func reports(refereeId: String? = nil) -> Endpoint {
+        let items = refereeId.map { [URLQueryItem(name: "refereeId", value: $0)] } ?? []
+        return Endpoint(.get, "/reports", query: items)
+    }
+    static let promotions = Endpoint(.get, "/promotions")
+    static func reviewPromotion(_ id: String, approve: Bool, comment: String? = nil) -> Endpoint {
+        struct Body: Encodable { let approve: Bool; let comment: String? }
+        return Endpoint(.post, "/promotions/\(id)/review", body: jsonBody(Body(approve: approve, comment: comment)))
+    }
 }
