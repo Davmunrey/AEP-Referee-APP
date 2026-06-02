@@ -20,17 +20,23 @@ final class SessionStore {
 
     let supabase: SupabaseClient
     let api: APIClient
+    let router: NotificationRouter
+    let push: PushManager
 
     init() {
         let supabase = SupabaseClient(
             supabaseURL: AppConfig.supabaseURL,
             supabaseKey: AppConfig.supabaseAnonKey
         )
-        self.supabase = supabase
-        self.api = APIClient(
+        let api = APIClient(
             baseURL: AppConfig.apiBaseURL,
             tokens: SupabaseTokenProvider(client: supabase)
         )
+        let router = NotificationRouter()
+        self.supabase = supabase
+        self.api = api
+        self.router = router
+        self.push = PushManager(api: api, router: router)
     }
 
     /// Al arrancar: si hay sesión persistida, pide Face ID (si está activado) y
@@ -67,6 +73,7 @@ final class SessionStore {
     }
 
     func signOut() async {
+        await push.unregister()
         try? await supabase.auth.signOut()
         BiometricPreference.isEnabled = false
         state = .signedOut(message: nil)
@@ -78,6 +85,7 @@ final class SessionStore {
             let meta: AppMeta = try await api.send(.meta)
             if let user = meta.currentUser {
                 state = .signedIn(user)
+                await push.start()
             } else {
                 state = .signedOut(message: "No se pudo cargar tu perfil.")
             }
