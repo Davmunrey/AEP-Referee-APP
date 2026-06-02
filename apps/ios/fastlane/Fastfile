@@ -1,0 +1,44 @@
+default_platform(:ios)
+
+# Distribución a TestFlight. Requiere (como variables de entorno / secrets):
+#   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_CONTENT (clave .p8 de App Store Connect, base64)
+#   MATCH_GIT_URL, MATCH_PASSWORD, MATCH_GIT_BASIC_AUTHORIZATION (certs con match)
+# El proyecto .xcodeproj se genera con XcodeGen (no se versiona).
+
+platform :ios do
+  desc "Genera AEPTarima.xcodeproj con XcodeGen"
+  lane :generate do
+    Dir.chdir("..") { sh("xcodegen generate") }
+  end
+
+  desc "Compila y sube una build a TestFlight"
+  lane :beta do
+    generate
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["ASC_KEY_CONTENT"],
+      is_key_content_base64: true
+    )
+
+    # Certificados/perfiles gestionados con match (repo cifrado).
+    match(type: "appstore", app_identifier: "es.aep.tarima", readonly: true)
+
+    increment_build_number(
+      xcodeproj: "AEPTarima.xcodeproj",
+      build_number: ENV["GITHUB_RUN_NUMBER"] || Time.now.strftime("%Y%m%d%H%M")
+    )
+
+    build_app(
+      project: "AEPTarima.xcodeproj",
+      scheme: "AEPTarima",
+      export_method: "app-store"
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end
