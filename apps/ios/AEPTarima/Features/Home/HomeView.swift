@@ -41,11 +41,14 @@ private struct CompetitionsTab: View {
                 case .idle, .loading:
                     ProgressView("Cargando campeonatos…")
                 case .loaded:
-                    if let comps = model?.competitions, !comps.isEmpty {
-                        List(comps) { CompetitionRow(competition: $0) }
-                            .listStyle(.insetGrouped)
-                    } else {
-                        ContentUnavailableView("Sin campeonatos", systemImage: "calendar.badge.exclamationmark")
+                    VStack(spacing: 0) {
+                        if model?.isOffline == true { OfflineBanner() }
+                        if let comps = model?.competitions, !comps.isEmpty {
+                            List(comps) { CompetitionRow(competition: $0) }
+                                .listStyle(.insetGrouped)
+                        } else {
+                            ContentUnavailableView("Sin campeonatos", systemImage: "calendar.badge.exclamationmark")
+                        }
                     }
                 case let .failed(message):
                     ContentUnavailableView {
