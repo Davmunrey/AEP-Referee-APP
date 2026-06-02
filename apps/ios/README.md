@@ -74,6 +74,20 @@ y añade las piezas nativas (Supabase SDK para auth, GRDB para offline) y la UI.
 
 > El núcleo se puede testear aparte sin el proyecto: `cd AEPTarimaCore && swift test`.
 
+## Distribución a TestFlight (Fastlane)
+
+`apps/ios/fastlane/Fastfile` define la lane `beta` (genera el proyecto, firma con
+**match**, sube a TestFlight con la **App Store Connect API key**). Se ejecuta a
+mano (`bundle exec fastlane beta`) o por el workflow `iOS Release (TestFlight)`
+(disparo manual o tag `ios-v*`).
+
+Secrets necesarios en GitHub (Settings → Secrets → Actions):
+- `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_CONTENT` (clave `.p8` en base64).
+- `MATCH_GIT_URL`, `MATCH_PASSWORD`, `MATCH_GIT_BASIC_AUTHORIZATION` (repo de
+  certificados gestionado con `fastlane match`).
+
+Primer arranque de match (una vez, en el Mac): `bundle exec fastlane match appstore`.
+
 ## Ejemplo de uso del núcleo
 
 ```swift
