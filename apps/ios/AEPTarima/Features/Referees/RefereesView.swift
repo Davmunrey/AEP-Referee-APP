@@ -11,17 +11,20 @@ struct RefereesView: View {
         NavigationStack {
             Group {
                 if let model {
-                    LoadableView(state: model.state, retry: { await model.load() }) { _ in
-                        let results = model.filtered(query)
-                        if results.isEmpty {
-                            ContentUnavailableView.search(text: query)
-                        } else {
-                            List(results) { referee in
-                                NavigationLink(value: referee) {
-                                    RefereeRow(referee: referee)
+                    VStack(spacing: 0) {
+                        if model.isOffline { OfflineBanner() }
+                        LoadableView(state: model.state, retry: { await model.load() }) { _ in
+                            let results = model.filtered(query)
+                            if results.isEmpty {
+                                ContentUnavailableView.search(text: query)
+                            } else {
+                                List(results) { referee in
+                                    NavigationLink(value: referee) {
+                                        RefereeRow(referee: referee)
+                                    }
                                 }
+                                .listStyle(.plain)
                             }
-                            .listStyle(.plain)
                         }
                     }
                 } else {

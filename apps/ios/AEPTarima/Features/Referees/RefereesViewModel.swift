@@ -6,7 +6,10 @@ import AEPTarimaCore
 @Observable
 final class RefereesViewModel {
     private let api: APIClient
+    private let cacheKey = "referees"
     private(set) var state: Loadable<[Referee]> = .idle
+    /// True cuando los datos mostrados vienen de la caché (sin conexión).
+    private(set) var isOffline = false
 
     init(api: APIClient) { self.api = api }
 
@@ -14,15 +17,27 @@ final class RefereesViewModel {
         state = .loading
         do {
             let referees: [Referee] = try await api.send(.referees())
+            DiskCache.shared.save(referees, key: cacheKey)
+            isOffline = false
             state = .loaded(referees)
         } catch let error as APIError {
-            state = .failed(error.userMessage)
+            // Sin conexión / error: servir caché si la hay.
+            if let cached = DiskCache.shared.load([Referee].self, key: cacheKey) {
+                isOffline = true
+                state = .loaded(cached)
+            } else {
+                state = .failed(error.userMessage)
+            }
         } catch {
-            state = .failed("Error inesperado.")
+            if let cached = DiskCache.shared.load([Referee].self, key: cacheKey) {
+                isOffline = true
+                state = .loaded(cached)
+            } else {
+                state = .failed("Error inesperado.")
+            }
         }
     }
 
-    /// Filtra la lista cargada por nombre/zona/localidad (búsqueda local).
     func filtered(_ query: String) -> [Referee] {
         guard case let .loaded(referees) = state else { return [] }
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
