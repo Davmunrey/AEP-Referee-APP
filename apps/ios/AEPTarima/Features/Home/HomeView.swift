@@ -33,6 +33,7 @@ private struct CompetitionsTab: View {
     @Environment(SessionStore.self) private var session
     let user: SessionUser
     @State private var model: HomeViewModel?
+    @State private var showScan = false
 
     var body: some View {
         NavigationStack {
@@ -62,6 +63,16 @@ private struct CompetitionsTab: View {
             }
             .navigationTitle("Campeonatos")
             .refreshable { await model?.load() }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showScan = true
+                    } label: {
+                        Label("Escanear", systemImage: "doc.viewfinder")
+                    }
+                }
+            }
+            .sheet(isPresented: $showScan) { ScanView() }
         }
         .task {
             if model == nil { model = HomeViewModel(api: session.api) }
