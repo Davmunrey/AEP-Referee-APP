@@ -16,7 +16,9 @@ export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
   const approve = Boolean(body.approve);
-  const comment = body.comment ? String(body.comment) : undefined;
+  // Límite de longitud: el comentario se refleja en el cuerpo de la push APNs
+  // (límite ~4 KB) y en la UI del remitente.
+  const comment = body.comment ? String(body.comment).slice(0, 500) : undefined;
 
   const result = await dataService.reviewApproval(id, approve, user.nombre, user.id, comment);
   if (!result) return jsonError("Propuesta no encontrada", 404);
