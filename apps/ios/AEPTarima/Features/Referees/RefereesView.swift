@@ -43,6 +43,7 @@ struct RefereesView: View {
                 if user.role.canEdit {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { showNew = true } label: { Image(systemName: "plus") }
+                            .accessibilityLabel("Nuevo juez")
                     }
                 }
             }
