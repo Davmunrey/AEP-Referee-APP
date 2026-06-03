@@ -139,6 +139,13 @@ private struct ProfileTab: View {
                     LabeledContent("Rol", value: user.rol)
                     if let zona = user.zona { LabeledContent("Zona", value: zona) }
                 }
+                Section {
+                    NavigationLink {
+                        RegulationsView()
+                    } label: {
+                        Label("Normativa IPF", systemImage: "book.closed")
+                    }
+                }
                 if BiometricService.isAvailable {
                     Section("Seguridad") {
                         Toggle("Desbloqueo con Face ID", isOn: $biometricEnabled)
