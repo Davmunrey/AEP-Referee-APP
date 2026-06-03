@@ -10,6 +10,9 @@ struct HomeView: View {
     var body: some View {
         @Bindable var router = session.router
         TabView(selection: $router.selectedTab) {
+            DashboardView()
+                .tag(HomeTab.dashboard)
+                .tabItem { Label("Inicio", systemImage: "house") }
             CompetitionsTab(user: user)
                 .tag(HomeTab.competitions)
                 .tabItem { Label("Campeonatos", systemImage: "calendar") }
@@ -19,12 +22,9 @@ struct HomeView: View {
             ApprovalsView(user: user)
                 .tag(HomeTab.approvals)
                 .tabItem { Label("Aprobaciones", systemImage: "checkmark.seal") }
-            PromotionsView(user: user)
-                .tag(HomeTab.promotions)
-                .tabItem { Label("Ascensos", systemImage: "arrow.up.circle") }
-            ProfileTab(user: user)
-                .tag(HomeTab.profile)
-                .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+            MoreTab(user: user)
+                .tag(HomeTab.more)
+                .tabItem { Label("Más", systemImage: "ellipsis.circle") }
         }
     }
 }
@@ -125,7 +125,9 @@ private struct CompetitionRow: View {
     }
 }
 
-private struct ProfileTab: View {
+/// Hub "Más": gestión secundaria (Ascensos, Analítica), referencia (Normativa)
+/// y perfil/seguridad. Cada destino es push-friendly (sin NavigationStack propio).
+private struct MoreTab: View {
     @Environment(SessionStore.self) private var session
     let user: SessionUser
     @State private var biometricEnabled = BiometricPreference.isEnabled
@@ -139,7 +141,19 @@ private struct ProfileTab: View {
                     LabeledContent("Rol", value: user.rol)
                     if let zona = user.zona { LabeledContent("Zona", value: zona) }
                 }
-                Section {
+                Section("Gestión") {
+                    NavigationLink {
+                        PromotionsView(user: user)
+                    } label: {
+                        Label("Ascensos", systemImage: "arrow.up.circle")
+                    }
+                    NavigationLink {
+                        AnalyticsView()
+                    } label: {
+                        Label("Analítica", systemImage: "chart.bar")
+                    }
+                }
+                Section("Referencia") {
                     NavigationLink {
                         RegulationsView()
                     } label: {
@@ -160,7 +174,7 @@ private struct ProfileTab: View {
                     }
                 }
             }
-            .navigationTitle("Perfil")
+            .navigationTitle("Más")
         }
     }
 }
