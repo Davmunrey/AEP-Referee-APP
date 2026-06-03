@@ -61,6 +61,30 @@ if (failures.length === 0) {
     }
   }
 
+  // Migraciones de la app móvil (020/021/022): aviso NO bloqueante si faltan,
+  // para no romper CI pero avisar de que hay que aplicarlas en Supabase.
+  const mobileChecks = [
+    {
+      id: "MOBILE-01",
+      detail: "tabla device_tokens (migración 020) no accesible",
+      run: () => admin.from("device_tokens").select("*", { count: "exact", head: true }),
+    },
+    {
+      id: "MOBILE-02",
+      detail: "columna referees.user_id (migración 021) no accesible",
+      run: () => admin.from("referees").select("user_id", { head: true }).limit(1),
+    },
+    {
+      id: "MOBILE-03",
+      detail: "columna approval_proposals.submitted_by_id (migración 022) no accesible",
+      run: () => admin.from("approval_proposals").select("submitted_by_id", { head: true }).limit(1),
+    },
+  ];
+  for (const check of mobileChecks) {
+    const { error } = await check.run();
+    if (error) warn(check.id, `${check.detail}: ${error.message}`);
+  }
+
   const { data: activeProfiles, error: profileError } = await admin
     .from("profiles")
     .select("email, role, zona, activo")

@@ -69,7 +69,8 @@ jobs:
   supabase-readiness:
     name: Supabase readiness
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    # Corre en push a main y también en PRs del propio repo (los secrets están
+    # disponibles para ramas del mismo repositorio).
     steps:
       - name: Checkout
         uses: actions/checkout@v4
