@@ -9,6 +9,7 @@ struct AEPTarimaApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
+                .tint(Theme.accent)
                 .task { await session.bootstrap() }
         }
     }

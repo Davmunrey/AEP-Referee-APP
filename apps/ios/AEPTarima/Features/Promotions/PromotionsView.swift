@@ -40,31 +40,30 @@ struct PromotionsView: View {
     @State private var model: PromotionsViewModel?
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let model {
-                    LoadableView(state: model.state, retry: { await model.load() }) { promos in
-                        if promos.isEmpty {
-                            ContentUnavailableView("Sin ascensos", systemImage: "arrow.up.circle")
-                        } else {
-                            List(promos) { promo in
-                                PromotionRow(
-                                    promo: promo,
-                                    canReview: user.role.canApprove && promo.status == .pendiente,
-                                    isReviewing: model.isReviewing,
-                                    onReview: { approve in
-                                        Task { await model.review(promo.id, approve: approve) }
-                                    }
-                                )
-                            }
-                            .listStyle(.insetGrouped)
+        Group {
+            if let model {
+                LoadableView(state: model.state, retry: { await model.load() }) { promos in
+                    if promos.isEmpty {
+                        ContentUnavailableView("Sin ascensos", systemImage: "arrow.up.circle")
+                    } else {
+                        List(promos) { promo in
+                            PromotionRow(
+                                promo: promo,
+                                canReview: user.role.canApprove && promo.status == .pendiente,
+                                isReviewing: model.isReviewing,
+                                onReview: { approve in
+                                    Task { await model.review(promo.id, approve: approve) }
+                                }
+                            )
                         }
+                        .listStyle(.insetGrouped)
                     }
-                } else { ProgressView() }
-            }
-            .navigationTitle("Ascensos")
-            .refreshable { await model?.load() }
+                }
+            } else { ProgressView() }
         }
+        .navigationTitle("Ascensos")
+        .navigationBarTitleDisplayMode(.inline)
+        .refreshable { await model?.load() }
         .task {
             if model == nil { model = PromotionsViewModel(api: session.api) }
             if case .idle? = model?.state { await model?.load() }
