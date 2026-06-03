@@ -59,4 +59,7 @@ public struct DashboardSummary: Codable, Sendable {
     public var health: OperationalHealth
     public var insights: [Insight]
     public var coverage: [EventCoverage]
+    /// Opcionales y tolerantes: si faltan en el payload, quedan nil.
+    public var activity: [ActivityItem]?
+    public var upcomingCompetitions: [Competition]?
 }
