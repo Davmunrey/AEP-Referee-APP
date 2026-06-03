@@ -4,7 +4,7 @@ import AEPTarimaCore
 
 /// Pestañas de la pantalla principal (para el enrutado por push).
 enum HomeTab: Hashable {
-    case competitions, referees, approvals, promotions, profile
+    case dashboard, competitions, referees, approvals, more
 }
 
 /// Estado de navegación que reacciona a las notificaciones push: traduce el
@@ -12,15 +12,17 @@ enum HomeTab: Hashable {
 @MainActor
 @Observable
 final class NotificationRouter {
-    var selectedTab: HomeTab = .competitions
+    var selectedTab: HomeTab = .dashboard
 
     func handle(userInfo: [AnyHashable: Any]) {
         guard let raw = userInfo["type"] as? String, let type = PushType(rawValue: raw) else { return }
         switch type {
         case .approvalPending:
             selectedTab = .approvals
-        case .approvalApproved, .approvalRejected, .assignment:
+        case .assignment:
             selectedTab = .competitions
+        case .approvalApproved, .approvalRejected:
+            selectedTab = .dashboard
         }
     }
 }
