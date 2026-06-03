@@ -36,7 +36,7 @@ struct RefereesView: View {
             .navigationTitle("Jueces")
             .searchable(text: $query, prompt: "Buscar por nombre o zona")
             .navigationDestination(for: Referee.self) { referee in
-                RefereeDetailView(referee: referee)
+                RefereeDetailView(referee: referee, user: user)
             }
             .refreshable { await model?.load() }
             .toolbar {

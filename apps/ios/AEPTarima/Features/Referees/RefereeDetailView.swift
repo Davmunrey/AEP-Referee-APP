@@ -1,11 +1,23 @@
 import SwiftUI
 import AEPTarimaCore
 
-/// Ficha de juez: datos, sanciones, exámenes e informes.
+/// Ficha de juez: datos, sanciones, exámenes e informes. Permite editar y
+/// añadir exámenes/informes (si el rol puede gestionar jueces).
 struct RefereeDetailView: View {
     @Environment(SessionStore.self) private var session
-    let referee: Referee
-    @State private var model: RefereeDetailViewModel?
+    let user: SessionUser
+    @State private var referee: Referee
+    @State private var model: RefereeDetailViewModel? = nil
+    @State private var showEdit = false
+    @State private var showExam = false
+    @State private var showReport = false
+
+    init(referee: Referee, user: SessionUser) {
+        self.user = user
+        _referee = State(initialValue: referee)
+    }
+
+    private var canEdit: Bool { user.role.canEdit }
 
     var body: some View {
         List {
@@ -15,6 +27,8 @@ struct RefereeDetailView: View {
                 LabeledContent("Estado", value: referee.estado.rawValue)
                 LabeledContent("Eventos", value: "\(referee.eventos)")
                 if let email = referee.email { LabeledContent("Correo", value: email) }
+                if let tel = referee.telefono { LabeledContent("Teléfono", value: tel) }
+                if let loc = referee.localidad { LabeledContent("Localidad", value: loc) }
                 if let lic = referee.licencia { LabeledContent("Licencia", value: lic) }
             }
 
@@ -33,6 +47,41 @@ struct RefereeDetailView: View {
         }
         .navigationTitle(referee.nombre)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if canEdit {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Editar") { showEdit = true }
+                }
+            }
+        }
+        .sheet(isPresented: $showEdit) {
+            EditRefereeSheet(referee: referee) { patch in
+                let updated = await model?.updateReferee(patch) ?? nil
+                if let updated { referee = updated }
+                return updated
+            }
+        }
+        .sheet(isPresented: $showExam) {
+            NewExamSheet(refereeId: referee.id) { payload in
+                await model?.createExam(payload) ?? false
+            }
+        }
+        .sheet(isPresented: $showReport) {
+            NewReportSheet(refereeId: referee.id) { payload in
+                await model?.createReport(payload) ?? false
+            }
+        }
+        .alert(
+            "No se pudo completar",
+            isPresented: Binding(
+                get: { model?.errorMessage != nil },
+                set: { if !$0 { model?.errorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { model?.errorMessage = nil }
+        } message: {
+            Text(model?.errorMessage ?? "")
+        }
         .task {
             if model == nil { model = RefereeDetailViewModel(api: session.api, refereeId: referee.id) }
             if case .idle? = model?.state { await model?.load() }
@@ -66,6 +115,9 @@ struct RefereeDetailView: View {
                     }
                 }
             }
+            if canEdit {
+                Button { showExam = true } label: { Label("Añadir examen", systemImage: "plus") }
+            }
         }
     }
 
@@ -80,6 +132,9 @@ struct RefereeDetailView: View {
                         Text(r.tipo.rawValue).font(.caption).foregroundStyle(.secondary)
                     }
                 }
+            }
+            if canEdit {
+                Button { showReport = true } label: { Label("Añadir informe", systemImage: "plus") }
             }
         }
     }

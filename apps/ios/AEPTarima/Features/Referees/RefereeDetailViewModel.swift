@@ -14,10 +14,57 @@ final class RefereeDetailViewModel {
     private let api: APIClient
     let refereeId: String
     private(set) var state: Loadable<Detail> = .idle
+    var isWorking = false
+    var errorMessage: String?
 
     init(api: APIClient, refereeId: String) {
         self.api = api
         self.refereeId = refereeId
+    }
+
+    /// Edita la ficha del juez (PATCH). Devuelve el juez actualizado o nil.
+    func updateReferee(_ patch: RefereePatch) async -> Referee? {
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            let updated: Referee = try await api.send(.updateReferee(refereeId, patch))
+            return updated
+        } catch let error as APIError {
+            errorMessage = error.userMessage
+            return nil
+        } catch {
+            errorMessage = "No se pudo guardar."
+            return nil
+        }
+    }
+
+    func createExam(_ payload: NewExamPayload) async -> Bool {
+        await mutate {
+            let _: RefereeExam = try await self.api.send(.createExam(payload))
+        }
+    }
+
+    func createReport(_ payload: NewReportPayload) async -> Bool {
+        await mutate {
+            let _: RefereeReport = try await self.api.send(.createReport(payload))
+        }
+    }
+
+    /// Ejecuta una mutación y recarga el detalle; gestiona working/errores.
+    private func mutate(_ action: () async throws -> Void) async -> Bool {
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            try await action()
+            await load()
+            return true
+        } catch let error as APIError {
+            errorMessage = error.userMessage
+            return false
+        } catch {
+            errorMessage = "No se pudo completar la operación."
+            return false
+        }
     }
 
     func load() async {
