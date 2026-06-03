@@ -160,6 +160,15 @@ private struct MoreTab: View {
                         Label("Normativa IPF", systemImage: "book.closed")
                     }
                 }
+                if user.role.canApprove {
+                    Section("Administración") {
+                        NavigationLink {
+                            AdminUsersView()
+                        } label: {
+                            Label("Usuarios", systemImage: "person.2.badge.gearshape")
+                        }
+                    }
+                }
                 if BiometricService.isAvailable {
                     Section("Seguridad") {
                         Toggle("Desbloqueo con Face ID", isOn: $biometricEnabled)
