@@ -19,7 +19,13 @@ struct DashboardView: View {
                                 kpiGrid(dash.kpis)
                                 healthCard(dash.health)
                                 if !dash.insights.isEmpty { insightsSection(dash.insights) }
+                                if let upcoming = dash.upcomingCompetitions, !upcoming.isEmpty {
+                                    upcomingSection(upcoming)
+                                }
                                 if !dash.coverage.isEmpty { coverageSection(dash.coverage) }
+                                if let activity = dash.activity, !activity.isEmpty {
+                                    activitySection(activity)
+                                }
                             }
                             .padding()
                         }
@@ -91,6 +97,41 @@ struct DashboardView: View {
                         Text(insight.detail).font(.caption).foregroundStyle(.secondary)
                     }
                 }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func upcomingSection(_ comps: [Competition]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Próximos campeonatos").font(.headline)
+            ForEach(comps) { comp in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(comp.nombre).font(.subheadline)
+                        Text("\(comp.fecha) · \(comp.sede)").font(.caption2).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text(comp.tipo.rawValue).font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func activitySection(_ activity: [ActivityItem]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Actividad reciente").font(.headline)
+            ForEach(activity.prefix(8)) { item in
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(item.actor) \(item.accion) \(item.evento)").font(.caption)
+                    Text(item.hace).font(.caption2).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

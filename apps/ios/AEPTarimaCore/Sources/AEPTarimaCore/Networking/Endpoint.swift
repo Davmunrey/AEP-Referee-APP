@@ -89,4 +89,17 @@ public extension Endpoint {
         struct Body: Encodable { let approve: Bool; let comment: String? }
         return Endpoint(.post, "/promotions/\(id)/review", body: jsonBody(Body(approve: approve, comment: comment)))
     }
+
+    // Administración de usuarios (super_admin / delegado_jueces).
+    static let adminUsers = Endpoint(.get, "/admin/users")
+    static func createUser(_ payload: NewUserPayload) -> Endpoint {
+        Endpoint(.post, "/admin/users", body: jsonBody(payload))
+    }
+    static func setUserActive(_ id: String, _ activo: Bool) -> Endpoint {
+        struct Body: Encodable { let activo: Bool }
+        return Endpoint(.patch, "/admin/users/\(id)", body: jsonBody(Body(activo: activo)))
+    }
+    static func deleteUser(_ id: String) -> Endpoint {
+        Endpoint(.delete, "/admin/users/\(id)")
+    }
 }
