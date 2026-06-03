@@ -45,6 +45,13 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<!-- App Transport Security: solo HTTPS (sin cargas arbitrarias). La app solo
+	     habla con Vercel y Supabase por TLS. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
 	<!-- Configuración del entorno (valores desde Config.xcconfig). -->
 	<key>API_HOST</key>
 	<string>$(API_HOST)</string>

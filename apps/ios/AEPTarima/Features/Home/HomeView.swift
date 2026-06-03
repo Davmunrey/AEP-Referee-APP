@@ -75,6 +75,7 @@ private struct CompetitionsTab: View {
                 if user.role.canEdit {
                     ToolbarItem(placement: .topBarLeading) {
                         Button { showNew = true } label: { Image(systemName: "plus") }
+                            .accessibilityLabel("Nuevo campeonato")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
