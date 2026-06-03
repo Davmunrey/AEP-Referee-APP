@@ -38,4 +38,15 @@ final class HomeViewModel {
             }
         }
     }
+
+    /// Crea un campeonato y recarga la lista. Devuelve true si tuvo éxito.
+    func create(_ payload: NewCompetitionPayload) async -> Bool {
+        do {
+            try await api.sendIgnoringBody(.createCompetition(payload))
+            await load()
+            return true
+        } catch {
+            return false
+        }
+    }
 }
