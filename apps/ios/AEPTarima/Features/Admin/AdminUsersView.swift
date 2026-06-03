@@ -28,6 +28,7 @@ struct AdminUsersView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showNew = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Nuevo usuario")
             }
         }
         .sheet(isPresented: $showNew) {
