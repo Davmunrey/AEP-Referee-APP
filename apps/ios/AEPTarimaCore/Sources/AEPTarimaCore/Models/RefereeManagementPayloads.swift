@@ -46,6 +46,42 @@ public struct NewExamPayload: Codable, Sendable {
     }
 }
 
+/// Cuerpo de POST /referees/:id/sanctions.
+public struct NewSanctionPayload: Codable, Sendable {
+    public var motivo: String
+    public var fechaInicio: String      // YYYY-MM-DD
+    public var duration: String         // p. ej. "30d", "90d", "permanente"
+    public var fechaFin: String?
+    public var notas: String?
+
+    public init(
+        motivo: String, fechaInicio: String, duration: String,
+        fechaFin: String? = nil, notas: String? = nil
+    ) {
+        self.motivo = motivo; self.fechaInicio = fechaInicio; self.duration = duration
+        self.fechaFin = fechaFin; self.notas = notas
+    }
+}
+
+/// Parche para PATCH /competitions/:id (campos parciales).
+public struct CompetitionPatch: Codable, Sendable {
+    public var nombre: String?
+    public var tipo: String?
+    public var fecha: String?
+    public var fechaFin: String?
+    public var sede: String?
+    public var sesiones: Int?
+    public var requeridos: Int?
+
+    public init(
+        nombre: String? = nil, tipo: String? = nil, fecha: String? = nil,
+        fechaFin: String? = nil, sede: String? = nil, sesiones: Int? = nil, requeridos: Int? = nil
+    ) {
+        self.nombre = nombre; self.tipo = tipo; self.fecha = fecha
+        self.fechaFin = fechaFin; self.sede = sede; self.sesiones = sesiones; self.requeridos = requeridos
+    }
+}
+
 /// Cuerpo de POST /reports (subjectType "juez" para informes de un juez).
 public struct NewReportPayload: Codable, Sendable {
     public var subjectType: String

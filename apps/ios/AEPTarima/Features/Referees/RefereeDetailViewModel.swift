@@ -50,6 +50,18 @@ final class RefereeDetailViewModel {
         }
     }
 
+    func createSanction(_ payload: NewSanctionPayload) async -> Bool {
+        await mutate {
+            let _: RefereeSanction = try await self.api.send(.createSanction(self.refereeId, payload))
+        }
+    }
+
+    func revokeSanction(_ sanctionId: String, motivo: String) async -> Bool {
+        await mutate {
+            try await self.api.sendIgnoringBody(.revokeSanction(sanctionId, motivo: motivo))
+        }
+    }
+
     /// Ejecuta una mutación y recarga el detalle; gestiona working/errores.
     private func mutate(_ action: () async throws -> Void) async -> Bool {
         isWorking = true
