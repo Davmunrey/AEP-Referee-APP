@@ -47,6 +47,15 @@ public extension Endpoint {
     }
     static func referee(_ id: String) -> Endpoint { Endpoint(.get, "/referees/\(id)") }
     static func refereeSanctions(_ id: String) -> Endpoint { Endpoint(.get, "/referees/\(id)/sanctions") }
+    static func updateReferee(_ id: String, _ patch: RefereePatch) -> Endpoint {
+        Endpoint(.patch, "/referees/\(id)", body: jsonBody(patch))
+    }
+    static func createExam(_ payload: NewExamPayload) -> Endpoint {
+        Endpoint(.post, "/exams", body: jsonBody(payload))
+    }
+    static func createReport(_ payload: NewReportPayload) -> Endpoint {
+        Endpoint(.post, "/reports", body: jsonBody(payload))
+    }
 
     static let competitions = Endpoint(.get, "/competitions")
     static func competition(_ id: String) -> Endpoint { Endpoint(.get, "/competitions/\(id)") }
