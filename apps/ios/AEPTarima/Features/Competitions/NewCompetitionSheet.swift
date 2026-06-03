@@ -85,12 +85,19 @@ struct NewCompetitionSheet: View {
 
 /// Formateo de fecha ISO (YYYY-MM-DD) estable, independiente del locale.
 enum ISODate {
-    static func string(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .iso8601)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date)
+    private static let formatter: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .iso8601)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    static func string(_ date: Date) -> String { formatter.string(from: date) }
+
+    /// Parsea "YYYY-MM-DD" (toma los primeros 10 caracteres); hoy si no es válido.
+    static func date(_ string: String) -> Date {
+        formatter.date(from: String(string.prefix(10))) ?? Date()
     }
 }

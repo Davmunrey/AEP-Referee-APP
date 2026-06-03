@@ -11,6 +11,7 @@ struct RefereeDetailView: View {
     @State private var showEdit = false
     @State private var showExam = false
     @State private var showReport = false
+    @State private var showSanction = false
 
     init(referee: Referee, user: SessionUser) {
         self.user = user
@@ -71,6 +72,11 @@ struct RefereeDetailView: View {
                 await model?.createReport(payload) ?? false
             }
         }
+        .sheet(isPresented: $showSanction) {
+            NewSanctionSheet { payload in
+                await model?.createSanction(payload) ?? false
+            }
+        }
         .alert(
             "No se pudo completar",
             isPresented: Binding(
@@ -89,15 +95,26 @@ struct RefereeDetailView: View {
     }
 
     @ViewBuilder private func sanctionsSection(_ items: [RefereeSanction]) -> some View {
-        if !items.isEmpty {
-            Section("Sanciones") {
+        Section("Sanciones") {
+            if items.isEmpty {
+                Text("Sin sanciones").foregroundStyle(.secondary)
+            } else {
                 ForEach(items) { s in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(s.motivo).font(.subheadline)
                         Text("\(s.fechaInicio) – \(s.fechaFin) · \(s.status)")
                             .font(.caption).foregroundStyle(.secondary)
+                        if canEdit && s.status == "vigente" {
+                            Button("Revocar", role: .destructive) {
+                                Task { await model?.revokeSanction(s.id, motivo: "") }
+                            }
+                            .font(.caption)
+                        }
                     }
                 }
+            }
+            if canEdit {
+                Button { showSanction = true } label: { Label("Sancionar", systemImage: "exclamationmark.triangle") }
             }
         }
     }
