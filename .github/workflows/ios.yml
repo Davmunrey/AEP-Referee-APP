@@ -47,5 +47,37 @@ jobs:
             -scheme AEPTarima \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO
+
+      # Capturas de pantalla (best-effort): no deben tumbar el gate de CI.
+      - name: Capturas de la app (Gallery + Login)
+        working-directory: apps/ios
+        continue-on-error: true
+        run: |
+          set -x
+          mkdir -p screenshots
+          UDID=$(xcrun simctl list devices available -j \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print([x['udid'] for r in d for x in d[r] if 'iPhone' in x['name']][0])")
+          xcrun simctl boot "$UDID" || true
+          APP=$(find build/Build/Products -name 'AEPTarima.app' | head -1)
+          xcrun simctl install "$UDID" "$APP"
+          # Escaparate de componentes (sin red).
+          xcrun simctl launch "$UDID" es.aep.tarima -uiPreview
+          sleep 6
+          xcrun simctl io "$UDID" screenshot screenshots/gallery.png
+          xcrun simctl terminate "$UDID" es.aep.tarima || true
+          # Pantalla de login real.
+          xcrun simctl launch "$UDID" es.aep.tarima
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/login.png
+
+      - name: Subir capturas como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: apps/ios/screenshots/*.png
+          if-no-files-found: ignore
+          retention-days: 14
