@@ -16,7 +16,7 @@ struct HomeView: View {
             CompetitionsTab(user: user)
                 .tag(HomeTab.competitions)
                 .tabItem { Label("Campeonatos", systemImage: "calendar") }
-            RefereesView()
+            RefereesView(user: user)
                 .tag(HomeTab.referees)
                 .tabItem { Label("Jueces", systemImage: "person.3") }
             ApprovalsView(user: user)
@@ -34,6 +34,7 @@ private struct CompetitionsTab: View {
     let user: SessionUser
     @State private var model: HomeViewModel?
     @State private var showScan = false
+    @State private var showNew = false
 
     var body: some View {
         NavigationStack {
@@ -71,6 +72,11 @@ private struct CompetitionsTab: View {
             }
             .refreshable { await model?.load() }
             .toolbar {
+                if user.role.canEdit {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button { showNew = true } label: { Image(systemName: "plus") }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showScan = true
@@ -80,6 +86,11 @@ private struct CompetitionsTab: View {
                 }
             }
             .sheet(isPresented: $showScan) { ScanView() }
+            .sheet(isPresented: $showNew) {
+                NewCompetitionSheet(user: user) { payload in
+                    await model?.create(payload) ?? false
+                }
+            }
         }
         .task {
             if model == nil { model = HomeViewModel(api: session.api) }
