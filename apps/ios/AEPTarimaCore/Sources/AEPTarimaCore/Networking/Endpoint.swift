@@ -50,6 +50,12 @@ public extension Endpoint {
 
     static let competitions = Endpoint(.get, "/competitions")
     static func competition(_ id: String) -> Endpoint { Endpoint(.get, "/competitions/\(id)") }
+    static func createCompetition(_ payload: NewCompetitionPayload) -> Endpoint {
+        Endpoint(.post, "/competitions", body: jsonBody(payload))
+    }
+    static func createReferee(_ payload: NewRefereePayload) -> Endpoint {
+        Endpoint(.post, "/referees", body: jsonBody(payload))
+    }
     static func roster(_ competitionId: String) -> Endpoint { Endpoint(.get, "/competitions/\(competitionId)/roster") }
 
     static func assign(_ competitionId: String, slotKey: String, refereeId: String, crossZoneReason: String? = nil) -> Endpoint {
