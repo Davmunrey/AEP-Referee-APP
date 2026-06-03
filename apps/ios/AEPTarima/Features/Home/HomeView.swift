@@ -142,6 +142,7 @@ private struct MoreTab: View {
     @Environment(SessionStore.self) private var session
     let user: SessionUser
     @State private var biometricEnabled = BiometricPreference.isEnabled
+    @State private var showChangePassword = false
 
     var body: some View {
         NavigationStack {
@@ -180,12 +181,17 @@ private struct MoreTab: View {
                         }
                     }
                 }
-                if BiometricService.isAvailable {
-                    Section("Seguridad") {
+                Section("Seguridad") {
+                    if BiometricService.isAvailable {
                         Toggle("Desbloqueo con Face ID", isOn: $biometricEnabled)
                             .onChange(of: biometricEnabled) { _, newValue in
                                 BiometricPreference.isEnabled = newValue
                             }
+                    }
+                    Button {
+                        showChangePassword = true
+                    } label: {
+                        Label("Cambiar contraseña", systemImage: "key")
                     }
                 }
                 Section {
@@ -195,6 +201,18 @@ private struct MoreTab: View {
                 }
             }
             .navigationTitle("Más")
+            .sheet(isPresented: $showChangePassword) {
+                ChangePasswordSheet { current, nuevo in
+                    do {
+                        try await session.api.sendIgnoringBody(.changePassword(current: current, new: nuevo))
+                        return nil
+                    } catch let error as APIError {
+                        return error.userMessage
+                    } catch {
+                        return "No se pudo cambiar la contraseña."
+                    }
+                }
+            }
         }
     }
 }

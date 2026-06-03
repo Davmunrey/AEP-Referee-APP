@@ -56,11 +56,29 @@ public extension Endpoint {
     static func createReport(_ payload: NewReportPayload) -> Endpoint {
         Endpoint(.post, "/reports", body: jsonBody(payload))
     }
+    static func createSanction(_ refereeId: String, _ payload: NewSanctionPayload) -> Endpoint {
+        Endpoint(.post, "/referees/\(refereeId)/sanctions", body: jsonBody(payload))
+    }
+    static func revokeSanction(_ id: String, motivo: String) -> Endpoint {
+        struct Body: Encodable { let action = "revoke"; let motivo: String }
+        return Endpoint(.patch, "/sanctions/\(id)", body: jsonBody(Body(motivo: motivo)))
+    }
+    static func changePassword(current: String, new: String) -> Endpoint {
+        struct Body: Encodable { let currentPassword: String; let newPassword: String }
+        return Endpoint(.post, "/auth/change-password", body: jsonBody(Body(currentPassword: current, newPassword: new)))
+    }
 
     static let competitions = Endpoint(.get, "/competitions")
     static func competition(_ id: String) -> Endpoint { Endpoint(.get, "/competitions/\(id)") }
     static func createCompetition(_ payload: NewCompetitionPayload) -> Endpoint {
         Endpoint(.post, "/competitions", body: jsonBody(payload))
+    }
+    static func updateCompetition(_ id: String, _ patch: CompetitionPatch) -> Endpoint {
+        Endpoint(.patch, "/competitions/\(id)", body: jsonBody(patch))
+    }
+    static func addAvailability(_ competitionId: String, refereeId: String) -> Endpoint {
+        struct Body: Encodable { let refereeId: String }
+        return Endpoint(.post, "/competitions/\(competitionId)/availability", body: jsonBody(Body(refereeId: refereeId)))
     }
     static func createReferee(_ payload: NewRefereePayload) -> Endpoint {
         Endpoint(.post, "/referees", body: jsonBody(payload))
