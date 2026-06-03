@@ -4,8 +4,10 @@ import AEPTarimaCore
 /// Directorio de jueces: lista con búsqueda y navegación al detalle.
 struct RefereesView: View {
     @Environment(SessionStore.self) private var session
+    let user: SessionUser
     @State private var model: RefereesViewModel?
     @State private var query = ""
+    @State private var showNew = false
 
     var body: some View {
         NavigationStack {
@@ -37,6 +39,18 @@ struct RefereesView: View {
                 RefereeDetailView(referee: referee)
             }
             .refreshable { await model?.load() }
+            .toolbar {
+                if user.role.canEdit {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { showNew = true } label: { Image(systemName: "plus") }
+                    }
+                }
+            }
+            .sheet(isPresented: $showNew) {
+                NewRefereeSheet(user: user) { payload in
+                    await model?.create(payload) ?? false
+                }
+            }
         }
         .task {
             if model == nil { model = RefereesViewModel(api: session.api) }

@@ -38,6 +38,17 @@ final class RefereesViewModel {
         }
     }
 
+    /// Crea un juez y recarga la lista. Devuelve true si tuvo éxito.
+    func create(_ payload: NewRefereePayload) async -> Bool {
+        do {
+            try await api.sendIgnoringBody(.createReferee(payload))
+            await load()
+            return true
+        } catch {
+            return false
+        }
+    }
+
     func filtered(_ query: String) -> [Referee] {
         guard case let .loaded(referees) = state else { return [] }
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
