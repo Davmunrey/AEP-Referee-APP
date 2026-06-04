@@ -130,6 +130,13 @@ struct RefereeDetailView: View {
                         Text("\(e.fecha) · \(e.resultado.rawValue)")
                             .font(.caption).foregroundStyle(.secondary)
                     }
+                    .swipeActions(edge: .trailing) {
+                        if canEdit {
+                            Button(role: .destructive) {
+                                Task { await model?.deleteExam(e.id) }
+                            } label: { Label("Borrar", systemImage: "trash") }
+                        }
+                    }
                 }
             }
             if canEdit {
@@ -147,6 +154,13 @@ struct RefereeDetailView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(r.titulo).font(.subheadline)
                         Text(r.tipo.rawValue).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        if canEdit {
+                            Button(role: .destructive) {
+                                Task { await model?.deleteReport(r.id) }
+                            } label: { Label("Borrar", systemImage: "trash") }
+                        }
                     }
                 }
             }

@@ -59,6 +59,12 @@ public extension Endpoint {
     static func createSanction(_ refereeId: String, _ payload: NewSanctionPayload) -> Endpoint {
         Endpoint(.post, "/referees/\(refereeId)/sanctions", body: jsonBody(payload))
     }
+    static func deleteExam(_ id: String) -> Endpoint { Endpoint(.delete, "/exams/\(id)") }
+    static func deleteReport(_ id: String) -> Endpoint { Endpoint(.delete, "/reports/\(id)") }
+    static func clearSlot(_ competitionId: String, slotKey: String) -> Endpoint {
+        struct Body: Encodable { let slotKey: String }
+        return Endpoint(.post, "/competitions/\(competitionId)/roster/clear", body: jsonBody(Body(slotKey: slotKey)))
+    }
     static func revokeSanction(_ id: String, motivo: String) -> Endpoint {
         struct Body: Encodable { let action = "revoke"; let motivo: String }
         return Endpoint(.patch, "/sanctions/\(id)", body: jsonBody(Body(motivo: motivo)))
