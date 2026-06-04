@@ -62,6 +62,14 @@ final class RefereeDetailViewModel {
         }
     }
 
+    func deleteExam(_ id: String) async -> Bool {
+        await mutate { try await self.api.sendIgnoringBody(.deleteExam(id)) }
+    }
+
+    func deleteReport(_ id: String) async -> Bool {
+        await mutate { try await self.api.sendIgnoringBody(.deleteReport(id)) }
+    }
+
     /// Ejecuta una mutación y recarga el detalle; gestiona working/errores.
     private func mutate(_ action: () async throws -> Void) async -> Bool {
         isWorking = true
