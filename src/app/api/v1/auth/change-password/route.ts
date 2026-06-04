@@ -1,5 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createTokenClient } from "@/lib/supabase/token";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 
@@ -29,16 +30,20 @@ export async function POST(request: Request) {
   }
   if (!user.email) return jsonError("La cuenta no tiene email asociado", 400);
 
-  const supabase = await createClient();
-
-  // Verifica la contraseña actual antes de permitir el cambio.
-  const { error: verifyError } = await supabase.auth.signInWithPassword({
+  // Verifica la contraseña actual con un cliente sin sesión (stateless), válido
+  // tanto para la web (cookie) como para el cliente nativo (Bearer).
+  const verifier = createTokenClient();
+  const { error: verifyError } = await verifier.auth.signInWithPassword({
     email: user.email,
     password: currentPassword,
   });
   if (verifyError) return jsonError("La contraseña actual no es correcta", 400);
 
-  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+  // Actualiza por id con la service role: funciona aunque no haya cookie (móvil).
+  const admin = createAdminClient();
+  const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
+    password: newPassword,
+  });
   if (updateError) return jsonError(`No se pudo actualizar: ${updateError.message}`, 500);
 
   return jsonOk({ updated: true });
