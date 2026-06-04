@@ -5,29 +5,20 @@ import AEPTarimaCore
 @MainActor
 @Observable
 final class DashboardViewModel {
-    private let api: APIClient
+    private let api: any APIRequesting
     private let cacheKey = "dashboard"
     private(set) var state: Loadable<DashboardSummary> = .idle
     private(set) var isOffline = false
 
-    init(api: APIClient) { self.api = api }
+    init(api: any APIRequesting) { self.api = api }
 
     func load() async {
         state = .loading
-        do {
+        let result = await OfflineLoad.single(cacheKey: cacheKey) {
             let summary: DashboardSummary = try await api.send(.dashboard)
-            DiskCache.shared.save(summary, key: cacheKey)
-            isOffline = false
-            state = .loaded(summary)
-        } catch {
-            if let cached = DiskCache.shared.load(DashboardSummary.self, key: cacheKey) {
-                isOffline = true
-                state = .loaded(cached)
-            } else if let apiError = error as? APIError {
-                state = .failed(apiError.userMessage)
-            } else {
-                state = .failed("Error inesperado.")
-            }
+            return summary
         }
+        state = result.state
+        isOffline = result.offline
     }
 }

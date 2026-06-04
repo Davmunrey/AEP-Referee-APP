@@ -5,37 +5,22 @@ import AEPTarimaCore
 @MainActor
 @Observable
 final class RefereesViewModel {
-    private let api: APIClient
+    private let api: any APIRequesting
     private let cacheKey = "referees"
     private(set) var state: Loadable<[Referee]> = .idle
     /// True cuando los datos mostrados vienen de la caché (sin conexión).
     private(set) var isOffline = false
 
-    init(api: APIClient) { self.api = api }
+    init(api: any APIRequesting) { self.api = api }
 
     func load() async {
         state = .loading
-        do {
+        let result = await OfflineLoad.list(cacheKey: cacheKey) {
             let referees: [Referee] = try await api.send(.referees())
-            DiskCache.shared.save(referees, key: cacheKey)
-            isOffline = false
-            state = .loaded(referees)
-        } catch let error as APIError {
-            // Sin conexión / error: servir caché si la hay.
-            if let cached = DiskCache.shared.load([Referee].self, key: cacheKey) {
-                isOffline = true
-                state = .loaded(cached)
-            } else {
-                state = .failed(error.userMessage)
-            }
-        } catch {
-            if let cached = DiskCache.shared.load([Referee].self, key: cacheKey) {
-                isOffline = true
-                state = .loaded(cached)
-            } else {
-                state = .failed("Error inesperado.")
-            }
+            return referees
         }
+        state = result.state
+        isOffline = result.offline
     }
 
     /// Crea un juez y recarga la lista. Devuelve true si tuvo éxito.
