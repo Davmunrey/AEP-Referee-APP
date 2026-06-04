@@ -31,6 +31,9 @@ jobs:
   e2e:
     name: Browser smoke
     runs-on: ubuntu-latest
+    # Solo en push/dispatch: este job recibe secrets (Supabase, credenciales E2E)
+    # y no debe ejecutar código de un PR no confiable del propio repo.
+    if: github.event_name != 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,8 +72,9 @@ jobs:
   supabase-readiness:
     name: Supabase readiness
     runs-on: ubuntu-latest
-    # Corre en push a main y también en PRs del propio repo (los secrets están
-    # disponibles para ramas del mismo repositorio).
+    # Solo en push/dispatch: usa SUPABASE_SERVICE_ROLE_KEY. No exponerlo a código
+    # de PRs (un PR del repo podría modificar el script y exfiltrarlo).
+    if: github.event_name != 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

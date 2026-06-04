@@ -1,4 +1,5 @@
 import { canEditRoster } from "@/lib/auth/session";
+import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
@@ -10,6 +11,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { id } = await params;
+  const scopeError = await assertCompetitionInUserZone(user, id);
+  if (scopeError) return scopeError;
   const confirmedIds = await dataService.getCompetitionAvailability(id);
   return jsonOk({ confirmedIds });
 }
