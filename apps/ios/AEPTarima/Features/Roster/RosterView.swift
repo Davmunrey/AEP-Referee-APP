@@ -21,6 +21,13 @@ struct RosterView: View {
                             Section("\(sesion.nombre) · \(sesion.dia)") {
                                 ForEach(model.slots(for: sesion)) { slot in
                                     slotRow(model: model, slot: slot)
+                                        .swipeActions(edge: .trailing) {
+                                            if canEdit, model.assignedReferee(forSlot: slot.key) != nil {
+                                                Button(role: .destructive) {
+                                                    Task { await model.clearSlot(slot.key) }
+                                                } label: { Label("Quitar", systemImage: "person.badge.minus") }
+                                            }
+                                        }
                                 }
                             }
                         }
