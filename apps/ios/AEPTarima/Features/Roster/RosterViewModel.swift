@@ -78,6 +78,19 @@ final class RosterViewModel {
         }
     }
 
+    func clearSlot(_ slotKey: String) async {
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            try await api.sendIgnoringBody(.clearSlot(competition.id, slotKey: slotKey))
+            await load()
+        } catch let error as APIError {
+            errorMessage = error.userMessage
+        } catch {
+            errorMessage = "No se pudo quitar la asignación."
+        }
+    }
+
     func submit() async -> Bool {
         isWorking = true
         defer { isWorking = false }
