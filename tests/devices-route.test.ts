@@ -45,14 +45,22 @@ describe("POST /api/v1/devices", () => {
     expect(registerDeviceToken).not.toHaveBeenCalled();
   });
 
+  const validToken = "a".repeat(64); // 64 hex chars (token APNs válido)
+
+  it("400 si el apnsToken no es hexadecimal", async () => {
+    const res = await POST(postBody({ apnsToken: "no-hex-token" }));
+    expect(res.status).toBe(400);
+    expect(registerDeviceToken).not.toHaveBeenCalled();
+  });
+
   it("registra el token para el usuario autenticado (cualquier rol, incl. solo_ver)", async () => {
     const res = await POST(
-      postBody({ apnsToken: "  tok-123  ", environment: "sandbox", deviceModel: "iPhone16,2" }),
+      postBody({ apnsToken: `  ${validToken}  `, environment: "sandbox", deviceModel: "iPhone16,2" }),
     );
     expect(res.status).toBe(200);
     expect(registerDeviceToken).toHaveBeenCalledWith({
       userId: "u1",
-      apnsToken: "tok-123",
+      apnsToken: validToken,
       environment: "sandbox",
       deviceModel: "iPhone16,2",
       appVersion: undefined,
@@ -61,7 +69,7 @@ describe("POST /api/v1/devices", () => {
   });
 
   it("usa environment 'production' por defecto ante valores no válidos", async () => {
-    await POST(postBody({ apnsToken: "tok", environment: "raro" }));
+    await POST(postBody({ apnsToken: validToken, environment: "raro" }));
     expect(registerDeviceToken).toHaveBeenCalledWith(
       expect.objectContaining({ environment: "production" }),
     );
