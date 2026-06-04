@@ -10,7 +10,7 @@ import FoundationNetworking
 /// - Decodifica el envelope `{ data: T }` del backend y mapea `{ error }`.
 ///
 /// Es un `actor` para serializar el acceso y ser seguro frente a concurrencia.
-public actor APIClient {
+public actor APIClient: APIRequesting {
     private let baseURL: URL          // p. ej. https://aep-tarima.vercel.app/api/v1
     private let tokens: TokenProvider
     private let session: URLSession

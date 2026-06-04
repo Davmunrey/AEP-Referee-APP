@@ -5,29 +5,20 @@ import AEPTarimaCore
 @MainActor
 @Observable
 final class AnalyticsViewModel {
-    private let api: APIClient
+    private let api: any APIRequesting
     private let cacheKey = "analytics"
     private(set) var state: Loadable<AnalyticsSummary> = .idle
     private(set) var isOffline = false
 
-    init(api: APIClient) { self.api = api }
+    init(api: any APIRequesting) { self.api = api }
 
     func load() async {
         state = .loading
-        do {
+        let result = await OfflineLoad.single(cacheKey: cacheKey) {
             let summary: AnalyticsSummary = try await api.send(.analytics)
-            DiskCache.shared.save(summary, key: cacheKey)
-            isOffline = false
-            state = .loaded(summary)
-        } catch {
-            if let cached = DiskCache.shared.load(AnalyticsSummary.self, key: cacheKey) {
-                isOffline = true
-                state = .loaded(cached)
-            } else if let apiError = error as? APIError {
-                state = .failed(apiError.userMessage)
-            } else {
-                state = .failed("Error inesperado.")
-            }
+            return summary
         }
+        state = result.state
+        isOffline = result.offline
     }
 }
