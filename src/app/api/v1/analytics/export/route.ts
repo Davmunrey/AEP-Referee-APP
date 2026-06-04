@@ -13,8 +13,17 @@ export async function GET() {
     c.fecha.startsWith(String(analytics.selectedYear)),
   );
 
+  // Neutraliza inyección de fórmulas (CSV injection): si un valor empieza por
+  // = + - @ (o tab/CR), antepone una comilla simple para que Excel/Sheets no lo
+  // evalúe como fórmula. Además escapa las comillas dobles.
   const csv = (...values: Array<string | number>) =>
-    values.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    values
+      .map((v) => {
+        let s = String(v);
+        if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+        return `"${s.replace(/"/g, '""')}"`;
+      })
+      .join(",");
 
   const lines: string[] = [
     "AEP Tarima — Estadísticas",
