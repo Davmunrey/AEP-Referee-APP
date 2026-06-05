@@ -1,6 +1,7 @@
 # API `/api/v1`
 
-Todas las rutas privadas usan sesión Supabase por cookie. Respuesta estándar:
+Todas las rutas privadas exigen sesión Supabase: **cookie** (web) o
+`Authorization: Bearer <jwt>` (cliente móvil iOS nativo). Respuesta estándar:
 
 ```json
 { "data": {} }
@@ -98,6 +99,14 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | Ascensos | `/promotions`, `/promotions/:id/review` | crear gestor; revisar nacional |
 | Aprobaciones | `/approvals`, `/approvals/:id/review` | revisar nacional |
 
+## Sanciones
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET/POST` | `/referees/:id/sanctions` | sesión / no `solo_ver` (alta) |
+| `PATCH` | `/sanctions/:id` | no `solo_ver`; `canManageSanctions` (zona) — body `{ action }` |
+| `POST` | `/sanctions/:id/notify` | no `solo_ver`; `canManageSanctions` (zona) — marca como notificada |
+
 ## Disponibilidad por campeonato
 
 | Método | Ruta | Permiso |
@@ -107,6 +116,32 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | `DELETE` | `/competitions/:id/availability/:refereeId` | no `solo_ver` |
 
 `GET` devuelve `{ confirmedIds: string[] }`. `POST` acepta `{ refereeId: string }`. Errores devuelven JSON `{ error: string }` incluso ante excepciones internas.
+
+## Asistente IA (widget de Ayuda)
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `POST` | `/assistant` | sesión (self-service) — body `{ question, history? }` |
+
+Respalda el widget de Ayuda. El prompt se ancla al rol del usuario
+(`src/lib/help/assistant-prompt.ts`) y la respuesta la genera **Google Gemini**
+(`gemini-2.0-flash` por defecto, configurable con `GEMINI_MODEL`). Sin
+`GEMINI_API_KEY` la ruta queda inerte (`503 { code: "not_configured" }`) y el
+cliente recurre al **asistente local** basado en la base de conocimiento
+(`src/lib/help/knowledge-base.ts`, `quick-start.ts`). Rate-limit en memoria:
+**30 preguntas / 5 min por usuario** (`429` al exceder). La clave vive solo en el
+servidor; nunca se expone al cliente.
+
+## Móvil / Push (APNs)
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `POST` | `/devices` | sesión (self-service) — body `{ apnsToken }` |
+| `DELETE` | `/devices/:token` | sesión (self-service) |
+
+Alta/baja del token APNs del propio dispositivo (cliente iOS nativo). El backend
+emite las notificaciones y el cliente enruta deep-links según `PushType`. Auth por
+`Bearer` igual que el resto de `/api/v1`.
 
 ## Seguridad import
 
