@@ -62,6 +62,30 @@ describe("askGemini", () => {
     expect(fetchMock.mock.calls[0][0]).toContain("gemini-1.5-flash:generateContent");
   });
 
+  it("reintenta como Bearer si la API key es rechazada (token OAuth)", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: () => Promise.resolve({ error: { status: "PERMISSION_DENIED", message: "no" } }),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ candidates: [{ content: { parts: [{ text: "ok bearer" }] } }] }),
+      } as unknown as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const reply = await askGemini("sys", [{ role: "user", text: "x" }]);
+    expect(reply).toBe("ok bearer");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const firstHeaders = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+    const secondHeaders = (fetchMock.mock.calls[1][1] as RequestInit).headers as Record<string, string>;
+    expect(firstHeaders["x-goog-api-key"]).toBe("test-key");
+    expect(secondHeaders.Authorization).toBe("Bearer test-key");
+  });
+
   it("incluye el motivo real del error de la API (p. ej. clave inválida)", async () => {
     vi.stubGlobal(
       "fetch",
