@@ -15,33 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { TransitionStartFunction } from "react";
 
-function CoverageRing({ pct }: { pct: number }) {
-  const stroke =
-    pct >= 100 ? "var(--chart-success)" : pct >= 70 ? "var(--chart-warning)" : "var(--chart-danger)";
-  const dash = (pct / 100) * 94.2;
-
-  return (
-    <div className="relative h-7 w-7">
-      <svg viewBox="0 0 36 36" className="h-7 w-7 -rotate-90">
-        <circle cx="18" cy="18" r="15" fill="none" stroke="var(--chart-track)" strokeWidth="3" />
-        <circle
-          cx="18"
-          cy="18"
-          r="15"
-          fill="none"
-          stroke={stroke}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray={`${dash} 94.2`}
-        />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center font-mono text-[8px] font-semibold tabular-nums text-foreground">
-        {pct}%
-      </span>
-    </div>
-  );
-}
-
 interface RosterHeaderActionsProps {
   competitionId: string;
   filledSlots: number;
@@ -106,24 +79,20 @@ export function RosterHeaderActions({
       />
     <div className="flex flex-col items-end gap-1.5">
       <div className="flex flex-wrap items-center justify-end gap-1.5">
-        {/* Coverage card with ring + bar */}
+        {/* Coverage card: plazas + barra de progreso */}
         <div
           className="flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-2.5"
-          title={`Cobertura: ${fillPct}% (${filledSlots}/${totalSlots} plazas)`}
+          title={`Cobertura: ${filledSlots}/${totalSlots} plazas`}
         >
-          <CoverageRing pct={fillPct} />
-          <div className="leading-tight">
-            <span className="font-mono text-xs font-medium tabular-nums text-foreground">
-              {filledSlots}
-              <span className="text-subtle-muted">/{totalSlots}</span>
-            </span>
-            {/* Linear progress bar */}
-            <div className="mt-0.5 h-1 w-14 overflow-hidden rounded-full bg-muted">
-              <div
-                className={cn("h-full rounded-full transition-all duration-500", coverageBarColor)}
-                style={{ width: `${fillPct}%` }}
-              />
-            </div>
+          <span className="font-mono text-xs font-medium tabular-nums text-foreground">
+            {filledSlots}
+            <span className="text-subtle-muted">/{totalSlots}</span>
+          </span>
+          <div className="h-1 w-16 overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn("h-full rounded-full transition-all duration-500", coverageBarColor)}
+              style={{ width: `${fillPct}%` }}
+            />
           </div>
         </div>
 
