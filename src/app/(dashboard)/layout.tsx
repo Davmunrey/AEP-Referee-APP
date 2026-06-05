@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { SiteFooter } from "@/components/site-footer";
 import { orgLabelForUser } from "@/lib/auth/profile";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
@@ -25,6 +26,7 @@ export default async function DashboardLayout({
       orgSubtitle={subtitle}
     >
       {children}
+      <SiteFooter className="mt-8 pb-2" />
     </AppShell>
   );
 }

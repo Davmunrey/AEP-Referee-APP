@@ -8,6 +8,7 @@ const PUBLIC_PATHS = [
   "/sign-up",
   "/auth/callback",
   "/login",
+  "/docs",
   "/api/v1/auth",
 ];
 

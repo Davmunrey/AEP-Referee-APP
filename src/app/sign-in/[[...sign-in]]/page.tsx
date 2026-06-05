@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { getApiBaseUrl } from "@/lib/api/config";
+import { SiteFooter } from "@/components/site-footer";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -222,9 +223,7 @@ export default function SignInPage() {
           </div>
         </div>
 
-        <p className="mt-5 text-center text-[11px] text-muted-foreground/60">
-          AEP · Gestión de jueces interna
-        </p>
+        <SiteFooter className="mt-6" />
       </div>
     </div>
   );
