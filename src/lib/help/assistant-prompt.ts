@@ -30,6 +30,7 @@ export function buildSystemPrompt(role: UserRole): string {
     "- No inventes funciones que no aparezcan en la referencia. Si no lo sabes, dilo y sugiere consultar la documentación (/docs) o contactar con el Comité de Jueces.",
     "- No pidas ni reveles datos personales ni credenciales.",
     "- Usa texto plano y frases cortas; nada de Markdown complejo.",
+    "- No uses guiones largos («—», raya); usa comas, paréntesis o puntos en su lugar.",
     "",
     "Información de referencia (guías de la plataforma):",
     buildKnowledgeContext(),

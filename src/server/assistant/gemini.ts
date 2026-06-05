@@ -1,6 +1,6 @@
 /**
  * Cliente del asistente IA con Google Gemini (capa gratuita). La API key se lee
- * SIEMPRE del entorno del servidor (`GEMINI_API_KEY`) — nunca se expone al
+ * SIEMPRE del entorno del servidor (`GEMINI_API_KEY`): nunca se expone al
  * cliente ni se almacena en el repositorio. Si falta la clave, el asistente IA
  * queda inerte y el cliente recurre al asistente local.
  */
@@ -46,11 +46,19 @@ export async function askGemini(systemPrompt: string, turns: GeminiTurn[]): Prom
   });
 
   if (!res.ok) {
-    throw new Error(`Gemini respondió ${res.status}`);
+    // Capturamos el motivo real (p. ej. API_KEY_INVALID, modelo no encontrado,
+    // cuota agotada) para poder diagnosticarlo en los logs del servidor.
+    const detail = await res
+      .json()
+      .then((b: { error?: { message?: string; status?: string } }) =>
+        b?.error?.message ? `${b.error.status ?? ""} ${b.error.message}`.trim() : "",
+      )
+      .catch(() => "");
+    throw new Error(`Gemini ${res.status}${detail ? `: ${detail}` : ""}`);
   }
 
   const data = (await res.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
+    candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[];
     promptFeedback?: { blockReason?: string };
   };
 
@@ -63,6 +71,9 @@ export async function askGemini(systemPrompt: string, turns: GeminiTurn[]): Prom
     .join("")
     .trim();
 
-  if (!text) throw new Error("Respuesta vacía de Gemini");
+  if (!text) {
+    const reason = data.candidates?.[0]?.finishReason;
+    throw new Error(`Respuesta vacía de Gemini${reason ? ` (finishReason: ${reason})` : ""}`);
+  }
   return text;
 }

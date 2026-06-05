@@ -10,6 +10,8 @@ describe("buildSystemPrompt", () => {
     expect(prompt.toLowerCase()).toContain("tarima");
     // No debe pedir datos personales/credenciales.
     expect(prompt).toContain("No pidas ni reveles datos personales");
+    // Debe prohibir los guiones largos en la respuesta.
+    expect(prompt).toContain("guiones largos");
   });
 
   it("el contexto de conocimiento no está vacío", () => {
