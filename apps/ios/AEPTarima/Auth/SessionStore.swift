@@ -26,7 +26,10 @@ final class SessionStore {
     init() {
         let supabase = SupabaseClient(
             supabaseURL: AppConfig.supabaseURL,
-            supabaseKey: AppConfig.supabaseAnonKey
+            supabaseKey: AppConfig.supabaseAnonKey,
+            options: SupabaseClientOptions(
+                auth: SupabaseClientOptions.AuthOptions(storage: AppAuthStorage())
+            )
         )
         let api = APIClient(
             baseURL: AppConfig.apiBaseURL,
