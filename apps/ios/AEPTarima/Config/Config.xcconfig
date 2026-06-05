@@ -5,8 +5,8 @@
 // escribir "https://...". Por eso guardamos solo los HOSTS (sin esquema) y
 // AppConfig compone "https://<host>" en código.
 
-API_HOST = TU-DEPLOY.vercel.app
+API_HOST = aep-tarima.vercel.app
 API_BASE_PATH = /api/v1
 
-SUPABASE_HOST = TU-PROYECTO.supabase.co
-SUPABASE_ANON_KEY = TU_ANON_KEY
+SUPABASE_HOST = foaemadggmpbcrhtpems.supabase.co
+SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvYWVtYWRnZ21wYmNyaHRwZW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTI3NTYsImV4cCI6MjA5NDQyODc1Nn0.bd9KiDbohr3HypVUxkL6i8o4Hs6Q02dkjfd3MvxNrIc
