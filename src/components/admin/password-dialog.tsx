@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/client";
@@ -25,6 +26,11 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  // Renderizamos en un portal a <body> para que el overlay `fixed` no quede
+  // contenido (y recortado) por ancestros con transform/backdrop-filter, como
+  // el sidebar. `mounted` evita desajustes de hidratación en SSR.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +61,9 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -122,6 +130,7 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
