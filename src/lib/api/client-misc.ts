@@ -87,6 +87,13 @@ export const miscApi = {
 
   getAnalytics: () => request<AnalyticsPayload>("/analytics"),
 
+  /** Asistente IA (Gemini). Lanza si no está configurado o falla → fallback local. */
+  askAssistant: (question: string, history: { role: "user" | "model"; text: string }[]) =>
+    request<{ reply: string }>("/assistant", {
+      method: "POST",
+      body: JSON.stringify({ question, history }),
+    }),
+
   analyticsExportUrl: () => `${getApiBaseUrl()}/analytics/export`,
 
   fetchAnalyticsExportText: async (): Promise<string> => {
