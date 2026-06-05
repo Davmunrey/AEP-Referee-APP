@@ -1,55 +1,52 @@
 import SwiftUI
-import AEPTarimaCore
 
-/// Normativa IPF: requisitos por rol y tipo de evento. Funciona offline.
+/// Reglamento Técnico de la IPF: capítulos y artículos con búsqueda de texto
+/// completo. Es el reglamento real (empaquetado en la app), no la matriz de
+/// roles. Disponible siempre, sin conexión.
 struct RegulationsView: View {
-    @Environment(SessionStore.self) private var session
-    @State private var model: RegulationsViewModel?
     @State private var query = ""
+
+    private var chapters: [IpfChapter] { Rulebook.filtered(query) }
 
     var body: some View {
         Group {
-            if let model {
-                VStack(spacing: 0) {
-                    if model.isOffline { OfflineBanner() }
-                    LoadableView(state: model.state, retry: { await model.load() }) { _ in
-                        let rules = model.filtered(query)
-                        if rules.isEmpty {
-                            ContentUnavailableView.search(text: query)
-                        } else {
-                            List(rules) { rule in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(rule.rol).font(.headline)
-                                        Spacer()
-                                        Text(rule.minLevel.rawValue)
-                                            .font(.caption).bold()
-                                            .foregroundStyle(.tint)
+            if Rulebook.chapters.isEmpty {
+                ContentUnavailableView("Reglamento no disponible", systemImage: "book.closed")
+            } else if chapters.isEmpty {
+                ContentUnavailableView.search(text: query)
+            } else {
+                List {
+                    ForEach(chapters) { chapter in
+                        Section {
+                            ForEach(chapter.articles) { article in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                        Text("\(chapter.num).\(article.num)")
+                                            .font(.aepCaption).bold().monospacedDigit()
+                                            .foregroundStyle(Theme.accent)
+                                        Text(article.title)
+                                            .font(.aepHeadline)
+                                            .foregroundStyle(Theme.foreground)
                                     }
-                                    if !rule.eventTypes.isEmpty {
-                                        Text(rule.eventTypes.map(\.rawValue).joined(separator: " · "))
-                                            .font(.caption).foregroundStyle(.secondary)
-                                    }
-                                    if !rule.note.isEmpty {
-                                        Text(rule.note).font(.subheadline)
-                                    }
+                                    Text(article.text)
+                                        .font(.aepFootnote)
+                                        .foregroundStyle(Theme.foregroundSecondary)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .padding(.vertical, 2)
+                                .padding(.vertical, 6)
                             }
-                            .listStyle(.insetGrouped)
+                        } header: {
+                            Text("\(chapter.num). \(chapter.title)")
+                                .font(.aepCaption).bold()
+                                .foregroundStyle(Theme.subtle)
                         }
                     }
                 }
-            } else {
-                ProgressView()
+                .listStyle(.insetGrouped)
             }
         }
-        .navigationTitle("Normativa IPF")
+        .navigationTitle("Reglamento IPF")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $query, prompt: "Buscar rol o requisito")
-        .task {
-            if model == nil { model = RegulationsViewModel(api: session.api) }
-            if case .idle? = model?.state { await model?.load() }
-        }
+        .searchable(text: $query, prompt: "Buscar en el reglamento")
     }
 }
