@@ -1,26 +1,76 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Award,
+  BarChart3,
+  Bell,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardCheck,
+  Database,
+  KeyRound,
+  LayoutGrid,
+  Lock,
+  Mail,
+  ScanFace,
+  ScanLine,
+  ShieldCheck,
+  Smartphone,
+  TrendingUp,
+  Users,
+  WifiOff,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Documentación y privacidad · AEP Tarima",
   description:
-    "Documentación de uso, política de privacidad y protección de datos de AEP Tarima, la plataforma de gestión de jueces de la Asociación Española de Powerlifting.",
+    "Guía de uso, funciones, roles, política de privacidad y protección de datos de AEP Tarima, la plataforma de gestión de jueces de la Asociación Española de Powerlifting.",
 };
+
+const updated = "junio de 2026";
+
+const toc: Array<{ id: string; label: string }> = [
+  { id: "que-es", label: "Qué es AEP Tarima" },
+  { id: "funciones", label: "Funciones principales" },
+  { id: "uso", label: "Guía de uso paso a paso" },
+  { id: "tarima", label: "Flujo de la tarima" },
+  { id: "roles", label: "Roles y permisos" },
+  { id: "niveles", label: "Niveles arbitrales" },
+  { id: "movil", label: "App móvil (iOS)" },
+  { id: "faq", label: "Preguntas frecuentes" },
+  { id: "privacidad", label: "Privacidad y datos" },
+  { id: "seguridad", label: "Seguridad" },
+  { id: "cookies", label: "Cookies y sesión" },
+  { id: "terminos", label: "Condiciones de uso" },
+  { id: "contacto", label: "Contacto" },
+];
+
+type Icon = React.ComponentType<{ className?: string }>;
 
 function Section({
   id,
+  icon: IconCmp,
   title,
   children,
 }: {
   id: string;
+  icon: Icon;
   title: string;
   children: React.ReactNode;
 }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <IconCmp className="h-4 w-4" />
+        </span>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      </div>
       <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground">
         {children}
       </div>
@@ -28,24 +78,47 @@ function Section({
   );
 }
 
-const updated = "junio de 2026";
+function FeatureCard({ icon: IconCmp, title, desc }: { icon: Icon; title: string; desc: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <IconCmp className="h-5 w-5" />
+      </span>
+      <h3 className="mt-3 text-sm font-semibold text-foreground">{title}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{desc}</p>
+    </div>
+  );
+}
+
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <li className="relative pl-10">
+      <span className="absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+        {n}
+      </span>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{children}</p>
+    </li>
+  );
+}
+
+function FlowStep({ icon: IconCmp, label }: { icon: Icon; label: string }) {
+  return (
+    <div className="flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-4 text-center">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <IconCmp className="h-5 w-5" />
+      </span>
+      <span className="text-xs font-medium text-foreground">{label}</span>
+    </div>
+  );
+}
 
 export default function DocsPage() {
-  const toc: Array<{ id: string; label: string }> = [
-    { id: "que-es", label: "Qué es AEP Tarima" },
-    { id: "uso", label: "Guía de uso" },
-    { id: "roles", label: "Roles y permisos" },
-    { id: "privacidad", label: "Privacidad y protección de datos" },
-    { id: "seguridad", label: "Seguridad" },
-    { id: "cookies", label: "Cookies y sesión" },
-    { id: "terminos", label: "Condiciones de uso" },
-    { id: "contacto", label: "Contacto" },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/60">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-4">
+      {/* Cabecera */}
+      <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
             <Image
               src="/assets/aep-master-logo.png"
@@ -54,7 +127,9 @@ export default function DocsPage() {
               height={38}
               className="h-8 w-auto"
             />
-            <span className="text-sm font-semibold text-foreground">Documentación</span>
+            <span className="hidden text-sm font-semibold text-foreground sm:inline">
+              Documentación
+            </span>
           </div>
           <Link
             href="/sign-in"
@@ -66,26 +141,47 @@ export default function DocsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Documentación y privacidad
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Plataforma de gestión de jueces de la Asociación Española de Powerlifting (AEP).
-          Última actualización: {updated}.
-        </p>
-
-        <nav aria-label="Índice" className="mt-6 rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-subtle-muted">
-            Índice
+      {/* Hero */}
+      <div className="border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
+        <div className="mx-auto max-w-4xl px-6 py-12 text-center">
+          <Image
+            src="/assets/aep-mark.png"
+            alt=""
+            width={64}
+            height={64}
+            className="mx-auto h-14 w-auto"
+          />
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground">
+            AEP Tarima — Documentación
+          </h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            Plataforma de gestión de jueces de la Asociación Española de Powerlifting:
+            censo arbitral, tarimas, aprobaciones, exámenes, ascensos y analítica.
           </p>
-          <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
+              <LayoutGrid className="h-3.5 w-3.5 text-primary" /> Web
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
+              <Smartphone className="h-3.5 w-3.5 text-primary" /> App iOS
+            </span>
+            <span className="text-subtle-muted">Actualizado: {updated}</span>
+          </div>
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-4xl px-6 py-10">
+        {/* Índice */}
+        <nav aria-label="Índice" className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-subtle-muted">Índice</p>
+          <ul className="mt-2 grid gap-1.5 sm:grid-cols-3">
             {toc.map((item) => (
               <li key={item.id}>
                 <a
                   href={`#${item.id}`}
-                  className="text-sm text-primary underline-offset-2 hover:underline"
+                  className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
                 >
+                  <ArrowRight className="h-3 w-3" aria-hidden="true" />
                   {item.label}
                 </a>
               </li>
@@ -93,113 +189,258 @@ export default function DocsPage() {
           </ul>
         </nav>
 
-        <div className="mt-10 space-y-10">
-          <Section id="que-es" title="Qué es AEP Tarima">
+        <div className="mt-10 space-y-12">
+          <Section id="que-es" icon={BookOpen} title="Qué es AEP Tarima">
             <p>
               AEP Tarima es la herramienta interna de la AEP para organizar el arbitraje de las
-              competiciones de powerlifting: gestión del censo de jueces, planificación de
-              tarimas (cuadrantes), aprobaciones, exámenes, ascensos, sanciones e informes.
-              El acceso está restringido a cuentas autorizadas por el Comité de Jueces.
+              competiciones de powerlifting. Centraliza el censo de jueces, la planificación de
+              las tarimas (cuadrantes de cada sesión), las aprobaciones del Comité, los exámenes,
+              los ascensos de nivel, las sanciones y los informes. El acceso está restringido a
+              cuentas autorizadas por el Comité de Jueces y está disponible tanto en web como en
+              app nativa de iOS, sobre los mismos datos en tiempo real.
             </p>
           </Section>
 
-          <Section id="uso" title="Guía de uso">
-            <ul className="list-disc space-y-1.5 pl-5">
-              <li><strong>Inicio:</strong> panel con indicadores de cobertura, salud operativa y avisos.</li>
-              <li><strong>Campeonatos:</strong> alta y edición de competiciones y construcción de la tarima (asignación de jueces por plaza, envío a aprobación).</li>
-              <li><strong>Jueces:</strong> censo con ficha individual (nivel, zona, exámenes, informes y sanciones).</li>
-              <li><strong>Aprobaciones y ascensos:</strong> revisión por el Comité de Jueces.</li>
-              <li><strong>Analítica y normativa:</strong> estadísticas por zona y requisitos IPF por rol.</li>
-            </ul>
+          <Section id="funciones" icon={LayoutGrid} title="Funciones principales">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <FeatureCard icon={BarChart3} title="Panel de inicio" desc="KPIs de cobertura, salud operativa, avisos y próximos campeonatos de un vistazo." />
+              <FeatureCard icon={CalendarDays} title="Campeonatos" desc="Alta y edición de competiciones, sesiones, sede y plazas requeridas." />
+              <FeatureCard icon={LayoutGrid} title="Tarima (cuadrante)" desc="Asignación de jueces por plaza, control de cobertura y envío a aprobación." />
+              <FeatureCard icon={Users} title="Censo de jueces" desc="Ficha por juez con nivel, zona, exámenes, informes y sanciones." />
+              <FeatureCard icon={ClipboardCheck} title="Aprobaciones y ascensos" desc="Revisión por el Comité de Jueces de tarimas y solicitudes de ascenso." />
+              <FeatureCard icon={TrendingUp} title="Analítica" desc="Estadísticas por zona, top de jueces y tasa de rechazo por año." />
+            </div>
+          </Section>
+
+          <Section id="uso" icon={BookOpen} title="Guía de uso paso a paso">
+            <ol className="space-y-5">
+              <Step n={1} title="Inicia sesión">
+                Accede con tu correo y contraseña autorizados. En la app iOS puedes activar Face ID
+                para entrar más rápido. ¿Olvidaste la contraseña? Usa el enlace de recuperación.
+              </Step>
+              <Step n={2} title="Revisa el panel de inicio">
+                El Dashboard resume la cobertura global, la salud operativa, los avisos y los
+                campeonatos próximos. Es tu punto de partida diario.
+              </Step>
+              <Step n={3} title="Crea o abre un campeonato">
+                En «Campeonatos», crea uno nuevo (tipo AEP-1/2/3, sede, fechas, sesiones y plazas)
+                o abre uno existente para ver su detalle.
+              </Step>
+              <Step n={4} title="Construye la tarima">
+                En el detalle del campeonato, abre la Tarima y asigna un juez a cada plaza (toca la
+                plaza y elige al juez). El indicador de cobertura te muestra el % completado.
+              </Step>
+              <Step n={5} title="Envía a aprobación">
+                Cuando la tarima esté completa, envíala al Comité de Jueces. Recibirás una
+                notificación cuando se apruebe o se rechace.
+              </Step>
+              <Step n={6} title="Gestiona el censo">
+                En «Jueces», da de alta o edita fichas y registra exámenes, informes y sanciones.
+                El delegado de zona trabaja sobre los jueces de su zona.
+              </Step>
+            </ol>
+          </Section>
+
+          <Section id="tarima" icon={LayoutGrid} title="Flujo de la tarima">
+            <p>El ciclo de vida de una tarima sigue cuatro pasos:</p>
+            <div className="mt-2 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+              <FlowStep icon={CalendarDays} label="1. Crear campeonato" />
+              <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-subtle-muted sm:rotate-0" aria-hidden="true" />
+              <FlowStep icon={Users} label="2. Asignar jueces" />
+              <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-subtle-muted sm:rotate-0" aria-hidden="true" />
+              <FlowStep icon={ClipboardCheck} label="3. Enviar a aprobación" />
+              <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-subtle-muted sm:rotate-0" aria-hidden="true" />
+              <FlowStep icon={CheckCircle2} label="4. Aprobado por el Comité" />
+            </div>
+          </Section>
+
+          <Section id="roles" icon={ShieldCheck} title="Roles y permisos">
+            <div className="overflow-hidden rounded-xl border border-border">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-muted/50 text-xs uppercase tracking-wider text-subtle-muted">
+                  <tr>
+                    <th className="px-4 py-2.5 font-medium">Rol</th>
+                    <th className="px-4 py-2.5 font-medium">Puede</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-foreground">Super Admin</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">Acceso total; gestiona usuarios; aprueba tarimas y ascensos.</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-foreground">Comité de Jueces</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">Igual que Super Admin a efectos operativos; aprueba a nivel nacional.</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-foreground">Delegado de Zona</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">Gestiona competiciones y jueces de su zona; solicita ascensos.</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-foreground">Solo lectura</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">Consulta la información sin poder modificarla.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-subtle-muted">
+              Los permisos se aplican y revalidan en el servidor en cada operación.
+            </p>
+          </Section>
+
+          <Section id="niveles" icon={Award} title="Niveles arbitrales">
+            <div className="flex flex-wrap gap-2">
+              {["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"].map((n) => (
+                <span
+                  key={n}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground"
+                >
+                  <Award className="h-3.5 w-3.5 text-primary" /> {n}
+                </span>
+              ))}
+            </div>
             <p>
-              La plataforma está disponible como aplicación web y como app nativa de iOS, ambas
-              conectadas a los mismos datos.
+              Cada plaza de la tarima exige un nivel mínimo según el tipo de competición y el rol
+              (central, lateral, jurado…), conforme a la normativa IPF recogida en la sección de
+              Normativa de la aplicación.
             </p>
           </Section>
 
-          <Section id="roles" title="Roles y permisos">
-            <ul className="list-disc space-y-1.5 pl-5">
-              <li><strong>Super Admin</strong> y <strong>Comité de Jueces</strong>: acceso completo; aprueban tarimas y ascensos y gestionan usuarios.</li>
-              <li><strong>Delegado de Zona</strong>: gestiona competiciones y jueces de su zona.</li>
-              <li><strong>Solo lectura</strong>: consulta sin modificar.</li>
-            </ul>
-            <p>El control de acceso se aplica y revalida en el servidor en cada operación.</p>
+          <Section id="movil" icon={Smartphone} title="App móvil (iOS)">
+            <p>La app nativa de iOS ofrece, además de todas las pantallas de gestión:</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <FeatureCard icon={ScanFace} title="Face ID / Touch ID" desc="Acceso rápido y seguro con biometría." />
+              <FeatureCard icon={Bell} title="Notificaciones" desc="Avisos de asignaciones y aprobaciones." />
+              <FeatureCard icon={WifiOff} title="Modo offline" desc="Consulta de datos en caché sin conexión." />
+              <FeatureCard icon={ScanLine} title="Escaneo" desc="Captura de cuadrantes en PDF con la cámara." />
+            </div>
           </Section>
 
-          <Section id="privacidad" title="Privacidad y protección de datos">
+          <Section id="faq" icon={BookOpen} title="Preguntas frecuentes">
+            <div className="space-y-2">
+              {[
+                {
+                  q: "¿Cómo recupero mi contraseña?",
+                  a: "Desde la pantalla de acceso, pulsa «¿Olvidaste tu contraseña?» e introduce tu correo; recibirás un enlace para restablecerla.",
+                },
+                {
+                  q: "¿Por qué no puedo editar un campeonato de otra zona?",
+                  a: "Los delegados de zona solo gestionan los datos de su propia zona. El Comité de Jueces tiene alcance nacional.",
+                },
+                {
+                  q: "¿Los datos del móvil y la web son los mismos?",
+                  a: "Sí. Ambas aplicaciones usan el mismo backend, así que los cambios se reflejan en tiempo real.",
+                },
+                {
+                  q: "¿Cómo se sanciona a un juez?",
+                  a: "Desde la ficha del juez, en la sección «Sanciones», indicando motivo, fecha de inicio y duración. El delegado de zona puede hacerlo en su zona.",
+                },
+              ].map((item) => (
+                <details
+                  key={item.q}
+                  className="group rounded-xl border border-border bg-card p-4"
+                >
+                  <summary className="cursor-pointer list-none text-sm font-medium text-foreground marker:hidden">
+                    {item.q}
+                  </summary>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
+                </details>
+              ))}
+            </div>
+          </Section>
+
+          <Section id="privacidad" icon={Database} title="Privacidad y protección de datos">
             <p>
               <strong>Responsable del tratamiento:</strong> Asociación Española de Powerlifting (AEP).
             </p>
             <p>
               <strong>Datos tratados:</strong> datos identificativos y de contacto de los jueces
-              (nombre, correo electrónico, teléfono, localidad, número de licencia), datos
-              federativos (zona, nivel arbitral, historial de eventos, exámenes, ascensos y
-              sanciones) y datos de las cuentas de acceso. En la app móvil, si se activan, el
-              token de notificaciones del dispositivo.
+              (nombre, correo, teléfono, localidad, número de licencia), datos federativos (zona,
+              nivel arbitral, historial de eventos, exámenes, ascensos y sanciones), datos de las
+              cuentas de acceso y, en la app móvil si se activan, el token de notificaciones del
+              dispositivo.
             </p>
             <p>
               <strong>Finalidad:</strong> organizar el arbitraje de las competiciones y mantener el
               censo y la trazabilidad de la actividad arbitral de la federación.
             </p>
             <p>
-              <strong>Base jurídica:</strong> el interés legítimo y la relación federativa entre la
-              AEP y sus jueces, así como el cumplimiento de las obligaciones organizativas de la
-              federación.
+              <strong>Base jurídica:</strong> interés legítimo y relación federativa entre la AEP y
+              sus jueces, y cumplimiento de las obligaciones organizativas de la federación.
             </p>
             <p>
-              <strong>Conservación:</strong> los datos se conservan mientras se mantenga la
-              vinculación federativa y durante los plazos legalmente exigibles.
+              <strong>Conservación:</strong> mientras se mantenga la vinculación federativa y durante
+              los plazos legalmente exigibles.
             </p>
             <p>
-              <strong>Destinatarios:</strong> los datos se alojan en proveedores de infraestructura
-              (Supabase y Vercel) que actúan como encargados del tratamiento. No se ceden a terceros
-              salvo obligación legal.
+              <strong>Destinatarios:</strong> proveedores de infraestructura (Supabase y Vercel) como
+              encargados del tratamiento. No se ceden a terceros salvo obligación legal.
             </p>
             <p>
-              <strong>Derechos:</strong> puedes ejercer tus derechos de acceso, rectificación,
-              supresión, oposición, limitación y portabilidad escribiendo al Comité de Jueces de la
-              AEP (ver <a href="#contacto" className="text-primary hover:underline">Contacto</a>).
+              <strong>Derechos:</strong> acceso, rectificación, supresión, oposición, limitación y
+              portabilidad, escribiendo al Comité de Jueces (ver
+              {" "}<a href="#contacto" className="text-primary hover:underline">Contacto</a>).
             </p>
           </Section>
 
-          <Section id="seguridad" title="Seguridad">
-            <ul className="list-disc space-y-1.5 pl-5">
-              <li>Todo el tráfico va cifrado por HTTPS/TLS.</li>
-              <li>Autenticación gestionada por Supabase; las contraseñas no se almacenan en claro.</li>
-              <li>En la app iOS, la sesión se guarda en el Llavero (Keychain) y puede protegerse con Face ID/Touch ID.</li>
-              <li>El acceso a los datos aplica control por rol y por zona, revalidado en el servidor.</li>
-              <li>Cabeceras de seguridad activas (HSTS, política de contenido, anti-clickjacking).</li>
+          <Section id="seguridad" icon={Lock} title="Seguridad">
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {[
+                { icon: Lock, t: "Cifrado HTTPS/TLS en todo el tráfico." },
+                { icon: KeyRound, t: "Autenticación gestionada por Supabase; sin contraseñas en claro." },
+                { icon: ScanFace, t: "Sesión en el Llavero del iPhone, con Face ID opcional." },
+                { icon: ShieldCheck, t: "Control por rol y zona revalidado en el servidor." },
+              ].map((it) => (
+                <li key={it.t} className="flex items-start gap-2 rounded-lg border border-border bg-card p-3">
+                  <it.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="text-sm text-muted-foreground">{it.t}</span>
+                </li>
+              ))}
             </ul>
           </Section>
 
-          <Section id="cookies" title="Cookies y sesión">
+          <Section id="cookies" icon={ShieldCheck} title="Cookies y sesión">
             <p>
-              La aplicación utiliza exclusivamente cookies técnicas necesarias para mantener la
-              sesión iniciada (gestionadas por el proveedor de autenticación). No se usan cookies
+              La aplicación usa exclusivamente cookies técnicas necesarias para mantener la sesión
+              iniciada (gestionadas por el proveedor de autenticación). No se usan cookies
               publicitarias ni de seguimiento de terceros.
             </p>
           </Section>
 
-          <Section id="terminos" title="Condiciones de uso">
+          <Section id="terminos" icon={ClipboardCheck} title="Condiciones de uso">
             <p>
-              El acceso está limitado a personas autorizadas por la AEP. El uso de la plataforma
-              y de la información contenida debe ceñirse a las funciones arbitrales y organizativas
-              de la federación. Queda prohibido el uso no autorizado, la extracción masiva de datos
-              o cualquier acción que comprometa la seguridad o la confidencialidad.
+              El acceso está limitado a personas autorizadas por la AEP. El uso de la plataforma y
+              de la información debe ceñirse a las funciones arbitrales y organizativas de la
+              federación. Queda prohibido el uso no autorizado, la extracción masiva de datos o
+              cualquier acción que comprometa la seguridad o la confidencialidad.
             </p>
           </Section>
 
-          <Section id="contacto" title="Contacto">
-            <p>
-              Para cualquier consulta sobre la plataforma o sobre el tratamiento de tus datos,
-              contacta con el <strong>Comité de Jueces de la Asociación Española de Powerlifting</strong>
-              a través de los canales oficiales de la federación.
-            </p>
+          <Section id="contacto" icon={Building2} title="Contacto">
+            <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Mail className="h-5 w-5" />
+              </span>
+              <p className="text-sm text-muted-foreground">
+                Para consultas sobre la plataforma o el tratamiento de tus datos, contacta con el
+                <strong> Comité de Jueces de la Asociación Española de Powerlifting</strong> a través
+                de los canales oficiales de la federación.
+              </p>
+            </div>
           </Section>
         </div>
 
-        <div className="mt-12 border-t border-border pt-6 text-center text-xs text-subtle-muted">
-          © {new Date().getFullYear()} Asociación Española de Powerlifting · AEP Tarima
+        <div className="mt-12 flex flex-col items-center gap-3 border-t border-border pt-6">
+          <Link
+            href="/sign-in"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Volver al acceso
+          </Link>
+          <p className="text-center text-xs text-subtle-muted">
+            © {new Date().getFullYear()} Asociación Española de Powerlifting · AEP Tarima
+          </p>
         </div>
       </main>
     </div>
