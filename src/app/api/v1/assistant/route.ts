@@ -61,8 +61,11 @@ export async function POST(request: Request) {
   try {
     const reply = await askGemini(buildSystemPrompt(role), turns);
     return jsonOk({ reply });
-  } catch {
-    // No filtramos detalles del proveedor; el cliente hará fallback al local.
+  } catch (err) {
+    // Registramos el motivo real (solo en logs del servidor / Vercel) para poder
+    // diagnosticar; al cliente le devolvemos un mensaje genérico y hará fallback
+    // al asistente local.
+    console.error("[assistant] Gemini falló:", err instanceof Error ? err.message : err);
     return jsonError("El asistente no está disponible ahora mismo.", 502, {
       code: "upstream_error",
     });
