@@ -10,11 +10,17 @@ struct LoginView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(.tint)
-            Text("AEP Tarima").font(.largeTitle).bold()
-            Text("Gestión de jueces").foregroundStyle(.secondary)
+            Image("AEPMark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 96, height: 96)
+                .accessibilityLabel("AEP")
+            Text("AEP Tarima")
+                .font(.aepLargeTitle).bold()
+                .foregroundStyle(Theme.foreground)
+            Text("Gestión de jueces")
+                .font(.aepBody)
+                .foregroundStyle(Theme.subtle)
 
             VStack(spacing: 12) {
                 TextField("Correo", text: $email)
@@ -28,7 +34,7 @@ struct LoginView: View {
             .textFieldStyle(.roundedBorder)
 
             if let message = initialMessage {
-                Text(message).font(.footnote).foregroundStyle(.red)
+                Text(message).font(.aepFootnote).foregroundStyle(Theme.danger)
             }
 
             Button {
@@ -46,5 +52,7 @@ struct LoginView: View {
             Spacer()
         }
         .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.background)
     }
 }

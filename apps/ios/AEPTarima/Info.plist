@@ -45,6 +45,11 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<!-- Tipografía de marca: DM Sans (misma que la web). Bundleada en Resources/Fonts. -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>DMSans.ttf</string>
+	</array>
 	<!-- App Transport Security: solo HTTPS (sin cargas arbitrarias). La app solo
 	     habla con Vercel y Supabase por TLS. -->
 	<key>NSAppTransportSecurity</key>
