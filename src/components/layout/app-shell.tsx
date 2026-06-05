@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import type { SessionUser } from "@/lib/types";
+import { HelpWidget } from "@/components/help/help-widget";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 
@@ -101,6 +102,7 @@ export function AppShell({
           {children}
         </main>
       </div>
+      <HelpWidget user={currentUser} />
     </div>
   );
 }
