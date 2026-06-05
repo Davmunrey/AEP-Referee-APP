@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { getSession } from "@/lib/auth/session";
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,17 +33,25 @@ export const metadata: Metadata = {
     "Guía de uso, funciones, roles, política de privacidad y protección de datos de AEP Tarima, la plataforma de gestión de jueces de la Asociación Española de Powerlifting.",
 };
 
+// Renderizar según sesión: lo externo es público; la guía operativa interna
+// solo se muestra a usuarios autenticados.
+export const dynamic = "force-dynamic";
+
 const updated = "junio de 2026";
 
-const toc: Array<{ id: string; label: string }> = [
+type TocItem = { id: string; label: string; internal?: boolean };
+
+// Secciones en orden de página. Las marcadas `internal` (guía operativa) solo
+// se muestran a usuarios autenticados; el resto es público (externo + legal).
+const tocSections: TocItem[] = [
   { id: "que-es", label: "Qué es AEP Tarima" },
   { id: "funciones", label: "Funciones principales" },
-  { id: "uso", label: "Guía de uso paso a paso" },
-  { id: "tarima", label: "Flujo de la tarima" },
-  { id: "roles", label: "Roles y permisos" },
+  { id: "uso", label: "Guía de uso paso a paso", internal: true },
+  { id: "tarima", label: "Flujo de la tarima", internal: true },
+  { id: "roles", label: "Roles y permisos", internal: true },
   { id: "niveles", label: "Niveles arbitrales" },
   { id: "movil", label: "App móvil (iOS)" },
-  { id: "faq", label: "Preguntas frecuentes" },
+  { id: "faq", label: "Preguntas frecuentes", internal: true },
   { id: "privacidad", label: "Privacidad y datos" },
   { id: "seguridad", label: "Seguridad" },
   { id: "cookies", label: "Cookies y sesión" },
@@ -113,7 +122,13 @@ function FlowStep({ icon: IconCmp, label }: { icon: Icon; label: string }) {
   );
 }
 
-export default function DocsPage() {
+export default async function DocsPage() {
+  const user = await getSession();
+  const isAuthenticated = Boolean(user);
+  const toc = tocSections.filter((s) => isAuthenticated || !s.internal);
+  const backHref = isAuthenticated ? "/" : "/sign-in";
+  const backLabel = isAuthenticated ? "Volver a la app" : "Volver al acceso";
+
   return (
     <div className="min-h-screen bg-background">
       {/* Cabecera */}
@@ -132,11 +147,11 @@ export default function DocsPage() {
             </span>
           </div>
           <Link
-            href="/sign-in"
+            href={backHref}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Volver al acceso
+            {backLabel}
           </Link>
         </div>
       </header>
@@ -212,6 +227,8 @@ export default function DocsPage() {
             </div>
           </Section>
 
+          {isAuthenticated ? (
+          <>
           <Section id="uso" icon={BookOpen} title="Guía de uso paso a paso">
             <ol className="space-y-5">
               <Step n={1} title="Inicia sesión">
@@ -287,6 +304,29 @@ export default function DocsPage() {
               Los permisos se aplican y revalidan en el servidor en cada operación.
             </p>
           </Section>
+          </>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Lock className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <h2 className="mt-3 text-base font-semibold text-foreground">
+                Guía de uso para personal autorizado
+              </h2>
+              <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+                La guía paso a paso, el flujo de la tarima, los roles y permisos y las preguntas
+                frecuentes operativas están disponibles para las cuentas autorizadas por el Comité
+                de Jueces. Inicia sesión para consultarlas.
+              </p>
+              <Link
+                href="/sign-in"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <KeyRound className="h-4 w-4" aria-hidden="true" />
+                Iniciar sesión
+              </Link>
+            </div>
+          )}
 
           <Section id="niveles" icon={Award} title="Niveles arbitrales">
             <div className="flex flex-wrap gap-2">
@@ -316,6 +356,7 @@ export default function DocsPage() {
             </div>
           </Section>
 
+          {isAuthenticated && (
           <Section id="faq" icon={BookOpen} title="Preguntas frecuentes">
             <div className="space-y-2">
               {[
@@ -348,6 +389,7 @@ export default function DocsPage() {
               ))}
             </div>
           </Section>
+          )}
 
           <Section id="privacidad" icon={Database} title="Privacidad y protección de datos">
             <p>
@@ -432,11 +474,11 @@ export default function DocsPage() {
 
         <div className="mt-12 flex flex-col items-center gap-3 border-t border-border pt-6">
           <Link
-            href="/sign-in"
+            href={backHref}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Volver al acceso
+            {backLabel}
           </Link>
           <p className="text-center text-xs text-subtle-muted">
             © {new Date().getFullYear()} Asociación Española de Powerlifting · AEP Tarima
