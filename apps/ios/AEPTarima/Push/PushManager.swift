@@ -31,7 +31,7 @@ final class PushManager {
 
     func unregister() async {
         guard let token = registeredToken else { return }
-        try? await api.sendIgnoringBody(.unregisterDevice(token: token))
+        _ = try? await api.sendIgnoringBody(.unregisterDevice(token: token))
         registeredToken = nil
     }
 
@@ -55,6 +55,6 @@ final class PushManager {
             appVersion: appVersion,
             locale: Locale.current.identifier
         )
-        try? await api.sendIgnoringBody(.registerDevice(registration))
+        _ = try? await api.sendIgnoringBody(.registerDevice(registration))
     }
 }

@@ -55,3 +55,9 @@ next-env.d.ts
 # local agent tooling
 .codex/
 .cursor/rules/
+
+# iOS — proyecto generado por XcodeGen (se regenera desde project.yml)
+apps/ios/AEPTarima.xcodeproj/
+apps/ios/**/xcuserdata/
+apps/ios/**/DerivedData/
+apps/ios/.build/

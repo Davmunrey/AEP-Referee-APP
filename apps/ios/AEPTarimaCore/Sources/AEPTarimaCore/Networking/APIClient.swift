@@ -24,7 +24,7 @@ public actor APIClient: APIRequesting {
     }
 
     /// Ejecuta el endpoint y decodifica la carga `data` como `T`.
-    public func send<T: Decodable>(_ endpoint: Endpoint, as type: T.Type = T.self) async throws -> T {
+    public func send<T: Decodable & Sendable>(_ endpoint: Endpoint, as type: T.Type = T.self) async throws -> T {
         var token = endpoint.requiresAuth ? await tokens.accessToken() : nil
         var (data, response) = try await perform(endpoint, token: token)
 
