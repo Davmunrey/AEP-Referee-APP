@@ -16,23 +16,31 @@ struct RosterView: View {
         Group {
             if let model {
                 LoadableView(state: model.state, retry: { await model.load() }) { payload in
-                    List {
-                        ForEach(Array(payload.template.enumerated()), id: \.offset) { _, sesion in
-                            Section("\(sesion.nombre) · \(sesion.dia)") {
-                                ForEach(model.slots(for: sesion)) { slot in
-                                    slotRow(model: model, slot: slot)
-                                        .swipeActions(edge: .trailing) {
-                                            if canEdit, model.assignedReferee(forSlot: slot.key) != nil {
-                                                Button(role: .destructive) {
-                                                    Task { await model.clearSlot(slot.key) }
-                                                } label: { Label("Quitar", systemImage: "person.badge.minus") }
+                    if payload.template.isEmpty {
+                        ContentUnavailableView {
+                            Label("Tarima sin configurar", systemImage: "square.grid.3x3")
+                        } description: {
+                            Text("Esta competición aún no tiene sesiones ni plazas definidas. Configura la plantilla desde la web y aquí podrás asignar jueces.")
+                        }
+                    } else {
+                        List {
+                            ForEach(Array(payload.template.enumerated()), id: \.offset) { _, sesion in
+                                Section("\(sesion.nombre) · \(sesion.dia)") {
+                                    ForEach(model.slots(for: sesion)) { slot in
+                                        slotRow(model: model, slot: slot)
+                                            .swipeActions(edge: .trailing) {
+                                                if canEdit, model.assignedReferee(forSlot: slot.key) != nil {
+                                                    Button(role: .destructive) {
+                                                        Task { await model.clearSlot(slot.key) }
+                                                    } label: { Label("Quitar", systemImage: "person.badge.minus") }
+                                                }
                                             }
-                                        }
+                                    }
                                 }
                             }
                         }
+                        .listStyle(.insetGrouped)
                     }
-                    .listStyle(.insetGrouped)
                 }
             } else {
                 ProgressView()
