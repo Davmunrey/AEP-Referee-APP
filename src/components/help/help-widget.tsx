@@ -7,12 +7,14 @@ import {
   ArrowRight,
   BookOpen,
   HelpCircle,
+  Loader2,
   MessageCircle,
   Send,
   Sparkles,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api/client";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
 import { searchKnowledgeBase, type HelpLink } from "@/lib/help/knowledge-base";
 import { quickStartForRole } from "@/lib/help/quick-start";
@@ -26,7 +28,16 @@ interface ChatMessage {
   links?: HelpLink[];
   /** Preguntas sugeridas relacionadas (otras entradas que también encajan). */
   suggestions?: string[];
+  /** Mientras se espera la respuesta del asistente IA. */
+  pending?: boolean;
 }
+
+const NO_MATCH =
+  "No he encontrado una respuesta exacta. Puedes consultar la documentación completa o escribir al Comité de Jueces.";
+const NO_MATCH_LINKS: HelpLink[] = [
+  { label: "Documentación", href: "/docs" },
+  { label: "Contacto", href: "/docs#contacto" },
+];
 
 const WELCOME: ChatMessage = {
   id: 0,
@@ -48,6 +59,9 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
   const [tab, setTab] = useState<Tab>("guia");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
+  // Cuando el asistente IA no está disponible (sin clave o error), se desactiva
+  // y las siguientes preguntas se resuelven directamente con el asistente local.
+  const [remoteEnabled, setRemoteEnabled] = useState(true);
   const nextId = useRef(1);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -71,36 +85,51 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
     if (tab === "asistente") scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, tab]);
 
-  const ask = (raw: string) => {
+  const ask = async (raw: string) => {
     const query = raw.trim();
     if (!query) return;
-    const userMsg: ChatMessage = { id: nextId.current++, from: "user", text: query };
 
-    const results = searchKnowledgeBase(query, user.role);
-    let botMsg: ChatMessage;
-    if (results.length === 0) {
-      botMsg = {
-        id: nextId.current++,
-        from: "bot",
-        text:
-          "No he encontrado una respuesta exacta. Puedes consultar la documentación completa o escribir al Comité de Jueces.",
-        links: [
-          { label: "Documentación", href: "/docs" },
-          { label: "Contacto", href: "/docs#contacto" },
-        ],
-      };
-    } else {
-      const [best, ...rest] = results;
-      botMsg = {
-        id: nextId.current++,
-        from: "bot",
-        text: best.entry.answer,
-        links: best.entry.links,
-        suggestions: rest.slice(0, 3).map((r) => r.entry.question),
-      };
-    }
-    setMessages((prev) => [...prev, userMsg, botMsg]);
+    // Resultados locales: aportan enlaces de acción y sirven de respaldo.
+    const local = searchKnowledgeBase(query, user.role);
+    const localText = local[0]?.entry.answer ?? NO_MATCH;
+    const localLinks = local.length > 0 ? local[0]?.entry.links : NO_MATCH_LINKS;
+    const suggestions = local.slice(1, 4).map((r) => r.entry.question);
+
+    // Historial para el modelo (sin la bienvenida ni mensajes en curso).
+    const history = messages
+      .filter((m) => m.id !== 0 && !m.pending)
+      .slice(-8)
+      .map((m) => ({ role: m.from === "user" ? ("user" as const) : ("model" as const), text: m.text }));
+
     setInput("");
+    setMessages((prev) => [...prev, { id: nextId.current++, from: "user", text: query }]);
+
+    if (!remoteEnabled) {
+      setMessages((prev) => [
+        ...prev,
+        { id: nextId.current++, from: "bot", text: localText, links: localLinks, suggestions },
+      ]);
+      return;
+    }
+
+    const pendingId = nextId.current++;
+    setMessages((prev) => [...prev, { id: pendingId, from: "bot", text: "", pending: true }]);
+    try {
+      const { reply } = await api.askAssistant(query, history);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === pendingId ? { ...m, text: reply, links: localLinks, suggestions, pending: false } : m,
+        ),
+      );
+    } catch {
+      // Sin clave o error del proveedor → fallback al asistente local.
+      setRemoteEnabled(false);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === pendingId ? { ...m, text: localText, links: localLinks, suggestions, pending: false } : m,
+        ),
+      );
+    }
   };
 
   const launcher = (
@@ -199,7 +228,14 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                       : "bg-surface text-foreground",
                   )}
                 >
-                  <p>{m.text}</p>
+                  {m.pending ? (
+                    <p className="flex items-center gap-1 text-muted-foreground" aria-live="polite">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Escribiendo…
+                    </p>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.text}</p>
+                  )}
                   {m.links && m.links.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {m.links.map((l) => (
@@ -222,7 +258,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                         <button
                           key={s}
                           type="button"
-                          onClick={() => ask(s)}
+                          onClick={() => void ask(s)}
                           className="block w-full rounded-md px-2 py-1 text-left text-xs text-primary underline-offset-2 hover:bg-muted hover:underline"
                         >
                           {s}
@@ -237,7 +273,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              ask(input);
+              void ask(input);
             }}
             className="flex items-center gap-2 border-t border-border bg-surface px-3 py-2.5"
           >
