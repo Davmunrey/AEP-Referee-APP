@@ -105,4 +105,30 @@ final class RosterViewModel {
             return false
         }
     }
+
+    /// Plantilla actualmente cargada (o vacía si aún no hay tarima configurada).
+    var currentTemplate: [RosterSession] {
+        if case let .loaded(payload) = state { return payload.template }
+        return []
+    }
+
+    /// Crea el editor de plantilla sembrado con la plantilla actual (o en blanco).
+    func makeTemplateEditor() -> TemplateEditorViewModel {
+        TemplateEditorViewModel(api: api, competition: competition, initial: currentTemplate)
+    }
+
+    /// Genera la plantilla AEP estándar para el tipo de la competición y recarga.
+    /// Permite configurar la tarima desde el móvil cuando aún no tiene plazas.
+    func applyPreset() async {
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            try await api.sendIgnoringBody(.applyTemplatePreset(competition.id))
+            await load()
+        } catch let error as APIError {
+            errorMessage = error.userMessage
+        } catch {
+            errorMessage = "No se pudo generar la plantilla."
+        }
+    }
 }

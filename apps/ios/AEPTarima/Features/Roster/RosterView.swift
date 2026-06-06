@@ -11,6 +11,7 @@ struct RosterView: View {
     @State private var model: RosterViewModel?
     @State private var pickerSlot: RosterSlot?
     @State private var submitted = false
+    @State private var editorModel: TemplateEditorViewModel?
 
     var body: some View {
         Group {
@@ -20,7 +21,26 @@ struct RosterView: View {
                         ContentUnavailableView {
                             Label("Tarima sin configurar", systemImage: "square.grid.3x3")
                         } description: {
-                            Text("Esta competición aún no tiene sesiones ni plazas definidas. Configura la plantilla desde la web y aquí podrás asignar jueces.")
+                            Text(canEdit
+                                ? "Esta competición aún no tiene plazas. Genera la plantilla AEP estándar para su tipo, o crea una personalizada, y empieza a asignar jueces."
+                                : "Esta competición aún no tiene tarima configurada.")
+                        } actions: {
+                            if canEdit {
+                                Button {
+                                    Task { await model.applyPreset() }
+                                } label: {
+                                    Label("Generar plantilla AEP", systemImage: "wand.and.stars")
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(model.isWorking)
+
+                                Button {
+                                    editorModel = model.makeTemplateEditor()
+                                } label: {
+                                    Label("Crear plantilla personalizada", systemImage: "slider.horizontal.3")
+                                }
+                                .disabled(model.isWorking)
+                            }
                         }
                     } else {
                         List {
@@ -51,8 +71,19 @@ struct RosterView: View {
         .toolbar {
             if canEdit {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Enviar") {
-                        Task { submitted = await model?.submit() == true }
+                    Menu {
+                        Button {
+                            if let model { editorModel = model.makeTemplateEditor() }
+                        } label: {
+                            Label("Editar plantilla", systemImage: "slider.horizontal.3")
+                        }
+                        Button {
+                            Task { submitted = await model?.submit() == true }
+                        } label: {
+                            Label("Enviar a aprobación", systemImage: "paperplane")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                     .disabled(model?.isWorking ?? true)
                 }
@@ -61,6 +92,11 @@ struct RosterView: View {
         .sheet(item: $pickerSlot) { slot in
             RefereePicker(referees: model?.referees ?? []) { referee in
                 Task { await model?.assign(slotKey: slot.key, refereeId: referee.id) }
+            }
+        }
+        .sheet(item: $editorModel) { editor in
+            TemplateEditorView(model: editor) {
+                Task { await model?.load() }
             }
         }
         .alert("Propuesta enviada", isPresented: $submitted) {

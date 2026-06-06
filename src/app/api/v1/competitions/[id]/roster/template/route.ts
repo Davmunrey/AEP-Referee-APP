@@ -1,11 +1,33 @@
 import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { getPresetForEventType } from "@/lib/roster-template";
 import type { RosterSession } from "@/lib/types";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
+}
+
+/**
+ * Genera y guarda la plantilla AEP estándar para el tipo de la competición
+ * (preset de cuadrante real). Permite configurar la tarima desde clientes que no
+ * incluyen el editor completo (p. ej. la app móvil). Idempotente: reaplica el
+ * preset del tipo.
+ */
+export async function POST(_request: Request, context: RouteContext) {
+  const user = await requireApiUser();
+  if (!isSessionUser(user)) return user;
+
+  const { id: competitionId } = await context.params;
+  const comp = await dataService.getCompetition(competitionId);
+  if (!comp) return jsonError("Competición no encontrada", 404);
+  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
+
+  const preset = getPresetForEventType(comp.tipo);
+  const result = await dataService.saveCompetitionTemplate(competitionId, preset, user.nombre);
+  if (!result) return jsonError("No se pudo generar la plantilla", 400);
+  return jsonOk(result);
 }
 
 export async function PUT(request: Request, context: RouteContext) {
