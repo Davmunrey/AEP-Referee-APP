@@ -1,7 +1,7 @@
 import Foundation
 
 public enum HTTPMethod: String, Sendable {
-    case get = "GET", post = "POST", patch = "PATCH", delete = "DELETE"
+    case get = "GET", post = "POST", put = "PUT", patch = "PATCH", delete = "DELETE"
 }
 
 /// Descripción de una llamada a /api/v1. El cuerpo se entrega ya codificado
@@ -98,6 +98,20 @@ public extension Endpoint {
     }
     static func submitRoster(_ competitionId: String) -> Endpoint {
         Endpoint(.post, "/competitions/\(competitionId)/roster/submit")
+    }
+    /// Genera la plantilla AEP estándar para el tipo de la competición (configura
+    /// la tarima desde el móvil). El servidor elige el preset según `tipo`.
+    static func applyTemplatePreset(_ competitionId: String) -> Endpoint {
+        Endpoint(.post, "/competitions/\(competitionId)/roster/template")
+    }
+    /// Guarda una plantilla personalizada (sesiones, roles y plazas) construida
+    /// desde el editor móvil. Espeja el `PUT` que usa el editor web. Enviar `[]`
+    /// borra la plantilla. Reutiliza el mismo servicio que valida y purga
+    /// asignaciones huérfanas en el backend.
+    static func saveTemplate(_ competitionId: String, template: [RosterSession]) -> Endpoint {
+        struct Body: Encodable { let template: [RosterSession] }
+        return Endpoint(.put, "/competitions/\(competitionId)/roster/template",
+                        body: jsonBody(Body(template: template)))
     }
 
     static let approvals = Endpoint(.get, "/approvals")
