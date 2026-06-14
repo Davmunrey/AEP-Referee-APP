@@ -28,3 +28,16 @@ export function getInitials(name: string) {
     .slice(0, 2)
     .toUpperCase();
 }
+
+/**
+ * "Última competición" se guarda como etiqueta ya formateada. Cuando el Excel de
+ * origen trae la celda vacía, el serial 0 se interpreta como el epoch de la hoja
+ * (p. ej. "1 ene 1899") y esa fecha centinela acababa mostrándose en la tabla.
+ * Toda competición real es de 2000 en adelante, así que cualquier año `1xxx` es
+ * un centinela: lo normalizamos a guion.
+ */
+export function displayUltimo(label: string | null | undefined): string {
+  const trimmed = label?.trim();
+  if (!trimmed || /\b1\d{3}\b/.test(trimmed)) return "—";
+  return trimmed;
+}
