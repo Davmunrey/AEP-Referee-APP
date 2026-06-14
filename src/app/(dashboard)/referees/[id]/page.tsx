@@ -9,6 +9,7 @@ import { RefereePromotionButton } from "@/components/referees/referee-promotion-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
+import { displayUltimo } from "@/lib/utils";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -242,7 +243,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
             </div>
             <div>
               <p className="friendly-label mb-1">Última competición</p>
-              <p className="text-sm text-foreground">{referee.ultimo}</p>
+              <p className="text-sm text-foreground">{displayUltimo(referee.ultimo)}</p>
             </div>
             <div>
               <p className="friendly-label mb-1">Disponibilidad</p>

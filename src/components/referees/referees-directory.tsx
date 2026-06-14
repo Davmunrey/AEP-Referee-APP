@@ -16,6 +16,7 @@ import {
 import { JudgesRegistryImportButton } from "@/components/referees/judges-registry-import";
 import { NewRefereeDialog } from "@/components/referees/new-referee-dialog";
 import { LevelBadge, StatusBadge } from "@/components/aep/badges";
+import { displayUltimo } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -319,7 +320,7 @@ export function RefereesDirectory({
                       {referee.eventos}
                     </td>
                     <td className="px-4 py-2.5 font-mono text-[10.5px] text-subtle-muted">
-                      {referee.ultimo}
+                      {displayUltimo(referee.ultimo)}
                     </td>
                     <td className="px-4 py-2.5 text-right opacity-0 transition-opacity group-hover:opacity-100">
                       <div className="flex items-center justify-end gap-1">
