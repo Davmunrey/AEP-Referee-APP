@@ -10,6 +10,20 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    // ESLint flat config ya ignora node_modules y .git, pero NO los artefactos
+    // de build de Next, los tipos generados ni los informes de test. Sin esto,
+    // `eslint .` lintaría miles de ficheros generados (lo que `next lint` evitaba).
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "coverage/**",
+      "playwright-report/**",
+      "test-results/**",
+      "next-env.d.ts",
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
