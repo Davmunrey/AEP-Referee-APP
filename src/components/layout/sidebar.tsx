@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
 import {
   Award,
   BarChart3,
@@ -13,18 +12,13 @@ import {
   ChevronRight,
   ClipboardList,
   GraduationCap,
-  KeyRound,
   Layers,
   LayoutDashboard,
-  LogOut,
   UserCog,
   Users,
 } from "lucide-react";
-import { useState } from "react";
 import { AepLogo } from "@/components/aep/logo";
-import { OrgSwitcher } from "@/components/aep/org-switcher";
 import { Button } from "@/components/ui/button";
-import { PasswordDialog } from "@/components/admin/password-dialog";
 
 import type { NavCounts } from "@/components/layout/app-shell";
 import type { SessionUser } from "@/lib/types";
@@ -88,7 +82,7 @@ function buildSecondaryNav(counts: NavCounts, canSeeUsers: boolean): NavItem[] {
       match: (p) => p.startsWith("/reports"),
     },
     { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
-    { href: "/regulations", label: "Normativa IPF", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
+    { href: "/regulations", label: "Normativa", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
   ];
   if (canSeeUsers) {
     items.push({
@@ -105,8 +99,6 @@ interface SidebarProps {
   collapsed: boolean;
   currentUser: SessionUser;
   navCounts: NavCounts;
-  orgLabel: string;
-  orgSubtitle: string;
   onToggle: () => void;
 }
 
@@ -114,8 +106,6 @@ export function Sidebar({
   collapsed,
   currentUser,
   navCounts,
-  orgLabel,
-  orgSubtitle,
   onToggle,
 }: SidebarProps) {
   const primaryNav = buildPrimaryNav(navCounts);
@@ -123,14 +113,6 @@ export function Sidebar({
     currentUser.role === "super_admin" || currentUser.role === "delegado_jueces";
   const secondaryNav = buildSecondaryNav(navCounts, canSeeUsers);
   const pathname = usePathname();
-  const router = useRouter();
-  const [pwdOpen, setPwdOpen] = useState(false);
-
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/sign-in");
-  };
 
   const renderLink = (item: NavItem) => {
     const active = item.match(pathname);
@@ -209,10 +191,6 @@ export function Sidebar({
         <AepLogo collapsed={collapsed} className={collapsed ? "justify-center" : undefined} />
       </div>
 
-      <div className={cn("px-3 pt-3", collapsed && "px-0")}>
-        <OrgSwitcher collapsed={collapsed} org={orgLabel} subtitle={orgSubtitle} />
-      </div>
-
       <div className="flex-1 min-h-0 overflow-y-auto pb-2">
         <nav className={cn("mt-5 flex flex-col gap-1", collapsed ? "px-0" : "px-3")}>
           {!collapsed && <p className="friendly-label mb-2 px-3">Operaciones</p>}
@@ -239,45 +217,13 @@ export function Sidebar({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1">
-            <Avatar className="mb-1 h-8 w-8 ring-2 ring-primary/20">
+          <div className="mb-1 flex justify-center">
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
               <AvatarFallback className="bg-primary/15 text-xs text-primary">
                 {currentUser.iniciales}
               </AvatarFallback>
             </Avatar>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-subtle-muted hover:text-foreground focus-ring"
-              onClick={() => setPwdOpen(true)}
-              aria-label="Cambiar contraseña"
-              title="Cambiar contraseña"
-            >
-              <KeyRound className="h-4 w-4" />
-            </Button>
           </div>
-        )}
-        {!collapsed && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mb-1 w-full justify-start gap-2 text-subtle-muted hover:text-foreground focus-ring"
-              onClick={() => setPwdOpen(true)}
-            >
-              <KeyRound className="h-3.5 w-3.5" />
-              Cambiar contraseña
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mb-2 w-full justify-start gap-2 text-subtle-muted hover:text-destructive focus-ring"
-              onClick={() => void handleSignOut()}
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Cerrar sesión
-            </Button>
-          </>
         )}
         <Button
           variant="ghost"
@@ -293,14 +239,6 @@ export function Sidebar({
           {!collapsed && <span className="ml-2 text-xs">Colapsar</span>}
         </Button>
       </div>
-
-      {pwdOpen && (
-        <PasswordDialog
-          mode="self"
-          subject={currentUser.nombre}
-          onClose={() => setPwdOpen(false)}
-        />
-      )}
     </aside>
   );
 }

@@ -21,14 +21,10 @@ export function AppShell({
   children,
   currentUser,
   navCounts,
-  orgLabel,
-  orgSubtitle,
 }: {
   children: React.ReactNode;
   currentUser: SessionUser;
   navCounts: NavCounts;
-  orgLabel: string;
-  orgSubtitle: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
@@ -92,8 +88,6 @@ export function AppShell({
         collapsed={collapsed}
         currentUser={currentUser}
         navCounts={liveNavCounts}
-        orgLabel={orgLabel}
-        orgSubtitle={orgSubtitle}
         onToggle={toggleCollapsed}
       />
       <div className="app-mesh relative flex min-w-0 flex-1 flex-col">
