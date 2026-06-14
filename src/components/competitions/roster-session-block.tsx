@@ -68,6 +68,65 @@ export function SessionOverviewCard({
   );
 }
 
+/**
+ * Pestaña compacta de sesión para el selector fijo del builder. A diferencia de
+ * SessionOverviewCard (tarjeta alta que crece en vertical), esta ocupa ~1 fila y
+ * vive en una tira con scroll horizontal: montar 12 sesiones cuesta lo mismo en
+ * alto que montar 2, y cambiar de sesión no obliga a hacer scroll.
+ */
+export function SessionTab({
+  session,
+  assignments,
+  active,
+  onClick,
+}: {
+  session: RosterSession;
+  assignments: AssignmentsMap;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const { filled, slots, pct } = sessionProgress(session, assignments);
+  const done = slots > 0 && filled >= slots;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      title={`${session.sesion} · ${session.nombre}`}
+      className={cn(
+        "flex w-[160px] shrink-0 flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-left transition-colors focus-ring",
+        active
+          ? "border-primary bg-primary/8 shadow-sm"
+          : "border-border bg-background/75 hover:border-border-strong hover:bg-surface",
+      )}
+    >
+      <span className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <span className="font-mono text-[11px] font-semibold text-primary">{session.sesion}</span>
+          <span className="truncate text-[12px] font-medium text-foreground">{session.nombre}</span>
+        </span>
+        <span
+          className={cn(
+            "shrink-0 font-mono text-[10px] tabular-nums",
+            done ? "text-success" : "text-subtle-muted",
+          )}
+        >
+          {filled}/{slots}
+        </span>
+      </span>
+      <span className="block h-1 overflow-hidden rounded-full bg-muted">
+        <span
+          className={cn(
+            "block h-full rounded-full transition-[width] duration-300",
+            pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </span>
+    </button>
+  );
+}
+
 export function SessionBlock({
   session,
   assignments,
