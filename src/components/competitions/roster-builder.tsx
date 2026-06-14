@@ -280,7 +280,13 @@ export function RosterBuilder({
             <RosterHelpPanel />
             <RosterStepper
               current={isEditing ? "plantilla" : workflowStep}
-              onChange={(step) => { setIsEditing(false); setWorkflowStep(step); }}
+              onChange={(step) => {
+                setWorkflowStep(step);
+                // "Plantilla" = trabajar la ESTRUCTURA. Si ya existe plantilla, abre el
+                // editor de sesiones directamente; antes mostraba la tarima en solo
+                // lectura (lo mismo que Asignación sin el panel de jueces), que no aporta.
+                setIsEditing(step === "plantilla" && totalSlots > 0);
+              }}
               disabled={pending || savingTemplate}
               plantillaDone={plantillaDone}
               asignacionDone={asignacionDone}
