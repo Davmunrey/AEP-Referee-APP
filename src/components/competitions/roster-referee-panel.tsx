@@ -78,18 +78,14 @@ export function RosterRefereePanelLeft({
     <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
       <div className="border-b border-border p-3">
         <h2 className="text-sm font-semibold text-foreground-secondary">Jueces disponibles</h2>
-        <p className="mt-0.5 text-xs text-subtle-muted">
-          {selectedSlot && !readOnly ? (
-            <span className="font-medium text-primary">
-              {selectedSlotMeta
-                ? `${selectedSlotMeta.sessionLabel} · ${selectedSlotMeta.roleLabel} ${selectedSlotMeta.slotNumber}`
-                : "Slot seleccionado"}{" "}
-              — haz clic en un juez para asignar
-            </span>
-          ) : (
-            "Arrastra o selecciona un slot primero"
-          )}
-        </p>
+        {selectedSlot && !readOnly && (
+          <p className="mt-0.5 text-xs font-medium text-primary">
+            {selectedSlotMeta
+              ? `${selectedSlotMeta.sessionLabel} · ${selectedSlotMeta.roleLabel} ${selectedSlotMeta.slotNumber}`
+              : "Slot seleccionado"}{" "}
+            — haz clic en un juez para asignar
+          </p>
+        )}
         {selectedSlot && !readOnly && (
           <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
             <span className="text-[11px] text-primary">Selección activa para asignación rápida</span>
