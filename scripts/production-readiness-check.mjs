@@ -1,7 +1,12 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 
 const root = process.cwd();
+
+// Las rutas comparadas (publicApi, selfServiceApi, `components/`) se escriben con
+// separador POSIX, pero `relative()` usa el separador nativo del SO (`\` en Windows).
+// Normalizamos a `/` para que la auditoría sea idéntica en Windows, macOS y Linux.
+const toPosix = (p) => (sep === "/" ? p : p.split(sep).join("/"));
 
 function walk(dir, predicate = () => true) {
   const out = [];
@@ -60,7 +65,7 @@ const selfServiceApi = new Set([
 ]);
 
 for (const file of apiRoutes) {
-  const rel = relative(root, file);
+  const rel = toPosix(relative(root, file));
   const src = readFileSync(file, "utf8");
   if (!publicApi.has(rel) && !/requireApiUser|getSession/.test(src)) {
     fail("API-01", `${rel} no exige sesión`);
@@ -124,7 +129,7 @@ if (!exists("supabase/migrations/016_competition_column_rename.sql")) {
 
 const visibleFiles = walk(join(root, "src"), (file) => /\.(tsx|ts)$/.test(file));
 for (const file of visibleFiles) {
-  const rel = relative(root, file);
+  const rel = toPosix(relative(root, file));
   const src = readFileSync(file, "utf8");
   if (/\(Excel:/i.test(src)) fail("UX-01", `${rel} expone fuente Excel en UI`);
   const visibleLegacy = src

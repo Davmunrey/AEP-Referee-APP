@@ -55,6 +55,9 @@ next-env.d.ts
 # local agent tooling
 .codex/
 .cursor/rules/
+.agents/
+.impeccable/
+skills-lock.json
 
 # iOS — proyecto generado por XcodeGen (se regenera desde project.yml)
 apps/ios/AEPTarima.xcodeproj/
