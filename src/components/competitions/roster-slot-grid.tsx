@@ -54,7 +54,7 @@ export function SlotGrid({
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   return (
-    <div className="grid gap-2 2xl:grid-cols-2">
+    <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-3">
       {roles.map((role) => (
         <div
           key={role.key}
@@ -72,7 +72,7 @@ export function SlotGrid({
               /{role.slots}
             </span>
           </div>
-          <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-2 min-[1800px]:grid-cols-3">
+          <div className="grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(132px,1fr))]">
             {Array.from({ length: role.slots }).map((_, idx) => {
               const slotKey = `${sesion}_${role.key}_${idx}`;
               const refereeId = assignments[slotKey];
