@@ -17,9 +17,14 @@ if (packageJson.overrides?.postcss == null) {
   fail("DEP-01", "Falta override postcss >= 8.5.10");
 }
 
+// En Windows el binario es `npm.cmd`; `execFileSync` no resuelve PATHEXT (eso es
+// cosa del shell), así que invocarlo como "npm" lanza ENOENT. Resolvemos el nombre
+// real por plataforma para que la auditoría corra igual en Windows y POSIX.
+const npmBin = process.platform === "win32" ? "npm.cmd" : "npm";
+
 let audit;
 try {
-  const out = execFileSync("npm", ["audit", "--json"], {
+  const out = execFileSync(npmBin, ["audit", "--json"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });

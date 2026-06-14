@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start -p 3000",
     "start:local": "next build && next start -p 3000",
-    "lint": "next lint",
+    "lint": "eslint src",
     "audit:prod": "node scripts/production-readiness-check.mjs",
     "audit:security": "node scripts/security-audit.mjs",
     "audit:remote": "node --env-file=.env.local scripts/supabase-readiness-audit.mjs",
