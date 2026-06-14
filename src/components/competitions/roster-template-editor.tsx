@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { selectFieldClass } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
 import { ROLE_LABELS, cloneTemplate } from "@/lib/roster-template";
 import type { RoleKey, RosterCategoria, RosterGrupo, RosterRole, RosterSession } from "@/lib/types";
 import { ChevronDown, ChevronUp, FileUp, Plus, Trash2 } from "lucide-react";
 import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
-import { RoleRows } from "@/components/competitions/roster-role-rows";
+import { RoleRows, COMPETITION_ROLE_KEYS, PESAJE_ROLE_KEYS } from "@/components/competitions/roster-role-rows";
 import { SessionCategoriesEditor } from "@/components/competitions/session-categories-editor";
 import { SessionGroupsEditor } from "@/components/competitions/session-groups-editor";
 
@@ -22,6 +24,54 @@ export interface RosterTemplateEditorProps {
 function nextSessionId(sessions: RosterSession[]): string {
   const nums = sessions.map((s) => parseInt(s.sesion.replace(/\D/g, ""), 10)).filter((n) => !Number.isNaN(n));
   return `S${nums.length ? Math.max(...nums) + 1 : 1}`;
+}
+
+// Lunes a domingo (las competiciones suelen ser viernes-domingo, pero dejamos todos).
+const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+const timeFieldClass =
+  "h-9 rounded-xl border border-border-strong bg-surface px-2 text-sm text-foreground focus-ring";
+
+// "10:00 - 13:00" → ["10:00","13:00"], normalizando a HH:MM para <input type=time>.
+function parseTimeRange(value: string): [string, string] {
+  const norm = (t?: string) => {
+    const m = (t ?? "").trim().match(/^(\d{1,2}):(\d{2})$/);
+    return m ? `${m[1]!.padStart(2, "0")}:${m[2]}` : "";
+  };
+  const parts = value.split(/[–-]/).map((s) => s.trim());
+  return [norm(parts[0]), norm(parts[1])];
+}
+
+function TimeRangeInput({
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  ariaLabel: string;
+}) {
+  const [start, end] = parseTimeRange(value);
+  const set = (s: string, e: string) => onChange(s && e ? `${s} - ${e}` : s || e || "");
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="time"
+        value={start}
+        onChange={(ev) => set(ev.target.value, end)}
+        className={timeFieldClass}
+        aria-label={`${ariaLabel} — inicio`}
+      />
+      <span className="text-subtle-muted">–</span>
+      <input
+        type="time"
+        value={end}
+        onChange={(ev) => set(start, ev.target.value)}
+        className={timeFieldClass}
+        aria-label={`${ariaLabel} — fin`}
+      />
+    </div>
+  );
 }
 
 export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, onCancel, saving }: RosterTemplateEditorProps) {
@@ -177,7 +227,19 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
               </button>
               <Input className="w-20" value={session.sesion} onChange={(e) => patchSession(si, { sesion: e.target.value })} placeholder="S1" />
               <Input className="min-w-[12rem] flex-1" value={session.nombre} onChange={(e) => patchSession(si, { nombre: e.target.value })} placeholder="Nombre sesión" />
-              <Input className="min-w-[10rem]" value={session.dia} onChange={(e) => patchSession(si, { dia: e.target.value })} placeholder="Día" />
+              <select
+                className={cn(selectFieldClass, "w-auto min-w-[9rem]")}
+                value={session.dia}
+                onChange={(e) => patchSession(si, { dia: e.target.value })}
+                aria-label="Día de la sesión"
+              >
+                {!DAYS.includes(session.dia) && session.dia ? (
+                  <option value={session.dia}>{session.dia}</option>
+                ) : null}
+                {DAYS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
               <div className="ml-auto flex gap-1">
                 <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSession(si, -1)} disabled={si === 0} aria-label="Subir sesión"><ChevronUp className="h-3.5 w-3.5" /></Button>
                 <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSession(si, 1)} disabled={si === sessions.length - 1} aria-label="Bajar sesión"><ChevronDown className="h-3.5 w-3.5" /></Button>
@@ -195,14 +257,22 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
                 />
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm">
-                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">Horario competición</span>
-                    <Input value={session.horarioCompeticion} onChange={(e) => patchSession(si, { horarioCompeticion: e.target.value })} />
-                  </label>
-                  <label className="space-y-1 text-sm">
-                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">Horario pesaje</span>
-                    <Input value={session.horarioPesaje} onChange={(e) => patchSession(si, { horarioPesaje: e.target.value })} />
-                  </label>
+                  <div className="space-y-1 text-sm">
+                    <span className="block text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">Horario competición</span>
+                    <TimeRangeInput
+                      value={session.horarioCompeticion}
+                      onChange={(v) => patchSession(si, { horarioCompeticion: v })}
+                      ariaLabel="Horario competición"
+                    />
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <span className="block text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">Horario pesaje</span>
+                    <TimeRangeInput
+                      value={session.horarioPesaje}
+                      onChange={(v) => patchSession(si, { horarioPesaje: v })}
+                      ariaLabel="Horario pesaje"
+                    />
+                  </div>
                 </div>
 
                 <SessionGroupsEditor
@@ -215,29 +285,26 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
                   onPatchGrupoCat={(gi, ci, field, value) => patchGrupoCat(si, gi, ci, field, value)}
                 />
 
-                <RoleRows
-                  title="Roles competición"
-                  accentClass="bg-surface-active"
-                  roles={session.roles}
-                  onChange={(ri, patch) => patchRole(si, "roles", ri, patch)}
-                  onAdd={() => addRole(si, "roles")}
-                  onRemove={(ri) => removeRole(si, "roles", ri)}
-                />
-
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 border-t border-dashed border-border-muted" />
-                  <span className="text-[10px] text-subtle-muted">Pesaje y revisión de equipamiento</span>
-                  <div className="flex-1 border-t border-dashed border-border-muted" />
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <RoleRows
+                    title="Jueces · competición"
+                    accentClass="bg-surface-active"
+                    roles={session.roles}
+                    allowedKeys={COMPETITION_ROLE_KEYS}
+                    onChange={(ri, patch) => patchRole(si, "roles", ri, patch)}
+                    onAdd={() => addRole(si, "roles")}
+                    onRemove={(ri) => removeRole(si, "roles", ri)}
+                  />
+                  <RoleRows
+                    title="Pesaje y control de material"
+                    accentClass="bg-primary/5"
+                    roles={session.pesajeRoles}
+                    allowedKeys={PESAJE_ROLE_KEYS}
+                    onChange={(ri, patch) => patchRole(si, "pesajeRoles", ri, patch)}
+                    onAdd={() => addRole(si, "pesajeRoles")}
+                    onRemove={(ri) => removeRole(si, "pesajeRoles", ri)}
+                  />
                 </div>
-
-                <RoleRows
-                  title="Roles pesaje"
-                  accentClass="bg-primary/5"
-                  roles={session.pesajeRoles}
-                  onChange={(ri, patch) => patchRole(si, "pesajeRoles", ri, patch)}
-                  onAdd={() => addRole(si, "pesajeRoles")}
-                  onRemove={(ri) => removeRole(si, "pesajeRoles", ri)}
-                />
               </div>
             )}
           </div>

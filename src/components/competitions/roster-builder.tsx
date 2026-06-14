@@ -37,7 +37,7 @@ import { CompetitionAvailabilityDialog } from "@/components/competitions/competi
 import { EditCompetitionDialog } from "@/components/competitions/edit-competition-dialog";
 import { RosterCompetitionHeader } from "./roster-competition-header";
 import { RosterRefereePanelLeft } from "./roster-referee-panel";
-import { SessionBlock, SessionOverviewCard } from "./roster-session-block";
+import { SessionBlock, SessionTab } from "./roster-session-block";
 import { collectOpenSlots, describeSlot, findNextOpenSlot, groupSessionsByDay } from "./roster-session-helpers";
 
 interface RosterBuilderProps {
@@ -232,6 +232,10 @@ export function RosterBuilder({
   };
 
   const isDragging = draggedId !== null;
+  // El panel de jueces solo tiene sentido al asignar. Al editar la plantilla (o en
+  // la vista de estructura) estorba y deja el editor apretado: lo ocultamos y damos
+  // el ancho completo al contenido.
+  const showRefereePanel = !isEditing && workflowStep === "asignacion";
   const groupedSessions = useMemo(() => groupSessionsByDay(template), [template]);
   const activeSession = template.find((s) => s.sesion === activeSessionKey) ?? template[0] ?? null;
   const activeSessionPendingSlots = activeSession ? collectOpenSlots(activeSession, assignments) : [];
@@ -276,7 +280,13 @@ export function RosterBuilder({
             <RosterHelpPanel />
             <RosterStepper
               current={isEditing ? "plantilla" : workflowStep}
-              onChange={(step) => { setIsEditing(false); setWorkflowStep(step); }}
+              onChange={(step) => {
+                setWorkflowStep(step);
+                // "Plantilla" = trabajar la ESTRUCTURA. Si ya existe plantilla, abre el
+                // editor de sesiones directamente; antes mostraba la tarima en solo
+                // lectura (lo mismo que Asignación sin el panel de jueces), que no aporta.
+                setIsEditing(step === "plantilla" && totalSlots > 0);
+              }}
               disabled={pending || savingTemplate}
               plantillaDone={plantillaDone}
               asignacionDone={asignacionDone}
@@ -305,8 +315,14 @@ export function RosterBuilder({
             <p className="text-[11px] text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
           </div>
         ) : (
-          <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(0,240px)_1fr] lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]">
-            {(workflowStep === "asignacion" || isEditing) && (
+          <div
+            className={cn(
+              "grid min-h-0 flex-1 grid-cols-1",
+              showRefereePanel &&
+                "md:grid-cols-[minmax(0,240px)_1fr] lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]",
+            )}
+          >
+            {showRefereePanel && (
               <RosterRefereePanelLeft
                 referees={availableReferees} assignedIds={assignedIds}
                 canEdit={canEdit} readOnly={readOnly}
@@ -335,29 +351,30 @@ export function RosterBuilder({
                 <>
                   <div className="border-b border-border px-4 py-2.5">
                     <h2 className="text-sm font-semibold text-foreground-secondary">Fin de semana · {template.length} sesión{template.length !== 1 ? "es" : ""}</h2>
-                    <p className="text-xs text-subtle-muted">Vista global por día arriba; detalle operativo abajo</p>
+                    <p className="text-xs text-subtle-muted">Elige la sesión arriba; trabaja sus huecos abajo sin perder de vista el resto</p>
+                  </div>
+                  <div className="shrink-0 border-b border-border-muted bg-surface/20">
+                    <div className="flex items-center gap-4 overflow-x-auto px-3 py-2">
+                      {groupedSessions.map(([dia, sesiones]) => (
+                        <div key={dia} className="flex shrink-0 items-center gap-2">
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                            {dia}
+                          </span>
+                          {sesiones.map((session) => (
+                            <SessionTab
+                              key={session.sesion}
+                              session={session}
+                              assignments={assignments}
+                              active={activeSession?.sesion === session.sesion}
+                              onClick={() => { setActiveSessionKey(session.sesion); setSelectedSlot(null); }}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto">
-                    <div className="space-y-3 p-3">
-                      <div className="grid gap-3 2xl:grid-cols-2">
-                        {groupedSessions.map(([dia, sesiones]) => (
-                          <section key={dia} className="rounded-xl border border-border-muted bg-surface/30 p-3">
-                            <div className="mb-3 flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-primary" />
-                              <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{dia}</h3>
-                            </div>
-                            <div className="space-y-1.5">
-                              {sesiones.map((session) => (
-                                <SessionOverviewCard
-                                  key={session.sesion} session={session} assignments={assignments}
-                                  active={activeSession?.sesion === session.sesion}
-                                  onClick={() => { setActiveSessionKey(session.sesion); setSelectedSlot(null); }}
-                                />
-                              ))}
-                            </div>
-                          </section>
-                        ))}
-                      </div>
+                    <div className="space-y-2 p-3">
                       {activeSession ? (
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center justify-between gap-2 px-1">
