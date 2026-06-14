@@ -117,6 +117,9 @@ function formatUltimoLabel(iso?: string): string {
   if (!iso) return "—";
   const d = new Date(`${iso}T12:00:00`);
   if (Number.isNaN(d.getTime())) return "—";
+  // Celdas vacías en el Excel se leen como serial 0 → epoch de la hoja (1899/1900).
+  // Ninguna competición real es anterior a 2000, así que lo tratamos como "sin fecha".
+  if (d.getFullYear() < 2000) return "—";
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 }
 
