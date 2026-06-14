@@ -15,23 +15,23 @@ export function cloneRosterRoles(roles: RosterSession["roles"]): RosterSession["
   return roles.map((r) => ({ ...r }));
 }
 
-/** 9 roles competición — AEP-1 (con Jurado×3). */
+/** AEP-1 — jueces de competición AEP-2/3 + Jurado×3. */
 export const COMPETICION_ROLES_AEP1: RosterSession["roles"] = [
   { rol: "Juez Central", slots: 1, key: "central" },
   { rol: "Juez Lateral", slots: 2, key: "lateral" },
   { rol: "Ordenador", slots: 1, key: "ordenador" },
-  { rol: "Speaker / Mesa", slots: 1, key: "speaker" },
+  { rol: "Speaker / Mesa", slots: 2, key: "speaker" },
   { rol: "Juez Control", slots: 1, key: "control" },
   { rol: "Jurado", slots: 3, key: "jurado" },
 ];
 
-/** 6 roles competición — AEP-2/3 (sin Jurado; cuadrantes regionales). */
+/** AEP-2/3 — jueces fijos: central, lateral×2, ordenador, speaker/mesa×2, control. */
 export const COMPETICION_ROLES_AEP2: RosterSession["roles"] = [
   { rol: "Juez Central", slots: 1, key: "central" },
   { rol: "Juez Lateral", slots: 2, key: "lateral" },
   { rol: "Ordenador", slots: 1, key: "ordenador" },
+  { rol: "Speaker / Mesa", slots: 2, key: "speaker" },
   { rol: "Juez Control", slots: 1, key: "control" },
-  { rol: "Speaker / Mesa", slots: 1, key: "speaker" },
 ];
 
 /** Variante AEP-2 con Liftingcast (Intend Power). */
@@ -83,14 +83,14 @@ export const PRESET_AEP1: RosterSession[] = [
 
 /** AEP-2 — 5 sesiones (Intend Power). */
 export const PRESET_AEP2: RosterSession[] = [
-  session("S1", "Sesión 1", "Sábado", [{ genero: "Hombres", pesos: "-83 kg (B) · -83 kg (A)" }], "10:00 - 13:30", "08:00 - 09:30", COMPETICION_ROLES_AEP2_LIFT),
-  session("S2", "Sesión 2", "Sábado", [{ genero: "Mujeres", pesos: "-63 · -69 · -84 kg" }], "14:00 - 17:00", "12:00 - 13:30", COMPETICION_ROLES_AEP2_LIFT),
-  session("S3", "Sesión 3", "Sábado", [{ genero: "Hombres", pesos: "-74 · -105 kg" }], "17:30 - 20:30", "15:30 - 17:00", COMPETICION_ROLES_AEP2_LIFT),
+  session("S1", "Sesión 1", "Sábado", [{ genero: "Hombres", pesos: "-83 kg (B) · -83 kg (A)" }], "10:00 - 13:30", "08:00 - 09:30", COMPETICION_ROLES_AEP2),
+  session("S2", "Sesión 2", "Sábado", [{ genero: "Mujeres", pesos: "-63 · -69 · -84 kg" }], "14:00 - 17:00", "12:00 - 13:30", COMPETICION_ROLES_AEP2),
+  session("S3", "Sesión 3", "Sábado", [{ genero: "Hombres", pesos: "-74 · -105 kg" }], "17:30 - 20:30", "15:30 - 17:00", COMPETICION_ROLES_AEP2),
   session("S4", "Sesión 4", "Domingo", [
     { genero: "Mujeres", pesos: "-57 · -76 · +84 kg" },
     { genero: "Hombres", pesos: "-59 · -66 kg" },
-  ], "10:00 - 13:00", "08:00 - 09:30", COMPETICION_ROLES_AEP2_LIFT),
-  session("S5", "Sesión 5", "Domingo", [{ genero: "Hombres", pesos: "-93 (B/A) · -120 kg" }], "13:30 - 16:30", "11:30 - 13:00", COMPETICION_ROLES_AEP2_LIFT),
+  ], "10:00 - 13:00", "08:00 - 09:30", COMPETICION_ROLES_AEP2),
+  session("S5", "Sesión 5", "Domingo", [{ genero: "Hombres", pesos: "-93 (B/A) · -120 kg" }], "13:30 - 16:30", "11:30 - 13:00", COMPETICION_ROLES_AEP2),
 ];
 
 /** AEP-3 — 3 sesiones (Bollodromo) o 2 (Young Ambition). */
