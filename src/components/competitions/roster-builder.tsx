@@ -37,7 +37,7 @@ import { CompetitionAvailabilityDialog } from "@/components/competitions/competi
 import { EditCompetitionDialog } from "@/components/competitions/edit-competition-dialog";
 import { RosterCompetitionHeader } from "./roster-competition-header";
 import { RosterRefereePanelLeft } from "./roster-referee-panel";
-import { SessionBlock, SessionOverviewCard } from "./roster-session-block";
+import { SessionBlock, SessionTab } from "./roster-session-block";
 import { collectOpenSlots, describeSlot, findNextOpenSlot, groupSessionsByDay } from "./roster-session-helpers";
 
 interface RosterBuilderProps {
@@ -335,29 +335,30 @@ export function RosterBuilder({
                 <>
                   <div className="border-b border-border px-4 py-2.5">
                     <h2 className="text-sm font-semibold text-foreground-secondary">Fin de semana · {template.length} sesión{template.length !== 1 ? "es" : ""}</h2>
-                    <p className="text-xs text-subtle-muted">Vista global por día arriba; detalle operativo abajo</p>
+                    <p className="text-xs text-subtle-muted">Elige la sesión arriba; trabaja sus huecos abajo sin perder de vista el resto</p>
+                  </div>
+                  <div className="shrink-0 border-b border-border-muted bg-surface/20">
+                    <div className="flex items-center gap-4 overflow-x-auto px-3 py-2">
+                      {groupedSessions.map(([dia, sesiones]) => (
+                        <div key={dia} className="flex shrink-0 items-center gap-2">
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                            {dia}
+                          </span>
+                          {sesiones.map((session) => (
+                            <SessionTab
+                              key={session.sesion}
+                              session={session}
+                              assignments={assignments}
+                              active={activeSession?.sesion === session.sesion}
+                              onClick={() => { setActiveSessionKey(session.sesion); setSelectedSlot(null); }}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto">
-                    <div className="space-y-3 p-3">
-                      <div className="grid gap-3 2xl:grid-cols-2">
-                        {groupedSessions.map(([dia, sesiones]) => (
-                          <section key={dia} className="rounded-xl border border-border-muted bg-surface/30 p-3">
-                            <div className="mb-3 flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-primary" />
-                              <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{dia}</h3>
-                            </div>
-                            <div className="space-y-1.5">
-                              {sesiones.map((session) => (
-                                <SessionOverviewCard
-                                  key={session.sesion} session={session} assignments={assignments}
-                                  active={activeSession?.sesion === session.sesion}
-                                  onClick={() => { setActiveSessionKey(session.sesion); setSelectedSlot(null); }}
-                                />
-                              ))}
-                            </div>
-                          </section>
-                        ))}
-                      </div>
+                    <div className="space-y-2 p-3">
                       {activeSession ? (
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center justify-between gap-2 px-1">
