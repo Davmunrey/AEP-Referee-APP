@@ -9,16 +9,31 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 
 const ROLE_KEYS = Object.keys(ROLE_LABELS) as RoleKey[];
 
+// Roles válidos por bloque: en competición la mesa de jueces; en pesaje, el pesaje
+// y el control de material. "ordenador" engloba Liftingcast/OpenLifter.
+export const COMPETITION_ROLE_KEYS: RoleKey[] = [
+  "central",
+  "lateral",
+  "ordenador",
+  "speaker",
+  "control",
+  "jurado",
+];
+export const PESAJE_ROLE_KEYS: RoleKey[] = ["pesaje", "equipamiento"];
+
 interface RoleRowsProps {
   title: string;
   accentClass?: string;
   roles: RosterRole[];
+  /** Limita las opciones del desplegable a estos roles (se conserva el valor actual). */
+  allowedKeys?: RoleKey[];
   onChange: (idx: number, patch: Partial<RosterRole>) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }
 
-export function RoleRows({ title, accentClass, roles, onChange, onAdd, onRemove }: RoleRowsProps) {
+export function RoleRows({ title, accentClass, roles, allowedKeys, onChange, onAdd, onRemove }: RoleRowsProps) {
+  const baseKeys = allowedKeys ?? ROLE_KEYS;
   return (
     <div className="space-y-2">
       <div className={cn("flex items-center justify-between rounded px-2 py-1", accentClass)}>
@@ -31,15 +46,15 @@ export function RoleRows({ title, accentClass, roles, onChange, onAdd, onRemove 
       {roles.map((role, idx) => (
         <div
           key={`${role.key}-${idx}`}
-          className="flex flex-wrap items-center gap-2 rounded border border-border bg-background px-2 py-1.5"
+          className="flex items-center gap-2 rounded border border-border bg-background px-2 py-1.5"
         >
           <select
             value={role.key}
             onChange={(e) => onChange(idx, { key: e.target.value as RoleKey })}
-            className={selectFieldClass}
+            className={cn(selectFieldClass, "w-auto min-w-0 flex-1")}
             aria-label="Rol"
           >
-            {ROLE_KEYS.map((k) => (
+            {(baseKeys.includes(role.key) ? baseKeys : [role.key, ...baseKeys]).map((k) => (
               <option key={k} value={k}>{ROLE_LABELS[k]}</option>
             ))}
           </select>
