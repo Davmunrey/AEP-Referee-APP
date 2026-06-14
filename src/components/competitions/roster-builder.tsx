@@ -349,10 +349,6 @@ export function RosterBuilder({
                 </ScrollArea>
               ) : (
                 <>
-                  <div className="border-b border-border px-4 py-2.5">
-                    <h2 className="text-sm font-semibold text-foreground-secondary">Fin de semana · {template.length} sesión{template.length !== 1 ? "es" : ""}</h2>
-                    <p className="text-xs text-subtle-muted">Elige la sesión arriba; trabaja sus huecos abajo sin perder de vista el resto</p>
-                  </div>
                   <div className="shrink-0 border-b border-border-muted bg-surface/20">
                     <div className="flex items-center gap-4 overflow-x-auto px-3 py-2">
                       {groupedSessions.map(([dia, sesiones]) => (
@@ -377,13 +373,6 @@ export function RosterBuilder({
                     <div className="space-y-2 p-3">
                       {activeSession ? (
                         <div className="space-y-2">
-                          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-subtle-muted">Sesión activa</p>
-                              <h3 className="text-sm font-semibold text-foreground">{activeSession.sesion} · {activeSession.nombre}</h3>
-                            </div>
-                            <p className="text-xs text-subtle-muted">Edita esta sesión sin perder la vista global del fin de semana</p>
-                          </div>
                           {!readOnly && (
                             <div className="rounded-2xl border border-border-muted bg-surface/25 p-3">
                               <div className="mb-2 flex items-center justify-between gap-2">

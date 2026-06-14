@@ -15,10 +15,13 @@ describe("getPresetForEventType", () => {
     expect(aep1.length).toBe(PRESET_AEP1.length);
     expect(aep2.length).toBe(PRESET_AEP2.length);
     expect(aep3.length).toBe(PRESET_AEP3.length);
-    expect(aep1[0]?.roles.some((r) => r.key === "jurado")).toBe(true);
+    // AEP-1 añade Jurado×3; AEP-2/3 no llevan jurado.
+    expect(aep1[0]?.roles.find((r) => r.key === "jurado")?.slots).toBe(3);
     expect(aep2[0]?.roles.some((r) => r.key === "jurado")).toBe(false);
+    // AEP-2/3 al generar: speaker/mesa×2 y sin liftingcast/mesa (ordenador los engloba).
+    expect(aep2[0]?.roles.find((r) => r.key === "speaker")?.slots).toBe(2);
     expect(aep2[0]?.roles.some((r) => r.key === "liftingcast" || r.key === "mesa")).toBe(
-      true,
+      false,
     );
   });
 });
