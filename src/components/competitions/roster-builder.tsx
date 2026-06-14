@@ -232,6 +232,10 @@ export function RosterBuilder({
   };
 
   const isDragging = draggedId !== null;
+  // El panel de jueces solo tiene sentido al asignar. Al editar la plantilla (o en
+  // la vista de estructura) estorba y deja el editor apretado: lo ocultamos y damos
+  // el ancho completo al contenido.
+  const showRefereePanel = !isEditing && workflowStep === "asignacion";
   const groupedSessions = useMemo(() => groupSessionsByDay(template), [template]);
   const activeSession = template.find((s) => s.sesion === activeSessionKey) ?? template[0] ?? null;
   const activeSessionPendingSlots = activeSession ? collectOpenSlots(activeSession, assignments) : [];
@@ -305,8 +309,14 @@ export function RosterBuilder({
             <p className="text-[11px] text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
           </div>
         ) : (
-          <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(0,240px)_1fr] lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]">
-            {(workflowStep === "asignacion" || isEditing) && (
+          <div
+            className={cn(
+              "grid min-h-0 flex-1 grid-cols-1",
+              showRefereePanel &&
+                "md:grid-cols-[minmax(0,240px)_1fr] lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]",
+            )}
+          >
+            {showRefereePanel && (
               <RosterRefereePanelLeft
                 referees={availableReferees} assignedIds={assignedIds}
                 canEdit={canEdit} readOnly={readOnly}
