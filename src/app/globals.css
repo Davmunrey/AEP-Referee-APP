@@ -131,6 +131,24 @@
     background: var(--scrollbar-thumb-hover);
     background-clip: content-box;
   }
+
+  /*
+   * Red de seguridad global de reduced-motion. La app usa animaciones puntuales
+   * (spinners, ping del indicador "en vivo", pulse de skeletons, transiciones de
+   * hover) repartidas por decenas de componentes; sin esto, cada una tendría que
+   * acordarse de respetar la preferencia del usuario. Aquí se neutralizan de una
+   * vez para quienes piden movimiento reducido, sin tocar la UI del resto.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {
@@ -157,18 +175,6 @@
     background: var(--card);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-card);
-  }
-
-  .text-gradient-brand {
-    background: linear-gradient(
-      135deg,
-      var(--gradient-brand-from) 0%,
-      var(--gradient-brand-mid) 50%,
-      var(--gradient-brand-to) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
   }
 
   .nav-glow-active {
