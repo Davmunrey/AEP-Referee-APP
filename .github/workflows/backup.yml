@@ -1,0 +1,74 @@
+name: Backup
+
+# Copia de seguridad lógica (export JSON) de las tablas críticas de Supabase.
+# - Se ejecuta a diario y bajo demanda (workflow_dispatch).
+# - Siempre `create` + `verify`: prueba de forma continua que el backup funciona.
+# - El backup contiene datos personales de jueces, así que NO se sube en claro:
+#   se cifra con GPG (AES256) y solo se sube como artefacto si está configurado
+#   el secret `BACKUP_PASSPHRASE`. Sin ese secret el job sigue siendo un
+#   health-check válido (crea y verifica, pero no retiene nada).
+#
+# Restaurar un artefacto:
+#   gpg --batch --decrypt --passphrase "<BACKUP_PASSPHRASE>" \
+#     aep-backup-XXXX.json.gpg > aep-backup-XXXX.json
+#   node scripts/backup-supabase.mjs verify aep-backup-XXXX.json
+
+on:
+  schedule:
+    # A diario a las 03:17 UTC (minuto no redondo para no saturar el scheduler).
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Supabase backup
+    runs-on: ubuntu-latest
+    # Disponible en todos los steps (incluido el `if` de gating). Las cadenas
+    # vacías indican "secret no configurado"; los secrets se enmascaran en logs.
+    env:
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Create backup
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/backup-supabase.mjs create
+
+      - name: Verify backup integrity
+        run: node scripts/backup-supabase.mjs verify
+
+      - name: Encrypt backup (AES256)
+        if: ${{ env.BACKUP_PASSPHRASE != '' }}
+        run: |
+          shopt -s nullglob
+          for f in backups/*.json; do
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "$BACKUP_PASSPHRASE" \
+              --symmetric --cipher-algo AES256 "$f"
+            rm -f "$f"
+          done
+
+      - name: Upload encrypted backup
+        if: ${{ env.BACKUP_PASSPHRASE != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: aep-backup-${{ github.run_id }}
+          path: backups/*.gpg
+          retention-days: 90
+          if-no-files-found: error
