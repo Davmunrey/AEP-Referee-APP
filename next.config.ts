@@ -44,6 +44,10 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  disableLogger: true,
-  automaticVercelMonitors: false,
+  // En @sentry/nextjs v10 estas opciones se movieron bajo `webpack` (antes
+  // estaban a nivel raíz como disableLogger / automaticVercelMonitors).
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: false,
+  },
 });
