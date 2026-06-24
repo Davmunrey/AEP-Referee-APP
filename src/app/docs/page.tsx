@@ -423,6 +423,20 @@ export default async function DocsPage() {
               portabilidad, escribiendo al Comité de Jueces (ver
               {" "}<a href="#contacto" className="text-primary hover:underline">Contacto</a>).
             </p>
+            <p>
+              <strong>Reclamaciones:</strong> si consideras que el tratamiento de tus datos no se
+              ajusta a la normativa, puedes presentar una reclamación ante la Agencia Española de
+              Protección de Datos (AEPD,
+              {" "}<a
+                href="https://www.aepd.es"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >www.aepd.es</a>).
+            </p>
+            <p className="text-xs text-subtle-muted">
+              Última actualización: {updated}.
+            </p>
           </Section>
 
           <Section id="seguridad" icon={Lock} title="Seguridad">
