@@ -17,7 +17,7 @@ Resumen de la postura de seguridad de la app nativa.
 
 ## Datos y permisos
 - Permisos declarados con su descripción: cámara (escaneo) y Face ID.
-- No se registran datos sensibles (tokens, contraseñas) en logs; el único
+- No se registran datos sensibles (tokens, contraseñas, **IBAN**) en logs; el IBAN de compensación solo existe en la petición de export web y no se persiste en servidor.
   `print` es un error de registro APNs y solo en compilaciones `DEBUG`.
 - La autorización de cada acción se **revalida en el servidor**; el gating por
   rol/zona en la UI es solo de experiencia de usuario.

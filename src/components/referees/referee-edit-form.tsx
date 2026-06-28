@@ -26,6 +26,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
   const [email, setEmail] = useState(referee.email ?? "");
   const [licencia, setLicencia] = useState(referee.licencia ?? "");
   const [localidad, setLocalidad] = useState(referee.localidad ?? "");
+  const [domicilio, setDomicilio] = useState(referee.domicilio ?? "");
   const [telefono, setTelefono] = useState(referee.telefono ?? "");
   const [genero, setGenero] = useState(referee.genero ?? "");
   const [antiguedad, setAntiguedad] = useState(referee.antiguedad ?? "");
@@ -43,6 +44,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     email !== (referee.email ?? "") ||
     licencia !== (referee.licencia ?? "") ||
     localidad !== (referee.localidad ?? "") ||
+    domicilio !== (referee.domicilio ?? "") ||
     telefono !== (referee.telefono ?? "") ||
     genero !== (referee.genero ?? "") ||
     antiguedad !== (referee.antiguedad ?? "") ||
@@ -57,6 +59,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     setEmail(referee.email ?? "");
     setLicencia(referee.licencia ?? "");
     setLocalidad(referee.localidad ?? "");
+    setDomicilio(referee.domicilio ?? "");
     setTelefono(referee.telefono ?? "");
     setGenero(referee.genero ?? "");
     setAntiguedad(referee.antiguedad ?? "");
@@ -80,6 +83,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
         email: email || undefined,
         licencia: licencia || undefined,
         localidad: localidad || undefined,
+        domicilio: domicilio || undefined,
         telefono: telefono || undefined,
         genero: genero || undefined,
         antiguedad: antiguedad || undefined,
@@ -175,6 +179,10 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
             <div>
               <label htmlFor="ref-localidad" className="mb-1 block text-xs font-medium text-foreground-secondary">Localidad</label>
               <Input id="ref-localidad" value={localidad} onChange={(e) => setLocalidad(e.target.value)} />
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="ref-domicilio" className="mb-1 block text-xs font-medium text-foreground-secondary">Domicilio (compensación km)</label>
+              <Input id="ref-domicilio" value={domicilio} onChange={(e) => setDomicilio(e.target.value)} placeholder="Calle, número, ciudad" />
             </div>
             <div>
               <label htmlFor="ref-telefono" className="mb-1 block text-xs font-medium text-foreground-secondary">Teléfono</label>

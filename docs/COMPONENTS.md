@@ -35,12 +35,14 @@
 | `RosterRevisionPanel` | Revisión |
 | `RosterHistoryPanel` | Historial |
 | `CompetitionAvailabilityDialog` | Confirmación disponibilidad jueces |
+| `CompensationBoard` | Tabla compensación por juez, overrides y totales |
+| `CompensationExportDialog` | Modal IBAN efímero → descarga recibo PDF |
 
 ### Sub-componentes RosterBuilder (v1.2)
 
 | Componente | Uso |
 |---|---|
-| `RosterCompetitionHeader` | Cabecera con info competición y acciones |
+| `RosterCompetitionHeader` | Cabecera con info competición, enlace compensación (rol financiero) y acciones |
 | `RequiredSlotsChips` | Resumen plazas requeridas (tarima, mesa, control, pesaje) |
 | `RosterRefereePanel` | Panel jueces con confirm-to-force en conflictos overridable |
 | `RefereeCard` | Tarjeta individual juez con badges y drag |
@@ -70,7 +72,7 @@ La disponibilidad se gestiona a nivel de campeonato (tabla `competition_availabi
 | Componente | Uso |
 |---|---|
 | `RefereesDirectory` | Directorio (con vista card en móvil) |
-| `RefereeEditForm` | Edición |
+| `RefereeEditForm` | Edición (incl. domicilio para compensación km) |
 | `ExamsManager` | Exámenes |
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |

@@ -72,6 +72,10 @@ y añade las piezas nativas (Supabase SDK para auth, GRDB para offline) y la UI.
    login (Supabase) → `/meta` → tabs Campeonatos (`/competitions`) + Perfil
    (toggle Face ID, cerrar sesión).
 
+La web v1.5 añade compensación de jueces (`/competitions/:id/compensation`,
+API `/api/v1/competitions/:id/compensation/*`). El cliente iOS aún no expone esta
+superficie; los modelos y endpoints pueden añadirse en iteraciones futuras.
+
 > El núcleo se puede testear aparte sin el proyecto: `cd AEPTarimaCore && swift test`.
 
 ## Distribución a TestFlight (Fastlane)

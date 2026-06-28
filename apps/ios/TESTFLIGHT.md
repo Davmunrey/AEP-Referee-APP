@@ -6,7 +6,7 @@ secrets**. Esta es la lista de lo que solo puedes hacer tú (cuenta de Apple).
 
 ## 0. Requisito previo: desplegar el backend
 La app habla con `https://aep-tarima.vercel.app/api/v1`. El backend en `main` incluye
-login móvil (`POST /auth/login`), RBAC zonal y APIs de tarima/push.
+login móvil (`POST /auth/login`), RBAC zonal, APIs de tarima/push y compensación de jueces (`/competitions/:id/compensation/*`).
 
 ## 1. Apple Developer + App Store Connect (una vez)
 1. Alta en el **Apple Developer Program** (99 $/año).

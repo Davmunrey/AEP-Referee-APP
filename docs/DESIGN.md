@@ -21,6 +21,8 @@ Fuente verdad:
 - Sidebar expandido para operación normal.
 - Sidebar colapsado solo iconos, sin labels cortados.
 - Tarima usa distribución horizontal: jueces disponibles izquierda, sesiones/slots derecha.
+- Tarima densa: cards de jueces compactas (~más visibles en 14"), slots de cuadrante menos altos.
+- Sin footer legal en dashboard (documentación vía `/docs` y widget Ayuda; footer solo en sign-in).
 - Tablas preview deben permitir scroll interno sin solapar headers.
 
 ## Estados
