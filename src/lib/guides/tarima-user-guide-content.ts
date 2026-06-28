@@ -340,19 +340,6 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
       ],
     },
     {
-      title: "APP MÓVIL (iOS)",
-      steps: [
-        {
-          id: "11.1",
-          title: "Funciones móviles",
-          body: [
-            "La app iOS comparte los mismos datos en tiempo real con la web.",
-            "Incluye Face ID/Touch ID, notificaciones de asignaciones y aprobaciones, modo offline y escaneo de cuadrantes PDF con la cámara.",
-          ],
-        },
-      ],
-    },
-    {
       title: "NAVEGACIÓN Y BARRA LATERAL",
       steps: [
         {

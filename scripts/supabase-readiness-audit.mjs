@@ -61,26 +61,21 @@ if (failures.length === 0) {
     }
   }
 
-  // Migraciones de la app móvil (020/021/022): aviso NO bloqueante si faltan,
-  // para no romper CI pero avisar de que hay que aplicarlas en Supabase.
-  const mobileChecks = [
+  // Migraciones de vinculación juez-usuario y remitente de aprobaciones (021/022):
+  // aviso NO bloqueante si faltan, para no romper CI pero avisar de aplicarlas en Supabase.
+  const schemaChecks = [
     {
-      id: "MOBILE-01",
-      detail: "tabla device_tokens (migración 020) no accesible",
-      run: () => admin.from("device_tokens").select("*", { count: "exact", head: true }),
-    },
-    {
-      id: "MOBILE-02",
+      id: "SCHEMA-01",
       detail: "columna referees.user_id (migración 021) no accesible",
       run: () => admin.from("referees").select("user_id", { head: true }).limit(1),
     },
     {
-      id: "MOBILE-03",
+      id: "SCHEMA-02",
       detail: "columna approval_proposals.submitted_by_id (migración 022) no accesible",
       run: () => admin.from("approval_proposals").select("submitted_by_id", { head: true }).limit(1),
     },
   ];
-  for (const check of mobileChecks) {
+  for (const check of schemaChecks) {
     const { error } = await check.run();
     if (error) warn(check.id, `${check.detail}: ${error.message}`);
   }

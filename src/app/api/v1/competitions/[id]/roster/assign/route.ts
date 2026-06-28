@@ -2,7 +2,6 @@ import { assignRefereeSchema } from "@/lib/validations";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
-import { notifyRefereeAssigned } from "@/server/notifications/notify";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -40,9 +39,6 @@ export async function POST(request: Request, context: RouteContext) {
     parsed.data.crossZoneReason,
   );
   if (result.error) return jsonError(result.error, 400);
-  // Best-effort: avisa al juez asignado si tiene cuenta de usuario (no-op sin APNs).
-  const referee = await dataService.getReferee(parsed.data.refereeId);
-  if (referee?.userId) await notifyRefereeAssigned(referee.userId, comp.nombre, comp.id);
   return jsonOk({
     assignments: result.assignments,
     flags: result.flags,

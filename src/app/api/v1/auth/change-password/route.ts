@@ -1,7 +1,7 @@
+import { createClient } from "@supabase/supabase-js";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createTokenClient } from "@/lib/supabase/token";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { getSupabaseAnonKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 
 /**
@@ -30,16 +30,17 @@ export async function POST(request: Request) {
   }
   if (!user.email) return jsonError("La cuenta no tiene email asociado", 400);
 
-  // Verifica la contraseña actual con un cliente sin sesión (stateless), válido
-  // tanto para la web (cookie) como para el cliente nativo (Bearer).
-  const verifier = createTokenClient();
+  // Verifica la contraseña actual con un cliente sin sesión persistente.
+  const verifier = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const { error: verifyError } = await verifier.auth.signInWithPassword({
     email: user.email,
     password: currentPassword,
   });
   if (verifyError) return jsonError("La contraseña actual no es correcta", 400);
 
-  // Actualiza por id con la service role: funciona aunque no haya cookie (móvil).
+  // Actualiza por id con la service role.
   const admin = createAdminClient();
   const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
     password: newPassword,

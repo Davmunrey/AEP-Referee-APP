@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Award,
   BarChart3,
-  Bell,
   BookOpen,
   Building2,
   CalendarDays,
@@ -19,13 +18,9 @@ import {
   LayoutGrid,
   Lock,
   Mail,
-  ScanFace,
-  ScanLine,
   ShieldCheck,
-  Smartphone,
   TrendingUp,
   Users,
-  WifiOff,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -51,7 +46,6 @@ const tocSections: TocItem[] = [
   { id: "tarima", label: "Flujo de la tarima", internal: true },
   { id: "roles", label: "Roles y permisos", internal: true },
   { id: "niveles", label: "Niveles arbitrales" },
-  { id: "movil", label: "App móvil (iOS)" },
   { id: "faq", label: "Preguntas frecuentes", internal: true },
   { id: "privacidad", label: "Privacidad y datos" },
   { id: "seguridad", label: "Seguridad" },
@@ -178,9 +172,6 @@ export default async function DocsPage() {
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
               <LayoutGrid className="h-3.5 w-3.5 text-primary" /> Web
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
-              <Smartphone className="h-3.5 w-3.5 text-primary" /> App iOS
-            </span>
             <span className="text-subtle-muted">Actualizado: {updated}</span>
           </div>
           {isAuthenticated && <TarimaManualDownloadButton className="mt-4" />}
@@ -213,8 +204,7 @@ export default async function DocsPage() {
               competiciones de powerlifting. Centraliza el censo de jueces, la planificación de
               las tarimas (cuadrantes de cada sesión), las aprobaciones del Comité, los exámenes,
               los ascensos de nivel, las sanciones y los informes. El acceso está restringido a
-              cuentas autorizadas por el Comité de Jueces y está disponible tanto en web como en
-              app nativa de iOS, sobre los mismos datos en tiempo real.
+              cuentas autorizadas por el Comité de Jueces.
             </p>
           </Section>
 
@@ -235,8 +225,8 @@ export default async function DocsPage() {
           <Section id="uso" icon={BookOpen} title="Guía de uso paso a paso">
             <ol className="space-y-5">
               <Step n={1} title="Inicia sesión">
-                Accede con tu correo y contraseña autorizados. En la app iOS puedes activar Face ID
-                para entrar más rápido. ¿Olvidaste la contraseña? Usa el enlace de recuperación.
+                Accede con tu correo y contraseña autorizados. ¿Olvidaste la contraseña? Usa el
+                enlace de recuperación.
               </Step>
               <Step n={2} title="Revisa el panel de inicio">
                 El Dashboard resume la cobertura global, la salud operativa, los avisos y los
@@ -251,8 +241,7 @@ export default async function DocsPage() {
                 plaza y elige al juez). El indicador de cobertura te muestra el % completado.
               </Step>
               <Step n={5} title="Envía a aprobación">
-                Cuando la tarima esté completa, envíala al Comité de Jueces. Recibirás una
-                notificación cuando se apruebe o se rechace.
+                Cuando la tarima esté completa, envíala al Comité de Jueces para su revisión.
               </Step>
               <Step n={6} title="Gestiona el censo">
                 En «Jueces», da de alta o edita fichas y registra exámenes, informes y sanciones.
@@ -353,16 +342,6 @@ export default async function DocsPage() {
             </p>
           </Section>
 
-          <Section id="movil" icon={Smartphone} title="App móvil (iOS)">
-            <p>La app nativa de iOS ofrece, además de todas las pantallas de gestión:</p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <FeatureCard icon={ScanFace} title="Face ID / Touch ID" desc="Acceso rápido y seguro con biometría." />
-              <FeatureCard icon={Bell} title="Notificaciones" desc="Avisos de asignaciones y aprobaciones." />
-              <FeatureCard icon={WifiOff} title="Modo offline" desc="Consulta de datos en caché sin conexión." />
-              <FeatureCard icon={ScanLine} title="Escaneo" desc="Captura de cuadrantes en PDF con la cámara." />
-            </div>
-          </Section>
-
           {isAuthenticated && (
           <Section id="faq" icon={BookOpen} title="Preguntas frecuentes">
             <div className="space-y-2">
@@ -374,10 +353,6 @@ export default async function DocsPage() {
                 {
                   q: "¿Por qué no puedo editar un campeonato de otra zona?",
                   a: "Los delegados de zona solo gestionan los datos de su propia zona. El Comité de Jueces tiene alcance nacional.",
-                },
-                {
-                  q: "¿Los datos del móvil y la web son los mismos?",
-                  a: "Sí. Ambas aplicaciones usan el mismo backend, así que los cambios se reflejan en tiempo real.",
                 },
                 {
                   q: "¿Cómo se sanciona a un juez?",
@@ -405,9 +380,8 @@ export default async function DocsPage() {
             <p>
               <strong>Datos tratados:</strong> datos identificativos y de contacto de los jueces
               (nombre, correo, teléfono, localidad, número de licencia), datos federativos (zona,
-              nivel arbitral, historial de eventos, exámenes, ascensos y sanciones), datos de las
-              cuentas de acceso y, en la app móvil si se activan, el token de notificaciones del
-              dispositivo.
+              nivel arbitral, historial de eventos, exámenes, ascensos y sanciones) y datos de las
+              cuentas de acceso.
             </p>
             <p>
               <strong>Finalidad:</strong> organizar el arbitraje de las competiciones y mantener el
@@ -450,8 +424,6 @@ export default async function DocsPage() {
             <ul className="grid gap-2 sm:grid-cols-2">
               {[
                 { icon: Lock, t: "Cifrado HTTPS/TLS en todo el tráfico." },
-                { icon: KeyRound, t: "Autenticación gestionada por Supabase; sin contraseñas en claro." },
-                { icon: ScanFace, t: "Sesión en el Llavero del iPhone, con Face ID opcional." },
                 { icon: ShieldCheck, t: "Control por rol y zona revalidado en el servidor." },
               ].map((it) => (
                 <li key={it.t} className="flex items-start gap-2 rounded-lg border border-border bg-card p-3">

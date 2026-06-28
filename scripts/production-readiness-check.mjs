@@ -59,9 +59,6 @@ const publicApi = new Set([
 // RBAC porque solo operan sobre la cuenta del propio llamante.
 const selfServiceApi = new Set([
   "src/app/api/v1/auth/change-password/route.ts",
-  // Registro/baja de tokens APNs del propio dispositivo del llamante (push).
-  "src/app/api/v1/devices/route.ts",
-  "src/app/api/v1/devices/[token]/route.ts",
 ]);
 
 for (const file of apiRoutes) {

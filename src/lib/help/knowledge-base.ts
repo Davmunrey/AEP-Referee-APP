@@ -59,7 +59,7 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     question: "¿Cómo inicio sesión?",
     keywords: ["acceso", "entrar", "login", "correo", "email", "contrasena", "iniciar sesion"],
     answer:
-      "Accede con tu correo y contraseña autorizados por el Comité de Jueces. En la app iOS puedes activar Face ID para entrar más rápido.",
+      "Accede con tu correo y contraseña autorizados por el Comité de Jueces.",
     links: [{ label: "Documentación", href: "/docs" }],
   },
   {
@@ -112,7 +112,7 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     question: "¿Cómo envío la tarima a aprobación?",
     keywords: ["enviar", "aprobacion", "propuesta", "tarima", "comite", "remitir", "mandar"],
     answer:
-      "Cuando la tarima esté completa, pulsa «Enviar a aprobación» en la cabecera. El Comité de Jueces la revisará y recibirás una notificación cuando se apruebe o se rechace.",
+      "Cuando la tarima esté completa, pulsa «Enviar a aprobación» en la cabecera. El Comité de Jueces la revisará y podrás ver el resultado en la aplicación.",
     roles: ["super_admin", "delegado_jueces", "delegado_zona"],
   },
   {
@@ -191,35 +191,6 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     answer:
       "Los delegados de zona solo gestionan los campeonatos y jueces de su propia zona. El Comité de Jueces y el Super Admin tienen alcance nacional. «Solo lectura» consulta sin modificar. Los permisos se revalidan en el servidor en cada operación.",
     links: [{ label: "Roles y permisos", href: "/docs#roles" }],
-  },
-  {
-    id: "ios-app",
-    question: "¿Cómo funciona la app de iOS?",
-    keywords: ["app", "movil", "ios", "iphone", "ipad", "nativa", "face id", "biometria", "instalar"],
-    answer:
-      "La app nativa de iOS usa los mismos datos que la web en tiempo real, y añade Face ID, notificaciones push, modo offline y escaneo de cuadrantes con la cámara. Se distribuye por TestFlight a las cuentas autorizadas.",
-    links: [{ label: "App móvil", href: "/docs#movil" }],
-  },
-  {
-    id: "notifications",
-    question: "¿Recibiré notificaciones?",
-    keywords: ["notificacion", "notificaciones", "aviso", "avisos", "push", "alerta", "asignacion", "aprobacion"],
-    answer:
-      "Sí. En la app iOS recibes avisos cuando se te asigna a una tarima y cuando se resuelve una propuesta de aprobación. Los cambios se reflejan en tiempo real entre web y móvil.",
-  },
-  {
-    id: "offline",
-    question: "¿Puedo usar la app sin conexión?",
-    keywords: ["offline", "sin conexion", "internet", "cache", "avion", "desconectado"],
-    answer:
-      "La app iOS guarda en caché los datos recientes (jueces, campeonatos, normativa) para consultarlos sin conexión, con un aviso de «datos en caché». Las ediciones de tarima y aprobaciones requieren conexión.",
-  },
-  {
-    id: "data-mobile-web",
-    question: "¿Los datos del móvil y la web son los mismos?",
-    keywords: ["datos", "movil", "web", "sincronizado", "tiempo real", "mismo", "iguales"],
-    answer:
-      "Sí. Ambas aplicaciones usan el mismo backend, así que cualquier cambio se refleja en tiempo real en las dos.",
   },
   {
     id: "privacy",
