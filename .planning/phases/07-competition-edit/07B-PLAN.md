@@ -2,6 +2,8 @@
 plan_id: 07B
 phase: "07"
 wave: 2
+status: completed
+superseded_by: v1.8
 depends_on: [07A]
 files_modified:
   - src/components/competitions/edit-competition-dialog.tsx
