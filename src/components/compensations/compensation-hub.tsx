@@ -26,6 +26,7 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useAppDataSync } from "@/hooks/use-app-data-sync";
 import { api } from "@/lib/api/client";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
@@ -50,6 +51,8 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
       }
     });
   }, []);
+
+  useAppDataSync(refresh);
 
   const { items, totalPendingKm, readyCount } = hub;
 
