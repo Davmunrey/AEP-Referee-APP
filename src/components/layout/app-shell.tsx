@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import type { SessionUser } from "@/lib/types";
 import { HelpWidget } from "@/components/help/help-widget";
+import { AppRealtimeSync } from "@/components/realtime/app-realtime-sync";
+import { useAppDataSync } from "@/hooks/use-app-data-sync";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 
@@ -34,11 +36,9 @@ export function AppShell({
     setLiveNavCounts(navCounts);
   }, [navCounts]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const refreshNavCounts = useCallback(() => {
     void Promise.all([api.getCompetitions(), api.getApprovals()])
       .then(([competitions, approvals]) => {
-        if (cancelled) return;
         setLiveNavCounts({
           competitions: competitions.length,
           approvals: approvals.filter((a) => a.status === "pendiente").length,
@@ -48,10 +48,13 @@ export function AppShell({
       .catch(() => {
         // Mantener contadores del servidor si la API falla (sesión expirada, etc.).
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname, navCounts]);
+  }, []);
+
+  useEffect(() => {
+    refreshNavCounts();
+  }, [pathname, navCounts, refreshNavCounts]);
+
+  useAppDataSync(refreshNavCounts);
 
   useEffect(() => {
     try {
@@ -96,6 +99,7 @@ export function AppShell({
           {children}
         </main>
       </div>
+      <AppRealtimeSync />
       <HelpWidget user={currentUser} />
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useAppDataSync } from "@/hooks/use-app-data-sync";
 import { useRouter } from "next/navigation";
 import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
@@ -130,6 +131,22 @@ export function RosterBuilder({
   const refreshCompetitionList = () => {
     router.refresh();
   };
+
+  const syncRosterFromServer = useCallback(() => {
+    if (isEditing || pending) return;
+    void Promise.all([api.getRoster(competition.id), api.getCompetition(competition.id)])
+      .then(([roster, comp]) => {
+        setTemplate(roster.template);
+        setAssignments(roster.assignments);
+        setFlags(roster.flags);
+        setAprobacion(comp.aprobacion);
+      })
+      .catch(() => {
+        // Mantener estado local si la sesión expiró o hay error de red.
+      });
+  }, [competition.id, isEditing, pending]);
+
+  useAppDataSync(syncRosterFromServer);
 
   const handleUnlockImprevisto = () => {
     if (

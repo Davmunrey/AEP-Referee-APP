@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 import { Pause, Play, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-
-const REFRESH_MS = 60_000;
+import { APP_DATA_SYNC_EVENT } from "@/lib/realtime/sync-events";
 
 function relativeLabel(seconds: number): string {
   if (seconds < 5) return "ahora mismo";
@@ -15,8 +14,7 @@ function relativeLabel(seconds: number): string {
 }
 
 /**
- * Barra de control en vivo — el panel se retroalimenta solo.
- * Refresca el árbol de servidor cada 60 s vía router.refresh().
+ * Barra de control en vivo — refleja la sincronización global (AppRealtimeSync).
  */
 export function DashboardLive({ generatedAt }: { generatedAt: string }) {
   const router = useRouter();
@@ -25,10 +23,14 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
   const [elapsed, setElapsed] = useState(0);
   const baseRef = useRef(Date.now());
 
-  useEffect(() => {
+  const markSynced = useCallback(() => {
     baseRef.current = Date.now();
     setElapsed(0);
-  }, [generatedAt]);
+  }, []);
+
+  useEffect(() => {
+    markSynced();
+  }, [generatedAt, markSynced]);
 
   const refresh = useCallback(() => {
     startTransition(() => router.refresh());
@@ -43,9 +45,10 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
 
   useEffect(() => {
     if (!auto) return;
-    const id = setInterval(refresh, REFRESH_MS);
-    return () => clearInterval(id);
-  }, [auto, refresh]);
+    const onSync = () => markSynced();
+    window.addEventListener(APP_DATA_SYNC_EVENT, onSync);
+    return () => window.removeEventListener(APP_DATA_SYNC_EVENT, onSync);
+  }, [auto, markSynced]);
 
   return (
     <div
