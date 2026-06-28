@@ -107,7 +107,7 @@ async function persistClaim(claim: CompensationClaim): Promise<void> {
   const supabase = db();
   const row = claimToDbRow(claim);
   const { error } = await supabase.from("judge_compensation_claims").upsert(row);
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 
   await supabase.from("judge_compensation_duty_lines").delete().eq("claim_id", claim.id);
   if (claim.dutyLines.length > 0) {
@@ -124,7 +124,7 @@ async function persistClaim(claim: CompensationClaim): Promise<void> {
       slot_keys: line.slotKeys,
     }));
     const { error: lineError } = await supabase.from("judge_compensation_duty_lines").insert(lines);
-    if (lineError) throw lineError;
+    if (lineError) throw new Error(lineError.message);
   }
 }
 
