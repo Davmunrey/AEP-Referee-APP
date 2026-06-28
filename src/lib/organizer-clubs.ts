@@ -1,4 +1,4 @@
-import registry from "./aep-clubs-registry.json";
+import { AEP_CLUBS_CURATED } from "./aep-clubs-curated";
 
 export interface AepClubRecord {
   region: string;
@@ -9,11 +9,20 @@ export interface AepClubRecord {
   email: string;
 }
 
-export const AEP_CLUBS_REGISTRY = registry as {
-  source: string;
-  updatedAt: string;
-  count: number;
-  clubs: AepClubRecord[];
+export const AEP_CLUBS_REGISTRY = {
+  source: "Listado curado AEP (junio 2026)",
+  updatedAt: "2026-06-28",
+  count: AEP_CLUBS_CURATED.length,
+  clubs: AEP_CLUBS_CURATED.map(
+    (club): AepClubRecord => ({
+      region: "",
+      province: "",
+      locality: "",
+      name: club.name.trim(),
+      responsible: "",
+      email: club.email.trim().toLowerCase(),
+    }),
+  ),
 };
 
 /** Normaliza nombre de club para búsqueda/autocompletado. */

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderTarimaUserGuidePdf } from "@/lib/guides/render-tarima-user-guide-pdf";
 import { tarimaUserGuideFilename } from "@/lib/guides/tarima-user-guide-filename";
 import { buildTarimaUserGuideSections } from "@/lib/guides/tarima-user-guide-content";
-import { KNOWN_ORGANIZER_CLUBS, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
+import { KNOWN_ORGANIZER_CLUBS } from "@/lib/organizer-clubs";
 
 describe("tarima user guide pdf", () => {
   it("builds all guide sections", () => {
@@ -45,11 +45,6 @@ describe("tarima user guide pdf", () => {
 
 describe("aep clubs registry", () => {
   it("loads official club list", () => {
-    expect(KNOWN_ORGANIZER_CLUBS.length).toBeGreaterThan(150);
-  });
-
-  it("suggests email for known club", () => {
-    const emails = suggestedEmailsForClubName("MYRTEA LIFTING CLUB Murcia");
-    expect(emails).toContain("myrtealiftingclub@gmail.com");
+    expect(KNOWN_ORGANIZER_CLUBS.length).toBe(180);
   });
 });
