@@ -8,35 +8,25 @@
 
 | Bloque | Progreso | Notas |
 |---|---|---|
-| A. Supabase prod | Pendiente acción manual | Migración 023 |
-| B. Compensación jueces | ~35 % | Lib + export PDF + rol financiero |
-| C. UI tarima (densidad) | En curso | Footer fuera de app, cards compactas |
-| D. E2E profundo | 0 % | Tras compensación UI |
+| A. Supabase prod | ✅ Hecho | 023, 024, 025 aplicadas vía MCP (2026-06-28) |
+| B. Compensación jueces | ~90 % | Servicios, API, UI, export PDF; falta E2E |
+| C. UI tarima (densidad) | ✅ Hecho | Footer fuera de app, cards compactas |
+| D. E2E profundo | 0 % | Tras E2E smoke compensación |
 | E. Sustitución xlsx | 0 % | Backlog técnico |
 
 ---
 
-## A. Acción Supabase (producción)
+## A. Acción Supabase (producción) — ✅ COMPLETADO
 
-### A1. Migración 023 — comentario rechazo ascensos
+Migraciones aplicadas en proyecto `foaemadggmpbcrhtpems` (eu-west-2) el 2026-06-28:
 
-**Archivo:** `supabase/migrations/023_promotion_review_comment.sql`
+| Migración | Nombre MCP | Contenido |
+|---|---|---|
+| 023 | `promotion_review_comment` | `review_comment` en ascensos |
+| 024 | `judge_compensation` | Claims, duty lines, domicilio, sede |
+| 025 | `financial_role_and_receipt` | Rol financiero + metadatos recibo |
 
-```sql
-ALTER TABLE promotion_requests
-  ADD COLUMN IF NOT EXISTS review_comment TEXT;
-```
-
-**Pasos en Supabase Dashboard → SQL Editor (producción):**
-
-1. Ejecutar el SQL de arriba (idempotente con `IF NOT EXISTS`).
-2. Verificar: `SELECT column_name FROM information_schema.columns WHERE table_name = 'promotion_requests' AND column_name = 'review_comment';`
-3. Probar en app: rechazar un ascenso con comentario → debe persistir y mostrarse.
-
-**También pendientes en prod (cuando toque compensación):**
-
-- `024_judge_compensation.sql` — tablas claims, domicilio, sede
-- `025_financial_role_and_receipt.sql` — rol `responsable_financiero_jueces`, metadatos recibo
+Verificación: `list_migrations` en Supabase MCP confirma las tres entradas.
 
 ---
 
@@ -55,19 +45,19 @@ Responsable: **`responsable_financiero_jueces`** (no delegado zona / delegado ju
 - [x] API `POST …/compensation/:refereeId/export`
 - [x] Tests unitarios baremo + recibo + RBAC
 
-### B2. Pendiente (orden)
+### B2. Hecho (2026-06-28)
 
-| # | Tarea | Archivos / rutas |
+| # | Tarea | Estado |
 |---|---|---|
-| B2.1 | Servicio Supabase + memoria para claims | `supabase-compensation.ts`, `dataService` |
-| B2.2 | API GET lista, POST recalculate, PATCH overrides, POST distance | `/api/v1/competitions/:id/compensation/*` |
-| B2.3 | UI `/competitions/[id]/compensation` | Tabla jueces, totales, overrides km/alojamiento |
-| B2.4 | Modal export: campo IBAN efímero → descarga PDF | Sin persistir |
-| B2.5 | Form campeonato: organizer club/AEP, email devolución | `edit-competition-dialog` |
-| B2.6 | Ficha juez: campo domicilio (geocodificación) | `referee-edit-form` |
-| B2.7 | Enlace «Compensación» en cabecera tarima | Solo rol financiero |
-| B2.8 | E2E smoke `compensation.spec.ts` | Playwright autenticado |
-| B2.9 | Aplicar 024 + 025 en producción | Tras revisar RLS |
+| B2.1 | Servicio Supabase + memoria para claims | ✅ |
+| B2.2 | API GET lista, POST recalculate, PATCH overrides, POST distance | ✅ |
+| B2.3 | UI `/competitions/[id]/compensation` | ✅ |
+| B2.4 | Modal export: campo IBAN efímero → descarga PDF | ✅ |
+| B2.5 | Config organizer en página compensación | ✅ |
+| B2.6 | Ficha juez: campo domicilio | ✅ |
+| B2.7 | Enlace «Compensación» en cabecera tarima | ✅ |
+| B2.8 | E2E smoke `compensation.spec.ts` | Pendiente |
+| B2.9 | Aplicar 024 + 025 en producción | ✅ |
 
 ### B3. Reglas de negocio (recordatorio)
 
@@ -136,25 +126,22 @@ Flujo completo Playwright:
 ## Orden de ejecución recomendado
 
 ```
-A1 (023 en prod)  ──►  C (UI tarima)  ──►  B2 (compensación end-to-end)
+A (023–025 en prod) ✅  ──►  C (UI tarima) ✅  ──►  B2 (compensación) ~90%
                               │                        │
-                              └──────────►  D (E2E profundo)
+                              └──────────►  D (E2E profundo) pendiente
                                                     │
                                             E (xlsx) en paralelo bajo demanda
 ```
 
-1. **Ahora:** aplicar 023 en Supabase prod (acción manual).
-2. **Esta semana:** terminar C + B2.1–B2.4 (servicios, API, UI compensación, modal IBAN).
-3. **Siguiente:** B2.5–B2.9, D (E2E), migraciones 024/025 en prod.
-4. **Cuando haya tiempo:** E (xlsx).
+**Siguiente:** B2.8 E2E smoke compensación, D (E2E profundo), E (xlsx).
 
 ---
 
 ## Criterios de «hecho» v1.5
 
-- [ ] 023 aplicada en producción
-- [ ] Responsable financiero puede: ver tarima → calcular → exportar recibo con IBAN puntual
-- [ ] Sin footer en app autenticada; docs accesibles desde Ayuda
-- [ ] Panel jueces muestra ≥6–8 filas visibles en laptop 1366×768
+- [x] 023–025 aplicadas en producción
+- [x] Responsable financiero puede: ver tarima → calcular → exportar recibo con IBAN puntual
+- [x] Sin footer en app autenticada; docs accesibles desde Ayuda
+- [x] Panel jueces más denso (cards compactas, slots menores)
 - [ ] E2E import → cuadrante → export pasa en CI
-- [ ] 024 + 025 aplicadas antes de usar compensación en prod
+- [ ] E2E smoke compensación pasa en CI

@@ -16,6 +16,8 @@ Supabase Postgres. Migraciones en `supabase/migrations`.
 | `roster_assignments` | 008 | Slots asignados |
 | `approval_proposals` | 001 | Propuestas aprobación |
 | `promotion_requests` | 001, 023 | Ascensos + `review_comment` al rechazar |
+| `judge_compensation_claims` | 024 | Compensación por juez × campeonato |
+| `judge_compensation_duty_lines` | 024 | Desglose sesión/pesaje por claim |
 | `exams` | 001 | Exámenes |
 | `reports` | 001 | Informes |
 | `regulation_rules` | 001 | Normativa |
@@ -46,6 +48,26 @@ ALTER TABLE promotion_requests ADD COLUMN IF NOT EXISTS review_comment TEXT;
 ```
 
 Persiste el motivo de rechazo al revisar ascensos (obligatorio en API cuando `approve: false`).
+
+### Compensación de jueces (migrations 024–025)
+
+**024** — tablas y geolocalización:
+
+| Tabla / columna | Uso |
+|---|---|
+| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Origen desplazamiento |
+| `competitions.sede_direccion`, `sede_lat`, `sede_lng`, `ambito` | Destino; baremo |
+| `judge_compensation_claims` | Una fila por juez × campeonato (sin IBAN) |
+| `judge_compensation_duty_lines` | Desglose sesión/pesaje |
+
+**025** — rol financiero y metadatos del recibo:
+
+- Enum `user_role`: valor `responsable_financiero_jueces`
+- `competitions.compensation_organizer`, `compensation_club_name`, `compensation_club_email`, `compensation_volunteer`
+
+**Estado producción (2026-06-28):** migraciones `023`, `024` y `025` aplicadas en proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
+
+Detalle funcional: [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
 
 ## RLS
 

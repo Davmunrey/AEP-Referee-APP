@@ -1,39 +1,43 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: production-hardening
-status: completed
-last_updated: "2025-06-28"
-last_activity: 2025-06-28 — audit completo, multi-temporada, docs actualizados
+milestone: v1.5
+milestone_name: compensation-and-ui
+status: in_progress
+last_updated: "2026-06-28"
+last_activity: 2026-06-28 — compensación E2E (servicios, API, UI), migraciones 023–025 en prod, tarima densa
 progress:
-  total_phases: 10
-  completed_phases: 10
-  percent: 100
+  total_phases: 5
+  completed_phases: 3
+  percent: 60
 ---
 
 ## Current Position
 
-Phase: 10 — Production hardening
-Status: Complete on `main`
-Last activity: Roster rules, zone scoping, login server-side, multi-year season utils, 298 tests
+Phase: 08 — Backlog detallado (compensación + UI tarima)
+Status: In progress on `main`
+Last activity: Migraciones 023–025 aplicadas en Supabase prod; compensación servicios+API+UI; tarima densa; 312 tests
 
-## Completed (v1.4)
+## Completed (v1.5 parcial)
 
-- Roster: plazas requeridas, conflictos misma sesión, confirm-to-force *, merge import horario parcial
-- Audit fixes: slotKey parsing, RBAC zona, PATCH whitelist, sanction bypass, promotion downgrade guard
-- Dashboard/analytics: scope zonal para `delegado_zona`
-- Auth: `POST /auth/login` server-side; rate-limit no manipulable
-- Multi-temporada: `src/lib/season.ts`; UI sin año fijo
-- DB: migration `023_promotion_review_comment`
-- Docs: README + `docs/*` + iOS actualizados
+- Supabase prod: `023` review_comment, `024` judge_compensation, `025` financial_role_and_receipt
+- Compensación: lib baremo, servicios supabase/memoria, API CRUD+export, UI board+modal IBAN
+- Rol `responsable_financiero_jueces` + enlace compensación en cabecera tarima
+- UI tarima: footer fuera de dashboard, cards/slots más densos
+- Ficha juez: campo domicilio
+- Docs: README + `docs/*` actualizados
+
+## Pending
+
+- E2E smoke `compensation.spec.ts`
+- E2E profundo import → cuadrante → export
+- Sustitución librería `xlsx`
 
 ## Key Decisions
 
+- IBAN efímero: solo en POST export, nunca en BD
+- Compensación gestionada por responsable financiero, no delegados
 - Temporada deportiva: julio+ → etiqueta año siguiente (`currentSeasonYear`)
-- Datos multi-año por fechas ISO; documentos normativos por archivo (`aep-guide-YYYY`)
-- `countOpenSlots` ignora claves huérfanas; assign revalida post-upsert (TOCTOU mitigado)
-- Guías normativas AEP permanecen versionadas por año de publicación
 
 ## Blockers/Concerns
 
-None for current release. Pendiente: E2E profundo import→export, sustitución `xlsx`.
+None for current release. E2E compensación y xlsx en backlog.

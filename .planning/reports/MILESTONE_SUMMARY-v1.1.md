@@ -1,3 +1,11 @@
+# Milestone Summary — v1.5 Compensation & UI (en curso)
+
+**Started:** 2026-06-28 · **Branch:** `main` · **Tests:** 312
+
+Compensación de gastos end-to-end (rol financiero, servicios, API, UI, export PDF con IBAN efímero), migraciones 023–025 en Supabase prod, UI tarima más densa, footer fuera del dashboard. Pendiente: E2E smoke compensación y E2E profundo.
+
+---
+
 # Milestone Summary — v1.4 Production Hardening
 
 **Completed:** 2025-06-28 · **Branch:** `main` · **Tests:** 298
