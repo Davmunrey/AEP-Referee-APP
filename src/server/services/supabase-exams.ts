@@ -36,12 +36,15 @@ export const examsService = {
     return (data ?? []).map((r) => mapPromotion(r as Record<string, unknown>));
   },
 
-  reviewPromotion: async (id: string, approve: boolean, reviewer: string) => {
+  reviewPromotion: async (id: string, approve: boolean, reviewer: string, comment?: string) => {
     const supabase = db();
     const { data: req } = await supabase.from("promotion_requests").select("*").eq("id", id).single();
     if (!req || req.status !== "pendiente") return undefined;
     const status = approve ? "aprobado" : "rechazado";
-    await supabase.from("promotion_requests").update({ status }).eq("id", id);
+    await supabase
+      .from("promotion_requests")
+      .update({ status, review_comment: comment ?? null })
+      .eq("id", id);
     if (approve) {
       // Solo aplica el ascenso si sigue siendo una subida frente al nivel ACTUAL
       // del juez (evita degradar si su nivel cambió tras crear la solicitud).

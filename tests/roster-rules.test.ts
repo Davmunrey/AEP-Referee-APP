@@ -4,7 +4,10 @@ import {
   validateAssignment,
   validateRosterOperation,
   countOpenSlots,
+  isSlotKeyInTemplate,
 } from "@/lib/roster-rules";
+import { cloneTemplate, enumerateSlotKeys } from "@/lib/roster-template";
+import { PRESET_AEP1 } from "@/lib/mock-data";
 import type { Referee, RosterSession } from "@/lib/types";
 
 function referee(over: Partial<Referee> = {}): Referee {
@@ -256,30 +259,36 @@ describe("validateRosterOperation", () => {
 });
 
 describe("countOpenSlots", () => {
-  const template = [
-    { roles: [{ slots: 3 }, { slots: 2 }] }, // 5 slots
-    { roles: [{ slots: 4 }] }, // 4 slots -> 9 total
-  ];
+  const tpl = cloneTemplate(PRESET_AEP1).slice(0, 2);
+  const totalSlots = enumerateSlotKeys(tpl).length;
 
   it("returns the total slot count when nothing is assigned", () => {
-    expect(countOpenSlots(template, {})).toBe(9);
+    expect(countOpenSlots(tpl, {})).toBe(totalSlots);
   });
 
   it("subtracts non-empty assignments from the total", () => {
-    const assignments = { a: "ref1", b: "ref2", c: "ref3" };
-    expect(countOpenSlots(template, assignments)).toBe(6);
+    const keys = enumerateSlotKeys(tpl);
+    const assignments = Object.fromEntries(keys.slice(0, 3).map((k) => [k, "ref1"]));
+    expect(countOpenSlots(tpl, assignments)).toBe(totalSlots - 3);
   });
 
   it("ignores empty-string assignments", () => {
-    const assignments = { a: "ref1", b: "", c: "ref2" };
-    expect(countOpenSlots(template, assignments)).toBe(7);
+    const keys = enumerateSlotKeys(tpl);
+    const assignments: Record<string, string> = {
+      [keys[0]!]: "ref1",
+      [keys[1]!]: "",
+      [keys[2]!]: "ref2",
+    };
+    expect(countOpenSlots(tpl, assignments)).toBe(totalSlots - 2);
   });
 
   it("never returns a negative count when over-assigned", () => {
-    const assignments = Object.fromEntries(
-      Array.from({ length: 20 }, (_, i) => [`k${i}`, `ref${i}`]),
+    const keys = enumerateSlotKeys(tpl);
+    const extra = Object.fromEntries(
+      Array.from({ length: 20 }, (_, i) => [`orphan_${i}`, `ref${i}`]),
     );
-    expect(countOpenSlots(template, assignments)).toBe(0);
+    const assignments = Object.fromEntries(keys.map((k) => [k, "ref-fill"])) ;
+    expect(countOpenSlots(tpl, { ...assignments, ...extra })).toBe(0);
   });
 
   it("returns 0 for an empty template", () => {
@@ -287,13 +296,25 @@ describe("countOpenSlots", () => {
   });
 
   it("counts pesaje slots in open slots", () => {
-    const withPesaje = [
-      {
-        roles: [{ slots: 1 }],
-        pesajeRoles: [{ slots: 2 }],
-      },
-    ];
-    expect(countOpenSlots(withPesaje, {})).toBe(3);
-    expect(countOpenSlots(withPesaje, { a: "r1" })).toBe(2);
+    const withPesaje = cloneTemplate(PRESET_AEP1).slice(0, 1);
+    const required = enumerateSlotKeys(withPesaje).length;
+    const oneKey = enumerateSlotKeys(withPesaje)[0]!;
+    expect(countOpenSlots(withPesaje, { [oneKey]: "r1" })).toBe(required - 1);
+  });
+
+  it("ignores orphan assignment keys not in the template", () => {
+    const tpl = cloneTemplate(PRESET_AEP1).slice(0, 1);
+    const validKey = enumerateSlotKeys(tpl)[0]!;
+    const assignments = { [validKey]: "ref-1", S99_central_0: "ref-orphan" };
+    expect(countOpenSlots(tpl, assignments)).toBe(enumerateSlotKeys(tpl).length - 1);
+  });
+});
+
+describe("isSlotKeyInTemplate", () => {
+  it("accepts valid keys and rejects unknown ones", () => {
+    const tpl = cloneTemplate(PRESET_AEP1).slice(0, 1);
+    const validKey = enumerateSlotKeys(tpl)[0]!;
+    expect(isSlotKeyInTemplate(tpl, validKey)).toBe(true);
+    expect(isSlotKeyInTemplate(tpl, "S99_central_0")).toBe(false);
   });
 });

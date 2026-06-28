@@ -9,6 +9,7 @@ import { RefereePromotionButton } from "@/components/referees/referee-promotion-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
+import { currentSeasonYear } from "@/lib/season";
 import { displayUltimo } from "@/lib/utils";
 import { getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
@@ -238,7 +239,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
               <StatusBadge status={referee.estado} />
             </div>
             <div>
-              <p className="friendly-label mb-1">Plazas Excel 2026</p>
+              <p className="friendly-label mb-1">Plazas importadas ({currentSeasonYear()})</p>
               <p className="font-mono text-sm text-foreground">{referee.eventos}</p>
             </div>
             <div>

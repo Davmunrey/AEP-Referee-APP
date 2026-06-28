@@ -1,3 +1,5 @@
+import { operationalQuarterLabel } from "@/lib/season";
+
 export interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -13,7 +15,7 @@ export function getPageMeta(pathname: string): PageMeta {
   if (pathname === "/") {
     return {
       title: "Dashboard Nacional",
-      subtitle: "T2 2026",
+      subtitle: operationalQuarterLabel(),
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Dashboard" }],
     };
   }

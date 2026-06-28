@@ -293,6 +293,7 @@ export interface PromotionRequest {
   submittedAt: string;
   eventosCompletados: number;
   motivo?: string;
+  reviewComment?: string;
 }
 
 export interface RegulationRule {

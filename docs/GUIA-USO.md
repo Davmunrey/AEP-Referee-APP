@@ -3,7 +3,7 @@
 Guía visual de la plataforma de gestión de jueces de la Asociación Española de Powerlifting.
 Cada sección muestra una captura real de la app y los pasos para usarla.
 
-> Capturas tomadas en `localhost:3000` con datos reales de producción (junio 2026).
+> Capturas tomadas en entorno de desarrollo con datos reales. La app no está ligada a una temporada fija: las fechas de campeonatos y el analytics determinan el año en pantalla.
 
 ---
 
@@ -19,7 +19,7 @@ Sin registro público: las cuentas las crea AEP Nacional.
 
 ## 2. Dashboard
 
-Pantalla de inicio. Resume el estado operativo de la temporada en tiempo real.
+Pantalla de inicio. Resume el estado operativo de la temporada en curso.
 
 ![Dashboard](images/01-dashboard.png)
 

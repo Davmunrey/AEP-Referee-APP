@@ -1,5 +1,5 @@
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
-import { countOpenSlots, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
+import { countOpenSlots, isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
 import { pruneAssignments } from "@/lib/roster-template";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
@@ -238,6 +238,10 @@ export async function validateAssign(
   if (!comp || !referee) return { ok: false, error: "Datos no válidos" };
   const parsed = parseSlotKey(slotKey);
   if (!parsed) return { ok: false, error: "Slot inválido" };
+  const template = getCompetitionTemplate(competitionId);
+  if (!isSlotKeyInTemplate(template, slotKey)) {
+    return { ok: false, error: "El hueco no existe en la plantilla del campeonato" };
+  }
   return validateAssignment(referee, parsed.roleKey as RoleKey, comp.tipo);
 }
 
@@ -283,6 +287,22 @@ export async function assignReferee(
     };
   }
   store.slotFlags.set(competitionId, flagMap);
+
+  const recheck = validateRosterOperation({
+    template,
+    assignments,
+    slotKey,
+    refereeId,
+    flags: flagMap,
+  });
+  if (!recheck.ok) {
+    delete assignments[slotKey];
+    delete flagMap[slotKey];
+    store.assignments.set(competitionId, assignments);
+    store.slotFlags.set(competitionId, flagMap);
+    return { error: recheck.error };
+  }
+
   syncCompetitionCoverage(competitionId);
   pushHistory({
     competitionId,

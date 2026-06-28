@@ -275,6 +275,12 @@ export function PromotionsBoard({
                               <LevelBadge level={p.toLevel} />
                             </div>
 
+                            {p.reviewComment && p.status === "rechazado" ? (
+                              <p className="mt-2 text-xs text-destructive">
+                                Motivo del rechazo: {p.reviewComment}
+                              </p>
+                            ) : null}
+
                             {/* Expandable motivo */}
                             {p.motivo ? (
                               <div className="mt-2">

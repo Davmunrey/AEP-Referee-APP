@@ -1,4 +1,5 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
+import { seasonLabel } from "@/lib/season";
 import { countOpenSlots } from "@/lib/roster-rules";
 import { buildRefereeCompetitionHistory } from "@/lib/referee-competition-history";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
@@ -79,7 +80,7 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
   }
   const critical = competitions.filter((c) => c.estado === "Crítico").length;
 
-  const subAlcance = isZoneScoped ? `zona ${userZone}` : "temporada 2026";
+  const subAlcance = isZoneScoped ? `zona ${userZone}` : seasonLabel();
 
   return [
     {

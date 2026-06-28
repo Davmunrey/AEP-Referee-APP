@@ -1,44 +1,40 @@
 # AEP Referee APP — Project
 
 ## What This Is
+
 App interna gestión jueces AEP: campeonatos, tarimas, cuadrantes, ascensos, sanciones, estadísticas.
 
 Stack: Next.js 15, TypeScript, Supabase (Postgres + Auth + RLS), Tailwind CSS, Radix UI.
 Producción: https://aep-tarima.vercel.app/
 
-## Current Milestone: v1.2 — Quality & Completeness
+Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por año, etiquetas UI dinámicas (`src/lib/season.ts`).
 
-**Goal:** Eliminar gaps funcionales, errores de tipos en tests, y archivos sobredimensionados para que el código sea correcto y mantenible.
+## Current Milestone: v1.4 — Production Hardening (Complete)
 
-**Target features:**
-- Competition edit — formulario para editar datos básicos de campeonato después de crearlo
-- Test type correctness — corregir fixtures obsoletos que fallan tsc
-- File refactoring — dividir roster-builder, supabase-service y memory-service (>500 líneas)
-- GSD artifacts — crear MILESTONES.md para tracking de historial
+**Goal:** Auditoría completa, privacidad zonal, robustez roster/auth, multi-año, documentación al día.
 
-## Previous Milestone: v1.1 — Full Feature Upgrade (Complete)
+**Shipped:**
+- Roster: plazas requeridas, conflictos sesión, confirm-to-force *, merge import horario
+- Zone scoping dashboard/analytics para `delegado_zona`
+- Login server-side + rate-limit endurecido
+- Validación slot keys, countOpenSlots sin huérfanos, revalidación assign (TOCTOU)
+- Comentario rechazo ascensos (`review_comment`, migration 023)
+- 298 tests Vitest
 
-**Goal:** Añadir selección cross-zona, creación manual horarios, mejoras importación y UX.
+## Previous: v1.2 — Quality & Completeness (Complete)
 
-**Features shipped:**
-- Cross-zone judge selection — jueces de fuera de zona con flag visual y workflow
-- Schedule builder — crear/editar horarios manualmente (sin PDF)
-- Import improvements — reconocer todos los campos de Excel/PDF
-- Judge availability (per-competition) — disponibilidad por competición vía WhatsApp
-- Analytics enhancements — cross-zona, KPI cobertura nacional
-- UX refinements — filtros, badges, warnings mejorados
+Competition edit, test correctness, refactor archivos grandes.
 
 ## Architecture
+
 - `/src/app` — Next.js App Router (dashboard + API v1)
-- `/src/components` — UI components (competitions, referees, aep, ui)
-- `/src/lib` — types, permissions, roster-rules, schedule-parser, validations
-- `/src/server` — services, DB mappers
-- `/supabase/migrations` — schema migrations
+- `/src/components` — UI
+- `/src/lib` — dominio, parsers, season, roster-rules
+- `/src/server` — services, mappers
+- `/supabase/migrations` — schema (hasta 023)
 
 ## Roles
-- `super_admin` / `delegado_jueces` — control total
-- `delegado_zona` — su zona únicamente (jueces, tarimas, informes)
-- `solo_ver` — solo lectura
 
-## Zones (5 macro)
-NOROESTE, CENTRO, MEDITERRANEO, ANDALUCIA, CANARIAS
+- `super_admin` / `delegado_jueces` — control total
+- `delegado_zona` — su macrozona (dashboard/analytics acotados)
+- `solo_ver` — lectura

@@ -34,9 +34,11 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 
 - Headers HTTP.
 - API privada con sesión.
-- Mutaciones con RBAC.
+- Login server-side con rate-limit no manipulable.
+- Mutaciones con RBAC y scope zonal.
 - RLS deny-by-default.
-- Imports con preview/selección.
+- Imports con preview/selección y merge parcial (horarios).
+- Validación roster server-side (slot keys, revalidación post-assign).
 - PDF con firma y límite.
 - XLSX con firma ZIP y límites estructurales.
 - Dependencias auditadas con excepción documentada `xlsx`.

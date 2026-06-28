@@ -15,8 +15,8 @@ Todas las rutas privadas exigen sesión Supabase: **cookie** (web) o
 | `GET` | `/auth/me` | Perfil actual |
 | `POST` | `/auth/logout` | Cerrar sesión |
 | `POST` | `/auth/signout` | Alias cierre sesión |
-| `POST` | `/auth/login` | Legacy 410; login real vive en `/sign-in` |
-| `POST` | `/auth/password` | Rate-limit pre-login (público) |
+| `POST` | `/auth/login` | Login email+password (server-side, fija cookies, rate-limit interno) |
+| `POST` | `/auth/password` | Rate-limit pre-login: solo `action: check` (público) |
 | `POST` | `/auth/change-password` | Cambiar la propia contraseña (sesión; verifica la actual) |
 
 ## Contraseñas

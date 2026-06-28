@@ -37,9 +37,9 @@ y añade las piezas nativas (Supabase SDK para auth, GRDB para offline) y la UI.
 ## Arquitectura (resumen del plan)
 
 - **Auth híbrida:** la app inicia sesión con el **SDK de Supabase Swift**
-  (`signInWithPassword`) y obtiene un JWT; llama a `/api/v1` con
-  `Authorization: Bearer <jwt>`. El backend ya lo soporta (PR #1). No se leen
-  tablas de Supabase directamente (RLS deny-by-default).
+  (`signInWithPassword`) o, alternativamente, puede usar `POST /api/v1/auth/login`
+  de la web (mismas cookies no aplican en nativo). Llama a `/api/v1` con
+  `Authorization: Bearer <jwt>`.
 - **`TokenProvider`** (en `Networking/`) abstrae la obtención/refresh del token;
   el target de app lo implementa con Supabase SDK + Keychain (refresh token
   protegido por Face ID).

@@ -41,7 +41,8 @@
 | Componente | Uso |
 |---|---|
 | `RosterCompetitionHeader` | Cabecera con info competición y acciones |
-| `RosterRefereePanelLeft` | Panel izquierdo: filtros + lista jueces |
+| `RequiredSlotsChips` | Resumen plazas requeridas (tarima, mesa, control, pesaje) |
+| `RosterRefereePanel` | Panel jueces con confirm-to-force en conflictos overridable |
 | `RefereeCard` | Tarjeta individual juez con badges y drag |
 | `SlotGrid` | Grid de slots por sesión/rol |
 | `SessionBlock` | Bloque sesión expandible |

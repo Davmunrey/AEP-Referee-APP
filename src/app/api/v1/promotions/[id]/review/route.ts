@@ -23,7 +23,7 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonError("El motivo de rechazo es obligatorio", 400);
   }
 
-  const result = await dataService.reviewPromotion(id, approve, user.nombre);
+  const result = await dataService.reviewPromotion(id, approve, user.nombre, comment);
   if (!result) return jsonError("Solicitud no encontrada", 404);
   return jsonOk(result);
 }

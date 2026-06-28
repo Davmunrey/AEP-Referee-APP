@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ARBITRAJE_ROLE_LABELS } from "@/lib/judges-registry/arbitraje-stats";
+import { currentSeasonYear } from "@/lib/season";
 import type { RefereeArbitrajeStats } from "@/lib/types";
 
 const TIERS: {
@@ -16,7 +17,7 @@ export function RefereeArbitrajePanel({ stats }: { stats: RefereeArbitrajeStats 
     <Card>
       <CardHeader>
         <CardTitle className="text-sm font-semibold">
-          Resumen Excel 2026
+          Resumen importado ({currentSeasonYear()})
         </CardTitle>
         <p className="text-xs text-subtle-muted">
           Recuento agregado por rol, sin campeonato concreto:{" "}
