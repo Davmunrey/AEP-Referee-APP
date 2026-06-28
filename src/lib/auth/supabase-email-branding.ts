@@ -1,9 +1,8 @@
-import { AEP_BRANDING } from "@/lib/aep-branding";
+import { AEP_BRANDING, AEP_TARIMA_OFFICIAL_URL } from "@/lib/aep-branding";
 
 /** URL pública de la app (enlaces en correos y Site URL de Supabase Auth). */
 export const AEP_TARIMA_SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-  "https://tarima.powerliftingspain.es";
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? AEP_TARIMA_OFFICIAL_URL;
 
 export const AEP_TARIMA_EMAIL_FROM_NAME = "AEP Tarima";
 

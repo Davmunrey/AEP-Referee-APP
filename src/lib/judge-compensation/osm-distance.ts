@@ -4,7 +4,7 @@ const NOMINATIM_URL =
   process.env.NOMINATIM_URL?.replace(/\/$/, "") ?? "https://nominatim.openstreetmap.org";
 const OSRM_URL = process.env.OSRM_URL?.replace(/\/$/, "") ?? "https://router.project-osrm.org";
 const APP_USER_AGENT =
-  process.env.OSM_USER_AGENT ?? "AEP-Tarima/1.0 (https://powerliftingspain.es; powerhispania@gmail.com)";
+  process.env.OSM_USER_AGENT ?? "AEP-Tarima/1.0 (https://aep-tarima.vercel.app; powerhispania@gmail.com)";
 
 /** Pausa entre peticiones a Nominatim (política de uso justo: ~1 req/s). */
 export function osmThrottle(ms = 1100): Promise<void> {
