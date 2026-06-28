@@ -6,7 +6,9 @@ import {
 } from "@/lib/judge-compensation/receipt-document";
 import { formatIbanDisplay, formatIbanInput, getSpanishIbanValidationHint, isValidSpanishIban, normalizeIban } from "@/lib/judge-compensation/iban";
 
-const SAMPLE_IBAN = "ES2801825332120200703784";
+/** IBAN de prueba (válido MOD-97; no es una cuenta real). */
+const SAMPLE_IBAN = "ES9121000418450200051332";
+const SAMPLE_IBAN_DISPLAY = "ES91 2100 0418 4502 0005 1332";
 
 describe("formatReceiptAmountEur", () => {
   it("formatea enteros sin decimales", () => {
@@ -41,9 +43,9 @@ describe("formatCompetitionDatePhrase", () => {
 
 describe("IBAN efímero", () => {
   it("normaliza y formatea para el PDF sin persistir", () => {
-    expect(normalizeIban("ES28 0182 5332 1202 0070 3784")).toBe(SAMPLE_IBAN);
-    expect(formatIbanDisplay(SAMPLE_IBAN)).toBe("ES28 0182 5332 1202 0070 3784");
-    expect(isValidSpanishIban("ES28 0182 5332 1202 0070 3784")).toBe(true);
+    expect(normalizeIban(SAMPLE_IBAN_DISPLAY)).toBe(SAMPLE_IBAN);
+    expect(formatIbanDisplay(SAMPLE_IBAN)).toBe(SAMPLE_IBAN_DISPLAY);
+    expect(isValidSpanishIban(SAMPLE_IBAN_DISPLAY)).toBe(true);
   });
 
   it("rechaza IBAN inválido", () => {
@@ -55,7 +57,7 @@ describe("IBAN efímero", () => {
   });
 
   it("formatea la entrada al escribir", () => {
-    expect(formatIbanInput("es2801825332120200703784")).toBe("ES28 0182 5332 1202 0070 3784");
+    expect(formatIbanInput("es9121000418450200051332")).toBe(SAMPLE_IBAN_DISPLAY);
   });
 });
 
@@ -80,7 +82,7 @@ describe("buildCompensationReceiptText", () => {
     expect(text).toContain("153,38€");
     expect(text).toContain("como juez en la Young Ambition Cup II");
     expect(text).toContain("el día 22 de marzo de 2026");
-    expect(text).toContain("IBAN: ES28 0182 5332 1202 0070 3784");
+    expect(text).toContain(`IBAN: ${SAMPLE_IBAN_DISPLAY}`);
     expect(text).not.toMatch(/guardar|almacenar|persist/i);
   });
 
