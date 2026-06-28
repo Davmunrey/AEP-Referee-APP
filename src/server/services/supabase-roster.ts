@@ -1,5 +1,5 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
-import { validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
+import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
 import { enumerateSlotKeys, pruneAssignments } from "@/lib/roster-template";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
@@ -143,6 +143,10 @@ export const rosterService = {
     if (!comp || !referee) return { ok: false, error: "Datos no válidos" };
     const parsed = parseSlotKey(slotKey);
     if (!parsed) return { ok: false, error: "Slot inválido" };
+    const template = (await getCompetitionTemplate(competitionId)) ?? [];
+    if (!isSlotKeyInTemplate(template, slotKey)) {
+      return { ok: false, error: "El hueco no existe en la plantilla del campeonato" };
+    }
     return validateAssignment(referee, parsed.roleKey as RoleKey, comp.tipo);
   },
 
@@ -205,7 +209,25 @@ export const rosterService = {
       cross_zone: isCrossZone,
       cross_zone_reason: isCrossZone ? (crossZoneReason ?? null) : null,
     });
-    assignments[slotKey] = refereeId;
+
+    const freshAssignments = await loadAssignments(competitionId);
+    const freshFlags = await loadFlags(competitionId);
+    const recheck = validateRosterOperation({
+      template,
+      assignments: freshAssignments,
+      slotKey,
+      refereeId,
+      flags: freshFlags,
+    });
+    if (!recheck.ok) {
+      await supabase
+        .from("roster_assignments")
+        .delete()
+        .eq("competition_id", competitionId)
+        .eq("slot_key", slotKey);
+      return { error: recheck.error };
+    }
+
     await syncCompetitionCoverage(competitionId);
     await pushHistory({
       competitionId,
@@ -215,8 +237,8 @@ export const rosterService = {
       detail: `${slotKey} → ${refereeId}${isCrossZone ? ` (${referee?.zona})` : ""}`,
     });
     return {
-      assignments: { ...assignments },
-      flags: await loadFlags(competitionId),
+      assignments: { ...freshAssignments },
+      flags: freshFlags,
       crossZoneMap: await loadCrossZoneMap(competitionId),
     };
   },

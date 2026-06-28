@@ -1,3 +1,11 @@
+# Milestone Summary — v1.4 Production Hardening
+
+**Completed:** 2025-06-28 · **Branch:** `main` · **Tests:** 298
+
+Auditoría completa, privacidad zonal, roster robusto, auth endurecido, soporte multi-temporada y documentación actualizada. Ver `docs/AUDIT.md` y `README.md`.
+
+---
+
 # Milestone Summary — v1.1 AEP Referee APP Full Feature Upgrade
 
 **Completed:** 2026-05-27 · **Commits:** 9f951bb → 4c0cbb1 · **Phases:** 6/6 · **Requirements:** 23/23

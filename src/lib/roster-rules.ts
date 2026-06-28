@@ -1,4 +1,4 @@
-import { parseSlotKey } from "./roster-template";
+import { enumerateSlotKeys, parseSlotKey } from "./roster-template";
 import type {
   AssignValidation,
   AssignmentsMap,
@@ -170,16 +170,24 @@ export function validateRosterOperation(input: {
 
 export function countOpenSlots(
   template: {
-    roles: { slots: number }[];
-    pesajeRoles?: { slots: number }[];
+    sesion?: string;
+    roles: { slots: number; key?: string }[];
+    pesajeRoles?: { slots: number; key?: string }[];
   }[],
   assignments: Record<string, string>,
 ): number {
+  const validKeys = new Set(enumerateSlotKeys(template as RosterSession[]));
   let total = 0;
   for (const session of template) {
     for (const role of session.roles) total += role.slots;
     for (const role of session.pesajeRoles ?? []) total += role.slots;
   }
-  const filled = Object.values(assignments).filter(Boolean).length;
+  const filled = Object.entries(assignments).filter(
+    ([key, refereeId]) => Boolean(refereeId) && validKeys.has(key),
+  ).length;
   return Math.max(0, total - filled);
+}
+
+export function isSlotKeyInTemplate(template: RosterSession[], slotKey: string): boolean {
+  return enumerateSlotKeys(template).includes(slotKey);
 }

@@ -1,53 +1,59 @@
 # QA y seguridad
 
-Fecha: 2026-06-01. Alcance: repo local + CI GitHub + flujos usuario comunes.
+Última revisión: junio 2025 (auditoría completa + hardening continuo). Alcance: repo, CI GitHub, flujos usuario comunes.
 
 ## Veredicto
 
-App operativa y desplegable. CI verde (Verify · Supabase readiness · Browser smoke), 198 tests, lint 0 warnings, build OK, 0 drift de migraciones. Pendiente: e2e profundo en navegador logueado de tarima/import/export, guía con fotos de pantallas internas, y sustitución futura de `xlsx` si aparece alternativa mantenida. PDFs de cuadrante escaneados (imagen) no se importan — fallan con mensaje accionable.
+App operativa y desplegable. CI verde, **298 tests**, lint 0 warnings, build OK. Multi-temporada: analytics y KPIs por fechas ISO; UI sin año fijo salvo documentos normativos (`aep-guide-2026.ts`).
 
 ## QA operativo
 
 | Área | Estado | Notas |
 |---|---|---|
-| Login | OK | E2E real con Supabase en CI |
+| Login | OK | `POST /auth/login` server-side; rate-limit IP+email; acciones `fail`/`success` bloqueadas en `/auth/password` |
 | Dashboard 14" | OK | Smoke sin overflow horizontal |
+| Dashboard zonal | OK | `delegado_zona` ve solo KPIs, calendario, intelligence y actividad de su zona |
 | Campeonatos | OK | `/competitions`, dedupe, import calendario con preview/selección |
-| Tarima | OK | Plantilla, cuadrante, asignación, clear, historial, export |
-| Cuadrantes | OK | Parser por geometría de columnas; 4 formatos AEP (rejilla, `SESION N`, escalonado, escaneado→aviso). Verificado con PDFs reales |
-| Imports | OK | Preview antes de aplicar, selección granular, límites tamaño |
+| Tarima | OK | Plantilla, cuadrante, asignación, plazas requeridas, confirm-to-force *, clear con rollback |
+| Conflictos sesión | OK | Tarima+tarima bloqueado; tarima+pesaje misma sesión permitido; cross-sesión con * |
+| Imports horario | OK | Merge parcial: sesiones no seleccionadas se conservan |
+| Cuadrantes | OK | Parser por geometría de columnas; 4 formatos AEP |
 | Usuarios | OK | Gestión restringida a nacional/superadmin |
-| Contraseñas | OK | Self-change (verifica actual) + admin-reset; guard super_admin cruzado |
-| Informes | OK | Scope por zona/nacional |
-| Exámenes/ascensos | OK | Modelo restringido a nuevos jueces, IPF, recertificación y ascensos |
-| Ficha juez | OK | Historial real por campeonato con sesión, rol, hueco y flags desde `roster_assignments` |
+| Contraseñas | OK | Self-change + admin-reset |
+| Ascensos | OK | Comentario de rechazo persistido (`review_comment`) |
+| Ficha juez | OK | Historial real desde `roster_assignments` |
 
 ## Ciberseguridad
 
 | Control | Estado |
 |---|---|
 | Auth middleware | OK |
-| API `requireApiUser` | OK, auditado por `audit:prod` |
-| RBAC mutaciones | OK, auditado por `audit:prod` |
-| RLS Supabase | OK, deny-by-default en migraciones |
-| Headers seguridad | OK: nosniff, DENY iframe, referrer policy, permissions policy, HSTS |
-| Cache API | OK: JSON API privada fuerza `Cache-Control: private, no-store` |
-| Login brute force | Mitigado: rate-limit app IP+email + Supabase Auth 429 |
-| Enumeración login | OK: mensaje genérico para cualquier fallo |
-| Sesión | Mitigado: TTL cookie 7 días; `HttpOnly` pendiente de auth server-side |
-| RBAC zona | OK: referee, roster, history/export, exams, sanctions |
-| Admin users | OK: solo `super_admin` puede tocar otro `super_admin` |
-| Secrets | OK: GitHub Secrets, no valores en repo |
-| Imports PDF | OK: MIME, tamaño, firma `%PDF-`, timeout extractor |
-| Imports XLSX | Mitigado: auth nacional, confirmación explícita replace, tamaño 8 MB, firma ZIP, límites hojas/filas/columnas |
-| Dependencias | OK salvo `xlsx` sin fix upstream, aceptado por `audit:security` con mitigación |
+| API `requireApiUser` | OK |
+| RBAC mutaciones | OK |
+| RBAC zona normalizado | OK (`resolveZoneCode`, fail-closed) |
+| RLS Supabase | OK, deny-by-default |
+| Login brute force | Mitigado: check público + login server-side registra fallos |
+| Enumeración login | OK: mensaje genérico |
+| Competition PATCH | OK: whitelist de campos editables |
+| Sanction bypass | OK: no reactivar juez con sanción activa |
+| Imports PDF/XLSX | OK: límites, MIME, preview obligatorio |
+| Dependencias | OK salvo `xlsx` documentado |
+
+## Validaciones roster (servidor)
+
+| Regla | Estado |
+|---|---|
+| Slot key en plantilla | OK — rechazado si no existe en template |
+| `countOpenSlots` sin huérfanos | OK — solo cuenta asignaciones con clave válida |
+| TOCTOU assign | Mitigado — revalidación post-upsert; rollback si conflicto |
+| Promotion downgrade | OK — solo ascenso si `toLevel` > nivel actual |
 
 ## Riesgos vivos
 
-- `xlsx` mantiene advisories sin versión npm segura pública. Mantener uso solo server-side y nacional. Sustituir cuando exista alternativa viable.
-- OCR depende de herramientas locales (`pdftotext`, `pdftoppm`, `swift`) y puede variar por host.
-- Falta e2e happy-path completo: importar horario, importar cuadrante, aplicar, exportar.
-- CSP estricta sigue en modo report-only por Next inline scripts; pasar a enforce tras observar reportes.
+- `xlsx` mantiene advisories sin fix upstream público.
+- OCR/PDF depende de herramientas locales en algunos entornos.
+- E2E profundo (import horario → cuadrante → export) pendiente.
+- CSP estricta en modo report-only.
 
 ## Gates obligatorios
 
@@ -59,9 +65,8 @@ npm run audit:remote
 
 GitHub CI ejecuta verify, browser smoke y Supabase readiness en cada push a `main`.
 
-Últimos gates locales aplicados:
+Últimos gates locales:
 
-- `npm run verify`: 47 rutas API, 4 rutas import, seguridad, lint (0 warnings), 198 tests y build Next OK.
-- `npm run e2e`: 3 tests Playwright OK en viewport 14".
-- `npm run audit:remote`: Supabase readiness OK; 15 tablas; usuarios activos permitidos vía `READINESS_ALLOWED_EMAILS` (super_admin + delegados AEP).
-- `npm run migration:status`: 13 migraciones verificables aplicadas, 0 drift.
+- `npm run verify`: 50 rutas API, 4 rutas import, seguridad, lint, **298 tests**, build OK.
+- `npm run e2e`: 3 tests Playwright OK (viewport 14").
+- `npm run audit:remote`: Supabase readiness OK.

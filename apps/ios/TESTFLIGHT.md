@@ -5,9 +5,8 @@ El pipeline ya está montado (`fastlane/Fastfile` lane `beta` + workflow
 secrets**. Esta es la lista de lo que solo puedes hacer tú (cuenta de Apple).
 
 ## 0. Requisito previo: desplegar el backend
-La app habla con `https://aep-tarima.vercel.app/api/v1`. Para que funcionen las
-funciones nuevas (login móvil, generar plantilla de tarima, push), **fusiona la
-rama `claude/ios-build-fixes-and-api-docs` a `main`** para que Vercel despliegue.
+La app habla con `https://aep-tarima.vercel.app/api/v1`. El backend en `main` incluye
+login móvil (`POST /auth/login`), RBAC zonal y APIs de tarima/push.
 
 ## 1. Apple Developer + App Store Connect (una vez)
 1. Alta en el **Apple Developer Program** (99 $/año).

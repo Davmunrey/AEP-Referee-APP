@@ -72,4 +72,12 @@ describe("reviewPromotion (memory)", () => {
       expect(store.referees[0]!.nivel).toBe("Regional");
     });
   });
+
+  it("persists rejection comment", async () => {
+    const store = getStore();
+    store.referees.push(referee({ nivel: "Regional" }));
+    store.promotions.push(pending({ fromLevel: "Regional", toLevel: "Nacional" }));
+    const result = await reviewPromotion("pro-1", false, "admin", "Faltan eventos");
+    expect(result?.reviewComment).toBe("Faltan eventos");
+  });
 });

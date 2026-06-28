@@ -1,6 +1,14 @@
-# Milestones — AEP Referee APP
+# Milestones — AEP Tarima
 
-## v1.1 — Completeness & Workflow (2026-05-27)
+## v1.4 — Production Hardening (2025-06)
+
+- Roster rules: plazas requeridas, conflictos sesión, confirm-to-force, merge import horario
+- Privacidad zonal dashboard/analytics
+- Login server-side + rate-limit
+- Multi-temporada (`season.ts`)
+- 298 tests, migration 023
+
+## v1.1 — Completeness & Workflow (2025-05)
 
 **6 phases | 23 requirements**
 

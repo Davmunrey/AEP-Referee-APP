@@ -132,6 +132,7 @@ export function mapPromotion(row: Record<string, unknown>): PromotionRequest {
     submittedAt: String(row.submitted_at),
     eventosCompletados: Number(row.eventos_completados),
     motivo: row.motivo ? String(row.motivo) : undefined,
+    reviewComment: row.review_comment ? String(row.review_comment) : undefined,
   };
 }
 

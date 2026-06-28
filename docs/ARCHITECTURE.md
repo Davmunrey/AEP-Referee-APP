@@ -35,6 +35,13 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 4. API valida zona, rol y solapes.
 5. Borrador, historial y aprobación quedan trazados.
 
+## Temporada y multi-año
+
+- Las competiciones almacenan `fecha` / `fechaFin` en ISO (`YYYY-MM-DD`).
+- Analytics agrupa por año detectado en fechas — no hay año hardcodeado en servidor.
+- UI usa `src/lib/season.ts`: `currentSeasonYear()`, `seasonLabel()`, `operationalQuarterLabel()`.
+- Documentos normativos por temporada (p. ej. `aep-guide-2026.ts`) son referencia estática; actualizar al publicar nueva guía AEP.
+
 ## Historial de juez
 
 - Fuente única: `roster_assignments`.
@@ -45,7 +52,7 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 ## Imports
 
 - Calendario anual: PDF/CSV -> preview -> selección -> crear campeonatos.
-- Horario competición: PDF -> preview sesiones -> selección -> guardar plantilla.
+- Horario competición: PDF -> preview sesiones -> selección -> **merge** en plantilla existente (sesiones no seleccionadas se conservan).
 - Cuadrante jueces: PDF -> preview candidatos -> selección -> asignar.
 - Registro jueces: XLSX -> preview -> upsert/replace.
 

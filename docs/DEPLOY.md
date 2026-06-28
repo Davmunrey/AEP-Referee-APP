@@ -42,6 +42,6 @@ CI en `.github/workflows/ci.yml`:
 - [ ] `npm run e2e`
 - [ ] `npm run audit:remote`
 - [ ] Backup reciente
-- [ ] Migraciones aplicadas
+- [ ] Migraciones aplicadas (hasta `023`)
 - [ ] Usuario admin único esperado activo
 - [ ] Import calendario/horario/cuadrante probado en preview

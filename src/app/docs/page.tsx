@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 // solo se muestra a usuarios autenticados.
 export const dynamic = "force-dynamic";
 
-const updated = "junio de 2026";
+const updated = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" });
 
 type TocItem = { id: string; label: string; internal?: boolean };
 

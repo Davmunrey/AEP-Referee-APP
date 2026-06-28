@@ -1,6 +1,8 @@
-# Requirements — v1.2 AEP Referee APP Quality & Completeness
+# Requirements — AEP Tarima
 
-## Competition Edit
+> v1.2 ítems completados en `main`. v1.4 añadió hardening roster/auth/zona (ver `docs/AUDIT.md`).
+
+## Competition Edit (v1.2 ✅)
 
 - [ ] **COMP-01**: Usuario puede editar nombre, tipo, fecha inicio, fecha fin, sede y zona de un campeonato existente desde su página de detalle
 - [ ] **COMP-02**: Formulario de edición valida todos los campos con las mismas reglas que el formulario de creación

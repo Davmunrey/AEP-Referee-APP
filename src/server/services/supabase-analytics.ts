@@ -1,4 +1,5 @@
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
+import { currentSeasonYear } from "@/lib/season";
 import { LEVELS } from "@/lib/mock-data";
 import { countOpenSlots } from "@/lib/roster-rules";
 import { enumerateSlotKeys, normalizeCompetitionTemplate } from "@/lib/roster-template";
@@ -81,7 +82,7 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
   const competitionsLength = competitions.length;
 
   return [
-    { label: "Jueces Activos", value: String(active), sub: `/ ${refereesLength} federados`, trend: "cuota operativa 2026", trendDir: "up", accent: "neutral" },
+    { label: "Jueces Activos", value: String(active), sub: `/ ${refereesLength} federados`, trend: `cuota operativa ${currentSeasonYear()}`, trendDir: "up", accent: "neutral" },
     { label: "Próximas Competiciones", value: String(competitionsLength), sub: "campeonatos en calendario", trend: "AEP-1 · AEP-2 · AEP-3", trendDir: "up", accent: "red" },
     { label: "Plazas sin cubrir", value: String(openSlots), sub: `en ${competitionsLength} campeonatos`, trend: `${critical} campeonatos en estado crítico`, trendDir: critical > 0 ? "warn" : "flat", accent: "yellow" },
     { label: "Aprobaciones Pendientes", value: String(pending), sub: "propuestas regionales", trend: "esperan revisión nacional", trendDir: "flat", accent: "blue" },

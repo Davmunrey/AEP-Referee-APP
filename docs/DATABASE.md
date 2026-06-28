@@ -15,7 +15,7 @@ Supabase Postgres. Migraciones en `supabase/migrations`.
 | `competitions` | 001 | Campeonatos + plantilla JSON |
 | `roster_assignments` | 008 | Slots asignados |
 | `approval_proposals` | 001 | Propuestas aprobación |
-| `promotion_requests` | 001 | Ascensos |
+| `promotion_requests` | 001, 023 | Ascensos + `review_comment` al rechazar |
 | `exams` | 001 | Exámenes |
 | `reports` | 001 | Informes |
 | `regulation_rules` | 001 | Normativa |
@@ -38,6 +38,14 @@ CREATE TABLE competition_availability (
 ```
 
 Índices en `competition_id` y `referee_id`. RLS: anon sin acceso; authenticated full CRUD.
+
+### `promotion_requests.review_comment` (migration 023)
+
+```sql
+ALTER TABLE promotion_requests ADD COLUMN IF NOT EXISTS review_comment TEXT;
+```
+
+Persiste el motivo de rechazo al revisar ascensos (obligatorio en API cuando `approve: false`).
 
 ## RLS
 

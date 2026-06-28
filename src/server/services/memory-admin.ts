@@ -27,11 +27,17 @@ export async function getPromotions(user?: SessionUser): Promise<PromotionReques
   return list;
 }
 
-export async function reviewPromotion(id: string, approve: boolean, reviewer: string): Promise<PromotionRequest | undefined> {
+export async function reviewPromotion(
+  id: string,
+  approve: boolean,
+  reviewer: string,
+  comment?: string,
+): Promise<PromotionRequest | undefined> {
   const store = getStore();
   const req = store.promotions.find((p) => p.id === id);
   if (!req || req.status !== "pendiente") return undefined;
   req.status = approve ? "aprobado" : "rechazado";
+  if (comment) req.reviewComment = comment;
   if (approve) {
     const ref = store.referees.find((r) => r.id === req.refereeId);
     // Solo sube el nivel si sigue siendo un ascenso frente al nivel ACTUAL.

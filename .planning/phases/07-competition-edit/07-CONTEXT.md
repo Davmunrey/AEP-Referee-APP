@@ -1,7 +1,7 @@
 # Phase 7: Competition Edit - Context
 
 **Gathered:** 2026-05-27
-**Status:** Ready for planning
+**Status:** Completed (shipped on `main`)
 
 <domain>
 ## Phase Boundary

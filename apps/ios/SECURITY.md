@@ -5,10 +5,8 @@ Resumen de la postura de seguridad de la app nativa.
 ## Autenticación y sesión
 - Login con el **SDK de Supabase** (`signInWithPassword`); el SDK guarda los
   tokens (access + refresh) en el **Keychain** del sistema.
-- La app llama a `/api/v1` con `Authorization: Bearer <jwt>`. El backend
-  **verifica el JWT en el servidor** (no solo lo decodifica) y aplica el mismo
-  RBAC/zona que la web. La app solo usa la **anon key** (pública); nunca la
-  `service_role`.
+- La app llama a `/api/v1` con `Authorization: Bearer <jwt>`. El backend verifica el JWT y aplica RBAC/zona. Alternativa web: `POST /api/v1/auth/login`.
+- La app solo usa la **anon key** (pública); nunca la `service_role`.
 - **Face ID/Touch ID** opcional como puerta de desbloqueo (`LocalAuthentication`).
 - 401 → un único intento de refresh de token y reintento; si falla, a login.
 
