@@ -1,8 +1,10 @@
 import { revalidatePath } from "next/cache";
+import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
+import type { Competition, EventType } from "@/lib/types";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -36,13 +38,30 @@ export async function PATCH(request: Request, context: RouteContext) {
   // Un delegado de zona solo puede editar competiciones de SU zona
   // y no puede reasignar la competición a otra zona.
   if (user.role === "delegado_zona") {
-    if (competition.zona !== user.zona) return jsonError("Sin permiso", 403);
-    if (body.zona !== undefined && body.zona !== user.zona) {
+    const userZone = resolveZoneCode(user.zona ?? "") ?? user.zona;
+    const compZone = resolveZoneCode(competition.zona ?? "") ?? competition.zona;
+    if (!user.zona || compZone !== userZone) return jsonError("Sin permiso", 403);
+    if (
+      body.zona !== undefined &&
+      (resolveZoneCode(String(body.zona)) ?? body.zona) !== userZone
+    ) {
       return jsonError("No puedes mover competiciones a otra zona", 403);
     }
   }
 
-  const updated = await dataService.updateCompetition(id, body);
+  // Lista blanca: solo campos editables del campeonato. Nunca `aprobacion`,
+  // `estado`, `confirmados` ni `template` (los gestiona el flujo de roster/aprobación).
+  const patch: Partial<Competition> = {};
+  if (typeof body.nombre === "string") patch.nombre = body.nombre;
+  if (typeof body.tipo === "string") patch.tipo = body.tipo as EventType;
+  if (typeof body.fecha === "string") patch.fecha = body.fecha;
+  if (typeof body.fechaFin === "string") patch.fechaFin = body.fechaFin;
+  if (typeof body.sede === "string") patch.sede = body.sede;
+  if (typeof body.zona === "string") patch.zona = body.zona;
+  if (typeof body.sesiones === "number") patch.sesiones = body.sesiones;
+  if (typeof body.requeridos === "number") patch.requeridos = body.requeridos;
+
+  const updated = await dataService.updateCompetition(id, patch);
   if (!updated) return jsonError("Competición no encontrada", 404);
   return jsonOk(updated);
 }

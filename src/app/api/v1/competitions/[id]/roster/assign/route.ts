@@ -45,5 +45,6 @@ export async function POST(request: Request, context: RouteContext) {
   return jsonOk({
     assignments: result.assignments,
     flags: result.flags,
+    crossZoneMap: result.crossZoneMap,
   });
 }

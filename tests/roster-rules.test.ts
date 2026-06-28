@@ -225,6 +225,34 @@ describe("validateRosterOperation", () => {
     });
     expect(result.ok).toBe(true);
   });
+
+  it("works correctly when session names contain underscores", () => {
+    const underscoreTemplate: RosterSession[] = [
+      {
+        sesion: "Day_1",
+        nombre: "Día 1",
+        dia: "Sábado",
+        categorias: [],
+        horarioCompeticion: "",
+        horarioPesaje: "",
+        roles: [
+          { rol: "Juez Central", key: "central", slots: 1 },
+          { rol: "Juez Lateral", key: "lateral", slots: 2 },
+        ],
+        pesajeRoles: [],
+      },
+    ];
+    // Dos puestos de tarima en la misma sesión "Day_1" → debe bloquear, no confundir
+    // "Day" como sesión y "1" como rol.
+    const result = validateRosterOperation({
+      template: underscoreTemplate,
+      assignments: { "Day_1_central_0": "r1" },
+      slotKey: "Day_1_lateral_0",
+      refereeId: "r1",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/otra posición/i);
+  });
 });
 
 describe("countOpenSlots", () => {

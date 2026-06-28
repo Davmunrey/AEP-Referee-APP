@@ -43,7 +43,19 @@ export const examsService = {
     const status = approve ? "aprobado" : "rechazado";
     await supabase.from("promotion_requests").update({ status }).eq("id", id);
     if (approve) {
-      await supabase.from("referees").update({ nivel: req.to_level }).eq("id", req.referee_id);
+      // Solo aplica el ascenso si sigue siendo una subida frente al nivel ACTUAL
+      // del juez (evita degradar si su nivel cambió tras crear la solicitud).
+      const { data: ref } = await supabase
+        .from("referees")
+        .select("nivel")
+        .eq("id", req.referee_id)
+        .single();
+      const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
+      const currentIdx = ref ? LEVEL_ORDER.indexOf(ref.nivel as string) : -1;
+      const toIdx = LEVEL_ORDER.indexOf(req.to_level as string);
+      if (toIdx > currentIdx) {
+        await supabase.from("referees").update({ nivel: req.to_level }).eq("id", req.referee_id);
+      }
     }
     await pushActivity({
       tipo: "ascenso",

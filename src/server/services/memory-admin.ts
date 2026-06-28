@@ -34,7 +34,11 @@ export async function reviewPromotion(id: string, approve: boolean, reviewer: st
   req.status = approve ? "aprobado" : "rechazado";
   if (approve) {
     const ref = store.referees.find((r) => r.id === req.refereeId);
-    if (ref) ref.nivel = req.toLevel;
+    // Solo sube el nivel si sigue siendo un ascenso frente al nivel ACTUAL.
+    const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
+    if (ref && LEVEL_ORDER.indexOf(req.toLevel) > LEVEL_ORDER.indexOf(ref.nivel)) {
+      ref.nivel = req.toLevel;
+    }
   }
   pushActivity({ tipo: "ascenso", actor: reviewer, accion: approve ? "aprobó ascenso a" : "rechazó ascenso a", evento: req.toLevel, hace: "ahora" });
   return req;

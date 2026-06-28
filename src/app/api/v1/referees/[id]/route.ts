@@ -78,6 +78,18 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
   }
 
+  // Una sanción activa no se puede levantar con este PATCH (ponerlo Activo o
+  // disponible): hay que revocarla desde el panel de sanciones.
+  if (patch.estado === "Activo" || patch.disp === true) {
+    const activeSanction = await dataService.getActiveSanction(id);
+    if (activeSanction) {
+      return jsonError(
+        "El juez tiene una sanción activa. Revócala desde el panel «Sanciones» para reactivarlo",
+        409,
+      );
+    }
+  }
+
   const updated = await dataService.updateReferee(id, patch);
   if (!updated) return jsonError("Juez no encontrado", 404);
   return jsonOk(updated);

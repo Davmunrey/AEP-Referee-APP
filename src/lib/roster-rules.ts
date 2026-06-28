@@ -1,3 +1,4 @@
+import { parseSlotKey } from "./roster-template";
 import type {
   AssignValidation,
   AssignmentsMap,
@@ -58,12 +59,6 @@ export function isBelowRecommendedLevel(
 ): boolean {
   if (roleKey !== "jurado") return false;
   return LEVEL_RANK[refereeLevel] < LEVEL_RANK["IPF Cat. 2"];
-}
-
-function parseSlotKey(slotKey: string): { session: string; roleKey: RoleKey } | null {
-  const [session, roleKey] = slotKey.split("_");
-  if (!session || !roleKey) return null;
-  return { session, roleKey: roleKey as RoleKey };
 }
 
 function sessionIndex(template: RosterSession[], session: string): number {

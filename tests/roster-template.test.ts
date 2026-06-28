@@ -4,6 +4,7 @@ import {
   enumerateSlotKeys,
   formatRequiredSlots,
   getPresetForEventType,
+  parseSlotKey,
   pruneAssignments,
   summarizeRequiredSlots,
 } from "@/lib/roster-template";
@@ -60,6 +61,30 @@ describe("pruneAssignments", () => {
     );
     expect(Object.keys(pruned.assignments)).toEqual([onlyKey]);
     expect(pruned.flags.orphan_key).toBeUndefined();
+  });
+});
+
+describe("parseSlotKey", () => {
+  it("parses a standard slot key", () => {
+    expect(parseSlotKey("S1_central_0")).toEqual({
+      session: "S1",
+      roleKey: "central",
+      index: 0,
+    });
+  });
+
+  it("handles session names that contain underscores", () => {
+    expect(parseSlotKey("Day_1_pesaje_2")).toEqual({
+      session: "Day_1",
+      roleKey: "pesaje",
+      index: 2,
+    });
+  });
+
+  it("rejects malformed keys", () => {
+    expect(parseSlotKey("only_two")).toBeNull();
+    expect(parseSlotKey("S1_central_x")).toBeNull();
+    expect(parseSlotKey("")).toBeNull();
   });
 });
 

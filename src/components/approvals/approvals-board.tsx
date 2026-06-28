@@ -11,8 +11,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { api } from "@/lib/api/client";
 import { textareaFieldClass } from "@/lib/design-tokens";
-import { ROLE_LABELS } from "@/lib/roster-template";
-import type { ApprovalProposal, Competition, RoleKey } from "@/lib/types";
+import { parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
+import type { ApprovalProposal, Competition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -75,14 +75,9 @@ function StatCard({
  * Format: <sesion> · <role label> [· #<n>] (index shown only when > 0 or multiple slots exist)
  */
 function decodeSlotKey(slotKey: string, allSlotKeys: string[]): string {
-  const parts = slotKey.split("_");
-  if (parts.length < 3) return slotKey;
-
-  // Last segment is the index; everything between first and last is the roleKey
-  const sesion = parts[0];
-  const idxStr = parts[parts.length - 1];
-  const roleKey = parts.slice(1, parts.length - 1).join("_") as RoleKey;
-  const idx = parseInt(idxStr, 10);
+  const parsed = parseSlotKey(slotKey);
+  if (!parsed) return slotKey;
+  const { session: sesion, roleKey, index: idx } = parsed;
 
   const roleLabel = ROLE_LABELS[roleKey] ?? roleKey;
 

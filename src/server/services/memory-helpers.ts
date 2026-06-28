@@ -18,11 +18,7 @@ import {
 /** Bitácora de salud en memoria (modo dev sin Supabase). */
 export const healthHistory: { score: number; at: number }[] = [];
 
-export function parseSlotKey(slotKey: string): { session: string; roleKey: string } | null {
-  const parts = slotKey.split("_");
-  if (parts.length < 3) return null;
-  return { session: parts[0]!, roleKey: parts[1]! };
-}
+export { parseSlotKey } from "@/lib/roster-template";
 
 export function syncCompetitionCoverage(competitionId: string) {
   const store = getStore();

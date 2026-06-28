@@ -30,6 +30,7 @@ import {
 } from "@/lib/roster-ui";
 import { cn } from "@/lib/utils";
 import { ChevronRight, FileUp } from "lucide-react";
+import { parseSlotKey } from "@/lib/roster-template";
 import { RosterTemplateEditor } from "@/components/competitions/roster-template-editor";
 import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
 import { QuadrantImportDialog } from "@/components/competitions/quadrant-import-dialog";
@@ -126,7 +127,7 @@ export function RosterBuilder({
     () => countRegulationViolations(template, assignments, competition.tipo, (id) => referees.find((r) => r.id === id)?.nivel, regulations),
     [assignments, template, regulations, competition.tipo, referees],
   );
-  const selectedRoleKey = selectedSlot ? (selectedSlot.split("_")[1] as RoleKey | undefined) : undefined;
+  const selectedRoleKey = selectedSlot ? parseSlotKey(selectedSlot)?.roleKey : undefined;
 
   const availableReferees = useMemo(() => referees.filter((r) => {
     if (r.estado !== "Activo" || !r.disp) return false;
@@ -162,8 +163,8 @@ export function RosterBuilder({
     }
     const snapshot = assignments;
     const flagsSnapshot = flags;
-    const session = slotKey.split("_")[0];
-    const sessionTpl = template.find((item) => item.sesion === session);
+    const session = parseSlotKey(slotKey)?.session;
+    const sessionTpl = session ? template.find((item) => item.sesion === session) : undefined;
     const nextAssignments = { ...snapshot, [slotKey]: refereeId };
     const flagPayload = forceShared
       ? { compartido: true, intercambio: Boolean(flags[slotKey]?.intercambio) }
@@ -187,10 +188,11 @@ export function RosterBuilder({
   };
 
   const persistClear = (slotKey: string) => {
+    const snapshot = assignments;
     setAssignments((prev) => { const next = { ...prev }; delete next[slotKey]; return next; });
     startTransition(async () => {
-      try { const res = await api.clearSlot(competition.id, slotKey); setAssignments(res.assignments); }
-      catch (err) { setStatusMsg(formatApiError(err, "No se pudo quitar la asignación")); setStatusIsError(true); }
+      try { const res = await api.clearSlot(competition.id, slotKey); setAssignments(res.assignments); setStatusMsg(null); setStatusIsError(false); }
+      catch (err) { setAssignments(snapshot); setStatusMsg(formatApiError(err, "No se pudo quitar la asignación")); setStatusIsError(true); }
     });
   };
 
