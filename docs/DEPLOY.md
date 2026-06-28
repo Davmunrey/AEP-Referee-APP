@@ -31,6 +31,8 @@ npm run verify
 - Signup público desactivado.
 - Reset password activo.
 - Solo dominios redirect necesarios.
+- Plantillas de correo con branding AEP Tarima (`src/lib/auth/supabase-email-branding.ts`).
+- Aplicar plantillas en producción: `SUPABASE_ACCESS_TOKEN=... npm run supabase:email-branding`.
 
 ## GitHub
 
@@ -46,7 +48,7 @@ CI en `.github/workflows/ci.yml`:
 - [ ] `npm run e2e`
 - [ ] `npm run audit:remote`
 - [ ] Backup reciente
-- [ ] Migraciones aplicadas (hasta `026`)
+- [ ] Migraciones aplicadas (hasta `028`)
 - [ ] `npm run docs:screenshots` si cambió la UI documentada
 - [ ] Manual PDF probado: `GET /api/v1/guides/tarima-manual`
 - [ ] Usuario admin único esperado activo
