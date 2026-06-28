@@ -162,3 +162,7 @@ servidor; nunca se expone al cliente.
 - PDF: MIME, máximo 5 MB, firma `%PDF-`, extracción con timeout.
 - XLSX: máximo 8 MB, firma ZIP, máximo 12 hojas, 2000 filas/hoja, 80 columnas/fila.
 - Selección import: máximo 500 claves, 160 caracteres por clave.
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

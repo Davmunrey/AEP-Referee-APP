@@ -87,3 +87,7 @@ npm run db:restore:dry-run
 ```
 
 Backups van a `backups/`, ignorado por git. Ejecutar desde entorno con credenciales Supabase (mantenedores).
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

@@ -160,3 +160,7 @@ El sidebar se auto-colapsa en `< 1024px` (primer render en tablet) para liberar 
 - Caché TTL 1 h para `zones` y `regulation_rules` (`src/server/cache/static-data.ts`).
 - Filtros SQL en directorio de jueces (zona, nivel, estado, búsqueda `ilike`).
 - Índices Postgres (migración `030`).
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

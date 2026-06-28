@@ -110,3 +110,7 @@ Los **recibos PDF de compensación** por campeonato siguen activos (flujo financ
 - [Auth](./AUTH.md) — roles y permisos
 - [Base de datos](./DATABASE.md) — tablas y migraciones
 - [Guía de uso](./GUIA-USO.md) — flujos con capturas
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

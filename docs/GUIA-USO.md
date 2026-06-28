@@ -245,3 +245,7 @@ La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de 
 - **Excel grande al importar jueces**: divide el archivo o elimina hojas no usadas (límite 8 MB).
 - **No veo «Usuarios»**: solo visible para AEP Nacional (`super_admin` / `delegado_jueces`).
 - **Tarima aprobada sin editar**: usa «Registrar imprevisto» en la cabecera.
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

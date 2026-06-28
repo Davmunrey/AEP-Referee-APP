@@ -46,3 +46,12 @@ Fuente de verdad:
 - No mezclar «Evento» visible con «Campeonato».
 - No ocultar errores de parser; mostrar warnings accionables.
 - No llamar APIs de mapas desde el cliente (usar `/api/v1/geocode/search`).
+
+## Domicilio (v1.8)
+
+- Campo con autocomplete OSM y botón **Eliminar ubicación** (texto rojo, junto a la etiqueta).
+- Tras eliminar, desaparecen coordenadas y mensaje verde «Ubicación OpenStreetMap OK».
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
