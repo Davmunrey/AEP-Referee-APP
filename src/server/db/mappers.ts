@@ -11,6 +11,7 @@ import type {
   RegulationRule,
   RosterHistoryEntry,
 } from "@/lib/types";
+import { isClaimTravelResolved } from "@/lib/judge-compensation/readiness";
 
 function mapArbitrajeStats(raw: unknown): RefereeArbitrajeStats | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -121,7 +122,25 @@ export function mapCompetition(row: Record<string, unknown>): Competition {
     compensationVolunteer: row.compensation_volunteer != null
       ? Boolean(row.compensation_volunteer)
       : undefined,
+    compensationClubs: parseCompensationClubs(row.compensation_clubs),
   };
+}
+
+function parseCompensationClubs(raw: unknown): import("@/lib/judge-compensation/types").CompensationClubContact[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const clubs = raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const rec = item as Record<string, unknown>;
+      const name = typeof rec.name === "string" ? rec.name.trim() : "";
+      const emails = Array.isArray(rec.emails)
+        ? rec.emails.map((e) => String(e).trim()).filter((e) => e.includes("@"))
+        : [];
+      if (!name) return null;
+      return { name, emails };
+    })
+    .filter(Boolean) as import("@/lib/judge-compensation/types").CompensationClubContact[];
+  return clubs.length > 0 ? clubs : undefined;
 }
 
 export function mapApproval(row: Record<string, unknown>): ApprovalProposal {
@@ -322,6 +341,11 @@ export function mapCompensationClaimRow(
     championshipDays: 1,
     lodgingEligible: Boolean(row.lodging_eligible),
     lodgingDays: Number(row.lodging_days ?? 0),
+    financialComplete: isClaimTravelResolved({
+      travelMode: base.travelMode,
+      distanceKmRoundTrip: base.distanceKmRoundTrip,
+      distanceKmOneWay: base.distanceKmOneWay,
+    }),
   };
   return { ...base, ...totals };
 }
@@ -353,6 +377,14 @@ export function competitionPatchToDb(
   }
   if (patch.compensationVolunteer !== undefined) {
     dbPatch.compensation_volunteer = patch.compensationVolunteer;
+  }
+  if (patch.compensationClubs !== undefined) {
+    dbPatch.compensation_clubs = patch.compensationClubs ?? [];
+    const primary = patch.compensationClubs?.[0];
+    if (primary) {
+      dbPatch.compensation_club_name = primary.name;
+      dbPatch.compensation_club_email = primary.emails[0] ?? null;
+    }
   }
   return dbPatch;
 }

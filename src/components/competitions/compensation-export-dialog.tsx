@@ -5,26 +5,35 @@ import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/client";
+import { buildClaimBreakdown } from "@/lib/judge-compensation/breakdown";
 import { isValidSpanishIban } from "@/lib/judge-compensation/iban";
+import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim } from "@/lib/judge-compensation/types";
 
 interface CompensationExportDialogProps {
   competitionId: string;
   claim: CompensationClaim;
+  readyForExport: boolean;
   onClose: () => void;
 }
 
 export function CompensationExportDialog({
   competitionId,
   claim,
+  readyForExport,
   onClose,
 }: CompensationExportDialogProps) {
   const [iban, setIban] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const breakdown = buildClaimBreakdown(claim);
 
   const onExport = () => {
     setError(null);
+    if (!readyForExport || !claim.financialComplete) {
+      setError("Completa todos los km antes de exportar");
+      return;
+    }
     if (!isValidSpanishIban(iban)) {
       setError("IBAN español no válido");
       return;
@@ -47,7 +56,7 @@ export function CompensationExportDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-xl">
+      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
         <div className="mb-4 flex items-start justify-between gap-2">
           <div>
             <h3 className="text-sm font-semibold">Exportar recibo</h3>
@@ -57,6 +66,25 @@ export function CompensationExportDialog({
             <X className="h-4 w-4 text-subtle-muted" />
           </button>
         </div>
+
+        <div className="mb-4 rounded-xl border border-border-muted bg-surface/50 p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Desglose</p>
+          <ul className="space-y-1 text-sm">
+            {breakdown.map((line) => (
+              <li key={`${line.label}-${line.detail ?? ""}`} className="flex justify-between gap-3">
+                <span className="text-foreground-secondary">
+                  {line.label}
+                  {line.detail ? <span className="text-muted-foreground"> · {line.detail}</span> : null}
+                </span>
+                <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 border-t border-border-muted pt-2 text-right font-mono font-semibold">
+            Total: {formatReceiptAmountEur(claim.totalAmount)}
+          </p>
+        </div>
+
         <p className="mb-3 text-xs text-muted-foreground">
           El IBAN solo se usa para generar el PDF y no se almacena en la aplicación.
         </p>
@@ -70,7 +98,7 @@ export function CompensationExportDialog({
         />
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
         <div className="mt-4 flex gap-2">
-          <Button type="button" onClick={onExport} disabled={pending || !iban.trim()}>
+          <Button type="button" onClick={onExport} disabled={pending || !iban.trim() || !claim.financialComplete}>
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Descargar PDF"}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={pending}>

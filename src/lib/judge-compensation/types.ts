@@ -70,6 +70,13 @@ export interface CompensationClaimTotals {
   championshipDays: number;
   lodgingEligible: boolean;
   lodgingDays: number;
+  /** Falso hasta que km/desplazamiento esté resuelto para este juez. */
+  financialComplete: boolean;
+}
+
+export interface CompensationClubContact {
+  name: string;
+  emails: string[];
 }
 
 export interface CompensationClaim extends CompensationClaimInput, CompensationClaimTotals {
@@ -82,5 +89,9 @@ export interface CompensationClaim extends CompensationClaimInput, CompensationC
 export interface CompetitionCompensationSummary {
   competitionId: string;
   claims: CompensationClaim[];
+  /** Suma solo de claims con financialComplete. */
   grandTotal: number;
+  /** Suma provisional (funciones + resp.) aunque falten km. */
+  provisionalTotal: number;
+  readiness: import("./readiness").CompensationReadiness;
 }

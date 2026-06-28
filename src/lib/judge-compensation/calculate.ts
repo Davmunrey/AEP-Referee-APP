@@ -7,6 +7,8 @@ import {
   travelAmountFromKm,
 } from "./rates";
 import { countDutyTypes } from "./classify-duties";
+import { isClaimTravelResolved } from "./readiness";
+import { parseIntegerKm } from "./km";
 import type {
   CompensationClaim,
   CompensationClaimInput,
@@ -71,25 +73,36 @@ export function calculateCompensationTotals(
   const { sessionCount, pesajeCount, functionCount } = countDutyTypes(input.dutyLines);
   const championshipDays = championshipDayCount(input.fecha, input.fechaFin);
 
-  const roundTripKm =
+  const roundTripKmRaw =
     input.distanceKmRoundTrip ??
     (input.distanceKmOneWay != null ? input.distanceKmOneWay * 2 : undefined);
+  const roundTripKm = roundTripKmRaw != null ? parseIntegerKm(roundTripKmRaw) ?? undefined : undefined;
 
-  const travelAmount = resolveTravelAmount({
+  const financialComplete = isClaimTravelResolved({
     travelMode: input.travelMode,
-    roundTripKm,
-    travelAmountOverride: input.travelAmountOverride,
-    travelApproved: input.travelApproved,
+    distanceKmRoundTrip: roundTripKm,
+    distanceKmOneWay: input.distanceKmOneWay,
   });
 
-  const { lodgingEligible, lodgingDays, lodgingAmount } = resolveLodging({
-    fecha: input.fecha,
-    fechaFin: input.fechaFin,
-    functionCount,
-    roundTripKm,
-    lodgingEligibleOverride: input.lodgingEligibleOverride,
-    lodgingDaysOverride: input.lodgingDaysOverride,
-  });
+  const travelAmount = financialComplete
+    ? resolveTravelAmount({
+        travelMode: input.travelMode,
+        roundTripKm,
+        travelAmountOverride: input.travelAmountOverride,
+        travelApproved: input.travelApproved,
+      })
+    : 0;
+
+  const { lodgingEligible, lodgingDays, lodgingAmount } = financialComplete
+    ? resolveLodging({
+        fecha: input.fecha,
+        fechaFin: input.fechaFin,
+        functionCount,
+        roundTripKm,
+        lodgingEligibleOverride: input.lodgingEligibleOverride,
+        lodgingDaysOverride: input.lodgingDaysOverride,
+      })
+    : { lodgingEligible: false, lodgingDays: 0, lodgingAmount: 0 };
 
   const competitionManagerAmount = input.isCompetitionManager
     ? competitionManagerRate(
@@ -100,9 +113,9 @@ export function calculateCompensationTotals(
       )
     : 0;
 
-  const totalAmount =
-    Math.round((dutiesAmount + travelAmount + lodgingAmount + competitionManagerAmount) * 100) /
-    100;
+  const totalAmount = financialComplete
+    ? Math.round((dutiesAmount + travelAmount + lodgingAmount + competitionManagerAmount) * 100) / 100
+    : Math.round((dutiesAmount + competitionManagerAmount) * 100) / 100;
 
   return {
     dutiesAmount,
@@ -116,6 +129,7 @@ export function calculateCompensationTotals(
     championshipDays,
     lodgingEligible,
     lodgingDays,
+    financialComplete,
   };
 }
 

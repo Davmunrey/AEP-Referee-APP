@@ -9,6 +9,7 @@ import type {
   CompensationTravelMode,
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
+import { parseIntegerKm, roundTripKmFromOneWay, oneWayKmFromRoundTrip } from "@/lib/judge-compensation/km";
 import type { Competition, Referee } from "@/lib/types";
 import {
   claimToDbRow,
@@ -124,18 +125,20 @@ async function persistClaim(claim: CompensationClaim): Promise<void> {
 async function buildSummary(competitionId: string): Promise<CompetitionCompensationSummary> {
   const competition = await competitionService.getCompetition(competitionId);
   if (!competition) {
-    return { competitionId, claims: [], grandTotal: 0 };
+    return emptySummary(competitionId);
   }
   const roster = await rosterService.getRoster(competitionId, competitionService.getCompetition);
   if (!roster) {
-    return { competitionId, claims: [], grandTotal: 0 };
+    return emptySummary(competitionId);
   }
   const stored = await loadStoredClaims(competitionId, competition);
   const claims: CompensationClaim[] = [];
+  const refereesById = new Map<string, Referee>();
 
   for (const refereeId of assignedRefereeIds(roster.assignments)) {
     const referee = await refereeService.getReferee(refereeId);
     if (!referee) continue;
+    refereesById.set(refereeId, referee);
     const existing = stored.get(refereeId);
     claims.push(
       mergeClaimFromRoster({
@@ -148,7 +151,24 @@ async function buildSummary(competitionId: string): Promise<CompetitionCompensat
     );
   }
 
-  return summarizeCompensation(claims);
+  return summarizeCompensation(competition, claims, refereesById);
+}
+
+function emptySummary(competitionId: string): CompetitionCompensationSummary {
+  return {
+    competitionId,
+    claims: [],
+    grandTotal: 0,
+    provisionalTotal: 0,
+    readiness: {
+      venueReady: false,
+      allTravelResolved: true,
+      pendingTravelReferees: [],
+      missingDomicilioReferees: [],
+      issues: [],
+      readyForExport: false,
+    },
+  };
 }
 
 export const compensationService = {
@@ -156,16 +176,18 @@ export const compensationService = {
 
   recalculate: async (competitionId: string): Promise<CompetitionCompensationSummary> => {
     const competition = await competitionService.getCompetition(competitionId);
-    if (!competition) return { competitionId, claims: [], grandTotal: 0 };
+    if (!competition) return emptySummary(competitionId);
 
     const roster = await rosterService.getRoster(competitionId, competitionService.getCompetition);
-    if (!roster) return { competitionId, claims: [], grandTotal: 0 };
+    if (!roster) return emptySummary(competitionId);
     const stored = await loadStoredClaims(competitionId, competition);
     const claims: CompensationClaim[] = [];
+    const refereesById = new Map<string, Referee>();
 
     for (const refereeId of assignedRefereeIds(roster.assignments)) {
       const referee = await refereeService.getReferee(refereeId);
       if (!referee) continue;
+      refereesById.set(refereeId, referee);
       const existing = stored.get(refereeId);
       const claim = mergeClaimFromRoster({
         competition,
@@ -188,7 +210,7 @@ export const compensationService = {
       }
     }
 
-    return summarizeCompensation(claims);
+    return summarizeCompensation(competition, claims, refereesById);
   },
 
   updateClaim: async (
@@ -213,6 +235,22 @@ export const compensationService = {
     const existing = summary.claims.find((c) => c.refereeId === refereeId);
     if (!existing) return undefined;
 
+    const normalizedPatch = { ...patch };
+    if (patch.distanceKmRoundTrip !== undefined) {
+      normalizedPatch.distanceKmRoundTrip =
+        patch.distanceKmRoundTrip != null ? parseIntegerKm(patch.distanceKmRoundTrip) : null;
+      if (normalizedPatch.distanceKmRoundTrip != null) {
+        normalizedPatch.distanceKmOneWay = oneWayKmFromRoundTrip(normalizedPatch.distanceKmRoundTrip);
+      }
+    }
+    if (patch.distanceKmOneWay !== undefined && patch.distanceKmRoundTrip === undefined) {
+      normalizedPatch.distanceKmOneWay =
+        patch.distanceKmOneWay != null ? parseIntegerKm(patch.distanceKmOneWay) : null;
+      if (normalizedPatch.distanceKmOneWay != null) {
+        normalizedPatch.distanceKmRoundTrip = roundTripKmFromOneWay(normalizedPatch.distanceKmOneWay);
+      }
+    }
+
     const input: CompensationClaimInput = {
       competitionId: existing.competitionId,
       refereeId: existing.refereeId,
@@ -222,37 +260,37 @@ export const compensationService = {
       fecha: existing.fecha,
       fechaFin: existing.fechaFin,
       dutyLines: existing.dutyLines,
-      travelMode: patch.travelMode ?? existing.travelMode,
+      travelMode: normalizedPatch.travelMode ?? existing.travelMode,
       distanceKmOneWay:
-        patch.distanceKmOneWay !== undefined
-          ? (patch.distanceKmOneWay ?? undefined)
+        normalizedPatch.distanceKmOneWay !== undefined
+          ? (normalizedPatch.distanceKmOneWay ?? undefined)
           : existing.distanceKmOneWay,
       distanceKmRoundTrip:
-        patch.distanceKmRoundTrip !== undefined
-          ? (patch.distanceKmRoundTrip ?? undefined)
+        normalizedPatch.distanceKmRoundTrip !== undefined
+          ? (normalizedPatch.distanceKmRoundTrip ?? undefined)
           : existing.distanceKmRoundTrip,
       distanceSource:
-        patch.distanceSource !== undefined
-          ? (patch.distanceSource ?? undefined)
+        normalizedPatch.distanceSource !== undefined
+          ? (normalizedPatch.distanceSource ?? undefined)
           : existing.distanceSource,
-      travelApproved: patch.travelApproved ?? existing.travelApproved,
+      travelApproved: normalizedPatch.travelApproved ?? existing.travelApproved,
       travelNotes:
-        patch.travelNotes !== undefined ? (patch.travelNotes ?? undefined) : existing.travelNotes,
-      isCompetitionManager: patch.isCompetitionManager ?? existing.isCompetitionManager,
+        normalizedPatch.travelNotes !== undefined ? (normalizedPatch.travelNotes ?? undefined) : existing.travelNotes,
+      isCompetitionManager: normalizedPatch.isCompetitionManager ?? existing.isCompetitionManager,
       competitionManagerPerDay:
-        patch.competitionManagerPerDay ?? existing.competitionManagerPerDay,
+        normalizedPatch.competitionManagerPerDay ?? existing.competitionManagerPerDay,
       lodgingEligibleOverride:
-        patch.lodgingEligibleOverride !== undefined
-          ? (patch.lodgingEligibleOverride ?? undefined)
+        normalizedPatch.lodgingEligibleOverride !== undefined
+          ? (normalizedPatch.lodgingEligibleOverride ?? undefined)
           : existing.lodgingEligibleOverride,
       lodgingDaysOverride:
-        patch.lodgingDaysOverride !== undefined
-          ? (patch.lodgingDaysOverride ?? undefined)
+        normalizedPatch.lodgingDaysOverride !== undefined
+          ? (normalizedPatch.lodgingDaysOverride ?? undefined)
           : existing.lodgingDaysOverride,
-      status: patch.status ?? existing.status,
+      status: normalizedPatch.status ?? existing.status,
       reviewComment:
-        patch.reviewComment !== undefined
-          ? (patch.reviewComment ?? undefined)
+        normalizedPatch.reviewComment !== undefined
+          ? (normalizedPatch.reviewComment ?? undefined)
           : existing.reviewComment,
     };
 
@@ -285,13 +323,23 @@ export const compensationService = {
     };
 
     const result = await fetchDrivingDistanceKm(origin, destination);
-    const roundTrip = Math.round(result.distanceKmOneWay * 2 * 10) / 10;
+    const roundTrip = roundTripKmFromOneWay(result.distanceKmOneWay);
 
     return compensationService.updateClaim(competitionId, refereeId, {
       distanceKmOneWay: result.distanceKmOneWay,
       distanceKmRoundTrip: roundTrip,
       distanceSource: "google_maps",
+      travelMode: "km_rate",
     });
+  },
+
+  calculateAllDistances: async (competitionId: string): Promise<CompetitionCompensationSummary> => {
+    const summary = await buildSummary(competitionId);
+    for (const claim of summary.claims) {
+      if (claim.travelMode === "shared_vehicle_passenger" || claim.travelMode === "none") continue;
+      await compensationService.calculateDistance(competitionId, claim.refereeId);
+    }
+    return buildSummary(competitionId);
   },
 
   getClaimForExport: async (

@@ -66,6 +66,7 @@ export interface CompensationReceiptInput {
   fechaFin: string;
   iban: string;
   organizer: CompensationReceiptOrganizer;
+  breakdownLines?: { label: string; amount: number; detail?: string }[];
 }
 
 interface ParsedIsoDate {
