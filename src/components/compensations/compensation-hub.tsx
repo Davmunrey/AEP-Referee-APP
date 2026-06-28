@@ -166,10 +166,6 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
                           <AlertCircle className="h-3 w-3" />
                           {item.pendingKmCount} km pend.
                         </span>
-                      ) : !item.venueReady ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-warning-border bg-warning-subtle px-2 py-0.5 text-[10px] font-medium text-warning">
-                          Sede sin geocodificar
-                        </span>
                       ) : item.issueCount > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-warning-border bg-warning-subtle px-2 py-0.5 text-[10px] font-medium text-warning">
                           Revisar

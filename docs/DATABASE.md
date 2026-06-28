@@ -17,7 +17,7 @@ Supabase Postgres. Migraciones en `supabase/migrations`.
 | `approval_proposals` | 001 | Propuestas aprobación |
 | `promotion_requests` | 001, 023 | Ascensos + `review_comment` al rechazar |
 | `judge_compensation_claims` | 024 | Compensación por juez × campeonato |
-| `judge_compensation_duty_lines` | 024 | Desglose sesión/pesaje por claim |
+| `judge_compensation_duty_lines` | 024 | Desglose sesión × posición por claim |
 | `exams` | 001 | Exámenes |
 | `reports` | 001 | Informes |
 | `regulation_rules` | 001 | Normativa |
@@ -55,18 +55,19 @@ Persiste el motivo de rechazo al revisar ascensos (obligatorio en API cuando `ap
 
 | Tabla / columna | Uso |
 |---|---|
-| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Origen desplazamiento (Photon/OSM) |
+| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Domicilio del juez (referencia; km manual en compensación) |
 | `competitions.sede_direccion`, `sede_lat`, `sede_lng`, `ambito` | Destino; baremo |
 | `competitions.compensation_clubs` (JSONB, **026**) | Varios clubes organizadores |
 | `judge_compensation_claims` | Una fila por juez × campeonato (sin IBAN) |
-| `judge_compensation_duty_lines` | Desglose sesión/pesaje |
+| `judge_compensation_duty_lines` | Desglose sesión × posición (`role_key`, `role_label`) |
+| `judge_compensation_claims.is_computer_setup` | Montaje del ordenador (pago aparte) |
 
 **025** — rol financiero y metadatos del recibo:
 
 - Enum `user_role`: valor `responsable_financiero_jueces`
 - `competitions.compensation_organizer`, `compensation_club_name`, `compensation_club_email`, `compensation_volunteer`
 
-**Estado producción (2026-06-28):** migraciones hasta `026` aplicadas en proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
+**Estado producción (2026-06-28):** migraciones hasta `027` aplicadas en proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
 
 Detalle funcional: [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
 

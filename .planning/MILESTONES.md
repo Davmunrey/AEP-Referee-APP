@@ -1,6 +1,6 @@
 # Milestones — AEP Tarima
 
-## v1.6 — Compensation Hub & OSM (2026-06)
+## v1.6 — Compensation Hub & km manual (2026-06)
 
 - Panel central `/compensation` + API hub
 - Kilometraje 100 % gratuito (Photon/Nominatim/OSRM)

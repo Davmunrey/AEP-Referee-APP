@@ -126,7 +126,7 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
 | `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
 | `GET` | `/compensation/hub` | `canManageCompensation` — panel central |
-| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km masivo OSM |
+| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km manual, comparte, montaje, resp. |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` efímero → `application/pdf` |
 
 `PATCH /competitions/:id` acepta `sedeDireccion`, `sedeLat`, `sedeLng` (desde autocomplete OSM), `compensationClubs[]`, `compensationOrganizer`, etc.

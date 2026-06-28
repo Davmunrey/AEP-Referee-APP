@@ -116,6 +116,8 @@ async function persistClaim(claim: CompensationClaim): Promise<void> {
       claim_id: claim.id,
       duty_type: line.dutyType,
       session_label: line.session,
+      role_key: line.roleKey ?? null,
+      role_label: line.roleLabel ?? null,
       unit_amount: line.unitAmount,
       quantity: line.quantity,
       amount: line.amount,
@@ -229,6 +231,7 @@ export const compensationService = {
       travelNotes: string | null;
       isCompetitionManager: boolean;
       competitionManagerPerDay: boolean;
+      isComputerSetup: boolean;
       lodgingEligibleOverride: boolean | null;
       lodgingDaysOverride: number | null;
       status: CompensationClaimStatus;
@@ -283,6 +286,7 @@ export const compensationService = {
       isCompetitionManager: normalizedPatch.isCompetitionManager ?? existing.isCompetitionManager,
       competitionManagerPerDay:
         normalizedPatch.competitionManagerPerDay ?? existing.competitionManagerPerDay,
+      isComputerSetup: normalizedPatch.isComputerSetup ?? existing.isComputerSetup,
       lodgingEligibleOverride:
         normalizedPatch.lodgingEligibleOverride !== undefined
           ? (normalizedPatch.lodgingEligibleOverride ?? undefined)

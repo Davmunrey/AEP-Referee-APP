@@ -143,11 +143,11 @@ Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de
 
 1. Entra en **Compensación** en la barra lateral (panel central) o abre un campeonato concreto.
 2. Pulsa **Compensación** en la cabecera de tarima (o `/competitions/[id]/compensation`).
-3. **Sede**: usa el **autocomplete OpenStreetMap** (elige una sugerencia de la lista) y guarda.
-4. Configura uno o varios **clubes organizadores** y sus e-mails (listado oficial AEP).
-5. Asegura el **domicilio** de cada juez en su ficha (también con autocomplete).
-6. **Calcular km (OSM)** o introduce km enteros manualmente; marca **Comparte** si aplica.
-7. Revisa el **desglose por sesión Sx** (Ordenador / Pesaje) expandiendo cada fila.
+3. Configura uno o varios **clubes organizadores** y sus e-mails (listado oficial AEP).
+4. Introduce los **km ida+vuelta manualmente** por juez en la tabla.
+5. Marca **Comparte** si el juez viaja en vehículo compartido (solo exime kilometraje; el alojamiento sigue según los km).
+6. Marca **Mont.** si el juez hace el montaje del ordenador (se paga aparte, una función de sesión).
+7. Revisa el **desglose por sesión Sx** con la posición real en tarima (Central, Pesaje, Lateral…) expandiendo cada fila.
 8. **Exportar recibo** → IBAN en el modal (no se guarda) → PDF con desglose.
 
 Los totales de viaje y alojamiento no se confirman hasta que todos los km estén completos.

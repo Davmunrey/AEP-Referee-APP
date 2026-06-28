@@ -9,13 +9,10 @@ import {
   ChevronRight,
   FileDown,
   Loader2,
-  MapPin,
-  Navigation,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AddressAutocompleteField } from "@/components/maps/address-autocomplete-field";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { api } from "@/lib/api/client";
 import {
@@ -55,12 +52,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       : [emptyClub()],
   );
   const [volunteer, setVolunteer] = useState(competition.compensationVolunteer ?? false);
-  const [sedeDireccion, setSedeDireccion] = useState(competition.sedeDireccion ?? "");
-  const [sedeCoords, setSedeCoords] = useState<{ lat: number; lng: number } | null>(
-    competition.sedeLat != null && competition.sedeLng != null
-      ? { lat: competition.sedeLat, lng: competition.sedeLng }
-      : null,
-  );
 
   const claims = summary?.claims ?? [];
   const readiness = summary?.readiness;
@@ -80,27 +71,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
   useEffect(() => {
     load();
   }, [load]);
-
-  const saveVenue = () => {
-    startTransition(async () => {
-      try {
-        const updated = await api.updateCompetition(competition.id, {
-          sedeDireccion,
-          ...(sedeCoords ? { sedeLat: sedeCoords.lat, sedeLng: sedeCoords.lng } : {}),
-        });
-        setCompetition(updated);
-        setSedeDireccion(updated.sedeDireccion ?? "");
-        setSedeCoords(
-          updated.sedeLat != null && updated.sedeLng != null
-            ? { lat: updated.sedeLat, lng: updated.sedeLng }
-            : null,
-        );
-        load();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo guardar la sede");
-      }
-    });
-  };
 
   const saveOrganizer = () => {
     startTransition(async () => {
@@ -138,17 +108,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
     });
   };
 
-  const onCalculateDistances = () => {
-    startTransition(async () => {
-      try {
-        setError(null);
-        setSummary(await api.calculateAllCompensationDistances(competition.id));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudieron calcular distancias");
-      }
-    });
-  };
-
   const patchClaim = (refereeId: string, patch: Parameters<typeof api.updateCompensationClaim>[2]) => {
     startTransition(async () => {
       try {
@@ -177,10 +136,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
     });
   };
 
-  const venueOk =
-    (sedeCoords != null || (competition.sedeLat != null && competition.sedeLng != null)) &&
-    Boolean(sedeDireccion.trim() || competition.sedeDireccion);
-
   return (
     <PageShell className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -207,45 +162,9 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       {canManage && (
         <section className="glass-panel-soft space-y-4 rounded-2xl p-4">
           <div>
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <MapPin className="h-4 w-4 text-primary" />
-              Sede del campeonato (OpenStreetMap)
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Dirección con autocomplete gratuito (OpenStreetMap) para calcular km desde el domicilio de cada juez.
-            </p>
-            <div className="mt-3 flex flex-wrap items-end gap-2">
-              <AddressAutocompleteField
-                className="min-w-[280px] flex-1"
-                label="Dirección de la sede"
-                value={sedeDireccion}
-                onValueChange={(value) => {
-                  setSedeDireccion(value);
-                  setSedeCoords(null);
-                }}
-                onPlaceSelect={(place) => {
-                  setSedeDireccion(place.address);
-                  setSedeCoords({ lat: place.lat, lng: place.lng });
-                }}
-                placeholder="Polideportivo, calle, ciudad…"
-                disabled={!canManage || pending}
-                coordsOk={venueOk}
-                coordsHint={
-                  venueOk
-                    ? `Coordenadas OK (${(sedeCoords?.lat ?? competition.sedeLat)?.toFixed(4)}, ${(sedeCoords?.lng ?? competition.sedeLng)?.toFixed(4)})`
-                    : "Selecciona una dirección de las sugerencias o guarda para geocodificar con OpenStreetMap."
-                }
-              />
-              <Button type="button" size="sm" onClick={saveVenue} disabled={pending || !sedeDireccion.trim()}>
-                Guardar sede
-              </Button>
-            </div>
-          </div>
-
-          <div className="border-t border-border-muted pt-4">
             <h2 className="text-sm font-semibold text-foreground">Organizadores del recibo</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Puede haber varios clubes y varios e-mails de devolución (separados por coma).
+              Puede haber varios clubes y varios e-mails de devolución (separados por coma). Los km se introducen manualmente por juez.
             </p>
             <div className="mt-3 space-y-3">
               <select
@@ -348,16 +267,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
 
       <div className="flex flex-wrap items-center gap-2">
         {canManage && (
-          <>
-            <Button type="button" size="sm" variant="outline" onClick={onRecalculate} disabled={pending}>
-              {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-              <span className="ml-1.5">Recalcular funciones</span>
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={onCalculateDistances} disabled={pending || !venueOk}>
-              <Navigation className="h-3.5 w-3.5" />
-              <span className="ml-1.5">Calcular km (OSM)</span>
-            </Button>
-          </>
+          <Button type="button" size="sm" variant="outline" onClick={onRecalculate} disabled={pending}>
+            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            <span className="ml-1.5">Recalcular funciones</span>
+          </Button>
         )}
         <div className="ml-auto text-right">
           <p className="font-mono text-sm font-semibold text-foreground">
@@ -391,6 +304,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               <th className="px-3 py-2">Comparte</th>
               <th className="px-3 py-2">Aloj.</th>
               <th className="px-3 py-2">Resp.</th>
+              <th className="px-3 py-2">Mont.</th>
               <th className="px-3 py-2 text-right">Total</th>
               {canManage && <th className="px-3 py-2" />}
             </tr>
@@ -416,9 +330,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       {formatDutySessionsSummary(claim)}
                     </td>
                     <td className="px-3 py-2">
-                      {claim.travelMode === "shared_vehicle_passenger" ? (
-                        <span className="text-xs text-muted-foreground">0 (compartido)</span>
-                      ) : canManage ? (
+                      {canManage ? (
                         <Input
                           className="h-8 w-20 font-mono text-xs"
                           type="number"
@@ -433,7 +345,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                                 distanceKmRoundTrip: null,
                                 distanceKmOneWay: null,
                                 distanceSource: null,
-                                travelMode: "km_rate",
                               });
                               return;
                             }
@@ -443,12 +354,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                               distanceKmRoundTrip: v,
                               distanceKmOneWay: Math.round(v / 2),
                               distanceSource: "manual",
-                              travelMode: "km_rate",
                             });
                           }}
                         />
                       ) : (
                         <span className="font-mono text-xs">{claim.distanceKmRoundTrip ?? "—"}</span>
+                      )}
+                      {claim.travelMode === "shared_vehicle_passenger" && (
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">sin cobro km</p>
                       )}
                     </td>
                     <td className="px-3 py-2">
@@ -459,12 +372,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           onChange={(e) =>
                             patchClaim(claim.refereeId, {
                               travelMode: e.target.checked ? "shared_vehicle_passenger" : "km_rate",
-                              ...(e.target.checked
-                                ? { distanceKmRoundTrip: 0, distanceKmOneWay: 0 }
-                                : {}),
                             })
                           }
-                          aria-label="Comparte desplazamiento"
+                          aria-label="Comparte desplazamiento (solo exime kilometraje)"
+                          title="Solo exime el cobro de kilometraje; el alojamiento sigue aplicando según los km"
                         />
                       ) : claim.travelMode === "shared_vehicle_passenger" ? (
                         "Sí"
@@ -486,6 +397,23 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           aria-label="Responsable competición"
                         />
                       ) : claim.isCompetitionManager ? (
+                        "Sí"
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      {canManage ? (
+                        <input
+                          type="checkbox"
+                          checked={claim.isComputerSetup}
+                          onChange={(e) =>
+                            patchClaim(claim.refereeId, { isComputerSetup: e.target.checked })
+                          }
+                          aria-label="Montaje del ordenador"
+                          title="Montaje del ordenador (se paga aparte)"
+                        />
+                      ) : claim.isComputerSetup ? (
                         "Sí"
                       ) : (
                         "—"
@@ -518,7 +446,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   </tr>
                   {isOpen && (
                     <tr className="bg-surface/30">
-                      <td colSpan={canManage ? 9 : 8} className="px-4 py-3">
+                      <td colSpan={canManage ? 10 : 9} className="px-4 py-3">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           Desglose · {claim.refereeName}
                         </p>
@@ -529,11 +457,11 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                               <ul className="space-y-1">
                                 {group.lines.map((line) => (
                                   <li
-                                    key={`${group.session}-${line.kind}`}
+                                    key={`${group.session}-${line.roleLabel}`}
                                     className="flex justify-between gap-4 text-foreground-secondary"
                                   >
                                     <span>
-                                      {line.kind === "pesaje" ? "Pesaje" : "Ordenador"}
+                                      {line.roleLabel}
                                       <span className="text-muted-foreground">
                                         {" "}
                                         · {formatReceiptAmountEur(line.unitAmount)}

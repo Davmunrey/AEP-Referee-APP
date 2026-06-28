@@ -79,6 +79,7 @@ export function buildClaimInputFromRoster(input: {
     travelNotes: input.existing?.travelNotes,
     isCompetitionManager: input.existing?.isCompetitionManager ?? false,
     competitionManagerPerDay: input.existing?.competitionManagerPerDay ?? false,
+    isComputerSetup: input.existing?.isComputerSetup ?? false,
     lodgingDaysOverride: input.existing?.lodgingDaysOverride,
     lodgingEligibleOverride: input.existing?.lodgingEligibleOverride,
     status: input.existing?.status ?? "borrador",

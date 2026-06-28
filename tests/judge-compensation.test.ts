@@ -15,6 +15,8 @@ function baseInput(overrides: Partial<CompensationClaimInput> = {}): Compensatio
       {
         dutyType: "session",
         session: "S1",
+        roleKey: "central",
+        roleLabel: "Juez Central",
         unitAmount: 30,
         quantity: 1,
         amount: 30,
@@ -23,6 +25,8 @@ function baseInput(overrides: Partial<CompensationClaimInput> = {}): Compensatio
       {
         dutyType: "pesaje",
         session: "S1",
+        roleKey: "pesaje",
+        roleLabel: "Pesaje",
         unitAmount: 15,
         quantity: 1,
         amount: 15,
@@ -34,6 +38,7 @@ function baseInput(overrides: Partial<CompensationClaimInput> = {}): Compensatio
     travelApproved: false,
     isCompetitionManager: false,
     competitionManagerPerDay: false,
+    isComputerSetup: false,
     status: "borrador",
     ...overrides,
   };
@@ -48,6 +53,12 @@ describe("calculateCompensationTotals", () => {
     expect(totals.lodgingEligible).toBe(true);
     expect(totals.lodgingAmount).toBe(25);
     expect(totals.totalAmount).toBe(96);
+  });
+
+  it("montaje del ordenador se paga aparte", () => {
+    const totals = calculateCompensationTotals(baseInput({ isComputerSetup: true }));
+    expect(totals.computerSetupAmount).toBe(30);
+    expect(totals.totalAmount).toBe(126);
   });
 
   it("EPF/IPF no paga responsable de competición", () => {

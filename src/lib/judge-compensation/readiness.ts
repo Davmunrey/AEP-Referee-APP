@@ -1,6 +1,6 @@
 import { isPositiveIntegerKm, parseIntegerKm } from "./km";
 import type { CompensationClaim, CompensationTravelMode, CompensationClubContact } from "./types";
-import type { Competition, Referee } from "@/lib/types";
+import type { Competition } from "@/lib/types";
 import { normalizeClubEmails } from "@/lib/organizer-clubs";
 
 export interface CompensationReadiness {
@@ -35,12 +35,9 @@ export function allClubEmailsFromCompetition(
   return [...new Set(emails)];
 }
 
-export function competitionVenueReady(comp: Pick<Competition, "sedeDireccion" | "sedeLat" | "sedeLng">): boolean {
-  return Boolean(comp.sedeDireccion?.trim() && comp.sedeLat != null && comp.sedeLng != null);
-}
-
-export function refereeDomicilioReady(ref: Pick<Referee, "domicilio" | "domicilioLat" | "domicilioLng">): boolean {
-  return Boolean(ref.domicilio?.trim() && ref.domicilioLat != null && ref.domicilioLng != null);
+/** Los km se introducen manualmente; no se exige geocodificar la sede. */
+export function competitionVenueReady(_comp: Pick<Competition, "sedeDireccion" | "sedeLat" | "sedeLng">): boolean {
+  return true;
 }
 
 export function isTravelModeResolved(
@@ -48,7 +45,7 @@ export function isTravelModeResolved(
   roundTripKm?: number | null,
   oneWayKm?: number | null,
 ): boolean {
-  if (travelMode === "shared_vehicle_passenger" || travelMode === "none") return true;
+  if (travelMode === "none") return true;
   const rt =
     roundTripKm != null
       ? parseIntegerKm(roundTripKm)
@@ -65,63 +62,41 @@ export function isClaimTravelResolved(claim: Pick<CompensationClaim, "travelMode
 export function assessCompensationReadiness(input: {
   competition: Competition;
   claims: CompensationClaim[];
-  refereesById: Map<string, Referee>;
+  refereesById: Map<string, import("@/lib/types").Referee>;
   organizerIsClub: boolean;
   clubEmails: string[];
 }): CompensationReadiness {
   const issues: string[] = [];
   const pendingTravelReferees: string[] = [];
-  const missingDomicilioReferees: string[] = [];
-
-  if (!competitionVenueReady(input.competition)) {
-    issues.push("Falta la dirección de la sede geocodificada (competición).");
-  }
 
   if (input.organizerIsClub && input.clubEmails.length === 0) {
     issues.push("Configura al menos un e-mail del club organizador.");
   }
 
   for (const claim of input.claims) {
-    const ref = input.refereesById.get(claim.refereeId);
-    if (claim.travelMode === "km_rate") {
-      if (ref && !refereeDomicilioReady(ref)) {
-        missingDomicilioReferees.push(claim.refereeName);
-      }
-      if (!isClaimTravelResolved(claim)) {
-        pendingTravelReferees.push(claim.refereeName);
-      }
-    } else if (!isClaimTravelResolved(claim)) {
+    if (!isClaimTravelResolved(claim)) {
       pendingTravelReferees.push(claim.refereeName);
     }
   }
 
-  if (missingDomicilioReferees.length > 0) {
-    issues.push(
-      `Domicilio sin geocodificar: ${missingDomicilioReferees.slice(0, 3).join(", ")}${missingDomicilioReferees.length > 3 ? "…" : ""}.`,
-    );
-  }
-
   if (pendingTravelReferees.length > 0) {
     issues.push(
-      `Km pendientes: ${pendingTravelReferees.slice(0, 3).join(", ")}${pendingTravelReferees.length > 3 ? "…" : ""}.`,
+      `Km pendientes (introduce manualmente): ${pendingTravelReferees.slice(0, 3).join(", ")}${pendingTravelReferees.length > 3 ? "…" : ""}.`,
     );
   }
 
-  const venueReady = competitionVenueReady(input.competition);
   const allTravelResolved = pendingTravelReferees.length === 0;
   const readyForExport =
-    venueReady &&
     allTravelResolved &&
     input.claims.length > 0 &&
     input.claims.every((c) => c.financialComplete && c.totalAmount > 0) &&
     (!input.organizerIsClub || input.clubEmails.length > 0);
 
   return {
-    venueReady,
-    venueIssue: venueReady ? undefined : "Indica la dirección completa de la sede y geocodifícala.",
+    venueReady: true,
     allTravelResolved,
     pendingTravelReferees,
-    missingDomicilioReferees,
+    missingDomicilioReferees: [],
     issues,
     readyForExport,
   };

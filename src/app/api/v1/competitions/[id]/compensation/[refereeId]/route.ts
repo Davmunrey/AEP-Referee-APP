@@ -33,6 +33,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       typeof body.competitionManagerPerDay === "boolean"
         ? body.competitionManagerPerDay
         : undefined,
+    isComputerSetup:
+      typeof body.isComputerSetup === "boolean" ? body.isComputerSetup : undefined,
     lodgingEligibleOverride:
       body.lodgingEligibleOverride === null
         ? null

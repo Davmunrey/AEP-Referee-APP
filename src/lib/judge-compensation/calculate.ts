@@ -5,6 +5,7 @@ import {
   LODGING_PER_DAY_EUR,
   MIN_FUNCTIONS_FOR_LODGING,
   travelAmountFromKm,
+  unitRateForDuty,
 } from "./rates";
 import { countDutyTypes } from "./classify-duties";
 import { isClaimTravelResolved } from "./readiness";
@@ -113,15 +114,27 @@ export function calculateCompensationTotals(
       )
     : 0;
 
+  const computerSetupAmount = input.isComputerSetup
+    ? unitRateForDuty("session", input.tipo, input.ambito)
+    : 0;
+
   const totalAmount = financialComplete
-    ? Math.round((dutiesAmount + travelAmount + lodgingAmount + competitionManagerAmount) * 100) / 100
-    : Math.round((dutiesAmount + competitionManagerAmount) * 100) / 100;
+    ? Math.round(
+        (dutiesAmount +
+          travelAmount +
+          lodgingAmount +
+          competitionManagerAmount +
+          computerSetupAmount) *
+          100,
+      ) / 100
+    : Math.round((dutiesAmount + competitionManagerAmount + computerSetupAmount) * 100) / 100;
 
   return {
     dutiesAmount,
     travelAmount,
     lodgingAmount,
     competitionManagerAmount,
+    computerSetupAmount,
     totalAmount,
     sessionCount,
     pesajeCount,

@@ -8,7 +8,7 @@ La compensación económica la gestiona el rol **`responsable_financiero_jueces`
 
 ## Objetivo
 
-Calcular y gestionar la compensación económica por campeonato de cada juez asignado en tarima: funciones (sesión/pesaje), desplazamiento (km o alternativas aprobadas), alojamiento y responsable de competición. Generar el **recibo PDF** por juez para devolución al organizador.
+Calcular y gestionar la compensación económica por campeonato de cada juez asignado en tarima: funciones por **posición en tarima** (Central, Lateral, Pesaje, etc.), desplazamiento (km o alternativas aprobadas), alojamiento, montaje del ordenador y responsable de competición. Generar el **recibo PDF** por juez para devolución al organizador.
 
 ## Baremo vigente (código: `src/lib/judge-compensation/rates.ts`)
 
@@ -16,6 +16,7 @@ Calcular y gestionar la compensación económica por campeonato de cada juez asi
 |---|---:|---:|---:|---:|
 | Pesaje | 15 € | 15 € | 20 € | 20 € |
 | Sesión (tarima) | 30 € | 30 € | 40 € | 40 € |
+| Montaje ordenador | 1 × tarifa sesión | | | |
 | Km ida+vuelta | 0,13 €/km | | | |
 | Alojamiento / día | 25 € | | | |
 | Responsable competición | 20 € / campeonato | 20 € | 20 €* | 0 € |
@@ -24,11 +25,13 @@ Calcular y gestionar la compensación económica por campeonato de cada juez asi
 
 ### Reglas de negocio
 
-1. **Funciones**: se cuentan **sesiones distintas** (`S1`, `S2`…) en las que el juez tiene rol de **ordenador** (tarima) o **pesaje**. El desglose UI/PDF agrupa por **Sx** (ordenador + pesaje bajo la misma sesión).
-2. **Desplazamiento**: solo si el juez viaja **exclusivamente como juez**. Un vehículo compartido → **un solo** desplazamiento pagado (`shared_vehicle_passenger` en pasajeros).
-3. **Km**: **OpenStreetMap** (100 % gratuito) — Photon autocomplete en cliente; Nominatim (geocoding) + OSRM (rutas) en servidor; ida × 2 (enteros). Override manual permitido. Comparte vehículo → 0 km.
-4. **Alojamiento**: ida+vuelta **> 150 km** y **≥ 2 funciones**. 25 € × días de campeonato.
-5. **Internacional EPF/IPF**: hotel oficial fuera de este cálculo; `ambito: epf|ipf` en competición.
+1. **Funciones**: una línea por **sesión × posición en tarima** (`S1` Central, `S1` Pesaje, `S2` Lateral…). El desglose UI/PDF agrupa por **Sx** mostrando cada posición real, no un genérico «ordenador/pesaje».
+2. **Montaje del ordenador**: caso aparte — checkbox **Mont.** en la tabla; se paga **una función de sesión** adicional, independiente de la posición en tarima.
+3. **Desplazamiento**: solo si el juez viaja **exclusivamente como juez**. Un vehículo compartido → **un solo** desplazamiento pagado en kilometraje (`shared_vehicle_passenger` en pasajeros).
+4. **Km**: **introducción manual** por juez (ida+vuelta, enteros). No se usa geocodificación de sede ni cálculo automático en compensación.
+5. **Comparte vehículo**: **solo exime el cobro de kilometraje**; los km siguen siendo obligatorios y se usan para calcular alojamiento.
+6. **Alojamiento**: ida+vuelta **> 150 km** y **≥ 2 funciones**. 25 € × días de campeonato. Aplica aunque el juez comparta vehículo.
+7. **Internacional EPF/IPF**: hotel oficial fuera de este cálculo; `ambito: epf|ipf` en competición.
 
 ## Recibo PDF (export por juez)
 
@@ -53,15 +56,14 @@ Body: { "iban": "ES28 0182 …" }   ← efímero
 
 Código: `src/lib/judge-compensation/receipt-document.ts`, `receipt-pdf.ts`, `iban.ts`.
 
-## Modelo de datos (migration `024`)
+## Modelo de datos (migrations `024`–`027`)
 
 | Tabla / columna | Uso |
 |---|---|
-| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Origen desplazamiento |
-| `competitions.sede_direccion`, `sede_lat`, `sede_lng`, `ambito` | Destino; baremo |
-| `competitions.compensation_*` (migrations `025`, `026`) | Metadatos del recibo; varios clubes (`compensation_clubs`) |
-| `judge_compensation_claims` | Una fila por juez × campeonato |
-| `judge_compensation_duty_lines` | Desglose sesión/pesaje |
+| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Referencia del juez (opcional; km manual en compensación) |
+| `competitions.ambito`, `compensation_*` | Baremo y metadatos del recibo |
+| `judge_compensation_claims` | Una fila por juez × campeonato; `is_computer_setup`, `computer_setup_amount` |
+| `judge_compensation_duty_lines` | Desglose por sesión × posición (`role_key`, `role_label`) |
 
 Estados del claim: `borrador` → `enviado` → `aprobado` → `pagado` / `rechazado`.
 
@@ -70,11 +72,11 @@ Estados del claim: `borrador` → `enviado` → `aprobado` → `pagado` / `recha
 ```
 Roster assignments + template
         ↓
-classifyDuties()  →  duty lines
+classifyDuties()  →  duty lines (posición tarima por sesión)
         ↓
-OSRM / Nominatim (OpenStreetMap, gratuito)  →  km ida
+Km manual por juez  →  ida+vuelta enteros
         ↓
-calculateClaim()  →  importes
+calculateClaim()  →  importes (+ montaje ordenador si aplica)
         ↓
 judge_compensation_claims (persistido, sin IBAN)
         ↓
@@ -88,39 +90,26 @@ Export PDF + IBAN introducido al vuelo
 | `GET` | `/compensation/hub` | `canManageCompensation` — panel central |
 | `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
-| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
-| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km masivo OSM |
+| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km, comparte, montaje, resp. |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` |
-
-## Variables de entorno (opcional)
-
-| Variable | Uso |
-|---|---|
-| `OSM_USER_AGENT` | Identificación de la app para Nominatim (recomendado en producción) |
-| `NOMINATIM_URL` | URL del servicio Nominatim (por defecto nominatim.openstreetmap.org) |
-| `OSRM_URL` | URL del router OSRM (por defecto router.project-osrm.org) |
-
-No se requiere ninguna API key de pago.
-
-![Compensación](images/10-compensacion.png)
 
 ## UI
 
-- **Panel central** `/compensation` — lista todos los campeonatos con jueces, estado de km y enlace directo a cada compensación (acceso desde la barra lateral).
+- **Panel central** `/compensation` — lista todos los campeonatos con jueces, km pendientes y enlace directo.
 - Página `/competitions/[id]/compensation` (solo responsable financiero / super_admin).
-- **Photon (OpenStreetMap)** autocomplete para la sede; domicilio del juez con el mismo componente en ficha.
-- Desglose por **Sx**: cada sesión muestra Ordenador y Pesaje; columna funciones tipo `S1(O+P) · S2`.
-- Varios clubes organizadores y e-mails múltiples (listado oficial AEP abril 2026).
-- Km enteros; totales bloqueados hasta completar todos los desplazamientos.
+- **Km manual** en columna «Km i+v»; **Comparte** solo exime kilometraje; **Mont.** para montaje del ordenador.
+- Desglose por **Sx** con la **posición real** (Juez Central, Pesaje, Lateral…); columna funciones tipo `S1(Cent+Pz) · S2`.
+- Varios clubes organizadores y e-mails múltiples.
+- Totales bloqueados hasta completar todos los km (modo `none` exento).
 - Exportar recibo → modal con desglose → PDF (IBAN efímero).
 
 Ver captura: `docs/images/10-compensacion.png`.
 
 ## Tests
 
-- `tests/judge-compensation.test.ts` — baremo y totales.
+- `tests/judge-compensation.test.ts` — baremo, montaje ordenador y totales.
+- `tests/judge-compensation-km.test.ts` — km manual, comparte y alojamiento.
+- `tests/judge-compensation-breakdown.test.ts` — desglose por posición en tarima.
 - `tests/judge-compensation-receipt.test.ts` — texto del recibo e IBAN efímero.
-- `tests/osm-distance.test.ts` — geocoding y rutas OSM.
 - `tests/compensation-hub.test.ts` — panel central.
-- `tests/judge-compensation-breakdown.test.ts` — desglose por Sx.
 - `tests/tarima-user-guide.test.ts` — manual PDF exportable.
