@@ -63,6 +63,12 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     setCompetitions(initialCompetitions);
   }, [initialCompetitions]);
 
+  const refreshEvents = useCallback(async () => {
+    const fresh = await api.getCompetitions();
+    setCompetitions(fresh);
+    router.refresh();
+  }, [router]);
+
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible") void refreshEvents();
@@ -81,12 +87,6 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   }, [duplicateGroups]);
   const duplicateCount = duplicateGroups.reduce((n, g) => n + g.competitions.length - 1, 0);
   const canDedupe = role === "super_admin" || role === "delegado_jueces";
-
-  const refreshEvents = useCallback(async () => {
-    const fresh = await api.getCompetitions();
-    setCompetitions(fresh);
-    router.refresh();
-  }, [router]);
 
   const filtered = useMemo(() => {
     return competitions.filter((e) => {
