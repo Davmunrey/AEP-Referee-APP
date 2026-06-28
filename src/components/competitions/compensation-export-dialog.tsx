@@ -132,7 +132,7 @@ export function CompensationExportDialog({
           {ibanHint ??
             (ibanReady
               ? "IBAN válido. Pulsa Descargar PDF."
-              : "Ejemplo de formato: ES28 0182 5332 1202 0070 3784")}
+              : "Ejemplo de formato: ES91 2100 0418 4502 0005 1332")}
         </p>
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
         <div className="mt-4 flex gap-2">
