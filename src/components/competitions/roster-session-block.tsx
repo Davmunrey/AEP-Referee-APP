@@ -279,7 +279,7 @@ export function SessionBlock({
                 </p>
                 <div className="flex-1 border-t border-border-muted" />
               </div>
-              <SlotGrid roles={pesajeRoles} {...grid} />
+              <SlotGrid roles={pesajeRoles} variant="pesaje" {...grid} />
             </>
           )}
         </div>

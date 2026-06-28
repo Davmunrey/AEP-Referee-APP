@@ -46,7 +46,7 @@
 | `RequiredSlotsChips` | Resumen plazas requeridas (tarima, mesa, control, pesaje) |
 | `RosterRefereePanel` | Panel jueces con confirm-to-force en conflictos overridable |
 | `RefereeCard` | Tarjeta individual juez con badges y drag |
-| `SlotGrid` | Grid de slots por sesión/rol |
+| `SlotGrid` | Grid de slots por sesión/rol (3 columnas: tarima, mesa, jurado) |
 | `SessionBlock` | Bloque sesión expandible |
 | `SessionOverviewCard` | Tarjeta resumen sesión (barra progreso) |
 
