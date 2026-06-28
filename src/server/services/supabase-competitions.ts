@@ -4,15 +4,17 @@ import {
   competitionsToRemoveInGroup,
   groupCompetitionDuplicates,
 } from "@/lib/competition-dedup";
+import { pickActiveRosterHref } from "@/lib/nav-utils";
 import { applyCoverageToCompetition } from "@/lib/roster-coverage";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type { Competition, RosterSession, SessionUser } from "@/lib/types";
 import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import {
+  cachedLoadAllAssignments,
   db,
   hasApprovalCompetitionColumns,
   hasHistoryCompetitionColumn,
-  loadAllAssignments,
+  loadAssignments,
 } from "./supabase-helpers";
 
 function enrichCompetitionRows(
@@ -35,7 +37,7 @@ export const competitionService = {
     const supabase = db();
     const [{ data }, assignmentsByComp] = await Promise.all([
       supabase.from("competitions").select("*").order("fecha"),
-      loadAllAssignments(),
+      cachedLoadAllAssignments(),
     ]);
     const list = enrichCompetitionRows(
       (data ?? []) as Record<string, unknown>[],
@@ -52,8 +54,40 @@ export const competitionService = {
     const supabase = db();
     const { data } = await supabase.from("competitions").select("*").eq("id", id).single();
     if (!data) return undefined;
-    const assignmentsByComp = await loadAllAssignments();
+    const assignments = await loadAssignments(id);
+    const assignmentsByComp = new Map([[id, assignments]]);
     return enrichCompetitionRows([data as Record<string, unknown>], assignmentsByComp)[0];
+  },
+
+  /** Contadores de navegación sin cargar plantillas ni asignaciones completas. */
+  getNavCountsFast: async (user?: SessionUser) => {
+    const supabase = db();
+    const userZone =
+      user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
+
+    let compQuery = supabase.from("competitions").select("id, fecha, estado").order("fecha");
+    let apprQuery = supabase
+      .from("approval_proposals")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pendiente");
+
+    if (userZone) {
+      compQuery = compQuery.eq("zona", userZone);
+      apprQuery = apprQuery.eq("zona", userZone);
+    }
+
+    const [{ data: comps }, { count: apprCount }] = await Promise.all([compQuery, apprQuery]);
+    const navComps = (comps ?? []).map((r) => ({
+      id: String(r.id),
+      fecha: String(r.fecha),
+      estado: String(r.estado) as Competition["estado"],
+    }));
+
+    return {
+      competitions: navComps.length,
+      approvals: apprCount ?? 0,
+      activeRosterHref: pickActiveRosterHref(navComps),
+    };
   },
 
   createCompetition: async (

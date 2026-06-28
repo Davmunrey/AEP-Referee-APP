@@ -30,6 +30,7 @@ import {
   loadAssignments,
   loadCrossZoneMap,
   loadFlags,
+  loadRosterAssignmentData,
   parseSlotKey,
   persistCompetitionTemplate,
   pushActivity,
@@ -44,11 +45,7 @@ export const rosterService = {
   ) => {
     if (!(await getCompetitionFn(competitionId))) return undefined;
     const template = await getCompetitionTemplate(competitionId);
-    const [assignments, flags, crossZoneMap] = await Promise.all([
-      loadAssignments(competitionId),
-      loadFlags(competitionId),
-      loadCrossZoneMap(competitionId),
-    ]);
+    const { assignments, flags, crossZoneMap } = await loadRosterAssignmentData(competitionId);
     return { template: template ?? [], assignments, flags, crossZoneMap };
   },
 
@@ -79,8 +76,7 @@ export const rosterService = {
           .eq("slot_key", row.slot_key);
       }
     }
-    const assignments = await loadAssignments(competitionId);
-    const flags = await loadFlags(competitionId);
+    const { assignments, flags } = await loadRosterAssignmentData(competitionId);
     const pruned = pruneAssignments(template, assignments, flags);
     for (const [slotKey, flagVal] of Object.entries(pruned.flags)) {
       await supabase
@@ -125,7 +121,7 @@ export const rosterService = {
       .update({ flags: payload })
       .eq("competition_id", competitionId)
       .eq("slot_key", slotKey);
-    const allFlags = await loadFlags(competitionId);
+    const allFlags = (await loadRosterAssignmentData(competitionId)).flags;
     await pushHistory({
       competitionId,
       at: new Date().toISOString(),
