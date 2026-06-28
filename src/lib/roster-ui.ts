@@ -6,6 +6,7 @@ import {
 import type {
   AssignmentsMap,
   EventType,
+  FlagsMap,
   Referee,
   RefereeLevel,
   RegulationRule,
@@ -64,6 +65,7 @@ export function getOperationalBlockReason(input: {
   assignments: AssignmentsMap;
   slotKey: string;
   refereeId: string;
+  flags?: FlagsMap;
 }): string | null {
   const validation = validateRosterOperation(input);
   return validation.ok ? null : validation.error ?? "No se puede asignar";

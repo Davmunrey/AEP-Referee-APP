@@ -2,10 +2,13 @@ import { describe, it, expect } from "vitest";
 import {
   cloneTemplate,
   enumerateSlotKeys,
+  formatRequiredSlots,
   getPresetForEventType,
   pruneAssignments,
+  summarizeRequiredSlots,
 } from "@/lib/roster-template";
 import { PRESET_AEP1, PRESET_AEP2, PRESET_AEP3 } from "@/lib/mock-data";
+import type { RosterSession } from "@/lib/types";
 
 describe("getPresetForEventType", () => {
   it("returns distinct presets per AEP type", () => {
@@ -57,5 +60,63 @@ describe("pruneAssignments", () => {
     );
     expect(Object.keys(pruned.assignments)).toEqual([onlyKey]);
     expect(pruned.flags.orphan_key).toBeUndefined();
+  });
+});
+
+describe("summarizeRequiredSlots", () => {
+  const session: RosterSession = {
+    sesion: "S1",
+    nombre: "Sesión 1",
+    dia: "Sábado",
+    categorias: [],
+    horarioCompeticion: "",
+    horarioPesaje: "",
+    roles: [
+      { rol: "Juez Central", slots: 1, key: "central" },
+      { rol: "Juez Lateral", slots: 2, key: "lateral" },
+      { rol: "Ordenador", slots: 1, key: "ordenador" },
+      { rol: "Speaker / Mesa", slots: 1, key: "speaker" },
+      { rol: "Juez Control", slots: 1, key: "control" },
+    ],
+    pesajeRoles: [
+      { rol: "Pesaje", slots: 1, key: "pesaje" },
+      { rol: "Control Equipamiento", slots: 1, key: "equipamiento" },
+    ],
+  };
+
+  it("groups required slots into tarima / mesa-ordenador / control / pesaje", () => {
+    const groups = summarizeRequiredSlots(session);
+    expect(groups).toEqual([
+      { key: "tarima", label: "Tarima", count: 3 }, // 1 central + 2 lateral
+      { key: "mesa", label: "Mesa/Ordenador", count: 2 }, // ordenador + speaker
+      { key: "control", label: "Control", count: 1 },
+      { key: "pesaje", label: "Pesaje", count: 2 }, // pesaje + equipamiento
+    ]);
+  });
+
+  it("omits groups with no required slots", () => {
+    const tarimaOnly: RosterSession = {
+      ...session,
+      roles: [{ rol: "Juez Central", slots: 1, key: "central" }],
+      pesajeRoles: [],
+    };
+    const groups = summarizeRequiredSlots(tarimaOnly);
+    expect(groups.map((g) => g.key)).toEqual(["tarima"]);
+  });
+
+  it("aggregates totals across every session of a template", () => {
+    const groups = summarizeRequiredSlots([session, session]);
+    expect(groups).toEqual([
+      { key: "tarima", label: "Tarima", count: 6 },
+      { key: "mesa", label: "Mesa/Ordenador", count: 4 },
+      { key: "control", label: "Control", count: 2 },
+      { key: "pesaje", label: "Pesaje", count: 4 },
+    ]);
+  });
+
+  it("formats a compact summary string", () => {
+    expect(formatRequiredSlots(session)).toBe(
+      "Tarima 3 · Mesa/Ordenador 2 · Control 1 · Pesaje 2",
+    );
   });
 });

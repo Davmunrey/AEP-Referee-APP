@@ -138,12 +138,12 @@ export function RosterBuilder({
       if (!r.nombre.toLowerCase().includes(q) && !(r.iniciales ?? "").toLowerCase().includes(q)) return false;
     }
     if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) return false;
-    if (selectedSlot && getOperationalBlockReason({ template, assignments, slotKey: selectedSlot, refereeId: r.id })) return false;
+    if (selectedSlot && getOperationalBlockReason({ template, assignments, slotKey: selectedSlot, refereeId: r.id, flags })) return false;
     return true;
-  }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, referees, regulations, search, selectedRoleKey, selectedSlot, template]);
+  }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, flags, referees, regulations, search, selectedRoleKey, selectedSlot, template]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
-    const block = getOperationalBlockReason({ template, assignments, slotKey, refereeId });
+    const block = getOperationalBlockReason({ template, assignments, slotKey, refereeId, flags });
     if (block) { setStatusMsg(block); setStatusIsError(true); return; }
     const snapshot = assignments;
     const session = slotKey.split("_")[0];
@@ -331,7 +331,7 @@ export function RosterBuilder({
                 filterZona={filterZona} filterNivel={filterNivel} search={search}
                 zones={zones} levels={levels} isDragging={isDragging} draggedId={draggedId}
                 competitionTipo={competition.tipo} competitionZona={competition.zona}
-                regulations={regulations} template={template} assignments={assignments}
+                regulations={regulations} template={template} assignments={assignments} flags={flags}
                 selectedRoleKey={selectedRoleKey}
                 onSelectSlot={setSelectedSlot} onAvailabilityOpen={() => setAvailabilityOpen(true)}
                 onFilterZona={setFilterZona} onFilterNivel={setFilterNivel}

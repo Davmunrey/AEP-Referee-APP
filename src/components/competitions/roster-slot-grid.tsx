@@ -198,7 +198,7 @@ export function SlotGrid({
                               e.stopPropagation();
                               onToggleFlag(slotKey, "compartido");
                             }}
-                            title="Compartido (*) — el juez comparte sesión con otra competición"
+                            title="Compartido (*) — el juez comparte sesión; permite asignarlo también en pesaje u otra posición que se solape"
                             aria-pressed={slotFlags?.compartido ? "true" : "false"}
                             className={cn(
                               "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",

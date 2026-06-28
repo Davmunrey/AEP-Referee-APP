@@ -2,6 +2,7 @@ import type {
   AssignValidation,
   AssignmentsMap,
   EventType,
+  FlagsMap,
   Referee,
   RefereeLevel,
   RoleKey,
@@ -69,12 +70,42 @@ function sessionIndex(template: RosterSession[], session: string): number {
   return template.findIndex((item) => item.sesion.toLowerCase() === session.toLowerCase());
 }
 
-function isTarimaRole(roleKey: RoleKey): boolean {
-  return ["central", "lateral", "control", "ordenador", "speaker", "jurado"].includes(roleKey);
+/**
+ * Franja horaria del rol dentro de una sesión:
+ * - "tarima": ocurre durante la competición (todos a la vez en tarima/mesa).
+ * - "pesaje": ocurre en el pesaje, ~2 h antes de levantar (franja distinta).
+ *
+ * Dos roles de la misma franja en la misma sesión se solapan en el tiempo;
+ * roles de franjas distintas (tarima + pesaje de la misma sesión) son
+ * secuenciales y por tanto compatibles para un mismo juez.
+ */
+type RoleTimeSlot = "tarima" | "pesaje";
+
+function roleTimeSlot(roleKey: RoleKey): RoleTimeSlot {
+  switch (roleKey) {
+    case "central":
+    case "lateral":
+    case "control":
+    case "ordenador":
+    case "speaker":
+    case "jurado":
+    case "mesa":
+    case "liftingcast":
+      return "tarima";
+    case "pesaje":
+    case "equipamiento":
+    case "material":
+      return "pesaje";
+    default: {
+      const _exhaustive: never = roleKey;
+      return _exhaustive;
+    }
+  }
 }
 
-function isPesajeOrMaterialRole(roleKey: RoleKey): boolean {
-  return ["pesaje", "equipamiento", "material"].includes(roleKey);
+/** El asterisco (*) marca un puesto como compartido y permite forzar el solape. */
+function isShared(flags: FlagsMap | undefined, slotKey: string): boolean {
+  return Boolean(flags?.[slotKey]?.compartido);
 }
 
 export function validateRosterOperation(input: {
@@ -82,38 +113,57 @@ export function validateRosterOperation(input: {
   assignments: AssignmentsMap;
   slotKey: string;
   refereeId: string;
+  /** Marcadores de slot; un puesto con `compartido` (*) permite forzar el solape. */
+  flags?: FlagsMap;
 }): AssignValidation {
   const target = parseSlotKey(input.slotKey);
   if (!target) return { ok: false, error: "Slot inválido" };
 
   const targetIndex = sessionIndex(input.template, target.session);
+  const targetSlot = roleTimeSlot(target.roleKey);
+  const targetShared = isShared(input.flags, input.slotKey);
+
   for (const [slotKey, assignedRefereeId] of Object.entries(input.assignments)) {
     if (slotKey === input.slotKey || assignedRefereeId !== input.refereeId) continue;
     const existing = parseSlotKey(slotKey);
     if (!existing) continue;
 
-    if (existing.session === target.session && existing.roleKey === target.roleKey) {
-      return {
-        ok: false,
-        error: "Ese juez ya ocupa ese mismo puesto en esta sesión",
-      };
+    // El * en cualquiera de los dos huecos en conflicto permite forzar el solape.
+    const overridden = targetShared || isShared(input.flags, slotKey);
+
+    if (existing.session === target.session) {
+      // Mismo puesto exacto repetido: nunca tiene sentido (no es solo un solape).
+      if (existing.roleKey === target.roleKey) {
+        return {
+          ok: false,
+          error: "Ese juez ya ocupa ese mismo puesto en esta sesión",
+        };
+      }
+      // Dos puestos de la misma franja (tarima+tarima o pesaje+pesaje) se solapan.
+      // Tarima + pesaje de la misma sesión son secuenciales → compatibles.
+      if (roleTimeSlot(existing.roleKey) === targetSlot && !overridden) {
+        return {
+          ok: false,
+          error:
+            "Ese juez ya está asignado en otra posición en esta misma sesión (marca * para permitirlo)",
+        };
+      }
+      continue;
     }
 
     const existingIndex = sessionIndex(input.template, existing.session);
     if (existingIndex < 0 || targetIndex < 0) continue;
+    const existingSlot = roleTimeSlot(existing.roleKey);
     const targetIsNextPesaje =
-      isTarimaRole(existing.roleKey) &&
-      isPesajeOrMaterialRole(target.roleKey) &&
-      targetIndex === existingIndex + 1;
+      existingSlot === "tarima" && targetSlot === "pesaje" && targetIndex === existingIndex + 1;
     const targetIsPreviousTarima =
-      isPesajeOrMaterialRole(existing.roleKey) &&
-      isTarimaRole(target.roleKey) &&
-      existingIndex === targetIndex + 1;
+      existingSlot === "pesaje" && targetSlot === "tarima" && existingIndex === targetIndex + 1;
 
-    if (targetIsNextPesaje || targetIsPreviousTarima) {
+    if ((targetIsNextPesaje || targetIsPreviousTarima) && !overridden) {
       return {
         ok: false,
-        error: "No puede estar en tarima/jurado y en pesaje o material de la sesión siguiente",
+        error:
+          "No puede estar en tarima/jurado y en pesaje o material de la sesión siguiente (marca * para permitirlo)",
       };
     }
   }

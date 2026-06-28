@@ -136,12 +136,36 @@ describe("validateRosterOperation", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("allows same referee in different roles in same session", () => {
+  it("blocks same referee in two platform positions in the same session", () => {
     const result = validateRosterOperation({
       template: rosterTemplate,
       assignments: { S1_central_0: "r1" },
       slotKey: "S1_jurado_0",
       refereeId: "r1",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/otra posición/i);
+  });
+
+  it("allows same referee at platform + weigh-in roles in the same session", () => {
+    // El pesaje ocurre ~2 h antes de levantar: tarima y pesaje de la misma sesión
+    // son secuenciales, no se solapan.
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_central_0: "r1" },
+      slotKey: "S1_pesaje_0",
+      refereeId: "r1",
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("allows a same-session overlap when the existing slot is marked compartido (*)", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_central_0: "r1" },
+      slotKey: "S1_jurado_0",
+      refereeId: "r1",
+      flags: { S1_central_0: { compartido: true } },
     });
     expect(result.ok).toBe(true);
   });
@@ -154,6 +178,39 @@ describe("validateRosterOperation", () => {
       refereeId: "r1",
     });
     expect(result.ok).toBe(false);
+  });
+
+  it("blocks control S1 + pesaje S2 (next-session weigh-in overlaps the platform)", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_central_0: "r1" },
+      slotKey: "S2_pesaje_0",
+      refereeId: "r1",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/marca \* para permitirlo/i);
+  });
+
+  it("allows control S1 + pesaje S2 when the existing platform slot is marked compartido (*)", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_central_0: "r1" },
+      slotKey: "S2_pesaje_0",
+      refereeId: "r1",
+      flags: { S1_central_0: { compartido: true } },
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("allows control S1 + pesaje S2 when the new slot is marked compartido (*)", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_central_0: "r1" },
+      slotKey: "S2_pesaje_0",
+      refereeId: "r1",
+      flags: { S2_pesaje_0: { compartido: true } },
+    });
+    expect(result.ok).toBe(true);
   });
 });
 
