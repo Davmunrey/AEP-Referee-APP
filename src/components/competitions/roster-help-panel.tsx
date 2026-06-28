@@ -34,7 +34,9 @@ export function RosterHelpPanel() {
           </li>
           <li>
             <strong className="text-foreground-secondary">Asignación:</strong> arrastra jueces a
-            los huecos; el sistema avisa si no cumplen nivel o normativa.
+            los huecos; el sistema avisa si no cumplen nivel o normativa, y bloquea a un mismo juez
+            en dos posiciones que se solapan. Marca el puesto con <span className="font-mono">*</span>{" "}
+            (compartido) para permitir ese solape (p. ej. tarima + pesaje).
           </li>
           <li>
             <strong className="text-foreground-secondary">Revisión:</strong> comprueba cobertura y

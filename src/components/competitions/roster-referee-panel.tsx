@@ -1,7 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction } from "react";
-import type { AssignmentsMap, Competition, Referee, RefereeLevel, RegulationRule, RoleKey, RosterSession, Zone } from "@/lib/types";
+import type { AssignmentsMap, Competition, FlagsMap, Referee, RefereeLevel, RegulationRule, RoleKey, RosterSession, Zone } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Info, Users } from "lucide-react";
@@ -30,6 +30,7 @@ interface RosterRefereePanelProps {
   regulations: RegulationRule[];
   template: RosterSession[];
   assignments: AssignmentsMap;
+  flags: FlagsMap;
   selectedRoleKey?: RoleKey;
   onSelectSlot: (key: string | null) => void;
   onAvailabilityOpen: () => void;
@@ -63,6 +64,7 @@ export function RosterRefereePanelLeft({
   regulations,
   template,
   assignments,
+  flags,
   selectedRoleKey,
   onSelectSlot,
   onAvailabilityOpen,
@@ -140,7 +142,7 @@ export function RosterRefereePanelLeft({
             const blockedReason =
               selectedRoleKey && selectedSlot
                 ? getAssignabilityReason(referee, selectedRoleKey, competitionTipo, regulations) ??
-                  getOperationalBlockReason({ template, assignments, slotKey: selectedSlot, refereeId: referee.id })
+                  getOperationalBlockReason({ template, assignments, slotKey: selectedSlot, refereeId: referee.id, flags })
                 : null;
             const warningReason =
               selectedRoleKey && !blockedReason

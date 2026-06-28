@@ -171,10 +171,21 @@ export const rosterService = {
     const supabase = db();
     const assignments = await loadAssignments(competitionId);
     const template = (await getCompetitionTemplate(competitionId)) ?? [];
-    const operation = validateRosterOperation({ template, assignments, slotKey, refereeId });
+    const existingFlags = await loadFlags(competitionId);
+    // El * (compartido) del hueco existente o del nuevo permite forzar el solape.
+    const operationFlags =
+      slotFlags && (slotFlags.compartido || slotFlags.intercambio)
+        ? { ...existingFlags, [slotKey]: slotFlags }
+        : existingFlags;
+    const operation = validateRosterOperation({
+      template,
+      assignments,
+      slotKey,
+      refereeId,
+      flags: operationFlags,
+    });
     if (!operation.ok) return { error: operation.error };
 
-    const existingFlags = await loadFlags(competitionId);
     const flagPayload =
       slotFlags && (slotFlags.compartido || slotFlags.intercambio)
         ? { compartido: Boolean(slotFlags.compartido), intercambio: Boolean(slotFlags.intercambio) }

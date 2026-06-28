@@ -10,6 +10,7 @@ import type { RoleKey, RosterCategoria, RosterGrupo, RosterRole, RosterSession }
 import { ChevronDown, ChevronUp, FileUp, Plus, Trash2 } from "lucide-react";
 import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
 import { RoleRows, COMPETITION_ROLE_KEYS, PESAJE_ROLE_KEYS } from "@/components/competitions/roster-role-rows";
+import { RequiredSlotsChips } from "@/components/competitions/roster-session-block";
 import { SessionCategoriesEditor } from "@/components/competitions/session-categories-editor";
 import { SessionGroupsEditor } from "@/components/competitions/session-groups-editor";
 
@@ -203,6 +204,15 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
         </div>
       </div>
 
+      {sessions.length > 0 && (
+        <div className="rounded-lg border border-border-muted bg-surface/40 px-3 py-2">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+            Plazas requeridas (total campeonato)
+          </p>
+          <RequiredSlotsChips source={sessions} />
+        </div>
+      )}
+
       <ScheduleImportDialog
         competitionId={competitionId}
         open={importOpen}
@@ -284,6 +294,13 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
                   onRemoveGrupoCat={(gi, ci) => removeGrupoCat(si, gi, ci)}
                   onPatchGrupoCat={(gi, ci, field, value) => patchGrupoCat(si, gi, ci, field, value)}
                 />
+
+                <div className="rounded-lg border border-border-muted bg-background/40 px-3 py-2">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+                    Plazas requeridas (esta sesión)
+                  </p>
+                  <RequiredSlotsChips source={session} />
+                </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
                   <RoleRows

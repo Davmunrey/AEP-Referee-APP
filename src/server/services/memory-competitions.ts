@@ -239,7 +239,19 @@ export async function assignReferee(
   const store = getStore();
   const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
   const template = getCompetitionTemplate(competitionId);
-  const operation = validateRosterOperation({ template, assignments, slotKey, refereeId });
+  const storedFlags = store.slotFlags.get(competitionId) ?? {};
+  // El * (compartido) del hueco existente o del nuevo permite forzar el solape.
+  const operationFlags: FlagsMap =
+    slotFlags && (slotFlags.compartido || slotFlags.intercambio)
+      ? { ...storedFlags, [slotKey]: slotFlags }
+      : storedFlags;
+  const operation = validateRosterOperation({
+    template,
+    assignments,
+    slotKey,
+    refereeId,
+    flags: operationFlags,
+  });
   if (!operation.ok) return { error: operation.error };
   assignments[slotKey] = refereeId;
   store.assignments.set(competitionId, assignments);

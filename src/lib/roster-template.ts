@@ -116,6 +116,51 @@ export const ROLE_LABELS: Record<RoleKey, string> = {
   liftingcast: "Liftingcast / OpenLifter",
 };
 
+/** Grupo de plazas requeridas mostrado en el resumen (tarima, mesa, control, pesaje). */
+export interface RequiredSlotGroup {
+  key: string;
+  label: string;
+  count: number;
+}
+
+// Agrupa los roles por área operativa para el resumen "plazas requeridas".
+// Ej: 1 central + 2 laterales = "Tarima 3"; speaker + ordenador = "Mesa/Ordenador 2".
+const REQUIRED_SLOT_GROUPS: { key: string; label: string; roles: RoleKey[] }[] = [
+  { key: "tarima", label: "Tarima", roles: ["central", "lateral", "jurado"] },
+  { key: "mesa", label: "Mesa/Ordenador", roles: ["speaker", "ordenador", "mesa", "liftingcast"] },
+  { key: "control", label: "Control", roles: ["control"] },
+  { key: "pesaje", label: "Pesaje", roles: ["pesaje", "equipamiento", "material"] },
+];
+
+/**
+ * Resume las plazas requeridas por área (tarima, mesa/ordenador, control, pesaje)
+ * de una sesión o de toda la plantilla. Solo devuelve los grupos con plazas > 0.
+ */
+export function summarizeRequiredSlots(
+  input: RosterSession | RosterSession[],
+): RequiredSlotGroup[] {
+  const sessions = Array.isArray(input) ? input : [input];
+  const counts = new Map<RoleKey, number>();
+  for (const session of sessions) {
+    for (const role of [...session.roles, ...(session.pesajeRoles ?? [])]) {
+      counts.set(role.key, (counts.get(role.key) ?? 0) + role.slots);
+    }
+  }
+  const groups: RequiredSlotGroup[] = [];
+  for (const group of REQUIRED_SLOT_GROUPS) {
+    const count = group.roles.reduce((acc, key) => acc + (counts.get(key) ?? 0), 0);
+    if (count > 0) groups.push({ key: group.key, label: group.label, count });
+  }
+  return groups;
+}
+
+/** Texto compacto del resumen de plazas: "Tarima 3 · Mesa/Ordenador 2 · Control 1 · Pesaje 2". */
+export function formatRequiredSlots(input: RosterSession | RosterSession[]): string {
+  return summarizeRequiredSlots(input)
+    .map((group) => `${group.label} ${group.count}`)
+    .join(" · ");
+}
+
 export function roleKeyFromLabel(label: string): RoleKey {
   const normalized = label.toLowerCase();
   if (normalized.includes("central")) return "central";

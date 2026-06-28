@@ -13,8 +13,38 @@ import type {
 } from "@/lib/types";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { summarizeRequiredSlots } from "@/lib/roster-template";
 import { sessionProgress, summarizeSessionCategories, summarizeSessionGroups } from "./roster-session-helpers";
 import { SlotGrid, type SlotGridProps } from "./roster-slot-grid";
+
+/** Chips compactos con las plazas requeridas por área (tarima, mesa, control, pesaje). */
+export function RequiredSlotsChips({
+  source,
+  className,
+}: {
+  source: RosterSession | RosterSession[];
+  className?: string;
+}) {
+  const groups = summarizeRequiredSlots(source);
+  if (groups.length === 0) return null;
+  const total = groups.reduce((acc, group) => acc + group.count, 0);
+  return (
+    <div className={cn("flex flex-wrap items-center gap-1", className)}>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+        Plazas {total}
+      </span>
+      {groups.map((group) => (
+        <span
+          key={group.key}
+          className="inline-flex items-center gap-1 rounded-full border border-border-muted bg-background/60 px-1.5 py-0.5 text-[10px] text-foreground-secondary"
+        >
+          {group.label}
+          <span className="font-mono font-semibold text-foreground">{group.count}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export function SessionOverviewCard({
   session,
@@ -217,6 +247,7 @@ export function SessionBlock({
               {groupsSummary}
             </p>
           ) : null}
+          <RequiredSlotsChips source={session} className="mt-1.5" />
         </div>
 
         <div className="min-w-[86px] shrink-0">
