@@ -55,7 +55,7 @@ Persiste el motivo de rechazo al revisar ascensos (obligatorio en API cuando `ap
 
 | Tabla / columna | Uso |
 |---|---|
-| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Origen desplazamiento (Places Autocomplete) |
+| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Origen desplazamiento (Photon/OSM) |
 | `competitions.sede_direccion`, `sede_lat`, `sede_lng`, `ambito` | Destino; baremo |
 | `competitions.compensation_clubs` (JSONB, **026**) | Varios clubes organizadores |
 | `judge_compensation_claims` | Una fila por juez × campeonato (sin IBAN) |

@@ -117,22 +117,18 @@ const SOLO_VER: QuickStartStep[] = [
 
 const FINANCIERO: QuickStartStep[] = [
   {
-    title: "Revisa campeonatos y tarimas",
-    body: "Consulta las asignaciones de jueces para calcular la compensación por competición.",
-    href: "/competitions",
-    linkLabel: "Campeonatos",
+    title: "Abre el panel de compensación",
+    body: "Menú lateral → Compensación. Ves todos los campeonatos con jueces, km pendientes y acceso directo a cada uno.",
+    href: "/compensation",
+    linkLabel: "Compensación",
   },
   {
-    title: "Calcula compensaciones",
-    body: "Desde cada campeonato, abre la sección de compensación, revisa importes y genera el recibo PDF.",
+    title: "Configura sede y clubes",
+    body: "En cada campeonato: sede con autocomplete OpenStreetMap, clubes organizadores y e-mails del recibo.",
   },
   {
-    title: "Exporta recibos",
-    body: "Al exportar, introduce el IBAN del juez en ese momento. La app no guarda números de cuenta.",
-  },
-  {
-    title: "Configura el organizador",
-    body: "Indica si el campeonato es de club o de AEP y el e-mail de devolución del recibo.",
+    title: "Calcula km y exporta recibos",
+    body: "Pulsa «Calcular km (OSM)», revisa el desglose por sesión Sx y exporta el PDF (IBAN solo al exportar).",
   },
 ];
 

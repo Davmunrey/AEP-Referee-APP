@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: compensation-and-ui
+milestone: v1.6
+milestone_name: compensation-hub-osm-docs
 status: in_progress
 last_updated: "2026-06-28"
-last_activity: 2026-06-28 — compensación E2E (servicios, API, UI), migraciones 023–025 en prod, tarima densa
+last_activity: 2026-06-28 — panel compensación, OSM gratuito, docs y manual PDF actualizados
 progress:
   total_phases: 5
-  completed_phases: 3
-  percent: 60
+  completed_phases: 4
+  percent: 80
 ---
 
 ## Current Position
 
-Phase: 08 — Backlog detallado (compensación + UI tarima)
+Phase: 08 — Backlog detallado (compensación + docs)
 Status: In progress on `main`
-Last activity: Migraciones 023–025 aplicadas en Supabase prod; compensación servicios+API+UI; tarima densa; 312 tests
+Last activity: Hub `/compensation`, OSM, sidebar, manual PDF, 344 tests
 
-## Completed (v1.5 parcial)
+## Completed (v1.6)
 
-- Supabase prod: `023` review_comment, `024` judge_compensation, `025` financial_role_and_receipt
-- Compensación: lib baremo, servicios supabase/memoria, API CRUD+export, UI board+modal IBAN
-- Rol `responsable_financiero_jueces` + enlace compensación en cabecera tarima
-- UI tarima: footer fuera de dashboard, cards/slots más densos
-- Ficha juez: campo domicilio
-- Docs: README + `docs/*` actualizados
+- Panel central compensación `/compensation` + API `GET /compensation/hub`
+- Sidebar: Documentación, Compensación, sin avatar duplicado
+- Kilometraje 100 % gratuito (Photon/Nominatim/OSRM)
+- Listado 180 clubes AEP + multi-club en recibos
+- Manual PDF exportable con capturas actualizadas
+- Docs `*.md` sincronizados
 
 ## Pending
 
-- E2E smoke `compensation.spec.ts`
+- E2E smoke compensación
 - E2E profundo import → cuadrante → export
 - Sustitución librería `xlsx`
 
@@ -36,8 +36,4 @@ Last activity: Migraciones 023–025 aplicadas en Supabase prod; compensación s
 
 - IBAN efímero: solo en POST export, nunca en BD
 - Compensación gestionada por responsable financiero, no delegados
-- Temporada deportiva: julio+ → etiqueta año siguiente (`currentSeasonYear`)
-
-## Blockers/Concerns
-
-None for current release. E2E compensación y xlsx en backlog.
+- Sin Google Maps: stack OSM gratuito

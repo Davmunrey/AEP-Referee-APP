@@ -7,6 +7,17 @@ Cada sección muestra una captura real de la app y los pasos para usarla.
 
 ---
 
+## Manual PDF
+
+Descarga el manual completo con capturas desde la app (requiere sesión):
+
+- **Web**: `/docs` → botón «Descargar manual PDF»
+- **API**: `GET /api/v1/guides/tarima-manual` → `Manual-AEP-Tarima-Gestion-Jueces.pdf`
+
+Regenerar capturas: `npm run docs:screenshots`
+
+---
+
 ## 1. Entrar
 
 1. Abre `/sign-in`.
@@ -29,6 +40,19 @@ Pantalla de inicio. Resume el estado operativo de la temporada en curso.
 - **En vivo**: el panel se refresca solo; el botón "Pausar" lo detiene.
 
 Atajos arriba a la derecha: **Jueces**, **Aprobaciones**, **Exportar**, **+ Nuevo campeonato**.
+
+---
+
+---
+
+## 2b. Barra lateral y documentación
+
+![Barra lateral](images/12-sidebar.png)
+
+- **Documentación** → `/docs` (guía web, privacidad, enlace al manual PDF).
+- **Compensación** → panel central `/compensation` (solo responsable financiero / super_admin).
+- El **usuario y «Cambiar contraseña»** están en la **esquina superior derecha** (topbar), no en el pie del menú.
+- **Colapsar** guarda la preferencia en el navegador.
 
 ---
 
@@ -100,7 +124,18 @@ Desde **Exportar ▾** en la tarima (o el icono PDF en la lista de campeonatos) 
 
 ---
 
-## 6b. Compensación de gastos (responsable financiero)
+## 6b. Panel central de compensación
+
+![Panel compensación](images/11-compensacion-hub.png)
+
+Rol **`responsable_financiero_jueces`**: accede desde **Compensación** en el menú lateral.
+
+- Lista todos los campeonatos con jueces asignados en tarima.
+- Muestra km pendientes, estado y total confirmado.
+- Botón **Abrir** → compensación del campeonato concreto.
+- Enlace a la guía en `/docs`.
+
+## 6c. Compensación por campeonato
 
 Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de jueces asignados en tarima. No edita tarima ni censo.
 
@@ -153,7 +188,7 @@ Por cada usuario, la columna **Acciones** ofrece: activar/desactivar, editar (ro
 
 ### Cambiar tu propia contraseña
 
-Cualquier usuario puede cambiarla desde el botón **"Cambiar contraseña"** del menú lateral (abajo). Pide la contraseña actual y la nueva (mín. 8 caracteres).
+Cualquier usuario puede cambiarla desde el **menú de usuario en la esquina superior** → **Cambiar contraseña**. Pide la contraseña actual y la nueva (mín. 8 caracteres).
 
 ![Cambiar contraseña](images/06-cambiar-password.png)
 
@@ -179,7 +214,7 @@ Desde Usuarios → icono llave de la fila → escribe la nueva contraseña. No n
 | `super_admin` | Control total |
 | `delegado_jueces` | Autoridad nacional sobre jueces, exámenes, informes, ascensos |
 | `delegado_zona` | Campeonatos, tarimas y jueces de **su zona** |
-| `responsable_financiero_jueces` | Compensación de gastos y export de recibos PDF (lectura de tarimas/censo) |
+| `responsable_financiero_jueces` | Panel `/compensation`, compensación y recibos PDF (lectura tarimas/censo) |
 | `solo_ver` | Solo lectura |
 
 La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de verdad (un delegado de zona no puede tocar datos de otra zona aunque manipule la petición).

@@ -5,8 +5,8 @@
 | Componente | Uso |
 |---|---|
 | `AppShell` | Shell dashboard |
-| `Sidebar` | Navegación colapsable |
-| `Topbar` | Breadcrumb y usuario |
+| `Sidebar` | Navegación colapsable (Documentación, Compensación, sin avatar en pie) |
+| `Topbar` | Breadcrumb, menú usuario (cambiar contraseña, cerrar sesión) |
 
 ## Dashboard
 
@@ -35,7 +35,8 @@
 | `RosterRevisionPanel` | Revisión |
 | `RosterHistoryPanel` | Historial |
 | `CompetitionAvailabilityDialog` | Confirmación disponibilidad jueces |
-| `CompensationBoard` | Compensación: sede autocomplete, desglose Sx, multi-club |
+| `CompensationHub` | Panel `/compensation` — lista campeonatos, km pendientes, enlace directo |
+| `CompensationBoard` | Compensación por campeonato: sede OSM, desglose Sx, multi-club |
 | `CompensationExportDialog` | Modal IBAN efímero → descarga recibo PDF (desglose por sesión) |
 | `AddressAutocompleteField` | Photon/OpenStreetMap autocomplete (sede, domicilio juez) |
 
@@ -73,7 +74,7 @@ La disponibilidad se gestiona a nivel de campeonato (tabla `competition_availabi
 | Componente | Uso |
 |---|---|
 | `RefereesDirectory` | Directorio (con vista card en móvil) |
-| `RefereeEditForm` | Edición (domicilio con Places Autocomplete) |
+| `RefereeEditForm` | Edición (domicilio con autocomplete OpenStreetMap) |
 | `ExamsManager` | Exámenes |
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |

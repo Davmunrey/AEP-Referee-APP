@@ -1,8 +1,8 @@
 /**
  * Genera capturas para docs/ y el manual PDF.
- * Uso: npm run build && node scripts/capture-docs-screenshots.mjs
+ * Uso: npm run docs:screenshots
  */
-import { mkdirSync, existsSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "@playwright/test";
 
@@ -52,12 +52,13 @@ const MOCKS = [
     body: `<table><tr><th>Nombre</th><th>Zona</th><th>Nivel</th></tr>
       <tr><td>Ana Roa Sales</td><td>Levante</td><td>Nacional</td></tr>
       <tr><td>Javier Ruiz</td><td>Norte</td><td>IPF Cat. 2</td></tr></table>
-      <div class="panel"><label>Domicilio (Google Maps)</label><input value="C/ Mayor 1, Murcia" /><small>Autocomplete activo</small></div>`,
+      <div class="panel"><label>Domicilio (OpenStreetMap)</label><input value="C/ Mayor 1, Murcia" /><small>Autocomplete gratuito — coordenadas OK</small></div>`,
   },
   {
     file: "06-cambiar-password.png",
     title: "Cambiar contraseña",
-    body: `<form class="panel narrow"><label>Contraseña actual</label><input type="password" />
+    body: `<div class="topbar-mock"><span>Usuario ▾</span><span class="menu">Cambiar contraseña</span></div>
+      <form class="panel narrow"><label>Contraseña actual</label><input type="password" />
       <label>Nueva contraseña</label><input type="password" /><button>Guardar</button></form>`,
   },
   {
@@ -71,6 +72,7 @@ const MOCKS = [
     file: "08-usuarios.png",
     title: "Usuarios",
     body: `<table><tr><th>Email</th><th>Rol</th><th>Acciones</th></tr>
+      <tr><td>financiero@aep.es</td><td>Resp. Financiero</td><td>🔑 ✎</td></tr>
       <tr><td>delegado@aep.es</td><td>Comité Jueces</td><td>🔑 ✎</td></tr></table>`,
   },
   {
@@ -81,12 +83,38 @@ const MOCKS = [
   },
   {
     file: "10-compensacion.png",
-    title: "Compensación",
-    body: `<div class="panel"><label>Sede (Google Autocomplete)</label><input value="Polideportivo Santander" />
-      <small>Coordenadas OK</small></div>
+    title: "Compensación del campeonato",
+    body: `<div class="panel"><label>Sede (OpenStreetMap)</label><input value="Polideportivo Santander, Cantabria" />
+      <small>Coordenadas OK · Calcular km (OSM)</small></div>
       <table><tr><th>Juez</th><th>Funciones</th><th>Km</th><th>Total</th></tr>
       <tr><td>Javier Ruiz</td><td>S1(O+P) · S2</td><td>200</td><td>96€</td></tr></table>
-      <div class="breakdown"><strong>S1</strong> Ordenador 30€ · Pesaje 15€</div>`,
+      <div class="breakdown"><strong>S1 · Ordenador</strong> 30€ · <strong>S1 · Pesaje</strong> 15€</div>`,
+  },
+  {
+    file: "11-compensacion-hub.png",
+    title: "Panel central de compensación",
+    body: `<div class="kpis"><div class="kpi"><span>Con jueces</span><strong>6</strong></div>
+      <div class="kpi"><span>Listos export</span><strong>2</strong></div>
+      <div class="kpi"><span>Km pendientes</span><strong>4</strong></div></div>
+      <table><tr><th>Campeonato</th><th>Jueces</th><th>Estado</th><th></th></tr>
+      <tr><td>Open Cantabria</td><td>8</td><td><span class="pill warn">3 km pend.</span></td><td><button>Abrir →</button></td></tr>
+      <tr><td>Copa Madrid</td><td>6</td><td><span class="pill ok">Listo</span></td><td><button>Abrir →</button></td></tr></table>
+      <p class="hint">Menú lateral → Compensación · sin ir tarima a tarima</p>`,
+  },
+  {
+    file: "12-sidebar.png",
+    title: "Barra lateral",
+    body: `<div class="sidebar-mock">
+      <div class="nav-item">Dashboard</div>
+      <div class="nav-item">Campeonatos</div>
+      <div class="nav-item active">Compensación</div>
+      <div class="nav-item">Directorio</div>
+      <hr />
+      <div class="nav-item">Estadísticas</div>
+      <div class="nav-item">Normativa</div>
+      <div class="nav-item">Documentación</div>
+      <p class="hint">Usuario en la esquina superior (topbar), no en el pie del menú</p>
+    </div>`,
   },
 ];
 
@@ -114,7 +142,7 @@ function mockHtml(title, body) {
     .step{flex:1;text-align:center;padding:8px;border-radius:8px;background:#1c2128;border:1px solid #30363d;font-size:12px}
     .step.active{border-color:#58a6ff;color:#58a6ff}
     .center{text-align:center;padding:32px}
-    button{background:#238636;color:#fff;border:0;border-radius:8px;padding:8px 14px}
+    button{background:#238636;color:#fff;border:0;border-radius:8px;padding:8px 14px;font-size:12px}
     .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .slot{background:#0d1117;border:1px dashed #484f58;border-radius:8px;padding:8px;margin:6px 0;font-size:12px}
     .slot.filled{border-style:solid;border-color:#3fb950}
@@ -127,6 +155,15 @@ function mockHtml(title, body) {
     .cell.c{background:#1f3d2a}.cell.p{background:#3d2a1f}
     .breakdown{margin-top:10px;padding:10px;background:#0d1117;border-radius:8px;font-size:12px}
     ul{padding-left:18px;margin:8px 0}
+    .topbar-mock{display:flex;justify-content:flex-end;gap:12px;margin-bottom:16px;font-size:12px;color:#8b949e}
+    .topbar-mock .menu{background:#1c2128;border:1px solid #30363d;border-radius:8px;padding:8px 12px;color:#e8eaed}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px}
+    .pill.ok{background:#1f3d2a;color:#3fb950}.pill.warn{background:#3d2f1f;color:#d29922}
+    .hint{margin-top:12px;font-size:11px;color:#8b949e}
+    .sidebar-mock{max-width:220px;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px}
+    .nav-item{padding:8px 10px;border-radius:8px;font-size:13px;margin:4px 0;color:#8b949e}
+    .nav-item.active{background:#1f2937;color:#58a6ff;border-left:3px solid #58a6ff}
+    hr{border:0;border-top:1px solid #30363d;margin:12px 0}
   </style></head><body><div class="shell"><h2>${title}</h2>${body}</div></body></html>`;
 }
 

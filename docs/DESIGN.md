@@ -18,8 +18,8 @@ Fuente verdad:
 
 ## Layout
 
-- Sidebar expandido para operación normal.
-- Sidebar colapsado solo iconos, sin labels cortados.
+- Sidebar expandido para operación normal; **sin avatar en pie** (usuario en topbar).
+- Enlaces **Documentación** (`/docs`) y **Compensación** (`/compensation`, rol financiero) en sidebar.
 - Tarima usa distribución horizontal: jueces disponibles izquierda, sesiones/slots derecha.
 - Tarima densa: cards de jueces compactas (~más visibles en 14"), slots de cuadrante menos altos.
 - Sin footer legal en dashboard (documentación vía `/docs` y widget Ayuda; footer solo en sign-in).

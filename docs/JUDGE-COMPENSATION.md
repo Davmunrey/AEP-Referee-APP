@@ -120,4 +120,7 @@ Ver captura: `docs/images/10-compensacion.png`.
 
 - `tests/judge-compensation.test.ts` — baremo y totales.
 - `tests/judge-compensation-receipt.test.ts` — texto del recibo e IBAN efímero.
+- `tests/osm-distance.test.ts` — geocoding y rutas OSM.
+- `tests/compensation-hub.test.ts` — panel central.
 - `tests/judge-compensation-breakdown.test.ts` — desglose por Sx.
+- `tests/tarima-user-guide.test.ts` — manual PDF exportable.

@@ -15,7 +15,7 @@ export const TARIMA_GUIDE_META = {
   title: "Gestión de Jueces AEP Tarima",
   subtitle: "Manual de uso de la plataforma de arbitraje",
   association: "ASOCIACIÓN ESPAÑOLA DE POWERLIFTING (AEP)",
-  updatedAt: "junio 2026",
+  updatedAt: "28 de junio de 2026",
   contactEmail: "powerhispania@gmail.com",
 } as const;
 
@@ -52,8 +52,16 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
           id: "1.3",
           title: "Cambiar tu contraseña",
           body: [
-            "Una vez dentro, usa el botón «Cambiar contraseña» del menú lateral (parte inferior).",
+            "Una vez dentro, abre el menú de tu usuario en la esquina superior derecha (topbar) y elige «Cambiar contraseña».",
             "La nueva contraseña debe tener al menos 8 caracteres.",
+          ],
+        },
+        {
+          id: "1.4",
+          title: "Documentación y manual PDF",
+          body: [
+            `Menú lateral → Documentación, o directamente ${appUrl}/docs.`,
+            "Desde esa página puedes descargar este manual en PDF (requiere sesión).",
           ],
         },
       ],
@@ -167,13 +175,21 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
     {
       title: "COMPENSACIÓN DE GASTOS (RESPONSABLE FINANCIERO)",
       intro:
-        "Rol responsable_financiero_jueces o super_admin. Gestiona la compensación económica sin editar tarima ni censo.",
+        "Rol responsable_financiero_jueces o super_admin. Gestiona la compensación económica sin editar tarima ni censo. Kilometraje 100 % gratuito vía OpenStreetMap (Photon + Nominatim + OSRM).",
       steps: [
+        {
+          id: "6.0",
+          title: "Panel central (/compensation)",
+          body: [
+            "Menú lateral → Compensación. Lista todos los campeonatos con jueces asignados, km pendientes y enlace «Abrir» a cada compensación.",
+            "Evita ir campeonato a campeonato desde la tarima.",
+          ],
+        },
         {
           id: "6.1",
           title: "Acceder y configurar sede",
           body: [
-            "Desde la tarima → Compensación, o directamente /competitions/[id]/compensation.",
+            "Desde el panel central o desde la tarima → Compensación (/competitions/[id]/compensation).",
             "Guarda la sede con autocomplete OpenStreetMap (elige una sugerencia de la lista). Es obligatoria para calcular km.",
           ],
         },
@@ -318,17 +334,32 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
       ],
     },
     {
-      title: "AYUDA Y CONTACTO",
+      title: "NAVEGACIÓN Y BARRA LATERAL",
       steps: [
         {
           id: "12.1",
+          title: "Menú lateral",
+          body: [
+            "Operaciones: Dashboard, Campeonatos, Compensación (rol financiero), Directorio.",
+            "Gestión: Estadísticas, Normativa, Documentación (guía web + manual PDF).",
+            "El perfil de usuario está en la esquina superior (topbar), no en el pie del menú.",
+            "El botón «Colapsar» reduce la barra a iconos; la preferencia se guarda en el navegador.",
+          ],
+        },
+      ],
+    },
+    {
+      title: "AYUDA Y CONTACTO",
+      steps: [
+        {
+          id: "13.1",
           title: "Documentación en la app",
           body: [
             `Consulta la documentación integrada en ${appUrl}/docs (guía, privacidad y condiciones).`,
           ],
         },
         {
-          id: "12.2",
+          id: "13.2",
           title: "Incidencias",
           body: [
             `Ante cualquier duda o problema, escribe a ${TARIMA_GUIDE_META.contactEmail}.`,

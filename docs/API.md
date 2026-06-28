@@ -129,9 +129,9 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km masivo OSM |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` efímero → `application/pdf` |
 
-`PATCH /competitions/:id` acepta `sedeDireccion`, `sedeLat`, `sedeLng` (desde Places), `compensationClubs[]`, `compensationOrganizer`, etc.
+`PATCH /competitions/:id` acepta `sedeDireccion`, `sedeLat`, `sedeLng` (desde autocomplete OSM), `compensationClubs[]`, `compensationOrganizer`, etc.
 
-`PATCH /referees/:id` acepta `domicilio`, `domicilioLat`, `domicilioLng` (desde Places o geocode servidor).
+`PATCH /referees/:id` acepta `domicilio`, `domicilioLat`, `domicilioLng` (desde autocomplete OSM o geocode Nominatim en servidor).
 
 | Método | Ruta | Permiso |
 |---|---|---|
