@@ -17,5 +17,5 @@ export function rosterCoveragePct(
   competition: Pick<Competition, "confirmados" | "requeridos">,
 ): number {
   if (competition.requeridos <= 0) return 0;
-  return Math.round((competition.confirmados / competition.requeridos) * 100);
+  return Math.min(100, Math.round((competition.confirmados / competition.requeridos) * 100));
 }

@@ -1,6 +1,10 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { seasonLabel } from "@/lib/season";
 import { countOpenSlots } from "@/lib/roster-rules";
+import {
+  computeRosterCoverage,
+  deriveCompetitionEstado,
+} from "@/lib/roster-coverage";
 import { buildRefereeCompetitionHistory } from "@/lib/referee-competition-history";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import type {
@@ -27,13 +31,11 @@ export function syncCompetitionCoverage(competitionId: string) {
   const comp = store.competitions.find((c) => c.id === competitionId);
   if (!comp) return;
   const assignments = store.assignments.get(competitionId) ?? {};
-  const filled = Object.values(assignments).filter(Boolean).length;
-  comp.confirmados = filled;
-  const open = countOpenSlots(getCompetitionTemplate(competitionId), assignments);
-  if (open === 0) comp.estado = "Completo";
-  else if (filled === 0) comp.estado = "Borrador";
-  else if (open > 5) comp.estado = "Crítico";
-  else comp.estado = "Incompleto";
+  const template = getCompetitionTemplate(competitionId);
+  const coverage = computeRosterCoverage(template, assignments, comp.requeridos);
+  comp.confirmados = coverage.confirmados;
+  comp.requeridos = coverage.requeridos;
+  comp.estado = deriveCompetitionEstado(coverage);
 }
 
 export function yearFromIso(date: string): number | null {

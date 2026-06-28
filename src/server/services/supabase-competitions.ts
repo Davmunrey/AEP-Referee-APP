@@ -4,19 +4,43 @@ import {
   competitionsToRemoveInGroup,
   groupCompetitionDuplicates,
 } from "@/lib/competition-dedup";
-import type { Competition, SessionUser } from "@/lib/types";
+import { applyCoverageToCompetition } from "@/lib/roster-coverage";
+import { normalizeCompetitionTemplate } from "@/lib/roster-template";
+import type { Competition, RosterSession, SessionUser } from "@/lib/types";
 import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import {
   db,
   hasApprovalCompetitionColumns,
   hasHistoryCompetitionColumn,
+  loadAllAssignments,
 } from "./supabase-helpers";
+
+function enrichCompetitionRows(
+  rows: Record<string, unknown>[],
+  assignmentsByComp: Map<string, Record<string, string>>,
+): Competition[] {
+  return rows.map((row) => {
+    const comp = mapCompetition(row);
+    const template = normalizeCompetitionTemplate(
+      (row.template as RosterSession[] | null) ?? null,
+      comp.tipo,
+    );
+    const assignments = assignmentsByComp.get(comp.id) ?? {};
+    return applyCoverageToCompetition(comp, template, assignments);
+  });
+}
 
 export const competitionService = {
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const supabase = db();
-    const { data } = await supabase.from("competitions").select("*").order("fecha");
-    const list = (data ?? []).map((r) => mapCompetition(r as Record<string, unknown>));
+    const [{ data }, assignmentsByComp] = await Promise.all([
+      supabase.from("competitions").select("*").order("fecha"),
+      loadAllAssignments(),
+    ]);
+    const list = enrichCompetitionRows(
+      (data ?? []) as Record<string, unknown>[],
+      assignmentsByComp,
+    );
     if (user?.role === "delegado_zona" && user.zona) {
       const userZone = resolveZoneCode(user.zona);
       return list.filter((c) => resolveZoneCode(c.zona) === userZone);
@@ -27,7 +51,9 @@ export const competitionService = {
   getCompetition: async (id: string): Promise<Competition | undefined> => {
     const supabase = db();
     const { data } = await supabase.from("competitions").select("*").eq("id", id).single();
-    return data ? mapCompetition(data as Record<string, unknown>) : undefined;
+    if (!data) return undefined;
+    const assignmentsByComp = await loadAllAssignments();
+    return enrichCompetitionRows([data as Record<string, unknown>], assignmentsByComp)[0];
   },
 
   createCompetition: async (

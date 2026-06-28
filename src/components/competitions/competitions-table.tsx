@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarDays, Check, FileText, Loader2, Trash2, X } from "lucide-react";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,14 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     setCompetitions(initialCompetitions);
   }, [initialCompetitions]);
 
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshEvents();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refreshEvents]);
+
   const duplicateGroups = useMemo(() => groupCompetitionDuplicates(competitions), [competitions]);
   const duplicateIds = useMemo(() => {
     const ids = new Set<string>();
@@ -74,11 +82,11 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   const duplicateCount = duplicateGroups.reduce((n, g) => n + g.competitions.length - 1, 0);
   const canDedupe = role === "super_admin" || role === "delegado_jueces";
 
-  const refreshEvents = async () => {
+  const refreshEvents = useCallback(async () => {
     const fresh = await api.getCompetitions();
     setCompetitions(fresh);
     router.refresh();
-  };
+  }, [router]);
 
   const filtered = useMemo(() => {
     return competitions.filter((e) => {
@@ -279,7 +287,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           {pageRows.map((competition) => {
             const pct =
               competition.requeridos > 0
-                ? Math.round((competition.confirmados / competition.requeridos) * 100)
+                ? Math.min(100, Math.round((competition.confirmados / competition.requeridos) * 100))
                 : 0;
             const isPast = isCompetitionPast(competition);
             const isConfirmingDelete = confirmDeleteId === competition.id;
@@ -381,7 +389,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
             {pageRows.map((competition) => {
               const pct =
                 competition.requeridos > 0
-                  ? Math.round((competition.confirmados / competition.requeridos) * 100)
+                  ? Math.min(100, Math.round((competition.confirmados / competition.requeridos) * 100))
                   : 0;
               const isConfirmingDelete = confirmDeleteId === competition.id;
               const isPast = isCompetitionPast(competition);
