@@ -12,20 +12,19 @@ export interface CompensationBreakdownLine {
 export interface CompensationSessionBreakdown {
   session: string;
   label: string;
-  ordenadorAmount: number;
-  pesajeAmount: number;
   lines: Array<{
-    kind: "ordenador" | "pesaje";
+    roleLabel: string;
+    dutyType: CompensationDutyLine["dutyType"];
     amount: number;
     unitAmount: number;
   }>;
 }
 
-function dutyKindLabel(dutyType: CompensationDutyLine["dutyType"]): "ordenador" | "pesaje" {
-  return dutyType === "pesaje" ? "pesaje" : "ordenador";
+function dutyRoleLabel(line: CompensationDutyLine): string {
+  return line.roleLabel ?? (line.dutyType === "pesaje" ? "Pesaje" : "Tarima");
 }
 
-/** Agrupa funciones por sesión Sx (ordenador + pesaje). */
+/** Agrupa funciones por sesión Sx (posición en tarima + pesaje si aplica). */
 export function groupDutiesBySession(dutyLines: CompensationDutyLine[]): CompensationSessionBreakdown[] {
   const map = new Map<string, CompensationDutyLine[]>();
 
@@ -39,27 +38,19 @@ export function groupDutiesBySession(dutyLines: CompensationDutyLine[]): Compens
     .sort(([a], [b]) => compareSessions(a, b))
     .map(([session, duties]) => {
       const sorted = [...duties].sort((a, b) => {
-        if (a.dutyType === b.dutyType) return 0;
-        return a.dutyType === "session" ? -1 : 1;
+        if (a.dutyType !== b.dutyType) return a.dutyType === "session" ? -1 : 1;
+        return dutyRoleLabel(a).localeCompare(dutyRoleLabel(b), "es");
       });
-
-      let ordenadorAmount = 0;
-      let pesajeAmount = 0;
-      const lines: CompensationSessionBreakdown["lines"] = [];
-
-      for (const duty of sorted) {
-        const kind = dutyKindLabel(duty.dutyType);
-        if (kind === "ordenador") ordenadorAmount += duty.amount;
-        else pesajeAmount += duty.amount;
-        lines.push({ kind, amount: duty.amount, unitAmount: duty.unitAmount });
-      }
 
       return {
         session,
         label: sessionLabel(session),
-        ordenadorAmount,
-        pesajeAmount,
-        lines,
+        lines: sorted.map((duty) => ({
+          roleLabel: dutyRoleLabel(duty),
+          dutyType: duty.dutyType,
+          amount: duty.amount,
+          unitAmount: duty.unitAmount,
+        })),
       };
     });
 }
@@ -69,18 +60,28 @@ export function buildClaimBreakdown(claim: CompensationClaim): CompensationBreak
 
   for (const group of groupDutiesBySession(claim.dutyLines)) {
     for (const line of group.lines) {
-      const kindLabel = line.kind === "pesaje" ? "Pesaje" : "Ordenador";
       lines.push({
         group: group.label,
-        label: `${group.label} · ${kindLabel}`,
+        label: `${group.label} · ${line.roleLabel}`,
         detail: formatReceiptAmountEur(line.unitAmount),
         amount: line.amount,
       });
     }
   }
 
+  if (claim.computerSetupAmount > 0) {
+    lines.push({
+      label: "Montaje del ordenador",
+      amount: claim.computerSetupAmount,
+    });
+  }
+
   if (claim.travelMode === "shared_vehicle_passenger") {
-    lines.push({ label: "Desplazamiento", detail: "Comparte vehículo", amount: 0 });
+    lines.push({
+      label: "Desplazamiento",
+      detail: claim.distanceKmRoundTrip != null ? `${claim.distanceKmRoundTrip} km i+v (comparte vehículo)` : "Comparte vehículo",
+      amount: 0,
+    });
   } else if (claim.travelMode === "none") {
     lines.push({ label: "Desplazamiento", detail: "Sin desplazamiento", amount: 0 });
   } else if (claim.distanceKmRoundTrip != null) {
@@ -111,16 +112,26 @@ export function buildClaimBreakdown(claim: CompensationClaim): CompensationBreak
   return lines;
 }
 
-/** Resumen compacto por sesión: S1 · S2P · S3 */
+function roleAbbrev(roleLabel: string, dutyType: CompensationDutyLine["dutyType"]): string {
+  if (dutyType === "pesaje") return "Pz";
+  const short = roleLabel
+    .replace(/^Juez\s+/i, "")
+    .replace(/\s*\/.*$/, "")
+    .split(/\s+/)[0]
+    ?.slice(0, 4);
+  return short ?? "Tar";
+}
+
+/** Resumen compacto por sesión: S1(Cent+Pz) · S2 */
 export function formatDutySessionsSummary(claim: Pick<CompensationClaim, "dutyLines">): string {
   const groups = groupDutiesBySession(claim.dutyLines);
   if (groups.length === 0) return "—";
 
   return groups
     .map((g) => {
-      if (g.ordenadorAmount > 0 && g.pesajeAmount > 0) return `${g.label}(O+P)`;
-      if (g.pesajeAmount > 0) return `${g.label}P`;
-      return g.label;
+      const parts = g.lines.map((l) => roleAbbrev(l.roleLabel, l.dutyType));
+      const unique = [...new Set(parts)];
+      return unique.length > 1 ? `${g.label}(${unique.join("+")})` : `${g.label}${unique[0] === "Pz" ? "P" : ""}`;
     })
     .join(" · ");
 }

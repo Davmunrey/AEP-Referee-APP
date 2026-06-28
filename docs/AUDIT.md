@@ -22,7 +22,7 @@ App operativa y desplegable. CI verde, **344 tests**, lint OK, build OK.
 | Contraseñas | OK | Self-change + admin-reset |
 | Ascensos | OK | Comentario de rechazo persistido (`review_comment`) |
 | Ficha juez | OK | Historial real desde `roster_assignments`; domicilio para compensación |
-| Compensación | OK | Panel hub `/compensation`, OSM gratuito, claims, export PDF IBAN efímero |
+| Compensación | OK | Panel hub `/compensation`, km manual, posición tarima, montaje ordenador, export PDF IBAN efímero |
 
 ## Ciberseguridad
 

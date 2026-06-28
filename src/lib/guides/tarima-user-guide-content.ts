@@ -187,10 +187,10 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
         },
         {
           id: "6.1",
-          title: "Acceder y configurar sede",
+          title: "Acceder a compensación",
           body: [
             "Desde el panel central o desde la tarima → Compensación (/competitions/[id]/compensation).",
-            "Guarda la sede con autocomplete OpenStreetMap (elige una sugerencia de la lista). Es obligatoria para calcular km.",
+            "Configura clubes organizadores y e-mails de devolución del recibo.",
           ],
         },
         {
@@ -204,19 +204,19 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
         },
         {
           id: "6.3",
-          title: "Domicilio del juez",
+          title: "Kilometraje manual",
           body: [
-            "En Directorio → ficha → Editar, el campo domicilio usa el mismo autocomplete OpenStreetMap.",
-            "Al guardar se almacenan dirección y coordenadas para el cálculo de km.",
+            "Introduce los km ida+vuelta (enteros) manualmente por cada juez en la tabla de compensación.",
+            "No se calculan automáticamente desde la sede del campeonato.",
           ],
         },
         {
           id: "6.4",
-          title: "Calcular km y desglose por sesión",
+          title: "Comparte, montaje y desglose por sesión",
           body: [
-            "Pulsa «Calcular km (OSM)» para distancias desde domicilio a sede (km enteros ida y vuelta).",
-            "Marca «Comparte desplazamiento» si el juez viaja en vehículo compartido.",
-            "El desglose agrupa por sesión Sx: Ordenador (tarima) y Pesaje bajo cada sesión.",
+            "Marca «Comparte» si el juez viaja en vehículo compartido: solo exime el cobro de kilometraje; el alojamiento sigue aplicando según los km.",
+            "Marca «Mont.» si el juez hace el montaje del ordenador: se paga aparte (una función de sesión).",
+            "El desglose agrupa por sesión Sx mostrando la posición real en tarima (Central, Lateral, Pesaje…).",
             "Los importes de viaje y alojamiento no se confirman hasta completar todos los km.",
           ],
         },

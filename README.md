@@ -43,7 +43,7 @@ Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por
 |---|---|
 | **Campeonatos** | Creación manual, import calendario anual PDF/CSV, edición inline, deduplicación |
 | **Tarima** | Plantilla, import horario/cuadrante PDF, drag-and-drop, flags *, borrador → aprobación |
-| **Compensación** | Panel `/compensation`, baremo AEP, km OSM, desglose Sx, multi-club, recibo PDF |
+| **Compensación** | Panel `/compensation`, baremo AEP, km manual, desglose por posición, montaje ordenador, recibo PDF |
 | **Export cuadrante** | PDF formato oficial AEP, Excel, compartir por WhatsApp |
 | **Jueces** | Directorio, ficha, domicilio OSM, sanciones, historial de tarimas |
 | **Disponibilidad** | Por campeonato, filtro "solo confirmados" en tarima |
@@ -122,7 +122,7 @@ Migraciones en orden (`001` → `026_compensation_clubs.sql`). Recientes:
 |---|---|
 | [Guía de uso](./docs/GUIA-USO.md) | Flujos operativos con capturas |
 | [Manual PDF](./docs/GUIA-USO.md#manual-pdf) | `GET /api/v1/guides/tarima-manual` (requiere sesión) |
-| [Compensación](./docs/JUDGE-COMPENSATION.md) | Baremo, OSM, recibos, panel hub |
+| [Compensación](./docs/JUDGE-COMPENSATION.md) | Baremo, km manual, recibos, panel hub |
 | [Arquitectura](./docs/ARCHITECTURE.md) | Capas, servicios, parsers |
 | [API](./docs/API.md) | Referencia `/api/v1` |
 | [Auth/RBAC](./docs/AUTH.md) | Roles y permisos |

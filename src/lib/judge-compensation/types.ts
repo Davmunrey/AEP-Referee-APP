@@ -1,4 +1,4 @@
-import type { EventType } from "@/lib/types";
+import type { EventType, RoleKey } from "@/lib/types";
 
 /** Ámbito del campeonato para baremo (nacional AEP vs internacional). */
 export type CompetitionAmbito = "nacional" | "epf" | "ipf";
@@ -22,6 +22,8 @@ export type CompensationClaimStatus =
 export interface CompensationDutyLine {
   dutyType: CompensationDutyType;
   session: string;
+  roleKey?: RoleKey;
+  roleLabel?: string;
   unitAmount: number;
   quantity: number;
   amount: number;
@@ -52,6 +54,8 @@ export interface CompensationClaimInput {
   travelNotes?: string;
   isCompetitionManager: boolean;
   competitionManagerPerDay: boolean;
+  /** Montaje del ordenador (se paga aparte, una función de sesión). */
+  isComputerSetup: boolean;
   lodgingDaysOverride?: number;
   lodgingEligibleOverride?: boolean;
   status: CompensationClaimStatus;
@@ -63,6 +67,7 @@ export interface CompensationClaimTotals {
   travelAmount: number;
   lodgingAmount: number;
   competitionManagerAmount: number;
+  computerSetupAmount: number;
   totalAmount: number;
   sessionCount: number;
   pesajeCount: number;

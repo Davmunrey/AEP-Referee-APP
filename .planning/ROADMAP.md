@@ -1,10 +1,10 @@
 # Roadmap — AEP Tarima
 
-## v1.6 — Hub compensación y OSM (en curso)
+## v1.6 — Hub compensación y km manual (en curso)
 
 | Área | Entregado |
 |---|---|
-| Compensación | Panel `/compensation`, hub API, OSM gratuito, desglose Sx |
+| Compensación | Panel `/compensation`, hub API, km manual, desglose por posición, montaje ordenador |
 | UI | Sidebar Documentación + Compensación, usuario en topbar |
 | Docs | Todos los `.md`, manual PDF, capturas `docs/images/` |
 | Clubes | 180 clubes AEP en `aep-clubs-registry.json` |

@@ -286,6 +286,8 @@ export function mapCompensationDutyLine(
   return {
     dutyType: row.duty_type as import("@/lib/judge-compensation/types").CompensationDutyType,
     session: String(row.session_label),
+    roleKey: row.role_key ? (String(row.role_key) as import("@/lib/types").RoleKey) : undefined,
+    roleLabel: row.role_label ? String(row.role_label) : undefined,
     unitAmount: Number(row.unit_amount ?? 0),
     quantity: Number(row.quantity ?? 1),
     amount: Number(row.amount ?? 0),
@@ -319,6 +321,7 @@ export function mapCompensationClaimRow(
     travelNotes: row.travel_notes ? String(row.travel_notes) : undefined,
     isCompetitionManager: Boolean(row.is_competition_manager),
     competitionManagerPerDay: Boolean(row.competition_manager_per_day),
+    isComputerSetup: Boolean(row.is_computer_setup),
     lodgingDaysOverride:
       row.lodging_days_override != null ? Number(row.lodging_days_override) : undefined,
     lodgingEligibleOverride:
@@ -334,6 +337,7 @@ export function mapCompensationClaimRow(
     travelAmount: Number(row.travel_amount ?? 0),
     lodgingAmount: Number(row.lodging_amount ?? 0),
     competitionManagerAmount: Number(row.competition_manager_amount ?? 0),
+    computerSetupAmount: Number(row.computer_setup_amount ?? 0),
     totalAmount: Number(row.total_amount ?? 0),
     sessionCount: Number(row.session_count ?? 0),
     pesajeCount: Number(row.pesaje_count ?? 0),
@@ -407,6 +411,8 @@ export function claimToDbRow(
     travel_notes: claim.travelNotes ?? null,
     is_competition_manager: claim.isCompetitionManager,
     competition_manager_per_day: claim.competitionManagerPerDay,
+    is_computer_setup: claim.isComputerSetup,
+    computer_setup_amount: claim.computerSetupAmount,
     lodging_days: claim.lodgingDays,
     lodging_eligible: claim.lodgingEligible,
     lodging_eligible_override: claim.lodgingEligibleOverride ?? null,

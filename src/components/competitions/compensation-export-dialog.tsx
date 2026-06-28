@@ -75,8 +75,8 @@ export function CompensationExportDialog({
                 <p className="mb-1 font-semibold text-foreground">{group.label}</p>
                 <ul className="space-y-0.5">
                   {group.lines.map((line) => (
-                    <li key={`${group.session}-${line.kind}`} className="flex justify-between gap-3 text-foreground-secondary">
-                      <span>{line.kind === "pesaje" ? "Pesaje" : "Ordenador"}</span>
+                    <li key={`${group.session}-${line.roleLabel}`} className="flex justify-between gap-3 text-foreground-secondary">
+                      <span>{line.roleLabel}</span>
                       <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
                     </li>
                   ))}

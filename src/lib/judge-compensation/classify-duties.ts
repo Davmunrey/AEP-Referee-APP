@@ -1,5 +1,5 @@
 import { compareSessions } from "@/lib/session-order";
-import { parseSlotKey } from "@/lib/roster-template";
+import { parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
 import type { AssignmentsMap, RoleKey, RosterSession } from "@/lib/types";
 import type { CompensationDutyLine, CompensationDutyType } from "./types";
 import { unitRateForDuty } from "./rates";
@@ -12,7 +12,7 @@ function dutyTypeForRole(roleKey: RoleKey): CompensationDutyType {
   return PESAJE_ROLE_KEYS.has(roleKey) ? "pesaje" : "session";
 }
 
-/** Agrupa asignaciones del juez en líneas de compensación (una por sesión × tipo). */
+/** Agrupa asignaciones del juez por sesión × posición en tarima. */
 export function classifyCompensationDuties(input: {
   template: RosterSession[];
   assignments: AssignmentsMap;
@@ -20,19 +20,29 @@ export function classifyCompensationDuties(input: {
   tipo: EventType;
   ambito: CompetitionAmbito;
 }): CompensationDutyLine[] {
-  const byKey = new Map<string, { dutyType: CompensationDutyType; session: string; slotKeys: string[] }>();
+  const byKey = new Map<
+    string,
+    { dutyType: CompensationDutyType; session: string; roleKey: RoleKey; roleLabel: string; slotKeys: string[] }
+  >();
 
   for (const [slotKey, assignedId] of Object.entries(input.assignments)) {
     if (assignedId !== input.refereeId) continue;
     const parsed = parseSlotKey(slotKey);
     if (!parsed) continue;
     const dutyType = dutyTypeForRole(parsed.roleKey);
-    const mapKey = `${parsed.session}::${dutyType}`;
+    const roleLabel = ROLE_LABELS[parsed.roleKey] ?? parsed.roleKey;
+    const mapKey = `${parsed.session}::${parsed.roleKey}`;
     const existing = byKey.get(mapKey);
     if (existing) {
       existing.slotKeys.push(slotKey);
     } else {
-      byKey.set(mapKey, { dutyType, session: parsed.session, slotKeys: [slotKey] });
+      byKey.set(mapKey, {
+        dutyType,
+        session: parsed.session,
+        roleKey: parsed.roleKey,
+        roleLabel,
+        slotKeys: [slotKey],
+      });
     }
   }
 
@@ -42,6 +52,8 @@ export function classifyCompensationDuties(input: {
     lines.push({
       dutyType: entry.dutyType,
       session: entry.session,
+      roleKey: entry.roleKey,
+      roleLabel: entry.roleLabel,
       unitAmount,
       quantity: 1,
       amount: unitAmount,
@@ -52,9 +64,8 @@ export function classifyCompensationDuties(input: {
   return lines.sort((a, b) => {
     const bySession = compareSessions(a.session, b.session);
     if (bySession !== 0) return bySession;
-    // Ordenador (sesión) antes que pesaje en la misma Sx
-    if (a.dutyType === b.dutyType) return 0;
-    return a.dutyType === "session" ? -1 : 1;
+    if (a.dutyType !== b.dutyType) return a.dutyType === "session" ? -1 : 1;
+    return (a.roleLabel ?? "").localeCompare(b.roleLabel ?? "", "es");
   });
 }
 

@@ -7,7 +7,7 @@ App interna gestión jueces AEP: campeonatos, tarimas, cuadrantes, compensación
 Stack: Next.js 15, TypeScript, Supabase (Postgres + Auth + RLS), Tailwind CSS, Radix UI.
 Producción: https://aep-tarima.vercel.app/
 
-## Current Milestone: v1.6 — Compensation Hub & OSM (In progress)
+## Current Milestone: v1.6 — Compensation Hub & km manual (In progress)
 
 **Shipped:**
 - Panel `/compensation`, API hub, sidebar actualizado

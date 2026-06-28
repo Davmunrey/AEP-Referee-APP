@@ -123,12 +123,12 @@ const FINANCIERO: QuickStartStep[] = [
     linkLabel: "Compensación",
   },
   {
-    title: "Configura sede y clubes",
-    body: "En cada campeonato: sede con autocomplete OpenStreetMap, clubes organizadores y e-mails del recibo.",
+    title: "Configura clubes organizadores",
+    body: "En cada campeonato: clubes organizadores y e-mails del recibo. Los km se introducen manualmente por juez.",
   },
   {
-    title: "Calcula km y exporta recibos",
-    body: "Pulsa «Calcular km (OSM)», revisa el desglose por sesión Sx y exporta el PDF (IBAN solo al exportar).",
+    title: "Km manual y exporta recibos",
+    body: "Introduce los km ida+vuelta por juez, marca Comparte si solo exime kilometraje, revisa el desglose por posición en tarima y exporta el PDF (IBAN solo al exportar).",
   },
 ];
 
