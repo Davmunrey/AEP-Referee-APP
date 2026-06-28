@@ -1,4 +1,8 @@
 import { countOpenSlots } from "@/lib/roster-rules";
+import {
+  computeRosterCoverage,
+  deriveCompetitionEstado,
+} from "@/lib/roster-coverage";
 import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type { CalendarDayEvent } from "@/lib/types";
@@ -155,13 +159,22 @@ export async function syncCompetitionCoverage(competitionId: string) {
   const supabase = db();
   const template = (await getCompetitionTemplate(competitionId)) ?? [];
   const assignments = await loadAssignments(competitionId);
-  const filled = Object.values(assignments).filter(Boolean).length;
-  const open = countOpenSlots(template, assignments);
-  let estado: Competition["estado"] = "Incompleto";
-  if (open === 0) estado = "Completo";
-  else if (filled === 0) estado = "Borrador";
-  else if (open > 5) estado = "Crítico";
-  await supabase.from("competitions").update({ confirmados: filled, estado }).eq("id", competitionId);
+  const { data: row } = await supabase
+    .from("competitions")
+    .select("requeridos")
+    .eq("id", competitionId)
+    .maybeSingle();
+  const fallbackRequeridos = row?.requeridos != null ? Number(row.requeridos) : 0;
+  const coverage = computeRosterCoverage(template, assignments, fallbackRequeridos);
+  const estado = deriveCompetitionEstado(coverage);
+  await supabase
+    .from("competitions")
+    .update({
+      confirmados: coverage.confirmados,
+      requeridos: coverage.requeridos,
+      estado,
+    })
+    .eq("id", competitionId);
 }
 
 export async function pushActivity(item: Omit<import("@/lib/types").ActivityItem, never>) {

@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
+import {
+  computeRosterCoverage,
+  isRosterLockedByApproval,
+} from "@/lib/roster-coverage";
 import { RosterHelpPanel } from "@/components/competitions/roster-help-panel";
 import { RosterRevisionPanel } from "@/components/competitions/roster-revision-panel";
 import { RosterStepper } from "@/components/competitions/roster-stepper";
@@ -37,6 +42,7 @@ import { QuadrantImportDialog } from "@/components/competitions/quadrant-import-
 import { CompetitionAvailabilityDialog } from "@/components/competitions/competition-availability-dialog";
 import { EditCompetitionDialog } from "@/components/competitions/edit-competition-dialog";
 import { RosterCompetitionHeader } from "./roster-competition-header";
+import { RosterImprevistoBanner } from "./roster-imprevisto-banner";
 import { RosterRefereePanelLeft } from "./roster-referee-panel";
 import { SessionBlock, SessionTab } from "./roster-session-block";
 import { collectOpenSlots, describeSlot, findNextOpenSlot, groupSessionsByDay } from "./roster-session-helpers";
@@ -75,7 +81,11 @@ export function RosterBuilder({
   initialConfirmedIds = [],
   defaultZonaFilter = "TODAS",
 }: RosterBuilderProps) {
+  const router = useRouter();
   const readOnly = !canEdit;
+  const [aprobacion, setAprobacion] = useState(competition.aprobacion);
+  const approvalLocked = isRosterLockedByApproval(aprobacion);
+  const rosterReadOnly = readOnly || approvalLocked;
   const [template, setTemplate] = useState(initialTemplate);
   const [assignments, setAssignments] = useState(initialAssignments);
   const [flags, setFlags] = useState<FlagsMap>(initialFlags);
@@ -99,15 +109,44 @@ export function RosterBuilder({
   const [pending, startTransition] = useTransition();
   const [workflowStep, setWorkflowStep] = useState<RosterWorkflowStep>("asignacion");
 
-  const totalSlots = template.reduce(
-    (acc, s) => acc + s.roles.reduce((a, r) => a + r.slots, 0) + (s.pesajeRoles ?? []).reduce((a, r) => a + r.slots, 0),
-    0,
+  useEffect(() => {
+    setAprobacion(competition.aprobacion);
+  }, [competition.aprobacion]);
+
+  const coverage = useMemo(
+    () => computeRosterCoverage(template, assignments, competition.requeridos),
+    [template, assignments, competition.requeridos],
   );
-  const filledSlots = Object.values(assignments).filter(Boolean).length;
-  const fillPct = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
-  const openSlots = Math.max(0, totalSlots - filledSlots);
+  const { requeridos: totalSlots, confirmados: filledSlots, openSlots, pct: fillPct } = coverage;
   const plantillaDone = totalSlots > 0;
   const asignacionDone = filledSlots > 0;
+
+  const refreshCompetitionList = () => {
+    router.refresh();
+  };
+
+  const handleUnlockImprevisto = () => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        "¿Registrar un imprevisto y desbloquear la tarima para cambios?\n\nDeberás volver a enviar la propuesta a aprobación cuando termines.",
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const res = await api.unlockRosterImprevisto(competition.id);
+        setAprobacion(res.aprobacion);
+        setStatusMsg(res.message);
+        setStatusIsError(false);
+        refreshCompetitionList();
+      } catch (err) {
+        setStatusMsg(formatApiError(err, "No se pudo registrar el imprevisto"));
+        setStatusIsError(true);
+      }
+    });
+  };
 
   useEffect(() => { if (totalSlots === 0) setWorkflowStep("plantilla"); }, [totalSlots]);
 
@@ -182,6 +221,7 @@ export function RosterBuilder({
         if (res.flags) setFlags(res.flags);
         if (res.crossZoneMap) setCrossZoneMap(res.crossZoneMap);
         setStatusMsg(null); setStatusIsError(false);
+        refreshCompetitionList();
       } catch (err) {
         setAssignments(snapshot); setFlags(flagsSnapshot); setSelectedSlot(slotKey);
         setStatusMsg(formatApiError(err, "No se pudo guardar la asignación")); setStatusIsError(true);
@@ -199,15 +239,15 @@ export function RosterBuilder({
   };
 
   const onDrop = (slotKey: string, refereeId: string) => {
-    if (readOnly) return;
+    if (rosterReadOnly) return;
     persistAssign(slotKey, refereeId);
     setDraggedId(null); setSelectedSlot(null);
   };
 
-  const onQuickAssign = (refereeId: string) => { if (!selectedSlot || readOnly) return; persistAssign(selectedSlot, refereeId); };
+  const onQuickAssign = (refereeId: string) => { if (!selectedSlot || rosterReadOnly) return; persistAssign(selectedSlot, refereeId); };
 
   const toggleFlag = (slotKey: string, field: keyof SlotFlags) => {
-    if (readOnly || !assignments[slotKey]) return;
+    if (rosterReadOnly || !assignments[slotKey]) return;
     const next: SlotFlags = { ...(flags[slotKey] ?? {}), [field]: !(flags[slotKey]?.[field]) };
     const snapshot = flags;
     setFlags((prev) => ({ ...prev, [slotKey]: next }));
@@ -231,18 +271,18 @@ export function RosterBuilder({
   };
 
   const clearAllAssignments = () => {
-    if (readOnly || filledSlots === 0 || pending) return;
+    if (rosterReadOnly || filledSlots === 0 || pending) return;
     if (!confirm(`¿Vaciar todas las asignaciones de jueces de ${competition.nombre}?\n\nLa plantilla se mantiene, solo se liberan los huecos.`)) return;
     const sa = assignments; const sf = flags;
     setAssignments({}); setFlags({}); setSelectedSlot(null);
     startTransition(async () => {
-      try { const res = await api.clearRosterAssignments(competition.id); setAssignments(res.assignments); setFlags(res.flags); setStatusMsg("Asignaciones borradas"); setStatusIsError(false); }
+      try { const res = await api.clearRosterAssignments(competition.id); setAssignments(res.assignments); setFlags(res.flags); setStatusMsg("Asignaciones borradas"); setStatusIsError(false); refreshCompetitionList(); }
       catch (err) { setAssignments(sa); setFlags(sf); setStatusMsg(formatApiError(err, "No se pudieron borrar las asignaciones")); setStatusIsError(true); }
     });
   };
 
   const clearTemplateAndAssignments = () => {
-    if (readOnly || template.length === 0 || pending || savingTemplate) return;
+    if (rosterReadOnly || template.length === 0 || pending || savingTemplate) return;
     if (!confirm(`¿Borrar la plantilla de tarima de ${competition.nombre}?\n\nEsto elimina sesiones, huecos y asignaciones. Podrás importar el horario de nuevo.`)) return;
     const st = template; const sa = assignments; const sf = flags;
     setTemplate([]); setAssignments({}); setFlags({}); setSelectedSlot(null); setActiveSessionKey(null); setWorkflowStep("plantilla");
@@ -250,7 +290,7 @@ export function RosterBuilder({
       try {
         const res = await api.clearRosterTemplate(competition.id);
         setTemplate(res.template); setAssignments(res.assignments); setFlags(res.flags);
-        setIsEditing(false); setStatusMsg("Plantilla borrada"); setStatusIsError(false);
+        setIsEditing(false); setStatusMsg("Plantilla borrada"); setStatusIsError(false); refreshCompetitionList();
       } catch (err) { setTemplate(st); setAssignments(sa); setFlags(sf); setStatusMsg(formatApiError(err, "No se pudo borrar la plantilla")); setStatusIsError(true); }
     });
   };
@@ -282,8 +322,10 @@ export function RosterBuilder({
           onApplied={(nextAssignments, nextFlags) => { setAssignments(nextAssignments); if (nextFlags) setFlags(nextFlags); setQuadrantImportOpen(false); setWorkflowStep("asignacion"); setStatusMsg("Cuadrante aplicado"); setStatusIsError(false); }}
         />
         <RosterCompetitionHeader
-          competition={competition} isPast={isPast} canEdit={canEdit}
+          competition={{ ...competition, aprobacion }}
+          isPast={isPast} canEdit={canEdit}
           canManageCompensation={canManageCompensation}
+          rosterLocked={approvalLocked}
           violationCount={violationCount} filledSlots={filledSlots} totalSlots={totalSlots}
           fillPct={fillPct} openSlots={openSlots} pending={pending} savingTemplate={savingTemplate}
           isEditing={isEditing} statusMsg={statusMsg} statusIsError={statusIsError}
@@ -299,6 +341,12 @@ export function RosterBuilder({
             if (isEditing) { setIsEditing(false); setWorkflowStep(totalSlots > 0 ? "asignacion" : "plantilla"); }
             else { setIsEditing(true); setWorkflowStep("plantilla"); }
           }}
+        />
+        <RosterImprevistoBanner
+          aprobacion={aprobacion}
+          canEdit={canEdit}
+          pending={pending}
+          onUnlock={handleUnlockImprevisto}
         />
         {!readOnly && (
           <>
@@ -350,7 +398,7 @@ export function RosterBuilder({
             {showRefereePanel && (
               <RosterRefereePanelLeft
                 referees={availableReferees} assignedIds={assignedIds}
-                canEdit={canEdit} readOnly={readOnly}
+                canEdit={canEdit} readOnly={rosterReadOnly}
                 selectedSlot={selectedSlot} selectedSlotMeta={selectedSlotMeta}
                 confirmedIds={confirmedIds} filterOnlyConfirmed={filterOnlyConfirmed}
                 filterZona={filterZona} filterNivel={filterNivel} search={search}
@@ -432,7 +480,7 @@ export function RosterBuilder({
                             getReferee={getReferee} selectedSlot={selectedSlot}
                             onSelectSlot={setSelectedSlot} onDrop={onDrop} onClear={persistClear}
                             onToggleFlag={toggleFlag} checkViolation={checkViolation}
-                            readOnly={readOnly} isDragging={isDragging} defaultExpanded
+                            readOnly={rosterReadOnly} isDragging={isDragging} defaultExpanded
                           />
                         </div>
                       ) : (

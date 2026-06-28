@@ -1,4 +1,10 @@
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import {
+  applyCoverageToCompetition,
+  isRosterLockedByApproval,
+  rosterMutationBlockedMessage,
+  ROSTER_IMPREVISTO_STATE,
+} from "@/lib/roster-coverage";
 import { countOpenSlots, isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
 import { pruneAssignments } from "@/lib/roster-template";
@@ -92,7 +98,12 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
 }
 
 export async function getCompetitions(user?: SessionUser): Promise<Competition[]> {
-  const list = getStore().competitions;
+  const store = getStore();
+  const list = store.competitions.map((comp) => {
+    const template = getCompetitionTemplate(comp.id);
+    const assignments = store.assignments.get(comp.id) ?? {};
+    return applyCoverageToCompetition(comp, template, assignments);
+  });
   if (user?.role === "delegado_zona" && user.zona) {
     const userZone = resolveZoneCode(user.zona);
     return list.filter((c) => resolveZoneCode(c.zona) === userZone);
@@ -101,7 +112,12 @@ export async function getCompetitions(user?: SessionUser): Promise<Competition[]
 }
 
 export async function getCompetition(id: string) {
-  return getStore().competitions.find((c) => c.id === id);
+  const comp = getStore().competitions.find((c) => c.id === id);
+  if (!comp) return undefined;
+  const store = getStore();
+  const template = getCompetitionTemplate(id);
+  const assignments = store.assignments.get(id) ?? {};
+  return applyCoverageToCompetition(comp, template, assignments);
 }
 
 export async function createCompetition(
@@ -259,6 +275,11 @@ export async function assignReferee(
 }> {
   const validation = await validateAssign(competitionId, slotKey, refereeId);
   if (!validation.ok) return { error: validation.error };
+
+  const comp = await getCompetition(competitionId);
+  if (!comp) return { error: "Competición no encontrada" };
+  const blocked = rosterMutationBlockedMessage(comp.aprobacion);
+  if (blocked) return { error: blocked };
 
   const store = getStore();
   const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
@@ -501,5 +522,33 @@ export async function removeDuplicateCompetitions(user?: SessionUser) {
     }
   }
   return { removed, kept, groups: groups.length };
+}
+
+export async function unlockImprevisto(
+  competitionId: string,
+  actor: string,
+): Promise<{ message: string; aprobacion: string } | { error: string }> {
+  const store = getStore();
+  const comp = store.competitions.find((c) => c.id === competitionId);
+  if (!comp) return { error: "Competición no encontrada" };
+  if (!isRosterLockedByApproval(comp.aprobacion)) {
+    return { error: "Solo se puede registrar imprevisto en tarimas ya aprobadas" };
+  }
+  comp.aprobacion = ROSTER_IMPREVISTO_STATE;
+  pushHistory({
+    competitionId,
+    at: new Date().toISOString(),
+    actor,
+    action: "Imprevisto registrado",
+    detail: "Tarima desbloqueada para cambios; reenviar a aprobación tras ajustar",
+  });
+  pushActivity({
+    tipo: "cambio",
+    actor,
+    accion: "registró imprevisto en tarima de",
+    evento: comp.nombre,
+    hace: "ahora",
+  });
+  return { message: "Tarima desbloqueada para cambios por imprevisto", aprobacion: ROSTER_IMPREVISTO_STATE };
 }
 
