@@ -92,7 +92,7 @@ export function renderTarimaUserGuidePdf(appUrl = tarimaGuideAppUrl()): Promise<
     doc.fillColor("#000000");
     doc.moveDown(1);
     doc.font("Helvetica").fontSize(10).text(
-      "Este documento describe el funcionamiento completo de AEP Tarima: censo de jueces, tarimas, aprobaciones, compensación de gastos (OpenStreetMap gratuito, desglose por sesión Sx), estadísticas y app móvil.",
+      "Este documento describe el funcionamiento completo de AEP Tarima: censo de jueces, tarimas, aprobaciones, compensación de gastos (km manual, desglose por posición en tarima, montaje del sistema informático), estadísticas y app móvil.",
       { align: "justify" },
     );
     doc.moveDown(0.5);
@@ -101,8 +101,10 @@ export function renderTarimaUserGuidePdf(appUrl = tarimaGuideAppUrl()): Promise<
     sections.forEach((section, index) => {
       const sectionNum = index + 1;
       drawSection(doc, section, sectionNum);
-      const shot = GUIDE_SCREENSHOTS.find((s) => s.afterSection === sectionNum);
-      if (shot) drawScreenshotPage(doc, shot.file, shot.caption);
+      const shots = GUIDE_SCREENSHOTS.filter((s) => s.afterSection === sectionNum);
+      for (const shot of shots) {
+        drawScreenshotPage(doc, shot.file, shot.caption);
+      }
     });
 
     const range = doc.bufferedPageRange();
@@ -122,6 +124,4 @@ export function renderTarimaUserGuidePdf(appUrl = tarimaGuideAppUrl()): Promise<
   });
 }
 
-export function tarimaUserGuideFilename(): string {
-  return "Manual-AEP-Tarima-Gestion-Jueces.pdf";
-}
+import { tarimaUserGuideFilename } from "./tarima-user-guide-filename";
