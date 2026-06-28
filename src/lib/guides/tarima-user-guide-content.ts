@@ -175,59 +175,77 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
     {
       title: "COMPENSACIÓN DE GASTOS (RESPONSABLE FINANCIERO)",
       intro:
-        "Rol responsable_financiero_jueces o super_admin. Gestiona la compensación económica sin editar tarima ni censo. Kilometraje 100 % gratuito vía OpenStreetMap (Photon + Nominatim + OSRM).",
+        "Rol responsable_financiero_jueces o super_admin. Gestiona la compensación económica sin editar tarima ni censo. Normativa AEP (revisión 31/10/2025).",
       steps: [
         {
           id: "6.0",
           title: "Panel central (/compensation)",
           body: [
-            "Menú lateral → Compensación. Lista todos los campeonatos con jueces asignados, km pendientes y enlace «Abrir» a cada compensación.",
+            "Menú lateral → Compensación. Lista todos los campeonatos con jueces asignados, km pendientes, estado y enlace «Abrir» a cada compensación.",
             "Evita ir campeonato a campeonato desde la tarima.",
           ],
         },
         {
           id: "6.1",
-          title: "Acceder a compensación",
+          title: "Acceder y configurar organizador",
           body: [
             "Desde el panel central o desde la tarima → Compensación (/competitions/[id]/compensation).",
-            "Configura clubes organizadores y e-mails de devolución del recibo.",
+            "Configura uno o varios clubes organizadores y sus e-mails de devolución del recibo.",
+            "Puedes elegir AEP nacional como organizador o varios clubes (listado oficial AEP, 180 clubes).",
           ],
         },
         {
           id: "6.2",
-          title: "Organizadores del recibo",
+          title: "Funciones en tarima (desglose por sesión)",
           body: [
-            "Puedes indicar varios clubes organizadores y varios e-mails de devolución.",
-            "El listado de clubes se autocompleta con el censo oficial AEP (180 clubes, abril 2026).",
-            "También puedes elegir AEP nacional como organizador.",
+            "Las funciones se calculan automáticamente desde el cuadrante: una línea por sesión × posición real (Central, Lateral, Ordenador, Pesaje…).",
+            "Ocupar la plaza de ordenador/liftingcast durante el campeonato se paga como cualquier otra función de tarima.",
+            "El resumen compacto muestra algo como S1(Cent+Pz) · S2. Expande cada fila para ver el desglose detallado.",
+            "Pulsa «Recalcular funciones» si has cambiado asignaciones en la tarima.",
           ],
         },
         {
           id: "6.3",
           title: "Kilometraje manual",
           body: [
-            "Introduce los km ida+vuelta (enteros) manualmente por cada juez en la tabla de compensación.",
+            "Introduce los km ida+vuelta (enteros) manualmente por cada juez en la columna «Km i+v».",
             "No se calculan automáticamente desde la sede del campeonato.",
+            "Los totales de viaje y alojamiento no se confirman hasta completar todos los km (modo «sin desplazamiento» exento).",
           ],
         },
         {
           id: "6.4",
-          title: "Comparte, montaje y desglose por sesión",
+          title: "Comparte vehículo y alojamiento",
           body: [
-            "Marca «Comparte» si el juez viaja en vehículo compartido: solo exime el cobro de kilometraje; el alojamiento sigue aplicando según los km.",
-            "Marca «Mont.» si el juez monta el sistema informático (Liftingcast, OpenLifter o Goodlift) e introduce el importe que se paga.",
-            "Esto es distinto de ocupar la posición ordenador en tarima: esa función sale del cuadrante como cualquier otra plaza.",
-            "El desglose agrupa por sesión Sx mostrando la posición real en tarima (Central, Lateral, Pesaje…).",
-            "Los importes de viaje y alojamiento no se confirman hasta completar todos los km.",
+            "Marca «Comparte» si el juez viaja en vehículo compartido: solo exime el cobro de kilometraje.",
+            "Los km siguen siendo obligatorios y se usan para calcular alojamiento (>150 km ida+vuelta + ≥2 funciones → 25 €/día).",
+            "Un vehículo compartido implica un solo cobro de kilometraje en el grupo (pasajeros en modo compartido).",
           ],
         },
         {
           id: "6.5",
+          title: "Montaje del sistema informático (aparte)",
+          body: [
+            "Columna «Mont.»: marca el tick si el juez monta/configura todo el sistema (Liftingcast, OpenLifter o Goodlift).",
+            "Introduce el importe manual en euros — no hay baremo fijo.",
+            "Esto es distinto de ocupar la posición ordenador en tarima durante el campeonato (esa función sale del cuadrante).",
+          ],
+        },
+        {
+          id: "6.6",
+          title: "Responsable de competición",
+          body: [
+            "Columna «Resp.»: marca si el juez es responsable de competición (20 € campeonato o 20 €/día según baremo).",
+            "EPF/IPF: no aplica responsable de competición en este cálculo.",
+          ],
+        },
+        {
+          id: "6.7",
           title: "Exportar recibo PDF",
           body: [
-            "El botón Recibo solo se activa cuando el juez tiene todos los datos completos.",
-            "Introduce el IBAN español en el modal (no se guarda en la app, solo en el PDF generado).",
-            "El PDF incluye el desglose de compensación según normativa AEP.",
+            "El botón Recibo solo se activa cuando el juez tiene todos los datos completos (km resueltos).",
+            "Introduce el IBAN español en el modal — no se guarda en la app, solo en el PDF generado.",
+            "El PDF incluye el desglose completo: funciones por sesión, desplazamiento, alojamiento, montaje sistema y responsable.",
           ],
         },
       ],
@@ -240,7 +258,7 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
           title: "Censo y ficha",
           body: [
             "Menú → Directorio. Búsqueda y filtros por zona, nivel y estado.",
-            "La ficha incluye domicilio (para km), historial por campeonato, sanciones, exámenes, informes y ascensos.",
+            "La ficha incluye domicilio, historial por campeonato, sanciones, exámenes, informes y ascensos.",
           ],
         },
         {

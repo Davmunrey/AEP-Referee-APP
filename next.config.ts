@@ -5,6 +5,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["pdfkit"],
   turbopack: {
     root: path.resolve(__dirname),
   },

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TarimaManualDownloadButton } from "@/components/docs/tarima-manual-download";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth/session";
@@ -182,15 +183,7 @@ export default async function DocsPage() {
             </span>
             <span className="text-subtle-muted">Actualizado: {updated}</span>
           </div>
-          {isAuthenticated && (
-            <a
-              href="/api/v1/guides/tarima-manual"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-            >
-              <BookOpen className="h-4 w-4" />
-              Descargar manual PDF (gestión de jueces)
-            </a>
-          )}
+          {isAuthenticated && <TarimaManualDownloadButton className="mt-4" />}
         </div>
       </div>
 
@@ -230,7 +223,7 @@ export default async function DocsPage() {
               <FeatureCard icon={BarChart3} title="Panel de inicio" desc="KPIs de cobertura, salud operativa, avisos y próximos campeonatos de un vistazo." />
               <FeatureCard icon={CalendarDays} title="Campeonatos" desc="Alta y edición de competiciones, sesiones, sede y plazas requeridas." />
               <FeatureCard icon={LayoutGrid} title="Tarima (cuadrante)" desc="Asignación de jueces por plaza, control de cobertura y envío a aprobación." />
-              <FeatureCard icon={Building2} title="Compensación" desc="Panel central, km OpenStreetMap gratuito, desglose Sx y recibos PDF por juez." />
+              <FeatureCard icon={Building2} title="Compensación" desc="Panel central, km manual, desglose por posición en tarima, montaje sistema y recibos PDF." />
               <FeatureCard icon={Users} title="Censo de jueces" desc="Ficha por juez con nivel, zona, domicilio, exámenes, informes y sanciones." />
               <FeatureCard icon={ClipboardCheck} title="Aprobaciones y ascensos" desc="Revisión por el Comité de Jueces de tarimas y solicitudes de ascenso." />
               <FeatureCard icon={TrendingUp} title="Analítica" desc="Estadísticas por zona, top de jueces y tasa de rechazo por año." />
