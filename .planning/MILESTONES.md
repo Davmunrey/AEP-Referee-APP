@@ -1,5 +1,13 @@
 # Milestones — AEP Tarima
 
+## v1.5 — Compensation & UI (2026-06, en curso)
+
+- Migraciones 023–025 en Supabase producción
+- Compensación jueces: servicios, API, UI, export PDF, IBAN efímero
+- Rol `responsable_financiero_jueces`
+- UI tarima densa; footer fuera de dashboard
+- 312 tests
+
 ## v1.4 — Production Hardening (2025-06)
 
 - Roster rules: plazas requeridas, conflictos sesión, confirm-to-force, merge import horario

@@ -1,5 +1,17 @@
 # Roadmap — AEP Tarima
 
+## v1.5 — Compensación y UI tarima (en curso)
+
+| Área | Entregado |
+|---|---|
+| Supabase prod | Migraciones 023–025 aplicadas |
+| Compensación | Servicios, API, UI, export PDF, IBAN efímero |
+| RBAC | Rol `responsable_financiero_jueces` |
+| UI tarima | Footer fuera de app, panel jueces/slots más densos |
+| Docs | README + docs + planning actualizados |
+
+**Pendiente v1.5:** E2E smoke compensación, E2E profundo, sustitución `xlsx`.
+
 ## v1.4 — Production Hardening ✅ (Complete)
 
 | Área | Entregado |
@@ -15,16 +27,14 @@
 
 Competition edit, test correctness, refactor >500 líneas.
 
-## Próximo (backlog) — ver plan detallado
+## Backlog — ver plan detallado
 
 **Documento maestro:** [`.planning/phases/08-backlog-detailed/PLAN.md`](./phases/08-backlog-detailed/PLAN.md)
 
-| Bloque | Contenido |
-|---|---|
-| A | Aplicar migración 023 en Supabase prod (review_comment ascensos) |
-| B | Compensación end-to-end (servicios, UI, IBAN efímero) |
-| C | UI tarima densa (footer fuera de app, panel jueces, cuadrante) |
-| D | E2E profundo: import → cuadrante → export |
-| E | Sustitución librería `xlsx` |
-
-Orden: **A → C → B → D** (E en paralelo bajo demanda).
+| Bloque | Contenido | Estado |
+|---|---|---|
+| A | Migraciones 023–025 en Supabase prod | ✅ |
+| B | Compensación end-to-end | ✅ (falta E2E) |
+| C | UI tarima densa | ✅ |
+| D | E2E profundo: import → cuadrante → export | Pendiente |
+| E | Sustitución librería `xlsx` | Pendiente |
