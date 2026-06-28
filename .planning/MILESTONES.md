@@ -1,6 +1,15 @@
 # Milestones — AEP Tarima
 
-## v1.5 — Compensation & UI (2026-06, en curso)
+## v1.6 — Compensation Hub & OSM (2026-06)
+
+- Panel central `/compensation` + API hub
+- Kilometraje 100 % gratuito (Photon/Nominatim/OSRM)
+- Sidebar: Documentación, Compensación, sin avatar duplicado
+- Listado 180 clubes AEP, multi-club en recibos
+- Manual PDF + docs sincronizados
+- 344 tests
+
+## v1.5 — Compensation & UI (2026-06)
 
 - Migraciones 023–025 en Supabase producción
 - Compensación jueces: servicios, API, UI, export PDF, IBAN efímero

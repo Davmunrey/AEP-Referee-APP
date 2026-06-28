@@ -1,6 +1,17 @@
 # Roadmap — AEP Tarima
 
-## v1.5 — Compensación y UI tarima (en curso)
+## v1.6 — Hub compensación y OSM (en curso)
+
+| Área | Entregado |
+|---|---|
+| Compensación | Panel `/compensation`, hub API, OSM gratuito, desglose Sx |
+| UI | Sidebar Documentación + Compensación, usuario en topbar |
+| Docs | Todos los `.md`, manual PDF, capturas `docs/images/` |
+| Clubes | 180 clubes AEP en `aep-clubs-registry.json` |
+
+**Pendiente v1.6:** E2E smoke compensación, E2E profundo, sustitución `xlsx`.
+
+## v1.5 — Compensación y UI tarima ✅
 
 | Área | Entregado |
 |---|---|

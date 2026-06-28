@@ -13,8 +13,10 @@ const GUIDE_SCREENSHOTS: { afterSection: number; file: string; caption: string }
   { afterSection: 3, file: "02-campeonatos.png", caption: "Fig. 2 — Campeonatos" },
   { afterSection: 4, file: "04-tarima-montada.png", caption: "Fig. 3 — Tarima (asignación)" },
   { afterSection: 5, file: "09-cuadrante-export.png", caption: "Fig. 4 — Exportar cuadrante" },
-  { afterSection: 6, file: "10-compensacion.png", caption: "Fig. 5 — Compensación (Sx + OpenStreetMap)" },
-  { afterSection: 7, file: "05-directorio.png", caption: "Fig. 6 — Directorio y domicilio" },
+  { afterSection: 6, file: "11-compensacion-hub.png", caption: "Fig. 5 — Panel central de compensación" },
+  { afterSection: 6, file: "10-compensacion.png", caption: "Fig. 6 — Compensación por campeonato (Sx + OSM)" },
+  { afterSection: 7, file: "05-directorio.png", caption: "Fig. 7 — Directorio y domicilio" },
+  { afterSection: 12, file: "12-sidebar.png", caption: "Fig. 8 — Barra lateral (Documentación, Compensación)" },
 ];
 
 function screenshotPath(file: string): string | null {

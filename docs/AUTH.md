@@ -25,7 +25,7 @@
 | `super_admin` | Todo |
 | `delegado_jueces` | Todo operativo nacional (jueces, tarimas, ascensos) |
 | `delegado_zona` | Jueces, informes y tarimas de su zona; dashboard/analytics acotados |
-| `responsable_financiero_jueces` | Compensación de gastos de jueces (lectura de tarimas/censo; export PDF). **No** edita tarima ni censo |
+| `responsable_financiero_jueces` | Compensación de gastos de jueces (lectura de tarimas/censo; export PDF). **No** edita tarima ni censo. Acceso principal: `/compensation` |
 | `solo_ver` | Lectura |
 
 ## Guards

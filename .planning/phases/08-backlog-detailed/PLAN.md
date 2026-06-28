@@ -1,6 +1,6 @@
-# Plan detallado v1.5 — Compensación, tarima UI y backlog
+# Plan detallado v1.6 — Compensación hub, OSM y documentación
 
-Última actualización: 2026-06-28. Un solo plan integrado (no ramas paralelas).
+Última actualización: 2026-06-28.
 
 ---
 
@@ -9,7 +9,7 @@
 | Bloque | Progreso | Notas |
 |---|---|---|
 | A. Supabase prod | ✅ Hecho | 023, 024, 025 aplicadas vía MCP (2026-06-28) |
-| B. Compensación jueces | ~90 % | Servicios, API, UI, export PDF; falta E2E |
+| B. Compensación jueces | ~95 % | Hub `/compensation`, OSM gratuito, multi-club, manual PDF |
 | C. UI tarima (densidad) | ✅ Hecho | Footer fuera de app, cards compactas |
 | D. E2E profundo | 0 % | Tras E2E smoke compensación |
 | E. Sustitución xlsx | 0 % | Backlog técnico |
@@ -37,7 +37,7 @@ Responsable: **`responsable_financiero_jueces`** (no delegado zona / delegado ju
 ### B1. Hecho
 
 - [x] Rol + RBAC (`canManageCompensation`)
-- [x] Lib baremo, classify, calculate, Google distance
+- [x] Lib baremo, classify, calculate, distancias OSM (Nominatim + OSRM)
 - [x] Migraciones 024/025 escritas
 - [x] Tipos + mappers (domicilio, sede, organizer)
 - [x] Recibo PDF club vs AEP (`receipt-document.ts`, `receipt-pdf.ts`)
@@ -56,13 +56,15 @@ Responsable: **`responsable_financiero_jueces`** (no delegado zona / delegado ju
 | B2.5 | Config organizer en página compensación | ✅ |
 | B2.6 | Ficha juez: campo domicilio | ✅ |
 | B2.7 | Enlace «Compensación» en cabecera tarima | ✅ |
+| B2.10 | Panel hub `/compensation` + sidebar | ✅ |
+| B2.11 | OSM gratuito (Photon/Nominatim/OSRM) | ✅ |
 | B2.8 | E2E smoke `compensation.spec.ts` | Pendiente |
-| B2.9 | Aplicar 024 + 025 en producción | ✅ |
+| B2.9 | Aplicar 024 + 025 + 026 en producción | ✅ |
 
 ### B3. Reglas de negocio (recordatorio)
 
 - Baremo PDF 31/10/2025
-- Km Google Maps o manual; vehículo compartido = un pago
+- Km OpenStreetMap (gratuito) o manual; vehículo compartido = un pago
 - Alojamiento: >150 km ida+vuelta + ≥2 funciones
 - Recibo: plantillas reales adjuntadas por el usuario (club / AEP)
 

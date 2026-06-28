@@ -230,7 +230,8 @@ export default async function DocsPage() {
               <FeatureCard icon={BarChart3} title="Panel de inicio" desc="KPIs de cobertura, salud operativa, avisos y próximos campeonatos de un vistazo." />
               <FeatureCard icon={CalendarDays} title="Campeonatos" desc="Alta y edición de competiciones, sesiones, sede y plazas requeridas." />
               <FeatureCard icon={LayoutGrid} title="Tarima (cuadrante)" desc="Asignación de jueces por plaza, control de cobertura y envío a aprobación." />
-              <FeatureCard icon={Users} title="Censo de jueces" desc="Ficha por juez con nivel, zona, exámenes, informes y sanciones." />
+              <FeatureCard icon={Building2} title="Compensación" desc="Panel central, km OpenStreetMap gratuito, desglose Sx y recibos PDF por juez." />
+              <FeatureCard icon={Users} title="Censo de jueces" desc="Ficha por juez con nivel, zona, domicilio, exámenes, informes y sanciones." />
               <FeatureCard icon={ClipboardCheck} title="Aprobaciones y ascensos" desc="Revisión por el Comité de Jueces de tarimas y solicitudes de ascenso." />
               <FeatureCard icon={TrendingUp} title="Analítica" desc="Estadísticas por zona, top de jueces y tasa de rechazo por año." />
             </div>
@@ -301,6 +302,10 @@ export default async function DocsPage() {
                   <tr>
                     <td className="px-4 py-2.5 font-medium text-foreground">Delegado de Zona</td>
                     <td className="px-4 py-2.5 text-muted-foreground">Gestiona competiciones y jueces de su zona; solicita ascensos.</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-foreground">Responsable Financiero</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">Panel de compensación, km y recibos PDF; lectura de tarimas y censo.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-medium text-foreground">Solo lectura</td>

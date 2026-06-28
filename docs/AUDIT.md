@@ -1,10 +1,10 @@
 # QA y seguridad
 
-Última revisión: junio 2025 (auditoría completa + hardening continuo). Alcance: repo, CI GitHub, flujos usuario comunes.
+Última revisión: junio 2026. Alcance: repo, CI GitHub, flujos usuario comunes.
 
 ## Veredicto
 
-App operativa y desplegable. CI verde, **312 tests**, lint 0 warnings, build OK. Multi-temporada: analytics y KPIs por fechas ISO; UI sin año fijo salvo documentos normativos (`aep-guide-2026.ts`).
+App operativa y desplegable. CI verde, **344 tests**, lint OK, build OK.
 
 ## QA operativo
 
@@ -22,7 +22,7 @@ App operativa y desplegable. CI verde, **312 tests**, lint 0 warnings, build OK.
 | Contraseñas | OK | Self-change + admin-reset |
 | Ascensos | OK | Comentario de rechazo persistido (`review_comment`) |
 | Ficha juez | OK | Historial real desde `roster_assignments`; domicilio para compensación |
-| Compensación | OK | Rol financiero, claims persistidos, export PDF con IBAN efímero |
+| Compensación | OK | Panel hub `/compensation`, OSM gratuito, claims, export PDF IBAN efímero |
 
 ## Ciberseguridad
 
@@ -54,7 +54,7 @@ App operativa y desplegable. CI verde, **312 tests**, lint 0 warnings, build OK.
 - `xlsx` mantiene advisories sin fix upstream público.
 - OCR/PDF depende de herramientas locales en algunos entornos.
 - E2E profundo (import horario → cuadrante → export) pendiente.
-- E2E smoke compensación pendiente.
+- E2E smoke compensación (`/compensation`, `/competitions/:id/compensation`) pendiente.
 - CSP estricta en modo report-only.
 
 ## Gates obligatorios

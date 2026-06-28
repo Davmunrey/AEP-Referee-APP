@@ -67,7 +67,7 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     question: "¿Cómo recupero mi contraseña?",
     keywords: ["contrasena", "clave", "olvide", "olvidada", "recuperar", "restablecer", "reset", "password"],
     answer:
-      "En la pantalla de acceso pulsa «¿Olvidaste tu contraseña?» e introduce tu correo; recibirás un enlace para restablecerla. Una vez dentro, puedes cambiarla desde el menú lateral («Cambiar contraseña»).",
+      "En la pantalla de acceso pulsa «¿Olvidaste tu contraseña?» e introduce tu correo; recibirás un enlace para restablecerla. Una vez dentro, puedes cambiarla desde el menú de usuario en la esquina superior («Cambiar contraseña»).",
     links: [{ label: "Ir al acceso", href: "/sign-in" }],
   },
   {
