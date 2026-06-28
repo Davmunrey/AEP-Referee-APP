@@ -2,6 +2,7 @@ import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError } from "@/lib/api/route-utils";
 import {
+  buildClaimBreakdown,
   compensationReceiptFilename,
   isValidSpanishIban,
   renderCompensationReceiptPdf,
@@ -51,6 +52,13 @@ export async function POST(request: Request, context: RouteContext) {
   const claim = await dataService.getCompensationClaimForExport(id, refereeId);
   if (!claim) return jsonError("Claim no encontrado", 404);
 
+  if (!claim.financialComplete) {
+    return jsonError(
+      "Completa los km de desplazamiento (o marca comparte vehículo) antes de exportar el recibo",
+      422,
+    );
+  }
+
   if (claim.totalAmount <= 0) {
     return jsonError("El importe calculado es cero; revisa la tarima y los datos de compensación", 422);
   }
@@ -64,6 +72,7 @@ export async function POST(request: Request, context: RouteContext) {
     fechaFin: competition.fechaFin,
     iban,
     organizer,
+    breakdownLines: buildClaimBreakdown(claim),
   });
 
   const filename = compensationReceiptFilename(referee.nombre, competition.nombre);

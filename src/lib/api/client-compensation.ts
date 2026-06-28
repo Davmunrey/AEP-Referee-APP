@@ -48,6 +48,12 @@ export const compensationApi = {
       { method: "POST" },
     ),
 
+  calculateAllCompensationDistances: (competitionId: string) =>
+    request<CompetitionCompensationSummary>(
+      `/competitions/${competitionId}/compensation/distances`,
+      { method: "POST" },
+    ),
+
   exportCompensationReceipt: async (competitionId: string, refereeId: string, iban: string) => {
     const res = await fetch(
       `${getApiBaseUrl()}/competitions/${competitionId}/compensation/${refereeId}/export`,

@@ -4,6 +4,9 @@ import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { geocodeAddress } from "@/lib/judge-compensation/google-distance";
+import type { CompensationClubContact } from "@/lib/judge-compensation/types";
+import { normalizeClubEmails } from "@/lib/organizer-clubs";
 import { dataService } from "@/server/services";
 import type { Competition, EventType } from "@/lib/types";
 
@@ -75,7 +78,39 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (typeof body.compensationVolunteer === "boolean") {
       patch.compensationVolunteer = body.compensationVolunteer;
     }
-    if (typeof body.sedeDireccion === "string") patch.sedeDireccion = body.sedeDireccion;
+    if (Array.isArray(body.compensationClubs)) {
+      patch.compensationClubs = body.compensationClubs
+        .map((item: unknown) => {
+          if (!item || typeof item !== "object") return null;
+          const rec = item as Record<string, unknown>;
+          const name = typeof rec.name === "string" ? rec.name.trim() : "";
+          const emails =
+            typeof rec.emails === "string"
+              ? normalizeClubEmails(rec.emails)
+              : Array.isArray(rec.emails)
+                ? rec.emails.map((e) => String(e).trim()).filter((e) => e.includes("@"))
+                : [];
+          if (!name) return null;
+          return { name, emails } satisfies CompensationClubContact;
+        })
+        .filter(Boolean) as CompensationClubContact[];
+    }
+    if (typeof body.sedeDireccion === "string") {
+      patch.sedeDireccion = body.sedeDireccion;
+      const trimmed = body.sedeDireccion.trim();
+      if (!trimmed) {
+        patch.sedeLat = undefined;
+        patch.sedeLng = undefined;
+      } else if (process.env.GOOGLE_MAPS_API_KEY) {
+        try {
+          const geo = await geocodeAddress(trimmed);
+          patch.sedeLat = geo.lat;
+          patch.sedeLng = geo.lng;
+        } catch {
+          return jsonError("No se pudo geocodificar la sede. Revisa la dirección de Google Maps.", 422);
+        }
+      }
+    }
     if (body.ambito === "epf" || body.ambito === "ipf" || body.ambito === null) {
       patch.ambito = body.ambito ?? undefined;
     }

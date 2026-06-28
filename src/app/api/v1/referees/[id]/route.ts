@@ -2,6 +2,7 @@ import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { geocodeAddress } from "@/lib/judge-compensation/google-distance";
 import { dataService } from "@/server/services";
 import type { Referee } from "@/lib/types";
 
@@ -69,6 +70,23 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (typeof raw.antiguedad === "string") patch.antiguedad = raw.antiguedad;
   if (typeof raw.notas === "string") patch.notas = raw.notas;
   if (typeof raw.ultimoFecha === "string") patch.ultimoFecha = raw.ultimoFecha;
+  if (typeof raw.domicilio === "string") patch.domicilio = raw.domicilio;
+
+  if (typeof raw.domicilio === "string") {
+    const trimmed = raw.domicilio.trim();
+    if (!trimmed) {
+      patch.domicilioLat = undefined;
+      patch.domicilioLng = undefined;
+    } else if (process.env.GOOGLE_MAPS_API_KEY) {
+      try {
+        const geo = await geocodeAddress(trimmed);
+        patch.domicilioLat = geo.lat;
+        patch.domicilioLng = geo.lng;
+      } catch {
+        return jsonError("No se pudo geocodificar el domicilio. Revisa la dirección.", 422);
+      }
+    }
+  }
 
   if (user.role === "delegado_zona" && typeof patch.zona === "string") {
     const userZone = resolveZoneCode(user.zona) ?? user.zona;

@@ -125,6 +125,8 @@ export const supabaseDataService = {
   ) => compensationService.updateClaim(competitionId, refereeId, patch),
   calculateCompensationDistance: (competitionId: string, refereeId: string) =>
     compensationService.calculateDistance(competitionId, refereeId),
+  calculateAllCompensationDistances: (competitionId: string) =>
+    compensationService.calculateAllDistances(competitionId),
   getCompensationClaimForExport: (competitionId: string, refereeId: string) =>
     compensationService.getClaimForExport(competitionId, refereeId),
 };

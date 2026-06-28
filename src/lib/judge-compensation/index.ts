@@ -5,4 +5,7 @@ export * from "./calculate";
 export * from "./iban";
 export * from "./receipt-document";
 export { renderCompensationReceiptPdf } from "./receipt-pdf";
+export * from "./km";
+export * from "./readiness";
+export * from "./breakdown";
 export { fetchDrivingDistanceKm, geocodeAddress } from "./google-distance";

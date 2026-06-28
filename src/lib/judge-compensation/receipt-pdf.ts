@@ -1,5 +1,5 @@
 import PDFDocument from "pdfkit";
-import { buildCompensationReceiptLines } from "./receipt-document";
+import { buildCompensationReceiptLines, formatReceiptAmountEur } from "./receipt-document";
 import type { CompensationReceiptInput } from "./receipt-document";
 
 /** Genera el PDF del recibo. El IBAN solo viaja en memoria durante la petición. */
@@ -39,6 +39,19 @@ export function renderCompensationReceiptPdf(input: CompensationReceiptInput): P
 
       doc.text(line, { align: "left" });
       doc.moveDown(0.35);
+    }
+
+    if (input.breakdownLines && input.breakdownLines.length > 0) {
+      doc.moveDown(0.5);
+      doc.font("Helvetica-Bold").fontSize(10).text("Desglose de compensación");
+      doc.font("Helvetica").fontSize(10).moveDown(0.25);
+      for (const line of input.breakdownLines) {
+        const detail = line.detail ? ` (${line.detail})` : "";
+        doc.text(`· ${line.label}${detail}: ${formatReceiptAmountEur(line.amount)}`);
+      }
+      doc.moveDown(0.35);
+      doc.font("Helvetica-Bold").text(`Total: ${formatReceiptAmountEur(input.amountEur)}`);
+      doc.font("Helvetica");
     }
 
     doc.end();

@@ -59,7 +59,7 @@ export async function fetchDrivingDistanceKm(
   }
 
   const distanceMeters = element.distance.value;
-  const distanceKmOneWay = Math.round((distanceMeters / 1000) * 10) / 10;
+  const distanceKmOneWay = Math.round(distanceMeters / 1000);
 
   return {
     distanceKmOneWay,

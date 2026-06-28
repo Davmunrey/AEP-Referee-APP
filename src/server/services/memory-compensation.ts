@@ -11,6 +11,8 @@ import {
   buildClaimInputFromRoster,
   summarizeCompensation,
 } from "./compensation-helpers";
+import type { Referee } from "@/lib/types";
+import { parseIntegerKm, oneWayKmFromRoundTrip } from "@/lib/judge-compensation/km";
 import * as competitions from "./memory-competitions";
 import * as referees from "./memory-referees";
 
@@ -24,17 +26,34 @@ function key(competitionId: string, refereeId: string): string {
   return `${competitionId}::${refereeId}`;
 }
 
+const emptySummary = (competitionId: string): CompetitionCompensationSummary => ({
+  competitionId,
+  claims: [],
+  grandTotal: 0,
+  provisionalTotal: 0,
+  readiness: {
+    venueReady: false,
+    allTravelResolved: true,
+    pendingTravelReferees: [],
+    missingDomicilioReferees: [],
+    issues: [],
+    readyForExport: false,
+  },
+});
+
 async function buildSummary(competitionId: string): Promise<CompetitionCompensationSummary> {
   const competition = await competitions.getCompetition(competitionId);
-  if (!competition) return { competitionId, claims: [], grandTotal: 0 };
+  if (!competition) return emptySummary(competitionId);
   const roster = await competitions.getRoster(competitionId);
-  if (!roster) return { competitionId, claims: [], grandTotal: 0 };
+  if (!roster) return emptySummary(competitionId);
   const refereeIds = [...new Set(Object.values(roster.assignments).filter(Boolean))];
   const claims: CompensationClaim[] = [];
+  const refereesById = new Map<string, Referee>();
 
   for (const refereeId of refereeIds) {
     const referee = await referees.getReferee(refereeId);
     if (!referee) continue;
+    refereesById.set(refereeId, referee);
     const stored = store.get(key(competitionId, refereeId));
     const claimInput = buildClaimInputFromRoster({
       competition,
@@ -55,7 +74,7 @@ async function buildSummary(competitionId: string): Promise<CompetitionCompensat
     claims.push(claim);
   }
 
-  return summarizeCompensation(claims);
+  return summarizeCompensation(competition, claims, refereesById);
 }
 
 export const memoryCompensationService = {
@@ -95,16 +114,25 @@ export const memoryCompensationService = {
     const base = updated.claims.find((c) => c.refereeId === refereeId);
     if (!base) return undefined;
 
+    const normalized = { ...patch };
+    if (patch.distanceKmRoundTrip !== undefined) {
+      normalized.distanceKmRoundTrip =
+        patch.distanceKmRoundTrip != null ? parseIntegerKm(patch.distanceKmRoundTrip) : null;
+      if (normalized.distanceKmRoundTrip != null) {
+        normalized.distanceKmOneWay = oneWayKmFromRoundTrip(normalized.distanceKmRoundTrip);
+      }
+    }
+
     const claim = buildCompensationClaim(base.id, {
       ...base,
-      travelMode: patch.travelMode ?? base.travelMode,
+      travelMode: normalized.travelMode ?? base.travelMode,
       distanceKmOneWay:
-        patch.distanceKmOneWay !== undefined
-          ? (patch.distanceKmOneWay ?? undefined)
+        normalized.distanceKmOneWay !== undefined
+          ? (normalized.distanceKmOneWay ?? undefined)
           : base.distanceKmOneWay,
       distanceKmRoundTrip:
-        patch.distanceKmRoundTrip !== undefined
-          ? (patch.distanceKmRoundTrip ?? undefined)
+        normalized.distanceKmRoundTrip !== undefined
+          ? (normalized.distanceKmRoundTrip ?? undefined)
           : base.distanceKmRoundTrip,
       distanceSource:
         patch.distanceSource !== undefined
@@ -148,6 +176,15 @@ export const memoryCompensationService = {
       distanceKmRoundTrip: oneWay * 2,
       distanceSource: "manual",
     });
+  },
+
+  calculateAllDistances: async (competitionId: string) => {
+    const summary = await buildSummary(competitionId);
+    for (const claim of summary.claims) {
+      if (claim.travelMode === "shared_vehicle_passenger" || claim.travelMode === "none") continue;
+      await memoryCompensationService.calculateDistance(competitionId, claim.refereeId);
+    }
+    return buildSummary(competitionId);
   },
 
   getClaimForExport: async (

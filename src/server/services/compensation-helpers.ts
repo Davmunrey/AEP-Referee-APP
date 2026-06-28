@@ -3,6 +3,12 @@ import {
   calculateCompensationTotals,
   classifyCompensationDuties,
 } from "@/lib/judge-compensation";
+import type { CompensationReceiptOrganizer } from "@/lib/judge-compensation/receipt-document";
+import {
+  assessCompensationReadiness,
+  allClubEmailsFromCompetition,
+  competitionClubContacts,
+} from "@/lib/judge-compensation/readiness";
 import type {
   CompetitionAmbito,
   CompensationClaim,
@@ -10,8 +16,10 @@ import type {
   CompensationDutyLine,
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
+import { formatClubEmails } from "@/lib/organizer-clubs";
 import type { Competition, CompensationOrganizerType, AssignmentsMap, Referee, RosterSession } from "@/lib/types";
-import type { CompensationReceiptOrganizer } from "@/lib/judge-compensation/receipt-document";
+
+export { competitionClubContacts, allClubEmailsFromCompetition };
 
 export function competitionAmbito(comp: Competition): CompetitionAmbito {
   return comp.ambito === "epf" || comp.ambito === "ipf" ? comp.ambito : "nacional";
@@ -22,10 +30,17 @@ export function receiptOrganizerFromCompetition(comp: Competition): Compensation
   if (organizer === "aep") {
     return { type: "aep" };
   }
+  const clubs = competitionClubContacts(comp);
+  const primary = clubs[0];
+  const clubName =
+    clubs.length > 1
+      ? clubs.map((c) => c.name).join(" · ")
+      : (primary?.name ?? comp.compensationClubName ?? comp.sede);
+  const emails = allClubEmailsFromCompetition(comp);
   return {
     type: "club",
-    clubName: comp.compensationClubName ?? comp.sede,
-    clubEmail: comp.compensationClubEmail ?? "",
+    clubName,
+    clubEmail: formatClubEmails(emails),
     volunteer: comp.compensationVolunteer ?? false,
   };
 }
@@ -71,12 +86,31 @@ export function buildClaimInputFromRoster(input: {
   };
 }
 
-export function summarizeCompensation(claims: CompensationClaim[]): CompetitionCompensationSummary {
-  const grandTotal = claims.reduce((sum, c) => sum + c.totalAmount, 0);
+export function summarizeCompensation(
+  competition: Competition,
+  claims: CompensationClaim[],
+  refereesById: Map<string, Referee>,
+): CompetitionCompensationSummary {
+  const grandTotal = claims
+    .filter((c) => c.financialComplete)
+    .reduce((sum, c) => sum + c.totalAmount, 0);
+  const provisionalTotal = claims.reduce((sum, c) => sum + c.totalAmount, 0);
+  const organizerIsClub = (competition.compensationOrganizer ?? "club") === "club";
+
+  const readiness = assessCompensationReadiness({
+    competition,
+    claims,
+    refereesById,
+    organizerIsClub,
+    clubEmails: allClubEmailsFromCompetition(competition),
+  });
+
   return {
-    competitionId: claims[0]?.competitionId ?? "",
+    competitionId: competition.id,
     claims,
     grandTotal: Math.round(grandTotal * 100) / 100,
+    provisionalTotal: Math.round(provisionalTotal * 100) / 100,
+    readiness,
   };
 }
 

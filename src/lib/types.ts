@@ -135,6 +135,8 @@ export interface Competition {
   compensationOrganizer?: CompensationOrganizerType;
   compensationClubName?: string;
   compensationClubEmail?: string;
+  /** Varios clubes organizadores con e-mails múltiples. */
+  compensationClubs?: import("@/lib/judge-compensation/types").CompensationClubContact[];
   /** Texto del recibo: voluntario vs colaborador deportivo. */
   compensationVolunteer?: boolean;
 }

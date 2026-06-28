@@ -44,6 +44,7 @@ describe("calculateCompensationTotals", () => {
     const totals = calculateCompensationTotals(baseInput());
     expect(totals.dutiesAmount).toBe(45);
     expect(totals.travelAmount).toBe(26);
+    expect(totals.financialComplete).toBe(true);
     expect(totals.lodgingEligible).toBe(true);
     expect(totals.lodgingAmount).toBe(25);
     expect(totals.totalAmount).toBe(96);
