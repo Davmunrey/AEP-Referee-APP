@@ -70,28 +70,26 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (typeof raw.antiguedad === "string") patch.antiguedad = raw.antiguedad;
   if (typeof raw.notas === "string") patch.notas = raw.notas;
   if (typeof raw.ultimoFecha === "string") patch.ultimoFecha = raw.ultimoFecha;
-  if (typeof raw.domicilio === "string") patch.domicilio = raw.domicilio;
-
   if (typeof raw.domicilio === "string") {
     const trimmed = raw.domicilio.trim();
-    if (!trimmed) {
-      patch.domicilioLat = undefined;
-      patch.domicilioLng = undefined;
-    } else if (
-      typeof raw.domicilioLat === "number" &&
-      typeof raw.domicilioLng === "number" &&
-      Number.isFinite(raw.domicilioLat) &&
-      Number.isFinite(raw.domicilioLng)
-    ) {
-      patch.domicilioLat = raw.domicilioLat;
-      patch.domicilioLng = raw.domicilioLng;
-    } else {
-      try {
-        const geo = await geocodeAddress(trimmed);
-        patch.domicilioLat = geo.lat;
-        patch.domicilioLng = geo.lng;
-      } catch {
-        return jsonError("No se pudo geocodificar el domicilio. Revisa la dirección o elige una sugerencia de la lista.", 422);
+    patch.domicilio = trimmed;
+    if (trimmed) {
+      if (
+        typeof raw.domicilioLat === "number" &&
+        typeof raw.domicilioLng === "number" &&
+        Number.isFinite(raw.domicilioLat) &&
+        Number.isFinite(raw.domicilioLng)
+      ) {
+        patch.domicilioLat = raw.domicilioLat;
+        patch.domicilioLng = raw.domicilioLng;
+      } else {
+        try {
+          const geo = await geocodeAddress(trimmed);
+          patch.domicilioLat = geo.lat;
+          patch.domicilioLng = geo.lng;
+        } catch {
+          return jsonError("No se pudo geocodificar el domicilio. Revisa la dirección o elige una sugerencia de la lista.", 422);
+        }
       }
     }
   }

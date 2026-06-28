@@ -43,7 +43,14 @@ export function refereeToDbRow(
   if (patch.email !== undefined) row.email = patch.email ?? null;
   if (patch.licencia !== undefined) row.licencia = patch.licencia ?? null;
   if (patch.localidad !== undefined) row.localidad = patch.localidad ?? null;
-  if (patch.domicilio !== undefined) row.domicilio = patch.domicilio ?? null;
+  if (patch.domicilio !== undefined) {
+    const trimmed = typeof patch.domicilio === "string" ? patch.domicilio.trim() : "";
+    row.domicilio = trimmed || null;
+    if (!trimmed) {
+      row.domicilio_lat = null;
+      row.domicilio_lng = null;
+    }
+  }
   if (patch.domicilioLat !== undefined) row.domicilio_lat = patch.domicilioLat ?? null;
   if (patch.domicilioLng !== undefined) row.domicilio_lng = patch.domicilioLng ?? null;
   if (patch.telefono !== undefined) row.telefono = patch.telefono ?? null;

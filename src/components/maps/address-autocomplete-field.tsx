@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +30,10 @@ interface AddressAutocompleteFieldProps {
   coordsOk?: boolean;
   coordsHint?: string;
   hint?: string;
+  /** Muestra botón para borrar dirección y coordenadas guardadas. */
+  clearable?: boolean;
+  onClear?: () => void;
+  clearing?: boolean;
 }
 
 export function AddressAutocompleteField({
@@ -44,6 +48,9 @@ export function AddressAutocompleteField({
   coordsOk,
   coordsHint,
   hint,
+  clearable,
+  onClear,
+  clearing,
 }: AddressAutocompleteFieldProps) {
   const autoId = useId();
   const inputId = id ?? autoId;
@@ -113,12 +120,27 @@ export function AddressAutocompleteField({
     setSearchError(null);
   };
 
+  const showClear = clearable && onClear && (value.trim().length > 0 || coordsOk);
+
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={inputId} className="flex items-center gap-1.5 text-xs font-medium text-foreground-secondary">
-        <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-        {label}
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={inputId} className="flex items-center gap-1.5 text-xs font-medium text-foreground-secondary">
+          <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+          {label}
+        </label>
+        {showClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={disabled || clearing}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-destructive transition-colors hover:bg-destructive-muted disabled:opacity-50"
+          >
+            <X className="h-3 w-3" aria-hidden="true" />
+            {clearing ? "Eliminando…" : "Eliminar ubicación"}
+          </button>
+        )}
+      </div>
       <div className="relative">
         <Input
           id={inputId}

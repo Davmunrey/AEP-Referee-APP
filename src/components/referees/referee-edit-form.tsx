@@ -40,6 +40,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
   const [disp, setDisp] = useState(referee.disp);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [clearingDomicilio, setClearingDomicilio] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const isDirty =
@@ -50,9 +51,9 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     email !== (referee.email ?? "") ||
     licencia !== (referee.licencia ?? "") ||
     localidad !== (referee.localidad ?? "") ||
-    domicilio !== (referee.domicilio ?? "") ||
-    domicilioCoords?.lat !== referee.domicilioLat ||
-    domicilioCoords?.lng !== referee.domicilioLng ||
+    domicilio.trim() !== (referee.domicilio ?? "").trim() ||
+    (domicilioCoords?.lat ?? null) !== (referee.domicilioLat ?? null) ||
+    (domicilioCoords?.lng ?? null) !== (referee.domicilioLng ?? null) ||
     telefono !== (referee.telefono ?? "") ||
     genero !== (referee.genero ?? "") ||
     antiguedad !== (referee.antiguedad ?? "") ||
@@ -82,12 +83,30 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     setSaved(false);
   };
 
+  const onClearDomicilio = async () => {
+    setClearingDomicilio(true);
+    setError(null);
+    setSaved(false);
+    try {
+      await api.updateReferee(referee.id, { domicilio: "" });
+      setDomicilio("");
+      setDomicilioCoords(null);
+      setSaved(true);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo eliminar la ubicación");
+    } finally {
+      setClearingDomicilio(false);
+    }
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSaved(false);
     try {
+      const trimmedDomicilio = domicilio.trim();
       await api.updateReferee(referee.id, {
         nombre,
         zona,
@@ -96,8 +115,10 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
         email: email || undefined,
         licencia: licencia || undefined,
         localidad: localidad || undefined,
-        domicilio: domicilio || undefined,
-        ...(domicilioCoords ? { domicilioLat: domicilioCoords.lat, domicilioLng: domicilioCoords.lng } : {}),
+        domicilio: trimmedDomicilio,
+        ...(trimmedDomicilio && domicilioCoords
+          ? { domicilioLat: domicilioCoords.lat, domicilioLng: domicilioCoords.lng }
+          : {}),
         telefono: telefono || undefined,
         genero: genero || undefined,
         antiguedad: antiguedad || undefined,
@@ -216,6 +237,9 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
                       : undefined
                 }
                 hint="Usado para calcular km hasta la sede del campeonato."
+                clearable
+                onClear={() => void onClearDomicilio()}
+                clearing={clearingDomicilio}
               />
             </div>
             <div>
@@ -281,7 +305,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
                   Descartar
                 </Button>
               )}
-              <Button type="submit" size="sm" disabled={loading || !isDirty}>
+              <Button type="submit" size="sm" disabled={loading || clearingDomicilio || !isDirty}>
                 {loading ? "Guardando…" : "Guardar cambios"}
               </Button>
             </div>
