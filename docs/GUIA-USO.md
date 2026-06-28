@@ -146,7 +146,7 @@ Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de
 3. Configura uno o varios **clubes organizadores** y sus e-mails (listado oficial AEP).
 4. Introduce los **km ida+vuelta manualmente** por juez en la tabla.
 5. Marca **Comparte** si el juez viaja en vehículo compartido (solo exime kilometraje; el alojamiento sigue según los km).
-6. Marca **Mont.** si el juez hace el montaje del ordenador (se paga aparte, una función de sesión).
+6. Marca **Mont.** si el juez **monta el sistema informático** (Liftingcast / OpenLifter / Goodlift) e introduce el importe. Esto es distinto de ocupar la posición ordenador en tarima (eso sale del cuadrante como cualquier otra función).
 7. Revisa el **desglose por sesión Sx** con la posición real en tarima (Central, Pesaje, Lateral…) expandiendo cada fila.
 8. **Exportar recibo** → IBAN en el modal (no se guarda) → PDF con desglose.
 

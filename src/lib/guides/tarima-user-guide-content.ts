@@ -215,7 +215,8 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
           title: "Comparte, montaje y desglose por sesión",
           body: [
             "Marca «Comparte» si el juez viaja en vehículo compartido: solo exime el cobro de kilometraje; el alojamiento sigue aplicando según los km.",
-            "Marca «Mont.» si el juez hace el montaje del ordenador: se paga aparte (una función de sesión).",
+            "Marca «Mont.» si el juez monta el sistema informático (Liftingcast, OpenLifter o Goodlift) e introduce el importe que se paga.",
+            "Esto es distinto de ocupar la posición ordenador en tarima: esa función sale del cuadrante como cualquier otra plaza.",
             "El desglose agrupa por sesión Sx mostrando la posición real en tarima (Central, Lateral, Pesaje…).",
             "Los importes de viaje y alojamiento no se confirman hasta completar todos los km.",
           ],

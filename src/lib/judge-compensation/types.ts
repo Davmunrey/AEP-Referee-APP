@@ -54,8 +54,10 @@ export interface CompensationClaimInput {
   travelNotes?: string;
   isCompetitionManager: boolean;
   competitionManagerPerDay: boolean;
-  /** Montaje del ordenador (se paga aparte, una función de sesión). */
+  /** Montaje del sistema informático (Liftingcast / OpenLifter / Goodlift). Distinto de la posición ordenador en tarima. */
   isComputerSetup: boolean;
+  /** Importe manual de montaje (entrada del usuario). */
+  computerSetupManualAmount?: number;
   lodgingDaysOverride?: number;
   lodgingEligibleOverride?: boolean;
   status: CompensationClaimStatus;

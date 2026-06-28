@@ -50,7 +50,7 @@ export function buildClaimInputFromRoster(input: {
   referee: Referee;
   template: RosterSession[];
   assignments: AssignmentsMap;
-  existing?: Partial<CompensationClaimInput>;
+  existing?: Partial<CompensationClaim>;
 }): CompensationClaimInput {
   const ambito = competitionAmbito(input.competition);
   const dutyLines = classifyCompensationDuties({
@@ -80,6 +80,7 @@ export function buildClaimInputFromRoster(input: {
     isCompetitionManager: input.existing?.isCompetitionManager ?? false,
     competitionManagerPerDay: input.existing?.competitionManagerPerDay ?? false,
     isComputerSetup: input.existing?.isComputerSetup ?? false,
+    computerSetupManualAmount: input.existing?.computerSetupAmount,
     lodgingDaysOverride: input.existing?.lodgingDaysOverride,
     lodgingEligibleOverride: input.existing?.lodgingEligibleOverride,
     status: input.existing?.status ?? "borrador",

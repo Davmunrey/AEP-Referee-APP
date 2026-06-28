@@ -304,7 +304,12 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               <th className="px-3 py-2">Comparte</th>
               <th className="px-3 py-2">Aloj.</th>
               <th className="px-3 py-2">Resp.</th>
-              <th className="px-3 py-2">Mont.</th>
+              <th
+                className="px-3 py-2"
+                title="Montaje del sistema informático (Liftingcast / OpenLifter / Goodlift). No es la posición ordenador en tarima."
+              >
+                Mont.
+              </th>
               <th className="px-3 py-2 text-right">Total</th>
               {canManage && <th className="px-3 py-2" />}
             </tr>
@@ -404,17 +409,50 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                     </td>
                     <td className="px-3 py-2">
                       {canManage ? (
-                        <input
-                          type="checkbox"
-                          checked={claim.isComputerSetup}
-                          onChange={(e) =>
-                            patchClaim(claim.refereeId, { isComputerSetup: e.target.checked })
-                          }
-                          aria-label="Montaje del ordenador"
-                          title="Montaje del ordenador (se paga aparte)"
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="checkbox"
+                            checked={claim.isComputerSetup}
+                            onChange={(e) =>
+                              patchClaim(claim.refereeId, {
+                                isComputerSetup: e.target.checked,
+                                computerSetupAmount: e.target.checked ? claim.computerSetupAmount || null : null,
+                              })
+                            }
+                            aria-label="Montaje del sistema informático"
+                            title="Montaje del sistema (Liftingcast / OpenLifter / Goodlift). Distinto de ocupar la posición ordenador en tarima."
+                          />
+                          {claim.isComputerSetup && (
+                            <Input
+                              className="h-8 w-16 font-mono text-xs"
+                              type="number"
+                              step={0.01}
+                              min={0}
+                              inputMode="decimal"
+                              placeholder="€"
+                              value={(claim.computerSetupAmount ?? 0) > 0 ? claim.computerSetupAmount : ""}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (raw === "") {
+                                  patchClaim(claim.refereeId, { computerSetupAmount: null });
+                                  return;
+                                }
+                                const v = Math.max(0, Number(raw));
+                                if (!Number.isFinite(v)) return;
+                                patchClaim(claim.refereeId, {
+                                  isComputerSetup: true,
+                                  computerSetupAmount: Math.round(v * 100) / 100,
+                                });
+                              }}
+                            />
+                          )}
+                        </div>
                       ) : claim.isComputerSetup ? (
-                        "Sí"
+                        <span className="font-mono text-xs">
+                          {(claim.computerSetupAmount ?? 0) > 0
+                            ? formatReceiptAmountEur(claim.computerSetupAmount ?? 0)
+                            : "Sí"}
+                        </span>
                       ) : (
                         "—"
                       )}

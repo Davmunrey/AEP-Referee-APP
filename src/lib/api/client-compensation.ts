@@ -19,6 +19,7 @@ export type CompensationClaimPatch = Partial<{
   isCompetitionManager: boolean;
   competitionManagerPerDay: boolean;
   isComputerSetup: boolean;
+  computerSetupAmount: number | null;
   lodgingEligibleOverride: boolean | null;
   lodgingDaysOverride: number | null;
   status: CompensationClaimStatus;

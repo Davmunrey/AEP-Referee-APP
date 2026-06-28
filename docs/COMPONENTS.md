@@ -36,7 +36,7 @@
 | `RosterHistoryPanel` | Historial |
 | `CompetitionAvailabilityDialog` | Confirmación disponibilidad jueces |
 | `CompensationHub` | Panel `/compensation` — lista campeonatos, km pendientes, enlace directo |
-| `CompensationBoard` | Compensación por campeonato: km manual, desglose por posición, montaje ordenador, multi-club |
+| `CompensationBoard` | Compensación: km manual, desglose por posición tarima, montaje sistema (aparte), multi-club |
 | `CompensationExportDialog` | Modal IBAN efímero → descarga recibo PDF (desglose por sesión) |
 | `AddressAutocompleteField` | Photon/OpenStreetMap autocomplete (sede, domicilio juez) |
 

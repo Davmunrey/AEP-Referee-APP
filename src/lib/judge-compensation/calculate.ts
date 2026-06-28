@@ -5,7 +5,6 @@ import {
   LODGING_PER_DAY_EUR,
   MIN_FUNCTIONS_FOR_LODGING,
   travelAmountFromKm,
-  unitRateForDuty,
 } from "./rates";
 import { countDutyTypes } from "./classify-duties";
 import { isClaimTravelResolved } from "./readiness";
@@ -115,7 +114,7 @@ export function calculateCompensationTotals(
     : 0;
 
   const computerSetupAmount = input.isComputerSetup
-    ? unitRateForDuty("session", input.tipo, input.ambito)
+    ? Math.round(Math.max(0, input.computerSetupManualAmount ?? 0) * 100) / 100
     : 0;
 
   const totalAmount = financialComplete

@@ -8,7 +8,7 @@ La compensación económica la gestiona el rol **`responsable_financiero_jueces`
 
 ## Objetivo
 
-Calcular y gestionar la compensación económica por campeonato de cada juez asignado en tarima: funciones por **posición en tarima** (Central, Lateral, Pesaje, etc.), desplazamiento (km o alternativas aprobadas), alojamiento, montaje del ordenador y responsable de competición. Generar el **recibo PDF** por juez para devolución al organizador.
+Calcular y gestionar la compensación económica por campeonato de cada juez asignado en tarima: funciones por **posición en tarima** (Central, Lateral, Ordenador, Pesaje, etc.), desplazamiento, alojamiento, **montaje del sistema informático** (aparte) y responsable de competición.
 
 ## Baremo vigente (código: `src/lib/judge-compensation/rates.ts`)
 
@@ -16,7 +16,7 @@ Calcular y gestionar la compensación económica por campeonato de cada juez asi
 |---|---:|---:|---:|---:|
 | Pesaje | 15 € | 15 € | 20 € | 20 € |
 | Sesión (tarima) | 30 € | 30 € | 40 € | 40 € |
-| Montaje ordenador | 1 × tarifa sesión | | | |
+| Montaje sistema | Importe manual (Liftingcast / OpenLifter / Goodlift) |
 | Km ida+vuelta | 0,13 €/km | | | |
 | Alojamiento / día | 25 € | | | |
 | Responsable competición | 20 € / campeonato | 20 € | 20 €* | 0 € |
@@ -25,8 +25,8 @@ Calcular y gestionar la compensación económica por campeonato de cada juez asi
 
 ### Reglas de negocio
 
-1. **Funciones**: una línea por **sesión × posición en tarima** (`S1` Central, `S1` Pesaje, `S2` Lateral…). El desglose UI/PDF agrupa por **Sx** mostrando cada posición real, no un genérico «ordenador/pesaje».
-2. **Montaje del ordenador**: caso aparte — checkbox **Mont.** en la tabla; se paga **una función de sesión** adicional, independiente de la posición en tarima.
+1. **Funciones en tarima**: una línea por **sesión × posición** (`S1` Central, `S1` Ordenador, `S1` Pesaje…). Ocupar la posición ordenador/liftingcast durante el campeonato se paga como cualquier otra función de tarima.
+2. **Montaje del sistema informático**: caso aparte — checkbox **Mont.** + importe manual. Es montar/configurar Liftingcast, OpenLifter o Goodlift, **no** ocupar la plaza de ordenador en sesión.
 3. **Desplazamiento**: solo si el juez viaja **exclusivamente como juez**. Un vehículo compartido → **un solo** desplazamiento pagado en kilometraje (`shared_vehicle_passenger` en pasajeros).
 4. **Km**: **introducción manual** por juez (ida+vuelta, enteros). No se usa geocodificación de sede ni cálculo automático en compensación.
 5. **Comparte vehículo**: **solo exime el cobro de kilometraje**; los km siguen siendo obligatorios y se usan para calcular alojamiento.
@@ -76,7 +76,7 @@ classifyDuties()  →  duty lines (posición tarima por sesión)
         ↓
 Km manual por juez  →  ida+vuelta enteros
         ↓
-calculateClaim()  →  importes (+ montaje ordenador si aplica)
+calculateClaim()  →  importes (+ ordenador manual si aplica)
         ↓
 judge_compensation_claims (persistido, sin IBAN)
         ↓
@@ -90,14 +90,14 @@ Export PDF + IBAN introducido al vuelo
 | `GET` | `/compensation/hub` | `canManageCompensation` — panel central |
 | `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
-| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km, comparte, montaje, resp. |
+| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km, comparte, ordenador, resp. |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` |
 
 ## UI
 
 - **Panel central** `/compensation` — lista todos los campeonatos con jueces, km pendientes y enlace directo.
 - Página `/competitions/[id]/compensation` (solo responsable financiero / super_admin).
-- **Km manual** en columna «Km i+v»; **Comparte** solo exime kilometraje; **Mont.** para montaje del ordenador.
+- **Mont.** para montaje del sistema (Liftingcast / OpenLifter / Goodlift), con importe manual. Distinto de la posición ordenador en tarima.
 - Desglose por **Sx** con la **posición real** (Juez Central, Pesaje, Lateral…); columna funciones tipo `S1(Cent+Pz) · S2`.
 - Varios clubes organizadores y e-mails múltiples.
 - Totales bloqueados hasta completar todos los km (modo `none` exento).
@@ -107,7 +107,7 @@ Ver captura: `docs/images/10-compensacion.png`.
 
 ## Tests
 
-- `tests/judge-compensation.test.ts` — baremo, montaje ordenador y totales.
+- `tests/judge-compensation.test.ts` — baremo, ordenador manual y totales.
 - `tests/judge-compensation-km.test.ts` — km manual, comparte y alojamiento.
 - `tests/judge-compensation-breakdown.test.ts` — desglose por posición en tarima.
 - `tests/judge-compensation-receipt.test.ts` — texto del recibo e IBAN efímero.

@@ -232,6 +232,7 @@ export const compensationService = {
       isCompetitionManager: boolean;
       competitionManagerPerDay: boolean;
       isComputerSetup: boolean;
+      computerSetupAmount: number | null;
       lodgingEligibleOverride: boolean | null;
       lodgingDaysOverride: number | null;
       status: CompensationClaimStatus;
@@ -287,6 +288,10 @@ export const compensationService = {
       competitionManagerPerDay:
         normalizedPatch.competitionManagerPerDay ?? existing.competitionManagerPerDay,
       isComputerSetup: normalizedPatch.isComputerSetup ?? existing.isComputerSetup,
+      computerSetupManualAmount:
+        normalizedPatch.computerSetupAmount !== undefined
+          ? (normalizedPatch.computerSetupAmount ?? undefined)
+          : existing.computerSetupAmount,
       lodgingEligibleOverride:
         normalizedPatch.lodgingEligibleOverride !== undefined
           ? (normalizedPatch.lodgingEligibleOverride ?? undefined)
