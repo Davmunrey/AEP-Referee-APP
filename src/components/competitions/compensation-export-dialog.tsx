@@ -50,7 +50,7 @@ export function CompensationExportDialog({
       try {
         const blob = await api.exportCompensationReceipt(competitionId, claim.refereeId, iban);
         const filename = `compensacion_${claim.refereeName.replace(/\s+/g, "_")}.pdf`;
-        await downloadPdfBlob(blob, filename);
+        downloadPdfBlob(blob, filename);
         onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al exportar");
@@ -132,7 +132,7 @@ export function CompensationExportDialog({
           {ibanHint ??
             (ibanReady
               ? "IBAN válido. Pulsa Descargar PDF."
-              : "Ejemplo de formato: ES91 2100 0418 4502 0005 1332")}
+              : "Ejemplo de formato: ES91 2100 0418 4502 0005 1332. En móvil se abre el PDF en una pestaña nueva para guardarlo.")}
         </p>
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
         <div className="mt-4 flex gap-2">

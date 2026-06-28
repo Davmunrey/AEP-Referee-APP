@@ -25,10 +25,16 @@ const AEP_HEADER_LINES = [
   "YouTube: Powerlifting AEP Instagram: @powerhispania",
 ] as const;
 
-const RULE_LINE =
-  "____________________________________________________________________________________";
 const SIGN_LINE =
   "__________________________________________________";
+
+export type CompensationReceiptLayout = {
+  headerLines: string[];
+  organizerType: "club" | "aep";
+  returnEmailLines: string[];
+  titleLines: string[];
+  bodyLines: string[];
+};
 
 export type CompensationOrganizerType = "club" | "aep";
 
@@ -203,8 +209,7 @@ function buildLaborPhrase(
   return `por la labor prestada como juez en ${article} ${competitionName}`;
 }
 
-/** Construye el texto completo del recibo (una línea por párrafo lógico). */
-export function buildCompensationReceiptLines(input: CompensationReceiptInput): string[] {
+function buildBodyLines(input: CompensationReceiptInput): string[] {
   const amount = formatReceiptAmountEur(input.amountEur);
   const datePhrase = formatCompetitionDatePhrase(input.fecha, input.fechaFin);
   const gender = celebrationGender(input.fecha, input.fechaFin);
@@ -213,23 +218,35 @@ export function buildCompensationReceiptLines(input: CompensationReceiptInput): 
   const received = buildReceivedPhrase(input.organizer, amount);
   const labor = buildLaborPhrase(input.organizer, input.competitionName);
 
-  const body = [
-    `Yo, ${input.refereeName}, en calidad de ${collaborator}, ${received} en concepto de`,
-    `compensación de gastos ${labor} celebrad${gender} en ${input.sede}, ${datePhrase}, a`,
-    "ingresar en la siguiente cuenta bancaria:",
+  return [
+    `Yo, ${input.refereeName}, en calidad de ${collaborator}, ${received} en concepto de compensación de gastos ${labor} celebrad${gender} en ${input.sede}, ${datePhrase}, a ingresar en la siguiente cuenta bancaria:`,
     `IBAN: ${ibanDisplay}`,
     "Y para que conste, firmo el presente documento.",
     "Fecha:",
     `Fdo. ${input.refereeName}`,
-  ].join(" ");
+  ];
+}
 
+/** Estructura del recibo AEP/club (sin desglose; el desglose solo se muestra en el modal). */
+export function buildCompensationReceiptLayout(input: CompensationReceiptInput): CompensationReceiptLayout {
+  return {
+    headerLines: buildHeaderLines(input.organizer),
+    organizerType: input.organizer.type,
+    returnEmailLines: buildReturnEmailLine(input.organizer).split("\n"),
+    titleLines: buildTitleLines(input.organizer),
+    bodyLines: buildBodyLines(input),
+  };
+}
+
+/** Construye el texto completo del recibo (una línea por párrafo lógico). */
+export function buildCompensationReceiptLines(input: CompensationReceiptInput): string[] {
+  const layout = buildCompensationReceiptLayout(input);
   return [
-    ...buildHeaderLines(input.organizer),
-    RULE_LINE,
+    ...layout.headerLines,
     SIGN_LINE,
-    buildReturnEmailLine(input.organizer),
-    ...buildTitleLines(input.organizer),
-    body,
+    layout.returnEmailLines.join(" "),
+    ...layout.titleLines,
+    ...layout.bodyLines,
   ];
 }
 

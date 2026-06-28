@@ -72,7 +72,7 @@ describe("downloadBlob", () => {
     let clicked = false;
     const create = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
     const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-    vi.stubGlobal("navigator", { userAgent: "Mozilla/5.0" });
+    vi.stubGlobal("navigator", { userAgent: "Mozilla/5.0 (Windows NT 10.0)" });
     vi.stubGlobal("document", {
       createElement: () => ({
         href: "",

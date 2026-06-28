@@ -2,7 +2,6 @@ import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError } from "@/lib/api/route-utils";
 import {
-  buildClaimBreakdown,
   compensationReceiptFilename,
   isValidSpanishIban,
   renderCompensationReceiptPdf,
@@ -72,7 +71,6 @@ export async function POST(request: Request, context: RouteContext) {
     fechaFin: competition.fechaFin,
     iban,
     organizer,
-    breakdownLines: buildClaimBreakdown(claim),
   });
 
   const filename = compensationReceiptFilename(referee.nombre, competition.nombre);

@@ -4,6 +4,7 @@ import {
   formatCompetitionDatePhrase,
   formatReceiptAmountEur,
 } from "@/lib/judge-compensation/receipt-document";
+import { renderCompensationReceiptPdf } from "@/lib/judge-compensation/receipt-pdf";
 import { formatIbanDisplay, formatIbanInput, getSpanishIbanValidationHint, isValidSpanishIban, normalizeIban } from "@/lib/judge-compensation/iban";
 
 /** IBAN de prueba (válido MOD-97; no es una cuenta real). */
@@ -84,6 +85,7 @@ describe("buildCompensationReceiptText", () => {
     expect(text).toContain("el día 22 de marzo de 2026");
     expect(text).toContain(`IBAN: ${SAMPLE_IBAN_DISPLAY}`);
     expect(text).not.toMatch(/guardar|almacenar|persist/i);
+    expect(text).not.toContain("Desglose");
   });
 
   it("recibo AEP nacional", () => {
@@ -127,5 +129,20 @@ describe("buildCompensationReceiptText", () => {
     expect(text).toContain("colaborador deportivo voluntario");
     expect(text).toContain("he recibido la cantidad de 185€");
     expect(text).toContain("por la labor prestada en la III Campeonato");
+  });
+
+  it("genera PDF AEP sin sección de desglose", async () => {
+    const pdf = await renderCompensationReceiptPdf({
+      refereeName: "David Muñoz Rey",
+      amountEur: 190,
+      competitionName: "Campeonato de España MASTER y Regional Noroeste-1",
+      sede: "Narón, A Coruña",
+      fecha: "2026-04-25",
+      fechaFin: "2026-04-26",
+      iban: SAMPLE_IBAN,
+      organizer: { type: "aep" },
+    });
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+    expect(pdf.length).toBeGreaterThan(500);
   });
 });
