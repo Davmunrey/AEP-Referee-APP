@@ -39,6 +39,21 @@ export function slotRoleEntries(session: RosterSession) {
   return [...session.roles, ...(session.pesajeRoles ?? [])];
 }
 
+/** Jueces ya asignados a algún hueco de una sesión concreta (no todo el campeonato). */
+export function assignedRefereeIdsInSession(
+  assignments: AssignmentsMap,
+  sessionKey: string | null | undefined,
+): Set<string> {
+  if (!sessionKey) return new Set();
+  const ids = new Set<string>();
+  for (const [slotKey, refereeId] of Object.entries(assignments)) {
+    if (!refereeId) continue;
+    const parsed = parseSlotKey(slotKey);
+    if (parsed?.session === sessionKey) ids.add(refereeId);
+  }
+  return ids;
+}
+
 export function sessionProgress(session: RosterSession, assignments: AssignmentsMap) {
   const allRoles = slotRoleEntries(session);
   const slots = allRoles.reduce((a, r) => a + r.slots, 0);
