@@ -28,7 +28,7 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 - `PromotionRequest`: ascenso.
 - `CompensationClaim`: compensación económica por juez × campeonato (sin IBAN).
 
-Dominio compensación: `src/lib/judge-compensation/` (baremo, classify, calculate, recibo PDF).
+Dominio compensación: `src/lib/judge-compensation/` (baremo, classify, calculate, recibo PDF). Ubicaciones: **Google Places Autocomplete** en cliente (`AddressAutocompleteField`) + Distance Matrix en servidor.
 Servicios: `supabase-compensation.ts`, `memory-compensation.ts`.
 
 ## Tarima

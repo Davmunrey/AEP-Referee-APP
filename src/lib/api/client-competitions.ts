@@ -26,6 +26,8 @@ export const competitionApi = {
         | "compensationVolunteer"
         | "compensationClubs"
         | "sedeDireccion"
+        | "sedeLat"
+        | "sedeLng"
         | "ambito"
       >
     >,

@@ -24,9 +24,9 @@ Calcular y gestionar la compensación económica por campeonato de cada juez asi
 
 ### Reglas de negocio
 
-1. **Funciones**: se cuentan **sesiones distintas** (`S1`, `S2`…) en las que el juez tiene al menos un rol de tarima (sesión) o de pesaje (pesaje/equipamiento/material).
+1. **Funciones**: se cuentan **sesiones distintas** (`S1`, `S2`…) en las que el juez tiene rol de **ordenador** (tarima) o **pesaje**. El desglose UI/PDF agrupa por **Sx** (ordenador + pesaje bajo la misma sesión).
 2. **Desplazamiento**: solo si el juez viaja **exclusivamente como juez**. Un vehículo compartido → **un solo** desplazamiento pagado (`shared_vehicle_passenger` en pasajeros).
-3. **Km**: Google Maps Distance Matrix entre domicilio del juez y sede; ida × 2. Override manual permitido.
+3. **Km**: Google Maps — **Places Autocomplete** en sede (compensación) y domicilio (ficha juez); Distance Matrix entre coordenadas; ida × 2 (enteros). Override manual permitido. Comparte vehículo → 0 km.
 4. **Alojamiento**: ida+vuelta **> 150 km** y **≥ 2 funciones**. 25 € × días de campeonato.
 5. **Internacional EPF/IPF**: hotel oficial fuera de este cálculo; `ambito: epf|ipf` en competición.
 
@@ -59,7 +59,7 @@ Código: `src/lib/judge-compensation/receipt-document.ts`, `receipt-pdf.ts`, `ib
 |---|---|
 | `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Origen desplazamiento |
 | `competitions.sede_direccion`, `sede_lat`, `sede_lng`, `ambito` | Destino; baremo |
-| `competitions.compensation_*` (migration `025`) | Metadatos del recibo |
+| `competitions.compensation_*` (migrations `025`, `026`) | Metadatos del recibo; varios clubes (`compensation_clubs`) |
 | `judge_compensation_claims` | Una fila por juez × campeonato |
 | `judge_compensation_duty_lines` | Desglose sesión/pesaje |
 
@@ -88,25 +88,31 @@ Export PDF + IBAN introducido al vuelo
 | `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
 | `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
-| `POST` | `/competitions/:id/compensation/:refereeId/distance` | `canManageCompensation` |
+| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km masivo Google |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` |
 
 ## Variables de entorno
 
 | Variable | Uso |
 |---|---|
-| `GOOGLE_MAPS_API_KEY` | Distance Matrix API (solo servidor) |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Places Autocomplete en cliente (sede + domicilio) |
+| `GOOGLE_MAPS_API_KEY` | Geocoding fallback + Distance Matrix (servidor) |
 
-## UI (v1.5)
+![Compensación](images/10-compensacion.png)
+
+## UI
 
 - Página `/competitions/[id]/compensation` (solo responsable financiero / super_admin).
-- Enlace **Compensación** en cabecera de tarima (visible solo con `canManageCompensation`).
-- Tabla por juez con totales, overrides km/alojamiento y botón **Exportar recibo** → modal IBAN → descarga PDF.
-- Configuración organizador (club/AEP, email devolución, voluntario) en la propia página de compensación.
-- Campo **domicilio** en ficha de juez (`referee-edit-form`) para cálculo de desplazamiento.
+- **Google Places Autocomplete** para la sede; domicilio del juez con el mismo componente en ficha.
+- Desglose por **Sx**: cada sesión muestra Ordenador y Pesaje; columna funciones tipo `S1(O+P) · S2`.
+- Varios clubes organizadores y e-mails múltiples (listado oficial AEP abril 2026).
+- Km enteros; totales bloqueados hasta completar todos los desplazamientos.
+- Exportar recibo → modal con desglose → PDF (IBAN efímero).
+
+Ver captura: `docs/images/10-compensacion.png`.
 
 ## Tests
 
 - `tests/judge-compensation.test.ts` — baremo y totales.
 - `tests/judge-compensation-receipt.test.ts` — texto del recibo e IBAN efímero.
-- `tests/session-rbac.test.ts` — `canManageCompensation`.
+- `tests/judge-compensation-breakdown.test.ts` — desglose por Sx.

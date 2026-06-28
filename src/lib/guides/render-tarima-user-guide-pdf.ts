@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import PDFDocument from "pdfkit";
 import {
   TARIMA_GUIDE_META,
@@ -5,6 +7,34 @@ import {
   tarimaGuideAppUrl,
   type GuideSection,
 } from "./tarima-user-guide-content";
+
+const GUIDE_SCREENSHOTS: { afterSection: number; file: string; caption: string }[] = [
+  { afterSection: 2, file: "01-dashboard.png", caption: "Fig. 1 — Panel de inicio" },
+  { afterSection: 3, file: "02-campeonatos.png", caption: "Fig. 2 — Campeonatos" },
+  { afterSection: 4, file: "04-tarima-montada.png", caption: "Fig. 3 — Tarima (asignación)" },
+  { afterSection: 5, file: "09-cuadrante-export.png", caption: "Fig. 4 — Exportar cuadrante" },
+  { afterSection: 6, file: "10-compensacion.png", caption: "Fig. 5 — Compensación (Sx + Google Maps)" },
+  { afterSection: 7, file: "05-directorio.png", caption: "Fig. 6 — Directorio y domicilio" },
+];
+
+function screenshotPath(file: string): string | null {
+  const path = join(process.cwd(), "docs/images", file);
+  return existsSync(path) ? path : null;
+}
+
+function drawScreenshotPage(doc: InstanceType<typeof PDFDocument>, file: string, caption: string) {
+  const path = screenshotPath(file);
+  if (!path) return;
+
+  doc.addPage();
+  doc.font("Helvetica-Bold").fontSize(11).text(caption, { align: "center" });
+  doc.moveDown(0.4);
+  const y = doc.y;
+  doc.image(path, 56, y, {
+    fit: [doc.page.width - 112, 380],
+    align: "center",
+  });
+}
 
 function drawSection(doc: InstanceType<typeof PDFDocument>, section: GuideSection, sectionNum: number) {
   doc.addPage();
@@ -60,13 +90,18 @@ export function renderTarimaUserGuidePdf(appUrl = tarimaGuideAppUrl()): Promise<
     doc.fillColor("#000000");
     doc.moveDown(1);
     doc.font("Helvetica").fontSize(10).text(
-      "Este documento describe el funcionamiento completo de AEP Tarima: censo de jueces, tarimas, aprobaciones, compensación de gastos, estadísticas y app móvil. El acceso es restringido a cuentas autorizadas por el Comité de Jueces de la AEP.",
+      "Este documento describe el funcionamiento completo de AEP Tarima: censo de jueces, tarimas, aprobaciones, compensación de gastos (Google Maps, desglose por sesión Sx), estadísticas y app móvil.",
       { align: "justify" },
     );
     doc.moveDown(0.5);
     doc.text(`URL de acceso: ${appUrl}/sign-in`, { align: "center" });
 
-    sections.forEach((section, index) => drawSection(doc, section, index + 1));
+    sections.forEach((section, index) => {
+      const sectionNum = index + 1;
+      drawSection(doc, section, sectionNum);
+      const shot = GUIDE_SCREENSHOTS.find((s) => s.afterSection === sectionNum);
+      if (shot) drawScreenshotPage(doc, shot.file, shot.caption);
+    });
 
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {

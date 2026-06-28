@@ -35,8 +35,9 @@
 | `RosterRevisionPanel` | Revisión |
 | `RosterHistoryPanel` | Historial |
 | `CompetitionAvailabilityDialog` | Confirmación disponibilidad jueces |
-| `CompensationBoard` | Tabla compensación por juez, overrides y totales |
-| `CompensationExportDialog` | Modal IBAN efímero → descarga recibo PDF |
+| `CompensationBoard` | Compensación: sede autocomplete, desglose Sx, multi-club |
+| `CompensationExportDialog` | Modal IBAN efímero → descarga recibo PDF (desglose por sesión) |
+| `AddressAutocompleteField` | Google Places Autocomplete (sede, domicilio juez) |
 
 ### Sub-componentes RosterBuilder (v1.2)
 
@@ -72,7 +73,7 @@ La disponibilidad se gestiona a nivel de campeonato (tabla `competition_availabi
 | Componente | Uso |
 |---|---|
 | `RefereesDirectory` | Directorio (con vista card en móvil) |
-| `RefereeEditForm` | Edición (incl. domicilio para compensación km) |
+| `RefereeEditForm` | Edición (domicilio con Places Autocomplete) |
 | `ExamsManager` | Exámenes |
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |

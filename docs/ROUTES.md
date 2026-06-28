@@ -18,6 +18,7 @@
 | `/competitions/new` | Crear campeonato |
 | `/competitions/[id]` | Tarima |
 | `/competitions/[id]/compensation` | Compensación de gastos (solo `responsable_financiero_jueces` / `super_admin`) |
+| `/docs` | Documentación web + enlace manual PDF |
 | `/referees` | Directorio |
 | `/referees/[id]` | Ficha juez |
 | `/exams` | Exámenes |

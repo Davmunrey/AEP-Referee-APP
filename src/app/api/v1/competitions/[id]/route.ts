@@ -101,6 +101,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       if (!trimmed) {
         patch.sedeLat = undefined;
         patch.sedeLng = undefined;
+      } else if (
+        typeof body.sedeLat === "number" &&
+        typeof body.sedeLng === "number" &&
+        Number.isFinite(body.sedeLat) &&
+        Number.isFinite(body.sedeLng)
+      ) {
+        patch.sedeLat = body.sedeLat;
+        patch.sedeLng = body.sedeLng;
       } else if (process.env.GOOGLE_MAPS_API_KEY) {
         try {
           const geo = await geocodeAddress(trimmed);
