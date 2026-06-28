@@ -31,6 +31,30 @@ export function getPageMeta(pathname: string): PageMeta {
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Campeonatos" }],
     };
   }
+  if (pathname === "/compensation") {
+    return {
+      title: "Compensación de jueces",
+      subtitle: "Panel central de facturación y recibos",
+      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Compensación" }],
+    };
+  }
+  if (pathname === "/docs") {
+    return {
+      title: "Documentación",
+      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Documentación" }],
+    };
+  }
+  if (pathname.startsWith("/competitions/") && pathname.endsWith("/compensation")) {
+    const id = pathname.split("/")[2];
+    return {
+      title: "Compensación del campeonato",
+      crumbs: [
+        { label: "AEP Tarima", href: "/" },
+        { label: "Compensación", href: "/compensation" },
+        { label: id ?? "Campeonato" },
+      ],
+    };
+  }
   if (pathname.startsWith("/competitions/")) {
     const id = pathname.split("/")[2];
     return {

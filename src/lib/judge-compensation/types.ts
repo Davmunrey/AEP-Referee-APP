@@ -46,7 +46,7 @@ export interface CompensationClaimInput {
   travelMode: CompensationTravelMode;
   distanceKmOneWay?: number;
   distanceKmRoundTrip?: number;
-  distanceSource?: "google_maps" | "manual";
+  distanceSource?: "osm" | "google_maps" | "manual";
   travelAmountOverride?: number;
   travelApproved: boolean;
   travelNotes?: string;

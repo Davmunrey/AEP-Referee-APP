@@ -183,7 +183,13 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
 
   return (
     <PageShell className="space-y-4">
-      <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="ghost" size="sm" className="gap-1.5" asChild>
+          <Link href="/compensation">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Panel compensación
+          </Link>
+        </Button>
         <Button variant="ghost" size="sm" className="gap-1.5" asChild>
           <Link href={`/competitions/${competition.id}`}>
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -203,10 +209,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           <div>
             <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <MapPin className="h-4 w-4 text-primary" />
-              Sede del campeonato (Google Maps)
+              Sede del campeonato (OpenStreetMap)
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Dirección con autocomplete de Google Maps para calcular km desde el domicilio de cada juez.
+              Dirección con autocomplete gratuito (OpenStreetMap) para calcular km desde el domicilio de cada juez.
             </p>
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <AddressAutocompleteField
@@ -227,7 +233,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                 coordsHint={
                   venueOk
                     ? `Coordenadas OK (${(sedeCoords?.lat ?? competition.sedeLat)?.toFixed(4)}, ${(sedeCoords?.lng ?? competition.sedeLng)?.toFixed(4)})`
-                    : "Selecciona una dirección de las sugerencias de Google o guarda para geocodificar."
+                    : "Selecciona una dirección de las sugerencias o guarda para geocodificar con OpenStreetMap."
                 }
               />
               <Button type="button" size="sm" onClick={saveVenue} disabled={pending || !sedeDireccion.trim()}>
@@ -349,7 +355,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={onCalculateDistances} disabled={pending || !venueOk}>
               <Navigation className="h-3.5 w-3.5" />
-              <span className="ml-1.5">Calcular km (Google)</span>
+              <span className="ml-1.5">Calcular km (OSM)</span>
             </Button>
           </>
         )}

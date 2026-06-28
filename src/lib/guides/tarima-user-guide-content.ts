@@ -174,7 +174,7 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
           title: "Acceder y configurar sede",
           body: [
             "Desde la tarima → Compensación, o directamente /competitions/[id]/compensation.",
-            "Guarda la sede con Google Places Autocomplete (elige una sugerencia de la lista). Es obligatoria para calcular km.",
+            "Guarda la sede con autocomplete OpenStreetMap (elige una sugerencia de la lista). Es obligatoria para calcular km.",
           ],
         },
         {
@@ -190,7 +190,7 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
           id: "6.3",
           title: "Domicilio del juez",
           body: [
-            "En Directorio → ficha → Editar, el campo domicilio usa el mismo autocomplete de Google Maps.",
+            "En Directorio → ficha → Editar, el campo domicilio usa el mismo autocomplete OpenStreetMap.",
             "Al guardar se almacenan dirección y coordenadas para el cálculo de km.",
           ],
         },
@@ -198,7 +198,7 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
           id: "6.4",
           title: "Calcular km y desglose por sesión",
           body: [
-            "Pulsa «Calcular km (Google)» para distancias desde domicilio a sede (km enteros ida y vuelta).",
+            "Pulsa «Calcular km (OSM)» para distancias desde domicilio a sede (km enteros ida y vuelta).",
             "Marca «Comparte desplazamiento» si el juez viaja en vehículo compartido.",
             "El desglose agrupa por sesión Sx: Ordenador (tarima) y Pesaje bajo cada sesión.",
             "Los importes de viaje y alojamiento no se confirman hasta completar todos los km.",

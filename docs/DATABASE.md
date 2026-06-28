@@ -66,7 +66,7 @@ Persiste el motivo de rechazo al revisar ascensos (obligatorio en API cuando `ap
 - Enum `user_role`: valor `responsable_financiero_jueces`
 - `competitions.compensation_organizer`, `compensation_club_name`, `compensation_club_email`, `compensation_volunteer`
 
-**Estado producción (2026-06-28):** migraciones `023`, `024` y `025` aplicadas en proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
+**Estado producción (2026-06-28):** migraciones hasta `026` aplicadas en proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
 
 Detalle funcional: [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
 

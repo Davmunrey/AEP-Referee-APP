@@ -74,7 +74,7 @@ export function assessCompensationReadiness(input: {
   const missingDomicilioReferees: string[] = [];
 
   if (!competitionVenueReady(input.competition)) {
-    issues.push("Falta la dirección de la sede en Google Maps (competición).");
+    issues.push("Falta la dirección de la sede geocodificada (competición).");
   }
 
   if (input.organizerIsClub && input.clubEmails.length === 0) {

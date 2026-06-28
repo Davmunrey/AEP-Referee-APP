@@ -129,4 +129,6 @@ export const supabaseDataService = {
     compensationService.calculateAllDistances(competitionId),
   getCompensationClaimForExport: (competitionId: string, refereeId: string) =>
     compensationService.getClaimForExport(competitionId, refereeId),
+  getCompensationHub: (user: import("@/lib/types").SessionUser) =>
+    compensationService.getHub(user),
 };

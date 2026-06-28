@@ -37,7 +37,7 @@
 | `CompetitionAvailabilityDialog` | Confirmación disponibilidad jueces |
 | `CompensationBoard` | Compensación: sede autocomplete, desglose Sx, multi-club |
 | `CompensationExportDialog` | Modal IBAN efímero → descarga recibo PDF (desglose por sesión) |
-| `AddressAutocompleteField` | Google Places Autocomplete (sede, domicilio juez) |
+| `AddressAutocompleteField` | Photon/OpenStreetMap autocomplete (sede, domicilio juez) |
 
 ### Sub-componentes RosterBuilder (v1.2)
 

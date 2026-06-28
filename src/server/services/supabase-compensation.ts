@@ -1,7 +1,11 @@
 import {
   buildCompensationClaim,
   fetchDrivingDistanceKm,
+  geocodeAddress,
+  osmThrottle,
 } from "@/lib/judge-compensation";
+import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
+import { buildHubSummary } from "@/lib/judge-compensation/hub";
 import type {
   CompensationClaim,
   CompensationClaimInput,
@@ -10,7 +14,7 @@ import type {
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
 import { parseIntegerKm, roundTripKmFromOneWay, oneWayKmFromRoundTrip } from "@/lib/judge-compensation/km";
-import type { Competition, Referee } from "@/lib/types";
+import type { Competition, Referee, SessionUser } from "@/lib/types";
 import {
   claimToDbRow,
   mapCompensationClaimRow,
@@ -220,7 +224,7 @@ export const compensationService = {
       travelMode: CompensationTravelMode;
       distanceKmOneWay: number | null;
       distanceKmRoundTrip: number | null;
-      distanceSource: "google_maps" | "manual" | null;
+      distanceSource: "osm" | "google_maps" | "manual" | null;
       travelApproved: boolean;
       travelNotes: string | null;
       isCompetitionManager: boolean;
@@ -322,13 +326,29 @@ export const compensationService = {
       lng: competition.sedeLng,
     };
 
+    if (origin.lat == null || origin.lng == null) {
+      if (!referee.domicilio?.trim()) return undefined;
+      const geo = await geocodeAddress(referee.domicilio);
+      origin.lat = geo.lat;
+      origin.lng = geo.lng;
+      await osmThrottle();
+    }
+    if (destination.lat == null || destination.lng == null) {
+      const addr = competition.sedeDireccion ?? competition.sede;
+      if (!addr?.trim()) return undefined;
+      const geo = await geocodeAddress(addr);
+      destination.lat = geo.lat;
+      destination.lng = geo.lng;
+      await osmThrottle();
+    }
+
     const result = await fetchDrivingDistanceKm(origin, destination);
     const roundTrip = roundTripKmFromOneWay(result.distanceKmOneWay);
 
     return compensationService.updateClaim(competitionId, refereeId, {
       distanceKmOneWay: result.distanceKmOneWay,
       distanceKmRoundTrip: roundTrip,
-      distanceSource: "google_maps",
+      distanceSource: "osm",
       travelMode: "km_rate",
     });
   },
@@ -338,8 +358,18 @@ export const compensationService = {
     for (const claim of summary.claims) {
       if (claim.travelMode === "shared_vehicle_passenger" || claim.travelMode === "none") continue;
       await compensationService.calculateDistance(competitionId, claim.refereeId);
+      await osmThrottle(300);
     }
     return buildSummary(competitionId);
+  },
+
+  getHub: async (user: SessionUser): Promise<CompensationHubSummary> => {
+    const competitions = await competitionService.getCompetitions(user);
+    const summaries = new Map<string, CompetitionCompensationSummary>();
+    for (const comp of competitions) {
+      summaries.set(comp.id, await buildSummary(comp.id));
+    }
+    return buildHubSummary(competitions, summaries);
   },
 
   getClaimForExport: async (

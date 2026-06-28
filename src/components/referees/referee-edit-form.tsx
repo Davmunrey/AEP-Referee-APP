@@ -210,9 +210,9 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
                 coordsOk={domicilioCoords != null || (referee.domicilioLat != null && referee.domicilioLng != null)}
                 coordsHint={
                   domicilioCoords || (referee.domicilioLat != null && referee.domicilioLng != null)
-                    ? `Ubicación Google Maps OK (${(domicilioCoords?.lat ?? referee.domicilioLat)?.toFixed(4)}, ${(domicilioCoords?.lng ?? referee.domicilioLng)?.toFixed(4)})`
+                    ? `Ubicación OpenStreetMap OK (${(domicilioCoords?.lat ?? referee.domicilioLat)?.toFixed(4)}, ${(domicilioCoords?.lng ?? referee.domicilioLng)?.toFixed(4)})`
                     : domicilio.trim()
-                      ? "Selecciona una sugerencia de Google o guarda para geocodificar al guardar."
+                      ? "Selecciona una sugerencia de la lista o guarda para geocodificar al guardar."
                       : undefined
                 }
                 hint="Usado para calcular km hasta la sede del campeonato."

@@ -11,8 +11,9 @@ Destino: Vercel + Supabase.
 | `SUPABASE_SERVICE_ROLE_KEY` | Production |
 | `READINESS_ALLOWED_EMAILS` | CI |
 | `E2E_EMAIL` | CI |
-| `GOOGLE_MAPS_API_KEY` | Production | Geocoding + Distance Matrix (servidor) |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Production, Preview | Places Autocomplete (cliente) |
+| `OSM_USER_AGENT` | Production | Identificación para Nominatim (recomendado) |
+| `NOMINATIM_URL` | Optional | Geocoding OSM (por defecto nominatim.openstreetmap.org) |
+| `OSRM_URL` | Optional | Rutas OSM (por defecto router.project-osrm.org) |
 
 ## Build
 

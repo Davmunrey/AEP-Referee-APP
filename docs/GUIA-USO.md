@@ -106,12 +106,12 @@ Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de
 
 ![Compensación](images/10-compensacion.png)
 
-1. Abre un campeonato con jueces asignados.
+1. Entra en **Compensación** en la barra lateral (panel central) o abre un campeonato concreto.
 2. Pulsa **Compensación** en la cabecera de tarima (o `/competitions/[id]/compensation`).
-3. **Sede**: usa el **autocomplete de Google Maps** (elige una sugerencia de la lista) y guarda.
+3. **Sede**: usa el **autocomplete OpenStreetMap** (elige una sugerencia de la lista) y guarda.
 4. Configura uno o varios **clubes organizadores** y sus e-mails (listado oficial AEP).
 5. Asegura el **domicilio** de cada juez en su ficha (también con autocomplete).
-6. **Calcular km (Google)** o introduce km enteros manualmente; marca **Comparte** si aplica.
+6. **Calcular km (OSM)** o introduce km enteros manualmente; marca **Comparte** si aplica.
 7. Revisa el **desglose por sesión Sx** (Ordenador / Pesaje) expandiendo cada fila.
 8. **Exportar recibo** → IBAN en el modal (no se guarda) → PDF con desglose.
 
@@ -125,7 +125,7 @@ Los totales de viaje y alojamiento no se confirman hasta que todos los km estén
 
 ![Directorio](images/05-directorio.png)
 
-- La ficha incluye **domicilio con Google Places Autocomplete** (para km en compensación), historial real por campeonato (sesión, rol, hueco, flags de compartido/intercambio), sanciones, exámenes, informes y ascensos.
+- La ficha incluye **domicilio con autocomplete OpenStreetMap** (para km en compensación), historial real por campeonato (sesión, rol, hueco, flags de compartido/intercambio), sanciones, exámenes, informes y ascensos.
 - **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional).
 - **+ Nuevo juez**: alta individual.
 

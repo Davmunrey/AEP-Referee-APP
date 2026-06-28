@@ -314,7 +314,7 @@ export function mapCompensationClaimRow(
     distanceKmOneWay: row.distance_km_one_way != null ? Number(row.distance_km_one_way) : undefined,
     distanceKmRoundTrip:
       row.distance_km_round_trip != null ? Number(row.distance_km_round_trip) : undefined,
-    distanceSource: row.distance_source as "google_maps" | "manual" | undefined,
+    distanceSource: row.distance_source as "osm" | "google_maps" | "manual" | undefined,
     travelApproved: Boolean(row.travel_approved),
     travelNotes: row.travel_notes ? String(row.travel_notes) : undefined,
     isCompetitionManager: Boolean(row.is_competition_manager),
