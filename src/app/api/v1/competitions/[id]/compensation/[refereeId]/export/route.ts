@@ -2,15 +2,11 @@ import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError } from "@/lib/api/route-utils";
 import {
-  buildCompensationClaim,
   compensationReceiptFilename,
   isValidSpanishIban,
   renderCompensationReceiptPdf,
 } from "@/lib/judge-compensation";
-import {
-  buildClaimInputFromRoster,
-  receiptOrganizerFromCompetition,
-} from "@/server/services/compensation-helpers";
+import { receiptOrganizerFromCompetition } from "@/server/services/compensation-helpers";
 import { dataService } from "@/server/services";
 
 export const runtime = "nodejs";
@@ -52,13 +48,8 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const claimInput = buildClaimInputFromRoster({
-    competition,
-    referee,
-    template: roster.template,
-    assignments: roster.assignments,
-  });
-  const claim = buildCompensationClaim(`claim-${refereeId}`, claimInput);
+  const claim = await dataService.getCompensationClaimForExport(id, refereeId);
+  if (!claim) return jsonError("Claim no encontrado", 404);
 
   if (claim.totalAmount <= 0) {
     return jsonError("El importe calculado es cero; revisa la tarima y los datos de compensación", 422);

@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { resolveZoneCode } from "@/lib/aep-zones";
+import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -60,6 +61,25 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (typeof body.zona === "string") patch.zona = body.zona;
   if (typeof body.sesiones === "number") patch.sesiones = body.sesiones;
   if (typeof body.requeridos === "number") patch.requeridos = body.requeridos;
+
+  if (canManageCompensation(user)) {
+    if (body.compensationOrganizer === "club" || body.compensationOrganizer === "aep") {
+      patch.compensationOrganizer = body.compensationOrganizer;
+    }
+    if (typeof body.compensationClubName === "string") {
+      patch.compensationClubName = body.compensationClubName;
+    }
+    if (typeof body.compensationClubEmail === "string") {
+      patch.compensationClubEmail = body.compensationClubEmail;
+    }
+    if (typeof body.compensationVolunteer === "boolean") {
+      patch.compensationVolunteer = body.compensationVolunteer;
+    }
+    if (typeof body.sedeDireccion === "string") patch.sedeDireccion = body.sedeDireccion;
+    if (body.ambito === "epf" || body.ambito === "ipf" || body.ambito === null) {
+      patch.ambito = body.ambito ?? undefined;
+    }
+  }
 
   const updated = await dataService.updateCompetition(id, patch);
   if (!updated) return jsonError("Competición no encontrada", 404);

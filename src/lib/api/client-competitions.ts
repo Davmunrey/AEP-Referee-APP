@@ -11,7 +11,23 @@ export const competitionApi = {
 
   updateCompetition: (
     id: string,
-    body: Partial<Pick<Competition, "nombre" | "tipo" | "fecha" | "fechaFin" | "sede" | "zona">>,
+    body: Partial<
+      Pick<
+        Competition,
+        | "nombre"
+        | "tipo"
+        | "fecha"
+        | "fechaFin"
+        | "sede"
+        | "zona"
+        | "compensationOrganizer"
+        | "compensationClubName"
+        | "compensationClubEmail"
+        | "compensationVolunteer"
+        | "sedeDireccion"
+        | "ambito"
+      >
+    >,
   ) =>
     request<Competition>(`/competitions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
 

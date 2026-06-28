@@ -26,6 +26,10 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 - `Report`: informe de juez o competición.
 - `Exam`: nuevo juez, IPF, recertificación.
 - `PromotionRequest`: ascenso.
+- `CompensationClaim`: compensación económica por juez × campeonato (sin IBAN).
+
+Dominio compensación: `src/lib/judge-compensation/` (baremo, classify, calculate, recibo PDF).
+Servicios: `supabase-compensation.ts`, `memory-compensation.ts`.
 
 ## Tarima
 

@@ -4,6 +4,7 @@ import { competitionService } from "./supabase-competitions";
 import { examsService } from "./supabase-exams";
 import { refereeService } from "./supabase-referees";
 import { rosterService } from "./supabase-roster";
+import { compensationService } from "./supabase-compensation";
 
 export const supabaseDataService = {
   // ── Meta / Analytics ─────────────────────────────────────────────────────
@@ -110,4 +111,18 @@ export const supabaseDataService = {
   reviewPromotion: examsService.reviewPromotion,
   createPromotion: examsService.createPromotion,
   importJudgesRegistry: examsService.importJudgesRegistry,
+
+  getCompensationSummary: (competitionId: string) =>
+    compensationService.getSummary(competitionId),
+  recalculateCompensation: (competitionId: string) =>
+    compensationService.recalculate(competitionId),
+  updateCompensationClaim: (
+    competitionId: string,
+    refereeId: string,
+    patch: Parameters<typeof compensationService.updateClaim>[2],
+  ) => compensationService.updateClaim(competitionId, refereeId, patch),
+  calculateCompensationDistance: (competitionId: string, refereeId: string) =>
+    compensationService.calculateDistance(competitionId, refereeId),
+  getCompensationClaimForExport: (competitionId: string, refereeId: string) =>
+    compensationService.getClaimForExport(competitionId, refereeId),
 };

@@ -88,6 +88,7 @@ Export PDF + IBAN introducido al vuelo
 | `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
 | `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
+| `POST` | `/competitions/:id/compensation/:refereeId/distance` | `canManageCompensation` |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` |
 
 ## Variables de entorno
@@ -96,11 +97,13 @@ Export PDF + IBAN introducido al vuelo
 |---|---|
 | `GOOGLE_MAPS_API_KEY` | Distance Matrix API (solo servidor) |
 
-## UI (v1)
+## UI (v1.5)
 
-- Página `/competitions/[id]/compensation` (solo responsable financiero).
-- Tabla por juez con totales y botón **Exportar recibo** → modal IBAN → descarga PDF.
-- Configuración organizador en ficha del campeonato.
+- Página `/competitions/[id]/compensation` (solo responsable financiero / super_admin).
+- Enlace **Compensación** en cabecera de tarima (visible solo con `canManageCompensation`).
+- Tabla por juez con totales, overrides km/alojamiento y botón **Exportar recibo** → modal IBAN → descarga PDF.
+- Configuración organizador (club/AEP, email devolución, voluntario) en la propia página de compensación.
+- Campo **domicilio** en ficha de juez (`referee-edit-form`) para cálculo de desplazamiento.
 
 ## Tests
 
