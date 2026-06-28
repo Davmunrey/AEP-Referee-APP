@@ -68,9 +68,11 @@ describe("import-export-ui", () => {
 
 describe("downloadBlob", () => {
   it("triggers download via temporary anchor", () => {
+    vi.useFakeTimers();
     let clicked = false;
     const create = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
     const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    vi.stubGlobal("navigator", { userAgent: "Mozilla/5.0" });
     vi.stubGlobal("document", {
       createElement: () => ({
         href: "",
@@ -88,9 +90,11 @@ describe("downloadBlob", () => {
 
     expect(clicked).toBe(true);
     expect(create).toHaveBeenCalled();
+    vi.runAllTimers();
     expect(revoke).toHaveBeenCalledWith("blob:test");
     create.mockRestore();
     revoke.mockRestore();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 });
