@@ -100,9 +100,7 @@ export function RefereeCard({
           </span>
         </p>
       </div>
-      <span className="shrink-0 [&_.inline-flex]:scale-[0.9] [&_.inline-flex]:origin-right">
-        <LevelBadge level={referee.nivel} />
-      </span>
+      <LevelBadge level={referee.nivel} compact />
     </li>
   );
 }
