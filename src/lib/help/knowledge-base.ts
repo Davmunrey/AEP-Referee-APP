@@ -181,7 +181,7 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     question: "¿Dónde consulto la normativa?",
     keywords: ["normativa", "reglas", "reglamento", "ipf", "requisitos", "nivel minimo", "guia"],
     answer:
-      "En «Normativa» tienes las reglas IPF aplicables: niveles mínimos por plaza, requisitos por tipo de competición y demás criterios usados al validar la tarima.",
+      "En «Normativa» tienes la Guía AEP 2026, los requisitos de nivel por plaza en tarima y el reglamento técnico IPF completo.",
     links: [{ label: "Normativa", href: "/regulations" }],
   },
   {

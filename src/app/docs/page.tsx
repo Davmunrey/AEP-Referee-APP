@@ -336,7 +336,7 @@ export default async function DocsPage() {
             <p>
               Cada plaza de la tarima exige un nivel mínimo según el tipo de competición y el rol
               (central, lateral, jurado…), conforme a la normativa IPF recogida en la sección de
-              Normativa de la aplicación.
+              Normativa de la aplicación (Guía AEP, plazas en tarima y reglamento IPF).
             </p>
           </Section>
 
