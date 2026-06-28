@@ -2,6 +2,8 @@
 plan_id: 07A
 phase: "07"
 wave: 1
+status: completed
+superseded_by: v1.8
 depends_on: []
 files_modified:
   - src/lib/competition-validation.ts

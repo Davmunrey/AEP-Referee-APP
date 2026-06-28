@@ -63,6 +63,8 @@ Servidor restringe:
 - Primer usuario puede crear perfil `super_admin`; después usuarios deben ser invitados/activados.
 - En producción desactivar signup público desde Supabase Auth.
 
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · Site URL y redirect URLs deben apuntar a este dominio Vercel.
+
 ## GitHub Secrets CI
 
 - `NEXT_PUBLIC_SUPABASE_URL`
