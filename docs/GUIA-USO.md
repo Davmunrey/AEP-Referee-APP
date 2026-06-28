@@ -77,6 +77,15 @@ Filtros del panel izquierdo: zona, nivel, búsqueda, y "solo confirmados" (dispo
 
 Cuando esté listo: **Guardar borrador** o **Enviar a aprobación**.
 
+### Tarima aprobada e imprevistos
+
+Si la tarima ya fue **aprobada** por el Comité, queda bloqueada para evitar cambios accidentales. Si surge un imprevisto (baja de última hora, sustitución urgente, etc.):
+
+1. Abre el campeonato en tarima.
+2. Pulsa **Registrar imprevisto** en el aviso amarillo de la cabecera.
+3. Modifica las asignaciones necesarias.
+4. **Enviar a aprobación** de nuevo para que el Comité valide los cambios.
+
 ---
 
 ## 6. Exportar el cuadrante

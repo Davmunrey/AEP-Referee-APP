@@ -1,4 +1,9 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
+import {
+  isRosterLockedByApproval,
+  rosterMutationBlockedMessage,
+  ROSTER_IMPREVISTO_STATE,
+} from "@/lib/roster-coverage";
 import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
 import { enumerateSlotKeys, pruneAssignments } from "@/lib/roster-template";
@@ -172,6 +177,9 @@ export const rosterService = {
       getRefereeFn(refereeId),
     ]);
     if (!validation.ok) return { error: validation.error };
+    if (!comp) return { error: "Competición no encontrada" };
+    const blocked = rosterMutationBlockedMessage(comp.aprobacion);
+    if (blocked) return { error: blocked };
 
     const supabase = db();
     const assignments = await loadAssignments(competitionId);
@@ -505,5 +513,37 @@ export const rosterService = {
       approvals,
       activeRosterHref: pickActiveRosterHref(competitions),
     };
+  },
+
+  unlockImprevisto: async (
+    competitionId: string,
+    actor: string,
+    getCompetitionFn: (id: string) => Promise<Competition | undefined>,
+  ): Promise<{ message: string; aprobacion: string } | { error: string }> => {
+    const comp = await getCompetitionFn(competitionId);
+    if (!comp) return { error: "Competición no encontrada" };
+    if (!isRosterLockedByApproval(comp.aprobacion)) {
+      return { error: "Solo se puede registrar imprevisto en tarimas ya aprobadas" };
+    }
+    const supabase = db();
+    await supabase
+      .from("competitions")
+      .update({ aprobacion: ROSTER_IMPREVISTO_STATE })
+      .eq("id", competitionId);
+    await pushHistory({
+      competitionId,
+      at: new Date().toISOString(),
+      actor,
+      action: "Imprevisto registrado",
+      detail: "Tarima desbloqueada para cambios; reenviar a aprobación tras ajustar",
+    });
+    await pushActivity({
+      tipo: "cambio",
+      actor,
+      accion: "registró imprevisto en tarima de",
+      evento: comp.nombre,
+      hace: "ahora",
+    });
+    return { message: "Tarima desbloqueada para cambios por imprevisto", aprobacion: ROSTER_IMPREVISTO_STATE };
   },
 };

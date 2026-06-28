@@ -84,6 +84,8 @@ export const supabaseDataService = {
     rosterService.submitRoster(competitionId, actor, userId, competitionService.getCompetition),
   saveDraft: (competitionId: string, actor: string) =>
     rosterService.saveDraft(competitionId, actor, competitionService.getCompetition),
+  unlockRosterImprevisto: (competitionId: string, actor: string) =>
+    rosterService.unlockImprevisto(competitionId, actor, competitionService.getCompetition),
   getApprovals: rosterService.getApprovals,
   reviewApproval: (id: string, approve: boolean, reviewer: string, reviewerId?: string, comment?: string) =>
     rosterService.reviewApproval(id, approve, reviewer, reviewerId, competitionService.getCompetition, comment),

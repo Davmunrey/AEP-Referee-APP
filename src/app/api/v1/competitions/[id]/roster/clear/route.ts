@@ -1,6 +1,6 @@
-import { canEditRoster } from "@/lib/auth/session";
 import { clearSlotSchema } from "@/lib/validations";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
@@ -14,8 +14,9 @@ export async function POST(request: Request, context: RouteContext) {
 
   const { id: competitionId } = await context.params;
   const comp = await dataService.getCompetition(competitionId);
+  const blocked = guardRosterWrite(comp, user);
+  if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
-  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
   const body = await request.json();
   const parsed = clearSlotSchema.safeParse({ competitionId, slotKey: body.slotKey });
@@ -37,8 +38,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   const { id: competitionId } = await context.params;
   const comp = await dataService.getCompetition(competitionId);
+  const blocked = guardRosterWrite(comp, user);
+  if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
-  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
   const result = await dataService.clearRosterAssignments(competitionId, user.nombre);
   if (!result) return jsonError("No se pudieron borrar las asignaciones", 400);

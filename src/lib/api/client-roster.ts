@@ -57,6 +57,12 @@ export const rosterApi = {
   saveDraft: (competitionId: string) =>
     request<{ message: string }>(`/competitions/${competitionId}/roster/draft`, { method: "POST" }),
 
+  unlockRosterImprevisto: (competitionId: string) =>
+    request<{ message: string; aprobacion: string }>(
+      `/competitions/${competitionId}/roster/imprevisto`,
+      { method: "POST" },
+    ),
+
   submitRoster: (competitionId: string) =>
     request<{ message: string; proposal: ApprovalProposal }>(
       `/competitions/${competitionId}/roster/submit`,

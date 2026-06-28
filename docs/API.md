@@ -63,6 +63,7 @@ Todas las rutas privadas exigen sesión Supabase: **cookie** (web) o
 | `PATCH` | `/competitions/:id/roster/flags` | `canEditRoster` |
 | `POST` | `/competitions/:id/roster/draft` | `canEditRoster` |
 | `POST` | `/competitions/:id/roster/submit` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/imprevisto` | `canEditRoster` — desbloquea tarima aprobada por imprevisto |
 | `GET` | `/competitions/:id/roster/export` | sesión |
 | `GET` | `/competitions/:id/roster/quadrant` | sesión |
 | `GET` | `/competitions/:id/roster/quadrant.xlsx` | sesión |

@@ -23,6 +23,7 @@ interface RosterHeaderActionsProps {
   violationCount?: number;
   openSlots?: number;
   pending: boolean;
+  rosterLocked?: boolean;
   statusMsg: string | null;
   statusIsError?: boolean;
   onStatus: (msg: string | null, isError?: boolean) => void;
@@ -37,6 +38,7 @@ export function RosterHeaderActions({
   violationCount = 0,
   openSlots = 0,
   pending,
+  rosterLocked = false,
   statusMsg,
   statusIsError = false,
   onStatus,
@@ -100,7 +102,7 @@ export function RosterHeaderActions({
           variant="outline"
           size="sm"
           className="h-8 px-2.5 text-xs"
-          disabled={pending}
+          disabled={pending || rosterLocked}
           onClick={() => {
             startTransition(async () => {
               try {
@@ -167,7 +169,7 @@ export function RosterHeaderActions({
             "h-8 gap-1.5 px-2.5 text-xs font-semibold shadow-sm transition-all",
             fillPct >= 100 && "animate-pulse",
           )}
-          disabled={pending}
+          disabled={pending || rosterLocked}
           onClick={() => {
             const lines = [
               `Cobertura: ${fillPct}% (${filledSlots}/${totalSlots} plazas).`,

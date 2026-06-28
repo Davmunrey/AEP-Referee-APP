@@ -1,5 +1,5 @@
+import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
@@ -11,12 +11,12 @@ export async function POST(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
-  const { id } = await context.params;
-  const comp = await dataService.getCompetition(id);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
+  const { id: competitionId } = await context.params;
+  const comp = await dataService.getCompetition(competitionId);
   if (!comp) return jsonError("Competición no encontrada", 404);
+  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
-  await dataService.saveDraft(id, user.nombre);
-  return jsonOk({ message: "Borrador guardado" });
+  const result = await dataService.unlockRosterImprevisto(competitionId, user.nombre);
+  if ("error" in result) return jsonError(result.error, 400);
+  return jsonOk(result);
 }

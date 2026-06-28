@@ -21,6 +21,7 @@ interface RosterCompetitionHeaderProps {
   isPast: boolean;
   canEdit: boolean;
   canManageCompensation?: boolean;
+  rosterLocked?: boolean;
   violationCount: number;
   filledSlots: number;
   totalSlots: number;
@@ -47,6 +48,7 @@ export function RosterCompetitionHeader({
   isPast,
   canEdit,
   canManageCompensation = false,
+  rosterLocked = false,
   violationCount,
   filledSlots,
   totalSlots,
@@ -134,7 +136,7 @@ export function RosterCompetitionHeader({
                 Volver a tarima
               </Button>
             )}
-            {canEdit && !isEditing && (
+            {canEdit && !isEditing && !rosterLocked && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -202,6 +204,7 @@ export function RosterCompetitionHeader({
                 violationCount={violationCount}
                 openSlots={openSlots}
                 pending={pending}
+                rosterLocked={rosterLocked}
                 statusMsg={statusMsg}
                 statusIsError={statusIsError}
                 onStatus={onStatus}
