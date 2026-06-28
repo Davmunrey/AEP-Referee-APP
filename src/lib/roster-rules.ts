@@ -146,6 +146,7 @@ export function validateRosterOperation(input: {
           ok: false,
           error:
             "Ese juez ya está asignado en otra posición en esta misma sesión (marca * para permitirlo)",
+          overridable: true,
         };
       }
       continue;
@@ -164,6 +165,7 @@ export function validateRosterOperation(input: {
         ok: false,
         error:
           "No puede estar en tarima/jurado y en pesaje o material de la sesión siguiente (marca * para permitirlo)",
+        overridable: true,
       };
     }
   }

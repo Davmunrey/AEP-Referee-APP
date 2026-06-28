@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Info, Users } from "lucide-react";
 import { selectFieldClass } from "@/lib/design-tokens";
-import { getAssignabilityReason, getOperationalBlockReason, getRecommendationWarning } from "@/lib/roster-ui";
+import { getAssignabilityReason, getOperationalBlock, getRecommendationWarning } from "@/lib/roster-ui";
 import { RefereeCard } from "./roster-referee-card";
 
 interface RosterRefereePanelProps {
@@ -139,14 +139,22 @@ export function RosterRefereePanelLeft({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <ul className="space-y-1.5 p-2.5">
           {referees.map((referee) => {
+            const opBlock =
+              selectedRoleKey && selectedSlot
+                ? getOperationalBlock({ template, assignments, slotKey: selectedSlot, refereeId: referee.id, flags })
+                : null;
+            // Bloqueo duro (nivel/normativa o conflicto no forzable) → no asignable.
+            // Conflicto forzable (solape) → aviso, sigue siendo asignable (confirma al asignar).
             const blockedReason =
               selectedRoleKey && selectedSlot
                 ? getAssignabilityReason(referee, selectedRoleKey, competitionTipo, regulations) ??
-                  getOperationalBlockReason({ template, assignments, slotKey: selectedSlot, refereeId: referee.id, flags })
+                  (opBlock && !opBlock.overridable ? opBlock.reason : null)
                 : null;
             const warningReason =
               selectedRoleKey && !blockedReason
-                ? getRecommendationWarning(referee, selectedRoleKey, competitionTipo, regulations)
+                ? opBlock?.overridable
+                  ? opBlock.reason
+                  : getRecommendationWarning(referee, selectedRoleKey, competitionTipo, regulations)
                 : null;
             return (
               <RefereeCard

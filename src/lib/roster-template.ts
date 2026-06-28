@@ -126,7 +126,8 @@ export interface RequiredSlotGroup {
 // Agrupa los roles por área operativa para el resumen "plazas requeridas".
 // Ej: 1 central + 2 laterales = "Tarima 3"; speaker + ordenador = "Mesa/Ordenador 2".
 const REQUIRED_SLOT_GROUPS: { key: string; label: string; roles: RoleKey[] }[] = [
-  { key: "tarima", label: "Tarima", roles: ["central", "lateral", "jurado"] },
+  { key: "tarima", label: "Tarima", roles: ["central", "lateral"] },
+  { key: "jurado", label: "Jurado", roles: ["jurado"] },
   { key: "mesa", label: "Mesa/Ordenador", roles: ["speaker", "ordenador", "mesa", "liftingcast"] },
   { key: "control", label: "Control", roles: ["control"] },
   { key: "pesaje", label: "Pesaje", roles: ["pesaje", "equipamiento", "material"] },

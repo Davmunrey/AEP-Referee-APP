@@ -5,6 +5,7 @@ import {
   countRosterSlots,
   findRegulationViolation,
   getAssignabilityReason,
+  getOperationalBlock,
   getRecommendationWarning,
 } from "@/lib/roster-ui";
 import type { Referee, RegulationRule, RosterSession } from "@/lib/types";
@@ -73,6 +74,41 @@ describe("roster-ui", () => {
     expect(getRecommendationWarning(nacional, "jurado", "AEP-1", juradoRegs)).toContain(
       "Recomendado",
     );
+  });
+
+  it("getOperationalBlock flags overridable overlaps and clears with the * flag", () => {
+    const twoSessions: RosterSession[] = [
+      {
+        sesion: "S1",
+        nombre: "Sesión 1",
+        dia: "Día 1",
+        categorias: [],
+        horarioCompeticion: "",
+        horarioPesaje: "",
+        roles: [{ rol: "Juez Central", slots: 1, key: "central" }],
+        pesajeRoles: [{ rol: "Pesaje", slots: 1, key: "pesaje" }],
+      },
+      {
+        sesion: "S2",
+        nombre: "Sesión 2",
+        dia: "Día 1",
+        categorias: [],
+        horarioCompeticion: "",
+        horarioPesaje: "",
+        roles: [{ rol: "Juez Central", slots: 1, key: "central" }],
+        pesajeRoles: [{ rol: "Pesaje", slots: 1, key: "pesaje" }],
+      },
+    ];
+    const base = {
+      template: twoSessions,
+      assignments: { S1_central_0: "r1" },
+      slotKey: "S2_pesaje_0",
+      refereeId: "r1",
+    };
+    const block = getOperationalBlock(base);
+    expect(block?.overridable).toBe(true);
+    // El * en el puesto existente elimina el conflicto.
+    expect(getOperationalBlock({ ...base, flags: { S1_central_0: { compartido: true } } })).toBeNull();
   });
 
   it("countRegulationViolations tallies assigned slots below min level", () => {

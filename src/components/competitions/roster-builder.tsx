@@ -25,7 +25,7 @@ import {
   countRegulationViolations,
   findRegulationViolation,
   getAssignabilityReason,
-  getOperationalBlockReason,
+  getOperationalBlock,
   type RosterWorkflowStep,
 } from "@/lib/roster-ui";
 import { cn } from "@/lib/utils";
@@ -138,29 +138,49 @@ export function RosterBuilder({
       if (!r.nombre.toLowerCase().includes(q) && !(r.iniciales ?? "").toLowerCase().includes(q)) return false;
     }
     if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) return false;
-    if (selectedSlot && getOperationalBlockReason({ template, assignments, slotKey: selectedSlot, refereeId: r.id, flags })) return false;
+    if (selectedSlot) {
+      // Los conflictos forzables (solape tarima/pesaje) se muestran como aviso y se
+      // pueden confirmar; solo se ocultan los bloqueos duros (mismo puesto repetido).
+      const block = getOperationalBlock({ template, assignments, slotKey: selectedSlot, refereeId: r.id, flags });
+      if (block && !block.overridable) return false;
+    }
     return true;
   }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, flags, referees, regulations, search, selectedRoleKey, selectedSlot, template]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
-    const block = getOperationalBlockReason({ template, assignments, slotKey, refereeId, flags });
-    if (block) { setStatusMsg(block); setStatusIsError(true); return; }
+    const block = getOperationalBlock({ template, assignments, slotKey, refereeId, flags });
+    let forceShared = false;
+    if (block) {
+      if (!block.overridable) { setStatusMsg(block.reason); setStatusIsError(true); return; }
+      // Conflicto forzable: avisamos y, si se confirma, marcamos el puesto como
+      // compartido (*) para dejar constancia en el acta y permitir el solape.
+      const proceed =
+        typeof window !== "undefined" &&
+        window.confirm(`${block.reason}\n\n¿Asignar de todas formas y marcar el puesto como compartido (*)?`);
+      if (!proceed) return;
+      forceShared = true;
+    }
     const snapshot = assignments;
+    const flagsSnapshot = flags;
     const session = slotKey.split("_")[0];
     const sessionTpl = template.find((item) => item.sesion === session);
     const nextAssignments = { ...snapshot, [slotKey]: refereeId };
+    const flagPayload = forceShared
+      ? { compartido: true, intercambio: Boolean(flags[slotKey]?.intercambio) }
+      : undefined;
     setAssignments(() => ({ ...snapshot, [slotKey]: refereeId }));
+    if (flagPayload) setFlags((prev) => ({ ...prev, [slotKey]: flagPayload }));
     if (sessionTpl) setSelectedSlot(findNextOpenSlot(sessionTpl, nextAssignments, slotKey));
     else setSelectedSlot(null);
     startTransition(async () => {
       try {
-        const res = await api.assignReferee(competition.id, slotKey, refereeId);
+        const res = await api.assignReferee(competition.id, slotKey, refereeId, flagPayload);
         setAssignments(res.assignments);
         if (res.flags) setFlags(res.flags);
         if (res.crossZoneMap) setCrossZoneMap(res.crossZoneMap);
         setStatusMsg(null); setStatusIsError(false);
       } catch (err) {
-        setAssignments(snapshot); setSelectedSlot(slotKey);
+        setAssignments(snapshot); setFlags(flagsSnapshot); setSelectedSlot(slotKey);
         setStatusMsg(formatApiError(err, "No se pudo guardar la asignación")); setStatusIsError(true);
       }
     });

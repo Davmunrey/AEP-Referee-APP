@@ -136,7 +136,7 @@ describe("validateRosterOperation", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("blocks same referee in two platform positions in the same session", () => {
+  it("blocks same referee in two platform positions in the same session (overridable)", () => {
     const result = validateRosterOperation({
       template: rosterTemplate,
       assignments: { S1_central_0: "r1" },
@@ -145,6 +145,18 @@ describe("validateRosterOperation", () => {
     });
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/otra posición/i);
+    expect(result.overridable).toBe(true);
+  });
+
+  it("marks same-role duplicate as a hard (non-overridable) block", () => {
+    const result = validateRosterOperation({
+      template: rosterTemplate,
+      assignments: { S1_jurado_0: "r1" },
+      slotKey: "S1_jurado_1",
+      refereeId: "r1",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.overridable).toBeFalsy();
   });
 
   it("allows same referee at platform + weigh-in roles in the same session", () => {
@@ -189,6 +201,7 @@ describe("validateRosterOperation", () => {
     });
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/marca \* para permitirlo/i);
+    expect(result.overridable).toBe(true);
   });
 
   it("allows control S1 + pesaje S2 when the existing platform slot is marked compartido (*)", () => {
