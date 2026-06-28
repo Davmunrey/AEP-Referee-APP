@@ -1,0 +1,1447 @@
+{
+  "source": "https://powerliftingspain.es/wp-content/uploads/2026/04/CLUBES-Y-DATOS-HISTORICOS.xlsx-DATOS-DE-CONTACTO-DE-CLUBES.pdf",
+  "updatedAt": "2026-04-18",
+  "count": 180,
+  "clubs": [
+    {
+      "region": "ANDALUCÍA",
+      "province": "Almeria",
+      "locality": "Vera",
+      "name": "KOOK VERA Almeria",
+      "responsible": "Eduardo Luis López Domí",
+      "email": "kooklevantamientosdepotencia@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Almería",
+      "locality": "Níjar",
+      "name": "DEPORNIXAR ALMERÍA",
+      "responsible": "David Hernández Ferná",
+      "email": "ndezdhernandezfer@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Almería",
+      "locality": "Roquetas de MarALMERÍA",
+      "name": "BARBELL CLUB",
+      "responsible": "Francisco Benete Herrada",
+      "email": "powerliftingalmeria@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Almería",
+      "locality": "Roquetas de Mar",
+      "name": "EFFICIENT STRENGTH Almeria",
+      "responsible": "José López Llorenteefficient",
+      "email": "strengthclub@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Almería",
+      "locality": "Huércal-overa",
+      "name": "POWER HUERCAL-OVERA",
+      "responsible": "Rubén Castillo Parra",
+      "email": "cdpowerho@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Cadíz",
+      "locality": "",
+      "name": "ChipionaPOWERLIFTING CHIPIONA",
+      "responsible": "Alberto Vega Rodríguez",
+      "email": "powerliftingchipiona@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Cádiz",
+      "locality": "Cádiz",
+      "name": "BASIC STRENGTH Cádiz",
+      "responsible": "Jaime Cortés",
+      "email": "herediajaimecortesheredia@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Cádiz",
+      "locality": "Jerez de la Frontera",
+      "name": "NAMEK BARBELL CLUB Cádiz",
+      "responsible": "Alejandro Murciano Renedoa",
+      "email": "alemail@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Cádiz",
+      "locality": "",
+      "name": "ChipionaRESTLESS CLUB Cadiz",
+      "responsible": "Alberto Castro FloridoRestless",
+      "email": "clubpowerlifting@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Córdoba",
+      "locality": "Monturque",
+      "name": "GOAT POWER CLUB Córdoba",
+      "responsible": "Julian Aguilar Pizarrogoat",
+      "email": "powerclub@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Córdoba",
+      "locality": "Córdoba",
+      "name": "POWERLIFTING LIFTERS Córdoba",
+      "responsible": "Alfonso Bonilla",
+      "email": "granadosalfonsobonillagranados@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Granada",
+      "locality": "Albolote",
+      "name": "FUERZA NAZARI Granada",
+      "responsible": "Raúl Palma Palma",
+      "email": "cdfuerzanazari@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Granada",
+      "locality": "ArmillaLIFT",
+      "name": "AMBITION Granada",
+      "responsible": "Inmaculada Soto Ruiz",
+      "email": "liftambition20@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Granada",
+      "locality": "Granada",
+      "name": "MOUNTAIN STRENGTH Granada",
+      "responsible": "David Quirante Pérezquiranted",
+      "email": "avid01@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Granada",
+      "locality": "GranadaTHE",
+      "name": "PRMODE Granada",
+      "responsible": "José Miguel Martín",
+      "email": "rosalesmerchandisingtheprmode@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Granada",
+      "locality": "Durcal",
+      "name": "PEPE POWER TEAM Granada",
+      "responsible": "José Francisco Puentes SánchezPPT",
+      "email": "clubpowerlifting@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Huelva",
+      "locality": "Almonte",
+      "name": "ALTERNATIVE RAW Huelva",
+      "responsible": "Luis Guitar MedinaAlmonteraw",
+      "email": "powerlifgting@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Huelva",
+      "locality": "HuelvaRV",
+      "name": "STRENGTH Huelva",
+      "responsible": "Rubén Rodríguez Castrorv",
+      "email": "strengthcoaching@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Jaén",
+      "locality": "Andújar",
+      "name": "POWERLIFTING ANDUJAR",
+      "responsible": "Rubén Martínez Hoyo",
+      "email": "powerliftingandujar@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Jaén",
+      "locality": "Jaén",
+      "name": "POWERLIFTING JAEN",
+      "responsible": "Francisco Javier Villar Macías",
+      "email": "cdpowerliftingjaen@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Jaén",
+      "locality": "Mengibar",
+      "name": "POWER RANGERS STRENGTH Jaén",
+      "responsible": "Antonio José Gómez Hoyo",
+      "email": "powerrangersstrength@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "Alhaurín De La Torre",
+      "name": "ENERGY ALHAURÍN",
+      "responsible": "Alejandro Rodríguez Acuña",
+      "email": "cdenergyalh@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "Alhaurín De La TorreFG",
+      "name": "POWER ALHAURÍN",
+      "responsible": "Francisco Gutiérrez",
+      "email": "cuestafgpersonaltrainermlg@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "Málaga84",
+      "name": "POWERLIFTING TEAM MalagaJosé",
+      "responsible": "Carlos Cayuela Domínguez84",
+      "email": "powerliftingteam@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "MálagaMÁLAGA",
+      "name": "POWER TEAM",
+      "responsible": "Francisco Ríos Naranjomalaga",
+      "email": "powerteam@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "Málaga",
+      "name": "PROJECT STRENGTH Málaga",
+      "responsible": "Adrián Segura PlazaAdr",
+      "email": "ich7ko@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "",
+      "name": "MarbellaPOWERLIFTING MARBELLA",
+      "responsible": "Diego Miguel Delgado Delgado",
+      "email": "powerliftingmarbella@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "Málaga",
+      "name": "VELIFT STRENGTH Málaga",
+      "responsible": "Miguel Mañanas Álvaro",
+      "email": "halterofiliamalaga@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Málaga",
+      "locality": "Málaga",
+      "name": "DISCIPLINE Málaga",
+      "responsible": "Iva Petrova Ivanovadiscipline",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Alcalá de Guadaíra",
+      "name": "FUERZA GUADAIRA",
+      "responsible": "Alvaro Galiano Galindo",
+      "email": "cdfuerzaguadaira@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Almensilla",
+      "name": "ÉLITE BOLLULLOS",
+      "responsible": "Francisco Rubio Domínguez",
+      "email": "clubelitepowerlifting@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Bollullos de la Mitación",
+      "name": "ELITE POWERHOUSE Sevilla",
+      "responsible": "Fernando Rubio Lobo",
+      "email": "clubelitepowerhouse@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Bollullos de la Mitación",
+      "name": "IRONSIDE STRENGTH Sevilla",
+      "responsible": "Rafael García",
+      "email": "rafael@gnoguer.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Pilas",
+      "name": "GORILAS POWER TEAM Sevilla",
+      "responsible": "Quimey Malinarich Pelizzagorillas",
+      "email": "powerteam@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Sevilla",
+      "name": "POWERLIFTING SEVILLA",
+      "responsible": "Alejandro García Gallardo",
+      "email": "powerliftingsevilla@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Villanueva del Río y Minas",
+      "name": "DU&QUE SPORT GYM CLUB Sevilla",
+      "responsible": "Francisco Ferrari Buizatokipafer",
+      "email": "rari46@hotmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Bollullos de la Mitación",
+      "name": "SOUTH POWER Sevilla",
+      "responsible": "Antonio Pérez Barrossouth",
+      "email": "powerstrength@gmail.com"
+    },
+    {
+      "region": "ANDALUCÍA",
+      "province": "Sevilla",
+      "locality": "Casariche",
+      "name": "ATLETAS DE FUERZA CASARICHE Sevilla",
+      "responsible": "Pedro Moriana Piñapedromoria",
+      "email": "na2017@gmail.com"
+    },
+    {
+      "region": "ARAGÓN",
+      "province": "Huesca",
+      "locality": "",
+      "name": "BarbastroBARBASTRO POWERLIFTING Huesca",
+      "responsible": "Gabriel Tripiana Sanzcfb",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "ARAGÓN",
+      "province": "Zaragoza",
+      "locality": "",
+      "name": "ZaragozaZARAGOZA BARBELL",
+      "responsible": "Pablo Martínez Córdova",
+      "email": "aragonbarbell@gmail.com"
+    },
+    {
+      "region": "ARAGÓN",
+      "province": "Zaragoza",
+      "locality": "",
+      "name": "ZaragozaTEAM CE POWERLIFTING Zaragoza",
+      "responsible": "Christian Embid Gasparcembi",
+      "email": "d.team@gmail.com"
+    },
+    {
+      "region": "ARAGÓN",
+      "province": "Huesca",
+      "locality": "",
+      "name": "BarbastroZEUS Huesca",
+      "responsible": "Eros Cuesta Redónsanti",
+      "email": "gg1986@gmail.com"
+    },
+    {
+      "region": "ASTURIAS",
+      "province": "Asturias",
+      "locality": "Gijón",
+      "name": "GRIND TEAM GIJON",
+      "responsible": "Pablo San Miguel Arcegrind",
+      "email": "teamgijon@gmail.com"
+    },
+    {
+      "region": "ASTURIAS",
+      "province": "Asturias",
+      "locality": "Oviedo",
+      "name": "ASOCIACIÓN ASTURIANA",
+      "responsible": "Felipe Nicolás Rodríguez Lópeza.a.de",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "ASTURIAS",
+      "province": "Asturias",
+      "locality": "Oviedo",
+      "name": "VETUSTA POWERLIFTING Asturias",
+      "responsible": "Jesús Castañón De La Fuentevetusta",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "ASTURIAS",
+      "province": "Asturias",
+      "locality": "Oviedo",
+      "name": "CONQUER POWER CLUB Oviedo",
+      "responsible": "Daniel Campillo Suár",
+      "email": "ezinfo@conquerfitclub.es"
+    },
+    {
+      "region": "ASTURIAS",
+      "province": "Asturias",
+      "locality": "Oviedo",
+      "name": "WORKER POWER Asturias",
+      "responsible": "Armando García González worker",
+      "email": "powersasturias@gmail.com"
+    },
+    {
+      "region": "BALEARES",
+      "province": "Baleares",
+      "locality": "Campos, Mallorca",
+      "name": "CONRA CLUB DE FORÇA Mallorca",
+      "responsible": "Jordi Vara Martorellco",
+      "email": "nragym@gmail.com"
+    },
+    {
+      "region": "BALEARES",
+      "province": "Baleares",
+      "locality": "Costa de la Calma",
+      "name": "FUERZA KB Baleares",
+      "responsible": "Enrique Bonnin",
+      "email": "almariolauraperaltacabrera@gmail.com"
+    },
+    {
+      "region": "BALEARES",
+      "province": "Baleares",
+      "locality": "Palma de Mallorca",
+      "name": "CIUTAT DE PALMA",
+      "responsible": "Antonio Martínez Cabello",
+      "email": "powerliftingciutatdepalma@gmail.com"
+    },
+    {
+      "region": "BALEARES",
+      "province": "Baleares",
+      "locality": "Porto Cristo",
+      "name": "ASOCIACION IRON LIFTERS POWERLIFTING Baleares",
+      "responsible": "Francisco Cañas Vergara",
+      "email": "clubdeportivoironlifters@gmail.com"
+    },
+    {
+      "region": "BALEARES",
+      "province": "Baleares",
+      "locality": "Santa Gertrudis de Fruitera",
+      "name": "POWERLIFTING IBIZA",
+      "responsible": "Antonio Torres Mari",
+      "email": "clubpowerliftingibiza@gmail.com"
+    },
+    {
+      "region": "BALEARES",
+      "province": "Baleares",
+      "locality": "Sa Pobla",
+      "name": "MENTALIFT JJ STERNGTH CLUB Baleares",
+      "responsible": "Jaume Joan Cantallops Bennassarcatalina",
+      "email": "info11@gmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Las Palmas",
+      "locality": "Las Palmas de Gran Canarias",
+      "name": "ELITE CANARIAS",
+      "responsible": "Miguel Angel Pascual",
+      "email": "cabreraelitcanarias@gmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Las Palmas",
+      "locality": "Agüimes",
+      "name": "PEGASUS POWERLIFTING Canarias",
+      "responsible": "Iván Jesús Tejera VeraPegasus",
+      "email": "powerlifting@hotmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Las Palmas",
+      "locality": "Arinaga",
+      "name": "WAVES Canarias",
+      "responsible": "David Suárez Torreswave",
+      "email": "sgcgym@gmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Tenerife",
+      "locality": "El Sobradillo",
+      "name": "CANARY STRENGTH",
+      "responsible": "Miguel Ramos López De Callecanary",
+      "email": "strengthclub@gmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Tenerife",
+      "locality": "La Laguna",
+      "name": "TIGOT POWERLIFTING Canarias",
+      "responsible": "Marco Herrera Hernándeztigot",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Tenerife",
+      "locality": "Santa Cruz de Tenerife",
+      "name": "FUERZA GUANCHE Canarias",
+      "responsible": "Ricardo Ruiz Bereijo",
+      "email": "fuerzaguanchemail@gmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Tenerife",
+      "locality": "Güímar",
+      "name": "IRON POWER TENERIFE",
+      "responsible": "Juan Francisco Rodríguez Dos Ramos",
+      "email": "ironbox.jf@gmail.com"
+    },
+    {
+      "region": "CANARIAS",
+      "province": "Tenerife",
+      "locality": "Los Realejos",
+      "name": "URUZ STRENGTH Canarias",
+      "responsible": "Clara Militto Valuruz",
+      "email": "strengthteam@gmail.com"
+    },
+    {
+      "region": "CANTABRIA",
+      "province": "Cantabria",
+      "locality": "Pechón",
+      "name": "TEAM ELITETRAINER Cantabria",
+      "responsible": "Carlos Arruzas Russellteamelitetrainer",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "CANTABRIA",
+      "province": "Cantabria",
+      "locality": "Santander",
+      "name": "POWERLIFTING CANTABRIA",
+      "responsible": "Cristian Serna Sierracristian",
+      "email": "serna6@gmail.com"
+    },
+    {
+      "region": "CANTABRIA",
+      "province": "Cantabria",
+      "locality": "Santander",
+      "name": "YOUNG AMBITION Cantabria",
+      "responsible": "Javier Sainz Rozas De",
+      "email": "castroyoungambitioncantabria@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Albacete",
+      "locality": "Albacete",
+      "name": "POWERLIFTING ALBACETE",
+      "responsible": "Antonio Toldos Ronco",
+      "email": "powerliftingalbacete@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Ciudad Real",
+      "locality": "Ciudad Real",
+      "name": "ECLIPSE POWERLIFTING",
+      "responsible": "Ciudad RealOscar Martin Sanchezeclipse",
+      "email": "powerclub@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Ciudad Real",
+      "locality": "Ciudad Real",
+      "name": "INSANE POWERLIFTING CIUDAD REAL",
+      "responsible": "Alberto Zamora Revertei",
+      "email": "power.strength@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Ciudad Real",
+      "locality": "Ciudad Real",
+      "name": "SOHO WEIGHTLIFTING",
+      "responsible": "Ciudad RealJose Francisco Nieto Gil",
+      "email": "secretaria@vitalgroupfn.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Ciudad Real",
+      "locality": "Ciudad Real",
+      "name": "ZB BARBELL",
+      "responsible": "Ciudad RealAlberto Zamora Reverte",
+      "email": "zbbarbell@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Cuenca",
+      "locality": "Cuenca",
+      "name": "BARRAS COLGADAS STRENGTH Cuenca",
+      "responsible": "Daniel Saiz Bonillabarrascolgadas",
+      "email": "strengthsociety@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Toledo",
+      "locality": "Burguillos de Toledo",
+      "name": "BELIAL POWERLIFTING Toledo",
+      "responsible": "Ángel Gámez Carmonabelial",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Toledo",
+      "locality": "Carranque",
+      "name": "BERSERKERS Toledo",
+      "responsible": "Óscar Sánchez Moraoscarsanc",
+      "email": "hez.pt@hotmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Toledo",
+      "locality": "Toledo",
+      "name": "POWERLIFTING",
+      "responsible": "TOLEDOSergio Sánchez-Cano Mora-Granados",
+      "email": "powerliftingtoledo@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Toledo",
+      "locality": "Velada",
+      "name": "ASTERION BULLS Toledo",
+      "responsible": "Sergio Lopez Martinasterion",
+      "email": ".bulls@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "",
+      "locality": "CASTILLA y LEÓN: 10ÁvilaÁvila",
+      "name": "RS LIFTING Ávila",
+      "responsible": "Raúl Jimenez Díazrs",
+      "email": "lifting.av@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Burgos",
+      "locality": "Burgos",
+      "name": "CELTIBERIAN LIFTERS Burgos",
+      "responsible": "Álvar Miñón Sánchezceltiberian",
+      "email": "lifters@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Burgos",
+      "locality": "Burgos",
+      "name": "STRENGTH BURGOS",
+      "responsible": "Ivan Alonso Lopez",
+      "email": "strengthburgos@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "León",
+      "locality": "Trobajo del Camino",
+      "name": "FUERZA NORTE León",
+      "responsible": "Sergio Álvarez Delgado",
+      "email": "powerlifting.fuerzanorte@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Salamanca",
+      "locality": "Salamanca",
+      "name": "POWERLIFTING SALAMANCA",
+      "responsible": "Raquel Martín Tomás",
+      "email": "powerliftingsalamanca@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Soria",
+      "locality": "Soria",
+      "name": "POWERLIFTING NUMANCIA",
+      "responsible": "Tsanko Ventsislavov Baliev",
+      "email": "power.numancia@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Valladolid",
+      "locality": "Valladolid",
+      "name": "ASENSIO POWERLIFTING Valladolid",
+      "responsible": "Miguel Fernández Morillo",
+      "email": "clubasensiopowerlifting@gmail.com"
+    },
+    {
+      "region": "CASTILLA-LA MANCHA",
+      "province": "Valladolid",
+      "locality": "Valladolid",
+      "name": "VALKYRIA PT Valladolid",
+      "responsible": "Mario García",
+      "email": "cembranosvalkyriapt@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Barcelona",
+      "name": "FEDERACIÓN CATALANA",
+      "responsible": "Daniel Villacampa Estal",
+      "email": "loinfo@fc-culturisme.cat"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Barcelona",
+      "name": "FRENETIK POWERLIFTING Barcelona",
+      "responsible": "Gerard Moya Freixedasfrenetik",
+      "email": "powerliftingclub@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Barcelona",
+      "name": "OLYMPIA BARCELONA",
+      "responsible": "Pau Toro I Vidiellapaut",
+      "email": "oro_20@hotmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Barcelona",
+      "name": "POWERLIFTING BARCELONA",
+      "responsible": "Javier Alcalá Sevillabarcelona",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Barcelona",
+      "name": "RIVAL POWERLIFTING Barcelona",
+      "responsible": "Daniel Garcia Tomeo",
+      "email": "afiliacionesrivalclub@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "BarcelonaTHE NEW ERA",
+      "name": "TEAM Barcelona",
+      "responsible": "Marc Ribera Gasconnewera",
+      "email": ".trainers@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Barcelona",
+      "name": "PBP CLUB Barcelona",
+      "responsible": "Sergio Rosales Lopez",
+      "email": "clubpbp@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Malgrat de Mar",
+      "name": "ATENEA POWERLIFTING Barcelona",
+      "responsible": "Sara Jiménez Guillénatenea",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Martorell",
+      "name": "UNDERGROUND LIFTING Barcelona",
+      "responsible": "Marc Rius I Pecaninsthemajor",
+      "email": "coaching@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Palau Solita I Plegamans",
+      "name": "MOONSTONE BARBELL Sabadell",
+      "responsible": "Víctor Terraga Gómezmoonstone",
+      "email": "zbbarbell@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "SabadellRZ",
+      "name": "POWER TEAM Sabadell",
+      "responsible": "Antoni Ruiz Rodriguez",
+      "email": "antoni-10-23@hotmmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Sant Adrià del Besos",
+      "name": "FORÇA LAIESKEN Barcelona",
+      "responsible": "Adrian Alegre Martinez",
+      "email": "clubfuerzalaiesken@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Sant Boi de LlobregatSTB",
+      "name": "STRENGTH Barcelona",
+      "responsible": "Daniel Landeira Gumádanilandeira",
+      "email": ".datapower@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Barcelona",
+      "locality": "Vilafranca del Penedès",
+      "name": "FORÇA VILLAFRANCA",
+      "responsible": "Oleksandra Kharandyuk",
+      "email": "clubdeforcavilafranca@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Girona",
+      "locality": "Olot",
+      "name": "VOLCANO STRENGTH Girona",
+      "responsible": "Carla Pérez BenítezVolcan",
+      "email": "strengthclub@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Lleida",
+      "locality": "Torrefarrera",
+      "name": "STRENGTH LEGACY Lleida",
+      "responsible": "Víctor López Gómezvict",
+      "email": "orlg98@hotmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Tarragona",
+      "locality": "El Vendrell",
+      "name": "UNITY FORCE Tarragona",
+      "responsible": "Jordi Corbella Edounityforce",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Tarragona",
+      "locality": "Tarragona",
+      "name": "PRAETORIANS Tarragona",
+      "responsible": "Eduard Moreno",
+      "email": "curtopraetorianstgn@gmail.com"
+    },
+    {
+      "region": "CATALUÑA",
+      "province": "Tarragona",
+      "locality": "La Pobla de Mafumet",
+      "name": "GNO TEAM Tarragona",
+      "responsible": "Óscar Cordero",
+      "email": "torresosckygnoroc@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Alava",
+      "locality": "Llodio",
+      "name": "ERASO POWERLIFTING Alava",
+      "responsible": "Iñaki Garcia",
+      "email": "ibarluzeaerasopwr@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Alava",
+      "locality": "Vitoria",
+      "name": "HIRUGORRI POWERLIFTING Arava",
+      "responsible": "Leire Mendia Calvohirugorri",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Bizkaia",
+      "locality": "Berango",
+      "name": "RAW BARBELL CLUB Bizkaia",
+      "responsible": "Joseba Etxegarai Somocuetobarbell",
+      "email": "barbellclubraw@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Bizkaia",
+      "locality": "Derio",
+      "name": "IRON HELL Bizkaia",
+      "responsible": "Endika Torralba Alonso",
+      "email": "ironhellbizkaia@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Bizkaia",
+      "locality": "Durango",
+      "name": "RAW RAGE POWERLIFTING Bizkaia",
+      "responsible": "Borja Isasi Echarterawrage",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Bizkaia",
+      "locality": "Getxo",
+      "name": "IZARRA POWERLIFTING Bizkaia",
+      "responsible": "Aimar Garitano SarasolaIzarra",
+      "email": "powerkluba@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Bizkaia",
+      "locality": "Abando",
+      "name": "STRONG POWER Bilbao",
+      "responsible": "Ainhoa Casanovas Martí",
+      "email": "nstrongainho@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Gipuzkoa",
+      "locality": "Urretxu",
+      "name": "GOIERRI KE Gipuzkoa",
+      "responsible": "Joseba Alvarez Zalduagoierr",
+      "email": "ipower@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Gipuzkoa",
+      "locality": "",
+      "name": "ZarautzZARAUTZ BURDIN ZALEAK Gipuzkoa",
+      "responsible": "Mikel Idigoras",
+      "email": "larramendizarautzbasqueforge@gmail.com"
+    },
+    {
+      "region": "EUSKADI",
+      "province": "Bizkaia",
+      "locality": "Barakaldo",
+      "name": "POWER PRIME Bilbao",
+      "responsible": "Jorge Perez Payo",
+      "email": "clubfuerzaprime@gmail.com"
+    },
+    {
+      "region": "EXTREMADURA",
+      "province": "Cáceres",
+      "locality": "Cáceres",
+      "name": "NORBA POWER Cáceres",
+      "responsible": "Javier Santervás Olmocjcorpora",
+      "email": "tion20@gmail.com"
+    },
+    {
+      "region": "EXTREMADURA",
+      "province": "Cáceres",
+      "locality": "Coria",
+      "name": "POWERLIFTING EXTREMADURA",
+      "responsible": "Esther Gutiérrez Gutiérrez",
+      "email": "powerliftingextremadura@gmail.com"
+    },
+    {
+      "region": "GALICIA",
+      "province": "La Coruña",
+      "locality": "Santiago de Compostela",
+      "name": "BEÖRN POWERLIFTING Coruña",
+      "responsible": "Fernando Regueira Lorenzobeorn",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "GALICIA",
+      "province": "La Coruña",
+      "locality": "El Ferrol",
+      "name": "FÉNIX GALICIA POWER",
+      "responsible": "Jesús D. Prieto",
+      "email": "freirejronkol@hotmail.com"
+    },
+    {
+      "region": "GALICIA",
+      "province": "La Coruña",
+      "locality": "Teo",
+      "name": "ONI BARBELL Coruña",
+      "responsible": "Oscar Juanes Carrascoonibarbell",
+      "email": "onibarbellclubgalicia@gmail.com"
+    },
+    {
+      "region": "GALICIA",
+      "province": "Ourense",
+      "locality": "Ourense",
+      "name": "720 POWERLIFTING",
+      "responsible": "OURENSERosalía Veiga Lestegás720",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "GALICIA",
+      "province": "Ourense",
+      "locality": "Ourense",
+      "name": "VÁKNER POWERLIFTING GALIZA",
+      "responsible": "Victor Perez Sanmamedvakner",
+      "email": "powerliftinggaliza@gmail.com"
+    },
+    {
+      "region": "GALICIA",
+      "province": "Pontevedra",
+      "locality": "Caldas de Reis",
+      "name": "GIM VITAL Pontevedra",
+      "responsible": "Jesús Manuel Arca Carballoactiveser",
+      "email": "vice15@outlook.com"
+    },
+    {
+      "region": "GALICIA",
+      "province": "Pontevedra",
+      "locality": "Vigo",
+      "name": "GALILIFTERS Pontevedra",
+      "responsible": "Óscar Vicente PereiraGali",
+      "email": "lifters2021@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Aldea del Fresno",
+      "name": "STRENGTH PHASE Madrid",
+      "responsible": "Enrique Galhardo Martíne",
+      "email": ".galhardo66@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Alcalá de Henares",
+      "name": "RISING POWER Madrid",
+      "responsible": "Jonatan Carriches Fernándezrising",
+      "email": "powercenter@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Alcalá de Henares",
+      "name": "FUERZA LA FORJA",
+      "responsible": "Alcala de HenaresRaúl Muñoz",
+      "email": "higuerasmunozhiguerasraul@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Alcobendas",
+      "name": "SPECIFIC STRENGTH Madrid",
+      "responsible": "Diego Manuel Díaz Reevesspecific",
+      "email": "strengthmadrid@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Alcobendas",
+      "name": "VENDETTA POWERLIFTING Madrid",
+      "responsible": "Gonzalo Cascales Martínvendetta",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Bellavista",
+      "name": "IRONBORN Madrid",
+      "responsible": "Carlos Solís Jiménez",
+      "email": "strengthironborn@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Colmenar Viejo",
+      "name": "BLACKBARBELL Madrid",
+      "responsible": "Pablo Rego Merinoblackbarbell",
+      "email": "clubpowerlifting@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Colmenar Viejo",
+      "name": "VILLA POWERLIFTING Madrid",
+      "responsible": "Víctor De La Villa Sá",
+      "email": "nchezvictordelavillasan@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "El Berruco",
+      "name": "PUERTA DE LA SIERRA Madrid",
+      "responsible": "Mauro Junior Mendoza",
+      "email": "burgosmmendozabu@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "El Vellón",
+      "name": "MIKEBARBELL Madrid",
+      "responsible": "Miguel Moreno Ortegamike",
+      "email": "barbell.coach@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Fuenlabrada",
+      "name": "IRON POWER Fuenlabrada",
+      "responsible": "Manuel Jesús Rubio Blas",
+      "email": "cdironpower@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Getafe",
+      "name": "SOUTHWEST POWERLIFTING Madrid",
+      "responsible": "Rafael García Noguersouth",
+      "email": "powerstrength@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Las Rozas de Madrid",
+      "name": "EDUARDO RALLO Madrid",
+      "responsible": "Eduardo López",
+      "email": "ralloeduardoralloentrenamiento@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Leganés",
+      "name": "INTEND POWER Madrid",
+      "responsible": "Alejandro Canel Rejanointen",
+      "email": "dpower@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "AG STRENGTH Madrid",
+      "responsible": "Valeria Ocaña Lópezag",
+      "email": "strengthclub@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "ALFA",
+      "responsible": "Forjando Atletas MadridCarlos Enrique López Echeverr",
+      "email": "iainfo@forjandoatletas.es"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "ATPOWER TEAM Madrid",
+      "responsible": "Ricardo Ampudia Garcíaat",
+      "email": "powerteammadrid@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "CROM GYM Madrid",
+      "responsible": "Eduardo Prada Jiménezcrom",
+      "email": "gympower@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "DANIGPOWER Madrid",
+      "responsible": "Daniel Gómez Ahumada",
+      "email": "clubdanigpower@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "MadridDT",
+      "name": "POWER Madrid",
+      "responsible": "Daniel Torvisco",
+      "email": "otodtfitnessmadrid@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "ENTRENA INTENSO Madrid",
+      "responsible": "Raúl López",
+      "email": "cubellsrauloon@hotmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "ÉXITO28",
+      "responsible": "MadridJosué Tarí Madariagaexito2",
+      "email": "8madrid@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "FENRIR Madrid",
+      "responsible": "Alvaro Iglesias Santosfenrir.",
+      "email": "powerclub@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "GRANDA Madrid",
+      "responsible": "Ventura Mateos Pé",
+      "email": "rezgrandapwr@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "HERU POWERLIFTING Madrid",
+      "responsible": "Antonio Serrano Hernándezheru.",
+      "email": "powerlifting.023@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "LEVANTAMIENTO Madrid",
+      "responsible": "Roberto Baquedano Briones",
+      "email": "clublpmpower@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "MAD POWERLIFTING Madrid",
+      "responsible": "María Sánchez Rodríguezmad",
+      "email": "powerlifting28100@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "MGF POWER TEAM Madrid",
+      "responsible": "Mario Gracia Firma Pazmariograc",
+      "email": "ia2000@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "POWERLIFTING MADRID",
+      "responsible": "Francisco García",
+      "email": "info@clubpowerliftingmadrid.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "RAGNAROK Madrid",
+      "responsible": "Jesús Antonio Caneiro Torres",
+      "email": "club.powerlifting.ragnarok@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "SIDEROPOLIS Madrid",
+      "responsible": "Samer Kichi Zarago",
+      "email": "zaclub@sideropolis.es"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "SILENT CLUB Madrid",
+      "responsible": "Rubén Díaz Fernándezsilent",
+      "email": "crew00@hotmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "SOY POWERLIFTER Madrid",
+      "responsible": "Ruth De Benito",
+      "email": "femiaignaciofernandezverdugo@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "STRENGTH CAPITAL Madrid",
+      "responsible": "Rodrigo García De Marina Metola",
+      "email": "strengthcapitalteam@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "SUNDAY POWER Madrid",
+      "responsible": "Domingo González Martínez",
+      "email": "clubsundaypower@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Madrid",
+      "name": "ALFA FUERZA Y ARCO CDE Madrid",
+      "responsible": "Carlos Enrique López Echeverria",
+      "email": "fuerzayarco@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Mejorada del Campo",
+      "name": "OVERSIZE STRENGT CLUB Madrid",
+      "responsible": "Adrian Pérez Sá",
+      "email": "nchezadri-japa@hotmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Miraflores de la Sierra",
+      "name": "POWER VALHALLA Madrid",
+      "responsible": "Jorge Ramírez Montero",
+      "email": "powervalhallasc@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Rivas Vaciamadrid",
+      "name": "BLACK CROWN POWERLIFTING Madrid",
+      "responsible": "Rafael Ballester Fernandezblackcrow",
+      "email": "npower@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Villalbilla",
+      "name": "LEONES HAKEÑOS Madrid",
+      "responsible": "Pablo Gutierrez Martínpablo",
+      "email": ".gutierrezm96@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Villalbilla",
+      "name": "HOME AND HEATLH FITNESS Madrid",
+      "responsible": "Daniel Felipe Orozco Gira",
+      "email": "ldoinfo@homeandhealthfitness.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Torrejón de Ardoz",
+      "name": "ABLAZE STRENGTH Madrid",
+      "responsible": "Jorge González Araujo",
+      "email": "strengthablaze@gmail.com"
+    },
+    {
+      "region": "MADRID",
+      "province": "Madrid",
+      "locality": "Alcorcón",
+      "name": "WORK & FAITH Madrid",
+      "responsible": "Cristian Vinueza Maque",
+      "email": "raworkandfaithteam@gmail.com"
+    },
+    {
+      "region": "MURCIA",
+      "province": "Murcia",
+      "locality": "Cartagena",
+      "name": "BANZAI STRENGTH CARTAGENA",
+      "responsible": "Isabel Gil Serranobanzai",
+      "email": ".strength@gmail.com"
+    },
+    {
+      "region": "MURCIA",
+      "province": "Murcia",
+      "locality": "Ceutí",
+      "name": "MONTOCÁN CEUTÍ",
+      "responsible": "Francisco José Cano Fernándezr",
+      "email": "ubios8@hotmail.com"
+    },
+    {
+      "region": "MURCIA",
+      "province": "Murcia",
+      "locality": "Las Torres de Cotillas",
+      "name": "MYRTEA LIFTING CLUB Murcia",
+      "responsible": "Ana Roa Salesmyrtea",
+      "email": "myrtealiftingclub@gmail.com"
+    },
+    {
+      "region": "MURCIA",
+      "province": "Murcia",
+      "locality": "Murcia",
+      "name": "SPARTA Murcia",
+      "responsible": "Francisco Lucas Dato",
+      "email": "clubspartamurcia@gmail.com"
+    },
+    {
+      "region": "NAVARRA",
+      "province": "Navarra",
+      "locality": "Pamplona",
+      "name": "POWER HOUSE Pamplona",
+      "responsible": "Pablo Aitor Lizarraga Guerraxthor",
+      "email": "powerlifting@gmail.com"
+    },
+    {
+      "region": "NAVARRA",
+      "province": "Navarra",
+      "locality": "Pamplona",
+      "name": "POWERLIFTING NAVARRA",
+      "responsible": "Juan Molina Sainz De Murieta",
+      "email": "powerliftingnavarra@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Alicante",
+      "locality": "Alicante",
+      "name": "FLOWERLIFTING CLUB Alicante",
+      "responsible": "Flor Anahí Lago PernisiFlower",
+      "email": "myrtealiftingclub@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Alicante",
+      "locality": "",
+      "name": "AlteaALTEA-FINESTRAT-L'ALFÀS",
+      "responsible": "Amadeo Gimeno Pé",
+      "email": "rezgpamadeo@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Alicante",
+      "locality": "Elche",
+      "name": "IRON TEAM Elche",
+      "responsible": "José Andrés Gómez Rives",
+      "email": "ironteampower@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Alicante",
+      "locality": "Petrer",
+      "name": "BEGOAL Alicante",
+      "responsible": "David Calderón Albero",
+      "email": "powerlifting.centrobegoal@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Alicante",
+      "locality": "San Vicente del Raspeig",
+      "name": "POWER SAN VICENTE",
+      "responsible": "Jorge González Pastor",
+      "email": "clubpowersanvicente@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Alicante",
+      "locality": "Ibi",
+      "name": "POWER AMIBI Alicante",
+      "responsible": "German Galera Sola",
+      "email": "powerliftingibi@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Valencia",
+      "locality": "Puerto de Sagunto",
+      "name": "ANVIL STRENGTH Valencia",
+      "responsible": "Marc Alonso Pascualanvil",
+      "email": "strengthclub@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Valencia",
+      "locality": "Alfafar",
+      "name": "ELITE LIFTERS Valencia",
+      "responsible": "Fernando Laguarda Mora",
+      "email": "fuerzagimnasio@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Valencia",
+      "locality": "Chiva",
+      "name": "FUERZA ISABEL ATLAS Chiva",
+      "responsible": "Isabel García Martínez",
+      "email": "clubfuerzaisabel@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Valencia",
+      "locality": "Llíria",
+      "name": "KRAKEN STRENGTH Lliria",
+      "responsible": "Alex Asensi Ramoskraken",
+      "email": "strengthclub@gmail.com"
+    },
+    {
+      "region": "VALENCIA",
+      "province": "Valencia",
+      "locality": "Almussafes",
+      "name": "GR STRENGTH ALMUSSAFES Valencia",
+      "responsible": "Nicolás Gómez Ramírez",
+      "email": "contactogr8@gmail.com"
+    }
+  ]
+}

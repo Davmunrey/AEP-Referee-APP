@@ -1,16 +1,35 @@
-/** Clubes organizadores frecuentes en campeonatos AEP (editable + autocompletado). */
-export const KNOWN_ORGANIZER_CLUBS = [
-  "Young Ambition Cantabria",
-  "Club Myrtea Lifting",
-  "Halterofilia Aragón",
-  "Club Halterofilia Castellón",
-  "Powerlifting Madrid",
-  "Club Deportivo Levante",
-  "Asociación Galega de Halterofilia",
-  "Club Halterofilia Sevilla",
-  "Haltero Club Málaga",
-  "Iron Warriors Barcelona",
-] as const;
+import registry from "./aep-clubs-registry.json";
+
+export interface AepClubRecord {
+  region: string;
+  province: string;
+  locality: string;
+  name: string;
+  responsible: string;
+  email: string;
+}
+
+export const AEP_CLUBS_REGISTRY = registry as {
+  source: string;
+  updatedAt: string;
+  count: number;
+  clubs: AepClubRecord[];
+};
+
+/** Normaliza nombre de club para búsqueda/autocompletado. */
+export function normalizeClubName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+/** Listado único de nombres de club para datalist (orden alfabético). */
+export const KNOWN_ORGANIZER_CLUBS: string[] = [
+  ...new Set(AEP_CLUBS_REGISTRY.clubs.map((c) => c.name.trim())),
+].sort((a, b) => a.localeCompare(b, "es"));
 
 export function normalizeClubEmails(raw: string): string[] {
   return raw
@@ -21,4 +40,28 @@ export function normalizeClubEmails(raw: string): string[] {
 
 export function formatClubEmails(emails: string[]): string {
   return emails.join(", ");
+}
+
+/** Busca clubes por nombre (contiene, sin acentos). */
+export function findClubsByName(query: string): AepClubRecord[] {
+  const q = normalizeClubName(query);
+  if (!q) return [];
+  return AEP_CLUBS_REGISTRY.clubs.filter((c) => normalizeClubName(c.name).includes(q));
+}
+
+/** E-mails sugeridos al elegir un club (coincidencia exacta o parcial). */
+export function suggestedEmailsForClubName(name: string): string[] {
+  const exact = AEP_CLUBS_REGISTRY.clubs.filter(
+    (c) => normalizeClubName(c.name) === normalizeClubName(name),
+  );
+  const partial = exact.length > 0 ? exact : findClubsByName(name);
+  return [...new Set(partial.map((c) => c.email.toLowerCase()))];
+}
+
+export function clubRegistryMeta() {
+  return {
+    source: AEP_CLUBS_REGISTRY.source,
+    updatedAt: AEP_CLUBS_REGISTRY.updatedAt,
+    count: AEP_CLUBS_REGISTRY.count,
+  };
 }
