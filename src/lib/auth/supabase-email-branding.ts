@@ -240,11 +240,25 @@ export function buildSupabaseAuthEmailTemplates(): SupabaseAuthEmailTemplates {
   };
 }
 
-/** Ajustes de URL y remitente que acompañan a las plantillas. */
+/** Ajustes de URL que acompañan a las plantillas (Management API). */
 export function buildSupabaseAuthBrandingConfig() {
-  return {
+  const config: {
+    site_url: string;
+    mailer_autoconfirm: boolean;
+    smtp_sender_name?: string;
+  } = {
     site_url: AEP_TARIMA_SITE_URL,
     mailer_autoconfirm: false,
-    smtp_sender_name: AEP_TARIMA_EMAIL_FROM_NAME,
   };
+
+  // smtp_sender_name solo es aceptado si el proyecto tiene SMTP custom configurado.
+  const hasCustomSmtp =
+    Boolean(process.env.SMTP_HOST) &&
+    Boolean(process.env.SMTP_USER) &&
+    Boolean(process.env.SMTP_PASS);
+  if (hasCustomSmtp) {
+    config.smtp_sender_name = AEP_TARIMA_EMAIL_FROM_NAME;
+  }
+
+  return config;
 }
