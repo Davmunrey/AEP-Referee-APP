@@ -155,10 +155,11 @@ export function downloadBlob(content: string | Blob, filename: string, mime: str
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
-  const isIos =
-    typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isMobile =
+    typeof navigator !== "undefined" &&
+    /Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
 
-  if (isIos) {
+  if (isMobile) {
     window.open(url, "_blank", "noopener,noreferrer");
     revokeLater();
     return;
@@ -174,18 +175,7 @@ export function downloadBlob(content: string | Blob, filename: string, mime: str
   revokeLater();
 }
 
-/** Descarga un PDF; en móvil intenta compartir/guardar si el navegador lo permite. */
-export async function downloadPdfBlob(blob: Blob, filename: string): Promise<void> {
-  if (typeof navigator !== "undefined" && "share" in navigator) {
-    const file = new File([blob], filename, { type: "application/pdf" });
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: filename });
-        return;
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-      }
-    }
-  }
+/** Descarga un PDF (sin hoja de compartir del sistema). */
+export function downloadPdfBlob(blob: Blob, filename: string): void {
   downloadBlob(blob, filename, "application/pdf");
 }
