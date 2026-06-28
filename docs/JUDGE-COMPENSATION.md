@@ -60,7 +60,7 @@ Código: `src/lib/judge-compensation/receipt-document.ts`, `receipt-pdf.ts`, `ib
 
 | Tabla / columna | Uso |
 |---|---|
-| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Referencia del juez (opcional; km manual en compensación) |
+| `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Referencia del juez (opcional; km manual en compensación). Borrables desde ficha con «Eliminar ubicación» → `NULL` en los tres campos |
 | `competitions.ambito`, `compensation_*` | Baremo y metadatos del recibo |
 | `judge_compensation_claims` | Una fila por juez × campeonato; `is_computer_setup`, `computer_setup_amount` |
 | `judge_compensation_duty_lines` | Desglose por sesión × posición (`role_key`, `role_label`) |

@@ -1,8 +1,21 @@
 # Plan detallado v1.6+ — Compensación, docs y backlog
 
-Última actualización: 2026-06-28.
+Última actualización: 2026-06-28 (v1.8).
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) — Vercel, deploy automático.
+
+---
+
+## v1.8 completado (2026-06-28)
+
+| Ítem | Estado |
+|---|---|
+| Producción Vercel operativa | ✅ |
+| Realtime Supabase (`029`) | ✅ |
+| Optimización rendimiento + índices `030` | ✅ |
+| Caché zonas/normativa | ✅ |
+| Eliminar ubicación domicilio | ✅ |
+| Documentación `.md` v1.8 | ✅ |
 
 ---
 
@@ -24,7 +37,7 @@
 
 | Bloque | Progreso | Notas |
 |---|---|---|
-| A. Supabase prod | ✅ Hecho | Hasta `028` aplicadas |
+| A. Supabase prod | ✅ Hecho | Hasta `030` aplicadas |
 | B. Compensación jueces | ✅ Hecho | Hub, km manual, montaje, export PDF |
 | C. UI tarima (densidad) | ✅ Hecho | Footer fuera de app, cards compactas |
 | D. E2E profundo | 0 % | Tras E2E smoke compensación |

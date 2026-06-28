@@ -1,8 +1,8 @@
 # Arquitectura
 
 ```text
-Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
-                                      \-> memory service solo dev sin Supabase
+Browser -> Vercel (Next.js App Router) -> /api/v1 -> dataService -> Supabase service
+                                      \-> memory service solo si faltan credenciales Supabase (no producción)
 ```
 
 ## Capas
@@ -142,3 +142,21 @@ El sidebar se auto-colapsa en `< 1024px` (primer render en tablet) para liberar 
 - Supabase cliente anon/authenticated no lee tablas sensibles por RLS.
 - Service role solo en servidor.
 - `parseApiResponse` valida `content-type: application/json` antes de llamar `.json()` para evitar crash en respuestas HTML de error.
+
+## Sincronización en tiempo real (v1.8)
+
+- Tabla `app_sync_state` (migración `029`) con triggers en 13 tablas operativas.
+- Cliente: `AppRealtimeSync` en el shell — escucha Realtime + poll de respaldo cada 30 s.
+- Al cambiar versión: `router.refresh()` para RSC; estado cliente (tarima, compensación) se sincroniza vía props SSR.
+- Archivos: `src/components/realtime/`, `src/hooks/use-app-data-sync.ts`, `src/lib/realtime/sync-events.ts`.
+
+## Rendimiento (v1.8)
+
+- `getCompetition` carga solo asignaciones del campeonato (no toda la tabla).
+- Hub compensación en batch (plantillas, claims, árbitros en pocas consultas).
+- `getNavCountsFast` — contadores de navegación sin plantillas JSON.
+- `cachedLoadAllAssignments` y `getSession` con `React.cache` por petición SSR.
+- `loadRosterAssignmentData` — una consulta para assignments/flags/cross-zone.
+- Caché TTL 1 h para `zones` y `regulation_rules` (`src/server/cache/static-data.ts`).
+- Filtros SQL en directorio de jueces (zona, nivel, estado, búsqueda `ilike`).
+- Índices Postgres (migración `030`).

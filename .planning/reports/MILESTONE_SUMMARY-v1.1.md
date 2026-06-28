@@ -1,3 +1,11 @@
+# Milestone Summary — v1.8 Producción Vercel, realtime y rendimiento (completo)
+
+**Completed:** 2026-06-28 · **Branch:** `main` · **Tests:** 331 · **URL:** https://aep-tarima.vercel.app
+
+Plataforma operativa en Vercel (deploy automático). Realtime Supabase (migración 029), optimización rendimiento (consultas, caché, índices 030), botón eliminar domicilio, documentación completa v1.8. Backlog menor: E2E profundo y sustitución `xlsx`.
+
+---
+
 # Milestone Summary — v1.7 Docs, normativa y UX (completo)
 
 **Completed:** 2026-06-28 · **Branch:** `main` · **Tests:** 331
@@ -215,19 +223,24 @@ UNIQUE(competition_id, referee_id)
 
 ## 7. Getting Started (Onboarding)
 
-### Setup
+### Uso operativo (delegados y comité)
+
+Acceder directamente a **https://aep-tarima.vercel.app/sign-in** con las credenciales facilitadas por AEP Nacional. No se requiere instalación ni entorno local.
+
+### Mantenedores (desarrollo / CI)
+
 ```bash
 git clone https://github.com/Davmunrey/AEP-Referee-APP
 cd AEP-Referee-APP
-npm install
-# Copiar variables de entorno (Supabase URL/Key + Clerk keys)
-npm run dev   # http://localhost:3000
+npm ci
+npm run verify   # audit + lint + test + build
 ```
 
-### Aplicar migraciones Supabase
-Ejecutar en Supabase SQL Editor en orden:
-1. `supabase/migrations/017_cross_zone_assignments.sql`
-2. `supabase/migrations/019_competition_availability.sql` *(018 reemplazada)*
+Deploy: push a `main` → Vercel publica automáticamente. Ver `docs/DEPLOY.md`.
+
+### Migraciones Supabase
+
+Aplicar en orden todas las migraciones en `supabase/migrations/` (actualmente hasta `030`).
 
 ### Flujo operativo completo
 1. **Importar jueces** → `/referees` → "Importar Excel" → preview 6 campos → confirmar

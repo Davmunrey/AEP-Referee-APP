@@ -4,16 +4,17 @@
 
 | Componente | Uso |
 |---|---|
-| `AppShell` | Shell dashboard |
+| `AppShell` | Shell dashboard + `AppRealtimeSync` |
 | `Sidebar` | Navegación colapsable (Operaciones + Gestión) |
 | `Topbar` | Breadcrumb, menú usuario (cambiar contraseña, cerrar sesión) |
 | `HelpWidget` | Ayuda flotante: guía por rol + asistente (Gemini / local) |
+| `AppRealtimeSync` | Sincronización en vivo con Supabase (invisible; shell) |
 
 ## Dashboard
 
 | Componente | Uso |
 |---|---|
-| `DashboardLive` | Refresco en vivo (pausable) |
+| `DashboardLive` | Indicador en vivo (sincronizado con Realtime global) |
 | `KpiCards` | KPIs de cobertura y operación |
 | `HealthGauge` | Índice de salud operativa (0–100) |
 | `InsightsPanel` | Recomendaciones auto-generadas |
@@ -72,7 +73,7 @@
 
 | Componente / API | Uso |
 |---|---|
-| `AddressAutocompleteField` | Autocomplete vía `GET /api/v1/geocode/search` (Photon servidor) |
+| `AddressAutocompleteField` | Autocomplete vía `GET /api/v1/geocode/search`; botón **Eliminar ubicación** |
 | `src/lib/geocoding/photon-search.ts` | Búsqueda Photon (bbox España) |
 
 ## Datos / import-export
@@ -88,7 +89,7 @@
 | Componente | Uso |
 |---|---|
 | `RefereesDirectory` | Directorio (tabla + cards móvil) |
-| `RefereeEditForm` | Edición con domicilio OSM |
+| `RefereeEditForm` | Edición con domicilio OSM y botón **Eliminar ubicación** |
 | `ExamsManager` | Exámenes |
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |
