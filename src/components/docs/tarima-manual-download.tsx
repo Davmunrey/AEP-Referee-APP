@@ -22,9 +22,10 @@ export function TarimaManualDownloadButton({
     setError(null);
     startTransition(async () => {
       try {
-        const res = await fetch(MANUAL_API_PATH, {
+        const res = await fetch(`${MANUAL_API_PATH}?v=${encodeURIComponent(Date.now().toString())}`, {
           method: "GET",
           credentials: "include",
+          cache: "no-store",
         });
 
         if (!res.ok) {

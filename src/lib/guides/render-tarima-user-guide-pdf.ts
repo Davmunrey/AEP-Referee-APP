@@ -25,7 +25,7 @@ export const GUIDE_SCREENSHOTS: GuideScreenshot[] = [
   { afterSection: 6, file: "11-compensacion-hub.png", caption: "Fig. 6 — Panel central de compensación" },
   { afterSection: 6, file: "10-compensacion.png", caption: "Fig. 7 — Compensación por campeonato" },
   { afterSection: 7, file: "05-directorio.png", caption: "Fig. 8 — Directorio de jueces" },
-  { afterSection: 10, file: "12-sidebar.png", caption: "Fig. 9 — Navegación lateral" },
+  { afterSection: 11, file: "12-sidebar.png", caption: "Fig. 9 — Navegación lateral" },
 ];
 
 type PdfDoc = InstanceType<typeof PDFDocument>;
