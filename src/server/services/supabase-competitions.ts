@@ -5,7 +5,7 @@ import {
   groupCompetitionDuplicates,
 } from "@/lib/competition-dedup";
 import type { Competition, SessionUser } from "@/lib/types";
-import { mapCompetition } from "@/server/db/mappers";
+import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import {
   db,
   hasApprovalCompetitionColumns,
@@ -77,13 +77,9 @@ export const competitionService = {
 
   updateCompetition: async (id: string, patch: Partial<Competition>): Promise<Competition | undefined> => {
     const supabase = db();
-    const dbPatch: Record<string, unknown> = { ...patch };
+    const dbPatch = competitionPatchToDb(patch);
     if (patch.zona !== undefined) {
       dbPatch.zona = normalizeZoneInput(patch.zona);
-    }
-    if (patch.fechaFin) {
-      dbPatch.fecha_fin = patch.fechaFin;
-      delete dbPatch.fechaFin;
     }
     const { data, error } = await supabase
       .from("competitions")

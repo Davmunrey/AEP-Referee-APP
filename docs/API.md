@@ -117,6 +117,20 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 
 `GET` devuelve `{ confirmedIds: string[] }`. `POST` acepta `{ refereeId: string }`. Errores devuelven JSON `{ error: string }` incluso ante excepciones internas.
 
+## Compensación de jueces
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
+| `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
+| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
+| `POST` | `/competitions/:id/compensation/:refereeId/distance` | `canManageCompensation` — calcula km (Google Maps o fallback) |
+| `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` efímero → `application/pdf` |
+
+`PATCH /competitions/:id` acepta campos `compensationOrganizer`, `compensationClubName`, `compensationClubEmail`, `compensationVolunteer` para usuarios con `canManageCompensation`.
+
+El **IBAN no se almacena** en base de datos; solo viaja en la petición de export. Ver [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
+
 ## Asistente IA (widget de Ayuda)
 
 | Método | Ruta | Permiso |

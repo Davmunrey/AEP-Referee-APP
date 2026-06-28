@@ -2,6 +2,7 @@ import * as admin from "./memory-admin";
 import * as analytics from "./memory-analytics";
 import * as competitions from "./memory-competitions";
 import * as referees from "./memory-referees";
+import { memoryCompensationService } from "./memory-compensation";
 
 export const memoryDataService = {
   getMeta: referees.getMeta,
@@ -67,4 +68,10 @@ export const memoryDataService = {
   updateReport: admin.updateReport,
   deleteReport: admin.deleteReport,
   importJudgesRegistry: admin.importJudgesRegistry,
+
+  getCompensationSummary: memoryCompensationService.getSummary,
+  recalculateCompensation: memoryCompensationService.recalculate,
+  updateCompensationClaim: memoryCompensationService.updateClaim,
+  calculateCompensationDistance: memoryCompensationService.calculateDistance,
+  getCompensationClaimForExport: memoryCompensationService.getClaimForExport,
 };

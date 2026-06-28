@@ -1,6 +1,7 @@
 import { miscApi } from "./client-misc";
 import { refereeApi } from "./client-referees";
 import { competitionApi } from "./client-competitions";
+import { compensationApi } from "./client-compensation";
 import { rosterApi } from "./client-roster";
 import { adminApi } from "./client-admin";
 
@@ -10,6 +11,7 @@ export const api = {
   ...miscApi,
   ...refereeApi,
   ...competitionApi,
+  ...compensationApi,
   ...rosterApi,
   ...adminApi,
 };

@@ -260,3 +260,135 @@ export function flagsFromRows(
   }
   return map;
 }
+
+export function mapCompensationDutyLine(
+  row: Record<string, unknown>,
+): import("@/lib/judge-compensation/types").CompensationDutyLine {
+  return {
+    dutyType: row.duty_type as import("@/lib/judge-compensation/types").CompensationDutyType,
+    session: String(row.session_label),
+    unitAmount: Number(row.unit_amount ?? 0),
+    quantity: Number(row.quantity ?? 1),
+    amount: Number(row.amount ?? 0),
+    slotKeys: Array.isArray(row.slot_keys) ? (row.slot_keys as string[]) : [],
+  };
+}
+
+export function mapCompensationClaimRow(
+  row: Record<string, unknown>,
+  dutyLines: import("@/lib/judge-compensation/types").CompensationDutyLine[] = [],
+  competition?: import("@/lib/types").Competition,
+): import("@/lib/judge-compensation/types").CompensationClaim {
+  const base = {
+    id: String(row.id),
+    competitionId: String(row.competition_id),
+    refereeId: String(row.referee_id),
+    refereeName: String(row.referee_name),
+    tipo: (competition?.tipo ?? "AEP-3") as import("@/lib/types").EventType,
+    ambito: (competition?.ambito === "epf" || competition?.ambito === "ipf"
+      ? competition.ambito
+      : "nacional") as import("@/lib/judge-compensation/types").CompetitionAmbito,
+    fecha: competition?.fecha ?? "",
+    fechaFin: competition?.fechaFin ?? "",
+    dutyLines,
+    travelMode: row.travel_mode as import("@/lib/judge-compensation/types").CompensationTravelMode,
+    distanceKmOneWay: row.distance_km_one_way != null ? Number(row.distance_km_one_way) : undefined,
+    distanceKmRoundTrip:
+      row.distance_km_round_trip != null ? Number(row.distance_km_round_trip) : undefined,
+    distanceSource: row.distance_source as "google_maps" | "manual" | undefined,
+    travelApproved: Boolean(row.travel_approved),
+    travelNotes: row.travel_notes ? String(row.travel_notes) : undefined,
+    isCompetitionManager: Boolean(row.is_competition_manager),
+    competitionManagerPerDay: Boolean(row.competition_manager_per_day),
+    lodgingDaysOverride:
+      row.lodging_days_override != null ? Number(row.lodging_days_override) : undefined,
+    lodgingEligibleOverride:
+      row.lodging_eligible_override != null ? Boolean(row.lodging_eligible_override) : undefined,
+    status: row.status as import("@/lib/judge-compensation/types").CompensationClaimStatus,
+    reviewComment: row.review_comment ? String(row.review_comment) : undefined,
+    submittedAt: row.submitted_at ? String(row.submitted_at) : undefined,
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    reviewedBy: row.reviewed_by ? String(row.reviewed_by) : undefined,
+  };
+  const totals = {
+    dutiesAmount: Number(row.duties_amount ?? 0),
+    travelAmount: Number(row.travel_amount ?? 0),
+    lodgingAmount: Number(row.lodging_amount ?? 0),
+    competitionManagerAmount: Number(row.competition_manager_amount ?? 0),
+    totalAmount: Number(row.total_amount ?? 0),
+    sessionCount: Number(row.session_count ?? 0),
+    pesajeCount: Number(row.pesaje_count ?? 0),
+    functionCount: Number(row.session_count ?? 0) + Number(row.pesaje_count ?? 0),
+    championshipDays: 1,
+    lodgingEligible: Boolean(row.lodging_eligible),
+    lodgingDays: Number(row.lodging_days ?? 0),
+  };
+  return { ...base, ...totals };
+}
+
+export function competitionPatchToDb(
+  patch: Partial<import("@/lib/types").Competition>,
+): Record<string, unknown> {
+  const dbPatch: Record<string, unknown> = {};
+  if (patch.nombre != null) dbPatch.nombre = patch.nombre;
+  if (patch.tipo != null) dbPatch.tipo = patch.tipo;
+  if (patch.fecha != null) dbPatch.fecha = patch.fecha;
+  if (patch.fechaFin != null) dbPatch.fecha_fin = patch.fechaFin;
+  if (patch.sede != null) dbPatch.sede = patch.sede;
+  if (patch.zona != null) dbPatch.zona = patch.zona;
+  if (patch.sesiones != null) dbPatch.sesiones = patch.sesiones;
+  if (patch.requeridos != null) dbPatch.requeridos = patch.requeridos;
+  if (patch.sedeDireccion !== undefined) dbPatch.sede_direccion = patch.sedeDireccion ?? null;
+  if (patch.sedeLat !== undefined) dbPatch.sede_lat = patch.sedeLat ?? null;
+  if (patch.sedeLng !== undefined) dbPatch.sede_lng = patch.sedeLng ?? null;
+  if (patch.ambito !== undefined) dbPatch.ambito = patch.ambito ?? null;
+  if (patch.compensationOrganizer !== undefined) {
+    dbPatch.compensation_organizer = patch.compensationOrganizer ?? null;
+  }
+  if (patch.compensationClubName !== undefined) {
+    dbPatch.compensation_club_name = patch.compensationClubName ?? null;
+  }
+  if (patch.compensationClubEmail !== undefined) {
+    dbPatch.compensation_club_email = patch.compensationClubEmail ?? null;
+  }
+  if (patch.compensationVolunteer !== undefined) {
+    dbPatch.compensation_volunteer = patch.compensationVolunteer;
+  }
+  return dbPatch;
+}
+
+export function claimToDbRow(
+  claim: import("@/lib/judge-compensation/types").CompensationClaim,
+): Record<string, unknown> {
+  return {
+    id: claim.id,
+    competition_id: claim.competitionId,
+    referee_id: claim.refereeId,
+    referee_name: claim.refereeName,
+    status: claim.status,
+    travel_mode: claim.travelMode,
+    distance_km_one_way: claim.distanceKmOneWay ?? null,
+    distance_km_round_trip: claim.distanceKmRoundTrip ?? null,
+    distance_source: claim.distanceSource ?? null,
+    travel_amount: claim.travelAmount,
+    travel_approved: claim.travelApproved,
+    travel_notes: claim.travelNotes ?? null,
+    is_competition_manager: claim.isCompetitionManager,
+    competition_manager_per_day: claim.competitionManagerPerDay,
+    lodging_days: claim.lodgingDays,
+    lodging_eligible: claim.lodgingEligible,
+    lodging_eligible_override: claim.lodgingEligibleOverride ?? null,
+    lodging_days_override: claim.lodgingDaysOverride ?? null,
+    duties_amount: claim.dutiesAmount,
+    lodging_amount: claim.lodgingAmount,
+    competition_manager_amount: claim.competitionManagerAmount,
+    total_amount: claim.totalAmount,
+    session_count: claim.sessionCount,
+    pesaje_count: claim.pesajeCount,
+    submitted_at: claim.submittedAt ?? null,
+    reviewed_at: claim.reviewedAt ?? null,
+    reviewed_by: claim.reviewedBy ?? null,
+    review_comment: claim.reviewComment ?? null,
+    updated_at: new Date().toISOString(),
+  };
+}
