@@ -1,3 +1,4 @@
+import type { UserRole } from "@/lib/types";
 import { request } from "./request";
 
 export const adminApi = {
@@ -11,7 +12,7 @@ export const adminApi = {
     id: string,
     body: {
       activo?: boolean;
-      role?: "super_admin" | "delegado_jueces" | "delegado_zona" | "solo_ver";
+      role?: UserRole;
       zona?: string | null;
       rolLabel?: string;
       nombre?: string;

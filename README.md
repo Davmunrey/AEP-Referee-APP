@@ -62,6 +62,7 @@ Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por
 | `super_admin` | Control total |
 | `delegado_jueces` | Equivalente operativo a superadmin |
 | `delegado_zona` | Jueces, informes y tarimas de su zona (dashboard y analytics acotados) |
+| `responsable_financiero_jueces` | Compensación de gastos de jueces y export de recibos PDF (sin editar tarima) |
 | `solo_ver` | Lectura — sin mutaciones |
 
 ---

@@ -42,6 +42,9 @@ export function refereeToDbRow(
   if (patch.email !== undefined) row.email = patch.email ?? null;
   if (patch.licencia !== undefined) row.licencia = patch.licencia ?? null;
   if (patch.localidad !== undefined) row.localidad = patch.localidad ?? null;
+  if (patch.domicilio !== undefined) row.domicilio = patch.domicilio ?? null;
+  if (patch.domicilioLat !== undefined) row.domicilio_lat = patch.domicilioLat ?? null;
+  if (patch.domicilioLng !== undefined) row.domicilio_lng = patch.domicilioLng ?? null;
   if (patch.telefono !== undefined) row.telefono = patch.telefono ?? null;
   if (patch.genero !== undefined) row.genero = patch.genero ?? null;
   if (patch.antiguedad !== undefined) row.antiguedad = patch.antiguedad ?? null;
@@ -70,6 +73,9 @@ export function mapReferee(row: Record<string, unknown>): Referee {
     email: row.email ? String(row.email) : undefined,
     licencia: row.licencia ? String(row.licencia) : undefined,
     localidad: row.localidad ? String(row.localidad) : undefined,
+    domicilio: row.domicilio ? String(row.domicilio) : undefined,
+    domicilioLat: row.domicilio_lat != null ? Number(row.domicilio_lat) : undefined,
+    domicilioLng: row.domicilio_lng != null ? Number(row.domicilio_lng) : undefined,
     telefono: row.telefono ? String(row.telefono) : undefined,
     genero: row.genero ? String(row.genero) : undefined,
     antiguedad: row.antiguedad ? String(row.antiguedad).slice(0, 10) : undefined,
@@ -99,6 +105,22 @@ export function mapCompetition(row: Record<string, unknown>): Competition {
     estado: row.estado as Competition["estado"],
     aprobacion: String(row.aprobacion),
     zona: row.zona ? String(row.zona) : undefined,
+    sedeDireccion: row.sede_direccion ? String(row.sede_direccion) : undefined,
+    sedeLat: row.sede_lat != null ? Number(row.sede_lat) : undefined,
+    sedeLng: row.sede_lng != null ? Number(row.sede_lng) : undefined,
+    ambito: row.ambito ? (String(row.ambito) as Competition["ambito"]) : undefined,
+    compensationOrganizer: row.compensation_organizer
+      ? (String(row.compensation_organizer) as Competition["compensationOrganizer"])
+      : undefined,
+    compensationClubName: row.compensation_club_name
+      ? String(row.compensation_club_name)
+      : undefined,
+    compensationClubEmail: row.compensation_club_email
+      ? String(row.compensation_club_email)
+      : undefined,
+    compensationVolunteer: row.compensation_volunteer != null
+      ? Boolean(row.compensation_volunteer)
+      : undefined,
   };
 }
 

@@ -6,6 +6,9 @@ export type EventStatus =
   | "Crítico"
   | "Borrador";
 export type EventType = "AEP-1" | "AEP-2" | "AEP-3";
+
+/** Ámbito internacional para baremo de compensación (EPF/IPF). */
+export type CompetitionAmbito = "epf" | "ipf";
 export type RoleKey =
   | "central"
   | "lateral"
@@ -23,6 +26,7 @@ export type UserRole =
   | "super_admin"
   | "delegado_jueces"
   | "delegado_zona"
+  | "responsable_financiero_jueces"
   | "solo_ver";
 
 /** Etiqueta legible para cada rol de usuario. */
@@ -30,8 +34,12 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Admin",
   delegado_jueces: "Delegado de Jueces",
   delegado_zona: "Delegado de Zona",
+  responsable_financiero_jueces: "Responsable Financiero Jueces",
   solo_ver: "Solo Ver",
 };
+
+/** Organizador del campeonato para el recibo de compensación. */
+export type CompensationOrganizerType = "club" | "aep";
 export type ApprovalStatus = "pendiente" | "aprobado" | "rechazado";
 
 export interface Zone {
@@ -58,6 +66,9 @@ export interface Referee {
   email?: string;
   licencia?: string;
   localidad?: string;
+  domicilio?: string;
+  domicilioLat?: number;
+  domicilioLng?: number;
   telefono?: string;
   genero?: string;
   /** Fecha ISO (YYYY-MM-DD) de antigüedad como juez. */
@@ -115,6 +126,17 @@ export interface Competition {
   estado: EventStatus;
   aprobacion: string;
   zona?: string;
+  sedeDireccion?: string;
+  sedeLat?: number;
+  sedeLng?: number;
+  /** null = nacional AEP; epf/ipf activa baremo internacional */
+  ambito?: CompetitionAmbito;
+  /** Cabecera del recibo: club organizador o AEP nacional. */
+  compensationOrganizer?: CompensationOrganizerType;
+  compensationClubName?: string;
+  compensationClubEmail?: string;
+  /** Texto del recibo: voluntario vs colaborador deportivo. */
+  compensationVolunteer?: boolean;
 }
 
 export interface RosterRole {

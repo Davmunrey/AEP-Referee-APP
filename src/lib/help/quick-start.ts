@@ -115,10 +115,32 @@ const SOLO_VER: QuickStartStep[] = [
   },
 ];
 
+const FINANCIERO: QuickStartStep[] = [
+  {
+    title: "Revisa campeonatos y tarimas",
+    body: "Consulta las asignaciones de jueces para calcular la compensación por competición.",
+    href: "/competitions",
+    linkLabel: "Campeonatos",
+  },
+  {
+    title: "Calcula compensaciones",
+    body: "Desde cada campeonato, abre la sección de compensación, revisa importes y genera el recibo PDF.",
+  },
+  {
+    title: "Exporta recibos",
+    body: "Al exportar, introduce el IBAN del juez en ese momento. La app no guarda números de cuenta.",
+  },
+  {
+    title: "Configura el organizador",
+    body: "Indica si el campeonato es de club o de AEP y el e-mail de devolución del recibo.",
+  },
+];
+
 const QUICK_START: Record<UserRole, QuickStartStep[]> = {
   super_admin: SUPER_ADMIN,
   delegado_jueces: DELEGADO_JUECES,
   delegado_zona: DELEGADO_ZONA,
+  responsable_financiero_jueces: FINANCIERO,
   solo_ver: SOLO_VER,
 };
 

@@ -227,6 +227,14 @@
     );
   }
 
+  .bg-role-financiero {
+    background: linear-gradient(
+      to right,
+      var(--role-financiero-bg-from),
+      var(--role-financiero-bg-to)
+    );
+  }
+
   .ring-role-nacional {
     @apply hover:ring-2 hover:ring-primary-border;
   }
@@ -241,6 +249,10 @@
 
   .ring-role-jueces {
     @apply hover:ring-2 hover:ring-info-border;
+  }
+
+  .ring-role-financiero {
+    @apply hover:ring-2 hover:ring-success-border;
   }
 
   .transfer-enter {

@@ -31,6 +31,9 @@ export function orgLabelForUser(user: SessionUser): { org: string; subtitle: str
   if (user.role === "delegado_jueces") {
     return { org: "AEP · Comité de Jueces", subtitle: user.rol };
   }
+  if (user.role === "responsable_financiero_jueces") {
+    return { org: "AEP · Compensación Jueces", subtitle: user.rol };
+  }
   if (user.role === "delegado_zona" && user.zona) {
     return {
       org: `AEP Regional · ${zoneDisplayName(user.zona)}`,
