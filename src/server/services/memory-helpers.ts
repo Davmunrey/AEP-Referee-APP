@@ -1,3 +1,4 @@
+import { resolveZoneCode } from "@/lib/aep-zones";
 import { countOpenSlots } from "@/lib/roster-rules";
 import { buildRefereeCompetitionHistory } from "@/lib/referee-competition-history";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
@@ -54,16 +55,17 @@ export function buildMemoryCompetitionHistory(refereeId: string): RefereeCompeti
 
 export function buildKpis(user?: SessionUser): DashboardKpi[] {
   const store = getStore();
-  const isZoneScoped =
-    user?.role === "delegado_zona" && typeof user.zona === "string";
-  const referees = isZoneScoped
-    ? store.referees.filter((r) => r.zona === user!.zona)
+  const userZone =
+    user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
+  const isZoneScoped = Boolean(userZone);
+  const referees = userZone
+    ? store.referees.filter((r) => resolveZoneCode(r.zona) === userZone)
     : store.referees;
-  const competitions = isZoneScoped
-    ? store.competitions.filter((c) => c.zona === user!.zona)
+  const competitions = userZone
+    ? store.competitions.filter((c) => resolveZoneCode(c.zona) === userZone)
     : store.competitions;
-  const approvals = isZoneScoped
-    ? store.approvals.filter((a) => a.zona === user!.zona)
+  const approvals = userZone
+    ? store.approvals.filter((a) => resolveZoneCode(a.zona) === userZone)
     : store.approvals;
 
   const active = referees.filter((r) => r.estado === "Activo").length;
@@ -77,7 +79,7 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
   }
   const critical = competitions.filter((c) => c.estado === "Crítico").length;
 
-  const subAlcance = isZoneScoped ? `zona ${user!.zona}` : "temporada 2026";
+  const subAlcance = isZoneScoped ? `zona ${userZone}` : "temporada 2026";
 
   return [
     {

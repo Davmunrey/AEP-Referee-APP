@@ -27,7 +27,7 @@ function iso(y: number, m: string, d: number): string {
 /** Excel serial o texto español → YYYY-MM-DD. */
 export function excelDateToIso(v: unknown): string | undefined {
   if (v instanceof Date && !Number.isNaN(v.getTime())) {
-    return v.toISOString().slice(0, 10);
+    return iso(v.getFullYear(), pad2(v.getMonth() + 1), v.getDate());
   }
   if (typeof v === "number" && v > 30000) {
     const parsed = XLSX.SSF.parse_date_code(v);

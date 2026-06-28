@@ -88,8 +88,9 @@ export function setCompetitionTemplate(competitionId: string, template: RosterSe
   getStore().templates.set(competitionId, template);
 }
 
-export function getCalendarEvents() {
-  return calendarEventsFromCompetitions(getStore().competitions);
+export function getCalendarEvents(competitions?: Competition[]) {
+  const list = competitions ?? getStore().competitions;
+  return calendarEventsFromCompetitions(list);
 }
 
 export function pushActivity(item: ActivityItem) {

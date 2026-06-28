@@ -4,6 +4,7 @@ import {
   enumerateSlotKeys,
   formatRequiredSlots,
   getPresetForEventType,
+  mergeRosterTemplateSessions,
   parseSlotKey,
   pruneAssignments,
   summarizeRequiredSlots,
@@ -158,5 +159,34 @@ describe("summarizeRequiredSlots", () => {
     expect(formatRequiredSlots(session)).toBe(
       "Tarima 3 · Mesa/Ordenador 2 · Control 1 · Pesaje 2",
     );
+  });
+});
+
+describe("mergeRosterTemplateSessions", () => {
+  const session = (sesion: string): RosterSession => ({
+    sesion,
+    nombre: `Sesión ${sesion}`,
+    dia: "Viernes",
+    categorias: [{ genero: "Hombres", pesos: "-83kg" }],
+    horarioCompeticion: "12:00",
+    horarioPesaje: "10:00",
+    roles: cloneTemplate(PRESET_AEP1)[0]!.roles,
+    pesajeRoles: cloneTemplate(PRESET_AEP1)[0]!.pesajeRoles,
+  });
+
+  it("replaces only selected sessions and keeps the rest", () => {
+    const existing = [session("S1"), session("S2"), session("S3")];
+    const incoming = [{ ...session("S2"), nombre: "Sesión 2 importada" }];
+    const merged = mergeRosterTemplateSessions(existing, incoming, new Set(["S2"]));
+    expect(merged.map((s) => s.sesion)).toEqual(["S1", "S2", "S3"]);
+    expect(merged[1]?.nombre).toBe("Sesión 2 importada");
+    expect(merged[0]?.nombre).toBe("Sesión S1");
+  });
+
+  it("appends new sessions from import", () => {
+    const existing = [session("S1")];
+    const incoming = [session("S4")];
+    const merged = mergeRosterTemplateSessions(existing, incoming, new Set(["S4"]));
+    expect(merged.map((s) => s.sesion)).toEqual(["S1", "S4"]);
   });
 });

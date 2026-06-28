@@ -1,3 +1,4 @@
+import { resolveZoneCode } from "@/lib/aep-zones";
 import { enumerateSlotKeys } from "@/lib/roster-template";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import type { AnalyticsPayload, SessionUser } from "@/lib/types";
@@ -18,10 +19,11 @@ export async function getNavCounts(user?: SessionUser) {
 export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload> {
   const store = getStore();
   const competitions = await getCompetitions(user);
-  const scopedReferees =
-    user?.role === "delegado_zona" && user.zona
-      ? store.referees.filter((r) => r.zona === user.zona)
-      : store.referees;
+  const userZone =
+    user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
+  const scopedReferees = userZone
+    ? store.referees.filter((r) => resolveZoneCode(r.zona) === userZone)
+    : store.referees;
   const years = Array.from(
     new Set(competitions.map((c) => yearFromIso(c.fecha)).filter((y): y is number => y != null)),
   ).sort((a, b) => a - b);
@@ -46,13 +48,15 @@ export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload
     assignedIds.forEach((id) => y.refereeIds.add(id));
     yearAgg.set(year, y);
     if (year === selectedYear && c.zona) {
-      const z = zoneAgg.get(c.zona) ?? { competitions: 0, criticalCompetitions: 0, requiredSlots: 0, filledSlots: 0, refereeIds: new Set<string>() };
+      const zoneCode = resolveZoneCode(c.zona);
+      if (!zoneCode) continue;
+      const z = zoneAgg.get(zoneCode) ?? { competitions: 0, criticalCompetitions: 0, requiredSlots: 0, filledSlots: 0, refereeIds: new Set<string>() };
       z.competitions += 1;
       z.criticalCompetitions += c.estado === "Crítico" ? 1 : 0;
       z.requiredSlots += requiredSlots;
       z.filledSlots += filledSlots;
       assignedIds.forEach((id) => z.refereeIds.add(id));
-      zoneAgg.set(c.zona, z);
+      zoneAgg.set(zoneCode, z);
     }
     if (year === selectedYear) {
       Object.values(assignments).filter(Boolean).forEach((refereeId) => {
@@ -70,7 +74,9 @@ export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload
   }));
   const activityByZone = getZones().map((z) => {
     const agg = zoneAgg.get(z.code);
-    const activeReferees = scopedReferees.filter((r) => r.zona === z.code && r.estado === "Activo").length;
+    const activeReferees = scopedReferees.filter(
+      (r) => resolveZoneCode(r.zona) === z.code && r.estado === "Activo",
+    ).length;
     return { zona: z.code, name: z.name, competitions: agg?.competitions ?? 0, criticalCompetitions: agg?.criticalCompetitions ?? 0, requiredSlots: agg?.requiredSlots ?? 0, filledSlots: agg?.filledSlots ?? 0, uniqueAssignedReferees: agg?.refereeIds.size ?? 0, activeReferees };
   });
   const topReferees = [...topRefAgg.entries()]
@@ -82,7 +88,10 @@ export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload
     .filter(Boolean)
     .sort((a, b) => (b!.assignedCompetitions - a!.assignedCompetitions) || (b!.assignedSlots - a!.assignedSlots) || a!.nombre.localeCompare(b!.nombre, "es"))
     .slice(0, 5) as AnalyticsPayload["topReferees"];
-  const approvalsForYear = store.approvals.filter((a) => yearFromIso(a.submittedAt) === selectedYear);
+  const approvalsForYear = (userZone
+    ? store.approvals.filter((a) => resolveZoneCode(a.zona) === userZone)
+    : store.approvals
+  ).filter((a) => yearFromIso(a.submittedAt) === selectedYear);
   const reviewed = approvalsForYear.filter((a) => a.status !== "pendiente").length;
   const rejected = approvalsForYear.filter((a) => a.status === "rechazado").length;
   const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : 0;

@@ -8,6 +8,11 @@ describe("judges registry dates", () => {
     expect(excelDateToIso("7-mar-26")).toBe("2026-03-07");
   });
 
+  it("keeps local calendar day for Date objects (no UTC shift)", () => {
+    const local = new Date(2026, 5, 1); // 1 Jun 2026 local
+    expect(excelDateToIso(local)).toBe("2026-06-01");
+  });
+
   it("parses dual-day ranges", () => {
     const r = parseCompetitionDateRange("21/22-Mar-26");
     expect(r?.fecha).toBe("2026-03-21");
