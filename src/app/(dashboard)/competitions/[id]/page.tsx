@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { RosterBuilder } from "@/components/competitions/roster-builder";
-import { canEditRoster, getSession } from "@/lib/auth/session";
+import { canEditRoster, canManageCompensation, getSession } from "@/lib/auth/session";
 import { isCompetitionPast } from "@/lib/competition-status";
 import { dataService } from "@/server/services";
 
@@ -35,6 +35,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       initialFlags={roster.flags ?? {}}
       initialCrossZoneMap={roster.crossZoneMap ?? {}}
       canEdit={canEdit}
+      canManageCompensation={canManageCompensation(user)}
       isPast={isPast}
       referees={referees}
       zones={meta.zones}

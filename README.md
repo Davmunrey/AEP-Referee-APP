@@ -7,8 +7,8 @@
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/producción-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v1.4-22c55e?style=for-the-badge&labelColor=0d1117" />
-  <img alt="Tests" src="https://img.shields.io/badge/tests-298%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v1.5-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-312%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
 <p align="center">
@@ -51,6 +51,7 @@ Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por
 | **Exámenes** | IPF, recertificación, nuevo juez |
 | **Informes** | Por juez o competición, visibilidad por zona o nacional |
 | **Ascensos** | Solicitud, revisión nacional con comentario de rechazo obligatorio |
+| **Compensación** | Baremo AEP, km/alojamiento, recibo PDF por juez (IBAN solo al exportar) |
 | **Analytics** | Histórico anual, KPIs, cobertura zonal/nacional, export CSV |
 | **Usuarios** | Gestión de roles, reset de contraseñas |
 | **Auth** | Login server-side con rate-limit (`POST /auth/login`) |
@@ -79,8 +80,8 @@ Browser
 
 - **UI**: Next.js 15, Tailwind CSS, Radix UI, Lucide
 - **Auth**: Supabase email/contraseña — sin registro público
-- **DB**: Supabase Postgres — migraciones en `supabase/migrations/` (hasta `023`)
-- **Tests**: Vitest — 298 tests, 47 archivos
+- **DB**: Supabase Postgres — migraciones en `supabase/migrations/` (hasta `025`)
+- **Tests**: Vitest — 312 tests, 49 archivos
 - **CI**: GitHub Actions — verify, Playwright smoke, Supabase readiness
 - **Deploy**: Vercel (automático desde `main`)
 
@@ -111,7 +112,7 @@ npm run audit:remote # auditoría seguridad remota
 
 ## Base de datos
 
-Supabase Postgres. Aplicar migraciones en orden (`001` → `023_promotion_review_comment.sql`).
+Supabase Postgres. Aplicar migraciones en orden (`001` → `025_financial_role_and_receipt.sql`).
 
 Migraciones recientes relevantes:
 
@@ -120,6 +121,8 @@ Migraciones recientes relevantes:
 | `019` | `competition_availability` |
 | `022` | `approval_submitter_id` |
 | `023` | `promotion_requests.review_comment` |
+| `024` | Compensación jueces (claims, domicilio, sede) |
+| `025` | Rol `responsable_financiero_jueces` + metadatos recibo |
 
 ---
 
@@ -136,11 +139,12 @@ Migraciones recientes relevantes:
 | [Diseño](./docs/DESIGN.md) | Tokens, componentes, layout |
 | [QA y seguridad](./docs/AUDIT.md) | Tests, auditoría, validaciones |
 | [Readiness producción](./docs/PRODUCTION-READINESS.md) | Checklist pre-release |
+| [Compensación jueces](./docs/JUDGE-COMPENSATION.md) | Baremo, recibos PDF, IBAN efímero |
 | [Rutas](./docs/ROUTES.md) | Mapa de páginas |
 | [Componentes](./docs/COMPONENTS.md) | Inventario UI |
 
 ---
 
 <p align="center">
-  <sub>AEP Tarima · v1.4 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
+  <sub>AEP Tarima · v1.5 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
 </p>

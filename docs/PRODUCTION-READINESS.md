@@ -46,6 +46,7 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 ## No cubierto todavía
 
 - E2E completo importar horario -> importar cuadrante -> export.
+- E2E smoke compensación (`/competitions/:id/compensation`).
 - CSP enforce.
 - Sustitución `xlsx`.
 - Restore real en staging.

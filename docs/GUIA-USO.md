@@ -91,13 +91,28 @@ Desde **Exportar ▾** en la tarima (o el icono PDF en la lista de campeonatos) 
 
 ---
 
+## 6b. Compensación de gastos (responsable financiero)
+
+Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de jueces asignados en tarima. No edita tarima ni censo.
+
+1. Abre un campeonato con jueces asignados.
+2. Pulsa **Compensación** en la cabecera de tarima (o navega a `/competitions/[id]/compensation`).
+3. Configura organizador (club o AEP), nombre/email del club y si es voluntario.
+4. **Recalcular** genera claims desde el cuadrante (sesiones, pesaje, km, alojamiento).
+5. Ajusta overrides por juez si hace falta (km manual, alojamiento, responsable de competición).
+6. **Exportar recibo** → introduce el IBAN en el modal (no se guarda en la app) → descarga PDF.
+
+El recibo sigue las plantillas reales AEP/club. El IBAN solo existe en la petición de export y en el PDF generado.
+
+---
+
 ## 7. Jueces — directorio y ficha
 
 `Directorio` en el menú. Lista todos los jueces con búsqueda y filtros (zona, nivel, estado).
 
 ![Directorio](images/05-directorio.png)
 
-- Clic en un juez abre su **ficha**: datos, historial real por campeonato (sesión, rol, hueco, flags de compartido/intercambio), sanciones, exámenes, informes y ascensos.
+- Clic en un juez abre su **ficha**: datos, **domicilio** (para cálculo de km en compensación), historial real por campeonato (sesión, rol, hueco, flags de compartido/intercambio), sanciones, exámenes, informes y ascensos.
 - **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional).
 - **+ Nuevo juez**: alta individual.
 
@@ -151,6 +166,7 @@ Desde Usuarios → icono llave de la fila → escribe la nueva contraseña. No n
 | `super_admin` | Control total |
 | `delegado_jueces` | Autoridad nacional sobre jueces, exámenes, informes, ascensos |
 | `delegado_zona` | Campeonatos, tarimas y jueces de **su zona** |
+| `responsable_financiero_jueces` | Compensación de gastos y export de recibos PDF (lectura de tarimas/censo) |
 | `solo_ver` | Solo lectura |
 
 La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de verdad (un delegado de zona no puede tocar datos de otra zona aunque manipule la petición).

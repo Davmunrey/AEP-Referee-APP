@@ -13,13 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, ArrowLeft, ChevronDown, FileUp, Layers, Pencil, Trash2, UsersRound } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Banknote, ChevronDown, FileUp, Layers, Pencil, Trash2, UsersRound } from "lucide-react";
 import type { TransitionStartFunction } from "react";
 
 interface RosterCompetitionHeaderProps {
   competition: Competition;
   isPast: boolean;
   canEdit: boolean;
+  canManageCompensation?: boolean;
   violationCount: number;
   filledSlots: number;
   totalSlots: number;
@@ -45,6 +46,7 @@ export function RosterCompetitionHeader({
   competition,
   isPast,
   canEdit,
+  canManageCompensation = false,
   violationCount,
   filledSlots,
   totalSlots,
@@ -181,6 +183,14 @@ export function RosterCompetitionHeader({
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+            {canManageCompensation && (
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" asChild>
+                <Link href={`/competitions/${competition.id}/compensation`}>
+                  <Banknote className="h-3.5 w-3.5" />
+                  Compensación
+                </Link>
+              </Button>
             )}
             <RosterHistoryPanel competitionId={competition.id} />
             {!readOnly && !isEditing && (

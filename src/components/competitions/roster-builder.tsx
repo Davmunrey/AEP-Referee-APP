@@ -48,6 +48,7 @@ interface RosterBuilderProps {
   initialFlags?: FlagsMap;
   initialCrossZoneMap?: CrossZoneMap;
   canEdit?: boolean;
+  canManageCompensation?: boolean;
   /** Campeonato finalizado — contexto histórico visual. */
   isPast?: boolean;
   referees: Referee[];
@@ -65,6 +66,7 @@ export function RosterBuilder({
   initialFlags = {},
   initialCrossZoneMap = {},
   canEdit = false,
+  canManageCompensation = false,
   isPast = false,
   referees,
   zones,
@@ -281,6 +283,7 @@ export function RosterBuilder({
         />
         <RosterCompetitionHeader
           competition={competition} isPast={isPast} canEdit={canEdit}
+          canManageCompensation={canManageCompensation}
           violationCount={violationCount} filledSlots={filledSlots} totalSlots={totalSlots}
           fillPct={fillPct} openSlots={openSlots} pending={pending} savingTemplate={savingTemplate}
           isEditing={isEditing} statusMsg={statusMsg} statusIsError={statusIsError}
