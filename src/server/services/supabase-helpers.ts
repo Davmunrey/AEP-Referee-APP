@@ -1,4 +1,3 @@
-import { countOpenSlots } from "@/lib/roster-rules";
 import {
   computeRosterCoverage,
   deriveCompetitionEstado,

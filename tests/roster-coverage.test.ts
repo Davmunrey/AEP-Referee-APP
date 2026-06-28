@@ -5,6 +5,7 @@ import {
   applyCoverageToCompetition,
   computeRosterCoverage,
   isRosterLockedByApproval,
+  rosterAnalyticsStats,
   rosterMutationBlockedMessage,
 } from "@/lib/roster-coverage";
 import type { Competition } from "@/lib/types";
@@ -56,6 +57,22 @@ describe("computeRosterCoverage", () => {
     expect(coverage.openSlots).toBe(0);
     expect(coverage.pct).toBe(100);
     expect(coverage.confirmados).toBe(coverage.requeridos);
+  });
+});
+
+describe("rosterAnalyticsStats", () => {
+  it("aligns filled slots and unique referees with template-valid assignments", () => {
+    const keys = enumerateSlotKeys(template);
+    const assignments = {
+      "orphan-slot": "r-orphan",
+      [keys[0]!]: "r1",
+      [keys[1]!]: "r1",
+      [keys[2]!]: "r2",
+    };
+    const stats = rosterAnalyticsStats(template, assignments, 8);
+    expect(stats.filledSlots).toBe(3);
+    expect(stats.refereeIds).toEqual(new Set(["r1", "r2"]));
+    expect(stats.filledSlots).toBeLessThanOrEqual(stats.requiredSlots);
   });
 });
 

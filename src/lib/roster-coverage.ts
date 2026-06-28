@@ -1,6 +1,6 @@
 import { countOpenSlots } from "@/lib/roster-rules";
 import { enumerateSlotKeys } from "@/lib/roster-template";
-import type { Competition, EventStatus, RosterSession } from "@/lib/types";
+import type { AssignmentsMap, Competition, EventStatus, RosterSession } from "@/lib/types";
 
 export const ROSTER_APPROVAL_LOCKED = "Aprobado";
 export const ROSTER_IMPREVISTO_STATE = "Cambio por imprevisto";
@@ -53,6 +53,35 @@ export function computeRosterCoverage(
   const pct =
     requeridos > 0 ? Math.min(100, Math.round((confirmados / requeridos) * 100)) : 0;
   return { requeridos, confirmados, openSlots, pct };
+}
+
+/** IDs únicos con plaza válida en plantilla (ignora claves huérfanas). */
+export function assignedRefereeIdsInTemplate(
+  template: RosterSession[],
+  assignments: AssignmentsMap,
+): Set<string> {
+  const validKeys = new Set(enumerateSlotKeys(template));
+  const ids = new Set<string>();
+  for (const [key, refereeId] of Object.entries(assignments)) {
+    if (refereeId && validKeys.has(key)) ids.add(refereeId);
+  }
+  return ids;
+}
+
+/** Métricas de cobertura + jueces únicos para analítica y agregados. */
+export function rosterAnalyticsStats(
+  template: RosterSession[],
+  assignments: AssignmentsMap,
+  fallbackRequeridos = 0,
+) {
+  const coverage = computeRosterCoverage(template, assignments, fallbackRequeridos);
+  return {
+    requiredSlots: coverage.requeridos,
+    filledSlots: coverage.confirmados,
+    openSlots: coverage.openSlots,
+    pct: coverage.pct,
+    refereeIds: assignedRefereeIdsInTemplate(template, assignments),
+  };
 }
 
 export function deriveCompetitionEstado(

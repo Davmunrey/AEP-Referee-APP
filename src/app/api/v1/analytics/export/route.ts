@@ -58,8 +58,10 @@ export async function GET() {
     ),
     "",
     "ACTIVIDAD_POR_ZONA_AÑO_ACTIVO",
-    "Zona,Código,Campeonatos,Campeonatos críticos,Plazas totales,Plazas cubiertas,Cobertura,Jueces asignados,Jueces activos",
-    ...analytics.activityByZone.map((row) =>
+    "Zona,Código,Campeonatos,Campeonatos críticos,Plazas totales,Plazas cubiertas,Cobertura,Jueces asignados,Jueces activos,Plazas otra zona",
+    ...analytics.activityByZone
+      .filter((row) => row.competitions > 0)
+      .map((row) =>
       csv(
         row.name,
         row.zona,
@@ -70,6 +72,7 @@ export async function GET() {
         `${row.requiredSlots > 0 ? Math.round((row.filledSlots / row.requiredSlots) * 100) : 0}%`,
         row.uniqueAssignedReferees,
         row.activeReferees,
+        row.crossZoneSlots ?? 0,
       ),
     ),
     "",
