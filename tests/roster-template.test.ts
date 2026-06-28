@@ -94,6 +94,21 @@ describe("summarizeRequiredSlots", () => {
     ]);
   });
 
+  it("breaks out jurado as its own group (AEP-1)", () => {
+    const withJurado: RosterSession = {
+      ...session,
+      roles: [...session.roles, { rol: "Jurado", slots: 3, key: "jurado" }],
+    };
+    const groups = summarizeRequiredSlots(withJurado);
+    expect(groups).toEqual([
+      { key: "tarima", label: "Tarima", count: 3 },
+      { key: "jurado", label: "Jurado", count: 3 },
+      { key: "mesa", label: "Mesa/Ordenador", count: 2 },
+      { key: "control", label: "Control", count: 1 },
+      { key: "pesaje", label: "Pesaje", count: 2 },
+    ]);
+  });
+
   it("omits groups with no required slots", () => {
     const tarimaOnly: RosterSession = {
       ...session,

@@ -60,15 +60,26 @@ export function getRecommendationWarning(
   return null;
 }
 
-export function getOperationalBlockReason(input: {
+export interface OperationalBlock {
+  reason: string;
+  /** Se puede forzar marcando el puesto como compartido (*). */
+  overridable: boolean;
+}
+
+/** Conflicto operativo del slot, con si es forzable mediante el flag compartido (*). */
+export function getOperationalBlock(input: {
   template: RosterSession[];
   assignments: AssignmentsMap;
   slotKey: string;
   refereeId: string;
   flags?: FlagsMap;
-}): string | null {
+}): OperationalBlock | null {
   const validation = validateRosterOperation(input);
-  return validation.ok ? null : validation.error ?? "No se puede asignar";
+  if (validation.ok) return null;
+  return {
+    reason: validation.error ?? "No se puede asignar",
+    overridable: Boolean(validation.overridable),
+  };
 }
 
 export function countRosterSlots(template: RosterSession[]): number {
