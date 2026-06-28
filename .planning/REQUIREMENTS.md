@@ -1,43 +1,46 @@
 # Requirements — AEP Tarima
 
-> v1.2 ítems completados en `main`. v1.4 añadió hardening roster/auth/zona (ver `docs/AUDIT.md`).
+> Histórico v1.2 completado en `main`. v1.4–v1.7 añadieron compensación, normativa, ayuda y pulido UX.
 
-## Competition Edit (v1.2 ✅)
+## v1.7 — Normativa y documentación ✅
 
-- [ ] **COMP-01**: Usuario puede editar nombre, tipo, fecha inicio, fecha fin, sede y zona de un campeonato existente desde su página de detalle
-- [ ] **COMP-02**: Formulario de edición valida todos los campos con las mismas reglas que el formulario de creación
-- [ ] **COMP-03**: `delegado_zona` solo puede editar campeonatos de su propia zona; no puede reasignarlo a otra zona; `solo_ver` no puede editar
+- [x] **DOC-01**: URL producción `https://aep-tarima.vercel.app` en código, docs y correos Supabase
+- [x] **DOC-02**: Sección Normativa con Guía AEP, plazas, compensación e IPF
+- [x] **DOC-03**: Asistente de ayuda con base de conocimiento y guía por rol
+- [x] **DOC-04**: Todos los `.md` del repositorio sincronizados con el estado actual
+- [x] **UX-01**: Autocomplete domicilio funcional (API servidor Photon)
+- [x] **UX-02**: Badges nivel compactos en tarima (R/N/I/II)
 
-## Test Suite Correctness
+## v1.6 — Compensación hub ✅
 
-- [ ] **TEST-01**: `judge-stats.test.ts` usa valores válidos de `ExamType` (`"Nuevo juez"`, `"Ascenso IPF"`, `"Recertificación"`) y `ReportType` (`"Evaluación"`)
-- [ ] **TEST-02**: `roster-ui.test.ts` — fixture `RosterSession` incluye todos los campos obligatorios: `nombre`, `categorias`, `horarioCompeticion`, `horarioPesaje`
-- [ ] **TEST-03**: `roster-ui.test.ts` — fixture `Referee` incluye campo obligatorio `ultimo`
-- [ ] **TEST-04**: `roster-ui.test.ts` — fixture `RegulationRule` incluye campos obligatorios `id` y `note`
-- [ ] **TEST-05**: `judges-import-preview.test.ts` — fixture de `ParsedRegistryReferee` incluye los 8 campos requeridos (`excelId`, `id`, `nombre`, `nivel`, `zona`, `estado`, `disp`, `eventos`, `ultimo`)
-- [ ] **TEST-06**: `npx tsc --noEmit` sale sin errores en toda la suite de tests
+- [x] **COMP-04**: Panel central `/compensation`
+- [x] **COMP-05**: Km manual, comparte, montaje sistema
+- [x] **COMP-06**: Listado clubes curados AEP (~180)
 
-## File Refactoring
+## v1.2 — Competition Edit ✅
 
-- [ ] **REFACTOR-01**: `roster-builder.tsx` (1603 líneas) dividido en sub-componentes; cada archivo < 500 líneas; comportamiento externo idéntico
-- [ ] **REFACTOR-02**: `supabase-service.ts` (1740 líneas) dividido en módulos por dominio; interfaz pública sin cambios
-- [ ] **REFACTOR-03**: `memory-service.ts` (1118 líneas) dividido siguiendo la misma estructura que `supabase-service` refactorizado
+- [x] **COMP-01**: Editar campeonato existente inline
+- [x] **COMP-02**: Validación compartida con alta
+- [x] **COMP-03**: Scope zonal en edición
 
-## GSD Artifacts
+## v1.2 — Test Suite ✅
 
-- [ ] **GSD-01**: `MILESTONES.md` creado en `.planning/` con el historial de v1.1 (6 fases, 23 requisitos)
+- [x] **TEST-01** – **TEST-06**: Fixtures corregidos, `tsc` limpio
 
-## Out of Scope
+## v1.2 — Refactoring ✅
 
-- Nuevas funcionalidades de producto (v1.3+)
-- Migraciones de base de datos adicionales
-- Tests nuevos más allá de corregir los existentes
+- [x] **REFACTOR-01**: `roster-builder.tsx` dividido
+- [x] **REFACTOR-02**: `supabase-service.ts` por dominio
+- [x] **REFACTOR-03**: `memory-service.ts` por dominio
 
-## Traceability
+## Backlog abierto
 
-| REQ-ID | Phase |
-|--------|-------|
-| COMP-01, COMP-02, COMP-03 | Phase 7 |
-| TEST-01 – TEST-06 | Phase 8 |
-| REFACTOR-01 – REFACTOR-03 | Phase 9 |
-| GSD-01 | Phase 9 |
+- [ ] **E2E-01**: Smoke compensación Playwright
+- [ ] **E2E-02**: Flujo profundo import → cuadrante → export
+- [ ] **TECH-01**: Sustitución librería `xlsx`
+
+## Out of Scope (cerrado)
+
+- App iOS — descontinuada (migration 028)
+- Manual PDF usuario — eliminado; solo `/docs` web
+- `tarima.powerliftingspain.es` — sustituido por `aep-tarima.vercel.app`

@@ -2,13 +2,13 @@
 
 <p align="center">
   <strong>Plataforma operativa interna para la gestión de jueces AEP</strong><br/>
-  Campeonatos · Tarimas · Cuadrantes · Compensación · Informes · Exámenes · Estadísticas
+  Campeonatos · Tarimas · Cuadrantes · Compensación · Normativa · Informes · Exámenes · Estadísticas
 </p>
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/producción-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v1.6-22c55e?style=for-the-badge&labelColor=0d1117" />
-  <img alt="Tests" src="https://img.shields.io/badge/tests-344%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v1.7-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-331%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
 <p align="center">
@@ -23,16 +23,19 @@
 
 ## ¿Qué es?
 
-AEP Tarima centraliza toda la operativa de jueces de la Asociación Española de Powerlifting: desde la creación de campeonatos hasta la asignación de tarimas, compensación económica, exámenes, informes de rendimiento, ascensos y estadísticas nacionales.
+AEP Tarima centraliza toda la operativa de jueces de la Asociación Española de Powerlifting: campeonatos, tarimas, compensación económica, normativa, exámenes, informes, ascensos y estadísticas nacionales.
 
-Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por año detectado y etiquetas de UI derivadas del calendario actual (`src/lib/season.ts`), sin acoplar la app a un año fijo.
+**Solo aplicación web** en [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app). Sin app móvil ni manual PDF descargable: la documentación vive en `/docs` y en el widget de Ayuda.
+
+Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por año detectado y etiquetas de UI derivadas del calendario actual (`src/lib/season.ts`).
 
 - **Un solo lugar** para gestionar jueces, campeonatos y cuadrantes a nivel nacional y por zonas.
-- **Panel de compensación** central para el responsable financiero — sin ir tarima a tarima.
-- **Kilometraje gratuito** con OpenStreetMap (Photon, Nominatim, OSRM) — sin API keys de pago.
+- **Panel de compensación** central para el responsable financiero.
+- **Normativa integrada** — Guía AEP 2026, plazas en tarima, baremo de compensación y reglamento IPF.
+- **OpenStreetMap gratuito** — autocomplete de domicilio vía API servidor (Photon) + Nominatim/OSRM en servidor.
 - **Import inteligente** de horarios y cuadrantes desde PDF con preview y selección granular.
-- **Asignación visual** con validación de roles, zonas, solapamientos y confirmación para forzar conflictos (*).
-- **Analytics multi-año** — histórico anual, cobertura, carga de trabajo, export CSV.
+- **Asignación visual** con validación de roles, zonas, solapamientos e imprevistos en tarimas aprobadas.
+- **Asistente de ayuda** con guía por rol y base de conocimiento (35 entradas) + Gemini opcional.
 - **Privacidad zonal** — delegados de zona ven solo datos de su macrozona.
 
 ---
@@ -41,15 +44,16 @@ Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por
 
 | Área | Capacidades |
 |---|---|
-| **Campeonatos** | Creación manual, import calendario anual PDF/CSV, edición inline, deduplicación |
-| **Tarima** | Plantilla, import horario/cuadrante PDF, drag-and-drop, flags *, borrador → aprobación |
-| **Compensación** | Panel `/compensation`, baremo AEP, km manual, desglose por posición, montaje ordenador, recibo PDF |
-| **Export cuadrante** | PDF formato oficial AEP, Excel, compartir por WhatsApp |
+| **Campeonatos** | Alta manual, import calendario anual PDF/CSV, edición inline, deduplicación |
+| **Tarima** | Plantilla, import horario/cuadrante PDF, drag-and-drop, imprevistos, badges nivel compactos (R/N/I/II) |
+| **Compensación** | Panel `/compensation`, km manual, montaje sistema, multi-club, recibo PDF, IBAN efímero |
+| **Normativa** | `/regulations` — Guía AEP, plazas, compensación, IPF |
+| **Export cuadrante** | PDF formato oficial AEP, Excel, WhatsApp |
 | **Jueces** | Directorio, ficha, domicilio OSM, sanciones, historial de tarimas |
-| **Disponibilidad** | Por campeonato, filtro "solo confirmados" en tarima |
+| **Disponibilidad** | Por campeonato, filtro «solo confirmados» en tarima |
 | **Exámenes / Informes / Ascensos** | Gestión nacional y zonal |
-| **Analytics** | Histórico anual, KPIs, cobertura, export CSV |
-| **Documentación** | `/docs` web (guía, privacidad, roles) |
+| **Estadísticas** | Histórico anual, KPIs, export CSV |
+| **Documentación** | `/docs` web + widget Ayuda (guía + asistente) |
 | **Usuarios** | Gestión de roles, reset de contraseñas |
 
 ## Roles
@@ -57,10 +61,10 @@ Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por
 | Rol | Alcance |
 |---|---|
 | `super_admin` | Control total |
-| `delegado_jueces` | Equivalente operativo a superadmin |
-| `delegado_zona` | Jueces, informes y tarimas de su zona |
-| `responsable_financiero_jueces` | Panel compensación, recibos PDF (sin editar tarima) |
-| `solo_ver` | Lectura — sin mutaciones |
+| `delegado_jueces` | Autoridad nacional (jueces, tarimas, ascensos, usuarios) |
+| `delegado_zona` | Campeonatos, tarimas y jueces de su zona |
+| `responsable_financiero_jueces` | Panel compensación, recibos PDF (lectura tarimas/censo) |
+| `solo_ver` | Solo lectura |
 
 ---
 
@@ -75,10 +79,11 @@ Browser
 ```
 
 - **UI**: Next.js 15, Tailwind CSS, Radix UI, Lucide
-- **Auth**: Supabase email/contraseña — sin registro público
-- **DB**: Supabase Postgres — migraciones en `supabase/migrations/` (hasta `026`)
-- **Geolocalización**: Photon (cliente) + Nominatim/OSRM (servidor) — gratuito
-- **Tests**: Vitest — 344 tests, 57 archivos
+- **Auth**: Supabase email/contraseña — sin registro público; correos con branding AEP
+- **DB**: Supabase Postgres — migraciones en `supabase/migrations/` (hasta `028`)
+- **Geocoding**: Photon (servidor, `/api/v1/geocode/search`) + Nominatim/OSRM — gratuito
+- **Asistente**: Gemini opcional (`GEMINI_API_KEY`) + fallback local (`knowledge-base.ts`)
+- **Tests**: Vitest — 331 tests, 57 archivos
 - **Deploy**: Vercel (automático desde `main`)
 
 ---
@@ -106,13 +111,15 @@ npm run docs:screenshots  # regenera capturas en docs/images/
 
 ## Base de datos
 
-Migraciones en orden (`001` → `026_compensation_clubs.sql`). Recientes:
+Migraciones en orden (`001` → `028_drop_device_tokens.sql`). Recientes:
 
 | Migración | Contenido |
 |---|---|
 | `024` | Compensación jueces (claims, domicilio, sede) |
 | `025` | Rol `responsable_financiero_jueces` + metadatos recibo |
 | `026` | Varios clubes organizadores (`compensation_clubs`) |
+| `027` | Montaje sistema (`is_computer_setup`, `role_key`, `role_label`) |
+| `028` | Eliminación `device_tokens` (app iOS descontinuada) |
 
 ---
 
@@ -126,12 +133,14 @@ Migraciones en orden (`001` → `026_compensation_clubs.sql`). Recientes:
 | [API](./docs/API.md) | Referencia `/api/v1` |
 | [Auth/RBAC](./docs/AUTH.md) | Roles y permisos |
 | [Base de datos](./docs/DATABASE.md) | Tablas, RLS, migraciones |
-| [Deploy](./docs/DEPLOY.md) | Vercel, variables, CI |
+| [Deploy](./docs/DEPLOY.md) | Vercel, variables, CI, Supabase |
 | [Rutas](./docs/ROUTES.md) | Mapa de páginas |
 | [Componentes](./docs/COMPONENTS.md) | Inventario UI |
+| [Diseño](./docs/DESIGN.md) | Tokens y principios UX |
+| [Auditoría](./docs/AUDIT.md) | QA y seguridad |
 
 ---
 
 <p align="center">
-  <sub>AEP Tarima · v1.6 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
+  <sub>AEP Tarima · v1.7 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
 </p>

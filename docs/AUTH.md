@@ -10,7 +10,7 @@
 - Sin registro público visible.
 - Reset: enlace "¿Olvidaste tu contraseña?" (Supabase `resetPasswordForEmail`).
 - Sesión: cookies `sb-*-auth-token`, TTL app 7 días.
-- **Correos transaccionales**: plantillas con branding AEP Tarima (cabecera roja, textos en español). Fuente: `src/lib/auth/supabase-email-branding.ts`. Aplicar en remoto con `npm run supabase:email-branding` (requiere `SUPABASE_ACCESS_TOKEN`).
+- **Correos transaccionales**: plantillas con branding AEP Tarima y URL `https://aep-tarima.vercel.app`. Fuente: `src/lib/auth/supabase-email-branding.ts` + `supabase/templates/`. Aplicar en remoto con `npm run supabase:email-branding` (requiere `SUPABASE_ACCESS_TOKEN`).
 
 ## Gestión de contraseñas
 

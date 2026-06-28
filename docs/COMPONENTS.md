@@ -5,92 +5,114 @@
 | Componente | Uso |
 |---|---|
 | `AppShell` | Shell dashboard |
-| `Sidebar` | Navegación colapsable (Documentación, Compensación, sin avatar en pie) |
+| `Sidebar` | Navegación colapsable (Operaciones + Gestión) |
 | `Topbar` | Breadcrumb, menú usuario (cambiar contraseña, cerrar sesión) |
+| `HelpWidget` | Ayuda flotante: guía por rol + asistente (Gemini / local) |
 
 ## Dashboard
 
 | Componente | Uso |
 |---|---|
-| `DashboardLive` | Refresco |
-| `KpiCards` | KPIs |
-| `HealthGauge` | Salud operativa |
-| `InsightsPanel` | Recomendaciones |
+| `DashboardLive` | Refresco en vivo (pausable) |
+| `KpiCards` | KPIs de cobertura y operación |
+| `HealthGauge` | Índice de salud operativa (0–100) |
+| `InsightsPanel` | Recomendaciones auto-generadas |
 | `CoverageForecast` | Cobertura próxima |
-| `OperationalCalendar` | Calendario |
+| `OperationalCalendar` | Calendario de campeonatos |
 
-## Campeonatos/tarima
+## Campeonatos / tarima
 
 | Componente | Uso |
 |---|---|
-| `CompetitionsTable` | Listado |
-| `OpenRostersPanel` | Tarimas abiertas |
-| `CalendarImportDialog` | Import calendario |
+| `CompetitionsTable` | Listado con filtros |
+| `OpenRostersPanel` | Tarimas abiertas priorizadas |
+| `CalendarImportDialog` | Import calendario anual |
 | `EditCompetitionDialog` | Edición inline de campeonato |
-| `RosterBuilder` | Asignación (orquestador, ≤500 líneas) |
-| `RosterTemplateEditor` | Plantilla |
+| `RosterBuilder` | Asignación (orquestador) |
+| `RosterImprevistoBanner` | Desbloqueo tarima aprobada por imprevisto |
+| `RosterTemplateEditor` | Plantilla manual |
 | `ScheduleImportDialog` | Horario PDF |
 | `AssignmentImportDialog` | Cuadrante PDF |
 | `ExportPreviewDialog` | Export |
-| `RosterRevisionPanel` | Revisión |
-| `RosterHistoryPanel` | Historial |
+| `RosterRevisionPanel` | Revisión antes de enviar |
+| `RosterHistoryPanel` | Historial de cambios |
 | `CompetitionAvailabilityDialog` | Confirmación disponibilidad jueces |
-| `CompensationHub` | Panel `/compensation` — lista campeonatos, km pendientes, enlace directo |
-| `CompensationBoard` | Compensación: km manual, desglose por posición tarima, montaje sistema (aparte), multi-club |
-| `CompensationExportDialog` | Modal IBAN efímero → descarga recibo PDF (desglose por sesión) |
-| `AddressAutocompleteField` | Photon/OpenStreetMap autocomplete (sede, domicilio juez) |
+| `RequiredSlotsChips` | Resumen plazas requeridas |
 
-### Sub-componentes RosterBuilder (v1.2)
+### Sub-componentes RosterBuilder
 
 | Componente | Uso |
 |---|---|
-| `RosterCompetitionHeader` | Cabecera con info competición, enlace compensación (rol financiero) y acciones |
-| `RequiredSlotsChips` | Resumen plazas requeridas (tarima, mesa, control, pesaje) |
-| `RosterRefereePanel` | Panel jueces con confirm-to-force en conflictos overridable |
-| `RefereeCard` | Tarjeta individual juez con badges y drag |
-| `SlotGrid` | Grid de slots por sesión/rol (3 columnas: tarima, mesa, jurado) |
+| `RosterCompetitionHeader` | Cabecera, acciones plantilla/export, enlace compensación |
+| `RosterRefereePanel` | Panel jueces; confirm-to-force en conflictos forzables |
+| `RefereeCard` | Tarjeta juez compacta; `LevelBadge compact` (R/N/I/II) |
+| `SlotGrid` | Grid de plazas (hasta 3 columnas por sesión/pesaje) |
 | `SessionBlock` | Bloque sesión expandible |
-| `SessionOverviewCard` | Tarjeta resumen sesión (barra progreso) |
+| `SessionOverviewCard` | Resumen sesión con barra de progreso |
 
-## Datos
+## Compensación
+
+| Componente | Uso |
+|---|---|
+| `CompensationHub` | Panel `/compensation` |
+| `CompensationBoard` | Km manual, comparte, montaje sistema, multi-club |
+| `CompensationExportDialog` | IBAN efímero → PDF recibo |
+| `CompensationKmInput` / `CompensationEuroInput` | Entradas numéricas optimistas |
+
+## Normativa
+
+| Componente | Uso |
+|---|---|
+| `RegulationsView` | Pestañas: Guía AEP, plazas tarima, compensación, IPF |
+| `AepGuidePanel` | Guía AEP 2026 |
+| `RosterRulesPanel` | Requisitos de plazas (`regulation_rules`) |
+| `CompensationNormativaPanel` | Baremo y reglas compensación |
+
+## Mapas / domicilio
+
+| Componente / API | Uso |
+|---|---|
+| `AddressAutocompleteField` | Autocomplete vía `GET /api/v1/geocode/search` (Photon servidor) |
+| `src/lib/geocoding/photon-search.ts` | Búsqueda Photon (bbox España) |
+
+## Datos / import-export
 
 | Componente | Uso |
 |---|---|
 | `TransferDialogShell` | Shell común import/export |
-| `FileDropZone` | Subida |
-| `ImportPreviewTable` | Vista previa |
-
-## Disponibilidad
-
-| Componente | Uso |
-|---|---|
-| `CompetitionAvailabilityDialog` | Modal para confirmar/quitar disponibilidad de un juez en un campeonato |
-| `RefereeAvailabilityPanel` | Panel en tarima: muestra confirmados, filtra "solo confirmados", llama a `/availability` |
-
-La disponibilidad se gestiona a nivel de campeonato (tabla `competition_availability`, migration 019). El filtro "solo confirmados" en tarima filtra la lista de jueces disponibles a los que confirmaron.
+| `FileDropZone` | Subida archivos |
+| `ImportPreviewTable` | Vista previa seleccionable |
 
 ## Jueces
 
 | Componente | Uso |
 |---|---|
-| `RefereesDirectory` | Directorio (con vista card en móvil) |
-| `RefereeEditForm` | Edición (domicilio con autocomplete OpenStreetMap) |
+| `RefereesDirectory` | Directorio (tabla + cards móvil) |
+| `RefereeEditForm` | Edición con domicilio OSM |
 | `ExamsManager` | Exámenes |
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |
 | `UsersAdmin` | Usuarios |
-| `EditUserDialog` | Editar usuario (nombre, rol, zona) |
-| `PasswordDialog` | Cambiar/resetear contraseña (modo `self` / `admin`) |
+| `PasswordDialog` | Cambiar/resetear contraseña |
+
+## Badges
+
+| Componente | Uso |
+|---|---|
+| `LevelBadge` | Nivel arbitral; prop `compact` en tarima (R, N, I, II) |
+| `StatusBadge` | Estado juez |
+| `EventTypeBadge` | Tipo campeonato AEP-1/2/3 |
 
 ## Export de cuadrante
 
 | Lib / Ruta | Uso |
 |---|---|
-| `quadrant-html.ts` | Genera HTML formato oficial AEP (colores por rol, portrait, leyenda) |
-| `quadrant-excel.ts` | Genera `.xlsx` (hoja por día, roles=filas, sesiones=columnas) |
-| `quadrant-layout-parser.ts` | Parser de import por geometría de columnas (4 formatos AEP) |
-| Botones | "Cuadrante PDF" / "Excel" / "WhatsApp" en cabecera de tarima; icono PDF en lista de campeonatos |
+| `quadrant-html.ts` | HTML formato oficial AEP |
+| `quadrant-excel.ts` | `.xlsx` por día |
+| `quadrant-layout-parser.ts` | Import PDF por geometría de columnas |
+| UI | Menú Exportar en tarima; icono PDF en lista campeonatos |
 
 ## Responsive
 
-El `AppShell` auto-colapsa el sidebar en `< 1024px` (primer render en tablet/iPad) para liberar espacio. El usuario puede expandirlo manualmente y la preferencia se persiste en localStorage (`aep-tarima:sidebar-collapsed`).
+- Sidebar auto-colapsa en `< 1024px`; preferencia en `localStorage`.
+- Breakpoints críticos en `xl` (1280px) para layouts de dos columnas en portátil 14".

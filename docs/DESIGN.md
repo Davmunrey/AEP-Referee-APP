@@ -2,15 +2,15 @@
 
 ## Principios
 
-- Pantalla 14" como base.
-- Menos verticalidad, más densidad útil.
+- Pantalla 14" como base de referencia.
+- Densidad útil en tarima: más jueces visibles, menos scroll.
 - Nombres completos visibles antes que iniciales.
-- Tokens, no colores hardcodeados.
+- Tokens de diseño, no colores hardcodeados.
 - Preview antes de aplicar cualquier import/export.
 
 ## Tokens
 
-Fuente verdad:
+Fuente de verdad:
 
 - `src/styles/tokens.css`
 - `src/app/globals.css`
@@ -18,12 +18,18 @@ Fuente verdad:
 
 ## Layout
 
-- Sidebar expandido para operación normal; **sin avatar en pie** (usuario en topbar).
-- Enlaces **Documentación** (`/docs`) y **Compensación** (`/compensation`, rol financiero) en sidebar.
-- Tarima usa distribución horizontal: jueces disponibles izquierda, sesiones/slots derecha.
-- Tarima densa: cards de jueces compactas (~más visibles en 14"), slots de cuadrante menos altos.
-- Sin footer legal en dashboard (documentación vía `/docs` y widget Ayuda; footer solo en sign-in).
-- Tablas preview deben permitir scroll interno sin solapar headers.
+- Sidebar expandido en escritorio; usuario en **topbar** (no en pie del sidebar).
+- Enlaces **Documentación**, **Normativa**, **Compensación** (rol financiero) en sidebar.
+- Tarima: panel jueces izquierda, sesiones/slots derecha.
+- Sin footer legal en dashboard (`/docs` + widget Ayuda).
+- Widget Ayuda flotante (esquina inferior derecha).
+
+## Tarima — densidad
+
+- Cards de juez compactas (`RefereeCard`).
+- **Badges de nivel abreviados** en tarima: Regional **R**, Nacional **N**, IPF Cat. 1 **I**, IPF Cat. 2 **II**. El directorio mantiene el nombre completo.
+- Slots de cuadrante con altura reducida; rejilla hasta 3 columnas.
+- Tooltip `title` en badge compacto muestra el nivel completo.
 
 ## Estados
 
@@ -37,6 +43,6 @@ Fuente verdad:
 ## No hacer
 
 - No mostrar fuentes internas tipo `(Excel: ...)`.
-- No mezclar "Evento" visible con "Competición/Campeonato".
-- No usar plantillas precargadas como verdad si competición trae plantilla propia.
+- No mezclar «Evento» visible con «Campeonato».
 - No ocultar errores de parser; mostrar warnings accionables.
+- No llamar APIs de mapas desde el cliente (usar `/api/v1/geocode/search`).

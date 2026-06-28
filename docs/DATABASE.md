@@ -67,7 +67,14 @@ Persiste el motivo de rechazo al revisar ascensos (obligatorio en API cuando `ap
 - Enum `user_role`: valor `responsable_financiero_jueces`
 - `competitions.compensation_organizer`, `compensation_club_name`, `compensation_club_email`, `compensation_volunteer`
 
-**Estado producción (2026-06-28):** migraciones hasta `027` aplicadas en proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
+**027** — montaje sistema y roles en duty lines:
+
+- `judge_compensation_claims.is_computer_setup`, `computer_setup_amount`
+- `judge_compensation_duty_lines.role_key`, `role_label`
+
+**028** — elimina tabla `device_tokens` (app iOS descontinuada).
+
+**Estado producción (2026-06-28):** migraciones hasta `028` aplicadas en proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
 
 Detalle funcional: [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
 

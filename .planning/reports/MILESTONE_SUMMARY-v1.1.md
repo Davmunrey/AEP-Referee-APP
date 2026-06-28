@@ -1,8 +1,24 @@
-# Milestone Summary — v1.5 Compensation & UI (en curso)
+# Milestone Summary — v1.7 Docs, normativa y UX (completo)
 
-**Started:** 2026-06-28 · **Branch:** `main` · **Tests:** 312
+**Completed:** 2026-06-28 · **Branch:** `main` · **Tests:** 331
 
-Compensación de gastos end-to-end (rol financiero, servicios, API, UI, export PDF con IBAN efímero), migraciones 023–025 en Supabase prod, UI tarima más densa, footer fuera del dashboard. Pendiente: E2E smoke compensación y E2E profundo.
+URL oficial `aep-tarima.vercel.app`, normativa 4 pestañas, asistente de ayuda completo, geocode OSM vía API servidor, badges compactos en tarima, migración 028, todos los `.md` sincronizados. Pendiente backlog: E2E profundo y sustitución `xlsx`.
+
+---
+
+# Milestone Summary — v1.6 Compensation Hub (completo)
+
+**Completed:** 2026-06-28 · **Branch:** `main`
+
+Panel `/compensation`, km manual, montaje sistema, ~180 clubes AEP, migraciones 026–027.
+
+---
+
+# Milestone Summary — v1.5 Compensation & UI (completo)
+
+**Completed:** 2026-06-28 · **Branch:** `main` · **Tests:** 312
+
+Compensación end-to-end, migraciones 023–025, rol financiero, export PDF IBAN efímero.
 
 ---
 

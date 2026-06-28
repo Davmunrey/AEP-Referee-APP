@@ -1,34 +1,38 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: compensation-hub-manual-km
-status: in_progress
+milestone: v1.7
+milestone_name: docs-normativa-ux-polish
+status: complete
 last_updated: "2026-06-28"
-last_activity: 2026-06-28 — km manual, comparte solo exime km, posición tarima, montaje ordenador
+last_activity: 2026-06-28 — docs *.md, normativa, asistente, geocode, badges tarima
 progress:
-  total_phases: 5
-  completed_phases: 4
-  percent: 80
+  total_phases: 6
+  completed_phases: 6
+  percent: 100
 ---
 
 ## Current Position
 
-Phase: 08 — Backlog detallado (compensación + docs)
-Status: In progress on `main`
-Last activity: Hub `/compensation`, km manual, posición tarima, montaje ordenador, docs
+Phase: Complete — v1.7 en `main`
+Last activity: Actualización total documentación, normativa compensación, asistente, geocode OSM, badges compactos
+
+## Completed (v1.7)
+
+- URL producción `aep-tarima.vercel.app` en todo el repo y correos Supabase Auth
+- Sección **Normativa** con 4 pestañas incl. compensación jueces
+- Asistente de ayuda: `knowledge-base.ts` (~35 entradas), `quick-start.ts`, widget Ayuda
+- `GET /api/v1/geocode/search` — autocomplete domicilio (Photon servidor, fix CSP)
+- Badges nivel abreviados en tarima (R, N, I, II)
+- Migración `028` (drop device_tokens)
+- Todos los `.md` del repositorio sincronizados
 
 ## Completed (v1.6)
 
-- Panel central compensación `/compensation` + API `GET /compensation/hub`
-- Sidebar: Documentación, Compensación, sin avatar duplicado
-- Km manual en compensación (comparte solo exime kilometraje, no alojamiento)
-- Desglose por posición en tarima (Central, Pesaje, Lateral…)
-- Montaje del ordenador como pago aparte (`is_computer_setup`)
-- Listado 180 clubes AEP + multi-club en recibos
-- Manual PDF exportable con capturas actualizadas
-- Docs `*.md` sincronizados
+- Panel `/compensation`, km manual, desglose por posición, montaje sistema
+- 180 clubes AEP curados, multi-club en recibos
+- IBAN efímero en export PDF
 
-## Pending
+## Pending (backlog)
 
 - E2E smoke compensación
 - E2E profundo import → cuadrante → export
@@ -37,5 +41,6 @@ Last activity: Hub `/compensation`, km manual, posición tarima, montaje ordenad
 ## Key Decisions
 
 - IBAN efímero: solo en POST export, nunca en BD
-- Compensación gestionada por responsable financiero, no delegados
-- Comparte vehículo: sin cobro km, pero km obligatorios para alojamiento
+- Compensación: rol `responsable_financiero_jueces`
+- Geocoding: nunca desde cliente (CSP); API propia + Nominatim al guardar
+- Documentación: solo web (`/docs` + widget Ayuda), no manual PDF

@@ -2,21 +2,27 @@
 
 ## What This Is
 
-App interna gestión jueces AEP: campeonatos, tarimas, cuadrantes, compensación, ascensos, sanciones, estadísticas.
+App interna de gestión de jueces AEP: campeonatos, tarimas, cuadrantes, compensación, normativa, ascensos, sanciones, estadísticas.
 
 Stack: Next.js 15, TypeScript, Supabase (Postgres + Auth + RLS), Tailwind CSS, Radix UI.
-Producción: https://aep-tarima.vercel.app/
 
-## Current Milestone: v1.6 — Compensation Hub & km manual (In progress)
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 
-**Shipped:**
-- Panel `/compensation`, API hub, sidebar actualizado
-- OpenStreetMap gratuito (sin Google Maps)
-- Manual PDF exportable con capturas
-- Migraciones hasta `026`, 180 clubes AEP
-- 344 tests Vitest
+Solo web. Sin app iOS. Sin manual PDF en la app.
 
-**Pending:** E2E smoke compensación, E2E profundo, sustitución xlsx.
+## Current Milestone: v1.7 — Docs, normativa y pulido UX (Complete)
+
+**Shipped (jun 2026):**
+
+- URL oficial `aep-tarima.vercel.app` en app, correos Supabase y documentación
+- Normativa `/regulations` — 4 pestañas (Guía AEP, plazas, compensación, IPF)
+- Asistente de ayuda completo (~35 entradas KB + guía por rol + Gemini opcional)
+- Autocomplete domicilio vía API servidor (fix CSP + Photon)
+- Badges nivel compactos en tarima (R/N/I/II)
+- Migraciones hasta `028`, branding correos aplicado
+- 331 tests Vitest
+
+**Pending backlog:** E2E smoke compensación, E2E profundo, sustitución `xlsx`.
 
 ## Architecture
 

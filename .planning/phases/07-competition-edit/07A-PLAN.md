@@ -13,6 +13,8 @@ requirements_addressed: [COMP-01, COMP-02]
 
 # Plan 07A: Shared Validation + API Client Method
 
+> **Histórico — completado.** Referencia de implementación v1.2. Estado actual: `docs/GUIA-USO.md`, `docs/API.md`.
+
 ## Objective
 Extract `validateField` and `FieldErrors` from `new-competition-form.tsx` into a shared `competition-validation.ts` lib file. Add `updateCompetition` to the api client. This enables `EditCompetitionDialog` (07B) to reuse identical validation without duplicating logic.
 

@@ -1,5 +1,7 @@
 # Production readiness
 
+Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+
 ## Gate local
 
 ```bash
@@ -11,7 +13,7 @@ Incluye:
 - `audit:prod`
 - `audit:security`
 - lint
-- tests
+- tests (331)
 - build
 
 ## Gate browser
@@ -32,29 +34,30 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 
 ## Seguridad cubierta
 
-- Headers HTTP.
+- Headers HTTP (CSP, HSTS, frame deny).
 - API privada con sesión.
-- Login server-side con rate-limit no manipulable.
+- Login server-side con rate-limit.
 - Mutaciones con RBAC y scope zonal.
 - RLS deny-by-default.
-- Imports con preview/selección y merge parcial (horarios).
-- Validación roster server-side (slot keys, revalidación post-assign).
-- PDF con firma y límite.
-- XLSX con firma ZIP y límites estructurales.
-- Dependencias auditadas con excepción documentada `xlsx`.
+- Geocoding vía API propia (Photon/Nominatim en servidor).
+- Imports con preview/selección.
+- Validación roster server-side.
+- PDF/XLSX con límites y firmas.
+- IBAN compensación no persistido.
 
 ## No cubierto todavía
 
-- E2E completo importar horario -> importar cuadrante -> export.
-- E2E smoke compensación (`/compensation`, `/competitions/:id/compensation`).
-- CSP enforce.
-- Sustitución `xlsx`.
+- E2E completo importar horario → cuadrante → export.
+- E2E smoke compensación (`/compensation`).
+- Sustitución librería `xlsx`.
 - Restore real en staging.
 
-## Criterio "listo producción"
+## Criterio «listo producción»
 
 - CI verde en GitHub.
 - `audit:remote` verde contra Supabase producción.
+- Migraciones hasta `028` aplicadas.
+- `NEXT_PUBLIC_APP_URL` y Site URL Supabase = `https://aep-tarima.vercel.app`.
+- Plantillas correo Auth con branding AEP.
 - Backup reciente verificado.
-- Usuario activo allowlist coincide con operación real.
 - Manual QA de import PDF/XLSX con archivos reales críticos.
