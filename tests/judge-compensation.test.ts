@@ -55,10 +55,12 @@ describe("calculateCompensationTotals", () => {
     expect(totals.totalAmount).toBe(96);
   });
 
-  it("montaje del ordenador se paga aparte", () => {
-    const totals = calculateCompensationTotals(baseInput({ isComputerSetup: true }));
-    expect(totals.computerSetupAmount).toBe(30);
-    expect(totals.totalAmount).toBe(126);
+  it("montaje del sistema informático con importe manual", () => {
+    const totals = calculateCompensationTotals(
+      baseInput({ isComputerSetup: true, computerSetupManualAmount: 45 }),
+    );
+    expect(totals.computerSetupAmount).toBe(45);
+    expect(totals.totalAmount).toBe(141);
   });
 
   it("EPF/IPF no paga responsable de competición", () => {

@@ -103,6 +103,7 @@ export const memoryCompensationService = {
       isCompetitionManager: boolean;
       competitionManagerPerDay: boolean;
       isComputerSetup: boolean;
+      computerSetupAmount: number | null;
       lodgingEligibleOverride: boolean | null;
       lodgingDaysOverride: number | null;
       status: CompensationClaimStatus;
@@ -148,6 +149,10 @@ export const memoryCompensationService = {
       competitionManagerPerDay:
         patch.competitionManagerPerDay ?? base.competitionManagerPerDay,
       isComputerSetup: patch.isComputerSetup ?? base.isComputerSetup,
+      computerSetupManualAmount:
+        patch.computerSetupAmount !== undefined
+          ? (patch.computerSetupAmount ?? undefined)
+          : base.computerSetupAmount,
       lodgingEligibleOverride:
         patch.lodgingEligibleOverride !== undefined
           ? (patch.lodgingEligibleOverride ?? undefined)

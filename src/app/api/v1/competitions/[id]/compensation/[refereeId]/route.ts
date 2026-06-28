@@ -35,6 +35,12 @@ export async function PATCH(request: Request, context: RouteContext) {
         : undefined,
     isComputerSetup:
       typeof body.isComputerSetup === "boolean" ? body.isComputerSetup : undefined,
+    computerSetupAmount:
+      body.computerSetupAmount === null
+        ? null
+        : typeof body.computerSetupAmount === "number"
+          ? body.computerSetupAmount
+          : undefined,
     lodgingEligibleOverride:
       body.lodgingEligibleOverride === null
         ? null

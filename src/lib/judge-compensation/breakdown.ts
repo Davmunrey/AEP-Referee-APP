@@ -69,10 +69,10 @@ export function buildClaimBreakdown(claim: CompensationClaim): CompensationBreak
     }
   }
 
-  if (claim.computerSetupAmount > 0) {
+  if (claim.isComputerSetup && (claim.computerSetupAmount ?? 0) > 0) {
     lines.push({
-      label: "Montaje del ordenador",
-      amount: claim.computerSetupAmount,
+      label: "Montaje sistema (Liftingcast / OpenLifter / Goodlift)",
+      amount: claim.computerSetupAmount ?? 0,
     });
   }
 
