@@ -1,13 +1,12 @@
 import PDFDocument from "pdfkit";
 import {
   buildCompensationReceiptLayout,
+  RULE_LINE,
+  SIGN_LINE,
   type CompensationReceiptInput,
 } from "./receipt-document";
 
-const SIGN_LINE =
-  "__________________________________________________";
-
-/** Genera el PDF del recibo AEP/club. El IBAN solo viaja en memoria durante la petición. */
+/** Genera el PDF del recibo AEP/club, igual que la plantilla oficial. */
 export function renderCompensationReceiptPdf(input: CompensationReceiptInput): Promise<Buffer> {
   const layout = buildCompensationReceiptLayout(input);
 
@@ -25,7 +24,7 @@ export function renderCompensationReceiptPdf(input: CompensationReceiptInput): P
 
     for (let i = 0; i < layout.headerLines.length; i++) {
       const line = layout.headerLines[i];
-      if (layout.organizerType === "club" && i < 2) {
+      if (layout.organizerType === "club" && i === 0) {
         doc.font("Helvetica-Bold").text(line, { align: "center", width: contentWidth });
         doc.font("Helvetica");
       } else {
@@ -33,32 +32,20 @@ export function renderCompensationReceiptPdf(input: CompensationReceiptInput): P
       }
     }
 
-    doc.moveDown(0.45);
-    const ruleY = doc.y;
-    doc
-      .moveTo(marginLeft, ruleY)
-      .lineTo(marginLeft + contentWidth, ruleY)
-      .lineWidth(0.75)
-      .strokeColor("#000000")
-      .stroke();
-    doc.moveDown(0.55);
-
-    doc.text(SIGN_LINE, { align: "center", width: contentWidth });
-    doc.moveDown(0.55);
+    doc.text(RULE_LINE, { align: "left", width: contentWidth, lineGap: 0 });
+    doc.text(SIGN_LINE, { align: "center", width: contentWidth, lineGap: 0 });
 
     for (const line of layout.returnEmailLines) {
-      doc.text(line, { align: "left", width: contentWidth, lineGap: 1 });
+      doc.text(line, { align: "left", width: contentWidth, lineGap: 0 });
     }
 
-    doc.moveDown(0.45);
     for (const line of layout.titleLines) {
-      doc.text(line, { align: "center", width: contentWidth, lineGap: 1 });
+      doc.text(line, { align: "center", width: contentWidth, lineGap: 0 });
     }
 
-    doc.moveDown(0.55);
-    for (const line of layout.bodyLines) {
-      doc.text(line, { align: "left", width: contentWidth, lineGap: 3 });
-      doc.moveDown(0.15);
+    doc.text(layout.bodyParagraph, { align: "left", width: contentWidth, lineGap: 0 });
+    for (const line of layout.bodyClosingLines) {
+      doc.text(line, { align: "left", width: contentWidth, lineGap: 0 });
     }
 
     doc.end();

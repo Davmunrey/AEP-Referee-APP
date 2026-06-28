@@ -103,6 +103,7 @@ describe("buildCompensationReceiptText", () => {
     expect(text).toContain("TesoreroAEP@gmail.com");
     expect(text).toContain("he recibido, la cantidad de 190€");
     expect(text).toContain("los días 25 y 26 de abril de 2026");
+    expect(text).toContain("celebrado en Narón, A Coruña, los días");
   });
 
   it("recibo club voluntario sin pagador explícito", () => {
@@ -129,6 +130,7 @@ describe("buildCompensationReceiptText", () => {
     expect(text).toContain("colaborador deportivo voluntario");
     expect(text).toContain("he recibido la cantidad de 185€");
     expect(text).toContain("por la labor prestada en la III Campeonato");
+    expect(text).toContain("celebrado en Las Torres de Cotillas, Murcia, los días");
   });
 
   it("genera PDF AEP sin sección de desglose", async () => {

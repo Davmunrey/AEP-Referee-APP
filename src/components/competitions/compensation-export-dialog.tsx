@@ -102,11 +102,11 @@ export function CompensationExportDialog({
           </p>
         </div>
 
-        <label className="mb-1 block text-xs font-semibold text-foreground-secondary" htmlFor="compensation-export-iban">
+        <label className="mb-2 block text-xs font-semibold text-foreground-secondary" htmlFor="compensation-export-iban">
           IBAN de devolución
         </label>
         <p className="mb-2 text-xs text-muted-foreground">
-          Introduce el IBAN real del juez (24 caracteres). Solo se usa para el PDF y no se guarda en la aplicación.
+          Solo se usa para el PDF y no se guarda en la aplicación.
         </p>
         <Input
           id="compensation-export-iban"
@@ -123,17 +123,8 @@ export function CompensationExportDialog({
           data-1p-ignore
           data-lpignore="true"
           aria-invalid={iban.length > 0 && !ibanReady}
-          aria-describedby="compensation-export-iban-hint"
         />
-        <p
-          id="compensation-export-iban-hint"
-          className={`mt-2 text-xs ${ibanHint ? "text-destructive" : ibanReady ? "text-success" : "text-muted-foreground"}`}
-        >
-          {ibanHint ??
-            (ibanReady
-              ? "IBAN válido. Pulsa Descargar PDF."
-              : "Ejemplo de formato: ES91 2100 0418 4502 0005 1332. En móvil se abre el PDF en una pestaña nueva para guardarlo.")}
-        </p>
+        {ibanHint && <p className="mt-2 text-xs text-destructive">{ibanHint}</p>}
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
         <div className="mt-4 flex gap-2">
           <Button

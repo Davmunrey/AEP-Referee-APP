@@ -25,15 +25,20 @@ const AEP_HEADER_LINES = [
   "YouTube: Powerlifting AEP Instagram: @powerhispania",
 ] as const;
 
+const RULE_LINE =
+  "____________________________________________________________________________________";
 const SIGN_LINE =
   "__________________________________________________";
+
+export { RULE_LINE, SIGN_LINE };
 
 export type CompensationReceiptLayout = {
   headerLines: string[];
   organizerType: "club" | "aep";
   returnEmailLines: string[];
   titleLines: string[];
-  bodyLines: string[];
+  bodyParagraph: string;
+  bodyClosingLines: string[];
 };
 
 export type CompensationOrganizerType = "club" | "aep";
@@ -209,17 +214,33 @@ function buildLaborPhrase(
   return `por la labor prestada como juez en ${article} ${competitionName}`;
 }
 
-function buildBodyLines(input: CompensationReceiptInput): string[] {
+function formatCelebrationPhrase(
+  sede: string,
+  fecha: string,
+  fechaFin: string,
+  gender: "a" | "o",
+): string {
+  const datePhrase = formatCompetitionDatePhrase(fecha, fechaFin);
+  if (fecha === fechaFin) {
+    return `celebrad${gender} en ${sede} ${datePhrase}`;
+  }
+  return `celebrad${gender} en ${sede}, ${datePhrase}`;
+}
+
+function buildBodyParagraph(input: CompensationReceiptInput): string {
   const amount = formatReceiptAmountEur(input.amountEur);
-  const datePhrase = formatCompetitionDatePhrase(input.fecha, input.fechaFin);
   const gender = celebrationGender(input.fecha, input.fechaFin);
-  const ibanDisplay = formatIbanDisplay(input.iban);
   const collaborator = buildCollaboratorPhrase(input.organizer);
   const received = buildReceivedPhrase(input.organizer, amount);
   const labor = buildLaborPhrase(input.organizer, input.competitionName);
+  const celebration = formatCelebrationPhrase(input.sede, input.fecha, input.fechaFin, gender);
 
+  return `Yo, ${input.refereeName}, en calidad de ${collaborator}, ${received} en concepto de compensación de gastos ${labor} ${celebration}, a ingresar en la siguiente cuenta bancaria:`;
+}
+
+function buildBodyClosingLines(input: CompensationReceiptInput): string[] {
+  const ibanDisplay = formatIbanDisplay(input.iban);
   return [
-    `Yo, ${input.refereeName}, en calidad de ${collaborator}, ${received} en concepto de compensación de gastos ${labor} celebrad${gender} en ${input.sede}, ${datePhrase}, a ingresar en la siguiente cuenta bancaria:`,
     `IBAN: ${ibanDisplay}`,
     "Y para que conste, firmo el presente documento.",
     "Fecha:",
@@ -234,7 +255,8 @@ export function buildCompensationReceiptLayout(input: CompensationReceiptInput):
     organizerType: input.organizer.type,
     returnEmailLines: buildReturnEmailLine(input.organizer).split("\n"),
     titleLines: buildTitleLines(input.organizer),
-    bodyLines: buildBodyLines(input),
+    bodyParagraph: buildBodyParagraph(input),
+    bodyClosingLines: buildBodyClosingLines(input),
   };
 }
 
@@ -243,10 +265,12 @@ export function buildCompensationReceiptLines(input: CompensationReceiptInput): 
   const layout = buildCompensationReceiptLayout(input);
   return [
     ...layout.headerLines,
+    RULE_LINE,
     SIGN_LINE,
-    layout.returnEmailLines.join(" "),
+    ...layout.returnEmailLines,
     ...layout.titleLines,
-    ...layout.bodyLines,
+    layout.bodyParagraph,
+    ...layout.bodyClosingLines,
   ];
 }
 
