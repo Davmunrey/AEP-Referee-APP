@@ -5,6 +5,7 @@ import { countOpenSlots } from "@/lib/roster-rules";
 import { rosterAnalyticsStats } from "@/lib/roster-coverage";
 import { enumerateSlotKeys, normalizeCompetitionTemplate } from "@/lib/roster-template";
 import { resolveZoneCode } from "@/lib/aep-zones";
+import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
 import type {
   AnalyticsPayload,
   AppMeta,
@@ -19,10 +20,9 @@ import { mapActivity, mapCompetition, mapRegulation } from "@/server/db/mappers"
 import { expireStaleSanctions, getSanctionAlerts } from "@/server/services/referee-sanctions";
 import {
   applyHealthHistory,
+  cachedLoadAllAssignments,
   db,
-  getCalendarEvents,
   getZones,
-  loadAllAssignments,
   yearFromIso,
 } from "./supabase-helpers";
 import { competitionService } from "./supabase-competitions";
@@ -48,7 +48,7 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
       supabase.from("referees").select("estado"),
       supabase.from("competitions").select("id, estado, template, tipo"),
       supabase.from("approval_proposals").select("status"),
-      loadAllAssignments(),
+      cachedLoadAllAssignments(),
     ]);
     referees = refRes.data ?? [];
     competitions = compRes.data ?? [];
@@ -136,7 +136,7 @@ export const analyticsService = {
       refereeQuery,
       approvalQuery,
       promotionQuery,
-      loadAllAssignments(),
+      cachedLoadAllAssignments(),
     ]);
 
     const competitions = (competitionRows ?? []).map((r) =>
@@ -197,13 +197,13 @@ export const analyticsService = {
         kpi.label === "Cobertura Nacional" ? { ...kpi, label: coverageLabel } : kpi,
       ),
       activity: activityItems,
-      calendar: await getCalendarEvents(() => competitionService.getCompetitions(user)),
+      calendar: calendarEventsFromCompetitions(competitions),
       upcomingCompetitions: competitions.slice(0, 6),
       currentUser: user,
       health,
       insights,
       coverage,
-      sanctionAlerts: await getSanctionAlerts(user),
+      sanctionAlerts: await getSanctionAlerts(user, { skipExpire: true }),
       generatedAt: new Date().toISOString(),
     };
   },
@@ -212,7 +212,7 @@ export const analyticsService = {
     const userZone =
       user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
     const competitions = await competitionService.getCompetitions(user);
-    const assignmentsByComp = await loadAllAssignments();
+    const assignmentsByComp = await cachedLoadAllAssignments();
     const supabase = db();
     const { data: compTemplates } = await supabase.from("competitions").select("id, template, tipo");
     const templateById = new Map(

@@ -6,13 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { dispatchAppDataSync } from "@/lib/realtime/sync-events";
 
-const POLL_MS = 12_000;
+const POLL_MS = 30_000;
 const DEBOUNCE_MS = 400;
 
 /**
  * Mantiene la UI sincronizada con Supabase:
  * - Realtime postgres_changes en `app_sync_state` (migration 029)
- * - Poll de respaldo cada 12 s por si Realtime se desconecta
+ * - Poll de respaldo cada 30 s (solo refresca si cambió la versión)
  * - Refresco al volver a la pestaña
  */
 export function AppRealtimeSync() {
@@ -30,7 +30,9 @@ export function AppRealtimeSync() {
       debounceRef.current = setTimeout(() => {
         startTransition(() => {
           router.refresh();
-          dispatchAppDataSync(source);
+          if (source === "realtime") {
+            dispatchAppDataSync(source);
+          }
           pendingRef.current = false;
         });
       }, DEBOUNCE_MS);
@@ -63,10 +65,7 @@ export function AppRealtimeSync() {
   }, [applySync]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      const id = setInterval(() => applySync("poll"), POLL_MS);
-      return () => clearInterval(id);
-    }
+    if (!isSupabaseConfigured()) return;
 
     const supabase = createClient();
     let cancelled = false;
@@ -117,7 +116,6 @@ export function AppRealtimeSync() {
     };
   }, [applySync, pollVersion]);
 
-  // Indicador accesible para lectores de pantalla cuando hay refresh en curso.
   return (
     <span className="sr-only" aria-live="polite" aria-busy={isPending}>
       {isPending ? "Sincronizando datos…" : ""}

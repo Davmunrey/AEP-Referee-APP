@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   computeRosterCoverage,
   deriveCompetitionEstado,
@@ -93,12 +94,31 @@ export async function getZones() {
 }
 
 export async function loadAssignments(competitionId: string): Promise<AssignmentsMap> {
+  const { assignments } = await loadRosterAssignmentData(competitionId);
+  return assignments;
+}
+
+/** Una sola consulta para asignaciones, flags y cross-zone de una tarima. */
+export async function loadRosterAssignmentData(competitionId: string): Promise<{
+  assignments: AssignmentsMap;
+  flags: FlagsMap;
+  crossZoneMap: import("@/lib/types").CrossZoneMap;
+}> {
   const supabase = db();
   const { data } = await supabase
     .from("roster_assignments")
-    .select("slot_key, referee_id")
+    .select("slot_key, referee_id, flags, cross_zone")
     .eq("competition_id", competitionId);
-  return assignmentsFromRows(data ?? []);
+  const rows = data ?? [];
+  const crossZoneMap: import("@/lib/types").CrossZoneMap = {};
+  for (const row of rows) {
+    if (row.cross_zone) crossZoneMap[String(row.slot_key)] = true;
+  }
+  return {
+    assignments: assignmentsFromRows(rows),
+    flags: flagsFromRows(rows),
+    crossZoneMap,
+  };
 }
 
 export function yearFromIso(date: string): number | null {
@@ -107,27 +127,15 @@ export function yearFromIso(date: string): number | null {
 }
 
 export async function loadFlags(competitionId: string): Promise<FlagsMap> {
-  const supabase = db();
-  const { data } = await supabase
-    .from("roster_assignments")
-    .select("slot_key, flags")
-    .eq("competition_id", competitionId);
-  return flagsFromRows(data ?? []);
+  const { flags } = await loadRosterAssignmentData(competitionId);
+  return flags;
 }
 
 export async function loadCrossZoneMap(
   competitionId: string,
 ): Promise<import("@/lib/types").CrossZoneMap> {
-  const supabase = db();
-  const { data } = await supabase
-    .from("roster_assignments")
-    .select("slot_key, cross_zone")
-    .eq("competition_id", competitionId);
-  const map: import("@/lib/types").CrossZoneMap = {};
-  for (const row of data ?? []) {
-    if (row.cross_zone) map[String(row.slot_key)] = true;
-  }
-  return map;
+  const { crossZoneMap } = await loadRosterAssignmentData(competitionId);
+  return crossZoneMap;
 }
 
 /**
@@ -153,6 +161,9 @@ export async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>>
   }
   return result;
 }
+
+/** Dedup por petición SSR (layout + página comparten la misma carga). */
+export const cachedLoadAllAssignments = cache(loadAllAssignments);
 
 export async function syncCompetitionCoverage(competitionId: string) {
   const supabase = db();

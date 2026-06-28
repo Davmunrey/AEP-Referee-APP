@@ -1,13 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { api } from "@/lib/api/client";
-import { pickActiveRosterHref } from "@/lib/nav-utils";
+import { useEffect, useState } from "react";
 import type { SessionUser } from "@/lib/types";
 import { HelpWidget } from "@/components/help/help-widget";
 import { AppRealtimeSync } from "@/components/realtime/app-realtime-sync";
-import { useAppDataSync } from "@/hooks/use-app-data-sync";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 
@@ -29,32 +25,11 @@ export function AppShell({
   navCounts: NavCounts;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const pathname = usePathname();
   const [liveNavCounts, setLiveNavCounts] = useState(navCounts);
 
   useEffect(() => {
     setLiveNavCounts(navCounts);
   }, [navCounts]);
-
-  const refreshNavCounts = useCallback(() => {
-    void Promise.all([api.getCompetitions(), api.getApprovals()])
-      .then(([competitions, approvals]) => {
-        setLiveNavCounts({
-          competitions: competitions.length,
-          approvals: approvals.filter((a) => a.status === "pendiente").length,
-          activeRosterHref: pickActiveRosterHref(competitions),
-        });
-      })
-      .catch(() => {
-        // Mantener contadores del servidor si la API falla (sesión expirada, etc.).
-      });
-  }, []);
-
-  useEffect(() => {
-    refreshNavCounts();
-  }, [pathname, navCounts, refreshNavCounts]);
-
-  useAppDataSync(refreshNavCounts);
 
   useEffect(() => {
     try {

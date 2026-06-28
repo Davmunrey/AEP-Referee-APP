@@ -14,7 +14,8 @@ import type {
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
 import { roundTripKmFromOneWay } from "@/lib/judge-compensation/km";
-import type { Competition, Referee, SessionUser } from "@/lib/types";
+import { normalizeCompetitionTemplate } from "@/lib/roster-template";
+import type { Competition, Referee, RosterSession, SessionUser } from "@/lib/types";
 import {
   claimToDbRow,
   mapCompensationClaimRow,
@@ -27,7 +28,7 @@ import {
 import { competitionService } from "./supabase-competitions";
 import { refereeService } from "./supabase-referees";
 import { rosterService } from "./supabase-roster";
-import { db } from "./supabase-helpers";
+import { cachedLoadAllAssignments, db, getCompetitionTemplate, loadRosterAssignmentData } from "./supabase-helpers";
 
 function claimId(competitionId: string, refereeId: string): string {
   return `cmp-${competitionId}-${refereeId}`;
@@ -167,38 +168,97 @@ async function loadMergedClaimForReferee(
   });
 }
 
-async function buildSummary(competitionId: string): Promise<CompetitionCompensationSummary> {
-  const competition = await competitionService.getCompetition(competitionId);
-  if (!competition) {
-    return emptySummary(competitionId);
-  }
-  const roster = await rosterService.getRoster(competitionId, competitionService.getCompetition);
-  if (!roster) {
-    return emptySummary(competitionId);
-  }
-  const refereeIds = assignedRefereeIds(roster.assignments);
-  const [stored, refereesById] = await Promise.all([
-    loadStoredClaims(competitionId, competition),
-    refereeService.getRefereesByIds(refereeIds),
-  ]);
-  const claims: CompensationClaim[] = [];
+async function loadStoredClaimsBatch(
+  competitions: Competition[],
+): Promise<Map<string, Map<string, CompensationClaim>>> {
+  const byComp = new Map<string, Map<string, CompensationClaim>>();
+  if (competitions.length === 0) return byComp;
 
+  const compIds = competitions.map((c) => c.id);
+  const compById = new Map(competitions.map((c) => [c.id, c]));
+  const supabase = db();
+  const { data: claimRows } = await supabase
+    .from("judge_compensation_claims")
+    .select("*")
+    .in("competition_id", compIds);
+
+  const claimIds = (claimRows ?? []).map((r) => String((r as Record<string, unknown>).id));
+  const dutyMap = await loadDutyLinesByClaim(claimIds);
+
+  for (const row of claimRows ?? []) {
+    const rec = row as Record<string, unknown>;
+    const compId = String(rec.competition_id);
+    const comp = compById.get(compId);
+    if (!comp) continue;
+    const id = String(rec.id);
+    const claim = mapCompensationClaimRow(rec, dutyMap.get(id) ?? [], comp);
+    const bucket = byComp.get(compId) ?? new Map<string, CompensationClaim>();
+    bucket.set(String(rec.referee_id), claim);
+    byComp.set(compId, bucket);
+  }
+  return byComp;
+}
+
+async function loadTemplatesBatch(compIds: string[]): Promise<Map<string, RosterSession[]>> {
+  const map = new Map<string, RosterSession[]>();
+  if (compIds.length === 0) return map;
+
+  const supabase = db();
+  const { data } = await supabase.from("competitions").select("id, template, tipo").in("id", compIds);
+  for (const row of data ?? []) {
+    const r = row as { id: string; template: RosterSession[] | null; tipo: string };
+    map.set(
+      r.id,
+      normalizeCompetitionTemplate(r.template, r.tipo as Competition["tipo"]),
+    );
+  }
+  return map;
+}
+
+function buildSummaryInMemory(
+  competition: Competition,
+  template: RosterSession[],
+  assignments: Record<string, string>,
+  stored: Map<string, CompensationClaim>,
+  refereesById: Map<string, Referee>,
+): CompetitionCompensationSummary {
+  const refereeIds = assignedRefereeIds(assignments);
+  if (refereeIds.length === 0) return emptySummary(competition.id);
+
+  const claims: CompensationClaim[] = [];
   for (const refereeId of refereeIds) {
     const referee = refereesById.get(refereeId);
     if (!referee) continue;
-    const existing = stored.get(refereeId);
     claims.push(
       mergeClaimFromRoster({
         competition,
         referee,
-        template: roster.template,
-        assignments: roster.assignments,
-        existing,
+        template,
+        assignments,
+        existing: stored.get(refereeId),
       }),
     );
   }
-
   return summarizeCompensation(competition, claims, refereesById);
+}
+
+async function buildSummary(competitionId: string): Promise<CompetitionCompensationSummary> {
+  const competition = await competitionService.getCompetition(competitionId);
+  if (!competition) return emptySummary(competitionId);
+
+  const [template, { assignments }] = await Promise.all([
+    getCompetitionTemplate(competitionId),
+    loadRosterAssignmentData(competitionId),
+  ]);
+  const tpl = template ?? [];
+  const refereeIds = assignedRefereeIds(assignments);
+  if (refereeIds.length === 0) return emptySummary(competitionId);
+
+  const [stored, refereesById] = await Promise.all([
+    loadStoredClaims(competitionId, competition),
+    refereeService.getRefereesByIds(refereeIds),
+  ]);
+  return buildSummaryInMemory(competition, tpl, assignments, stored, refereesById);
 }
 
 function emptySummary(competitionId: string): CompetitionCompensationSummary {
@@ -347,10 +407,36 @@ export const compensationService = {
   },
 
   getHub: async (user: SessionUser): Promise<CompensationHubSummary> => {
-    const competitions = await competitionService.getCompetitions(user);
+    const [competitions, assignmentsByComp] = await Promise.all([
+      competitionService.getCompetitions(user),
+      cachedLoadAllAssignments(),
+    ]);
+    const compIds = competitions.map((c) => c.id);
+    const [templatesById, storedByComp] = await Promise.all([
+      loadTemplatesBatch(compIds),
+      loadStoredClaimsBatch(competitions),
+    ]);
+
+    const allRefereeIds = new Set<string>();
+    for (const comp of competitions) {
+      for (const rid of Object.values(assignmentsByComp.get(comp.id) ?? {})) {
+        if (rid) allRefereeIds.add(rid);
+      }
+    }
+    const refereesById = await refereeService.getRefereesByIds([...allRefereeIds]);
+
     const summaries = new Map<string, CompetitionCompensationSummary>();
     for (const comp of competitions) {
-      summaries.set(comp.id, await buildSummary(comp.id));
+      summaries.set(
+        comp.id,
+        buildSummaryInMemory(
+          comp,
+          templatesById.get(comp.id) ?? [],
+          assignmentsByComp.get(comp.id) ?? {},
+          storedByComp.get(comp.id) ?? new Map(),
+          refereesById,
+        ),
+      );
     }
     return buildHubSummary(competitions, summaries);
   },

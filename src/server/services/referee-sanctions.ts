@@ -266,8 +266,13 @@ export async function markSanctionDelegateNotified(
   return mapSanction(data as Record<string, unknown>);
 }
 
-export async function getSanctionAlerts(user?: SessionUser): Promise<SanctionAlert[]> {
-  await expireStaleSanctions();
+export async function getSanctionAlerts(
+  user?: SessionUser,
+  options?: { skipExpire?: boolean },
+): Promise<SanctionAlert[]> {
+  if (!options?.skipExpire) {
+    await expireStaleSanctions();
+  }
   const supabase = db();
   const { data } = await supabase
     .from("referee_sanctions")

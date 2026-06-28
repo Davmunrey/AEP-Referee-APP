@@ -18,7 +18,6 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import { Progress } from "@/components/ui/progress";
-import { useAppDataSync } from "@/hooks/use-app-data-sync";
 import { api } from "@/lib/api/client";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { isCompetitionPast } from "@/lib/competition-status";
@@ -64,9 +63,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     setCompetitions(initialCompetitions);
   }, [initialCompetitions]);
 
-  const refreshEvents = useCallback(async () => {
-    const fresh = await api.getCompetitions();
-    setCompetitions(fresh);
+  const refreshEvents = useCallback(() => {
     router.refresh();
   }, [router]);
 
@@ -77,8 +74,6 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [refreshEvents]);
-
-  useAppDataSync(refreshEvents);
 
   const duplicateGroups = useMemo(() => groupCompetitionDuplicates(competitions), [competitions]);
   const duplicateIds = useMemo(() => {

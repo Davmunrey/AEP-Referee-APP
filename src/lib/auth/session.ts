@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -75,7 +76,7 @@ async function resolveSessionUser(admin: AdminClient, user: User): Promise<Sessi
 }
 
 /** Sesión del usuario actual vía cookie de sesión Supabase SSR. */
-export async function getSession(): Promise<SessionUser | null> {
+export const getSession = cache(async (): Promise<SessionUser | null> => {
   if (isDocsCaptureMode()) {
     ensureDocsCaptureSeed();
     return DOCS_CAPTURE_SESSION;
@@ -88,7 +89,7 @@ export async function getSession(): Promise<SessionUser | null> {
   if (error || !data.user) return null;
 
   return resolveSessionUser(createAdminClient(), data.user);
-}
+});
 
 /**
  * RBAC. Cinco roles:

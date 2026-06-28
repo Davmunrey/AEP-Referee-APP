@@ -96,8 +96,7 @@ export const supabaseDataService = {
       (cId) => rosterService.getRoster(cId, competitionService.getCompetition),
       competitionService.getCompetition,
     ),
-  getNavCounts: (user?: SessionUser) =>
-    rosterService.getNavCounts(user, competitionService.getCompetitions, rosterService.getApprovals),
+  getNavCounts: (user?: SessionUser) => competitionService.getNavCountsFast(user),
 
   // ── Exams / Reports / Promotions ──────────────────────────────────────────
   getExams: examsService.getExams,
