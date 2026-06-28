@@ -1,9 +1,7 @@
 import type { User } from "@supabase/supabase-js";
-import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { verifyAccessToken } from "@/lib/supabase/token";
 import { profileToSessionUser, type ProfileRow } from "@/lib/auth/profile";
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { DOCS_CAPTURE_SESSION, isDocsCaptureMode } from "@/lib/auth/docs-capture";
@@ -76,25 +74,7 @@ async function resolveSessionUser(admin: AdminClient, user: User): Promise<Sessi
   return profileToSessionUser(profile as ProfileRow);
 }
 
-/**
- * Token Bearer presentado por un cliente nativo (app móvil), si lo hay.
- * Devuelve el usuario auth de Supabase verificado, o null.
- */
-async function userFromBearer(): Promise<User | null> {
-  const authHeader = (await headers()).get("authorization");
-  if (!authHeader) return null;
-  const match = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
-  const token = match?.[1]?.trim();
-  if (!token) return null;
-  return verifyAccessToken(token);
-}
-
-/**
- * Sesión del usuario actual. Acepta dos transportes de autenticación:
- *  1. Token Bearer (clientes nativos — app móvil iOS).
- *  2. Cookie de sesión Supabase SSR (web), sin cambios.
- * Ambos producen un SessionUser idéntico, con el mismo RBAC.
- */
+/** Sesión del usuario actual vía cookie de sesión Supabase SSR. */
 export async function getSession(): Promise<SessionUser | null> {
   if (isDocsCaptureMode()) {
     ensureDocsCaptureSeed();
@@ -103,18 +83,11 @@ export async function getSession(): Promise<SessionUser | null> {
 
   if (!isSupabaseConfigured()) return null;
 
-  // 1) Cliente nativo: token Bearer (app móvil).
-  let user = await userFromBearer();
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
 
-  // 2) Web: sesión por cookie (Supabase SSR).
-  if (!user) {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) return null;
-    user = data.user;
-  }
-
-  return resolveSessionUser(createAdminClient(), user);
+  return resolveSessionUser(createAdminClient(), data.user);
 }
 
 /**

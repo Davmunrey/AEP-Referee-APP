@@ -32,7 +32,7 @@
 | Privacidad | Dashboard/analytics acotados por zona |
 | Robustez | Slot validation, countOpenSlots, TOCTOU assign mitigado |
 | Multi-año | `season.ts`, UI sin 2026 hardcodeado |
-| Docs | README + docs + iOS + planning actualizados |
+| Docs | README + docs + planning actualizados |
 
 ## v1.2 — Quality & Completeness ✅
 

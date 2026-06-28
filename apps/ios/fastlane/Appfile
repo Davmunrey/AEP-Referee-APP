@@ -1,3 +1,0 @@
-app_identifier("es.aep.tarima")
-# El Apple ID y el Team ID se resuelven con la App Store Connect API key
-# (ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_CONTENT) en CI; no se hardcodean aquí.

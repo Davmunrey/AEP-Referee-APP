@@ -1,7 +1,6 @@
 # API `/api/v1`
 
-Todas las rutas privadas exigen sesión Supabase: **cookie** (web) o
-`Authorization: Bearer <jwt>` (cliente móvil iOS nativo). Respuesta estándar:
+Todas las rutas privadas exigen sesión Supabase por **cookie** (web). Respuesta estándar:
 
 ```json
 { "data": {} }
@@ -153,17 +152,6 @@ cliente recurre al **asistente local** basado en la base de conocimiento
 (`src/lib/help/knowledge-base.ts`, `quick-start.ts`). Rate-limit en memoria:
 **30 preguntas / 5 min por usuario** (`429` al exceder). La clave vive solo en el
 servidor; nunca se expone al cliente.
-
-## Móvil / Push (APNs)
-
-| Método | Ruta | Permiso |
-|---|---|---|
-| `POST` | `/devices` | sesión (self-service) — body `{ apnsToken }` |
-| `DELETE` | `/devices/:token` | sesión (self-service) |
-
-Alta/baja del token APNs del propio dispositivo (cliente iOS nativo). El backend
-emite las notificaciones y el cliente enruta deep-links según `PushType`. Auth por
-`Bearer` igual que el resto de `/api/v1`.
 
 ## Seguridad import
 
