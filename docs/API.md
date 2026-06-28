@@ -125,10 +125,16 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
 | `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
-| `POST` | `/competitions/:id/compensation/:refereeId/distance` | `canManageCompensation` — calcula km (Google Maps o fallback) |
+| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km masivo Google |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` efímero → `application/pdf` |
 
-`PATCH /competitions/:id` acepta campos `compensationOrganizer`, `compensationClubName`, `compensationClubEmail`, `compensationVolunteer` para usuarios con `canManageCompensation`.
+`PATCH /competitions/:id` acepta `sedeDireccion`, `sedeLat`, `sedeLng` (desde Places), `compensationClubs[]`, `compensationOrganizer`, etc.
+
+`PATCH /referees/:id` acepta `domicilio`, `domicilioLat`, `domicilioLng` (desde Places o geocode servidor).
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/guides/tarima-manual` | sesión — manual PDF gestión jueces |
 
 El **IBAN no se almacena** en base de datos; solo viaja en la petición de export. Ver [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
 

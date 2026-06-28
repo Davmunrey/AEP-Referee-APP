@@ -11,7 +11,8 @@ Destino: Vercel + Supabase.
 | `SUPABASE_SERVICE_ROLE_KEY` | Production |
 | `READINESS_ALLOWED_EMAILS` | CI |
 | `E2E_EMAIL` | CI |
-| `GOOGLE_MAPS_API_KEY` | Production (opcional) | Distance Matrix para compensación km |
+| `GOOGLE_MAPS_API_KEY` | Production | Geocoding + Distance Matrix (servidor) |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Production, Preview | Places Autocomplete (cliente) |
 
 ## Build
 
@@ -42,6 +43,6 @@ CI en `.github/workflows/ci.yml`:
 - [ ] `npm run e2e`
 - [ ] `npm run audit:remote`
 - [ ] Backup reciente
-- [ ] Migraciones aplicadas (hasta `025`)
+- [ ] Migraciones aplicadas (hasta `026`)
 - [ ] Usuario admin único esperado activo
 - [ ] Import calendario/horario/cuadrante probado en preview

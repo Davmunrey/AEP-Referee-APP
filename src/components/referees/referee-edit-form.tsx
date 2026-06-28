@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api/client";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
+import { AddressAutocompleteField } from "@/components/maps/address-autocomplete-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,11 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
   const [licencia, setLicencia] = useState(referee.licencia ?? "");
   const [localidad, setLocalidad] = useState(referee.localidad ?? "");
   const [domicilio, setDomicilio] = useState(referee.domicilio ?? "");
+  const [domicilioCoords, setDomicilioCoords] = useState<{ lat: number; lng: number } | null>(
+    referee.domicilioLat != null && referee.domicilioLng != null
+      ? { lat: referee.domicilioLat, lng: referee.domicilioLng }
+      : null,
+  );
   const [telefono, setTelefono] = useState(referee.telefono ?? "");
   const [genero, setGenero] = useState(referee.genero ?? "");
   const [antiguedad, setAntiguedad] = useState(referee.antiguedad ?? "");
@@ -45,6 +51,8 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     licencia !== (referee.licencia ?? "") ||
     localidad !== (referee.localidad ?? "") ||
     domicilio !== (referee.domicilio ?? "") ||
+    domicilioCoords?.lat !== referee.domicilioLat ||
+    domicilioCoords?.lng !== referee.domicilioLng ||
     telefono !== (referee.telefono ?? "") ||
     genero !== (referee.genero ?? "") ||
     antiguedad !== (referee.antiguedad ?? "") ||
@@ -60,6 +68,11 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     setLicencia(referee.licencia ?? "");
     setLocalidad(referee.localidad ?? "");
     setDomicilio(referee.domicilio ?? "");
+    setDomicilioCoords(
+      referee.domicilioLat != null && referee.domicilioLng != null
+        ? { lat: referee.domicilioLat, lng: referee.domicilioLng }
+        : null,
+    );
     setTelefono(referee.telefono ?? "");
     setGenero(referee.genero ?? "");
     setAntiguedad(referee.antiguedad ?? "");
@@ -84,6 +97,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
         licencia: licencia || undefined,
         localidad: localidad || undefined,
         domicilio: domicilio || undefined,
+        ...(domicilioCoords ? { domicilioLat: domicilioCoords.lat, domicilioLng: domicilioCoords.lng } : {}),
         telefono: telefono || undefined,
         genero: genero || undefined,
         antiguedad: antiguedad || undefined,
@@ -181,8 +195,28 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
               <Input id="ref-localidad" value={localidad} onChange={(e) => setLocalidad(e.target.value)} />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="ref-domicilio" className="mb-1 block text-xs font-medium text-foreground-secondary">Domicilio (compensación km)</label>
-              <Input id="ref-domicilio" value={domicilio} onChange={(e) => setDomicilio(e.target.value)} placeholder="Calle, número, ciudad" />
+              <AddressAutocompleteField
+                label="Domicilio (compensación km)"
+                value={domicilio}
+                onValueChange={(value) => {
+                  setDomicilio(value);
+                  setDomicilioCoords(null);
+                }}
+                onPlaceSelect={(place) => {
+                  setDomicilio(place.address);
+                  setDomicilioCoords({ lat: place.lat, lng: place.lng });
+                }}
+                placeholder="Calle, número, ciudad"
+                coordsOk={domicilioCoords != null || (referee.domicilioLat != null && referee.domicilioLng != null)}
+                coordsHint={
+                  domicilioCoords || (referee.domicilioLat != null && referee.domicilioLng != null)
+                    ? `Ubicación Google Maps OK (${(domicilioCoords?.lat ?? referee.domicilioLat)?.toFixed(4)}, ${(domicilioCoords?.lng ?? referee.domicilioLng)?.toFixed(4)})`
+                    : domicilio.trim()
+                      ? "Selecciona una sugerencia de Google o guarda para geocodificar al guardar."
+                      : undefined
+                }
+                hint="Usado para calcular km hasta la sede del campeonato."
+              />
             </div>
             <div>
               <label htmlFor="ref-telefono" className="mb-1 block text-xs font-medium text-foreground-secondary">Teléfono</label>

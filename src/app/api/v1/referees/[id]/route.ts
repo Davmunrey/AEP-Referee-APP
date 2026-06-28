@@ -77,6 +77,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!trimmed) {
       patch.domicilioLat = undefined;
       patch.domicilioLng = undefined;
+    } else if (
+      typeof raw.domicilioLat === "number" &&
+      typeof raw.domicilioLng === "number" &&
+      Number.isFinite(raw.domicilioLat) &&
+      Number.isFinite(raw.domicilioLng)
+    ) {
+      patch.domicilioLat = raw.domicilioLat;
+      patch.domicilioLng = raw.domicilioLng;
     } else if (process.env.GOOGLE_MAPS_API_KEY) {
       try {
         const geo = await geocodeAddress(trimmed);

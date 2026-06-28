@@ -15,16 +15,20 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AddressAutocompleteField } from "@/components/maps/address-autocomplete-field";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { api } from "@/lib/api/client";
-import { buildClaimBreakdown } from "@/lib/judge-compensation/breakdown";
+import {
+  buildClaimBreakdown,
+  formatDutySessionsSummary,
+  groupDutiesBySession,
+} from "@/lib/judge-compensation/breakdown";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim, CompensationClubContact, CompetitionCompensationSummary } from "@/lib/judge-compensation/types";
 import { competitionClubContacts } from "@/lib/judge-compensation/readiness";
 import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
 import type { Competition } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
-import { cn } from "@/lib/utils";
 import { CompensationExportDialog } from "./compensation-export-dialog";
 
 interface CompensationBoardProps {
@@ -52,6 +56,11 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
   );
   const [volunteer, setVolunteer] = useState(competition.compensationVolunteer ?? false);
   const [sedeDireccion, setSedeDireccion] = useState(competition.sedeDireccion ?? "");
+  const [sedeCoords, setSedeCoords] = useState<{ lat: number; lng: number } | null>(
+    competition.sedeLat != null && competition.sedeLng != null
+      ? { lat: competition.sedeLat, lng: competition.sedeLng }
+      : null,
+  );
 
   const claims = summary?.claims ?? [];
   const readiness = summary?.readiness;
@@ -75,9 +84,17 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
   const saveVenue = () => {
     startTransition(async () => {
       try {
-        const updated = await api.updateCompetition(competition.id, { sedeDireccion });
+        const updated = await api.updateCompetition(competition.id, {
+          sedeDireccion,
+          ...(sedeCoords ? { sedeLat: sedeCoords.lat, sedeLng: sedeCoords.lng } : {}),
+        });
         setCompetition(updated);
         setSedeDireccion(updated.sedeDireccion ?? "");
+        setSedeCoords(
+          updated.sedeLat != null && updated.sedeLng != null
+            ? { lat: updated.sedeLat, lng: updated.sedeLng }
+            : null,
+        );
         load();
       } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo guardar la sede");
@@ -160,7 +177,9 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
     });
   };
 
-  const venueOk = competition.sedeLat != null && competition.sedeLng != null && Boolean(competition.sedeDireccion);
+  const venueOk =
+    (sedeCoords != null || (competition.sedeLat != null && competition.sedeLng != null)) &&
+    Boolean(sedeDireccion.trim() || competition.sedeDireccion);
 
   return (
     <PageShell className="space-y-4">
@@ -187,24 +206,34 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               Sede del campeonato (Google Maps)
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Dirección completa para calcular km desde el domicilio de cada juez.
+              Dirección con autocomplete de Google Maps para calcular km desde el domicilio de cada juez.
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Input
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              <AddressAutocompleteField
                 className="min-w-[280px] flex-1"
-                placeholder="Ej. Polideportivo Municipal, Av. …, ciudad"
+                label="Dirección de la sede"
                 value={sedeDireccion}
-                onChange={(e) => setSedeDireccion(e.target.value)}
+                onValueChange={(value) => {
+                  setSedeDireccion(value);
+                  setSedeCoords(null);
+                }}
+                onPlaceSelect={(place) => {
+                  setSedeDireccion(place.address);
+                  setSedeCoords({ lat: place.lat, lng: place.lng });
+                }}
+                placeholder="Polideportivo, calle, ciudad…"
+                disabled={!canManage || pending}
+                coordsOk={venueOk}
+                coordsHint={
+                  venueOk
+                    ? `Coordenadas OK (${(sedeCoords?.lat ?? competition.sedeLat)?.toFixed(4)}, ${(sedeCoords?.lng ?? competition.sedeLng)?.toFixed(4)})`
+                    : "Selecciona una dirección de las sugerencias de Google o guarda para geocodificar."
+                }
               />
               <Button type="button" size="sm" onClick={saveVenue} disabled={pending || !sedeDireccion.trim()}>
-                Guardar y geocodificar
+                Guardar sede
               </Button>
             </div>
-            <p className={cn("mt-2 text-xs", venueOk ? "text-success" : "text-warning")}>
-              {venueOk
-                ? `Coordenadas OK (${competition.sedeLat?.toFixed(4)}, ${competition.sedeLng?.toFixed(4)})`
-                : "Pendiente: guarda una dirección válida de Google Maps."}
-            </p>
           </div>
 
           <div className="border-t border-border-muted pt-4">
@@ -363,7 +392,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           <tbody>
             {claims.map((claim) => {
               const isOpen = expanded.has(claim.refereeId);
-              const breakdown = buildClaimBreakdown(claim);
               return (
                 <Fragment key={claim.refereeId}>
                   <tr className="border-b border-border-muted/60">
@@ -378,8 +406,8 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       </button>
                     </td>
                     <td className="px-3 py-2 font-medium">{claim.refereeName}</td>
-                    <td className="px-3 py-2 font-mono text-xs">
-                      {claim.sessionCount}S + {claim.pesajeCount}P
+                    <td className="px-3 py-2 font-mono text-xs text-foreground-secondary">
+                      {formatDutySessionsSummary(claim)}
                     </td>
                     <td className="px-3 py-2">
                       {claim.travelMode === "shared_vehicle_passenger" ? (
@@ -488,18 +516,42 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           Desglose · {claim.refereeName}
                         </p>
-                        <ul className="space-y-1 text-sm">
-                          {breakdown.map((line) => (
-                            <li key={`${line.label}-${line.detail ?? ""}`} className="flex justify-between gap-4">
-                              <span className="text-foreground-secondary">
-                                {line.label}
-                                {line.detail ? (
-                                  <span className="text-muted-foreground"> · {line.detail}</span>
-                                ) : null}
-                              </span>
-                              <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                        <ul className="space-y-3 text-sm">
+                          {groupDutiesBySession(claim.dutyLines).map((group) => (
+                            <li key={group.session} className="rounded-lg border border-border-muted/80 bg-background/50 px-3 py-2">
+                              <p className="mb-1.5 font-semibold text-foreground">{group.label}</p>
+                              <ul className="space-y-1">
+                                {group.lines.map((line) => (
+                                  <li
+                                    key={`${group.session}-${line.kind}`}
+                                    className="flex justify-between gap-4 text-foreground-secondary"
+                                  >
+                                    <span>
+                                      {line.kind === "pesaje" ? "Pesaje" : "Ordenador"}
+                                      <span className="text-muted-foreground">
+                                        {" "}
+                                        · {formatReceiptAmountEur(line.unitAmount)}
+                                      </span>
+                                    </span>
+                                    <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                                  </li>
+                                ))}
+                              </ul>
                             </li>
                           ))}
+                          {buildClaimBreakdown(claim)
+                            .filter((line) => !line.group)
+                            .map((line) => (
+                              <li key={`${line.label}-${line.detail ?? ""}`} className="flex justify-between gap-4 border-t border-border-muted/60 pt-2">
+                                <span className="text-foreground-secondary">
+                                  {line.label}
+                                  {line.detail ? (
+                                    <span className="text-muted-foreground"> · {line.detail}</span>
+                                  ) : null}
+                                </span>
+                                <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                              </li>
+                            ))}
                         </ul>
                       </td>
                     </tr>

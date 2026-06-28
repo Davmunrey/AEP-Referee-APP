@@ -1,3 +1,4 @@
+import { compareSessions } from "@/lib/session-order";
 import { parseSlotKey } from "@/lib/roster-template";
 import type { AssignmentsMap, RoleKey, RosterSession } from "@/lib/types";
 import type { CompensationDutyLine, CompensationDutyType } from "./types";
@@ -48,9 +49,13 @@ export function classifyCompensationDuties(input: {
     });
   }
 
-  return lines.sort(
-    (a, b) => a.session.localeCompare(b.session, "es") || a.dutyType.localeCompare(b.dutyType),
-  );
+  return lines.sort((a, b) => {
+    const bySession = compareSessions(a.session, b.session);
+    if (bySession !== 0) return bySession;
+    // Ordenador (sesión) antes que pesaje en la misma Sx
+    if (a.dutyType === b.dutyType) return 0;
+    return a.dutyType === "session" ? -1 : 1;
+  });
 }
 
 export function countDutyTypes(lines: CompensationDutyLine[]): {

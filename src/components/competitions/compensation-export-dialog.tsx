@@ -5,7 +5,7 @@ import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/client";
-import { buildClaimBreakdown } from "@/lib/judge-compensation/breakdown";
+import { buildClaimBreakdown, groupDutiesBySession } from "@/lib/judge-compensation/breakdown";
 import { isValidSpanishIban } from "@/lib/judge-compensation/iban";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim } from "@/lib/judge-compensation/types";
@@ -26,7 +26,7 @@ export function CompensationExportDialog({
   const [iban, setIban] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const breakdown = buildClaimBreakdown(claim);
+  const extras = buildClaimBreakdown(claim).filter((line) => !line.group);
 
   const onExport = () => {
     setError(null);
@@ -69,9 +69,22 @@ export function CompensationExportDialog({
 
         <div className="mb-4 rounded-xl border border-border-muted bg-surface/50 p-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Desglose</p>
-          <ul className="space-y-1 text-sm">
-            {breakdown.map((line) => (
-              <li key={`${line.label}-${line.detail ?? ""}`} className="flex justify-between gap-3">
+          <ul className="space-y-2 text-sm">
+            {groupDutiesBySession(claim.dutyLines).map((group) => (
+              <li key={group.session} className="rounded-lg border border-border-muted/70 bg-background/40 px-2.5 py-2">
+                <p className="mb-1 font-semibold text-foreground">{group.label}</p>
+                <ul className="space-y-0.5">
+                  {group.lines.map((line) => (
+                    <li key={`${group.session}-${line.kind}`} className="flex justify-between gap-3 text-foreground-secondary">
+                      <span>{line.kind === "pesaje" ? "Pesaje" : "Ordenador"}</span>
+                      <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+            {extras.map((line) => (
+              <li key={`${line.label}-${line.detail ?? ""}`} className="flex justify-between gap-3 border-t border-border-muted/60 pt-2">
                 <span className="text-foreground-secondary">
                   {line.label}
                   {line.detail ? <span className="text-muted-foreground"> · {line.detail}</span> : null}

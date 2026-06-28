@@ -104,14 +104,18 @@ Desde **Exportar ▾** en la tarima (o el icono PDF en la lista de campeonatos) 
 
 Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de jueces asignados en tarima. No edita tarima ni censo.
 
-1. Abre un campeonato con jueces asignados.
-2. Pulsa **Compensación** en la cabecera de tarima (o navega a `/competitions/[id]/compensation`).
-3. Configura organizador (club o AEP), nombre/email del club y si es voluntario.
-4. **Recalcular** genera claims desde el cuadrante (sesiones, pesaje, km, alojamiento).
-5. Ajusta overrides por juez si hace falta (km manual, alojamiento, responsable de competición).
-6. **Exportar recibo** → introduce el IBAN en el modal (no se guarda en la app) → descarga PDF.
+![Compensación](images/10-compensacion.png)
 
-El recibo sigue las plantillas reales AEP/club. El IBAN solo existe en la petición de export y en el PDF generado.
+1. Abre un campeonato con jueces asignados.
+2. Pulsa **Compensación** en la cabecera de tarima (o `/competitions/[id]/compensation`).
+3. **Sede**: usa el **autocomplete de Google Maps** (elige una sugerencia de la lista) y guarda.
+4. Configura uno o varios **clubes organizadores** y sus e-mails (listado oficial AEP).
+5. Asegura el **domicilio** de cada juez en su ficha (también con autocomplete).
+6. **Calcular km (Google)** o introduce km enteros manualmente; marca **Comparte** si aplica.
+7. Revisa el **desglose por sesión Sx** (Ordenador / Pesaje) expandiendo cada fila.
+8. **Exportar recibo** → IBAN en el modal (no se guarda) → PDF con desglose.
+
+Los totales de viaje y alojamiento no se confirman hasta que todos los km estén completos.
 
 ---
 
@@ -121,7 +125,7 @@ El recibo sigue las plantillas reales AEP/club. El IBAN solo existe en la petici
 
 ![Directorio](images/05-directorio.png)
 
-- Clic en un juez abre su **ficha**: datos, **domicilio** (para cálculo de km en compensación), historial real por campeonato (sesión, rol, hueco, flags de compartido/intercambio), sanciones, exámenes, informes y ascensos.
+- La ficha incluye **domicilio con Google Places Autocomplete** (para km en compensación), historial real por campeonato (sesión, rol, hueco, flags de compartido/intercambio), sanciones, exámenes, informes y ascensos.
 - **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional).
 - **+ Nuevo juez**: alta individual.
 

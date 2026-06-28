@@ -174,31 +174,38 @@ export function buildTarimaUserGuideSections(appUrl: string): GuideSection[] {
           title: "Acceder y configurar sede",
           body: [
             "Desde la tarima → Compensación, o directamente /competitions/[id]/compensation.",
-            "Guarda la dirección completa de la sede y geocodifícala (Google Maps). Es obligatoria para calcular km.",
+            "Guarda la sede con Google Places Autocomplete (elige una sugerencia de la lista). Es obligatoria para calcular km.",
           ],
         },
         {
           id: "6.2",
           title: "Organizadores del recibo",
           body: [
-            "Puedes indicar varios clubes organizadores y varios e-mails de devolución (separados por coma).",
-            "El listado de clubes se autocompleta con el censo oficial AEP (actualizado abril 2026).",
+            "Puedes indicar varios clubes organizadores y varios e-mails de devolución.",
+            "El listado de clubes se autocompleta con el censo oficial AEP (180 clubes, abril 2026).",
             "También puedes elegir AEP nacional como organizador.",
           ],
         },
         {
           id: "6.3",
-          title: "Calcular km y totales",
+          title: "Domicilio del juez",
           body: [
-            "Cada juez debe tener domicilio geocodificado en su ficha (Directorio → ficha del juez).",
-            "Pulsa «Calcular km (Google)» para obtener distancias desde domicilio a sede (km enteros ida y vuelta).",
-            "Marca «Comparte desplazamiento» si el juez viaja en vehículo compartido (0 km).",
-            "Los importes de viaje y alojamiento NO se suman hasta que todos los km estén completos.",
-            "Expande cada fila para ver el desglose detallado antes de exportar.",
+            "En Directorio → ficha → Editar, el campo domicilio usa el mismo autocomplete de Google Maps.",
+            "Al guardar se almacenan dirección y coordenadas para el cálculo de km.",
           ],
         },
         {
           id: "6.4",
+          title: "Calcular km y desglose por sesión",
+          body: [
+            "Pulsa «Calcular km (Google)» para distancias desde domicilio a sede (km enteros ida y vuelta).",
+            "Marca «Comparte desplazamiento» si el juez viaja en vehículo compartido.",
+            "El desglose agrupa por sesión Sx: Ordenador (tarima) y Pesaje bajo cada sesión.",
+            "Los importes de viaje y alojamiento no se confirman hasta completar todos los km.",
+          ],
+        },
+        {
+          id: "6.5",
           title: "Exportar recibo PDF",
           body: [
             "El botón Recibo solo se activa cuando el juez tiene todos los datos completos.",
