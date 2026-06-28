@@ -1,4 +1,6 @@
 /** Metadatos y colores de marca AEP Tarima (correos, documentación). */
+export const AEP_TARIMA_OFFICIAL_URL = "https://aep-tarima.vercel.app";
+
 export const AEP_BRANDING = {
   association: "ASOCIACIÓN ESPAÑOLA DE POWERLIFTING (AEP)",
   contactEmail: "powerhispania@gmail.com",

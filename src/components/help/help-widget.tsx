@@ -43,7 +43,7 @@ const WELCOME: ChatMessage = {
   id: 0,
   from: "bot",
   text:
-    "Hola 👋 Soy el asistente de AEP Tarima. Pregúntame cómo hacer algo (crear una tarima, asignar un juez, recuperar tu contraseña…) y te llevo a la sección correspondiente. Funciono en tu navegador, sin enviar tus datos a ningún sitio.",
+    "Hola 👋 Soy el asistente de AEP Tarima. Pregúntame cómo usar la plataforma (tarima, compensación, normativa, permisos…) y te indico los pasos con enlaces a cada sección. Las respuestas se basan en la documentación oficial de la app.",
 };
 
 /**

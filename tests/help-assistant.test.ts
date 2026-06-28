@@ -66,19 +66,56 @@ describe("searchKnowledgeBase", () => {
     expect(withRole!.score).toBeGreaterThan(withoutRole!.score);
   });
 
+  it("encuentra compensación para el rol financiero", () => {
+    const top = searchKnowledgeBase("panel de compensación km recibos", "responsable_financiero_jueces")[0];
+    expect(top.entry.id).toBe("compensation-hub");
+  });
+
+  it("encuentra normativa con cuatro pestañas", () => {
+    const top = searchKnowledgeBase("normativa compensación baremo ipf")[0];
+    expect(top.entry.id).toBe("regulations");
+  });
+
+  it("encuentra imprevisto en tarima aprobada", () => {
+    const top = searchKnowledgeBase("tarima aprobada imprevisto")[0];
+    expect(top.entry.id).toBe("roster-imprevisto");
+  });
+
   it("todas las entradas tienen id único", () => {
     const ids = KNOWLEDGE_BASE.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("la base de conocimiento cubre las áreas principales", () => {
+    expect(KNOWLEDGE_BASE.length).toBeGreaterThanOrEqual(30);
+    const ids = new Set(KNOWLEDGE_BASE.map((e) => e.id));
+    expect(ids.has("compensation-hub")).toBe(true);
+    expect(ids.has("roster-imprevisto")).toBe(true);
+    expect(ids.has("regulations")).toBe(true);
   });
 });
 
 describe("quickStartForRole", () => {
   it("devuelve pasos para cada rol", () => {
-    for (const role of ["super_admin", "delegado_jueces", "delegado_zona", "solo_ver"] as const) {
+    for (const role of [
+      "super_admin",
+      "delegado_jueces",
+      "delegado_zona",
+      "responsable_financiero_jueces",
+      "solo_ver",
+    ] as const) {
       const steps = quickStartForRole(role);
       expect(steps.length).toBeGreaterThan(0);
       expect(steps[0].title).toBeTruthy();
     }
+  });
+
+  it("el responsable financiero ve compensación y recibos", () => {
+    const bodies = quickStartForRole("responsable_financiero_jueces")
+      .map((s) => `${s.title} ${s.body}`.toLowerCase())
+      .join(" ");
+    expect(bodies).toContain("compensación");
+    expect(bodies).toContain("iban");
   });
 
   it("el delegado de zona ve el flujo de construir y enviar la tarima", () => {

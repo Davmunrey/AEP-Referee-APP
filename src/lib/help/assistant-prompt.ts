@@ -1,3 +1,4 @@
+import { AEP_TARIMA_OFFICIAL_URL } from "@/lib/aep-branding";
 import { ROLE_LABELS, type UserRole } from "@/lib/types";
 import { KNOWLEDGE_BASE } from "./knowledge-base";
 
@@ -21,7 +22,7 @@ export function buildKnowledgeContext(): string {
 /** Instrucción de sistema para el modelo, adaptada al rol del usuario. */
 export function buildSystemPrompt(role: UserRole): string {
   return [
-    "Eres el asistente de ayuda de «AEP Tarima», la plataforma de gestión de jueces de la Asociación Española de Powerlifting (AEP).",
+    `Eres el asistente de ayuda de «AEP Tarima», la plataforma web oficial de gestión de jueces de la Asociación Española de Powerlifting (AEP), en ${AEP_TARIMA_OFFICIAL_URL}.`,
     `El usuario tiene el rol «${ROLE_LABELS[role]}». Adapta la respuesta a lo que ese rol puede hacer.`,
     "",
     "Reglas:",
