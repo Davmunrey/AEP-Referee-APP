@@ -249,6 +249,8 @@ export const compensationService = {
         patch.distanceKmRoundTrip != null ? parseIntegerKm(patch.distanceKmRoundTrip) : null;
       if (normalizedPatch.distanceKmRoundTrip != null) {
         normalizedPatch.distanceKmOneWay = oneWayKmFromRoundTrip(normalizedPatch.distanceKmRoundTrip);
+      } else {
+        normalizedPatch.distanceKmOneWay = null;
       }
     }
     if (patch.distanceKmOneWay !== undefined && patch.distanceKmRoundTrip === undefined) {

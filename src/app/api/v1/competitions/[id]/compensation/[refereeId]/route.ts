@@ -20,7 +20,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return jsonError("Cuerpo inválido", 400);
 
-  const updated = await dataService.updateCompensationClaim(id, refereeId, {
+  try {
+    const updated = await dataService.updateCompensationClaim(id, refereeId, {
     travelMode: body.travelMode as CompensationTravelMode | undefined,
     distanceKmOneWay: body.distanceKmOneWay as number | null | undefined,
     distanceKmRoundTrip: body.distanceKmRoundTrip as number | null | undefined,
@@ -55,8 +56,13 @@ export async function PATCH(request: Request, context: RouteContext) {
           : undefined,
     status: body.status as CompensationClaimStatus | undefined,
     reviewComment: body.reviewComment as string | null | undefined,
-  });
+    });
 
-  if (!updated) return jsonError("Claim no encontrado para este juez", 404);
-  return jsonOk(updated);
+    if (!updated) return jsonError("Claim no encontrado para este juez", 404);
+    return jsonOk(updated);
+  } catch (err) {
+    console.error("[compensation PATCH]", err);
+    const message = err instanceof Error ? err.message : "Error al guardar compensación";
+    return jsonError(message, 500);
+  }
 }

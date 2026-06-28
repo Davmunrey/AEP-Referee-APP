@@ -81,6 +81,24 @@ describe("compensation km", () => {
     expect(totals.lodgingAmount).toBe(25);
   });
 
+  it("km 0 cuenta como km introducido (sin desplazamiento)", () => {
+    expect(
+      isClaimTravelResolved({
+        travelMode: "km_rate",
+        distanceKmRoundTrip: 0,
+        distanceKmOneWay: 0,
+      }),
+    ).toBe(true);
+    const totals = calculateCompensationTotals(
+      baseInput({
+        distanceKmRoundTrip: 0,
+        distanceKmOneWay: 0,
+      }),
+    );
+    expect(totals.financialComplete).toBe(true);
+    expect(totals.travelAmount).toBe(0);
+  });
+
   it("km_rate requires positive integer round trip", () => {
     expect(
       isClaimTravelResolved({
