@@ -6,14 +6,12 @@ AEP Tarima es una **aplicación web** desplegada en **Vercel** con base de datos
 
 | Uso | URL |
 |---|---|
-| **Entrega a la AEP (principal)** | https://tarima.powerliftingspain.es |
-| Acceso | https://tarima.powerliftingspain.es/sign-in |
-| Documentación | https://tarima.powerliftingspain.es/docs |
-| Panel (requiere sesión) | https://tarima.powerliftingspain.es/ |
+| **Entrega a la AEP (principal)** | https://aep-tarima.vercel.app |
+| Acceso | https://aep-tarima.vercel.app/sign-in |
+| Documentación | https://aep-tarima.vercel.app/docs |
+| Panel (requiere sesión) | https://aep-tarima.vercel.app/ |
 
-Dominio alternativo Vercel (mismo deploy): `https://aep-tarima.vercel.app`
-
-`NEXT_PUBLIC_APP_URL` en producción debe ser `https://tarima.powerliftingspain.es` (sin barra final). Esa URL se usa en correos de Supabase Auth, enlaces del asistente y redirecciones.
+`NEXT_PUBLIC_APP_URL` en producción debe ser `https://aep-tarima.vercel.app` (sin barra final). Esa URL se usa en correos de Supabase Auth, enlaces del asistente y redirecciones.
 
 ## Flujo de deploy (Vercel)
 
@@ -42,10 +40,10 @@ npm run audit:remote
 Copiar y adaptar:
 
 > **AEP Tarima** — plataforma de gestión de jueces  
-> https://tarima.powerliftingspain.es  
+> https://aep-tarima.vercel.app  
 >
 > Acceso con el correo y contraseña que facilita el Comité de Jueces (no hay registro público).  
-> Documentación y privacidad: https://tarima.powerliftingspain.es/docs  
+> Documentación y privacidad: https://aep-tarima.vercel.app/docs  
 >
 > Contacto operativo: powerhispania@gmail.com
 
@@ -56,7 +54,7 @@ Copiar y adaptar:
 | `NEXT_PUBLIC_SUPABASE_URL` | Production, Preview | URL del proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production, Preview | Clave anon |
 | `SUPABASE_SERVICE_ROLE_KEY` | Production | Service role (solo servidor) |
-| `NEXT_PUBLIC_APP_URL` | Production | `https://tarima.powerliftingspain.es` |
+| `NEXT_PUBLIC_APP_URL` | Production | `https://aep-tarima.vercel.app` |
 | `OSM_USER_AGENT` | Production (recomendado) | Identificación para Nominatim/OSRM |
 | `NOMINATIM_URL` | Opcional | Geocoding OSM |
 | `OSRM_URL` | Opcional | Rutas OSM |
@@ -76,8 +74,8 @@ No se requiere ninguna API key de mapas de pago.
 
 - Proyecto vinculado a producción.
 - **Auth**: email/contraseña; signup público desactivado; reset de contraseña activo.
-- **Redirect URLs** en Supabase Auth: incluir `https://tarima.powerliftingspain.es/**` y el dominio Vercel si se usa en preview.
-- **Site URL** en Auth: `https://tarima.powerliftingspain.es`
+- **Redirect URLs** en Supabase Auth: incluir `https://aep-tarima.vercel.app/**` y el dominio Vercel si se usa en preview.
+- **Site URL** en Auth: `https://aep-tarima.vercel.app`
 - **Plantillas de correo**: branding AEP en `src/lib/auth/supabase-email-branding.ts`. Aplicar en remoto:
   ```bash
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding
@@ -85,20 +83,17 @@ No se requiere ninguna API key de mapas de pago.
   (o workflow `.github/workflows/supabase-email-branding.yml` con el token en GitHub Secrets).
 - **Migraciones**: aplicar en orden hasta la última en `supabase/migrations/` (incl. `028_drop_device_tokens`).
 
-## Dominio custom
+## Dominio en Vercel
 
-En Vercel → Project → Settings → Domains:
+El dominio de producción es el asignado por Vercel: `aep-tarima.vercel.app`.
 
-- `tarima.powerliftingspain.es` → producción
-- DNS en el registrador: registro CNAME o A según indique Vercel
-
-Tras añadir dominio, actualizar Site URL y redirect URLs en Supabase Auth.
+Si en el futuro se añade un dominio personalizado en Vercel → Project → Settings → Domains, actualizar también **Site URL** y **Redirect URLs** en Supabase Auth y `NEXT_PUBLIC_APP_URL` en Vercel.
 
 ## Checklist release
 
 - [ ] `npm run verify` en verde
 - [ ] Push a `main` y deploy Vercel completado sin error
-- [ ] https://tarima.powerliftingspain.es/sign-in carga correctamente
+- [ ] https://aep-tarima.vercel.app/sign-in carga correctamente
 - [ ] Login con cuenta de prueba / admin
 - [ ] `/docs` accesible (pública en parte legal; guía operativa con sesión)
 - [ ] Migraciones Supabase aplicadas
