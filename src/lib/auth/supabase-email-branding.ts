@@ -1,5 +1,4 @@
-import { TARIMA_GUIDE_META } from "@/lib/guides/tarima-user-guide-content";
-import { PDF_THEME } from "@/lib/guides/tarima-user-guide-pdf-theme";
+import { AEP_BRANDING } from "@/lib/aep-branding";
 
 /** URL pública de la app (enlaces en correos y Site URL de Supabase Auth). */
 export const AEP_TARIMA_SITE_URL =
@@ -8,15 +7,7 @@ export const AEP_TARIMA_SITE_URL =
 
 export const AEP_TARIMA_EMAIL_FROM_NAME = "AEP Tarima";
 
-const THEME = {
-  red: PDF_THEME.red,
-  redLight: PDF_THEME.redLight,
-  text: PDF_THEME.text,
-  muted: PDF_THEME.muted,
-  border: PDF_THEME.border,
-  surface: PDF_THEME.surface,
-  white: PDF_THEME.white,
-} as const;
+const THEME = AEP_BRANDING.colors;
 
 function button(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 8px;">
@@ -51,7 +42,7 @@ export function wrapAepTarimaEmail(bodyHtml: string): string {
           <tr>
             <td style="background:${THEME.red};padding:24px 28px;text-align:center;">
               <p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.02em;">AEP Tarima</p>
-              <p style="margin:8px 0 0;color:${THEME.redLight};font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;">Gestión de jueces · ${TARIMA_GUIDE_META.association}</p>
+              <p style="margin:8px 0 0;color:${THEME.redLight};font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;">Gestión de jueces · ${AEP_BRANDING.association}</p>
             </td>
           </tr>
           <tr>
@@ -62,7 +53,7 @@ export function wrapAepTarimaEmail(bodyHtml: string): string {
               Mensaje automático de la plataforma interna de arbitraje AEP. Si no esperabas este correo, puedes ignorarlo.
               <br /><br />
               <a href="${AEP_TARIMA_SITE_URL}" style="color:${THEME.red};text-decoration:none;">${AEP_TARIMA_SITE_URL.replace(/^https?:\/\//, "")}</a>
-              · Comité de Jueces · <a href="mailto:${TARIMA_GUIDE_META.contactEmail}" style="color:${THEME.red};text-decoration:none;">${TARIMA_GUIDE_META.contactEmail}</a>
+              · Comité de Jueces · <a href="mailto:${AEP_BRANDING.contactEmail}" style="color:${THEME.red};text-decoration:none;">${AEP_BRANDING.contactEmail}</a>
             </td>
           </tr>
         </table>

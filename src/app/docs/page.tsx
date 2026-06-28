@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TarimaManualDownloadButton } from "@/components/docs/tarima-manual-download";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth/session";
@@ -174,9 +173,6 @@ export default async function DocsPage() {
             </span>
             <span className="text-subtle-muted">Actualizado: {updated}</span>
           </div>
-          {isAuthenticated ? (
-            <TarimaManualDownloadButton className="mt-6" />
-          ) : null}
         </div>
       </div>
 

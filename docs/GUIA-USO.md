@@ -7,15 +7,6 @@ Cada sección muestra una captura real de la app y los pasos para usarla.
 
 ---
 
-## Manual PDF
-
-Descarga el manual completo con capturas desde la app (requiere sesión):
-
-- **Web**: `/docs` → botón «Descargar manual PDF»
-- **API**: `GET /api/v1/guides/tarima-manual` → `Manual-AEP-Tarima-Gestion-Jueces-v1.8.pdf`
-
-Regenerar capturas: `npm run docs:screenshots`
-
 ---
 
 ## 1. Entrar
@@ -49,7 +40,7 @@ Atajos arriba a la derecha: **Jueces**, **Aprobaciones**, **Exportar**, **+ Nuev
 
 ![Barra lateral](images/12-sidebar.png)
 
-- **Documentación** → `/docs` (guía web, privacidad, enlace al manual PDF).
+- **Documentación** → `/docs` (guía web y privacidad).
 - **Compensación** → panel central `/compensation` (solo responsable financiero / super_admin).
 - El **usuario y «Cambiar contraseña»** están en la **esquina superior derecha** (topbar), no en el pie del menú.
 - **Colapsar** guarda la preferencia en el navegador.

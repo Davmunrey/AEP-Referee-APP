@@ -1,5 +1,5 @@
 /**
- * Capturas REALES de la plataforma AEP Tarima para el manual PDF.
+ * Capturas REALES de la plataforma AEP Tarima para docs/GUIA-USO.md.
  *
  * Modo local (sin Supabase): arranca el servidor con AEP_DOCS_CAPTURE=1 y datos de demo.
  * Modo producción: DOCS_SCREENSHOT_BASE + E2E_EMAIL + E2E_PASSWORD.
