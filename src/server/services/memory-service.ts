@@ -46,6 +46,7 @@ export const memoryDataService = {
   clearSlot: competitions.clearSlot,
   clearRosterAssignments: competitions.clearRosterAssignments,
   submitRoster: competitions.submitRoster,
+  unlockRosterImprevisto: competitions.unlockImprevisto,
   saveDraft: competitions.saveDraft,
   getApprovals: competitions.getApprovals,
   reviewApproval: competitions.reviewApproval,

@@ -1,5 +1,5 @@
-import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { getPresetForEventType } from "@/lib/roster-template";
 import type { RosterSession } from "@/lib/types";
@@ -21,8 +21,9 @@ export async function POST(_request: Request, context: RouteContext) {
 
   const { id: competitionId } = await context.params;
   const comp = await dataService.getCompetition(competitionId);
+  const blocked = guardRosterWrite(comp, user);
+  if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
-  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
   const preset = getPresetForEventType(comp.tipo);
   const result = await dataService.saveCompetitionTemplate(competitionId, preset, user.nombre);
@@ -36,8 +37,9 @@ export async function PUT(request: Request, context: RouteContext) {
 
   const { id: competitionId } = await context.params;
   const comp = await dataService.getCompetition(competitionId);
+  const blocked = guardRosterWrite(comp, user);
+  if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
-  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
   const body = await request.json().catch(() => null);
   const template = body?.template as RosterSession[] | undefined;
@@ -60,8 +62,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   const { id: competitionId } = await context.params;
   const comp = await dataService.getCompetition(competitionId);
+  const blocked = guardRosterWrite(comp, user);
+  if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
-  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
   const result = await dataService.saveCompetitionTemplate(competitionId, [], user.nombre);
   if (!result) return jsonError("No se pudo borrar la plantilla", 400);

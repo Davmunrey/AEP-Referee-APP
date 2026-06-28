@@ -1,5 +1,5 @@
-import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import type { SlotFlags } from "@/lib/types";
 import { dataService } from "@/server/services";
@@ -14,8 +14,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id: competitionId } = await context.params;
   const comp = await dataService.getCompetition(competitionId);
+  const blocked = guardRosterWrite(comp, user);
+  if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
-  if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
   const body = await request.json().catch(() => null);
   const slotKey = body?.slotKey ? String(body.slotKey) : "";
