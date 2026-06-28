@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
@@ -21,15 +21,39 @@ import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-d
 import { api } from "@/lib/api/client";
 import { AlertTriangle, ArrowLeftRight, CalendarRange, Download, MapPin, Trophy, Users } from "lucide-react";
 
-function pct(filled: number, required: number) {
-  if (required <= 0) return 0;
-  return Math.round((filled / required) * 100);
+function coveragePct(filled: number, required: number) {
+  if (required <= 0) return null;
+  return Math.min(100, Math.round((filled / required) * 100));
+}
+
+function formatSlotCoverage(filled: number, required: number) {
+  if (required <= 0) {
+    return filled > 0 ? `${filled} sin plantilla` : "sin plantilla";
+  }
+  const pct = coveragePct(filled, required);
+  return `${filled}/${required} (${pct}%)`;
 }
 
 export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
   const [exportOpen, setExportOpen] = useState(false);
   const exportFilename = `estadisticas-${new Date().toISOString().slice(0, 10)}.csv`;
   const maxCompetitions = Math.max(...data.topReferees.map((r) => r.assignedCompetitions), 1);
+  const yearCoveragePct = coveragePct(
+    data.totals.filledSlots,
+    data.totals.filledSlots + data.totals.openSlots,
+  );
+
+  const zonesWithActivity = useMemo(
+    () =>
+      [...data.activityByZone]
+        .filter((row) => row.competitions > 0)
+        .sort((a, b) => {
+          const aScore = a.filledSlots + a.competitions;
+          const bScore = b.filledSlots + b.competitions;
+          return bScore - aScore || a.name.localeCompare(b.name, "es");
+        }),
+    [data.activityByZone],
+  );
 
   return (
     <PageShell>
@@ -44,7 +68,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
       <PageHeader
         eyebrow="Gestión"
         title="Estadísticas"
-        description={`Histórico por año y resumen ${data.selectedYear}. Datos de campeonatos, plazas y asignaciones reales.`}
+        description={`Resumen ${data.selectedYear}: campeonatos, plazas de plantilla y asignaciones guardadas en tarima.`}
       >
         <button
           type="button"
@@ -58,19 +82,29 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard label={`Campeonatos ${data.selectedYear}`} accent="blue" value={data.totals.competitions} />
-        <StatCard label="Jueces asignados" accent="neutral" value={data.totals.uniqueAssignedReferees} />
+        <StatCard
+          label="Jueces distintos"
+          accent="neutral"
+          value={data.totals.uniqueAssignedReferees}
+        />
         <StatCard label="Plazas cubiertas" accent="yellow" value={data.totals.filledSlots} />
         <StatCard label="Plazas abiertas" accent="red" value={data.totals.openSlots} />
         <StatCard label="Aprobaciones pendientes" accent="neutral" value={data.totals.pendingApprovals} />
       </div>
 
       {data.crossZoneSummary && data.crossZoneSummary.totalCrossZoneSlots > 0 && (
-        <div className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm dark:border-orange-900/40 dark:bg-orange-950/30">
-          <ArrowLeftRight className="h-4 w-4 shrink-0 text-orange-500" aria-hidden="true" />
-          <span className="text-orange-700 dark:text-orange-300">
-            <strong>{data.crossZoneSummary.totalCrossZoneSlots}</strong> plazas asignadas a jueces de otra zona este año
-            ({data.crossZoneSummary.pctOfFilledSlots}% del total cubierto)
-          </span>
+        <div className="flex items-start gap-3 rounded-xl border border-orange-200/80 bg-orange-50 px-4 py-3 text-sm dark:border-orange-900/40 dark:bg-orange-950/30">
+          <ArrowLeftRight className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden="true" />
+          <div className="text-orange-900 dark:text-orange-100">
+            <p>
+              <strong>{data.crossZoneSummary.totalCrossZoneSlots}</strong> plazas cubiertas por jueces de{" "}
+              <strong>otra zona</strong> ({data.crossZoneSummary.pctOfFilledSlots}% de las{" "}
+              {data.totals.filledSlots} plazas cubiertas).
+            </p>
+            <p className="mt-1 text-xs text-orange-800/90 dark:text-orange-200/80">
+              Cuenta plazas, no personas: un mismo juez en varios puestos suma varias plazas externas.
+            </p>
+          </div>
         </div>
       )}
 
@@ -82,7 +116,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               <CardTitle>Histórico por año</CardTitle>
             </div>
             <p className="text-xs text-subtle-muted">
-              Fuente: campeonatos guardados y asignaciones reales de tarima.
+              Plazas = huecos de plantilla. Cubiertas = asignaciones válidas en tarima.
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -103,7 +137,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                     <DataTableCell className="text-right">{row.competitions}</DataTableCell>
                     <DataTableCell className="text-right">{row.requiredSlots}</DataTableCell>
                     <DataTableCell className="text-right">
-                      {row.filledSlots} ({pct(row.filledSlots, row.requiredSlots)}%)
+                      {formatSlotCoverage(row.filledSlots, row.requiredSlots)}
                     </DataTableCell>
                     <DataTableCell className="text-right">{row.uniqueAssignedReferees}</DataTableCell>
                   </DataTableRow>
@@ -120,47 +154,65 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               <CardTitle>Actividad por zona · {data.selectedYear}</CardTitle>
             </div>
             <p className="text-xs text-subtle-muted">
-              No es cobertura abstracta. Son campeonatos, plazas y jueces realmente asignados.
+              Solo zonas con campeonatos ese año. Jueces = distintos asignados / activos en el registro.
             </p>
           </CardHeader>
           <CardContent className="p-0">
-            <DataTable>
-              <DataTableHead>
-                <DataTableHeaderRow>
-                  <DataTableHeadCell>Zona</DataTableHeadCell>
-                  <DataTableHeadCell className="text-right">Camp.</DataTableHeadCell>
-                  <DataTableHeadCell className="text-right">Cubiertas</DataTableHeadCell>
-                  <DataTableHeadCell className="text-right">Jueces</DataTableHeadCell>
-                  <DataTableHeadCell className="text-right" title="Plazas cubiertas por jueces de otra zona">⟳ Ext.</DataTableHeadCell>
-                </DataTableHeaderRow>
-              </DataTableHead>
-              <DataTableBody>
-                {data.activityByZone.map((row) => (
-                  <DataTableRow key={row.zona}>
-                    <DataTableCell>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-foreground">{row.name}</p>
-                        <p className="text-[11px] text-subtle-muted">{row.zona}</p>
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell className="text-right">{row.competitions}</DataTableCell>
-                    <DataTableCell className="text-right">
-                      {row.filledSlots}/{row.requiredSlots} ({pct(row.filledSlots, row.requiredSlots)}%)
-                    </DataTableCell>
-                    <DataTableCell className="text-right">
-                      {row.uniqueAssignedReferees}/{row.activeReferees}
-                    </DataTableCell>
-                    <DataTableCell className="text-right">
-                      {(row.crossZoneSlots ?? 0) > 0 ? (
-                        <span className="font-semibold text-orange-500">{row.crossZoneSlots}</span>
-                      ) : (
-                        <span className="text-subtle-muted">—</span>
-                      )}
-                    </DataTableCell>
-                  </DataTableRow>
-                ))}
-              </DataTableBody>
-            </DataTable>
+            {zonesWithActivity.length === 0 ? (
+              <p className="px-6 py-8 text-center text-xs text-subtle-muted">
+                No hay campeonatos registrados en {data.selectedYear}.
+              </p>
+            ) : (
+              <DataTable>
+                <DataTableHead>
+                  <DataTableHeaderRow>
+                    <DataTableHeadCell>Zona</DataTableHeadCell>
+                    <DataTableHeadCell className="text-right">Camp.</DataTableHeadCell>
+                    <DataTableHeadCell className="text-right">Cubiertas</DataTableHeadCell>
+                    <DataTableHeadCell
+                      className="text-right"
+                      title="Jueces distintos con plaza / jueces activos en el registro de la zona"
+                    >
+                      Jueces
+                    </DataTableHeadCell>
+                    <DataTableHeadCell
+                      className="text-right"
+                      title="Plazas cubiertas por jueces cuya zona de registro no coincide con la del campeonato"
+                    >
+                      Otra zona
+                    </DataTableHeadCell>
+                  </DataTableHeaderRow>
+                </DataTableHead>
+                <DataTableBody>
+                  {zonesWithActivity.map((row) => (
+                    <DataTableRow key={row.zona}>
+                      <DataTableCell>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">{row.name}</p>
+                          <p className="text-[11px] text-subtle-muted">{row.zona}</p>
+                        </div>
+                      </DataTableCell>
+                      <DataTableCell className="text-right">{row.competitions}</DataTableCell>
+                      <DataTableCell className="text-right">
+                        {formatSlotCoverage(row.filledSlots, row.requiredSlots)}
+                      </DataTableCell>
+                      <DataTableCell className="text-right">
+                        {row.uniqueAssignedReferees}/{row.activeReferees}
+                      </DataTableCell>
+                      <DataTableCell className="text-right">
+                        {(row.crossZoneSlots ?? 0) > 0 ? (
+                          <span className="font-semibold text-orange-600 dark:text-orange-400">
+                            {row.crossZoneSlots}
+                          </span>
+                        ) : (
+                          <span className="text-subtle-muted">—</span>
+                        )}
+                      </DataTableCell>
+                    </DataTableRow>
+                  ))}
+                </DataTableBody>
+              </DataTable>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -218,15 +270,35 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               Año activo: <strong>{data.selectedYear}</strong>.
             </p>
             <p>
-              Cobertura real del año: <strong>{pct(data.totals.filledSlots, data.totals.filledSlots + data.totals.openSlots)}%</strong>.
+              Cobertura del año:{" "}
+              <strong>{yearCoveragePct != null ? `${yearCoveragePct}%` : "—"}</strong>
+              {yearCoveragePct != null && (
+                <span className="text-subtle-muted">
+                  {" "}
+                  ({data.totals.filledSlots}/{data.totals.filledSlots + data.totals.openSlots} plazas)
+                </span>
+              )}
             </p>
             <p>
-              Tasa de rechazo del año: <strong>{data.rejectionRate}%</strong>.
+              Tasa de rechazo de propuestas: <strong>{data.rejectionRate}%</strong>.
             </p>
-            <p className="text-xs text-subtle-muted">
-              `Competiciones` = campeonatos con fecha ese año. `Plazas` = huecos de plantilla.
-              `Cubiertas` = asignaciones guardadas. `Jueces` = únicos con al menos una asignación.
-            </p>
+            <dl className="space-y-1.5 border-t border-border-muted pt-3 text-xs text-subtle-muted">
+              <div>
+                <dt className="font-medium text-foreground-secondary">Plazas cubiertas</dt>
+                <dd>Huecos de plantilla con juez asignado (misma lógica que la lista de campeonatos).</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-foreground-secondary">Jueces distintos</dt>
+                <dd>Personas únicas con al menos una plaza válida en el año.</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-foreground-secondary">Otra zona</dt>
+                <dd>
+                  Plazas donde el juez no pertenece a la zona del campeonato. Puede superar el número de
+                  jueces porque una persona puede cubrir varios puestos.
+                </dd>
+              </div>
+            </dl>
           </CardContent>
         </Card>
       </div>

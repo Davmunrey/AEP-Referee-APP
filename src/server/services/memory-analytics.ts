@@ -1,4 +1,5 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
+import { rosterAnalyticsStats } from "@/lib/roster-coverage";
 import { enumerateSlotKeys } from "@/lib/roster-template";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import type { AnalyticsPayload, SessionUser } from "@/lib/types";
@@ -37,15 +38,13 @@ export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload
     if (year == null) continue;
     const template = getCompetitionTemplate(c.id);
     const assignments = store.assignments.get(c.id) ?? {};
-    const requiredSlots = enumerateSlotKeys(template).length;
-    const filledSlots = Object.values(assignments).filter(Boolean).length;
-    const assignedIds = new Set(Object.values(assignments).filter(Boolean));
+    const stats = rosterAnalyticsStats(template, assignments, c.requeridos);
     const y = yearAgg.get(year) ?? { competitions: 0, criticalCompetitions: 0, requiredSlots: 0, filledSlots: 0, refereeIds: new Set<string>() };
     y.competitions += 1;
     y.criticalCompetitions += c.estado === "Crítico" ? 1 : 0;
-    y.requiredSlots += requiredSlots;
-    y.filledSlots += filledSlots;
-    assignedIds.forEach((id) => y.refereeIds.add(id));
+    y.requiredSlots += stats.requiredSlots;
+    y.filledSlots += stats.filledSlots;
+    stats.refereeIds.forEach((id) => y.refereeIds.add(id));
     yearAgg.set(year, y);
     if (year === selectedYear && c.zona) {
       const zoneCode = resolveZoneCode(c.zona);
@@ -53,18 +52,20 @@ export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload
       const z = zoneAgg.get(zoneCode) ?? { competitions: 0, criticalCompetitions: 0, requiredSlots: 0, filledSlots: 0, refereeIds: new Set<string>() };
       z.competitions += 1;
       z.criticalCompetitions += c.estado === "Crítico" ? 1 : 0;
-      z.requiredSlots += requiredSlots;
-      z.filledSlots += filledSlots;
-      assignedIds.forEach((id) => z.refereeIds.add(id));
+      z.requiredSlots += stats.requiredSlots;
+      z.filledSlots += stats.filledSlots;
+      stats.refereeIds.forEach((id) => z.refereeIds.add(id));
       zoneAgg.set(zoneCode, z);
     }
     if (year === selectedYear) {
-      Object.values(assignments).filter(Boolean).forEach((refereeId) => {
+      const validKeys = new Set(enumerateSlotKeys(template));
+      for (const [slotKey, refereeId] of Object.entries(assignments)) {
+        if (!refereeId || !validKeys.has(slotKey)) continue;
         const refAgg = topRefAgg.get(refereeId) ?? { competitionIds: new Set<string>(), slots: 0 };
         refAgg.competitionIds.add(c.id);
         refAgg.slots += 1;
         topRefAgg.set(refereeId, refAgg);
-      });
+      }
     }
   }
 
