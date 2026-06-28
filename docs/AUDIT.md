@@ -2,27 +2,30 @@
 
 Última revisión: junio 2026. Alcance: repo, CI GitHub, flujos usuario comunes.
 
+Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+
 ## Veredicto
 
-App operativa y desplegable. CI verde, **344 tests**, lint OK, build OK.
+App operativa y desplegable. CI verde, **331 tests** (57 archivos), lint OK, build OK.
 
 ## QA operativo
 
 | Área | Estado | Notas |
 |---|---|---|
-| Login | OK | `POST /auth/login` server-side; rate-limit IP+email; acciones `fail`/`success` bloqueadas en `/auth/password` |
-| Dashboard 14" | OK | Smoke sin overflow horizontal |
-| Dashboard zonal | OK | `delegado_zona` ve solo KPIs, calendario, intelligence y actividad de su zona |
-| Campeonatos | OK | `/competitions`, dedupe, import calendario con preview/selección |
-| Tarima | OK | Plantilla, cuadrante, asignación, plazas requeridas, confirm-to-force *, clear con rollback |
-| Conflictos sesión | OK | Tarima+tarima bloqueado; tarima+pesaje misma sesión permitido; cross-sesión con * |
-| Imports horario | OK | Merge parcial: sesiones no seleccionadas se conservan |
-| Cuadrantes | OK | Parser por geometría de columnas; 4 formatos AEP |
-| Usuarios | OK | Gestión restringida a nacional/superadmin |
-| Contraseñas | OK | Self-change + admin-reset |
-| Ascensos | OK | Comentario de rechazo persistido (`review_comment`) |
-| Ficha juez | OK | Historial real desde `roster_assignments`; domicilio para compensación |
-| Compensación | OK | Panel hub `/compensation`, km manual, posición tarima, montaje ordenador, export PDF IBAN efímero |
+| Login | OK | `POST /auth/login` server-side; rate-limit IP+email |
+| Dashboard | OK | KPIs, salud, recomendaciones; smoke 14" sin overflow |
+| Dashboard zonal | OK | `delegado_zona` acotado por macrozona |
+| Campeonatos | OK | Alta, dedupe, import calendario con preview |
+| Tarima | OK | Plantilla, cuadrante, asignación, imprevistos, badges compactos |
+| Conflictos sesión | OK | Tarima+tarima bloqueado; tarima+pesaje forzable con confirmación |
+| Imports horario | OK | Merge parcial de sesiones |
+| Cuadrantes | OK | Parser por geometría; 4 formatos AEP |
+| Normativa | OK | 4 pestañas en `/regulations` |
+| Domicilio OSM | OK | Autocomplete vía API servidor (CSP); Nominatim al guardar |
+| Compensación | OK | Hub, km manual, montaje sistema, export PDF IBAN efímero |
+| Ayuda | OK | Widget guía + asistente (Gemini opcional + fallback local) |
+| Usuarios / contraseñas | OK | Self-change + admin-reset |
+| Ascensos | OK | `review_comment` al rechazar |
 
 ## Ciberseguridad
 
@@ -31,31 +34,19 @@ App operativa y desplegable. CI verde, **344 tests**, lint OK, build OK.
 | Auth middleware | OK |
 | API `requireApiUser` | OK |
 | RBAC mutaciones | OK |
-| RBAC zona normalizado | OK (`resolveZoneCode`, fail-closed) |
+| RBAC zona (`resolveZoneCode`) | OK — fail-closed |
 | RLS Supabase | OK, deny-by-default |
-| Login brute force | Mitigado: check público + login server-side registra fallos |
-| Enumeración login | OK: mensaje genérico |
-| Competition PATCH | OK: whitelist de campos editables |
-| Sanction bypass | OK: no reactivar juez con sanción activa |
-| Imports PDF/XLSX | OK: límites, MIME, preview obligatorio |
-| Dependencias | OK salvo `xlsx` documentado |
-
-## Validaciones roster (servidor)
-
-| Regla | Estado |
-|---|---|
-| Slot key en plantilla | OK — rechazado si no existe en template |
-| `countOpenSlots` sin huérfanos | OK — solo cuenta asignaciones con clave válida |
-| TOCTOU assign | Mitigado — revalidación post-upsert; rollback si conflicto |
-| Promotion downgrade | OK — solo ascenso si `toLevel` > nivel actual |
+| Login brute force | Mitigado |
+| CSP | OK — mapas solo vía API propia |
+| IBAN compensación | OK — efímero, no persiste |
+| Imports PDF/XLSX | OK — límites y preview |
 
 ## Riesgos vivos
 
 - `xlsx` mantiene advisories sin fix upstream público.
 - OCR/PDF depende de herramientas locales en algunos entornos.
-- E2E profundo (import horario → cuadrante → export) pendiente.
-- E2E smoke compensación (`/compensation`, `/competitions/:id/compensation`) pendiente.
-- CSP estricta en modo report-only.
+- E2E profundo (import → cuadrante → export) pendiente.
+- E2E smoke compensación pendiente.
 
 ## Gates obligatorios
 
@@ -67,8 +58,8 @@ npm run audit:remote
 
 GitHub CI ejecuta verify, browser smoke y Supabase readiness en cada push a `main`.
 
-Últimos gates locales:
+Últimos gates locales (jun 2026):
 
-- `npm run verify`: 50 rutas API, 4 rutas import, seguridad, lint, **298 tests**, build OK.
-- `npm run e2e`: 3 tests Playwright OK (viewport 14").
+- `npm run verify`: lint, **331 tests**, build OK.
+- `npm run e2e`: smoke Playwright OK (viewport 14").
 - `npm run audit:remote`: Supabase readiness OK.

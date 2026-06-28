@@ -1,51 +1,41 @@
 # Roadmap — AEP Tarima
 
-## v1.6 — Hub compensación y km manual (en curso)
+Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+
+## v1.7 — Normativa, docs y UX ✅
 
 | Área | Entregado |
 |---|---|
-| Compensación | Panel `/compensation`, hub API, km manual, desglose por posición, montaje ordenador |
-| UI | Sidebar Documentación + Compensación, usuario en topbar |
-| Docs | Todos los `.md`, manual PDF, capturas `docs/images/` |
-| Clubes | 180 clubes AEP en `aep-clubs-registry.json` |
+| URL | `aep-tarima.vercel.app` en app, Vercel, Supabase Auth, correos |
+| Normativa | `/regulations` — Guía AEP, plazas, compensación, IPF |
+| Ayuda | Asistente ~35 entradas, guía por rol, Gemini opcional |
+| Geocode | `/api/v1/geocode/search` (Photon servidor) |
+| Tarima UX | Badges nivel compactos R/N/I/II |
+| Docs | Todos los `.md` actualizados |
+| DB | Migración `028` (drop device_tokens) |
 
-**Pendiente v1.6:** E2E smoke compensación, E2E profundo, sustitución `xlsx`.
+## v1.6 — Hub compensación y km manual ✅
+
+| Área | Entregado |
+|---|---|
+| Compensación | Panel `/compensation`, km manual, montaje sistema |
+| Clubes | ~180 clubes curados AEP |
+| UI | Sidebar Documentación + Compensación |
 
 ## v1.5 — Compensación y UI tarima ✅
 
-| Área | Entregado |
+Migraciones 023–027, rol financiero, export PDF IBAN efímero.
+
+## v1.4 — Production Hardening ✅
+
+Roster rules, privacidad zonal, login server-side, multi-temporada.
+
+## Backlog
+
+| Ítem | Estado |
 |---|---|
-| Supabase prod | Migraciones 023–025 aplicadas |
-| Compensación | Servicios, API, UI, export PDF, IBAN efímero |
-| RBAC | Rol `responsable_financiero_jueces` |
-| UI tarima | Footer fuera de app, panel jueces/slots más densos |
-| Docs | README + docs + planning actualizados |
+| E2E smoke compensación | Pendiente |
+| E2E profundo import → export | Pendiente |
+| Sustitución `xlsx` | Pendiente |
 
-**Pendiente v1.5:** E2E smoke compensación, E2E profundo, sustitución `xlsx`.
-
-## v1.4 — Production Hardening ✅ (Complete)
-
-| Área | Entregado |
-|---|---|
-| Roster | Plazas requeridas, conflictos misma sesión, * override, merge import parcial |
-| Seguridad | Login server-side, PATCH whitelist, sanction bypass bloqueado |
-| Privacidad | Dashboard/analytics acotados por zona |
-| Robustez | Slot validation, countOpenSlots, TOCTOU assign mitigado |
-| Multi-año | `season.ts`, UI sin 2026 hardcodeado |
-| Docs | README + docs + planning actualizados |
-
-## v1.2 — Quality & Completeness ✅
-
-Competition edit, test correctness, refactor >500 líneas.
-
-## Backlog — ver plan detallado
-
-**Documento maestro:** [`.planning/phases/08-backlog-detailed/PLAN.md`](./phases/08-backlog-detailed/PLAN.md)
-
-| Bloque | Contenido | Estado |
-|---|---|---|
-| A | Migraciones 023–025 en Supabase prod | ✅ |
-| B | Compensación end-to-end | ✅ (falta E2E) |
-| C | UI tarima densa | ✅ |
-| D | E2E profundo: import → cuadrante → export | Pendiente |
-| E | Sustitución librería `xlsx` | Pendiente |
+Plan detallado: [`.planning/phases/08-backlog-detailed/PLAN.md`](./phases/08-backlog-detailed/PLAN.md)

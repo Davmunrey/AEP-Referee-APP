@@ -12,6 +12,8 @@ requirements_addressed: [COMP-01, COMP-02, COMP-03]
 
 # Plan 07B: EditCompetitionDialog Component + RosterBuilder Integration
 
+> **Histórico — completado.** Referencia de implementación v1.2. Estado actual: `docs/GUIA-USO.md`, `docs/COMPONENTS.md`.
+
 ## Objective
 Create the `EditCompetitionDialog` component using the shared validation from 07A, and integrate it into `RosterBuilder` with role-based visibility. Satisfies all three requirements: UI editing (COMP-01), shared validation (COMP-02), and role enforcement (COMP-03).
 

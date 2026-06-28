@@ -28,7 +28,7 @@ Browser -> Next.js App Router -> /api/v1 -> dataService -> Supabase service
 - `PromotionRequest`: ascenso.
 - `CompensationClaim`: compensación económica por juez × campeonato (sin IBAN).
 
-Dominio compensación: `src/lib/judge-compensation/` (baremo, classify, calculate, recibo PDF). Ubicaciones: **Photon/OpenStreetMap** en cliente (`AddressAutocompleteField`) + Nominatim/OSRM en servidor (gratuito).
+Dominio compensación: `src/lib/judge-compensation/` (baremo, classify, calculate, recibo PDF). Geocoding: **Photon** en servidor (`/api/v1/geocode/search`, `src/lib/geocoding/photon-search.ts`) + **Nominatim/OSRM** para geocode puntual y distancias (`osm-distance.ts`). El cliente no llama a APIs externas de mapas (CSP).
 Servicios: `supabase-compensation.ts`, `memory-compensation.ts`.
 
 ## Tarima
@@ -36,8 +36,15 @@ Servicios: `supabase-compensation.ts`, `memory-compensation.ts`.
 1. Campeonato obtiene plantilla guardada (`competitions.template`) o preset por tipo.
 2. Usuario puede importar horario PDF o editar plantilla manual.
 3. Usuario importa cuadrante PDF o asigna manual.
-4. API valida zona, rol y solapes.
-5. Borrador, historial y aprobación quedan trazados.
+4. API valida zona, rol y solapes; badges de nivel en tarima abreviados (R, N, I, II).
+5. Borrador, historial y aprobación quedan trazados. Tarima aprobada: modo **imprevisto** para cambios urgentes.
+
+## Ayuda y documentación in-app
+
+- Widget flotante (`HelpWidget`): pestaña **Guía** (quick-start por rol) y **Asistente** (Gemini + fallback local).
+- Base de conocimiento: `src/lib/help/knowledge-base.ts` (~35 entradas).
+- Documentación web: `/docs` (pública en parte legal; guía operativa con sesión).
+- Normativa: `/regulations` — Guía AEP 2026, plazas en tarima, compensación jueces, reglamento IPF.
 
 ## Temporada y multi-año
 

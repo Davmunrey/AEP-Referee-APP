@@ -117,6 +117,14 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 
 `GET` devuelve `{ confirmedIds: string[] }`. `POST` acepta `{ refereeId: string }`. Errores devuelven JSON `{ error: string }` incluso ante excepciones internas.
 
+## Geocoding / domicilio
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/geocode/search?q=…` | sesión — autocomplete Photon (España, ≥3 caracteres) |
+
+Al guardar ficha juez o sede sin coordenadas, el servidor geocodifica con Nominatim (`geocodeAddress`).
+
 ## Compensación de jueces
 
 | Método | Ruta | Permiso |

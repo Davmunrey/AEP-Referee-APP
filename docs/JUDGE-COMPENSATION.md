@@ -99,9 +99,10 @@ Export PDF + IBAN introducido al vuelo
 - Página `/competitions/[id]/compensation` (solo responsable financiero / super_admin).
 - **Mont.** para montaje del sistema (Liftingcast / OpenLifter / Goodlift), con importe manual. Distinto de la posición ordenador en tarima.
 - Desglose por **Sx** con la **posición real** (Juez Central, Pesaje, Lateral…); columna funciones tipo `S1(Cent+Pz) · S2`.
-- Varios clubes organizadores y e-mails múltiples.
+- Clubes organizadores desde listado curado (~180 clubes AEP en `src/lib/aep-clubs-curated.ts`).
 - Totales bloqueados hasta completar todos los km (modo `none` exento).
-- Exportar recibo → modal con desglose → PDF (IBAN efímero).
+- Exportar recibo → modal con IBAN → PDF (sin desglose línea a línea en el PDF; desglose en pantalla).
+- Baremo también en **Normativa** → pestaña Compensación de jueces.
 
 Ver captura: `docs/images/10-compensacion.png`.
 

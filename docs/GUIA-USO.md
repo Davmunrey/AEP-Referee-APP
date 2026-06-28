@@ -1,9 +1,10 @@
 # Guía de uso — AEP Tarima
 
 Guía visual de la plataforma de gestión de jueces de la Asociación Española de Powerlifting.
-Cada sección muestra una captura real de la app y los pasos para usarla.
 
-> Capturas tomadas en entorno de desarrollo con datos reales. La app no está ligada a una temporada fija: las fechas de campeonatos y el analytics determinan el año en pantalla.
+**URL producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+
+> Capturas en `docs/images/`. La app no está ligada a una temporada fija: el año en pantalla lo determinan las fechas de campeonatos y el analytics.
 
 ---
 
@@ -88,7 +89,7 @@ Tres formas de asignar:
 2. **Clic** en una plaza y luego en un juez.
 3. **Importar cuadrante (PDF)** desde "Plantilla ▾": detecta los jueces del cuadrante oficial, los cruza con el directorio y propone las asignaciones. Funciona con los 4 formatos AEP (rejilla, "SESIÓN N", cabeceras escalonadas; los escaneados avisan).
 
-Filtros del panel izquierdo: zona, nivel, búsqueda, y "solo confirmados" (disponibilidad). El sistema avisa de huecos, solapes y cruces de zona.
+Filtros del panel izquierdo: zona, nivel, búsqueda, y «solo confirmados» (disponibilidad). Los **badges de nivel** en tarima son compactos (**R**, **N**, **I**, **II**); en el directorio se muestra el nombre completo. El sistema avisa de huecos, solapes y cruces de zona.
 
 Cuando esté listo: **Guardar borrador** o **Enviar a aprobación**.
 
@@ -139,7 +140,7 @@ Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de
 5. Marca **Comparte** si el juez viaja en vehículo compartido (solo exime kilometraje; el alojamiento sigue según los km).
 6. Marca **Mont.** si el juez **monta el sistema informático** (Liftingcast / OpenLifter / Goodlift) e introduce el importe. Esto es distinto de ocupar la posición ordenador en tarima (eso sale del cuadrante como cualquier otra función).
 7. Revisa el **desglose por sesión Sx** con la posición real en tarima (Central, Pesaje, Lateral…) expandiendo cada fila.
-8. **Exportar recibo** → IBAN en el modal (no se guarda) → PDF con desglose.
+8. **Exportar recibo** → IBAN en el modal (no se guarda) → PDF (plantilla AEP o club; el desglose detallado se ve en pantalla antes de exportar).
 
 Los totales de viaje y alojamiento no se confirman hasta que todos los km estén completos.
 
@@ -151,7 +152,8 @@ Los totales de viaje y alojamiento no se confirman hasta que todos los km estén
 
 ![Directorio](images/05-directorio.png)
 
-- La ficha incluye **domicilio con autocomplete OpenStreetMap** (para km en compensación), historial real por campeonato (sesión, rol, hueco, flags de compartido/intercambio), sanciones, exámenes, informes y ascensos.
+- La ficha incluye **domicilio con autocomplete OpenStreetMap**: escribe al menos 3 caracteres y elige una sugerencia de la lista (búsqueda vía servidor). Si no hay sugerencia, puedes guardar y el servidor intentará geocodificar con Nominatim.
+- Historial real por campeonato (sesión, rol, hueco, flags compartido/intercambio), sanciones, exámenes, informes y ascensos.
 - **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional).
 - **+ Nuevo juez**: alta individual.
 
@@ -189,7 +191,29 @@ Desde Usuarios → icono llave de la fila → escribe la nueva contraseña. No n
 
 ---
 
-## 10. Aprobaciones, ascensos, exámenes, informes
+## 10. Normativa
+
+`Normativa` en el menú lateral. Cuatro pestañas:
+
+1. **Guía AEP 2026** — documento de referencia de la temporada.
+2. **Plazas en tarima** — requisitos de nivel por tipo de campeonato y rol.
+3. **Compensación de jueces** — baremo, km, alojamiento, montaje sistema, recibos.
+4. **Reglamento IPF** — artículos buscables con enlaces directos.
+
+---
+
+## 11. Ayuda y asistente
+
+Icono **?** en la esquina inferior derecha:
+
+- **Guía**: primeros pasos según tu rol, con enlaces directos.
+- **Asistente**: preguntas sobre el uso de la app; respuestas basadas en la documentación oficial. Si hay IA configurada, la usa; si no, búsqueda local. Tras cada respuesta verás sugerencias de preguntas relacionadas.
+
+Documentación completa: `/docs`.
+
+---
+
+## 12. Aprobaciones, ascensos, exámenes, informes
 
 - **Aprobaciones**: las propuestas de tarima enviadas esperan revisión nacional aquí.
 - **Ascensos**: solicitud y revisión de cambios de categoría de juez.
@@ -198,7 +222,7 @@ Desde Usuarios → icono llave de la fila → escribe la nueva contraseña. No n
 
 ---
 
-## 11. Roles y permisos
+## 13. Roles y permisos
 
 | Rol | Alcance |
 |---|---|
@@ -212,9 +236,11 @@ La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de 
 
 ---
 
-## 12. Errores frecuentes
+## 14. Errores frecuentes
 
-- **El PDF de cuadrante no detecta a nadie**: probablemente es un PDF escaneado (imagen). Vuelve a exportarlo desde el documento original con texto seleccionable, o asigna a mano.
+- **El PDF de cuadrante no detecta a nadie**: probablemente es un PDF escaneado (imagen). Vuelve a exportarlo con texto seleccionable, o asigna a mano.
+- **No aparecen sugerencias de domicilio**: escribe al menos 3 caracteres; incluye población si hace falta. Si sigue vacío, guarda la ficha y el servidor geocodificará al guardar.
 - **Campeonato pasado**: queda en solo lectura; la API mutadora devuelve `423`.
 - **Excel grande al importar jueces**: divide el archivo o elimina hojas no usadas (límite 8 MB).
-- **No veo "Usuarios"**: solo es visible para AEP Nacional (`super_admin` / `delegado_jueces`).
+- **No veo «Usuarios»**: solo visible para AEP Nacional (`super_admin` / `delegado_jueces`).
+- **Tarima aprobada sin editar**: usa «Registrar imprevisto» en la cabecera.

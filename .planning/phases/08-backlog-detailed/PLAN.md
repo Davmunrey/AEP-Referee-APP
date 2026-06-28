@@ -1,15 +1,31 @@
-# Plan detallado v1.6 — Compensación hub, km manual y documentación
+# Plan detallado v1.6+ — Compensación, docs y backlog
 
 Última actualización: 2026-06-28.
 
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+
 ---
 
-## Estado resumido
+## v1.7 completado (2026-06-28)
+
+| Ítem | Estado |
+|---|---|
+| URL oficial en repo + correos Supabase | ✅ |
+| Normativa 4 pestañas (`/regulations`) | ✅ |
+| Asistente ayuda (~35 KB + guía rol) | ✅ |
+| Geocode `/api/v1/geocode/search` | ✅ |
+| Badges nivel compactos tarima | ✅ |
+| Migración 028 | ✅ |
+| Todos los `.md` actualizados | ✅ |
+
+---
+
+## Estado resumido v1.6
 
 | Bloque | Progreso | Notas |
 |---|---|---|
-| A. Supabase prod | ✅ Hecho | 023, 024, 025 aplicadas vía MCP (2026-06-28) |
-| B. Compensación jueces | ~98 % | Hub `/compensation`, km manual, posición tarima, montaje ordenador |
+| A. Supabase prod | ✅ Hecho | Hasta `028` aplicadas |
+| B. Compensación jueces | ✅ Hecho | Hub, km manual, montaje, export PDF |
 | C. UI tarima (densidad) | ✅ Hecho | Footer fuera de app, cards compactas |
 | D. E2E profundo | 0 % | Tras E2E smoke compensación |
 | E. Sustitución xlsx | 0 % | Backlog técnico |
@@ -138,7 +154,7 @@ A (023–025 en prod) ✅  ──►  C (UI tarima) ✅  ──►  B2 (compensa
                                             E (xlsx) en paralelo bajo demanda
 ```
 
-**Siguiente:** B2.8 E2E smoke compensación, D (E2E profundo), E (xlsx).
+**Siguiente:** D (E2E profundo), E (xlsx), E2E smoke compensación (B2.8).
 
 ---
 
