@@ -84,6 +84,39 @@ export function enumerateSlotKeys(template: RosterSession[]): string[] {
 }
 
 /** Purga asignaciones y flags que ya no existen en el template. */
+/**
+ * Fusiona sesiones importadas en una plantilla existente sin borrar las no seleccionadas.
+ * Las claves en `replaceSessionKeys` se sustituyen por la versión importada; el resto se conserva.
+ */
+export function mergeRosterTemplateSessions(
+  existing: RosterSession[],
+  incoming: RosterSession[],
+  replaceSessionKeys: Set<string>,
+): RosterSession[] {
+  const incomingBySession = new Map(incoming.map((s) => [s.sesion, s]));
+  const merged: RosterSession[] = [];
+  const replaced = new Set<string>();
+
+  for (const session of existing) {
+    if (replaceSessionKeys.has(session.sesion) && incomingBySession.has(session.sesion)) {
+      merged.push(cloneTemplate([incomingBySession.get(session.sesion)!])[0]!);
+      replaced.add(session.sesion);
+      continue;
+    }
+    if (!replaceSessionKeys.has(session.sesion)) {
+      merged.push(cloneTemplate([session])[0]!);
+    }
+  }
+
+  for (const session of incoming) {
+    if (!replaced.has(session.sesion) && !existing.some((e) => e.sesion === session.sesion)) {
+      merged.push(cloneTemplate([session])[0]!);
+    }
+  }
+
+  return merged;
+}
+
 export function pruneAssignments(
   template: RosterSession[],
   assignments: Record<string, string>,

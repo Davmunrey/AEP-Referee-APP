@@ -1,8 +1,6 @@
 import {
   canAttemptLogin,
-  clearLoginAttempts,
   loginRateLimitKey,
-  recordFailedLogin,
 } from "@/lib/api/login-rate-limit";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 
@@ -23,15 +21,11 @@ export async function POST(request: Request) {
   const email = String(body?.email ?? "").trim().toLowerCase();
   if (!email) return jsonError("Email obligatorio", 400);
 
+  if (action === "fail" || action === "success") {
+    return jsonError("Acción no permitida. Usa POST /auth/login.", 403);
+  }
+
   const key = loginRateLimitKey(requestIp(request), email);
-  if (action === "fail") {
-    recordFailedLogin(key);
-    return jsonOk({ allowed: true });
-  }
-  if (action === "success") {
-    clearLoginAttempts(key);
-    return jsonOk({ allowed: true });
-  }
 
   const limit = canAttemptLogin(key);
   if (!limit.allowed) {

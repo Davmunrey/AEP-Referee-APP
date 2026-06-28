@@ -126,6 +126,16 @@ describe("parseQuadrantLayout", () => {
     expect(warnings.join(" ")).not.toContain("No se detectó rejilla");
   });
 
+  it("no desplaza roles cuando una fila solo tiene nombres sin coincidencia", () => {
+    const garbled = LAYOUT.replace("Ana Vazquez", "Nombre Inventado XYZ");
+    const { candidates } = parseQuadrantLayout(garbled, referees, template);
+    const central = candidates.find((c) => c.session === "S1" && c.roleKey === "central");
+    expect(central?.importable).toBe(false);
+    expect(candidates.find((c) => c.slotKey === "S1_lateral_0")?.refereeName).toBe(
+      "Isa García Romero",
+    );
+  });
+
   it("multi-bloque sin form-feed: el 2º bloque comp NO se trata como pesaje", () => {
     // Simula salida de pdf.js (páginas concatenadas sin \f): comp+pesaje (S1-S3), luego comp (S4-S6).
     const page2 = `                S4                                 S5                                    S6

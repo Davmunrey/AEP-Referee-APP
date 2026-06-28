@@ -2,6 +2,7 @@ import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { parseSelectedImportKeys } from "@/lib/import-security";
+import { mergeRosterTemplateSessions } from "@/lib/roster-template";
 import {
   MAX_PDF_BYTES,
   extractPdfText,
@@ -120,9 +121,15 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonError("Selecciona al menos una sesión para aplicar", 400, { preview });
   }
 
+  let templateToSave = selectedTemplate;
+  if (selectedKeys) {
+    const existing = (await dataService.getRoster(competitionId))?.template ?? [];
+    templateToSave = mergeRosterTemplateSessions(existing, selectedTemplate, selectedKeys);
+  }
+
   const saved = await dataService.saveCompetitionTemplate(
     competitionId,
-    selectedTemplate,
+    templateToSave,
     user.nombre,
   );
   if (!saved) return jsonError("No se pudo guardar la plantilla", 400);

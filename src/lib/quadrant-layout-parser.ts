@@ -316,7 +316,7 @@ export function parseQuadrantLayout(
       }
 
       const currentRole = roleIndex;
-      roleIndex++;
+      let rowConsumesRole = false;
 
       for (const [sessionLabel, cellRaw] of byCol) {
         const sessionKey = sessionLabel.toUpperCase();
@@ -331,6 +331,7 @@ export function parseQuadrantLayout(
 
         const { name, flags } = extractFlags(cellRaw);
         if (!name) continue;
+        rowConsumesRole = true;
         const match = matchReferee(name, referees);
         const slotKey = `${tpl.sesion}_${slot.key}_${slot.slotIndex}`;
 
@@ -355,6 +356,10 @@ export function parseQuadrantLayout(
             : `Sin coincidencia en el directorio para "${name}"`,
           flags,
         });
+      }
+
+      if (rowConsumesRole) {
+        roleIndex++;
       }
     }
   }

@@ -29,9 +29,24 @@ import { getReferee } from "./memory-referees";
 
 export async function getDashboard(user: SessionUser): Promise<DashboardPayload> {
   const store = getStore();
-  const competitions = [...store.competitions].sort((a, b) =>
-    a.fecha.localeCompare(b.fecha),
-  );
+  const userZone =
+    user.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
+  const competitions = [...store.competitions]
+    .filter((c) => !userZone || resolveZoneCode(c.zona) === userZone)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const competitionNames = new Set(competitions.map((c) => c.nombre));
+  const scopedReferees = userZone
+    ? store.referees.filter((r) => resolveZoneCode(r.zona) === userZone)
+    : store.referees;
+  const scopedApprovals = userZone
+    ? store.approvals.filter((a) => resolveZoneCode(a.zona) === userZone)
+    : store.approvals;
+  const scopedPromotions = userZone
+    ? store.promotions.filter((p) => resolveZoneCode(p.zona) === userZone)
+    : store.promotions;
+  const activity = userZone
+    ? store.activity.filter((item) => competitionNames.has(item.evento))
+    : store.activity;
   const coverage = competitions.map((c) => {
     const assignments = store.assignments.get(c.id) ?? {};
     const filled = Object.values(assignments).filter(Boolean).length;
@@ -47,12 +62,12 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
     };
   });
   const { health, insights } = buildIntelligence({
-    referees: store.referees,
+    referees: scopedReferees,
     competitions,
-    approvals: store.approvals,
-    promotions: store.promotions,
+    approvals: scopedApprovals,
+    promotions: scopedPromotions,
     coverage,
-    activity: store.activity,
+    activity,
   });
   const last = healthHistory[healthHistory.length - 1];
   if (last) {
@@ -64,8 +79,8 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
   }
   return {
     kpis: buildKpis(user),
-    activity: store.activity,
-    calendar: getCalendarEvents(),
+    activity,
+    calendar: getCalendarEvents(competitions),
     upcomingCompetitions: competitions.slice(0, 6),
     currentUser: user,
     health,

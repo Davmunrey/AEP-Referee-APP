@@ -214,12 +214,13 @@ export function parseCampeonatos26(
       continue;
     }
 
-    const range =
-      parseCompetitionDateRange(row[6], row[7]) ??
-      ({
-        fecha: "2026-06-01",
-        fechaFin: "2026-06-01",
-      } as const);
+    const range = parseCompetitionDateRange(row[6], row[7]);
+    if (!range) {
+      warnings.push(
+        `Campeonato ${excelId} (${nombre}): fecha no reconocida «${row[6] ?? "—"}»`,
+      );
+      continue;
+    }
     const sede = [localidad, provincia].filter(Boolean).join(" · ") || nombre;
 
     out.push({
