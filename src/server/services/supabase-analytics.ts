@@ -16,7 +16,8 @@ import type {
   RosterSession,
   SessionUser,
 } from "@/lib/types";
-import { mapActivity, mapCompetition, mapRegulation } from "@/server/db/mappers";
+import { mapActivity, mapCompetition } from "@/server/db/mappers";
+import { getRegulationsCached } from "@/server/cache/static-data";
 import { expireStaleSanctions, getSanctionAlerts } from "@/server/services/referee-sanctions";
 import {
   applyHealthHistory,
@@ -341,9 +342,5 @@ export const analyticsService = {
     };
   },
 
-  getRegulations: async (): Promise<RegulationRule[]> => {
-    const supabase = db();
-    const { data } = await supabase.from("regulation_rules").select("*");
-    return (data ?? []).map((r) => mapRegulation(r as Record<string, unknown>));
-  },
+  getRegulations: async (): Promise<RegulationRule[]> => getRegulationsCached(),
 };

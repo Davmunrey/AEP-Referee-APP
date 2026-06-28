@@ -19,6 +19,7 @@ import {
   flagsFromRows,
   mapActivity,
 } from "@/server/db/mappers";
+import { getZonesCached } from "@/server/cache/static-data";
 
 export function db() {
   return createAdminClient();
@@ -88,9 +89,7 @@ export async function getCalendarEvents(
 }
 
 export async function getZones() {
-  const supabase = db();
-  const { data } = await supabase.from("zones").select("code, name").order("code");
-  return (data ?? []).map((z) => ({ code: z.code, name: z.name }));
+  return getZonesCached();
 }
 
 export async function loadAssignments(competitionId: string): Promise<AssignmentsMap> {

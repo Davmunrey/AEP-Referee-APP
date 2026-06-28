@@ -1,4 +1,4 @@
-import { normalizeZoneInput } from "@/lib/aep-zones";
+import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import { buildRefereeCompetitionHistory } from "@/lib/referee-competition-history";
 import type {
@@ -69,19 +69,35 @@ export const refereeService = {
   }): Promise<Referee[]> => {
     await expireStaleSanctions();
     const supabase = db();
-    const { data } = await supabase.from("referees").select("*").order("nombre");
-    return (data ?? [])
-      .map((r) => mapReferee(r as Record<string, unknown>))
-      .filter((r) => {
-        if (params?.user?.role === "delegado_zona" && params.user.zona && r.zona !== params.user.zona) {
-          return false;
-        }
-        if (params?.zona && params.zona !== "TODAS" && r.zona !== params.zona) return false;
-        if (params?.nivel && params.nivel !== "TODOS" && r.nivel !== params.nivel) return false;
-        if (params?.estado && params.estado !== "TODOS" && r.estado !== params.estado) return false;
-        if (params?.q && !r.nombre.toLowerCase().includes(params.q.toLowerCase())) return false;
-        return true;
-      });
+    let query = supabase.from("referees").select("*").order("nombre");
+
+    const userZone =
+      params?.user?.role === "delegado_zona" && params.user.zona
+        ? resolveZoneCode(params.user.zona)
+        : undefined;
+    if (userZone) {
+      query = query.eq("zona", userZone);
+    }
+
+    if (params?.zona && params.zona !== "TODAS") {
+      const zone = resolveZoneCode(params.zona) ?? params.zona;
+      query = query.eq("zona", zone);
+    }
+    if (params?.nivel && params.nivel !== "TODOS") {
+      query = query.eq("nivel", params.nivel);
+    }
+    if (params?.estado && params.estado !== "TODOS") {
+      query = query.eq("estado", params.estado);
+    }
+    if (params?.q?.trim()) {
+      const term = params.q.trim().replace(/[%_]/g, "");
+      if (term) {
+        query = query.ilike("nombre", `%${term}%`);
+      }
+    }
+
+    const { data } = await query;
+    return (data ?? []).map((r) => mapReferee(r as Record<string, unknown>));
   },
 
   getReferee: async (id: string): Promise<Referee | undefined> => {
