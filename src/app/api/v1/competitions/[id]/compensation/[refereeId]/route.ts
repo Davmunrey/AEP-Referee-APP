@@ -24,7 +24,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     travelMode: body.travelMode as CompensationTravelMode | undefined,
     distanceKmOneWay: body.distanceKmOneWay as number | null | undefined,
     distanceKmRoundTrip: body.distanceKmRoundTrip as number | null | undefined,
-    distanceSource: body.distanceSource as "google_maps" | "manual" | null | undefined,
+    distanceSource: body.distanceSource as "osm" | "google_maps" | "manual" | null | undefined,
     travelApproved: typeof body.travelApproved === "boolean" ? body.travelApproved : undefined,
     travelNotes: body.travelNotes as string | null | undefined,
     isCompetitionManager:

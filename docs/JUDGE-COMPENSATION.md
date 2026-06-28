@@ -26,7 +26,7 @@ Calcular y gestionar la compensación económica por campeonato de cada juez asi
 
 1. **Funciones**: se cuentan **sesiones distintas** (`S1`, `S2`…) en las que el juez tiene rol de **ordenador** (tarima) o **pesaje**. El desglose UI/PDF agrupa por **Sx** (ordenador + pesaje bajo la misma sesión).
 2. **Desplazamiento**: solo si el juez viaja **exclusivamente como juez**. Un vehículo compartido → **un solo** desplazamiento pagado (`shared_vehicle_passenger` en pasajeros).
-3. **Km**: Google Maps — **Places Autocomplete** en sede (compensación) y domicilio (ficha juez); Distance Matrix entre coordenadas; ida × 2 (enteros). Override manual permitido. Comparte vehículo → 0 km.
+3. **Km**: **OpenStreetMap** (100 % gratuito) — Photon autocomplete en cliente; Nominatim (geocoding) + OSRM (rutas) en servidor; ida × 2 (enteros). Override manual permitido. Comparte vehículo → 0 km.
 4. **Alojamiento**: ida+vuelta **> 150 km** y **≥ 2 funciones**. 25 € × días de campeonato.
 5. **Internacional EPF/IPF**: hotel oficial fuera de este cálculo; `ambito: epf|ipf` en competición.
 
@@ -72,7 +72,7 @@ Roster assignments + template
         ↓
 classifyDuties()  →  duty lines
         ↓
-Google Distance Matrix (opcional)  →  km ida
+OSRM / Nominatim (OpenStreetMap, gratuito)  →  km ida
         ↓
 calculateClaim()  →  importes
         ↓
@@ -85,25 +85,30 @@ Export PDF + IBAN introducido al vuelo
 
 | Método | Ruta | Permiso |
 |---|---|---|
+| `GET` | `/compensation/hub` | `canManageCompensation` — panel central |
 | `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
 | `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
-| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km masivo Google |
+| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km masivo OSM |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` |
 
-## Variables de entorno
+## Variables de entorno (opcional)
 
 | Variable | Uso |
 |---|---|
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Places Autocomplete en cliente (sede + domicilio) |
-| `GOOGLE_MAPS_API_KEY` | Geocoding fallback + Distance Matrix (servidor) |
+| `OSM_USER_AGENT` | Identificación de la app para Nominatim (recomendado en producción) |
+| `NOMINATIM_URL` | URL del servicio Nominatim (por defecto nominatim.openstreetmap.org) |
+| `OSRM_URL` | URL del router OSRM (por defecto router.project-osrm.org) |
+
+No se requiere ninguna API key de pago.
 
 ![Compensación](images/10-compensacion.png)
 
 ## UI
 
+- **Panel central** `/compensation` — lista todos los campeonatos con jueces, estado de km y enlace directo a cada compensación (acceso desde la barra lateral).
 - Página `/competitions/[id]/compensation` (solo responsable financiero / super_admin).
-- **Google Places Autocomplete** para la sede; domicilio del juez con el mismo componente en ficha.
+- **Photon (OpenStreetMap)** autocomplete para la sede; domicilio del juez con el mismo componente en ficha.
 - Desglose por **Sx**: cada sesión muestra Ordenador y Pesaje; columna funciones tipo `S1(O+P) · S2`.
 - Varios clubes organizadores y e-mails múltiples (listado oficial AEP abril 2026).
 - Km enteros; totales bloqueados hasta completar todos los desplazamientos.

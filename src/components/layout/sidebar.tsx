@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Award,
+  Banknote,
   BarChart3,
   BookOpen,
   CalendarDays,
@@ -11,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  FileText,
   GraduationCap,
   Layers,
   LayoutDashboard,
@@ -23,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import type { NavCounts } from "@/components/layout/app-shell";
 import type { SessionUser } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type NavItem = {
   href: string;
@@ -33,8 +34,12 @@ type NavItem = {
   match: (p: string) => boolean;
 };
 
-function buildPrimaryNav(counts: NavCounts): NavItem[] {
-  return [
+function buildPrimaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
+  const isFinancial = user.role === "responsable_financiero_jueces";
+  const canCompensation =
+    user.role === "super_admin" || user.role === "responsable_financiero_jueces";
+
+  const items: NavItem[] = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard, match: (p) => p === "/" },
     {
       href: "/competitions",
@@ -43,20 +48,38 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
       badge: counts.competitions > 0 ? counts.competitions : undefined,
       match: (p) => p === "/competitions" || p === "/competitions/new",
     },
-    {
+  ];
+
+  if (canCompensation) {
+    items.push({
+      href: "/compensation",
+      label: "Compensación",
+      icon: Banknote,
+      match: (p) => p === "/compensation" || p.endsWith("/compensation"),
+    });
+  }
+
+  if (!isFinancial) {
+    items.push({
       href: counts.activeRosterHref,
       label: "Tarima activa",
       icon: Layers,
       match: (p) =>
-        p.startsWith("/competitions/") && p !== "/competitions" && p !== "/competitions/new",
-    },
-    {
-      href: "/referees",
-      label: "Directorio",
-      icon: Users,
-      match: (p) => p.startsWith("/referees"),
-    },
-  ];
+        p.startsWith("/competitions/") &&
+        p !== "/competitions" &&
+        p !== "/competitions/new" &&
+        !p.endsWith("/compensation"),
+    });
+  }
+
+  items.push({
+    href: "/referees",
+    label: "Directorio",
+    icon: Users,
+    match: (p) => p.startsWith("/referees"),
+  });
+
+  return items;
 }
 
 function buildSecondaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
@@ -94,6 +117,7 @@ function buildSecondaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
   items.push(
     { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
     { href: "/regulations", label: "Normativa", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
+    { href: "/docs", label: "Documentación", icon: FileText, match: (p) => p.startsWith("/docs") },
   );
 
   if (canSeeUsers) {
@@ -120,7 +144,7 @@ export function Sidebar({
   navCounts,
   onToggle,
 }: SidebarProps) {
-  const primaryNav = buildPrimaryNav(navCounts);
+  const primaryNav = buildPrimaryNav(navCounts, currentUser);
   const secondaryNav = buildSecondaryNav(navCounts, currentUser);
   const pathname = usePathname();
 
@@ -214,27 +238,6 @@ export function Sidebar({
       </div>
 
       <div className={cn("border-t border-border-muted p-3", collapsed && "px-0")}>
-        {!collapsed ? (
-          <div className="mb-3 flex items-center gap-2.5 rounded-2xl border border-border-muted bg-surface-hover p-2.5">
-            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
-              <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
-                {currentUser.iniciales}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-medium text-foreground">{currentUser.nombre}</p>
-              <p className="truncate text-[11px] text-subtle-muted">{currentUser.rol}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-1 flex justify-center">
-            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
-              <AvatarFallback className="bg-primary/15 text-xs text-primary">
-                {currentUser.iniciales}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        )}
         <Button
           variant="ghost"
           size={collapsed ? "icon" : "default"}

@@ -1,6 +1,8 @@
 import {
   buildCompensationClaim,
 } from "@/lib/judge-compensation";
+import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
+import { buildHubSummary } from "@/lib/judge-compensation/hub";
 import type {
   CompensationClaim,
   CompensationClaimStatus,
@@ -95,7 +97,7 @@ export const memoryCompensationService = {
       travelMode: CompensationTravelMode;
       distanceKmOneWay: number | null;
       distanceKmRoundTrip: number | null;
-      distanceSource: "google_maps" | "manual" | null;
+      distanceSource: "osm" | "google_maps" | "manual" | null;
       travelApproved: boolean;
       travelNotes: string | null;
       isCompetitionManager: boolean;
@@ -193,5 +195,14 @@ export const memoryCompensationService = {
   ): Promise<CompensationClaim | undefined> => {
     const summary = await buildSummary(competitionId);
     return summary.claims.find((c) => c.refereeId === refereeId);
+  },
+
+  getHub: async (user?: import("@/lib/types").SessionUser): Promise<CompensationHubSummary> => {
+    const list = await competitions.getCompetitions(user);
+    const summaries = new Map<string, CompetitionCompensationSummary>();
+    for (const comp of list) {
+      summaries.set(comp.id, await buildSummary(comp.id));
+    }
+    return buildHubSummary(list, summaries);
   },
 };

@@ -8,4 +8,6 @@ export { renderCompensationReceiptPdf } from "./receipt-pdf";
 export * from "./km";
 export * from "./readiness";
 export * from "./breakdown";
-export { fetchDrivingDistanceKm, geocodeAddress } from "./google-distance";
+export { fetchDrivingDistanceKm, geocodeAddress, osmThrottle } from "./osm-distance";
+export * from "./hub-types";
+export * from "./hub";

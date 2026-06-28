@@ -13,7 +13,7 @@ const GUIDE_SCREENSHOTS: { afterSection: number; file: string; caption: string }
   { afterSection: 3, file: "02-campeonatos.png", caption: "Fig. 2 — Campeonatos" },
   { afterSection: 4, file: "04-tarima-montada.png", caption: "Fig. 3 — Tarima (asignación)" },
   { afterSection: 5, file: "09-cuadrante-export.png", caption: "Fig. 4 — Exportar cuadrante" },
-  { afterSection: 6, file: "10-compensacion.png", caption: "Fig. 5 — Compensación (Sx + Google Maps)" },
+  { afterSection: 6, file: "10-compensacion.png", caption: "Fig. 5 — Compensación (Sx + OpenStreetMap)" },
   { afterSection: 7, file: "05-directorio.png", caption: "Fig. 6 — Directorio y domicilio" },
 ];
 
@@ -90,7 +90,7 @@ export function renderTarimaUserGuidePdf(appUrl = tarimaGuideAppUrl()): Promise<
     doc.fillColor("#000000");
     doc.moveDown(1);
     doc.font("Helvetica").fontSize(10).text(
-      "Este documento describe el funcionamiento completo de AEP Tarima: censo de jueces, tarimas, aprobaciones, compensación de gastos (Google Maps, desglose por sesión Sx), estadísticas y app móvil.",
+      "Este documento describe el funcionamiento completo de AEP Tarima: censo de jueces, tarimas, aprobaciones, compensación de gastos (OpenStreetMap gratuito, desglose por sesión Sx), estadísticas y app móvil.",
       { align: "justify" },
     );
     doc.moveDown(0.5);

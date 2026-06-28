@@ -76,4 +76,5 @@ export const memoryDataService = {
   calculateCompensationDistance: memoryCompensationService.calculateDistance,
   calculateAllCompensationDistances: memoryCompensationService.calculateAllDistances,
   getCompensationClaimForExport: memoryCompensationService.getClaimForExport,
+  getCompensationHub: memoryCompensationService.getHub,
 };

@@ -7,11 +7,13 @@ import type {
   CompensationClaimStatus,
 } from "@/lib/judge-compensation/types";
 
+import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
+
 export type CompensationClaimPatch = Partial<{
   travelMode: CompensationTravelMode;
   distanceKmOneWay: number | null;
   distanceKmRoundTrip: number | null;
-  distanceSource: "google_maps" | "manual" | null;
+  distanceSource: "osm" | "google_maps" | "manual" | null;
   travelApproved: boolean;
   travelNotes: string | null;
   isCompetitionManager: boolean;
@@ -23,6 +25,8 @@ export type CompensationClaimPatch = Partial<{
 }>;
 
 export const compensationApi = {
+  getCompensationHub: () => request<CompensationHubSummary>("/compensation/hub"),
+
   getCompensation: (competitionId: string) =>
     request<CompetitionCompensationSummary>(`/competitions/${competitionId}/compensation`),
 
