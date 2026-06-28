@@ -1,6 +1,18 @@
 # Roadmap — AEP Tarima
 
-Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) — deploy automático en Vercel desde `main`.
+
+## v1.8 — Producción, realtime y rendimiento ✅
+
+| Área | Entregado |
+|---|---|
+| Vercel | Plataforma operativa; usuarios acceden solo vía web |
+| Realtime | Migración `029` (`app_sync_state`); sync entre usuarios |
+| Rendimiento | Consultas optimizadas, React.cache, hub batch, nav counts |
+| Caché | Zonas y normativa TTL 1 h |
+| DB | Índices migración `030` |
+| UX | Botón eliminar ubicación domicilio |
+| Docs | Todos los `.md` v1.8 |
 
 ## v1.7 — Normativa, docs y UX ✅
 

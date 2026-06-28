@@ -1,6 +1,8 @@
 # Deploy y entrega AEP
 
-AEP Tarima es una **aplicación web** desplegada en **Vercel** con base de datos y autenticación en **Supabase**. No hay app móvil ni exportación de manual PDF: la documentación para usuarios está en la propia web.
+AEP Tarima es una **aplicación web en producción** en **Vercel** con base de datos y autenticación en **Supabase**. No hay app móvil ni manual PDF: la documentación para usuarios está en la propia web.
+
+**La plataforma está pensada para usarse directamente en Vercel** — los delegados y el comité no necesitan entorno local.
 
 ## URLs de producción
 
@@ -16,24 +18,10 @@ AEP Tarima es una **aplicación web** desplegada en **Vercel** con base de datos
 ## Flujo de deploy (Vercel)
 
 1. Push a la rama `main` en GitHub.
-2. Vercel construye y publica **en tiempo real** (integración continua del proyecto).
+2. Vercel construye y publica **automáticamente** (integración continua del proyecto).
 3. GitHub Actions ejecuta en paralelo: `npm run verify`, smoke E2E y auditoría Supabase (`.github/workflows/ci.yml`).
 
-No hay paso manual de “subir build”: cada merge a `main` despliega automáticamente.
-
-### Verificación local antes de merge
-
-```bash
-npm ci
-npm run verify    # audit + lint + test + build
-```
-
-Opcional antes de release importante:
-
-```bash
-npm run e2e
-npm run audit:remote
-```
+No hay paso manual de “subir build”: cada merge a `main` despliega en producción.
 
 ## Texto de entrega a la AEP
 
@@ -72,7 +60,7 @@ No se requiere ninguna API key de mapas de pago.
 
 ## Supabase
 
-- Proyecto vinculado a producción.
+- Proyecto vinculado a producción: `foaemadggmpbcrhtpems` (eu-west-2).
 - **Auth**: email/contraseña; signup público desactivado; reset de contraseña activo.
 - **Redirect URLs** en Supabase Auth: incluir `https://aep-tarima.vercel.app/**` y el dominio Vercel si se usa en preview.
 - **Site URL** en Auth: `https://aep-tarima.vercel.app`
@@ -80,8 +68,8 @@ No se requiere ninguna API key de mapas de pago.
   ```bash
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding
   ```
-  (o workflow `.github/workflows/supabase-email-branding.yml` con el token en GitHub Secrets).
-- **Migraciones**: aplicar en orden hasta la última en `supabase/migrations/` (incl. `028_drop_device_tokens`).
+- **Migraciones**: aplicar en orden hasta la última en `supabase/migrations/` (incl. `030_roster_assignments_indexes`).
+- **Realtime**: tabla `app_sync_state` publicada (migración `029`) para sincronización en vivo entre usuarios.
 
 ## Dominio en Vercel
 
@@ -91,15 +79,14 @@ Si en el futuro se añade un dominio personalizado en Vercel → Project → Set
 
 ## Checklist release
 
-- [ ] `npm run verify` en verde
+- [ ] `npm run verify` en verde (CI)
 - [ ] Push a `main` y deploy Vercel completado sin error
 - [ ] https://aep-tarima.vercel.app/sign-in carga correctamente
 - [ ] Login con cuenta de prueba / admin
-- [ ] `/docs` accesible (pública en parte legal; guía operativa con sesión)
-- [ ] Migraciones Supabase aplicadas
+- [ ] `/docs` accesible
+- [ ] Migraciones Supabase aplicadas (hasta `030`)
 - [ ] Backup reciente (`npm run db:backup`)
 - [ ] Plantillas de correo Auth con branding AEP (si hubo cambios)
-- [ ] `npm run docs:screenshots` solo si cambió la UI documentada en `docs/GUIA-USO.md`
 - [ ] Usuario admin / comité esperado activo
 
 ## Rollback
@@ -122,4 +109,4 @@ Los **recibos PDF de compensación** por campeonato siguen activos (flujo financ
 - [API](./API.md) — endpoints `/api/v1`
 - [Auth](./AUTH.md) — roles y permisos
 - [Base de datos](./DATABASE.md) — tablas y migraciones
-- [Guía de uso](./GUIA-USO.md) — flujos con capturas (markdown en repo)
+- [Guía de uso](./GUIA-USO.md) — flujos con capturas

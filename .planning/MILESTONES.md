@@ -1,5 +1,14 @@
 # Milestones — AEP Tarima
 
+## v1.8 — Producción Vercel, realtime y rendimiento (2026-06)
+
+- Plataforma operativa en **https://aep-tarima.vercel.app** (deploy automático)
+- Realtime Supabase (`app_sync_state`, migración 029)
+- Rendimiento: consultas batch, React.cache, nav counts, hub compensación
+- Caché TTL zonas/normativa; filtros SQL jueces; índices (migración 030)
+- Botón eliminar ubicación domicilio
+- 331 tests; documentación completa v1.8
+
 ## v1.7 — Normativa, docs y pulido UX (2026-06)
 
 - URL oficial `aep-tarima.vercel.app`
@@ -8,7 +17,6 @@
 - Geocode autocomplete vía API servidor
 - Badges nivel compactos en tarima
 - Migración 028, correos Supabase branding
-- 331 tests, todos los `.md` actualizados
 
 ## v1.6 — Compensation Hub & km manual (2026-06)
 
@@ -32,8 +40,8 @@
 
 ## v1.1 — Completeness & Workflow (2025-05)
 
-Cross-zone assignment, template editor, PDF imports, availability per competition, analytics coverage, roster UI enhancements. 6 phases, 23 requirements.
+Cross-zone assignment, template editor, PDF imports, availability per competition, analytics coverage, roster UI enhancements.
 
 ## v1.2 — Quality & Completeness
 
-Competition edit, test correctness, refactor archivos >500 líneas (roster-builder, supabase-service, memory-service).
+Competition edit, test correctness, refactor archivos >500 líneas.

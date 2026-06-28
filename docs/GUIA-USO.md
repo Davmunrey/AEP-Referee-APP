@@ -29,7 +29,7 @@ Pantalla de inicio. Resume el estado operativo de la temporada en curso.
 - **KPIs** (arriba): jueces activos, próximas competiciones, plazas sin cubrir, aprobaciones pendientes, cobertura nacional.
 - **Salud operativa**: índice 0–100 ponderado (cobertura de plantillas, estabilidad, urgencia, aprobaciones, disponibilidad).
 - **Recomendaciones**: avisos priorizados por severidad (crítico/alerta/sugerencia).
-- **En vivo**: el panel se refresca solo; el botón "Pausar" lo detiene.
+- **En vivo**: el panel refleja la sincronización global de la app (cambios de otros usuarios en segundos). El botón "Pausar" solo afecta al indicador visual.
 
 Atajos arriba a la derecha: **Jueces**, **Aprobaciones**, **Exportar**, **+ Nuevo campeonato**.
 
@@ -153,6 +153,7 @@ Los totales de viaje y alojamiento no se confirman hasta que todos los km estén
 ![Directorio](images/05-directorio.png)
 
 - La ficha incluye **domicilio con autocomplete OpenStreetMap**: escribe al menos 3 caracteres y elige una sugerencia de la lista (búsqueda vía servidor). Si no hay sugerencia, puedes guardar y el servidor intentará geocodificar con Nominatim.
+- **Eliminar ubicación**: botón junto al campo domicilio borra dirección y coordenadas en Supabase al instante (útil si el juez ya no debe tener km de compensación calculados desde ese domicilio).
 - Historial real por campeonato (sesión, rol, hueco, flags compartido/intercambio), sanciones, exámenes, informes y ascensos.
 - **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional).
 - **+ Nuevo juez**: alta individual.

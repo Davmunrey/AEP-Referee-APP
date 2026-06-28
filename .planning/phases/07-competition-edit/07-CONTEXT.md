@@ -1,7 +1,7 @@
 # Phase 7: Competition Edit - Context
 
 **Gathered:** 2026-05-27
-**Status:** Completed (shipped on `main`). Superseded by v1.4–v1.7 hardening, compensación y normativa — ver `docs/AUDIT.md` y `.planning/STATE.md`.
+**Status:** Completed (shipped on `main`). Superseded by v1.4–v1.8 — ver `docs/AUDIT.md` y `.planning/STATE.md`.
 
 <domain>
 ## Phase Boundary

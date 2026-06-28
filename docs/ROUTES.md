@@ -43,6 +43,7 @@ Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 - Estado colapsado persiste en `localStorage` (`aep-tarima:sidebar-collapsed`).
 - Auto-colapsa en `< 1024px` (tablet).
 - Widget **Ayuda** (esquina inferior derecha): guía por rol + asistente.
+- **Sincronización en vivo**: cambios en tarima, aprobaciones o compensación se reflejan automáticamente en todas las pestañas abiertas (sin recargar manualmente).
 
 ## Rol `responsable_financiero_jueces`
 

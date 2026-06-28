@@ -1,6 +1,15 @@
 # Requirements — AEP Tarima
 
-> Histórico v1.2 completado en `main`. v1.4–v1.7 añadieron compensación, normativa, ayuda y pulido UX.
+> Histórico v1.2 completado en `main`. v1.4–v1.8: compensación, normativa, ayuda, realtime, rendimiento y producción Vercel.
+
+## v1.8 — Producción, realtime y rendimiento ✅
+
+- [x] **PROD-01**: Plataforma operativa en Vercel (`aep-tarima.vercel.app`)
+- [x] **RT-01**: Sincronización en tiempo real (Supabase Realtime + `app_sync_state`)
+- [x] **PERF-01**: Optimización consultas Supabase (competición, hub, nav)
+- [x] **PERF-02**: Caché TTL zonas/normativa; índices Postgres (`030`)
+- [x] **UX-03**: Botón eliminar ubicación domicilio en ficha juez
+- [x] **DOC-05**: Todos los `.md` sincronizados v1.8
 
 ## v1.7 — Normativa y documentación ✅
 

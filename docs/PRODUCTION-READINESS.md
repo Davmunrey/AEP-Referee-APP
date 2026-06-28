@@ -1,8 +1,10 @@
 # Production readiness
 
-Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 
-## Gate local
+La plataforma está desplegada y operativa en Vercel + Supabase. Los usuarios finales acceden solo vía web; no se requiere entorno local.
+
+## Gate CI (GitHub Actions)
 
 ```bash
 npm run verify
@@ -44,20 +46,29 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - Validación roster server-side.
 - PDF/XLSX con límites y firmas.
 - IBAN compensación no persistido.
+- Realtime: solo lectura de `app_sync_state` para clientes autenticados.
 
-## No cubierto todavía
+## Rendimiento (v1.8)
+
+- Consultas Supabase optimizadas (sin escaneo global de asignaciones por campeonato).
+- Caché TTL zonas/normativa (1 h).
+- Índices en `roster_assignments` y `referees`.
+- Sincronización en vivo sin tormenta de APIs redundantes.
+
+## Backlog menor (no bloquea producción)
 
 - E2E completo importar horario → cuadrante → export.
 - E2E smoke compensación (`/compensation`).
 - Sustitución librería `xlsx`.
 - Restore real en staging.
 
-## Criterio «listo producción»
+## Criterio «listo producción» ✅
 
 - CI verde en GitHub.
+- Deploy Vercel automático desde `main`.
 - `audit:remote` verde contra Supabase producción.
-- Migraciones hasta `028` aplicadas.
+- Migraciones hasta `030` aplicadas.
 - `NEXT_PUBLIC_APP_URL` y Site URL Supabase = `https://aep-tarima.vercel.app`.
 - Plantillas correo Auth con branding AEP.
+- Realtime activo (`app_sync_state`).
 - Backup reciente verificado.
-- Manual QA de import PDF/XLSX con archivos reales críticos.
