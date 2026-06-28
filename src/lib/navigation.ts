@@ -98,8 +98,8 @@ export function getPageMeta(pathname: string): PageMeta {
   }
   if (pathname === "/regulations") {
     return {
-      title: "Normativa IPF",
-      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Normativa IPF" }],
+      title: "Normativa",
+      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Normativa" }],
     };
   }
   if (pathname === "/competitions/new") {

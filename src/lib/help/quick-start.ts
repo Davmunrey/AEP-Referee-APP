@@ -109,7 +109,7 @@ const SOLO_VER: QuickStartStep[] = [
   },
   {
     title: "Revisa la analítica y la normativa",
-    body: "Estadísticas de la actividad arbitral y reglas IPF aplicables.",
+    body: "Estadísticas de la actividad arbitral y normativa AEP (guía, plazas en tarima, reglamento IPF).",
     href: "/analytics",
     linkLabel: "Analítica",
   },

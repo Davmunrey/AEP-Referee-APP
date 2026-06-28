@@ -27,7 +27,7 @@
 | `/approvals` | Aprobaciones |
 | `/promotions` | Ascensos |
 | `/analytics` | Estadísticas |
-| `/regulations` | Normativa IPF |
+| `/regulations` | Normativa |
 | `/admin/users` | Usuarios |
 
 ## Sidebar (navegación)
