@@ -10,6 +10,11 @@ export function isPositiveIntegerKm(km: number | null | undefined): boolean {
   return km != null && Number.isInteger(km) && km > 0;
 }
 
+/** Km introducido manualmente (incluye 0 = sin desplazamiento facturable). */
+export function isResolvedIntegerKm(km: number | null | undefined): boolean {
+  return km != null && Number.isInteger(km) && km >= 0;
+}
+
 /** Ida → vuelta en km enteros (×2). */
 export function roundTripKmFromOneWay(oneWayKm: number): number {
   const oneWay = parseIntegerKm(oneWayKm);

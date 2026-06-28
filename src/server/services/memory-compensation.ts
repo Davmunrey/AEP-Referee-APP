@@ -124,6 +124,8 @@ export const memoryCompensationService = {
         patch.distanceKmRoundTrip != null ? parseIntegerKm(patch.distanceKmRoundTrip) : null;
       if (normalized.distanceKmRoundTrip != null) {
         normalized.distanceKmOneWay = oneWayKmFromRoundTrip(normalized.distanceKmRoundTrip);
+      } else {
+        normalized.distanceKmOneWay = null;
       }
     }
 

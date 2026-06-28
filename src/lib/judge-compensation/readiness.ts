@@ -1,4 +1,4 @@
-import { isPositiveIntegerKm, parseIntegerKm } from "./km";
+import { isResolvedIntegerKm, parseIntegerKm } from "./km";
 import type { CompensationClaim, CompensationTravelMode, CompensationClubContact } from "./types";
 import type { Competition } from "@/lib/types";
 import { normalizeClubEmails } from "@/lib/organizer-clubs";
@@ -52,7 +52,7 @@ export function isTravelModeResolved(
       : oneWayKm != null
         ? parseIntegerKm(oneWayKm)! * 2
         : null;
-  return isPositiveIntegerKm(rt);
+  return isResolvedIntegerKm(rt);
 }
 
 export function isClaimTravelResolved(claim: Pick<CompensationClaim, "travelMode" | "distanceKmRoundTrip" | "distanceKmOneWay">): boolean {
