@@ -55,11 +55,7 @@ export async function hasHistoryCompetitionColumn(): Promise<boolean> {
   return historyCompetitionColumnPromise;
 }
 
-export function parseSlotKey(slotKey: string): { session: string; roleKey: string } | null {
-  const parts = slotKey.split("_");
-  if (parts.length < 3) return null;
-  return { session: parts[0]!, roleKey: parts[1]! };
-}
+export { parseSlotKey } from "@/lib/roster-template";
 
 export async function getCompetitionTemplate(competitionId: string): Promise<RosterSession[] | undefined> {
   const supabase = db();

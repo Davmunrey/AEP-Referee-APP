@@ -232,7 +232,12 @@ export async function assignReferee(
   refereeId: string,
   actor: string,
   slotFlags?: SlotFlags,
-): Promise<{ assignments?: AssignmentsMap; flags?: FlagsMap; error?: string }> {
+): Promise<{
+  assignments?: AssignmentsMap;
+  flags?: FlagsMap;
+  crossZoneMap?: import("@/lib/types").CrossZoneMap;
+  error?: string;
+}> {
   const validation = await validateAssign(competitionId, slotKey, refereeId);
   if (!validation.ok) return { error: validation.error };
 
@@ -274,6 +279,7 @@ export async function assignReferee(
   return {
     assignments: { ...assignments },
     flags: { ...flagMap },
+    crossZoneMap: {},
   };
 }
 

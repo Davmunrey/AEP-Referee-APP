@@ -52,6 +52,24 @@ export function cloneTemplate(sessions: RosterSession[]): RosterSession[] {
   }));
 }
 
+/**
+ * Divide una slotKey con formato `${sesion}_${rol}_${indice}`.
+ * Como `sesion` puede contener guiones bajos (el editor permite texto libre),
+ * tomamos el índice (último segmento) y el rol (penúltimo), y el resto es la
+ * sesión. Devuelve `null` si el formato no es válido.
+ */
+export function parseSlotKey(
+  slotKey: string,
+): { session: string; roleKey: RoleKey; index: number } | null {
+  const parts = slotKey.split("_");
+  if (parts.length < 3) return null;
+  const index = Number(parts[parts.length - 1]);
+  const roleKey = parts[parts.length - 2] as RoleKey;
+  const session = parts.slice(0, -2).join("_");
+  if (!session || !roleKey || !Number.isInteger(index) || index < 0) return null;
+  return { session, roleKey, index };
+}
+
 /** Todas las claves de slot válidas para un template. */
 export function enumerateSlotKeys(template: RosterSession[]): string[] {
   const keys: string[] = [];

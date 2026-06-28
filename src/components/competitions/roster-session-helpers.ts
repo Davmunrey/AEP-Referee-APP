@@ -1,5 +1,6 @@
 import type { AssignmentsMap, RosterSession, Zone } from "@/lib/types";
 import { zoneUiName } from "@/lib/aep-zones";
+import { parseSlotKey } from "@/lib/roster-template";
 
 export function zoneName(zones: Zone[], code: string) {
   return zoneUiName(zones.find((z) => z.code === code)?.code ?? code);
@@ -71,14 +72,15 @@ export function findNextOpenSlot(
 }
 
 export function describeSlot(session: RosterSession, slotKey: string) {
-  const [, roleKey, slotIndexRaw] = slotKey.split("_");
-  const role = slotRoleEntries(session).find((entry) => entry.key === roleKey);
+  const parsed = parseSlotKey(slotKey);
+  if (!parsed) return null;
+  const role = slotRoleEntries(session).find((entry) => entry.key === parsed.roleKey);
   if (!role) return null;
   return {
     slotKey,
     sessionLabel: session.sesion,
     roleLabel: role.rol,
-    slotNumber: Number(slotIndexRaw) + 1,
+    slotNumber: parsed.index + 1,
   };
 }
 

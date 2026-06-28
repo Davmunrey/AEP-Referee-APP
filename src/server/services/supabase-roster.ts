@@ -1,3 +1,4 @@
+import { resolveZoneCode } from "@/lib/aep-zones";
 import { validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
 import { enumerateSlotKeys, pruneAssignments } from "@/lib/roster-template";
@@ -191,7 +192,10 @@ export const rosterService = {
         ? { compartido: Boolean(slotFlags.compartido), intercambio: Boolean(slotFlags.intercambio) }
         : existingFlags[slotKey] ?? {};
 
-    const isCrossZone = !!comp?.zona && !!referee?.zona && comp.zona !== referee.zona;
+    const isCrossZone =
+      !!comp?.zona &&
+      !!referee?.zona &&
+      (resolveZoneCode(comp.zona) ?? comp.zona) !== (resolveZoneCode(referee.zona) ?? referee.zona);
 
     await supabase.from("roster_assignments").upsert({
       competition_id: competitionId,
@@ -377,13 +381,28 @@ export const rosterService = {
     const comp = await getCompetitionFn(proposalCompetitionId);
     if (comp) {
       if (approve) {
+        // Conserva flags (*, ↑↓) y cross-zona de las filas vivas al re-insertar
+        // la propuesta aprobada; antes se perdían y el acta salía sin marcas.
+        const { data: liveRows } = await supabase
+          .from("roster_assignments")
+          .select("slot_key, flags, cross_zone, cross_zone_reason")
+          .eq("competition_id", proposalCompetitionId);
+        const liveBySlot = new Map(
+          (liveRows ?? []).map((r) => [String(r.slot_key), r as Record<string, unknown>]),
+        );
         await supabase.from("roster_assignments").delete().eq("competition_id", proposalCompetitionId);
         const assignments = proposal.assignments as AssignmentsMap;
-        const rows = Object.entries(assignments).map(([slot_key, referee_id]) => ({
-          competition_id: proposalCompetitionId,
-          slot_key,
-          referee_id,
-        }));
+        const rows = Object.entries(assignments).map(([slot_key, referee_id]) => {
+          const live = liveBySlot.get(slot_key);
+          return {
+            competition_id: proposalCompetitionId,
+            slot_key,
+            referee_id,
+            flags: live?.flags ?? {},
+            cross_zone: live?.cross_zone ?? false,
+            cross_zone_reason: live?.cross_zone_reason ?? null,
+          };
+        });
         if (rows.length) await supabase.from("roster_assignments").insert(rows);
         await supabase
           .from("competitions")
