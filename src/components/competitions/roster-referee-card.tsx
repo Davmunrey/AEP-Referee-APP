@@ -80,10 +80,13 @@ export function RefereeCard({
           <p className="min-w-0 flex-1 truncate text-[12px] font-semibold leading-tight text-foreground">
             {referee.nombre}
           </p>
-          {isConfirmed && (
-            <span className="shrink-0 text-[9px] font-bold text-success" title="Confirmado">✓</span>
-          )}
-          {assigned && <Check className="h-3 w-3 shrink-0 text-success" aria-label="En tarima" />}
+          {assigned ? (
+            <Check className="h-3 w-3 shrink-0 text-success" aria-label="Asignado en esta sesión" />
+          ) : isConfirmed ? (
+            <span className="shrink-0 text-[9px] font-bold text-success" title="Disponibilidad confirmada">
+              ✓
+            </span>
+          ) : null}
         </div>
         <p className="truncate text-[10px] leading-tight text-subtle-muted">
           <span className={cn(isFromOtherZone && "font-medium text-orange-500")}>

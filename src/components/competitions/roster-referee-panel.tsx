@@ -81,7 +81,7 @@ export function RosterRefereePanelLeft({
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-[13px] font-semibold text-foreground-secondary">Jueces</h2>
           <span className="font-mono text-[10px] text-subtle-muted">
-            {referees.length} · {referees.filter((r) => assignedIds.has(r.id)).length} asign.
+            {referees.length} · {referees.filter((r) => assignedIds.has(r.id)).length} en sesión
           </span>
         </div>
         {selectedSlot && !readOnly && (

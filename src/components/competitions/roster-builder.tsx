@@ -45,7 +45,13 @@ import { RosterCompetitionHeader } from "./roster-competition-header";
 import { RosterImprevistoBanner } from "./roster-imprevisto-banner";
 import { RosterRefereePanelLeft } from "./roster-referee-panel";
 import { SessionBlock, SessionTab } from "./roster-session-block";
-import { collectOpenSlots, describeSlot, findNextOpenSlot, groupSessionsByDay } from "./roster-session-helpers";
+import {
+  assignedRefereeIdsInSession,
+  collectOpenSlots,
+  describeSlot,
+  findNextOpenSlot,
+  groupSessionsByDay,
+} from "./roster-session-helpers";
 
 interface RosterBuilderProps {
   competition: Competition;
@@ -157,7 +163,10 @@ export function RosterBuilder({
     }
   }, [template, activeSessionKey]);
 
-  const assignedIds = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
+  const activeSessionAssignedIds = useMemo(
+    () => assignedRefereeIdsInSession(assignments, activeSessionKey),
+    [assignments, activeSessionKey],
+  );
   const getReferee = (id: string) => referees.find((r) => r.id === id);
   const checkViolation = (roleKey: RoleKey, refereeId: string) => {
     const ref = getReferee(refereeId);
@@ -397,7 +406,7 @@ export function RosterBuilder({
           >
             {showRefereePanel && (
               <RosterRefereePanelLeft
-                referees={availableReferees} assignedIds={assignedIds}
+                referees={availableReferees} assignedIds={activeSessionAssignedIds}
                 canEdit={canEdit} readOnly={rosterReadOnly}
                 selectedSlot={selectedSlot} selectedSlotMeta={selectedSlotMeta}
                 confirmedIds={confirmedIds} filterOnlyConfirmed={filterOnlyConfirmed}
