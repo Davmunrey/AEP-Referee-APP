@@ -113,3 +113,7 @@ Ver captura: `docs/images/10-compensacion.png`.
 - `tests/judge-compensation-breakdown.test.ts` — desglose por posición en tarima.
 - `tests/judge-compensation-receipt.test.ts` — texto del recibo e IBAN efímero.
 - `tests/compensation-hub.test.ts` — panel central.
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

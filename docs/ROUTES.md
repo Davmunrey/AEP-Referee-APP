@@ -52,3 +52,7 @@ Ve principalmente: Dashboard (lectura), Compensación, Directorio (lectura), Est
 ## Legacy
 
 Compat de navegación antigua se mantiene solo para no romper enlaces guardados. La UI visible usa `competitions` / «Campeonatos».
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

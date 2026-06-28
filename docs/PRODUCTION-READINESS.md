@@ -72,3 +72,7 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - Plantillas correo Auth con branding AEP.
 - Realtime activo (`app_sync_state`).
 - Backup reciente verificado.
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8

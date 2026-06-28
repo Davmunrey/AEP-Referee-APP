@@ -117,3 +117,7 @@
 
 - Sidebar auto-colapsa en `< 1024px`; preferencia en `localStorage`.
 - Breakpoints críticos en `xl` (1280px) para layouts de dos columnas en portátil 14".
+
+---
+
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
