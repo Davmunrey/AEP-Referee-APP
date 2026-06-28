@@ -25,7 +25,6 @@
     "db:restore:dry-run": "node --env-file=.env.local scripts/backup-supabase.mjs restore-dry-run",
     "db:backfill-templates": "npx tsx --env-file=.env.local scripts/backfill-templates.ts",
     "db:import-judges": "npx tsx --env-file=.env.local scripts/import-judges-registry.ts",
-    "db:import-clubs": "npx tsx scripts/import-aep-clubs.ts",
     "docs:screenshots": "node scripts/capture-docs-screenshots.mjs",
     "supabase:email-branding": "npx tsx scripts/apply-supabase-auth-branding.ts",
     "db:cleanup-demo": "npx tsx --env-file=.env.local scripts/cleanup-demo-data.ts"
