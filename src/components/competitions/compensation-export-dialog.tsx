@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/client";
 import { buildClaimBreakdown, groupDutiesBySession } from "@/lib/judge-compensation/breakdown";
-import { isValidSpanishIban } from "@/lib/judge-compensation/iban";
+import {
+  formatIbanInput,
+  getSpanishIbanValidationHint,
+  isValidSpanishIban,
+} from "@/lib/judge-compensation/iban";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim } from "@/lib/judge-compensation/types";
+import { downloadPdfBlob } from "@/lib/import-export-ui";
 
 interface CompensationExportDialogProps {
   competitionId: string;
@@ -28,25 +33,24 @@ export function CompensationExportDialog({
   const [pending, startTransition] = useTransition();
   const extras = buildClaimBreakdown(claim).filter((line) => !line.group);
 
+  const ibanHint = useMemo(() => getSpanishIbanValidationHint(iban), [iban]);
+  const ibanReady = isValidSpanishIban(iban);
+
   const onExport = () => {
     setError(null);
     if (!readyForExport || !claim.financialComplete) {
       setError("Completa todos los km antes de exportar");
       return;
     }
-    if (!isValidSpanishIban(iban)) {
-      setError("IBAN español no válido");
+    if (!ibanReady) {
+      setError(ibanHint ?? "IBAN español no válido");
       return;
     }
     startTransition(async () => {
       try {
         const blob = await api.exportCompensationReceipt(competitionId, claim.refereeId, iban);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `compensacion_${claim.refereeName.replace(/\s+/g, "_")}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const filename = `compensacion_${claim.refereeName.replace(/\s+/g, "_")}.pdf`;
+        await downloadPdfBlob(blob, filename);
         onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al exportar");
@@ -98,20 +102,45 @@ export function CompensationExportDialog({
           </p>
         </div>
 
-        <p className="mb-3 text-xs text-muted-foreground">
-          El IBAN solo se usa para generar el PDF y no se almacena en la aplicación.
+        <label className="mb-1 block text-xs font-semibold text-foreground-secondary" htmlFor="compensation-export-iban">
+          IBAN de devolución
+        </label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Introduce el IBAN real del juez (24 caracteres). Solo se usa para el PDF y no se guarda en la aplicación.
         </p>
         <Input
+          id="compensation-export-iban"
           placeholder="ES00 0000 0000 0000 0000 0000"
           value={iban}
-          onChange={(e) => setIban(e.target.value)}
+          onChange={(e) => {
+            setIban(formatIbanInput(e.target.value));
+            setError(null);
+          }}
+          inputMode="text"
           autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
           data-1p-ignore
           data-lpignore="true"
+          aria-invalid={iban.length > 0 && !ibanReady}
+          aria-describedby="compensation-export-iban-hint"
         />
+        <p
+          id="compensation-export-iban-hint"
+          className={`mt-2 text-xs ${ibanHint ? "text-destructive" : ibanReady ? "text-success" : "text-muted-foreground"}`}
+        >
+          {ibanHint ??
+            (ibanReady
+              ? "IBAN válido. Pulsa Descargar PDF."
+              : "Ejemplo de formato: ES28 0182 5332 1202 0070 3784")}
+        </p>
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
         <div className="mt-4 flex gap-2">
-          <Button type="button" onClick={onExport} disabled={pending || !iban.trim() || !claim.financialComplete}>
+          <Button
+            type="button"
+            onClick={onExport}
+            disabled={pending || !ibanReady || !claim.financialComplete}
+          >
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Descargar PDF"}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={pending}>

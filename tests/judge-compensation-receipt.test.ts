@@ -4,7 +4,7 @@ import {
   formatCompetitionDatePhrase,
   formatReceiptAmountEur,
 } from "@/lib/judge-compensation/receipt-document";
-import { formatIbanDisplay, isValidSpanishIban, normalizeIban } from "@/lib/judge-compensation/iban";
+import { formatIbanDisplay, formatIbanInput, getSpanishIbanValidationHint, isValidSpanishIban, normalizeIban } from "@/lib/judge-compensation/iban";
 
 const SAMPLE_IBAN = "ES2801825332120200703784";
 
@@ -48,6 +48,14 @@ describe("IBAN efímero", () => {
 
   it("rechaza IBAN inválido", () => {
     expect(isValidSpanishIban("ES00 0000 0000 0000 0000 0000")).toBe(false);
+  });
+
+  it("indica caracteres faltantes", () => {
+    expect(getSpanishIbanValidationHint("ES00 0000")).toContain("Faltan");
+  });
+
+  it("formatea la entrada al escribir", () => {
+    expect(formatIbanInput("es2801825332120200703784")).toBe("ES28 0182 5332 1202 0070 3784");
   });
 });
 

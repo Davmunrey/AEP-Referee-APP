@@ -151,6 +151,19 @@ export function truncateTextPreview(text: string, maxLines = EXPORT_PREVIEW_MAX_
 export function downloadBlob(content: string | Blob, filename: string, mime: string): void {
   const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
+  const revokeLater = () => {
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const isIos =
+    typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIos) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    revokeLater();
+    return;
+  }
+
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
@@ -158,5 +171,21 @@ export function downloadBlob(content: string | Blob, filename: string, mime: str
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  revokeLater();
+}
+
+/** Descarga un PDF; en móvil intenta compartir/guardar si el navegador lo permite. */
+export async function downloadPdfBlob(blob: Blob, filename: string): Promise<void> {
+  if (typeof navigator !== "undefined" && "share" in navigator) {
+    const file = new File([blob], filename, { type: "application/pdf" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: filename });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      }
+    }
+  }
+  downloadBlob(blob, filename, "application/pdf");
 }
