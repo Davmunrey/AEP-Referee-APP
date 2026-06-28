@@ -132,10 +132,6 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 
 `PATCH /referees/:id` acepta `domicilio`, `domicilioLat`, `domicilioLng` (desde autocomplete OSM o geocode Nominatim en servidor).
 
-| Método | Ruta | Permiso |
-|---|---|---|
-| `GET` | `/guides/tarima-manual` | sesión — manual PDF gestión jueces |
-
 El **IBAN no se almacena** en base de datos; solo viaja en la petición de export. Ver [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
 
 ## Asistente IA (widget de Ayuda)

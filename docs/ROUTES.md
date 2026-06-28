@@ -30,12 +30,6 @@
 | `/regulations` | Normativa IPF |
 | `/admin/users` | Usuarios |
 
-## API documentación exportable
-
-| Ruta | Uso |
-|---|---|
-| `GET /api/v1/guides/tarima-manual` | Manual PDF gestión jueces (requiere sesión) |
-
 ## Sidebar (navegación)
 
 | Sección | Enlaces |

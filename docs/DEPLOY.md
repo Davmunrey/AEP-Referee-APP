@@ -50,5 +50,4 @@ CI en `.github/workflows/ci.yml`:
 - [ ] Backup reciente
 - [ ] Migraciones aplicadas (hasta `028`)
 - [ ] `npm run docs:screenshots` si cambió la UI documentada
-- [ ] Manual PDF probado: `GET /api/v1/guides/tarima-manual`
 - [ ] Usuario admin único esperado activo

@@ -49,7 +49,7 @@ Diseñada para **varias temporadas**: fechas ISO en competiciones, analytics por
 | **Disponibilidad** | Por campeonato, filtro "solo confirmados" en tarima |
 | **Exámenes / Informes / Ascensos** | Gestión nacional y zonal |
 | **Analytics** | Histórico anual, KPIs, cobertura, export CSV |
-| **Documentación** | `/docs` web + manual PDF descargable |
+| **Documentación** | `/docs` web (guía, privacidad, roles) |
 | **Usuarios** | Gestión de roles, reset de contraseñas |
 
 ## Roles
@@ -121,7 +121,6 @@ Migraciones en orden (`001` → `026_compensation_clubs.sql`). Recientes:
 | Doc | Contenido |
 |---|---|
 | [Guía de uso](./docs/GUIA-USO.md) | Flujos operativos con capturas |
-| [Manual PDF](./docs/GUIA-USO.md#manual-pdf) | `GET /api/v1/guides/tarima-manual` (requiere sesión) |
 | [Compensación](./docs/JUDGE-COMPENSATION.md) | Baremo, km manual, recibos, panel hub |
 | [Arquitectura](./docs/ARCHITECTURE.md) | Capas, servicios, parsers |
 | [API](./docs/API.md) | Referencia `/api/v1` |
