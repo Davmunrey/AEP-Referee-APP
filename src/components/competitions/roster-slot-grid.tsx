@@ -14,6 +14,7 @@ import type {
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, X } from "lucide-react";
 import { LevelBadge } from "@/components/aep/badges";
+import { abbreviateRefereeLevel } from "@/lib/referee-level-label";
 import { cn } from "@/lib/utils";
 import {
   buildCompetitionSlotLayout,
@@ -153,7 +154,7 @@ function SlotCell({
                   )}
                 </p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                  <LevelBadge level={referee.nivel} />
+                  <LevelBadge level={referee.nivel} compact />
                   {isCrossZone && (
                     <span
                       title={`Fuera de zona (${referee.zona})`}
@@ -168,7 +169,7 @@ function SlotCell({
                       className="flex items-center gap-0.5 rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
                     >
                       <AlertTriangle className="h-2.5 w-2.5" />
-                      {violation.minLevel}
+                      {abbreviateRefereeLevel(violation.minLevel)}
                     </span>
                   )}
                 </div>

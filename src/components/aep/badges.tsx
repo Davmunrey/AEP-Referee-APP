@@ -1,7 +1,15 @@
 import { Badge } from "@/components/ui/badge";
+import { abbreviateRefereeLevel } from "@/lib/referee-level-label";
 import type { EventStatus, EventType, RefereeLevel, RefereeStatus } from "@/lib/types";
 
-export function LevelBadge({ level }: { level: RefereeLevel }) {
+export function LevelBadge({
+  level,
+  compact = false,
+}: {
+  level: RefereeLevel;
+  /** Abreviatura (R, N, I, II) para la tarima; el directorio usa el nombre completo. */
+  compact?: boolean;
+}) {
   const variant =
     level === "Regional"
       ? "regional"
@@ -11,7 +19,18 @@ export function LevelBadge({ level }: { level: RefereeLevel }) {
           ? "ipf1"
           : "ipf2";
 
-  return <Badge variant={variant}>{level}</Badge>;
+  const label = compact ? abbreviateRefereeLevel(level) : level;
+
+  return (
+    <Badge
+      variant={variant}
+      size={compact ? "sm" : "default"}
+      title={compact ? level : undefined}
+      className={compact ? "min-w-[1.25rem] justify-center px-1 font-mono tabular-nums" : undefined}
+    >
+      {label}
+    </Badge>
+  );
 }
 
 export function StatusBadge({ status }: { status: RefereeStatus }) {
