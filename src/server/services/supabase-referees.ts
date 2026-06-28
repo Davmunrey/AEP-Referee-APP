@@ -90,6 +90,19 @@ export const refereeService = {
     return data ? mapReferee(data as Record<string, unknown>) : undefined;
   },
 
+  getRefereesByIds: async (ids: string[]): Promise<Map<string, Referee>> => {
+    const unique = [...new Set(ids.filter(Boolean))];
+    const map = new Map<string, Referee>();
+    if (unique.length === 0) return map;
+    const supabase = db();
+    const { data } = await supabase.from("referees").select("*").in("id", unique);
+    for (const row of data ?? []) {
+      const referee = mapReferee(row as Record<string, unknown>);
+      map.set(referee.id, referee);
+    }
+    return map;
+  },
+
   createReferee: async (input: Omit<Referee, "id" | "iniciales">): Promise<Referee> => {
     const supabase = db();
     const { count } = await supabase.from("referees").select("*", { count: "exact", head: true });

@@ -23,6 +23,7 @@ import {
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim, CompensationClubContact, CompetitionCompensationSummary } from "@/lib/judge-compensation/types";
 import { allClubEmailsFromCompetition, assessCompensationReadiness, competitionClubContacts } from "@/lib/judge-compensation/readiness";
+import { applyCompensationClaimPatch } from "@/lib/judge-compensation/claim-patch";
 import type { CompensationClaimPatch } from "@/lib/api/client-compensation";
 import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
 import type { Competition } from "@/lib/types";
@@ -139,6 +140,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
 
   const patchClaim = useCallback(
     (refereeId: string, patch: CompensationClaimPatch) => {
+      setSummary((prev) => {
+        if (!prev) return prev;
+        const existing = prev.claims.find((c) => c.refereeId === refereeId);
+        if (!existing) return prev;
+        const optimistic = applyCompensationClaimPatch(existing, patch);
+        return applyClaimUpdate(prev, optimistic, competition);
+      });
+
       const run = patchChainRef.current
         .then(async () => {
           const updated = await api.updateCompensationClaim(competition.id, refereeId, patch);
@@ -147,10 +156,11 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
         })
         .catch((err: unknown) => {
           setError(err instanceof Error ? err.message : "No se pudo guardar");
+          load();
         });
       patchChainRef.current = run;
     },
-    [competition],
+    [competition, load],
   );
 
   const toggleExpanded = (refereeId: string) => {

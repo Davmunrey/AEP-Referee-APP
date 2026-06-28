@@ -3,17 +3,17 @@ import {
   fetchDrivingDistanceKm,
   geocodeAddress,
   osmThrottle,
+  applyCompensationClaimPatch,
 } from "@/lib/judge-compensation";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { buildHubSummary } from "@/lib/judge-compensation/hub";
 import type {
   CompensationClaim,
-  CompensationClaimInput,
   CompensationClaimStatus,
   CompensationTravelMode,
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
-import { parseIntegerKm, roundTripKmFromOneWay, oneWayKmFromRoundTrip } from "@/lib/judge-compensation/km";
+import { roundTripKmFromOneWay } from "@/lib/judge-compensation/km";
 import type { Competition, Referee, SessionUser } from "@/lib/types";
 import {
   claimToDbRow,
@@ -103,11 +103,13 @@ function mergeClaimFromRoster(input: {
   });
 }
 
-async function persistClaim(claim: CompensationClaim): Promise<void> {
+async function persistClaim(claim: CompensationClaim, options?: { syncDutyLines?: boolean }): Promise<void> {
   const supabase = db();
   const row = claimToDbRow(claim);
   const { error } = await supabase.from("judge_compensation_claims").upsert(row);
   if (error) throw new Error(error.message);
+
+  if (options?.syncDutyLines === false) return;
 
   await supabase.from("judge_compensation_duty_lines").delete().eq("claim_id", claim.id);
   if (claim.dutyLines.length > 0) {
@@ -128,6 +130,43 @@ async function persistClaim(claim: CompensationClaim): Promise<void> {
   }
 }
 
+async function loadMergedClaimForReferee(
+  competitionId: string,
+  refereeId: string,
+): Promise<CompensationClaim | undefined> {
+  const competition = await competitionService.getCompetition(competitionId);
+  if (!competition) return undefined;
+
+  const roster = await rosterService.getRoster(competitionId, competitionService.getCompetition);
+  if (!roster || !assignedRefereeIds(roster.assignments).includes(refereeId)) return undefined;
+
+  const id = claimId(competitionId, refereeId);
+  const supabase = db();
+  const [referee, claimRow] = await Promise.all([
+    refereeService.getReferee(refereeId),
+    supabase.from("judge_compensation_claims").select("*").eq("id", id).maybeSingle(),
+  ]);
+  if (!referee) return undefined;
+
+  let existing: CompensationClaim | undefined;
+  if (claimRow.data) {
+    const dutyMap = await loadDutyLinesByClaim([id]);
+    existing = mapCompensationClaimRow(
+      claimRow.data as Record<string, unknown>,
+      dutyMap.get(id) ?? [],
+      competition,
+    );
+  }
+
+  return mergeClaimFromRoster({
+    competition,
+    referee,
+    template: roster.template,
+    assignments: roster.assignments,
+    existing,
+  });
+}
+
 async function buildSummary(competitionId: string): Promise<CompetitionCompensationSummary> {
   const competition = await competitionService.getCompetition(competitionId);
   if (!competition) {
@@ -137,14 +176,16 @@ async function buildSummary(competitionId: string): Promise<CompetitionCompensat
   if (!roster) {
     return emptySummary(competitionId);
   }
-  const stored = await loadStoredClaims(competitionId, competition);
+  const refereeIds = assignedRefereeIds(roster.assignments);
+  const [stored, refereesById] = await Promise.all([
+    loadStoredClaims(competitionId, competition),
+    refereeService.getRefereesByIds(refereeIds),
+  ]);
   const claims: CompensationClaim[] = [];
-  const refereesById = new Map<string, Referee>();
 
-  for (const refereeId of assignedRefereeIds(roster.assignments)) {
-    const referee = await refereeService.getReferee(refereeId);
+  for (const refereeId of refereeIds) {
+    const referee = refereesById.get(refereeId);
     if (!referee) continue;
-    refereesById.set(refereeId, referee);
     const existing = stored.get(refereeId);
     claims.push(
       mergeClaimFromRoster({
@@ -186,14 +227,16 @@ export const compensationService = {
 
     const roster = await rosterService.getRoster(competitionId, competitionService.getCompetition);
     if (!roster) return emptySummary(competitionId);
-    const stored = await loadStoredClaims(competitionId, competition);
+    const refereeIds = assignedRefereeIds(roster.assignments);
+    const [stored, refereesById] = await Promise.all([
+      loadStoredClaims(competitionId, competition),
+      refereeService.getRefereesByIds(refereeIds),
+    ]);
     const claims: CompensationClaim[] = [];
-    const refereesById = new Map<string, Referee>();
 
-    for (const refereeId of assignedRefereeIds(roster.assignments)) {
-      const referee = await refereeService.getReferee(refereeId);
+    for (const refereeId of refereeIds) {
+      const referee = refereesById.get(refereeId);
       if (!referee) continue;
-      refereesById.set(refereeId, referee);
       const existing = stored.get(refereeId);
       const claim = mergeClaimFromRoster({
         competition,
@@ -239,82 +282,11 @@ export const compensationService = {
       reviewComment: string | null;
     }>,
   ): Promise<CompensationClaim | undefined> => {
-    const summary = await buildSummary(competitionId);
-    const existing = summary.claims.find((c) => c.refereeId === refereeId);
+    const existing = await loadMergedClaimForReferee(competitionId, refereeId);
     if (!existing) return undefined;
 
-    const normalizedPatch = { ...patch };
-    if (patch.distanceKmRoundTrip !== undefined) {
-      normalizedPatch.distanceKmRoundTrip =
-        patch.distanceKmRoundTrip != null ? parseIntegerKm(patch.distanceKmRoundTrip) : null;
-      if (normalizedPatch.distanceKmRoundTrip != null) {
-        normalizedPatch.distanceKmOneWay = oneWayKmFromRoundTrip(normalizedPatch.distanceKmRoundTrip);
-      } else {
-        normalizedPatch.distanceKmOneWay = null;
-      }
-    }
-    if (patch.distanceKmOneWay !== undefined && patch.distanceKmRoundTrip === undefined) {
-      normalizedPatch.distanceKmOneWay =
-        patch.distanceKmOneWay != null ? parseIntegerKm(patch.distanceKmOneWay) : null;
-      if (normalizedPatch.distanceKmOneWay != null) {
-        normalizedPatch.distanceKmRoundTrip = roundTripKmFromOneWay(normalizedPatch.distanceKmOneWay);
-      }
-    }
-
-    const input: CompensationClaimInput = {
-      competitionId: existing.competitionId,
-      refereeId: existing.refereeId,
-      refereeName: existing.refereeName,
-      tipo: existing.tipo,
-      ambito: existing.ambito,
-      fecha: existing.fecha,
-      fechaFin: existing.fechaFin,
-      dutyLines: existing.dutyLines,
-      travelMode: normalizedPatch.travelMode ?? existing.travelMode,
-      distanceKmOneWay:
-        normalizedPatch.distanceKmOneWay !== undefined
-          ? (normalizedPatch.distanceKmOneWay ?? undefined)
-          : existing.distanceKmOneWay,
-      distanceKmRoundTrip:
-        normalizedPatch.distanceKmRoundTrip !== undefined
-          ? (normalizedPatch.distanceKmRoundTrip ?? undefined)
-          : existing.distanceKmRoundTrip,
-      distanceSource:
-        normalizedPatch.distanceSource !== undefined
-          ? (normalizedPatch.distanceSource ?? undefined)
-          : existing.distanceSource,
-      travelApproved: normalizedPatch.travelApproved ?? existing.travelApproved,
-      travelNotes:
-        normalizedPatch.travelNotes !== undefined ? (normalizedPatch.travelNotes ?? undefined) : existing.travelNotes,
-      isCompetitionManager: normalizedPatch.isCompetitionManager ?? existing.isCompetitionManager,
-      competitionManagerPerDay:
-        normalizedPatch.competitionManagerPerDay ?? existing.competitionManagerPerDay,
-      isComputerSetup: normalizedPatch.isComputerSetup ?? existing.isComputerSetup,
-      computerSetupManualAmount:
-        normalizedPatch.computerSetupAmount !== undefined
-          ? (normalizedPatch.computerSetupAmount ?? undefined)
-          : existing.computerSetupAmount,
-      lodgingEligibleOverride:
-        normalizedPatch.lodgingEligibleOverride !== undefined
-          ? (normalizedPatch.lodgingEligibleOverride ?? undefined)
-          : existing.lodgingEligibleOverride,
-      lodgingDaysOverride:
-        normalizedPatch.lodgingDaysOverride !== undefined
-          ? (normalizedPatch.lodgingDaysOverride ?? undefined)
-          : existing.lodgingDaysOverride,
-      status: normalizedPatch.status ?? existing.status,
-      reviewComment:
-        normalizedPatch.reviewComment !== undefined
-          ? (normalizedPatch.reviewComment ?? undefined)
-          : existing.reviewComment,
-    };
-
-    const claim = buildCompensationClaim(existing.id, input, {
-      submittedAt: existing.submittedAt,
-      reviewedAt: existing.reviewedAt,
-      reviewedBy: existing.reviewedBy,
-    });
-    await persistClaim(claim);
+    const claim = applyCompensationClaimPatch(existing, patch);
+    await persistClaim(claim, { syncDutyLines: false });
     return claim;
   },
 
@@ -386,8 +358,5 @@ export const compensationService = {
   getClaimForExport: async (
     competitionId: string,
     refereeId: string,
-  ): Promise<CompensationClaim | undefined> => {
-    const summary = await buildSummary(competitionId);
-    return summary.claims.find((c) => c.refereeId === refereeId);
-  },
+  ): Promise<CompensationClaim | undefined> => loadMergedClaimForReferee(competitionId, refereeId),
 };

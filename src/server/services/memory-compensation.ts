@@ -1,5 +1,6 @@
 import {
   buildCompensationClaim,
+  applyCompensationClaimPatch,
 } from "@/lib/judge-compensation";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { buildHubSummary } from "@/lib/judge-compensation/hub";
@@ -14,7 +15,6 @@ import {
   summarizeCompensation,
 } from "./compensation-helpers";
 import type { Referee } from "@/lib/types";
-import { parseIntegerKm, oneWayKmFromRoundTrip } from "@/lib/judge-compensation/km";
 import * as competitions from "./memory-competitions";
 import * as referees from "./memory-referees";
 
@@ -114,61 +114,7 @@ export const memoryCompensationService = {
     const existing = summary.claims.find((c) => c.refereeId === refereeId);
     if (!existing) return undefined;
 
-    const updated = await memoryCompensationService.recalculate(competitionId);
-    const base = updated.claims.find((c) => c.refereeId === refereeId);
-    if (!base) return undefined;
-
-    const normalized = { ...patch };
-    if (patch.distanceKmRoundTrip !== undefined) {
-      normalized.distanceKmRoundTrip =
-        patch.distanceKmRoundTrip != null ? parseIntegerKm(patch.distanceKmRoundTrip) : null;
-      if (normalized.distanceKmRoundTrip != null) {
-        normalized.distanceKmOneWay = oneWayKmFromRoundTrip(normalized.distanceKmRoundTrip);
-      } else {
-        normalized.distanceKmOneWay = null;
-      }
-    }
-
-    const claim = buildCompensationClaim(base.id, {
-      ...base,
-      travelMode: normalized.travelMode ?? base.travelMode,
-      distanceKmOneWay:
-        normalized.distanceKmOneWay !== undefined
-          ? (normalized.distanceKmOneWay ?? undefined)
-          : base.distanceKmOneWay,
-      distanceKmRoundTrip:
-        normalized.distanceKmRoundTrip !== undefined
-          ? (normalized.distanceKmRoundTrip ?? undefined)
-          : base.distanceKmRoundTrip,
-      distanceSource:
-        patch.distanceSource !== undefined
-          ? (patch.distanceSource ?? undefined)
-          : base.distanceSource,
-      travelApproved: patch.travelApproved ?? base.travelApproved,
-      travelNotes:
-        patch.travelNotes !== undefined ? (patch.travelNotes ?? undefined) : base.travelNotes,
-      isCompetitionManager: patch.isCompetitionManager ?? base.isCompetitionManager,
-      competitionManagerPerDay:
-        patch.competitionManagerPerDay ?? base.competitionManagerPerDay,
-      isComputerSetup: patch.isComputerSetup ?? base.isComputerSetup,
-      computerSetupManualAmount:
-        patch.computerSetupAmount !== undefined
-          ? (patch.computerSetupAmount ?? undefined)
-          : base.computerSetupAmount,
-      lodgingEligibleOverride:
-        patch.lodgingEligibleOverride !== undefined
-          ? (patch.lodgingEligibleOverride ?? undefined)
-          : base.lodgingEligibleOverride,
-      lodgingDaysOverride:
-        patch.lodgingDaysOverride !== undefined
-          ? (patch.lodgingDaysOverride ?? undefined)
-          : base.lodgingDaysOverride,
-      status: patch.status ?? base.status,
-      reviewComment:
-        patch.reviewComment !== undefined
-          ? (patch.reviewComment ?? undefined)
-          : base.reviewComment,
-    });
+    const claim = applyCompensationClaimPatch(existing, patch);
     store.set(key(competitionId, refereeId), claim);
     return claim;
   },

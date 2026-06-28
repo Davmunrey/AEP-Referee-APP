@@ -3,28 +3,13 @@ import { request } from "./request";
 import type {
   CompensationClaim,
   CompetitionCompensationSummary,
-  CompensationTravelMode,
-  CompensationClaimStatus,
 } from "@/lib/judge-compensation/types";
 
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 
-export type CompensationClaimPatch = Partial<{
-  travelMode: CompensationTravelMode;
-  distanceKmOneWay: number | null;
-  distanceKmRoundTrip: number | null;
-  distanceSource: "osm" | "google_maps" | "manual" | null;
-  travelApproved: boolean;
-  travelNotes: string | null;
-  isCompetitionManager: boolean;
-  competitionManagerPerDay: boolean;
-  isComputerSetup: boolean;
-  computerSetupAmount: number | null;
-  lodgingEligibleOverride: boolean | null;
-  lodgingDaysOverride: number | null;
-  status: CompensationClaimStatus;
-  reviewComment: string | null;
-}>;
+import type { CompensationClaimPatch } from "@/lib/judge-compensation/claim-patch";
+
+export type { CompensationClaimPatch };
 
 export const compensationApi = {
   getCompensationHub: () => request<CompensationHubSummary>("/compensation/hub"),
