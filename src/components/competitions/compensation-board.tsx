@@ -28,6 +28,7 @@ import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName 
 import type { Competition } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { CompensationExportDialog } from "./compensation-export-dialog";
+import { CompensationEuroInput, CompensationKmInput } from "./compensation-numeric-inputs";
 
 interface CompensationBoardProps {
   competition: Competition;
@@ -64,14 +65,6 @@ function applyClaimUpdate(
   };
 }
 
-function parseKmDraft(raw: string): number | null | "invalid" {
-  const trimmed = raw.trim();
-  if (trimmed === "") return null;
-  const v = Math.max(0, Math.round(Number(trimmed.replace(",", "."))));
-  if (!Number.isFinite(v)) return "invalid";
-  return v;
-}
-
 export function CompensationBoard({ competition: initialCompetition, canManage }: CompensationBoardProps) {
   const [competition, setCompetition] = useState(initialCompetition);
   const [summary, setSummary] = useState<CompetitionCompensationSummary | null>(null);
@@ -87,8 +80,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       : [emptyClub()],
   );
   const [volunteer, setVolunteer] = useState(competition.compensationVolunteer ?? false);
-  const [kmDraft, setKmDraft] = useState<Record<string, string>>({});
-  const [montajeDraft, setMontajeDraft] = useState<Record<string, string>>({});
   const patchChainRef = useRef(Promise.resolve());
 
   const claims = summary?.claims ?? [];
@@ -162,57 +153,6 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
     [competition],
   );
 
-  const kmInputValue = (claim: CompensationClaim): string => {
-    if (claim.refereeId in kmDraft) return kmDraft[claim.refereeId]!;
-    return claim.distanceKmRoundTrip != null ? String(claim.distanceKmRoundTrip) : "";
-  };
-
-  const commitKm = (refereeId: string, raw: string) => {
-    setKmDraft((prev) => {
-      const next = { ...prev };
-      delete next[refereeId];
-      return next;
-    });
-    const parsed = parseKmDraft(raw);
-    if (parsed === "invalid") return;
-    if (parsed === null) {
-      patchClaim(refereeId, {
-        distanceKmRoundTrip: null,
-        distanceKmOneWay: null,
-        distanceSource: null,
-      });
-      return;
-    }
-    patchClaim(refereeId, {
-      distanceKmRoundTrip: parsed,
-      distanceKmOneWay: Math.round(parsed / 2),
-      distanceSource: "manual",
-    });
-  };
-
-  const montajeInputValue = (claim: CompensationClaim): string => {
-    if (claim.refereeId in montajeDraft) return montajeDraft[claim.refereeId]!;
-    return (claim.computerSetupAmount ?? 0) > 0 ? String(claim.computerSetupAmount) : "";
-  };
-
-  const commitMontaje = (refereeId: string, raw: string) => {
-    setMontajeDraft((prev) => {
-      const next = { ...prev };
-      delete next[refereeId];
-      return next;
-    });
-    if (raw.trim() === "") {
-      patchClaim(refereeId, { computerSetupAmount: null });
-      return;
-    }
-    const v = Math.max(0, Number(raw.replace(",", ".")));
-    if (!Number.isFinite(v)) return;
-    patchClaim(refereeId, {
-      isComputerSetup: true,
-      computerSetupAmount: Math.round(v * 100) / 100,
-    });
-  };
-
   const toggleExpanded = (refereeId: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -250,8 +190,8 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           <div>
             <h2 className="text-sm font-semibold text-foreground">Organizadores del recibo</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Puede haber varios clubes y varios e-mails de devolución (separados por coma). Introduce los km
-              ida+vuelta por juez y pulsa Enter o sal del campo para guardar y calcular.
+              Puede haber varios clubes y varios e-mails de devolución (separados por coma). Escribe los km
+              ida+vuelta (solo números) y pulsa Enter o sal del campo para guardar.
             </p>
             <div className="mt-3 space-y-3">
               <select
@@ -423,22 +363,24 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                     </td>
                     <td className="px-3 py-2">
                       {canManage ? (
-                        <Input
-                          className="h-8 w-20 font-mono text-xs"
-                          type="text"
-                          inputMode="numeric"
-                          value={kmInputValue(claim)}
-                          onChange={(e) =>
-                            setKmDraft((prev) => ({ ...prev, [claim.refereeId]: e.target.value }))
-                          }
-                          onBlur={(e) => commitKm(claim.refereeId, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              e.currentTarget.blur();
+                        <CompensationKmInput
+                          valueKm={claim.distanceKmRoundTrip}
+                          label={`Kilometraje ida y vuelta de ${claim.refereeName}`}
+                          onCommit={(km) => {
+                            if (km === null) {
+                              patchClaim(claim.refereeId, {
+                                distanceKmRoundTrip: null,
+                                distanceKmOneWay: null,
+                                distanceSource: null,
+                              });
+                              return;
                             }
+                            patchClaim(claim.refereeId, {
+                              distanceKmRoundTrip: km,
+                              distanceKmOneWay: Math.round(km / 2),
+                              distanceSource: "manual",
+                            });
                           }}
-                          aria-label={`Kilometraje ida y vuelta de ${claim.refereeName}`}
                         />
                       ) : (
                         <span className="font-mono text-xs">{claim.distanceKmRoundTrip ?? "—"}</span>
@@ -501,26 +443,15 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                             title="Montaje del sistema (Liftingcast / OpenLifter / Goodlift). Distinto de ocupar la posición ordenador en tarima."
                           />
                           {claim.isComputerSetup && (
-                            <Input
-                              className="h-8 w-16 font-mono text-xs"
-                              type="text"
-                              inputMode="decimal"
-                              placeholder="€"
-                              value={montajeInputValue(claim)}
-                              onChange={(e) =>
-                                setMontajeDraft((prev) => ({
-                                  ...prev,
-                                  [claim.refereeId]: e.target.value,
-                                }))
-                              }
-                              onBlur={(e) => commitMontaje(claim.refereeId, e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  e.currentTarget.blur();
-                                }
+                            <CompensationEuroInput
+                              valueEur={claim.computerSetupAmount}
+                              label={`Importe montaje sistema de ${claim.refereeName}`}
+                              onCommit={(amount) => {
+                                patchClaim(claim.refereeId, {
+                                  isComputerSetup: true,
+                                  computerSetupAmount: amount,
+                                });
                               }}
-                              aria-label={`Importe montaje sistema de ${claim.refereeName}`}
                             />
                           )}
                         </div>
