@@ -174,7 +174,9 @@ export default async function DocsPage() {
             </span>
             <span className="text-subtle-muted">Actualizado: {updated}</span>
           </div>
-          {isAuthenticated && <TarimaManualDownloadButton className="mt-4" />}
+          {isAuthenticated ? (
+            <TarimaManualDownloadButton className="mt-6" />
+          ) : null}
         </div>
       </div>
 
