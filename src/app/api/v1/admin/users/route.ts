@@ -10,6 +10,7 @@ const VALID_ROLES: UserRole[] = [
   "super_admin",
   "delegado_jueces",
   "delegado_zona",
+  "responsable_financiero_jueces",
   "solo_ver",
 ];
 

@@ -59,31 +59,43 @@ function buildPrimaryNav(counts: NavCounts): NavItem[] {
   ];
 }
 
-function buildSecondaryNav(counts: NavCounts, canSeeUsers: boolean): NavItem[] {
-  const items: NavItem[] = [
-    {
-      href: "/approvals",
-      label: "Aprobaciones",
-      icon: CheckCircle2,
-      badge: counts.approvals,
-      match: (p) => p.startsWith("/approvals"),
-    },
-    { href: "/promotions", label: "Ascensos", icon: Award, match: (p) => p.startsWith("/promotions") },
-    {
-      href: "/exams",
-      label: "Exámenes",
-      icon: GraduationCap,
-      match: (p) => p.startsWith("/exams"),
-    },
-    {
-      href: "/reports",
-      label: "Informes",
-      icon: ClipboardList,
-      match: (p) => p.startsWith("/reports"),
-    },
+function buildSecondaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
+  const canSeeUsers =
+    user.role === "super_admin" || user.role === "delegado_jueces";
+  const isFinancial = user.role === "responsable_financiero_jueces";
+
+  const items: NavItem[] = [];
+
+  if (!isFinancial) {
+    items.push(
+      {
+        href: "/approvals",
+        label: "Aprobaciones",
+        icon: CheckCircle2,
+        badge: counts.approvals,
+        match: (p) => p.startsWith("/approvals"),
+      },
+      { href: "/promotions", label: "Ascensos", icon: Award, match: (p) => p.startsWith("/promotions") },
+      {
+        href: "/exams",
+        label: "Exámenes",
+        icon: GraduationCap,
+        match: (p) => p.startsWith("/exams"),
+      },
+      {
+        href: "/reports",
+        label: "Informes",
+        icon: ClipboardList,
+        match: (p) => p.startsWith("/reports"),
+      },
+    );
+  }
+
+  items.push(
     { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
     { href: "/regulations", label: "Normativa", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
-  ];
+  );
+
   if (canSeeUsers) {
     items.push({
       href: "/admin/users",
@@ -109,9 +121,7 @@ export function Sidebar({
   onToggle,
 }: SidebarProps) {
   const primaryNav = buildPrimaryNav(navCounts);
-  const canSeeUsers =
-    currentUser.role === "super_admin" || currentUser.role === "delegado_jueces";
-  const secondaryNav = buildSecondaryNav(navCounts, canSeeUsers);
+  const secondaryNav = buildSecondaryNav(navCounts, currentUser);
   const pathname = usePathname();
 
   const renderLink = (item: NavItem) => {

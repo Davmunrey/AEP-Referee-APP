@@ -115,6 +115,11 @@ export const roleTokens: Record<
     bg: "bg-role-regional",
     icon: tokens.text.warning,
   },
+  responsable_financiero_jueces: {
+    ring: "ring-role-financiero",
+    bg: "bg-role-financiero",
+    icon: tokens.text.success,
+  },
   solo_ver: {
     ring: "ring-role-lectura",
     bg: "bg-role-lectura",

@@ -23,8 +23,9 @@
 | Rol | Permisos |
 |---|---|
 | `super_admin` | Todo |
-| `delegado_jueces` | Todo operativo nacional |
+| `delegado_jueces` | Todo operativo nacional (jueces, tarimas, ascensos) |
 | `delegado_zona` | Jueces, informes y tarimas de su zona; dashboard/analytics acotados |
+| `responsable_financiero_jueces` | Compensación de gastos de jueces (lectura de tarimas/censo; export PDF). **No** edita tarima ni censo |
 | `solo_ver` | Lectura |
 
 ## Guards
@@ -36,6 +37,7 @@
 | `canApprove` | Aprobaciones |
 | `canManageUsers` | Usuarios |
 | `canManageJudges` | Jueces, exámenes, informes |
+| `canManageCompensation` | Compensación y export de recibos (responsable financiero) |
 | `canAdminJudges` | Delete juez/informe/sanción |
 | `canReviewPromotions` | Revisar ascensos |
 | `assertRefereeInUserZone` | Lectura/mutación juez por zona |

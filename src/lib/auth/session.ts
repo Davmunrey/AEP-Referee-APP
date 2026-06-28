@@ -111,11 +111,12 @@ export async function getSession(): Promise<SessionUser | null> {
 }
 
 /**
- * RBAC. Cuatro roles:
- *  - super_admin      — control total.
- *  - delegado_jueces  — jefe nacional de jueces; autoridad total (igual que super_admin).
- *  - delegado_zona    — gestiona campeonatos, tarimas y jueces de SU zona.
- *  - solo_ver         — solo lectura.
+ * RBAC. Cinco roles:
+ *  - super_admin                    — control total.
+ *  - delegado_jueces                — jefe nacional de jueces; autoridad total (igual que super_admin).
+ *  - delegado_zona                  — gestiona campeonatos, tarimas y jueces de SU zona.
+ *  - responsable_financiero_jueces  — compensación económica de jueces (no tarima ni censo).
+ *  - solo_ver                       — solo lectura.
  */
 
 /** Campeonatos y tarima: crear, editar, asignar. */
@@ -144,8 +145,19 @@ export function canManageUsers(user: SessionUser): boolean {
 
 /** Crear/editar jueces, exámenes e informes. */
 export function canManageJudges(user: SessionUser): boolean {
-  return user.role !== "solo_ver";
+  return (
+    user.role === "super_admin" ||
+    user.role === "delegado_jueces" ||
+    user.role === "delegado_zona"
+  );
 }
+
+/** Ver y gestionar compensación de gastos de jueces (no delegado de zona ni de jueces). */
+export function canManageCompensation(user: SessionUser): boolean {
+  return user.role === "super_admin" || user.role === "responsable_financiero_jueces";
+}
+
+export const canViewCompensation = canManageCompensation;
 
 /** Eliminar jueces, exámenes o informes. */
 export function canAdminJudges(user: SessionUser): boolean {

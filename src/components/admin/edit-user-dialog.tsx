@@ -70,6 +70,9 @@ export function EditUserDialog({
             <option value="super_admin">{ROLE_LABELS.super_admin}</option>
             <option value="delegado_jueces">{ROLE_LABELS.delegado_jueces}</option>
             <option value="delegado_zona">{ROLE_LABELS.delegado_zona}</option>
+            <option value="responsable_financiero_jueces">
+              {ROLE_LABELS.responsable_financiero_jueces}
+            </option>
             <option value="solo_ver">{ROLE_LABELS.solo_ver}</option>
           </select>
           {form.role === "delegado_zona" && (

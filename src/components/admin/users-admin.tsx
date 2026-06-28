@@ -47,6 +47,7 @@ const ROLE_BADGE_VARIANT: Record<UserRole, "nacional" | "regional" | "ipf2" | "m
   super_admin: "nacional",
   delegado_jueces: "regional",
   delegado_zona: "ipf2",
+  responsable_financiero_jueces: "muted",
   solo_ver: "muted",
 };
 
@@ -292,6 +293,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           <option value="super_admin">Super Admin</option>
           <option value="delegado_jueces">Delegado de Jueces</option>
           <option value="delegado_zona">Delegado de Zona</option>
+          <option value="responsable_financiero_jueces">Responsable Financiero Jueces</option>
           <option value="solo_ver">Solo Ver</option>
         </select>
         {form.role === "delegado_zona" && (
@@ -315,6 +317,9 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           <option value="super_admin">{ROLE_LABELS.super_admin}</option>
           <option value="delegado_jueces">{ROLE_LABELS.delegado_jueces}</option>
           <option value="delegado_zona">{ROLE_LABELS.delegado_zona}</option>
+          <option value="responsable_financiero_jueces">
+            {ROLE_LABELS.responsable_financiero_jueces}
+          </option>
           <option value="solo_ver">{ROLE_LABELS.solo_ver}</option>
         </select>
         <select className="h-9 rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground-secondary focus-ring" value={filterZone} onChange={(e) => setFilterZone(e.target.value)} aria-label="Filtrar por zona">

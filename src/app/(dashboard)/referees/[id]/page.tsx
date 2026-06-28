@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
 import { currentSeasonYear } from "@/lib/season";
 import { displayUltimo } from "@/lib/utils";
-import { getSession } from "@/lib/auth/session";
+import { canManageJudges, getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -53,7 +53,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
     if (refZone !== userZone) notFound();
   }
   const zoneName = zoneUiName(referee.zona);
-  const canEdit = user.role !== "solo_ver";
+  const canEdit = canManageJudges(user);
   const canSanction = canManageSanctions(user, referee.zona);
   const canDelete = user.role === "super_admin" || user.role === "delegado_jueces";
 

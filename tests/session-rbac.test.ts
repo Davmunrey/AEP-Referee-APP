@@ -3,14 +3,15 @@ import {
   canAdminJudges,
   canApprove,
   canEditRoster,
+  canManageCompensation,
   canManageJudges,
   canManageUsers,
 } from "@/lib/auth/session";
 import type { SessionUser, UserRole } from "@/lib/types";
 
 /**
- * RBAC para el modelo de 4 roles:
- *  super_admin · delegado_jueces · delegado_zona · solo_ver
+ * RBAC para el modelo de 5 roles:
+ *  super_admin · delegado_jueces · delegado_zona · responsable_financiero_jueces · solo_ver
  */
 function user(role: UserRole, zona?: string): SessionUser {
   return {
@@ -53,6 +54,11 @@ describe("canEditRoster", () => {
   it("solo_ver nunca edita", () => {
     expect(canEditRoster(user("solo_ver"), "CENTRO")).toBe(false);
   });
+
+  it("responsable_financiero_jueces no edita tarima", () => {
+    expect(canEditRoster(user("responsable_financiero_jueces"), "CENTRO")).toBe(false);
+    expect(canEditRoster(user("responsable_financiero_jueces"), "NOROESTE")).toBe(false);
+  });
 });
 
 describe("canApprove", () => {
@@ -74,10 +80,11 @@ describe("canManageUsers", () => {
 });
 
 describe("canManageJudges", () => {
-  it("todos menos solo_ver pueden crear/editar jueces", () => {
+  it("super_admin, delegado_jueces y delegado_zona pueden crear/editar jueces", () => {
     expect(canManageJudges(user("super_admin"))).toBe(true);
     expect(canManageJudges(user("delegado_jueces"))).toBe(true);
     expect(canManageJudges(user("delegado_zona", "CENTRO"))).toBe(true);
+    expect(canManageJudges(user("responsable_financiero_jueces"))).toBe(false);
     expect(canManageJudges(user("solo_ver"))).toBe(false);
   });
 });
@@ -87,6 +94,17 @@ describe("canAdminJudges", () => {
     expect(canAdminJudges(user("super_admin"))).toBe(true);
     expect(canAdminJudges(user("delegado_jueces"))).toBe(true);
     expect(canAdminJudges(user("delegado_zona", "CENTRO"))).toBe(false);
+    expect(canAdminJudges(user("responsable_financiero_jueces"))).toBe(false);
     expect(canAdminJudges(user("solo_ver"))).toBe(false);
+  });
+});
+
+describe("canManageCompensation", () => {
+  it("solo responsable financiero y super_admin gestionan compensación", () => {
+    expect(canManageCompensation(user("responsable_financiero_jueces"))).toBe(true);
+    expect(canManageCompensation(user("super_admin"))).toBe(true);
+    expect(canManageCompensation(user("delegado_jueces"))).toBe(false);
+    expect(canManageCompensation(user("delegado_zona", "CENTRO"))).toBe(false);
+    expect(canManageCompensation(user("solo_ver"))).toBe(false);
   });
 });

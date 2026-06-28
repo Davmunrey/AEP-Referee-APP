@@ -174,4 +174,8 @@
   --role-jueces-ring: color-mix(in srgb, var(--info) 35%, transparent);
   --role-jueces-bg-from: color-mix(in srgb, var(--info) 16%, var(--neutral-0));
   --role-jueces-bg-to: color-mix(in srgb, var(--info) 6%, var(--neutral-0));
+
+  --role-financiero-ring: color-mix(in srgb, var(--success) 35%, transparent);
+  --role-financiero-bg-from: color-mix(in srgb, var(--success) 14%, var(--neutral-0));
+  --role-financiero-bg-to: color-mix(in srgb, var(--success) 5%, var(--neutral-0));
 }
