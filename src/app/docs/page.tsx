@@ -182,6 +182,15 @@ export default async function DocsPage() {
             </span>
             <span className="text-subtle-muted">Actualizado: {updated}</span>
           </div>
+          {isAuthenticated && (
+            <a
+              href="/api/v1/guides/tarima-manual"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              <BookOpen className="h-4 w-4" />
+              Descargar manual PDF (gestión de jueces)
+            </a>
+          )}
         </div>
       </div>
 

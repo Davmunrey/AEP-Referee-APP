@@ -21,7 +21,7 @@ import { buildClaimBreakdown } from "@/lib/judge-compensation/breakdown";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim, CompensationClubContact, CompetitionCompensationSummary } from "@/lib/judge-compensation/types";
 import { competitionClubContacts } from "@/lib/judge-compensation/readiness";
-import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails } from "@/lib/organizer-clubs";
+import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
 import type { Competition } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
@@ -235,11 +235,18 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           list="organizer-clubs-list"
                           placeholder="Nombre del club"
                           value={club.name}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const name = e.target.value;
                             setClubs((prev) =>
-                              prev.map((c, i) => (i === index ? { ...c, name: e.target.value } : c)),
-                            )
-                          }
+                              prev.map((c, i) => {
+                                if (i !== index) return c;
+                                const suggested = suggestedEmailsForClubName(name);
+                                const emails =
+                                  suggested.length > 0 && c.emails.length === 0 ? suggested : c.emails;
+                                return { ...c, name, emails };
+                              }),
+                            );
+                          }}
                         />
                       </div>
                       <div>
