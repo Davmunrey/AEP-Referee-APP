@@ -8,6 +8,7 @@ import { jsonError } from "@/lib/api/route-utils";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
 /** Descarga el manual de usuario AEP Tarima en PDF (requiere sesión). */
 export async function GET() {
@@ -29,7 +30,8 @@ export async function GET() {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Length": String(pdf.length),
-        "Cache-Control": "private, max-age=3600",
+        "Cache-Control": "private, no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
       },
     });
   } catch (err) {

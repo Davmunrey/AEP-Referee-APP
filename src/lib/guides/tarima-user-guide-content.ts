@@ -15,7 +15,8 @@ export const TARIMA_GUIDE_META = {
   title: "Gestión de Jueces AEP Tarima",
   subtitle: "Manual de uso de la plataforma de arbitraje",
   association: "ASOCIACIÓN ESPAÑOLA DE POWERLIFTING (AEP)",
-  updatedAt: "28 de junio de 2026 (v1.7)",
+  updatedAt: "28 de junio de 2026 (v1.8)",
+  guideVersion: "1.8",
   contactEmail: "powerhispania@gmail.com",
 } as const;
 

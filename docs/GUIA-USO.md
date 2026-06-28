@@ -12,7 +12,7 @@ Cada sección muestra una captura real de la app y los pasos para usarla.
 Descarga el manual completo con capturas desde la app (requiere sesión):
 
 - **Web**: `/docs` → botón «Descargar manual PDF»
-- **API**: `GET /api/v1/guides/tarima-manual` → `Manual-AEP-Tarima-Gestion-Jueces.pdf`
+- **API**: `GET /api/v1/guides/tarima-manual` → `Manual-AEP-Tarima-Gestion-Jueces-v1.8.pdf`
 
 Regenerar capturas: `npm run docs:screenshots`
 

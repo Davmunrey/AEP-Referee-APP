@@ -25,8 +25,21 @@ describe("tarima user guide pdf", () => {
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   });
 
-  it("uses stable filename", () => {
-    expect(tarimaUserGuideFilename()).toContain("Manual-AEP-Tarima");
+  it("no incluye sección de app móvil iOS", () => {
+    const sections = buildTarimaUserGuideSections("https://example.test");
+    const text = JSON.stringify(sections);
+    expect(text).not.toMatch(/APP MÓVIL|app iOS/i);
+    expect(sections).toHaveLength(12);
+  });
+
+  it("coloca la captura de sidebar tras la sección de navegación", async () => {
+    const { GUIDE_SCREENSHOTS } = await import("@/lib/guides/render-tarima-user-guide-pdf");
+    const sidebar = GUIDE_SCREENSHOTS.find((s) => s.file === "12-sidebar.png");
+    expect(sidebar?.afterSection).toBe(11);
+  });
+
+  it("uses versioned filename", () => {
+    expect(tarimaUserGuideFilename()).toBe("Manual-AEP-Tarima-Gestion-Jueces-v1.8.pdf");
   });
 });
 
