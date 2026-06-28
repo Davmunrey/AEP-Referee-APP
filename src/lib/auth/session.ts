@@ -6,6 +6,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { verifyAccessToken } from "@/lib/supabase/token";
 import { profileToSessionUser, type ProfileRow } from "@/lib/auth/profile";
 import { resolveZoneCode } from "@/lib/aep-zones";
+import { DOCS_CAPTURE_SESSION, isDocsCaptureMode } from "@/lib/auth/docs-capture";
+import { ensureDocsCaptureSeed } from "@/server/services/docs-capture-seed";
 import type { SessionUser } from "@/lib/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -94,6 +96,11 @@ async function userFromBearer(): Promise<User | null> {
  * Ambos producen un SessionUser idéntico, con el mismo RBAC.
  */
 export async function getSession(): Promise<SessionUser | null> {
+  if (isDocsCaptureMode()) {
+    ensureDocsCaptureSeed();
+    return DOCS_CAPTURE_SESSION;
+  }
+
   if (!isSupabaseConfigured()) return null;
 
   // 1) Cliente nativo: token Bearer (app móvil).
