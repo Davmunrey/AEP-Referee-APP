@@ -73,7 +73,7 @@ for (const file of apiRoutes) {
 
   const mutates = /export async function (POST|PUT|PATCH|DELETE)\b/.test(src);
   const hasAuthz =
-    /can(EditRoster|Manage|Approve|Admin|Review)|canManageSanctions|user\.role|checkRefereeScope/.test(
+    /can(EditRoster|Manage|Approve|Admin|Review)|canManageSanctions|guardRosterWrite|user\.role|checkRefereeScope/.test(
       src,
     );
   if (mutates && !publicApi.has(rel) && !selfServiceApi.has(rel) && !hasAuthz) {
