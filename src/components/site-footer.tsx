@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 /**
- * Pie de página común: enlaces a la documentación/privacidad y aviso de
- * copyright. Se usa en el login y en el layout de la aplicación.
+ * Pie de página para pantallas públicas (login). En la app autenticada no se
+ * muestra: Documentación/Privacidad/Contacto viven en /docs y el widget Ayuda.
  */
 export function SiteFooter({ className = "" }: { className?: string }) {
   const year = new Date().getFullYear();

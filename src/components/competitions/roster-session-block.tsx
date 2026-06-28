@@ -212,7 +212,7 @@ export function SessionBlock({
 
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-surface/40 shadow-sm">
-      <header className="grid gap-2 border-b border-border-muted p-2.5 lg:grid-cols-[auto_minmax(0,1.15fr)_minmax(0,2fr)_auto] lg:items-center">
+      <header className="grid gap-1.5 border-b border-border-muted p-2 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.5fr)_auto] lg:items-center">
         <button
           type="button"
           className="rounded text-subtle-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

@@ -265,7 +265,7 @@ export function RosterBuilder({
 
   return (
     <>
-      <div className="flex h-[calc(100vh-4rem)] flex-col">
+      <div className="flex h-[calc(100dvh-3.5rem)] flex-col">
         <ScheduleImportDialog
           competitionId={competition.id}
           open={importOpen}
@@ -341,7 +341,7 @@ export function RosterBuilder({
             className={cn(
               "grid min-h-0 flex-1 grid-cols-1",
               showRefereePanel &&
-                "md:grid-cols-[minmax(0,240px)_1fr] lg:grid-cols-[minmax(0,280px)_1fr] xl:grid-cols-[minmax(0,320px)_1fr]",
+                "md:grid-cols-[minmax(0,220px)_1fr] lg:grid-cols-[minmax(0,252px)_1fr] xl:grid-cols-[minmax(0,272px)_1fr] 2xl:grid-cols-[minmax(0,292px)_1fr]",
             )}
           >
             {showRefereePanel && (

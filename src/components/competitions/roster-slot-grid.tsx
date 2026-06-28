@@ -54,17 +54,17 @@ export function SlotGrid({
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   return (
-    <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-3">
+    <div className="grid gap-1.5 md:grid-cols-2 2xl:grid-cols-3">
       {roles.map((role) => (
         <div
           key={role.key}
-          className="rounded-lg border border-border-muted bg-background/55 p-2"
+          className="rounded-md border border-border-muted bg-background/55 p-1.5"
         >
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-subtle-muted">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <p className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-subtle-muted">
               {role.rol}
             </p>
-            <span className="font-mono text-[10px] text-subtle-muted">
+            <span className="shrink-0 font-mono text-[9px] text-subtle-muted">
               {Array.from({ length: role.slots }).filter((_, idx) => {
                 const slotKey = `${sesion}_${role.key}_${idx}`;
                 return assignments[slotKey];
@@ -72,7 +72,7 @@ export function SlotGrid({
               /{role.slots}
             </span>
           </div>
-          <div className="grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(132px,1fr))]">
+          <div className="grid gap-1 [grid-template-columns:repeat(auto-fit,minmax(108px,1fr))]">
             {Array.from({ length: role.slots }).map((_, idx) => {
               const slotKey = `${sesion}_${role.key}_${idx}`;
               const refereeId = assignments[slotKey];
@@ -110,7 +110,7 @@ export function SlotGrid({
                     onSelectSlot(isSelected ? null : slotKey);
                   }}
                   className={cn(
-                    "relative rounded-md border p-2 transition-all duration-100",
+                    "relative rounded border p-1.5 transition-all duration-100",
                     !readOnly && "cursor-pointer",
                     isDropTarget
                       ? "border-primary bg-primary/10 shadow-md"
@@ -127,88 +127,73 @@ export function SlotGrid({
                 >
                   {referee ? (
                     <>
-                      <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-start justify-between gap-0.5">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[12.5px] font-semibold text-foreground">
+                          <p className="truncate text-[11.5px] font-semibold leading-tight text-foreground">
                             {referee.nombre}
                             {slotFlags?.compartido && (
-                              <span
-                                className="ml-1 font-mono text-primary"
-                                title="Compartido entre sesiones"
-                              >
-                                *
-                              </span>
+                              <span className="ml-0.5 font-mono text-[10px] text-primary" title="Compartido">*</span>
                             )}
                             {slotFlags?.intercambio && (
-                              <span
-                                className="ml-0.5 font-mono text-accent"
-                                title="Intercambio de jueces"
-                              >
-                                ↑↓
-                              </span>
+                              <span className="ml-0.5 font-mono text-[10px] text-accent" title="Intercambio">↑↓</span>
                             )}
                           </p>
-                          <p className="mt-0.5 text-[10px] text-subtle-muted">
-                            Hueco {idx + 1}
-                          </p>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                            <LevelBadge level={referee.nivel} />
+                            {isCrossZone && (
+                              <span
+                                title={`Fuera de zona (${referee.zona})`}
+                                className="rounded border border-orange-400/50 px-1 py-px text-[9px] font-semibold text-orange-600"
+                              >
+                                ⟳
+                              </span>
+                            )}
+                            {violation && (
+                              <span
+                                title={`Mínimo ${violation.minLevel}`}
+                                className="flex items-center gap-0.5 rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
+                              >
+                                <AlertTriangle className="h-2.5 w-2.5" />
+                                {violation.minLevel}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         {!readOnly && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 shrink-0 text-subtle-muted hover:text-foreground"
+                            className="h-5 w-5 shrink-0 text-subtle-muted hover:text-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
                               onClear(slotKey);
                             }}
                             aria-label="Quitar asignación"
                           >
-                            <X className="h-3 w-3" />
+                            <X className="h-2.5 w-2.5" />
                           </Button>
                         )}
                       </div>
 
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <LevelBadge level={referee.nivel} />
-                        {isCrossZone && (
-                          <span
-                            title={`Juez de fuera de zona (${referee.zona})`}
-                            className="flex items-center gap-0.5 rounded border border-orange-400/60 bg-orange-50 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 dark:bg-orange-950 dark:text-orange-400"
-                          >
-                            ⟳ {referee.zona}
-                          </span>
-                        )}
-                        {violation && (
-                          <span
-                            title={`Mínimo ${violation.minLevel} para ${violation.rol}`}
-                            className="flex items-center gap-1 rounded border border-warning-border bg-warning-muted px-1.5 py-0.5 text-[10px] font-semibold text-warning"
-                          >
-                            <AlertTriangle className="h-3 w-3" />
-                            min. {violation.minLevel}
-                          </span>
-                        )}
-                      </div>
-
                       {!readOnly && (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
+                        <div className="mt-1 flex gap-0.5">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               onToggleFlag(slotKey, "compartido");
                             }}
-                            title="Compartido (*) — el juez comparte sesión; permite asignarlo también en pesaje u otra posición que se solape"
+                            title="Compartido (*) — permite solape tarima/pesaje"
                             aria-pressed={slotFlags?.compartido ? "true" : "false"}
                             className={cn(
-                              "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",
+                              "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-colors",
                               slotFlags?.compartido
                                 ? "border-primary bg-primary text-white"
-                                : "border-border bg-background text-subtle-muted hover:border-primary/50 hover:text-primary",
+                                : "border-border bg-background text-subtle-muted hover:border-primary/50",
                             )}
                           >
-                            <span>*</span>
-                            <span className="hidden text-[9px] sm:inline">Comp.</span>
+                            *
                           </button>
                           <button
                             type="button"
@@ -216,23 +201,22 @@ export function SlotGrid({
                               e.stopPropagation();
                               onToggleFlag(slotKey, "intercambio");
                             }}
-                            title="Intercambio (↑↓) — juez en intercambio con otra federación"
+                            title="Intercambio (↑↓)"
                             aria-pressed={slotFlags?.intercambio ? "true" : "false"}
                             className={cn(
-                              "flex h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] transition-colors",
+                              "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-colors",
                               slotFlags?.intercambio
                                 ? "border-accent bg-accent text-white"
-                                : "border-border bg-background text-subtle-muted hover:border-accent/50 hover:text-accent",
+                                : "border-border bg-background text-subtle-muted hover:border-accent/50",
                             )}
                           >
-                            <span>↑↓</span>
-                            <span className="hidden text-[9px] sm:inline">Interc.</span>
+                            ↑↓
                           </button>
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="flex min-h-[42px] flex-col items-center justify-center gap-0.5 text-center">
+                    <div className="flex min-h-[36px] flex-col items-center justify-center gap-0.5 text-center">
                       {isDropTarget ? (
                         <p className="text-xs font-medium text-primary">Soltar aquí</p>
                       ) : isSelected ? (
