@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { BookOpen, Loader2 } from "lucide-react";
+import { FileDown, FileText, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TARIMA_GUIDE_META } from "@/lib/guides/tarima-user-guide-content";
 import { tarimaUserGuideFilename } from "@/lib/guides/tarima-user-guide-filename";
+import { cn } from "@/lib/utils";
 
 interface TarimaManualDownloadButtonProps {
   className?: string;
-  label?: string;
 }
 
 const MANUAL_API_PATH = "/api/v1/guides/tarima-manual";
 
-export function TarimaManualDownloadButton({
-  className,
-  label = "Descargar manual PDF (gestión de jueces)",
-}: TarimaManualDownloadButtonProps) {
+export function TarimaManualDownloadButton({ className }: TarimaManualDownloadButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -66,21 +65,51 @@ export function TarimaManualDownloadButton({
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <button
-        type="button"
-        onClick={onDownload}
-        disabled={pending}
-        className={
-          className ??
-          "inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
-        }
-      >
-        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpen className="h-4 w-4" />}
-        {pending ? "Generando PDF…" : label}
-      </button>
+    <div className={cn("mx-auto w-full max-w-md", className)}>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm">
+        <div className="h-1 bg-primary" aria-hidden="true" />
+        <div className="p-4 sm:p-5">
+          <div className="flex items-start gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <FileText className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-subtle-muted">
+                Manual PDF
+              </p>
+              <h2 className="mt-0.5 text-base font-semibold text-foreground">
+                Gestión de jueces AEP Tarima
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Guía paso a paso con capturas de pantalla. Versión {TARIMA_GUIDE_META.guideVersion} ·{" "}
+                {TARIMA_GUIDE_META.updatedAt}
+              </p>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            onClick={onDownload}
+            disabled={pending}
+            size="lg"
+            className="mt-4 w-full gap-2 rounded-xl"
+          >
+            {pending ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <FileDown className="h-4 w-4" aria-hidden="true" />
+            )}
+            {pending ? "Generando PDF…" : "Descargar manual PDF"}
+          </Button>
+
+          <p className="mt-2 text-center text-[11px] text-subtle-muted">
+            {tarimaUserGuideFilename()}
+          </p>
+        </div>
+      </div>
+
       {error ? (
-        <p role="alert" className="max-w-md text-center text-xs text-destructive">
+        <p role="alert" className="mt-2 text-center text-xs text-destructive">
           {error}
         </p>
       ) : null}
