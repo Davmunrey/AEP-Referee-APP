@@ -223,7 +223,8 @@ export async function setSlotFlags(
 ): Promise<{ flags: FlagsMap } | { error: string }> {
   const store = getStore();
   const assignments = store.assignments.get(competitionId) ?? {};
-  if (!assignments[slotKey]) {
+  const refereeId = assignments[slotKey];
+  if (!refereeId) {
     return { error: "Asigna un juez antes de marcar flags" };
   }
   const all = { ...(store.slotFlags.get(competitionId) ?? {}) };
@@ -231,6 +232,27 @@ export async function setSlotFlags(
     compartido: Boolean(flags.compartido),
     intercambio: Boolean(flags.intercambio),
   };
+  const resultingFlags: FlagsMap = { ...all };
+  if (merged.compartido || merged.intercambio) resultingFlags[slotKey] = merged;
+  else delete resultingFlags[slotKey];
+
+  // Igual que en supabase-roster: quitar el * no debe dejar una doble asignación
+  // solapada del mismo juez que el override permitía.
+  const revalidation = validateRosterOperation({
+    template: getCompetitionTemplate(competitionId),
+    assignments,
+    slotKey,
+    refereeId,
+    flags: resultingFlags,
+  });
+  if (!revalidation.ok) {
+    return {
+      error:
+        revalidation.error ??
+        "Quitar el * dejaría a ese juez en dos puestos solapados de la misma sesión",
+    };
+  }
+
   if (merged.compartido || merged.intercambio) all[slotKey] = merged;
   else delete all[slotKey];
   store.slotFlags.set(competitionId, all);

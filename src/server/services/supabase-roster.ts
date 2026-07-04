@@ -107,7 +107,8 @@ export const rosterService = {
     actor: string,
   ): Promise<{ flags: FlagsMap } | { error: string }> => {
     const assignments = await loadAssignments(competitionId);
-    if (!assignments[slotKey]) {
+    const refereeId = assignments[slotKey];
+    if (!refereeId) {
       return { error: "Asigna un juez antes de marcar flags" };
     }
     const supabase = db();
@@ -116,11 +117,35 @@ export const rosterService = {
       intercambio: flags.intercambio ?? false,
     };
     const payload = merged.compartido || merged.intercambio ? merged : {};
-    await supabase
+
+    // Quitar el * (compartido) puede dejar una doble asignación del mismo juez en
+    // slots solapados que antes el override permitía. Revalidamos con los flags
+    // resultantes antes de persistir; validateRosterOperation ya respeta el * del
+    // otro slot en conflicto, así que solo rechaza los solapes realmente ilegales.
+    const template = (await getCompetitionTemplate(competitionId)) ?? [];
+    const currentFlags = await loadFlags(competitionId);
+    const resultingFlags: FlagsMap = { ...currentFlags, [slotKey]: payload };
+    const revalidation = validateRosterOperation({
+      template,
+      assignments,
+      slotKey,
+      refereeId,
+      flags: resultingFlags,
+    });
+    if (!revalidation.ok) {
+      return {
+        error:
+          revalidation.error ??
+          "Quitar el * dejaría a ese juez en dos puestos solapados de la misma sesión",
+      };
+    }
+
+    const { error: writeError } = await supabase
       .from("roster_assignments")
       .update({ flags: payload })
       .eq("competition_id", competitionId)
       .eq("slot_key", slotKey);
+    if (writeError) return { error: "No se pudieron guardar los marcadores del slot" };
     const allFlags = (await loadRosterAssignmentData(competitionId)).flags;
     await pushHistory({
       competitionId,
@@ -205,7 +230,7 @@ export const rosterService = {
       !!referee?.zona &&
       (resolveZoneCode(comp.zona) ?? comp.zona) !== (resolveZoneCode(referee.zona) ?? referee.zona);
 
-    await supabase.from("roster_assignments").upsert({
+    const { error: writeError } = await supabase.from("roster_assignments").upsert({
       competition_id: competitionId,
       slot_key: slotKey,
       referee_id: refereeId,
@@ -213,6 +238,9 @@ export const rosterService = {
       cross_zone: isCrossZone,
       cross_zone_reason: isCrossZone ? (crossZoneReason ?? null) : null,
     });
+    // supabase-js no lanza: devuelve { error }. Sin esto, un fallo de escritura
+    // (constraint, RLS, caída) respondería "OK" con el juez sin asignar.
+    if (writeError) return { error: "No se pudo guardar la asignación" };
 
     const freshAssignments = await loadAssignments(competitionId);
     const freshFlags = await loadFlags(competitionId);
@@ -310,12 +338,13 @@ export const rosterService = {
 
     const now = new Date().toISOString();
     if (existing) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("approval_proposals")
         .update({ assignments, submitted_at: now, submitted_by: actor, ...submitterId })
         .eq("id", existing.id);
+      if (updateError) return undefined;
     } else {
-      await supabase.from("approval_proposals").insert({
+      const { error: insertError } = await supabase.from("approval_proposals").insert({
         id: `apr-${Date.now()}`,
         [competitionIdColumn]: competitionId,
         [competitionNameColumn]: comp.nombre,
@@ -326,6 +355,9 @@ export const rosterService = {
         status: "pendiente",
         assignments,
       });
+      // Si el insert falla no marcamos la competición como "Propuesta enviada":
+      // dejaríamos un estado enviado sin propuesta real que aprobar.
+      if (insertError) return undefined;
     }
     await supabase
       .from("competitions")
@@ -392,6 +424,32 @@ export const rosterService = {
       .single();
     if (!proposal || proposal.status !== "pendiente") return undefined;
 
+    const proposalCompetitionId = String(proposal.competition_id ?? proposal.event_id);
+    const proposalCompetitionName = String(proposal.competition_name ?? proposal.event_name);
+    const comp = await getCompetitionFn(proposalCompetitionId);
+    const assignments = proposal.assignments as AssignmentsMap;
+
+    // Pre-check ANTES de tocar nada: si un juez de la propuesta se borró del censo,
+    // el insert final fallaría por FK dejando el roster vacío y la competición
+    // marcada como "Aprobado/Completo" sin asignaciones. Abortamos limpio.
+    if (approve && comp) {
+      const refereeIds = [...new Set(Object.values(assignments).filter(Boolean))] as string[];
+      if (refereeIds.length) {
+        const { data: existingRefs, error: refErr } = await supabase
+          .from("referees")
+          .select("id")
+          .in("id", refereeIds);
+        if (refErr) throw new Error("No se pudo validar el censo; inténtalo de nuevo.");
+        const existingIds = new Set((existingRefs ?? []).map((r) => String(r.id)));
+        const missing = refereeIds.filter((rid) => !existingIds.has(rid));
+        if (missing.length) {
+          throw new Error(
+            `No se puede aprobar: ${missing.length} juez(ces) de la propuesta ya no existe(n) en el censo. Revisa la tarima y reenvíala.`,
+          );
+        }
+      }
+    }
+
     const now = new Date().toISOString();
     const status = approve ? "aprobado" : "rechazado";
     const reviewerIdCol = (await hasApprovalSubmitterColumns())
@@ -402,22 +460,18 @@ export const rosterService = {
       .update({ status, reviewed_by: reviewer, reviewed_at: now, comment: comment ?? null, ...reviewerIdCol })
       .eq("id", id);
 
-    const proposalCompetitionId = String(proposal.competition_id ?? proposal.event_id);
-    const proposalCompetitionName = String(proposal.competition_name ?? proposal.event_name);
-    const comp = await getCompetitionFn(proposalCompetitionId);
     if (comp) {
       if (approve) {
         // Conserva flags (*, ↑↓) y cross-zona de las filas vivas al re-insertar
         // la propuesta aprobada; antes se perdían y el acta salía sin marcas.
         const { data: liveRows } = await supabase
           .from("roster_assignments")
-          .select("slot_key, flags, cross_zone, cross_zone_reason")
+          .select("slot_key, referee_id, flags, cross_zone, cross_zone_reason")
           .eq("competition_id", proposalCompetitionId);
         const liveBySlot = new Map(
           (liveRows ?? []).map((r) => [String(r.slot_key), r as Record<string, unknown>]),
         );
         await supabase.from("roster_assignments").delete().eq("competition_id", proposalCompetitionId);
-        const assignments = proposal.assignments as AssignmentsMap;
         const rows = Object.entries(assignments).map(([slot_key, referee_id]) => {
           const live = liveBySlot.get(slot_key);
           return {
@@ -429,7 +483,36 @@ export const rosterService = {
             cross_zone_reason: live?.cross_zone_reason ?? null,
           };
         });
-        if (rows.length) await supabase.from("roster_assignments").insert(rows);
+        if (rows.length) {
+          const { error: insertError } = await supabase.from("roster_assignments").insert(rows);
+          if (insertError) {
+            // El delete ya vació las filas: restauramos exactamente lo que había
+            // y revertimos la propuesta a "pendiente" para no dejar un acta vacía
+            // marcada como aprobada. No marcamos la competición como Aprobado.
+            if (liveRows && liveRows.length) {
+              await supabase.from("roster_assignments").insert(
+                liveRows.map((r) => ({
+                  competition_id: proposalCompetitionId,
+                  slot_key: r.slot_key,
+                  referee_id: r.referee_id,
+                  flags: r.flags ?? {},
+                  cross_zone: r.cross_zone ?? false,
+                  cross_zone_reason: r.cross_zone_reason ?? null,
+                })),
+              );
+            }
+            const resetReviewer = Object.fromEntries(
+              Object.keys(reviewerIdCol).map((k) => [k, null]),
+            );
+            await supabase
+              .from("approval_proposals")
+              .update({ status: "pendiente", reviewed_by: null, reviewed_at: null, comment: null, ...resetReviewer })
+              .eq("id", id);
+            throw new Error(
+              "No se pudo guardar el acta aprobada; la propuesta sigue pendiente. Inténtalo de nuevo.",
+            );
+          }
+        }
         await supabase
           .from("competitions")
           .update({

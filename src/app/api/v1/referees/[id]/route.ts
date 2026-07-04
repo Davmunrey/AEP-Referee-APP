@@ -1,7 +1,7 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
+import { assertRefereeInUserZone, stripRefereePII } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import { dataService } from "@/server/services";
@@ -19,7 +19,7 @@ export async function GET(_request: Request, context: RouteContext) {
   if (scopeErr) return scopeErr;
   const referee = await dataService.getReferee(id);
   if (!referee) return jsonError("Juez no encontrado", 404);
-  return jsonOk(referee);
+  return jsonOk(stripRefereePII(referee, user));
 }
 
 export async function PATCH(request: Request, context: RouteContext) {

@@ -319,7 +319,12 @@ export function mapCompensationClaimRow(
     fecha: competition?.fecha ?? "",
     fechaFin: competition?.fechaFin ?? "",
     dutyLines,
-    travelMode: row.travel_mode as import("@/lib/judge-compensation/types").CompensationTravelMode,
+    // Normaliza modos retirados/desconocidos (p. ej. `fuel_receipt` heredado) a
+    // `km_rate` para que el cálculo parta de un modo soportado.
+    travelMode: ((): import("@/lib/judge-compensation/types").CompensationTravelMode => {
+      const m = row.travel_mode;
+      return m === "shared_vehicle_passenger" || m === "none" ? m : "km_rate";
+    })(),
     distanceKmOneWay: row.distance_km_one_way != null ? Number(row.distance_km_one_way) : undefined,
     distanceKmRoundTrip:
       row.distance_km_round_trip != null ? Number(row.distance_km_round_trip) : undefined,
