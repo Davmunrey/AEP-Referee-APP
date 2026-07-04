@@ -4,18 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
-import type { UserRole } from "@/lib/types";
+import { USER_ROLES, type UserRole } from "@/lib/types";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
-
-const VALID_ROLES: UserRole[] = [
-  "super_admin",
-  "delegado_jueces",
-  "delegado_zona",
-  "solo_ver",
-];
 
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
@@ -49,7 +42,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     patch.activo = body.activo;
   }
   if (body.role !== undefined) {
-    if (!VALID_ROLES.includes(body.role as UserRole)) {
+    if (!USER_ROLES.includes(body.role as UserRole)) {
       return jsonError("Rol no válido", 400);
     }
     // Evita que un admin se quite a sí mismo el rol super_admin.

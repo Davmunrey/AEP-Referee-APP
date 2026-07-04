@@ -13,7 +13,10 @@ export type RosterRouteGuardResult = RosterRouteGuardSuccess | RosterRouteGuardF
 
 /** Lógica compartida por rutas POST de tarima (assign, template, submit, …). */
 export function checkRosterMutationAllowed(
-  comp: Pick<Competition, "fechaFin" | "fecha" | "aprobacion"> | null | undefined,
+  comp:
+    | (Pick<Competition, "fechaFin" | "fecha"> & Partial<Pick<Competition, "aprobacion">>)
+    | null
+    | undefined,
   userCanEdit: boolean,
 ): RosterRouteGuardResult {
   if (!comp) {

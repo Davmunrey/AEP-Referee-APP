@@ -4,15 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
-import type { UserRole } from "@/lib/types";
-
-const VALID_ROLES: UserRole[] = [
-  "super_admin",
-  "delegado_jueces",
-  "delegado_zona",
-  "responsable_financiero_jueces",
-  "solo_ver",
-];
+import { USER_ROLES, type UserRole } from "@/lib/types";
 
 export async function GET() {
   const user = await requireApiUser();
@@ -50,7 +42,7 @@ export async function POST(request: Request) {
   if (!email || !password || !nombre || !rolLabel || !role) {
     return jsonError("Email, contraseña, nombre, rol y etiqueta son obligatorios", 400);
   }
-  if (!VALID_ROLES.includes(role)) {
+  if (!USER_ROLES.includes(role)) {
     return jsonError("Rol no válido", 400);
   }
   if (role === "super_admin" && user.role !== "super_admin") {
