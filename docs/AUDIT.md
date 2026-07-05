@@ -1,12 +1,12 @@
 # QA y seguridad
 
-Última revisión: junio 2026 (v1.8). Alcance: repo, CI GitHub, flujos usuario comunes.
+Última revisión: julio 2026 (v1.9). Alcance: repo, CI GitHub, flujos usuario comunes.
 
 **Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 
 ## Veredicto
 
-App **operativa en producción** en Vercel. CI verde, **331 tests** (57 archivos), lint OK, build OK. Migraciones hasta `030` aplicadas en Supabase.
+App **operativa en producción** en Vercel. CI verde, **354 tests** (355 con 1 skip, 61 archivos, Vitest), lint OK, build OK. Migraciones hasta `033` aplicadas en Supabase.
 
 ## QA operativo
 
@@ -38,11 +38,13 @@ App **operativa en producción** en Vercel. CI verde, **331 tests** (57 archivos
 | RBAC mutaciones | OK |
 | RBAC zona (`resolveZoneCode`) | OK — fail-closed |
 | RLS Supabase | OK, deny-by-default |
+| RLS endurecido (`033`) | OK — políticas permisivas eliminadas en `referee_sanctions` y `competition_availability`; solo servidor (`service_role`). Advisors sin los 2 WARN previos |
 | Login brute force | Mitigado |
 | CSP | OK — mapas solo vía API propia |
 | IBAN compensación | OK — efímero, no persiste |
 | Imports PDF/XLSX | OK — límites y preview |
 | Realtime `app_sync_state` | OK — solo SELECT authenticated |
+| Leaked Password Protection | Pendiente — único item de seguridad abierto; toggle manual en Supabase Auth (HaveIBeenPwned), no es código |
 
 ## Riesgos vivos (backlog)
 
@@ -61,4 +63,4 @@ npm run audit:remote
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9

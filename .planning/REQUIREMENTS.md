@@ -1,6 +1,15 @@
 # Requirements — AEP Tarima
 
-> Histórico v1.2 completado en `main`. v1.4–v1.8: compensación, normativa, ayuda, realtime, rendimiento y producción Vercel.
+> Histórico v1.2 completado en `main`. v1.4–v1.9: compensación, normativa, ayuda, realtime, rendimiento, producción Vercel, censo anual y seguridad.
+
+## v1.9 — Censo anual, selección rápida y seguridad ✅
+
+- [x] **CENSO-01**: Arbitrajes por año natural (parser hojas `ArbitrajesAAAA`, columna `arbitraje_stats_by_year`, migración `032`)
+- [x] **CENSO-02**: Ficha de juez con selector de año + Histórico; directorio con filtro de censo por año (vigente vs histórico)
+- [x] **COMP-07**: Recibo con organizador de 3 opciones (club / «Asociación Española de Powerlifting» / personalizable, migración `031`); PDF con logo; pie de correo variable
+- [x] **ROSTER-01**: Selección rápida aplica solo a jueces disponibles; orden por idoneidad; nivel recomendado como aviso
+- [x] **IMPORT-01**: Import Excel maestro «reemplazar censo» seguro (conserva campeonatos, cuadrantes y asignados)
+- [x] **SEC-01**: RLS endurecido — eliminadas políticas permisivas en `referee_sanctions` y `competition_availability` (migración `033`)
 
 ## v1.8 — Producción, realtime y rendimiento ✅
 
@@ -44,6 +53,8 @@
 
 ## Backlog abierto
 
+- [ ] **SEC-02**: Activar Leaked Password Protection en Supabase Auth (toggle manual)
+- [ ] **TECH-02**: OCR client-side para cuadrantes escaneados (diferido)
 - [ ] **E2E-01**: Smoke compensación Playwright
 - [ ] **E2E-02**: Flujo profundo import → cuadrante → export
 - [ ] **TECH-01**: Sustitución librería `xlsx`

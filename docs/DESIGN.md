@@ -31,6 +31,22 @@ Fuente de verdad:
 - Slots de cuadrante con altura reducida; rejilla hasta 3 columnas.
 - Tooltip `title` en badge compacto muestra el nivel completo.
 
+## Selección rápida de jueces
+
+- Al elegir un hueco, la lista se ordena por **idoneidad** (disponibilidad confirmada como criterio dominante, luego zona, nivel y solapes).
+- La selección rápida actúa **solo sobre los jueces disponibles**: va después del paso de disponibilidad.
+- El nivel recomendado es un **aviso** (no bloquea la asignación).
+
+## Arbitrajes por año
+
+- Ficha de juez: **selector de año natural** + «Histórico» (censo vs. agregado).
+- Directorio: filtro de censo por año natural.
+
+## Recibo de compensación
+
+- Organizador con 3 estilos: **club**, **AEP**, **custom**.
+- PDF con logo AEP en la cabecera (solo en el tipo AEP).
+
 ## Estados
 
 | Estado | UI |
@@ -54,4 +70,4 @@ Fuente de verdad:
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
