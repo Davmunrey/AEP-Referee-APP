@@ -6,6 +6,7 @@ import type {
   PromotionRequest,
   Referee,
   RefereeArbitrajeStats,
+  RefereeArbitrajeStatsByYear,
   RefereeExam,
   RefereeReport,
   RegulationRule,
@@ -23,6 +24,19 @@ function mapArbitrajeStats(raw: unknown): RefereeArbitrajeStats | undefined {
     ipf: Number(o.ipf ?? 0),
     total: Number(o.total ?? 0),
   };
+}
+
+function mapArbitrajeStatsByYear(
+  raw: unknown,
+): RefereeArbitrajeStatsByYear | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: RefereeArbitrajeStatsByYear = {};
+  for (const [year, stats] of Object.entries(raw as Record<string, unknown>)) {
+    if (!/^\d{4}$/.test(year)) continue;
+    const mapped = mapArbitrajeStats(stats);
+    if (mapped) out[year] = mapped;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 /** Convierte ficha de juez (app) → columnas Postgres. */
@@ -63,6 +77,9 @@ export function refereeToDbRow(
   if (patch.arbitrajeStats !== undefined) {
     row.arbitraje_stats = patch.arbitrajeStats ?? null;
   }
+  if (patch.arbitrajeStatsByYear !== undefined) {
+    row.arbitraje_stats_by_year = patch.arbitrajeStatsByYear ?? null;
+  }
   return row;
 }
 
@@ -96,6 +113,7 @@ export function mapReferee(row: Record<string, unknown>): Referee {
       ? String(row.excel_macro_zone)
       : undefined,
     arbitrajeStats: mapArbitrajeStats(row.arbitraje_stats),
+    arbitrajeStatsByYear: mapArbitrajeStatsByYear(row.arbitraje_stats_by_year),
   };
 }
 

@@ -140,7 +140,10 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       </Card>
 
       {referee.arbitrajeStats && referee.arbitrajeStats.total > 0 && (
-        <RefereeArbitrajePanel stats={referee.arbitrajeStats} />
+        <RefereeArbitrajePanel
+          stats={referee.arbitrajeStats}
+          byYear={referee.arbitrajeStatsByYear}
+        />
       )}
 
       <Card className="overflow-hidden p-0">

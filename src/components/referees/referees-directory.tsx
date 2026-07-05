@@ -24,7 +24,26 @@ import { Input } from "@/components/ui/input";
 import { selectFieldClassSm } from "@/lib/design-tokens";
 import { api } from "@/lib/api/client";
 import { zoneUiName } from "@/lib/aep-zones";
+import { arbitrajeYears } from "@/lib/judges-registry/arbitraje-stats";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
+
+const CENSO_ALL = "TODOS";
+
+/** Años naturales con actividad de arbitraje presentes en el censo, desc. */
+function censusYears(referees: Referee[]): number[] {
+  const years = new Set<number>();
+  for (const r of referees) {
+    if (r.arbitrajeStatsByYear) {
+      for (const y of arbitrajeYears(r.arbitrajeStatsByYear)) years.add(y);
+    }
+  }
+  return [...years].sort((a, b) => b - a);
+}
+
+/** ¿El juez tuvo arbitrajes en ese año natural concreto? */
+function activeInYear(referee: Referee, year: string): boolean {
+  return (referee.arbitrajeStatsByYear?.[year]?.total ?? 0) > 0;
+}
 
 function zoneName(zones: Zone[], code: string) {
   return zoneUiName(zones.find((z) => z.code === code)?.code ?? code);
@@ -58,15 +77,19 @@ export function RefereesDirectory({
   const [filterZona, setFilterZona] = useState("TODAS");
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [filterEstado, setFilterEstado] = useState("TODOS");
+  const [filterCenso, setFilterCenso] = useState(CENSO_ALL);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 25;
 
+  const yearOptions = useMemo(() => censusYears(referees), [referees]);
+
   const hasActiveFilters: boolean =
     filterZona !== "TODAS" ||
     filterNivel !== "TODOS" ||
     filterEstado !== "TODOS" ||
+    filterCenso !== CENSO_ALL ||
     !!search;
 
   const clearFilters = () => {
@@ -74,6 +97,7 @@ export function RefereesDirectory({
     setFilterZona("TODAS");
     setFilterNivel("TODOS");
     setFilterEstado("TODOS");
+    setFilterCenso(CENSO_ALL);
   };
 
   useEffect(() => {
@@ -100,14 +124,15 @@ export function RefereesDirectory({
       if (filterZona !== "TODAS" && a.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && a.nivel !== filterNivel) return false;
       if (filterEstado !== "TODOS" && a.estado !== filterEstado) return false;
+      if (filterCenso !== CENSO_ALL && !activeInYear(a, filterCenso)) return false;
       if (search && !a.nombre.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [referees, filterZona, filterNivel, filterEstado, search]);
+  }, [referees, filterZona, filterNivel, filterEstado, filterCenso, search]);
 
   useEffect(() => {
     setPage(1);
-  }, [filterZona, filterNivel, filterEstado, search]);
+  }, [filterZona, filterNivel, filterEstado, filterCenso, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
@@ -219,6 +244,21 @@ export function RefereesDirectory({
               </option>
             ))}
           </select>
+          {yearOptions.length > 0 && (
+            <select
+              value={filterCenso}
+              onChange={(e) => setFilterCenso(e.target.value)}
+              className={selectFieldClassSm}
+              aria-label="Filtrar por censo por año natural"
+            >
+              <option value={CENSO_ALL}>Censo — Histórico</option>
+              {yearOptions.map((y) => (
+                <option key={y} value={String(y)}>
+                  Arbitró en {y}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Mobile card list */}
