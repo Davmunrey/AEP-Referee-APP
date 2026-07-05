@@ -199,6 +199,10 @@ export function RosterBuilder({
   const availableReferees = useMemo(() => referees.filter((r) => {
     if (r.estado !== "Activo" || !r.disp) return false;
     if (filterOnlyConfirmed && !confirmedIds.has(r.id)) return false;
+    // Selección rápida = solo disponibles: al elegir un hueco, si hay
+    // disponibilidad confirmada para la competición, se ocultan los no
+    // confirmados (la selección rápida va DESPUÉS del paso de disponibilidad).
+    if (selectedSlot && confirmedIds.size > 0 && !confirmedIds.has(r.id)) return false;
     if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
     if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
     if (search) {

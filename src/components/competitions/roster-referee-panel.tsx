@@ -125,7 +125,9 @@ export function RosterRefereePanelLeft({
         {suggestionsActive && (
           <p className="mt-0.5 flex items-center gap-1 text-[9.5px] text-subtle-muted">
             <Sparkles className="h-2.5 w-2.5 text-primary" />
-            Ordenados por idoneidad para el hueco
+            {confirmedIds.size > 0
+              ? "Solo disponibles · ordenados por idoneidad"
+              : "Ordenados por idoneidad para el hueco"}
           </p>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -240,7 +242,11 @@ export function RosterRefereePanelLeft({
             );
           })}
           {referees.length === 0 && (
-            <li className="py-8 text-center text-xs text-subtle-muted">Sin coincidencias. Ajusta los filtros.</li>
+            <li className="py-8 text-center text-xs text-subtle-muted">
+              {suggestionsActive && confirmedIds.size > 0
+                ? "Ningún juez disponible para este hueco. Revisa la disponibilidad o ajusta los filtros."
+                : "Sin coincidencias. Ajusta los filtros."}
+            </li>
           )}
         </ul>
       </div>
