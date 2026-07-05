@@ -35,13 +35,13 @@ export function renderCompensationReceiptPdf(input: CompensationReceiptInput): P
     const headerAlign: "right" | "center" = isAep ? "right" : "center";
 
     if (isAep) {
-      const logoW = 92;
+      const logoW = 155;
       try {
         doc.image(AEP_LOGO, left, headerTop, { width: logoW });
       } catch {
         /* si el logo fallara, seguimos sin él */
       }
-      textX = left + logoW + 14;
+      textX = left + logoW + 16;
       textW = right - textX;
     }
 
