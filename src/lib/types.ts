@@ -38,6 +38,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   solo_ver: "Solo Ver",
 };
 
+/** Conjunto canónico de roles asignables. Fuente única para validar en la API. */
+export const USER_ROLES = Object.keys(ROLE_LABELS) as UserRole[];
+
 /** Organizador del campeonato para el recibo de compensación. */
 export type CompensationOrganizerType = "club" | "aep";
 export type ApprovalStatus = "pendiente" | "aprobado" | "rechazado";

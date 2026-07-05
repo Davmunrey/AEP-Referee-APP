@@ -1,4 +1,4 @@
-import { canAdminJudges } from "@/lib/auth/session";
+import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import type { RefereeReport, ReportType } from "@/lib/types";
@@ -19,7 +19,7 @@ const ALLOWED_TIPOS: ReadonlyArray<ReportType> = [
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
+  if (!canManageJudges(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   const raw = await request.json().catch(() => null);

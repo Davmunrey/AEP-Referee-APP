@@ -13,7 +13,6 @@ import type {
   CompensationTravelMode,
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
-import { roundTripKmFromOneWay } from "@/lib/judge-compensation/km";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type { Competition, Referee, RosterSession, SessionUser } from "@/lib/types";
 import {
@@ -386,11 +385,10 @@ export const compensationService = {
     }
 
     const result = await fetchDrivingDistanceKm(origin, destination);
-    const roundTrip = roundTripKmFromOneWay(result.distanceKmOneWay);
 
     return compensationService.updateClaim(competitionId, refereeId, {
       distanceKmOneWay: result.distanceKmOneWay,
-      distanceKmRoundTrip: roundTrip,
+      distanceKmRoundTrip: result.distanceKmRoundTrip,
       distanceSource: "osm",
       travelMode: "km_rate",
     });

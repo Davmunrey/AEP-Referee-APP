@@ -3,14 +3,7 @@ import { canAskAssistant } from "@/lib/api/assistant-rate-limit";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { buildSystemPrompt } from "@/lib/help/assistant-prompt";
 import { askGemini, isGeminiConfigured, type GeminiTurn } from "@/server/assistant/gemini";
-import type { UserRole } from "@/lib/types";
-
-const ROLES: readonly UserRole[] = [
-  "super_admin",
-  "delegado_jueces",
-  "delegado_zona",
-  "solo_ver",
-];
+import { USER_ROLES, type UserRole } from "@/lib/types";
 
 interface AssistantBody {
   question?: unknown;
@@ -52,7 +45,7 @@ export async function POST(request: Request) {
     return jsonError("Pregunta no válida", 400);
   }
 
-  const role: UserRole = ROLES.includes(user.role) ? user.role : "solo_ver";
+  const role: UserRole = USER_ROLES.includes(user.role) ? user.role : "solo_ver";
 
   const turns: GeminiTurn[] = [...parseHistory(body?.history), { role: "user", text: question }];
   // El primer turno debe ser de 'user'.

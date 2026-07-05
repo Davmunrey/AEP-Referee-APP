@@ -107,7 +107,7 @@ export function applyCoverageToCompetition(
   };
 }
 
-export function isRosterLockedByApproval(aprobacion: string): boolean {
+export function isRosterLockedByApproval(aprobacion: string | undefined): boolean {
   return aprobacion === ROSTER_APPROVAL_LOCKED;
 }
 

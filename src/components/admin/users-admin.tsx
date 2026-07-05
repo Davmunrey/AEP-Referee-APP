@@ -222,6 +222,11 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Misma validación que la edición: un Delegado de Zona necesita zona.
+    if (form.role === "delegado_zona" && !form.zona) {
+      setError("La zona es obligatoria para Delegado de Zona.");
+      return;
+    }
     setSaving(true);
     setError(null);
     const capturedEmail = form.email;

@@ -7,7 +7,8 @@ import {
   canManageJudges,
   canManageUsers,
 } from "@/lib/auth/session";
-import type { SessionUser, UserRole } from "@/lib/types";
+import { canCreateCompetition } from "@/lib/permissions";
+import { USER_ROLES, type SessionUser, type UserRole } from "@/lib/types";
 
 /**
  * RBAC para el modelo de 5 roles:
@@ -106,5 +107,30 @@ describe("canManageCompensation", () => {
     expect(canManageCompensation(user("delegado_jueces"))).toBe(false);
     expect(canManageCompensation(user("delegado_zona", "CENTRO"))).toBe(false);
     expect(canManageCompensation(user("solo_ver"))).toBe(false);
+  });
+});
+
+describe("canCreateCompetition", () => {
+  it("crear/gestionar campeonatos excluye al financiero y a solo_ver", () => {
+    expect(canCreateCompetition("super_admin")).toBe(true);
+    expect(canCreateCompetition("delegado_jueces")).toBe(true);
+    expect(canCreateCompetition("delegado_zona")).toBe(true);
+    // El rol financiero NO gestiona tarima (solo compensación).
+    expect(canCreateCompetition("responsable_financiero_jueces")).toBe(false);
+    expect(canCreateCompetition("solo_ver")).toBe(false);
+  });
+});
+
+describe("USER_ROLES", () => {
+  it("es la fuente única de roles asignables (create y edit comparten lista)", () => {
+    expect([...USER_ROLES].sort()).toEqual(
+      [
+        "delegado_jueces",
+        "delegado_zona",
+        "responsable_financiero_jueces",
+        "solo_ver",
+        "super_admin",
+      ].sort(),
+    );
   });
 });

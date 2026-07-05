@@ -1,4 +1,5 @@
 import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
+import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
+  if (!canManageJudges(user)) return jsonError("Sin permiso", 403);
 
   const body = (await request.json().catch(() => null)) as {
     refereeId?: string;

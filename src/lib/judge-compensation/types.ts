@@ -5,10 +5,12 @@ export type CompetitionAmbito = "nacional" | "epf" | "ipf";
 
 export type CompensationDutyType = "session" | "pesaje";
 
+// Modos de viaje soportados de extremo a extremo. Se retiraron `fuel_receipt` y
+// `transport_ticket`: no había forma (ni API ni UI) de introducir su importe, por
+// lo que siempre liquidaban 0 €. Reintroducirlos exige persistir y exponer el
+// importe del recibo/billete de principio a fin.
 export type CompensationTravelMode =
   | "km_rate"
-  | "fuel_receipt"
-  | "transport_ticket"
   | "shared_vehicle_passenger"
   | "none";
 

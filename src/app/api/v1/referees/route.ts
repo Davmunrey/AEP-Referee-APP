@@ -1,5 +1,6 @@
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { stripRefereeListPII } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { Referee } from "@/lib/types";
@@ -8,15 +9,14 @@ export async function GET(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { searchParams } = new URL(request.url);
-  return jsonOk(
-    await dataService.getReferees({
-      zona: searchParams.get("zona") ?? undefined,
-      nivel: searchParams.get("nivel") ?? undefined,
-      estado: searchParams.get("estado") ?? undefined,
-      q: searchParams.get("q") ?? undefined,
-      user,
-    }),
-  );
+  const referees = await dataService.getReferees({
+    zona: searchParams.get("zona") ?? undefined,
+    nivel: searchParams.get("nivel") ?? undefined,
+    estado: searchParams.get("estado") ?? undefined,
+    q: searchParams.get("q") ?? undefined,
+    user,
+  });
+  return jsonOk(stripRefereeListPII(referees, user));
 }
 
 export async function POST(request: Request) {

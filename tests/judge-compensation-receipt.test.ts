@@ -103,7 +103,25 @@ describe("buildCompensationReceiptText", () => {
     expect(text).toContain("TesoreroAEP@gmail.com");
     expect(text).toContain("he recibido, la cantidad de 190€");
     expect(text).toContain("los días 25 y 26 de abril de 2026");
+    // Concordancia: "Campeonato" es masculino → "en el … celebrado" (antes "en la").
+    expect(text).toContain("como juez en el Campeonato de España MASTER y Regional Noroeste-1");
     expect(text).toContain("celebrado en Narón, A Coruña, los días");
+  });
+
+  it("recibo AEP con competición femenina concuerda el artículo y el participio", () => {
+    const text = buildCompensationReceiptText({
+      refereeName: "David Muñoz Rey",
+      amountEur: 60,
+      competitionName: "III Copa Iron Fira",
+      sede: "Barcelona",
+      fecha: "2026-06-14",
+      fechaFin: "2026-06-14",
+      iban: SAMPLE_IBAN,
+      organizer: { type: "aep" },
+    });
+    // "Copa" es femenino y va tras un ordinal romano → "en la Copa … celebrada".
+    expect(text).toContain("como juez en la III Copa Iron Fira");
+    expect(text).toContain("celebrada en Barcelona el día 14 de junio de 2026");
   });
 
   it("recibo club voluntario sin pagador explícito", () => {

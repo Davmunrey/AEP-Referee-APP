@@ -158,8 +158,11 @@ function findRoleAnchor(block: string): number {
     const gap = (matches[i + 1]!.index) - (matches[i]!.index + matches[i]![0].length);
     if (gap <= 200) return matches[i]!.index;
   }
-  // Fallback: último match aislado (leyenda al final del doc)
-  return matches.at(-1)!.index;
+  // Sin cluster: un match aislado suele ser un ENCABEZADO de sección (p. ej.
+  // "Pesaje y Control de Equipamiento"), no la leyenda de roles. No cortamos ahí
+  // —perderíamos las filas de pesaje que van después—: parseamos el bloque
+  // entero y dejamos que splitAssignmentRegions separe competición y pesaje.
+  return block.length;
 }
 
 function uniqueSessions(block: string): string[] {

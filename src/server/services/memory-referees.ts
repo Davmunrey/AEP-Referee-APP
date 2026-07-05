@@ -1,4 +1,4 @@
-import { normalizeZoneInput } from "@/lib/aep-zones";
+import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import type {
   AppMeta,
@@ -30,11 +30,20 @@ export async function getReferees(params?: {
   user?: SessionUser;
 }): Promise<Referee[]> {
   const store = getStore();
+  // Normaliza las zonas igual que el backend de Supabase (resolveZoneCode), para
+  // que el filtro por zona se comporte idéntico en dev y en producción.
+  const userZone =
+    params?.user?.role === "delegado_zona" && params.user.zona
+      ? (resolveZoneCode(params.user.zona) ?? params.user.zona)
+      : undefined;
+  const filterZone =
+    params?.zona && params.zona !== "TODAS"
+      ? (resolveZoneCode(params.zona) ?? params.zona)
+      : undefined;
   return store.referees.filter((r) => {
-    if (params?.user?.role === "delegado_zona" && params.user.zona && r.zona !== params.user.zona) {
-      return false;
-    }
-    if (params?.zona && params.zona !== "TODAS" && r.zona !== params.zona) return false;
+    const rZone = resolveZoneCode(r.zona) ?? r.zona;
+    if (userZone && rZone !== userZone) return false;
+    if (filterZone && rZone !== filterZone) return false;
     if (params?.nivel && params.nivel !== "TODOS" && r.nivel !== params.nivel) return false;
     if (params?.estado && params.estado !== "TODOS" && r.estado !== params.estado) return false;
     if (params?.q && !r.nombre.toLowerCase().includes(params.q.toLowerCase())) return false;
@@ -48,7 +57,14 @@ export async function getReferee(id: string) {
 
 export async function createReferee(input: Omit<Referee, "id" | "iniciales">): Promise<Referee> {
   const store = getStore();
-  const id = `j${String(store.referees.length + 1).padStart(3, "0")}`;
+  // ID por máximo existente, no por longitud del array: tras borrar un juez
+  // intermedio, `length + 1` reutilizaría un id ya usado.
+  const maxNum = store.referees.reduce((max, r) => {
+    const m = /^j(\d+)$/i.exec(r.id);
+    const n = m ? parseInt(m[1], 10) : 0;
+    return Number.isFinite(n) ? Math.max(max, n) : max;
+  }, 0);
+  const id = `j${String(maxNum + 1).padStart(3, "0")}`;
   const iniciales = input.nombre
     .split(" ")
     .map((p) => p[0])
