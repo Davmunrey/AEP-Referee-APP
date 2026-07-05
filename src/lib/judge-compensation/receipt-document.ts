@@ -127,6 +127,39 @@ function celebrationGender(fecha: string, fechaFin: string): "a" | "o" {
   return fecha === fechaFin ? "a" : "o";
 }
 
+// Sustantivos de competición femeninos; el resto (Campeonato, Trofeo, Torneo,
+// Open, Clasificatorio, Memorial, Regional…) son masculinos.
+const FEMININE_COMPETITION_WORDS = new Set([
+  "copa",
+  "supercopa",
+  "liga",
+  "competicion",
+  "final",
+  "jornada",
+  "fase",
+  "exhibicion",
+  "prueba",
+  "concentracion",
+]);
+
+/**
+ * Artículo (`el`/`la`) que concuerda con el nombre del campeonato. Ignora un
+ * prefijo de numeral romano u ordinal ("III Campeonato…") y mira el primer
+ * sustantivo. Para nombres combinados ("Campeonato … y Regional …") decide por
+ * el primero. Devuelve también el género para el participio "celebrad{o/a}".
+ */
+function competitionAgreement(name: string): { article: "el" | "la"; celebrated: "a" | "o" } {
+  const cleaned = name
+    .trim()
+    .replace(/^(?:[ivxlcdm]+|\d+[.ºªo]?)\s+/i, "");
+  const first = (cleaned.split(/\s+/)[0] ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+  const feminine = FEMININE_COMPETITION_WORDS.has(first);
+  return { article: feminine ? "la" : "el", celebrated: feminine ? "a" : "o" };
+}
+
 function buildHeaderLines(organizer: CompensationReceiptOrganizer): string[] {
   if (organizer.type === "aep") {
     return [...AEP_HEADER_LINES];
@@ -204,7 +237,8 @@ function buildLaborPhrase(
   competitionName: string,
 ): string {
   if (organizer.type === "aep") {
-    return `por la labor prestada como juez en la ${competitionName}`;
+    const { article } = competitionAgreement(competitionName);
+    return `por la labor prestada como juez en ${article} ${competitionName}`;
   }
 
   const article = organizer.competitionArticle ?? "la";
@@ -229,7 +263,12 @@ function formatCelebrationPhrase(
 
 function buildBodyParagraph(input: CompensationReceiptInput): string {
   const amount = formatReceiptAmountEur(input.amountEur);
-  const gender = celebrationGender(input.fecha, input.fechaFin);
+  // Para AEP el participio concuerda con el género del campeonato (el Campeonato
+  // celebrado / la Copa celebrada). El club conserva su lógica previa.
+  const gender =
+    input.organizer.type === "aep"
+      ? competitionAgreement(input.competitionName).celebrated
+      : celebrationGender(input.fecha, input.fechaFin);
   const collaborator = buildCollaboratorPhrase(input.organizer);
   const received = buildReceivedPhrase(input.organizer, amount);
   const labor = buildLaborPhrase(input.organizer, input.competitionName);
