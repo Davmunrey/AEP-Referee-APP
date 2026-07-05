@@ -85,9 +85,11 @@ export function ReportsManager({
   };
 
   const remove = async (id: string) => {
+    if (!window.confirm("¿Eliminar este informe? Esta acción no se puede deshacer.")) return;
     setBusy(true);
+    setError(null);
     try { await api.deleteReport(id); setReports((prev) => prev.filter((r) => r.id !== id)); router.refresh(); }
-    catch { /* noop */ }
+    catch (err) { setError(err instanceof Error ? err.message : "No se pudo eliminar el informe"); }
     finally { setBusy(false); }
   };
 

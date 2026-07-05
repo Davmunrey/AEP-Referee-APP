@@ -39,6 +39,10 @@ export function normalizeCompensationClaimPatch(patch: CompensationClaimPatch): 
       patch.distanceKmOneWay != null ? parseIntegerKm(patch.distanceKmOneWay) : null;
     if (normalized.distanceKmOneWay != null) {
       normalized.distanceKmRoundTrip = roundTripKmFromOneWay(normalized.distanceKmOneWay);
+    } else {
+      // Simétrico a la rama de round-trip: limpiar la ida limpia también el i+v,
+      // que calculate.ts prioriza; si no, seguiría facturándose el valor obsoleto.
+      normalized.distanceKmRoundTrip = null;
     }
   }
   return normalized;

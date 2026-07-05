@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const EXAM_TYPES: ExamType[] = [
   "Nuevo juez",
@@ -90,6 +90,14 @@ export function ExamsManager({
   const selectedReferee = referees.find((r) => r.id === refereeId);
   const availableLevels = allowedLevelsForExam(tipo, selectedReferee?.nivel);
 
+  // Mantiene el nivel objetivo dentro de las opciones válidas del tipo/juez actual.
+  // Sin esto, el estado podía quedar en "Nacional" mientras el <select> mostraba
+  // "Regional" (única opción de "Nuevo juez"), enviando un nivel distinto al visible.
+  useEffect(() => {
+    const levels = allowedLevelsForExam(tipo, selectedReferee?.nivel);
+    setNivelObjetivo((prev) => (levels.includes(prev) ? prev : levels[0]));
+  }, [tipo, selectedReferee?.nivel]);
+
   const resetForm = () => {
     setTipo("Nuevo juez");
     setNivelObjetivo("Regional");
@@ -129,25 +137,28 @@ export function ExamsManager({
 
   const mark = async (id: string, resultado: ExamResult) => {
     setBusy(true);
+    setError(null);
     try {
       const updated = await api.updateExam(id, { resultado });
       setExams((prev) => prev.map((e) => (e.id === id ? updated : e)));
       router.refresh();
-    } catch {
-      /* noop */
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo actualizar el examen");
     } finally {
       setBusy(false);
     }
   };
 
   const remove = async (id: string) => {
+    if (!window.confirm("¿Eliminar este examen? Esta acción no se puede deshacer.")) return;
     setBusy(true);
+    setError(null);
     try {
       await api.deleteExam(id);
       setExams((prev) => prev.filter((e) => e.id !== id));
       router.refresh();
-    } catch {
-      /* noop */
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo eliminar el examen");
     } finally {
       setBusy(false);
     }
