@@ -365,7 +365,7 @@ export async function clearSlot(
   competitionId: string,
   slotKey: string,
   actor: string,
-): Promise<AssignmentsMap | undefined> {
+): Promise<AssignmentsMap> {
   const store = getStore();
   const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
   delete assignments[slotKey];
