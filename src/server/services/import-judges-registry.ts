@@ -21,9 +21,29 @@ export async function importJudgesRegistryToSupabase(
   let competitionsSkipped = 0;
 
   if (options?.replace) {
-    await supabase.from("roster_assignments").delete().neq("competition_id", "");
-    await supabase.from("competitions").delete().neq("id", "");
-    await supabase.from("referees").delete().neq("id", "");
+    // «Reemplazar el censo» reimporta el Excel completo. NUNCA borra campeonatos
+    // ni cuadrantes (son datos operativos ajenos al Excel) y conserva a los
+    // jueces que ya están asignados en alguna tarima (respeta la FK de
+    // roster_assignments); esos se avisan en lugar de romper la importación.
+    const { data: assignedRows } = await supabase
+      .from("roster_assignments")
+      .select("referee_id");
+    const assignedIds = new Set(
+      (assignedRows ?? []).map((a) => String(a.referee_id)),
+    );
+    const { data: allRefs } = await supabase.from("referees").select("id");
+    const deletable = (allRefs ?? [])
+      .map((r) => String(r.id))
+      .filter((id) => !assignedIds.has(id));
+    if (deletable.length) {
+      const { error } = await supabase.from("referees").delete().in("id", deletable);
+      if (error) warnings.push(`No se pudieron eliminar jueces previos: ${error.message}`);
+    }
+    if (assignedIds.size) {
+      warnings.push(
+        `${assignedIds.size} juez(ces) asignados en alguna tarima no se eliminaron (protección de asignaciones); se actualizan con el Excel.`,
+      );
+    }
   }
 
   for (const r of parsed.referees) {
@@ -177,10 +197,13 @@ export function importJudgesRegistryToMemory(
   let refereesUpdated = 0;
 
   if (options?.replace) {
-    store.referees = [];
-    store.competitions = [];
-    store.assignments.clear();
-    store.slotFlags.clear();
+    // Igual que en Supabase: no borra campeonatos ni cuadrantes; conserva a los
+    // jueces ya asignados en alguna tarima y reimporta el resto desde el Excel.
+    const assignedIds = new Set<string>();
+    for (const map of store.assignments.values()) {
+      for (const rid of Object.values(map)) if (rid) assignedIds.add(String(rid));
+    }
+    store.referees = store.referees.filter((r) => assignedIds.has(String(r.id)));
   }
 
   for (const r of parsed.referees) {
