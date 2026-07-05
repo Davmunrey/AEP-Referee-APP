@@ -152,8 +152,9 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
           className="mt-1"
         />
         <span>
-          Reemplazar datos existentes (borra jueces y campeonatos actuales antes de importar). Solo
-          para carga inicial.
+          Reemplazar el censo: elimina los jueces que ya no estén en este Excel y
+          reimporta el resto. <strong>No borra campeonatos ni cuadrantes</strong>, y
+          conserva a los jueces ya asignados en alguna tarima.
         </span>
       </label>
 
@@ -214,7 +215,8 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
           ) : null}
           {preview.replaceRequested ? (
             <p className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-xs text-warning">
-              Se aplicará reemplazo total de jueces y campeonatos al confirmar.
+              Al confirmar se eliminarán los jueces que no estén en este Excel (salvo
+              los ya asignados en tarima). Los campeonatos y cuadrantes no se tocan.
             </p>
           ) : null}
         </div>
