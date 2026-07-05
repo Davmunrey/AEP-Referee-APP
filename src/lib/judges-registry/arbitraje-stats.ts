@@ -1,4 +1,4 @@
-/** Recuento de posiciones por tipo de campeonato (hoja Arbitrajes2026). */
+/** Recuento de posiciones por tipo de campeonato (una hoja ArbitrajesAAAA). */
 export interface RefereeArbitrajeStats {
   aep1: Record<string, number>;
   aep2: Record<string, number>;
@@ -6,6 +6,9 @@ export interface RefereeArbitrajeStats {
   ipf: number;
   total: number;
 }
+
+/** Arbitrajes desglosados por año natural: { "2024": {…}, "2025": {…}, … }. */
+export type RefereeArbitrajeStatsByYear = Record<string, RefereeArbitrajeStats>;
 
 export const ARBITRAJE_ROLE_LABELS: Record<string, string> = {
   central: "Central",
@@ -34,6 +37,38 @@ export function arbitrajeStatsTotal(stats: RefereeArbitrajeStats): number {
     sumRoleMap(stats.aep3) +
     stats.ipf
   );
+}
+
+function mergeRoleMaps(
+  a: Record<string, number>,
+  b: Record<string, number>,
+): Record<string, number> {
+  const out: Record<string, number> = { ...a };
+  for (const [role, n] of Object.entries(b)) out[role] = (out[role] ?? 0) + n;
+  return out;
+}
+
+/** Suma los arbitrajes de todos los años naturales en un único agregado. */
+export function aggregateArbitrajeYears(
+  byYear: RefereeArbitrajeStatsByYear,
+): RefereeArbitrajeStats {
+  const agg = emptyArbitrajeStats();
+  for (const stats of Object.values(byYear)) {
+    agg.aep1 = mergeRoleMaps(agg.aep1, stats.aep1);
+    agg.aep2 = mergeRoleMaps(agg.aep2, stats.aep2);
+    agg.aep3 = mergeRoleMaps(agg.aep3, stats.aep3);
+    agg.ipf += stats.ipf;
+  }
+  agg.total = arbitrajeStatsTotal(agg);
+  return agg;
+}
+
+/** Años naturales con al menos un arbitraje, ordenados desc (el más reciente primero). */
+export function arbitrajeYears(byYear: RefereeArbitrajeStatsByYear): number[] {
+  return Object.keys(byYear)
+    .map((y) => Number(y))
+    .filter((y) => Number.isFinite(y) && (byYear[String(y)]?.total ?? 0) > 0)
+    .sort((a, b) => b - a);
 }
 
 /** Top roles across AEP tiers for compact UI. */

@@ -1,7 +1,11 @@
 import * as XLSX from "xlsx";
 import type { AepMacroZoneId } from "@/lib/aep-zones";
 import type { EventType, RefereeLevel, RefereeStatus } from "@/lib/types";
-import type { RefereeArbitrajeStats } from "./arbitraje-stats";
+import {
+  aggregateArbitrajeYears,
+  type RefereeArbitrajeStats,
+  type RefereeArbitrajeStatsByYear,
+} from "./arbitraje-stats";
 import {
   mapExcelActivo,
   mapExcelEventType,
@@ -38,7 +42,10 @@ export interface ParsedRegistryReferee {
   ultimoFecha?: string;
   notas?: string;
   excelMacroZone?: string;
+  /** Arbitrajes agregados de todos los años (compatibilidad y totales). */
   arbitrajeStats?: RefereeArbitrajeStats;
+  /** Arbitrajes desglosados por año natural. */
+  arbitrajeStatsByYear?: RefereeArbitrajeStatsByYear;
 }
 
 export interface ParsedRegistryCompetition {
@@ -126,6 +133,7 @@ function formatUltimoLabel(iso?: string): string {
 function parseDatos(
   rows: unknown[][],
   arbitrajeById: Map<number, RefereeArbitrajeStats>,
+  arbitrajeByYearById: Map<number, RefereeArbitrajeStatsByYear>,
   warnings: string[],
 ): ParsedRegistryReferee[] {
   const out: ParsedRegistryReferee[] = [];
@@ -182,6 +190,7 @@ function parseDatos(
       notas,
       excelMacroZone,
       arbitrajeStats: stats,
+      arbitrajeStatsByYear: arbitrajeByYearById.get(Math.trunc(excelId)),
     });
   }
   return out;
@@ -252,8 +261,27 @@ export function parseJudgesRegistryXlsx(
     throw new Error(`Falta hoja «${REQUIRED_SHEET}»`);
   }
 
-  const arbitrajeById = parseArbitrajes2026Sheet(sheetRows(wb, "Arbitrajes2026"));
-  const referees = parseDatos(sheetRows(wb, "Datos"), arbitrajeById, warnings);
+  // Lee TODAS las hojas de arbitrajes por año natural ("Arbitrajes2024",
+  // "Arbitrajes2025", "Arbitrajes2026"…), no solo la del año en curso. Cada hoja
+  // se guarda en su bucket de año; el agregado suma todos los años.
+  const arbitrajeSheets = wb.SheetNames.filter((n) => /^Arbitrajes\s*\d{4}$/i.test(n));
+  const arbitrajeByYearById = new Map<number, RefereeArbitrajeStatsByYear>();
+  for (const sheetName of arbitrajeSheets) {
+    const year = sheetName.match(/(\d{4})/)?.[1];
+    if (!year) continue;
+    const perId = parseArbitrajes2026Sheet(sheetRows(wb, sheetName));
+    for (const [id, stats] of perId) {
+      if ((stats.total ?? 0) <= 0) continue;
+      const byYear = arbitrajeByYearById.get(id) ?? {};
+      byYear[year] = stats;
+      arbitrajeByYearById.set(id, byYear);
+    }
+  }
+  const arbitrajeById = new Map<number, RefereeArbitrajeStats>();
+  for (const [id, byYear] of arbitrajeByYearById) {
+    arbitrajeById.set(id, aggregateArbitrajeYears(byYear));
+  }
+  const referees = parseDatos(sheetRows(wb, "Datos"), arbitrajeById, arbitrajeByYearById, warnings);
   const competitions = parseCampeonatos26(sheetRows(wb, "Campeonatos26"), warnings);
 
   return { referees, competitions, warnings };

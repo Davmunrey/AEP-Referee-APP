@@ -68,6 +68,7 @@ export async function importJudgesRegistryToSupabase(
       ultimo_fecha: r.ultimoFecha ?? null,
       excel_macro_zone: r.excelMacroZone ?? null,
       arbitraje_stats: r.arbitrajeStats ?? null,
+      arbitraje_stats_by_year: r.arbitrajeStatsByYear ?? null,
     };
 
     const { data: byExcel } = await supabase
@@ -227,6 +228,7 @@ export function importJudgesRegistryToMemory(
       ultimoFecha: r.ultimoFecha,
       excelMacroZone: r.excelMacroZone,
       arbitrajeStats: r.arbitrajeStats,
+      arbitrajeStatsByYear: r.arbitrajeStatsByYear,
     };
     const idx = store.referees.findIndex(
       (x) => x.excelId === r.excelId || x.id === r.id,

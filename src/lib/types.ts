@@ -50,9 +50,12 @@ export interface Zone {
   name: string;
 }
 
-import type { RefereeArbitrajeStats } from "@/lib/judges-registry/arbitraje-stats";
+import type {
+  RefereeArbitrajeStats,
+  RefereeArbitrajeStatsByYear,
+} from "@/lib/judges-registry/arbitraje-stats";
 
-export type { RefereeArbitrajeStats };
+export type { RefereeArbitrajeStats, RefereeArbitrajeStatsByYear };
 
 export interface Referee {
   id: string;
@@ -82,7 +85,10 @@ export interface Referee {
   ultimoFecha?: string;
   /** Etiqueta zona en Excel (ej. «2- CENTRO»); `zona` guarda el código macro canónico. */
   excelMacroZone?: string;
+  /** Arbitrajes agregados de todos los años naturales (totales, compatibilidad). */
   arbitrajeStats?: RefereeArbitrajeStats;
+  /** Arbitrajes desglosados por año natural: { "2024": {…}, "2025": {…} }. */
+  arbitrajeStatsByYear?: RefereeArbitrajeStatsByYear;
 }
 
 export interface JudgesRegistryImportPreview {
