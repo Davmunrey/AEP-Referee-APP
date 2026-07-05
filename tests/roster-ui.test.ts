@@ -169,4 +169,16 @@ describe("rankRefereesForSlot — selección rápida", () => {
     });
     expect(ranked[0]!.id).toBe("a");
   });
+
+  it("la disponibilidad domina sobre zona/nivel", async () => {
+    const { rankRefereesForSlot } = await import("@/lib/roster-ui");
+    const confirmadoOtraZona = j({ id: "e", zona: "NOROESTE" });
+    const sinConfirmarMismaZona = j({ id: "f", zona: "CENTRO" });
+    const ranked = rankRefereesForSlot([sinConfirmarMismaZona, confirmadoOtraZona], {
+      slotKey: "S1_central_0", roleKey: "central", eventType: "AEP-2",
+      competitionZona: "CENTRO", template: tpl, assignments: {}, flags: {}, regulations: [],
+      confirmedIds: new Set(["e"]),
+    });
+    expect(ranked[0]!.id).toBe("e");
+  });
 })
