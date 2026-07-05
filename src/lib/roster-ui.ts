@@ -141,10 +141,17 @@ function zonesMatch(a: string | undefined, b: string | undefined): boolean {
   return (resolveZoneCode(a) ?? a) === (resolveZoneCode(b) ?? b);
 }
 
+/** Peso dominante: la selección rápida va DESPUÉS de la disponibilidad, así que
+ * un juez que ha confirmado disponibilidad siempre se ordena por encima de uno
+ * que no, entre los asignables. Los criterios finos (zona, nivel, solape) solo
+ * desempatan dentro de cada grupo. */
+const AVAILABILITY_TIER = 500;
+
 /**
  * Idoneidad de un juez para un hueco (mayor = mejor). Los inasignables (inactivo,
- * no disponible, o conflicto no forzable) quedan al fondo con puntuación negativa;
- * el resto se ordena por disponibilidad confirmada, misma zona y nivel adecuado.
+ * no disponible, o conflicto no forzable) quedan al fondo con puntuación negativa.
+ * Entre los asignables manda la DISPONIBILIDAD confirmada; luego misma zona y
+ * nivel adecuado desempatan.
  */
 export function scoreRefereeForSlot(referee: Referee, ctx: SlotSuggestionContext): number {
   const hardBlock = getAssignabilityReason(referee, ctx.roleKey, ctx.eventType, ctx.regulations);
@@ -159,9 +166,10 @@ export function scoreRefereeForSlot(referee: Referee, ctx: SlotSuggestionContext
   if (op && !op.overridable) return -900;
 
   let score = 100;
+  // La disponibilidad es el criterio dominante (tras el paso de disponibilidad).
+  if (ctx.confirmedIds?.has(referee.id)) score += AVAILABILITY_TIER;
   if (op?.overridable) score -= 40; // solape forzable con *
   if (getRecommendationWarning(referee, ctx.roleKey, ctx.eventType, ctx.regulations)) score -= 20;
-  if (ctx.confirmedIds?.has(referee.id)) score += 30; // disponibilidad confirmada
   if (ctx.competitionZona && zonesMatch(referee.zona, ctx.competitionZona)) score += 15; // misma zona
   if (ctx.assignedIds?.has(referee.id)) score -= 12; // ya ocupado en la competición
   return score;
