@@ -18,11 +18,6 @@ export function canImportJudgesRegistry(role: SessionUser["role"]): boolean {
   return role === "super_admin" || role === "delegado_jueces";
 }
 
-/** Gestión de usuarios en `/admin/users`. */
-export function canManageUsers(role: SessionUser["role"]): boolean {
-  return role === "super_admin" || role === "delegado_jueces";
-}
-
 /** Imponer o revocar sanciones a jueces. */
 export function canManageSanctions(
   user: SessionUser,
