@@ -1,3 +1,4 @@
+import { resolveZoneCode } from "@/lib/aep-zones";
 import {
   isBelowRecommendedLevel,
   validateAssignment,
@@ -117,6 +118,61 @@ export function countRegulationViolations(
     }
   }
   return count;
+}
+
+/** Contexto para puntuar/ordenar jueces candidatos a un hueco (selección rápida). */
+export interface SlotSuggestionContext {
+  slotKey: string;
+  roleKey: RoleKey;
+  eventType: EventType;
+  competitionZona?: string;
+  template: RosterSession[];
+  assignments: AssignmentsMap;
+  flags?: FlagsMap;
+  regulations: RegulationRule[];
+  /** Jueces con disponibilidad confirmada para la competición. */
+  confirmedIds?: Set<string>;
+  /** Jueces ya asignados en la competición (para des-priorizarlos). */
+  assignedIds?: Set<string>;
+}
+
+function zonesMatch(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b) return false;
+  return (resolveZoneCode(a) ?? a) === (resolveZoneCode(b) ?? b);
+}
+
+/**
+ * Idoneidad de un juez para un hueco (mayor = mejor). Los inasignables (inactivo,
+ * no disponible, o conflicto no forzable) quedan al fondo con puntuación negativa;
+ * el resto se ordena por disponibilidad confirmada, misma zona y nivel adecuado.
+ */
+export function scoreRefereeForSlot(referee: Referee, ctx: SlotSuggestionContext): number {
+  const hardBlock = getAssignabilityReason(referee, ctx.roleKey, ctx.eventType, ctx.regulations);
+  if (hardBlock) return -1000;
+  const op = getOperationalBlock({
+    template: ctx.template,
+    assignments: ctx.assignments,
+    slotKey: ctx.slotKey,
+    refereeId: referee.id,
+    flags: ctx.flags,
+  });
+  if (op && !op.overridable) return -900;
+
+  let score = 100;
+  if (op?.overridable) score -= 40; // solape forzable con *
+  if (getRecommendationWarning(referee, ctx.roleKey, ctx.eventType, ctx.regulations)) score -= 20;
+  if (ctx.confirmedIds?.has(referee.id)) score += 30; // disponibilidad confirmada
+  if (ctx.competitionZona && zonesMatch(referee.zona, ctx.competitionZona)) score += 15; // misma zona
+  if (ctx.assignedIds?.has(referee.id)) score -= 12; // ya ocupado en la competición
+  return score;
+}
+
+/** Ordena los jueces por idoneidad para el hueco (estable ante empates). */
+export function rankRefereesForSlot(referees: Referee[], ctx: SlotSuggestionContext): Referee[] {
+  return referees
+    .map((referee, index) => ({ referee, index, score: scoreRefereeForSlot(referee, ctx) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((entry) => entry.referee);
 }
 
 export type RosterWorkflowStep = "plantilla" | "asignacion" | "revision";

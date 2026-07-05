@@ -122,3 +122,51 @@ describe("roster-ui", () => {
     expect(count).toBe(1);
   });
 });
+
+describe("rankRefereesForSlot — selección rápida", () => {
+  const tpl: RosterSession[] = [
+    {
+      sesion: "S1",
+      nombre: "Sesión 1",
+      dia: "Día 1",
+      categorias: [],
+      horarioCompeticion: "10:00 - 13:00",
+      horarioPesaje: "08:00 - 09:30",
+      roles: [
+        { rol: "Juez Central", slots: 1, key: "central" },
+        { rol: "Juez Lateral", slots: 2, key: "lateral" },
+      ],
+      pesajeRoles: [],
+    },
+  ];
+  function j(over: Partial<Referee>): Referee {
+    return {
+      id: "x", nombre: "N", iniciales: "N", zona: "CENTRO", nivel: "Nacional",
+      estado: "Activo", disp: true, eventos: 0, ultimo: "", ...over,
+    };
+  }
+  const activo = j({ id: "a", zona: "CENTRO" });
+  const inactivo = j({ id: "b", estado: "Inactivo" });
+  const noDisp = j({ id: "c", disp: false });
+  const otraZona = j({ id: "d", zona: "NOROESTE" });
+
+  it("pone los inasignables (inactivo / no disponible) al fondo", async () => {
+    const { rankRefereesForSlot } = await import("@/lib/roster-ui");
+    const ranked = rankRefereesForSlot([inactivo, noDisp, activo], {
+      slotKey: "S1_central_0", roleKey: "central", eventType: "AEP-2",
+      competitionZona: "CENTRO", template: tpl, assignments: {}, flags: {}, regulations: [],
+    });
+    expect(ranked[0]!.id).toBe("a");
+    expect(ranked.slice(-2).map((r) => r.id).sort()).toEqual(["b", "c"]);
+  });
+
+  it("prioriza misma zona y disponibilidad confirmada", async () => {
+    const { rankRefereesForSlot } = await import("@/lib/roster-ui");
+    const ranked = rankRefereesForSlot([otraZona, activo], {
+      slotKey: "S1_central_0", roleKey: "central", eventType: "AEP-2",
+      competitionZona: "CENTRO", template: tpl, assignments: {}, flags: {}, regulations: [],
+      confirmedIds: new Set(["a"]),
+    });
+    expect(ranked[0]!.id).toBe("a");
+  });
+})
