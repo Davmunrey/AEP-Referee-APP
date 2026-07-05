@@ -47,6 +47,12 @@ export async function POST(request: Request, context: RouteContext) {
       422,
     );
   }
+  if (organizer.type === "custom" && (!organizer.entityName.trim() || !organizer.emails.trim())) {
+    return jsonError(
+      "Configura el nombre y el e-mail del organizador personalizado antes de exportar",
+      422,
+    );
+  }
 
   const claim = await dataService.getCompensationClaimForExport(id, refereeId);
   if (!claim) return jsonError("Claim no encontrado", 404);

@@ -71,7 +71,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   if (canComp) {
-    if (body.compensationOrganizer === "club" || body.compensationOrganizer === "aep") {
+    if (
+      body.compensationOrganizer === "club" ||
+      body.compensationOrganizer === "aep" ||
+      body.compensationOrganizer === "custom"
+    ) {
       patch.compensationOrganizer = body.compensationOrganizer;
     }
     if (typeof body.compensationClubName === "string") {
