@@ -37,6 +37,15 @@ export function receiptOrganizerFromCompetition(comp: Competition): Compensation
       ? clubs.map((c) => c.name).join(" · ")
       : (primary?.name ?? comp.compensationClubName ?? comp.sede);
   const emails = allClubEmailsFromCompetition(comp);
+  if (organizer === "custom") {
+    // Organizador libre: reutiliza los nombres/correos guardados en
+    // compensation_clubs como cabecera y correos de devolución del recibo.
+    return {
+      type: "custom",
+      entityName: clubName,
+      emails: formatClubEmails(emails),
+    };
+  }
   return {
     type: "club",
     clubName,

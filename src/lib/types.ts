@@ -42,7 +42,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const USER_ROLES = Object.keys(ROLE_LABELS) as UserRole[];
 
 /** Organizador del campeonato para el recibo de compensación. */
-export type CompensationOrganizerType = "club" | "aep";
+export type CompensationOrganizerType = "club" | "aep" | "custom";
 export type ApprovalStatus = "pendiente" | "aprobado" | "rechazado";
 
 export interface Zone {
