@@ -1,11 +1,11 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useMemo } from "react";
 import type { AssignmentsMap, Competition, FlagsMap, Referee, RefereeLevel, RegulationRule, RoleKey, RosterSession, Zone } from "@/lib/types";
 import { Input } from "@/components/ui/input";
-import { Users } from "lucide-react";
+import { Sparkles, Users } from "lucide-react";
 import { selectFieldClass } from "@/lib/design-tokens";
-import { getAssignabilityReason, getOperationalBlock, getRecommendationWarning } from "@/lib/roster-ui";
+import { getAssignabilityReason, getOperationalBlock, getRecommendationWarning, rankRefereesForSlot } from "@/lib/roster-ui";
 import { RefereeCard } from "./roster-referee-card";
 
 interface RosterRefereePanelProps {
@@ -75,6 +75,37 @@ export function RosterRefereePanelLeft({
   onDragEnd,
   onQuickAssign,
 }: RosterRefereePanelProps) {
+  // Selección rápida: al elegir un hueco, ordena los jueces por idoneidad
+  // (elegibles y disponibles de la misma zona/nivel arriba; inasignables al fondo).
+  const orderedReferees = useMemo(() => {
+    if (readOnly || !selectedSlot || !selectedRoleKey) return referees;
+    return rankRefereesForSlot(referees, {
+      slotKey: selectedSlot,
+      roleKey: selectedRoleKey,
+      eventType: competitionTipo,
+      competitionZona,
+      template,
+      assignments,
+      flags,
+      regulations,
+      confirmedIds,
+      assignedIds,
+    });
+  }, [
+    referees,
+    readOnly,
+    selectedSlot,
+    selectedRoleKey,
+    competitionTipo,
+    competitionZona,
+    template,
+    assignments,
+    flags,
+    regulations,
+    confirmedIds,
+    assignedIds,
+  ]);
+  const suggestionsActive = !readOnly && !!selectedSlot && !!selectedRoleKey;
   return (
     <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
       <div className="border-b border-border px-2.5 py-2">
@@ -89,6 +120,12 @@ export function RosterRefereePanelLeft({
             {selectedSlotMeta
               ? `${selectedSlotMeta.sessionLabel} · ${selectedSlotMeta.roleLabel} ${selectedSlotMeta.slotNumber}`
               : "Hueco seleccionado"}
+          </p>
+        )}
+        {suggestionsActive && (
+          <p className="mt-0.5 flex items-center gap-1 text-[9.5px] text-subtle-muted">
+            <Sparkles className="h-2.5 w-2.5 text-primary" />
+            Ordenados por idoneidad para el hueco
           </p>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -164,7 +201,7 @@ export function RosterRefereePanelLeft({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <ul className="space-y-0.5 p-1.5">
-          {referees.map((referee) => {
+          {orderedReferees.map((referee) => {
             const opBlock =
               selectedRoleKey && selectedSlot
                 ? getOperationalBlock({ template, assignments, slotKey: selectedSlot, refereeId: referee.id, flags })
