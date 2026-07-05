@@ -45,7 +45,7 @@
 | Componente | Uso |
 |---|---|
 | `RosterCompetitionHeader` | Cabecera, acciones plantilla/export, enlace compensación |
-| `RosterRefereePanel` | Panel jueces; confirm-to-force en conflictos forzables |
+| `RosterRefereePanel` | Panel jueces; selección rápida (ranking por idoneidad, `rankRefereesForSlot`); confirm-to-force en conflictos forzables |
 | `RefereeCard` | Tarjeta juez compacta; `LevelBadge compact` (R/N/I/II) |
 | `SlotGrid` | Grid de plazas (hasta 3 columnas por sesión/pesaje) |
 | `SessionBlock` | Bloque sesión expandible |
@@ -56,8 +56,8 @@
 | Componente | Uso |
 |---|---|
 | `CompensationHub` | Panel `/compensation` |
-| `CompensationBoard` | Km manual, comparte, montaje sistema, multi-club |
-| `CompensationExportDialog` | IBAN efímero → PDF recibo |
+| `CompensationBoard` | Km manual, comparte, montaje sistema, multi-club; organizador club/aep/custom |
+| `CompensationExportDialog` | IBAN efímero → PDF recibo (3 tipos de organizador, logo AEP) |
 | `CompensationKmInput` / `CompensationEuroInput` | Entradas numéricas optimistas |
 
 ## Normativa
@@ -88,7 +88,8 @@
 
 | Componente | Uso |
 |---|---|
-| `RefereesDirectory` | Directorio (tabla + cards móvil) |
+| `RefereesDirectory` | Directorio (tabla + cards móvil); filtro de censo por año natural |
+| `RefereeArbitrajePanel` | Arbitrajes por año natural: selector de año + **Histórico** |
 | `RefereeEditForm` | Edición con domicilio OSM y botón **Eliminar ubicación** |
 | `ExamsManager` | Exámenes |
 | `ReportsManager` | Informes |
@@ -120,4 +121,4 @@
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9

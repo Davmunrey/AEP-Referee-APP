@@ -2,6 +2,17 @@
 
 **Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) — deploy automático en Vercel desde `main`.
 
+## v1.9 — Censo anual, selección rápida y seguridad ✅
+
+| Área | Entregado |
+|---|---|
+| Censo por año | Parser hojas `ArbitrajesAAAA`; columna `arbitraje_stats_by_year` (migración `032`); ficha con selector de año + Histórico; directorio con filtro de censo por año |
+| Compensación | Recibo con organizador de 3 opciones (club / «Asociación Española de Powerlifting» / personalizable, migración `031`); PDF con logo; pie de correo variable |
+| Selección rápida | Aplica solo a jueces disponibles; orden por idoneidad; nivel recomendado como aviso |
+| Import | «Reemplazar censo» seguro: conserva campeonatos, cuadrantes y asignados |
+| Seguridad | RLS endurecido (migración `033`, elimina políticas permisivas) |
+| Tests | 354 pasan (355 con 1 skip), 61 archivos |
+
 ## v1.8 — Producción, realtime y rendimiento ✅
 
 | Área | Entregado |
@@ -46,6 +57,8 @@ Roster rules, privacidad zonal, login server-side, multi-temporada.
 
 | Ítem | Estado |
 |---|---|
+| Activar Leaked Password Protection (Supabase Auth) | Pendiente (toggle manual) |
+| OCR client-side cuadrantes escaneados | Diferido |
 | E2E smoke compensación | Pendiente |
 | E2E profundo import → export | Pendiente |
 | Sustitución `xlsx` | Pendiente |

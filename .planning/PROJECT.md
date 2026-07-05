@@ -10,18 +10,18 @@ Stack: Next.js 15, TypeScript, Supabase (Postgres + Auth + RLS + Realtime), Tail
 
 Solo web en Vercel. Sin app iOS. Sin manual PDF en la app.
 
-## Current Milestone: v1.8 — Producción, realtime y rendimiento (Complete)
+## Current Milestone: v1.9 — Censo anual, selección rápida y seguridad (Complete)
 
-**Shipped (jun 2026):**
+**Shipped (jul 2026):**
 
-- Plataforma operativa en Vercel — deploy automático desde `main`
-- Sincronización en tiempo real (migración `029`, `AppRealtimeSync`)
-- Optimización rendimiento (consultas, caché, índices `030`)
-- Caché TTL zonas/normativa; filtros SQL árbitros
-- Botón eliminar ubicación domicilio en ficha juez
-- 331 tests Vitest; migraciones hasta `030` en Supabase prod
+- Arbitrajes por año natural: censo vigente vs histórico (migración `032`), selector de año en ficha y filtro en directorio
+- Recibo de compensación con organizador personalizable (migración `031`), PDF con logo y pie de correo variable
+- Selección rápida de jueces subordinada a la disponibilidad; nivel recomendado como aviso
+- Import Excel maestro «reemplazar censo» seguro (conserva campeonatos, cuadrantes y asignados)
+- Seguridad: RLS endurecido (migración `033`)
+- 354 tests Vitest (355 con 1 skip), 61 archivos; migraciones hasta `033` en Supabase prod
 
-**Backlog menor:** E2E smoke compensación, E2E profundo, sustitución `xlsx`.
+**Backlog menor:** activar Leaked Password Protection (toggle Supabase Auth), OCR client-side (diferido), E2E smoke compensación, E2E profundo, sustitución `xlsx`.
 
 ## Architecture
 

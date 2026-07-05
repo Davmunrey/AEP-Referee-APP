@@ -15,7 +15,7 @@ Incluye:
 - `audit:prod`
 - `audit:security`
 - lint
-- tests (331)
+- tests (354; 355 con 1 skip)
 - build
 
 ## Gate browser
@@ -40,7 +40,7 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - API privada con sesión.
 - Login server-side con rate-limit.
 - Mutaciones con RBAC y scope zonal.
-- RLS deny-by-default.
+- RLS deny-by-default; endurecimiento aplicado (migración `033`): eliminadas las políticas permisivas de `referee_sanctions` y `competition_availability` (ambas solo servidor). Los advisors de Supabase ya no muestran los 2 WARN de políticas permisivas.
 - Geocoding vía API propia (Photon/Nominatim en servidor).
 - Imports con preview/selección.
 - Validación roster server-side.
@@ -55,6 +55,10 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - Índices en `roster_assignments` y `referees`.
 - Sincronización en vivo sin tormenta de APIs redundantes.
 
+## Seguridad — único item pendiente
+
+- **Leaked Password Protection** (HaveIBeenPwned) en Supabase Auth: toggle manual del panel (no es código). Es el único punto de seguridad abierto tras el endurecimiento RLS de la migración `033`.
+
 ## Backlog menor (no bloquea producción)
 
 - E2E completo importar horario → cuadrante → export.
@@ -67,7 +71,7 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - CI verde en GitHub.
 - Deploy Vercel automático desde `main`.
 - `audit:remote` verde contra Supabase producción.
-- Migraciones hasta `030` aplicadas.
+- Migraciones hasta `033` aplicadas.
 - `NEXT_PUBLIC_APP_URL` y Site URL Supabase = `https://aep-tarima.vercel.app`.
 - Plantillas correo Auth con branding AEP.
 - Realtime activo (`app_sync_state`).
@@ -75,4 +79,4 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9

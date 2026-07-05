@@ -35,14 +35,21 @@ Calcular y gestionar la compensación económica por campeonato de cada juez asi
 
 ## Recibo PDF (export por juez)
 
-Plantilla alineada con los recibos reales AEP/club. Dos cabeceras:
+El recibo se exporta como **PDF con logo AEP** (logo empotrado en base64, `src/lib/judge-compensation/receipt-logo.ts`), con estilo alineado a los recibos reales AEP/club. La cabecera y los **correos del pie (devolución) varían según el organizador** elegido para el campeonato.
 
-| Tipo | Cabecera | Devolución |
+### Tres opciones de organizador (`compensationOrganizer`)
+
+| Tipo | Cabecera | Devolución (pie) |
 |---|---|---|
-| **Club** | Nombre del club + línea AEP | `compensationClubEmail` del campeonato |
-| **AEP** | Membrete AEP nacional | JuecesAEP / TesoreroAEP / PresidenteAEP |
+| **Club(es) organizador(es)** (`club`) | Nombre del/los club(es) + línea de afiliación AEP | `compensationClubEmail` del/los club(es) |
+| **Asociación Española de Powerlifting** (`aep`) | Membrete AEP nacional | JuecesAEP@gmail.com, con copia a TesoreroAEP@gmail.com y PresidenteAEP@gmail.com |
+| **Personalizable** (`custom`) | Nombres introducidos a mano | Correos introducidos a mano |
 
-Campos del campeonato (`compensationOrganizer`, `compensationClubName`, `compensationClubEmail`, `compensationVolunteer`) configuran el texto del recibo.
+- **Club(es)**: uno o varios clubes organizadores desde el listado curado AEP, cada uno con sus e-mails de devolución.
+- **AEP**: membrete y correos nacionales fijos.
+- **Personalizable**: introduces **nombres y correos a mano** (reutiliza el mismo almacén JSONB `compensation_clubs` que la opción club, migración `031`). Útil cuando organiza una entidad que no está en el listado de clubes.
+
+Campos del campeonato (`compensationOrganizer`, `compensationClubName`/`compensation_clubs`, `compensationClubEmail`, `compensationVolunteer`) configuran el texto del recibo. Código: `receipt-document.ts` (`buildHeaderLines`, `buildReturnEmailLine`).
 
 ### IBAN — no se almacena
 
@@ -56,12 +63,12 @@ Body: { "iban": "ES28 0182 …" }   ← efímero
 
 Código: `src/lib/judge-compensation/receipt-document.ts`, `receipt-pdf.ts`, `iban.ts`.
 
-## Modelo de datos (migrations `024`–`027`)
+## Modelo de datos (migrations `024`–`027`, `031`)
 
 | Tabla / columna | Uso |
 |---|---|
 | `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Referencia del juez (opcional; km manual en compensación). Borrables desde ficha con «Eliminar ubicación» → `NULL` en los tres campos |
-| `competitions.ambito`, `compensation_*` | Baremo y metadatos del recibo |
+| `competitions.ambito`, `compensation_*` | Baremo y metadatos del recibo. `compensation_organizer` admite `club` / `aep` / `custom` (migración `031`) |
 | `judge_compensation_claims` | Una fila por juez × campeonato; `is_computer_setup`, `computer_setup_amount` |
 | `judge_compensation_duty_lines` | Desglose por sesión × posición (`role_key`, `role_label`) |
 
@@ -99,9 +106,9 @@ Export PDF + IBAN introducido al vuelo
 - Página `/competitions/[id]/compensation` (solo responsable financiero / super_admin).
 - **Mont.** para montaje del sistema (Liftingcast / OpenLifter / Goodlift), con importe manual. Distinto de la posición ordenador en tarima.
 - Desglose por **Sx** con la **posición real** (Juez Central, Pesaje, Lateral…); columna funciones tipo `S1(Cent+Pz) · S2`.
-- Clubes organizadores desde listado curado (~180 clubes AEP en `src/lib/aep-clubs-curated.ts`).
+- Organizador del recibo con selector de 3 opciones (club(es) organizador(es) / Asociación Española de Powerlifting / personalizable). Clubes desde listado curado (~180 clubes AEP en `src/lib/aep-clubs-curated.ts`); la opción personalizable acepta nombres y correos a mano.
 - Totales bloqueados hasta completar todos los km (modo `none` exento).
-- Exportar recibo → modal con IBAN → PDF (sin desglose línea a línea en el PDF; desglose en pantalla).
+- Exportar recibo → modal con IBAN → PDF con logo AEP (sin desglose línea a línea en el PDF; desglose en pantalla).
 - Baremo también en **Normativa** → pestaña Compensación de jueces.
 
 Ver captura: `docs/images/10-compensacion.png`.
@@ -116,4 +123,4 @@ Ver captura: `docs/images/10-compensacion.png`.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9

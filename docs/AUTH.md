@@ -62,8 +62,10 @@ Servidor restringe:
 - Usuario inactivo no obtiene sesión app.
 - Primer usuario puede crear perfil `super_admin`; después usuarios deben ser invitados/activados.
 - En producción desactivar signup público desde Supabase Auth.
+- **Acceso a datos:** el cliente del navegador (clave anónima) solo se usa para auth y para leer/suscribirse a `app_sync_state`. Todo el resto de datos se lee/escribe desde el servidor con `service_role` (ignora RLS) + RBAC propio. El esquema está bloqueado por RLS "sin políticas" (ver [`DATABASE.md`](./DATABASE.md#rls); endurecido en migración 033).
+- **Pendiente de seguridad** (toggle manual del panel, no es código): activar **Leaked Password Protection** (HaveIBeenPwned) en Supabase Auth.
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8 · Site URL y redirect URLs deben apuntar a este dominio Vercel.
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9 · Site URL y redirect URLs deben apuntar a este dominio Vercel.
 
 ## GitHub Secrets CI
 

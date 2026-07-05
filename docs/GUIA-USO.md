@@ -91,6 +91,8 @@ Tres formas de asignar:
 
 Filtros del panel izquierdo: zona, nivel, búsqueda, y «solo confirmados» (disponibilidad). Los **badges de nivel** en tarima son compactos (**R**, **N**, **I**, **II**); en el directorio se muestra el nombre completo. El sistema avisa de huecos, solapes y cruces de zona.
 
+**Selección rápida** (al pulsar un hueco): la lista de la izquierda se ordena por **idoneidad** y muestra **solo los jueces disponibles**. Va **después** del paso de disponibilidad: si ya hay disponibilidad confirmada para el campeonato, oculta a los no confirmados. El **nivel recomendado** para la plaza es solo un **aviso**: no bloquea la asignación (los bloqueos duros, como repetir el mismo puesto, sí se ocultan).
+
 Cuando esté listo: **Guardar borrador** o **Enviar a aprobación**.
 
 ### Tarima aprobada e imprevistos
@@ -135,12 +137,15 @@ Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de
 
 1. Entra en **Compensación** en la barra lateral (panel central) o abre un campeonato concreto.
 2. Pulsa **Compensación** en la cabecera de tarima (o `/competitions/[id]/compensation`).
-3. Configura uno o varios **clubes organizadores** y sus e-mails (listado oficial AEP).
+3. Elige el **organizador del recibo** (selector con 3 opciones):
+   - **Club(es) organizador(es)**: uno o varios clubes y sus e-mails de devolución (listado oficial AEP).
+   - **Asociación Española de Powerlifting**: membrete y correos nacionales.
+   - **Personalizable**: introduces los nombres y correos a mano (cuando organiza una entidad que no está en el listado). La cabecera y los correos del pie del recibo se ajustan al organizador elegido.
 4. Introduce los **km ida+vuelta manualmente** por juez en la tabla.
 5. Marca **Comparte** si el juez viaja en vehículo compartido (solo exime kilometraje; el alojamiento sigue según los km).
 6. Marca **Mont.** si el juez **monta el sistema informático** (Liftingcast / OpenLifter / Goodlift) e introduce el importe. Esto es distinto de ocupar la posición ordenador en tarima (eso sale del cuadrante como cualquier otra función).
 7. Revisa el **desglose por sesión Sx** con la posición real en tarima (Central, Pesaje, Lateral…) expandiendo cada fila.
-8. **Exportar recibo** → IBAN en el modal (no se guarda) → PDF (plantilla AEP o club; el desglose detallado se ve en pantalla antes de exportar).
+8. **Exportar recibo** → IBAN en el modal (no se guarda) → **PDF con logo AEP** (cabecera y correos según el organizador; el desglose detallado se ve en pantalla antes de exportar).
 
 Los totales de viaje y alojamiento no se confirman hasta que todos los km estén completos.
 
@@ -154,8 +159,9 @@ Los totales de viaje y alojamiento no se confirman hasta que todos los km estén
 
 - La ficha incluye **domicilio con autocomplete OpenStreetMap**: escribe al menos 3 caracteres y elige una sugerencia de la lista (búsqueda vía servidor). Si no hay sugerencia, puedes guardar y el servidor intentará geocodificar con Nominatim.
 - **Eliminar ubicación**: botón junto al campo domicilio borra dirección y coordenadas en Supabase al instante (útil si el juez ya no debe tener km de compensación calculados desde ese domicilio).
+- **Arbitrajes por año natural**: la ficha del juez incluye un **selector de año** más la opción **«Histórico»** (agregado de todos los años). Por defecto muestra el año natural más reciente con actividad (censo vigente). En el **directorio** hay un **filtro de censo por año** para ver quién arbitró en cada año natural, separado del histórico.
 - Historial real por campeonato (sesión, rol, hueco, flags compartido/intercambio), sanciones, exámenes, informes y ascensos.
-- **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional).
+- **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional). La opción **«reemplazar censo»** reimporta el Excel completo de forma segura: solo borra los jueces **ausentes del Excel y no asignados** a ninguna tarima; **no toca campeonatos ni cuadrantes** y conserva (avisando) a los jueces ya asignados.
 - **+ Nuevo juez**: alta individual.
 
 ---
@@ -248,4 +254,4 @@ La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de 
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9

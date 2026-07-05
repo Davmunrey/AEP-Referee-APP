@@ -28,7 +28,7 @@ Browser -> Vercel (Next.js App Router) -> /api/v1 -> dataService -> Supabase ser
 - `PromotionRequest`: ascenso.
 - `CompensationClaim`: compensación económica por juez × campeonato (sin IBAN).
 
-Dominio compensación: `src/lib/judge-compensation/` (baremo, classify, calculate, recibo PDF). Geocoding: **Photon** en servidor (`/api/v1/geocode/search`, `src/lib/geocoding/photon-search.ts`) + **Nominatim/OSRM** para geocode puntual y distancias (`osm-distance.ts`). El cliente no llama a APIs externas de mapas (CSP).
+Dominio compensación: `src/lib/judge-compensation/` (baremo, classify, calculate, recibo PDF). El recibo admite 3 tipos de organizador (club / aep / custom) y genera PDF con logo (`receipt-document.ts` + `receipt-pdf.ts`, logo en `receipt-logo.ts`; migración `031`). Geocoding: **Photon** en servidor (`/api/v1/geocode/search`, `src/lib/geocoding/photon-search.ts`) + **Nominatim/OSRM** para geocode puntual y distancias (`osm-distance.ts`). El cliente no llama a APIs externas de mapas (CSP).
 Servicios: `supabase-compensation.ts`, `memory-compensation.ts`.
 
 ## Tarima
@@ -38,6 +38,16 @@ Servicios: `supabase-compensation.ts`, `memory-compensation.ts`.
 3. Usuario importa cuadrante PDF o asigna manual.
 4. API valida zona, rol y solapes; badges de nivel en tarima abreviados (R, N, I, II).
 5. Borrador, historial y aprobación quedan trazados. Tarima aprobada: modo **imprevisto** para cambios urgentes.
+
+## Selección rápida de jueces
+
+Al elegir un hueco, la lista de jueces se ordena por **idoneidad** para ese slot.
+
+- Helpers en `src/lib/roster-ui.ts`: `scoreRefereeForSlot`, `rankRefereesForSlot` y el contexto `SlotSuggestionContext`.
+- La selección rápida aplica **solo a los jueces disponibles**: va DESPUÉS del paso de disponibilidad, así que si hay disponibilidad confirmada para la competición, se ocultan los no confirmados (`availableReferees` en `src/components/competitions/roster-builder.tsx`).
+- Criterio **dominante**: la disponibilidad confirmada. Luego desempatan misma zona, nivel adecuado y solapes (los forzables restan puntos; los bloqueos duros quedan al fondo).
+- El nivel recomendado es un **aviso**, no un bloqueo (`getRecommendationWarning`); el ranking lo penaliza pero no excluye al juez.
+- El panel `src/components/competitions/roster-referee-panel.tsx` aplica `rankRefereesForSlot` para pintar la lista ordenada.
 
 ## Ayuda y documentación in-app
 
@@ -65,7 +75,7 @@ Servicios: `supabase-compensation.ts`, `memory-compensation.ts`.
 - Calendario anual: PDF/CSV -> preview -> selección -> crear campeonatos.
 - Horario competición: PDF -> preview sesiones -> selección -> **merge** en plantilla existente (sesiones no seleccionadas se conservan).
 - Cuadrante jueces: PDF -> preview candidatos -> selección -> asignar.
-- Registro jueces: XLSX -> preview -> upsert/replace.
+- Registro jueces: XLSX -> preview -> upsert/replace (incluye arbitrajes por año natural, ver abajo).
 
 ### Parser de cuadrantes (`src/lib/quadrant-layout-parser.ts`)
 
@@ -106,6 +116,15 @@ Módulo multi-archivo que convierte texto de horarios AEP en `RosterSession[]`:
 | `types.ts` | Tipos intermedios |
 
 Soporta formatos: sesión única/multi-día, categorías inline o en línea siguiente, grupos con totales, horarios `Pesaje HH:MM - HH:MM / Inicio HH:MM / Fin HH:MM`.
+
+### Registro de jueces y arbitrajes por año (`src/lib/judges-registry/`)
+
+El XLSX del registro trae varias hojas de arbitrajes por año natural
+(`Arbitrajes2024`, `Arbitrajes2025`, `Arbitrajes2026`…).
+
+- `parse-xlsx.ts` lee **todas** las hojas `ArbitrajesAAAA` (no solo la del año en curso): construye el desglose por año y el agregado histórico. Cada juez expone `arbitrajeStatsByYear` (desglose) y el total agregado.
+- `arbitraje-stats.ts` define el tipo `RefereeArbitrajeStatsByYear` (`{ "2024": {…}, "2025": {…} }`) y los helpers `aggregateArbitrajeYears()` (suma todos los años en un único agregado) y `arbitrajeYears()` (años con actividad, desc).
+- Distingue **censo** (arbitrajes de un año natural concreto) de **histórico** (agregado de todos los años): el componente `referee-arbitraje-panel.tsx` ofrece un selector de año natural + «Histórico», y `referees-directory.tsx` filtra el censo por año natural.
 
 ## Capa de servicios (v1.2)
 
@@ -163,4 +182,4 @@ El sidebar se auto-colapsa en `< 1024px` (primer render en tablet) para liberar 
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9

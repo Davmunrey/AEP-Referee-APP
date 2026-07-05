@@ -1,5 +1,15 @@
 # Milestones — AEP Tarima
 
+## v1.9 — Censo anual, selección rápida y seguridad (2026-07)
+
+- Arbitrajes por año natural: parser de todas las hojas `ArbitrajesAAAA`, columna `referees.arbitraje_stats_by_year` (migración 032); ficha de juez con selector de año + Histórico; directorio con filtro de censo por año
+- Recibo de compensación con organizador de 3 opciones (club / «Asociación Española de Powerlifting» / personalizable, migración 031); PDF con logo; correos de pie variables
+- Selección rápida de jueces subordinada a la disponibilidad; orden por idoneidad; nivel recomendado como aviso
+- Import Excel maestro «reemplazar censo» seguro (conserva campeonatos, cuadrantes y asignados)
+- Seguridad: RLS endurecido (migración 033, elimina políticas permisivas en `referee_sanctions` y `competition_availability`)
+- PRs #48–#52; 354 tests (355 con 1 skip), 61 archivos; migraciones hasta 033 en producción
+- Pendiente: activar Leaked Password Protection en Supabase Auth (toggle manual)
+
 ## v1.8 — Producción Vercel, realtime y rendimiento (2026-06)
 
 - Plataforma operativa en **https://aep-tarima.vercel.app** (deploy automático)

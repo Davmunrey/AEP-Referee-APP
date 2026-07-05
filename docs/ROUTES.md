@@ -20,10 +20,10 @@ Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 | `/competitions` | Campeonatos |
 | `/competitions/new` | Crear campeonato |
 | `/competitions/[id]` | Tarima (constructor de cuadrante) |
-| `/competitions/[id]/compensation` | Compensación del campeonato |
+| `/competitions/[id]/compensation` | Compensación del campeonato (organizador del recibo: club(es) / AEP / personalizable) |
 | `/compensation` | Panel central de compensación |
 | `/referees` | Directorio de jueces |
-| `/referees/[id]` | Ficha de juez |
+| `/referees/[id]` | Ficha de juez (incluye arbitrajes por año natural: censo vigente vs histórico) |
 | `/exams` | Exámenes |
 | `/reports` | Informes |
 | `/approvals` | Aprobaciones de tarima |
@@ -55,4 +55,4 @@ Compat de navegación antigua se mantiene solo para no romper enlaces guardados.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9

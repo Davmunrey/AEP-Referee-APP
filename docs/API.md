@@ -90,6 +90,8 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | `POST` | `/referees/import` | nacional |
 | `GET/POST` | `/referees/:id/sanctions` | sesión / gestor |
 
+`/referees/import` importa el Excel maestro de censo. Con `?replace=true` (modo "reemplazar censo") el borrado es **seguro**: solo elimina jueces ausentes del Excel y **no** asignados a ninguna tarima (respeta la FK de `roster_assignments`); los asignados se conservan y se actualizan con el Excel. No toca campeonatos ni cuadrantes. El modo replace exige además la cabecera `x-confirm-registry-replace: true`.
+
 ## Exámenes, informes, ascensos
 
 | Recurso | Rutas | Permiso |
@@ -138,6 +140,8 @@ Al guardar ficha juez o sede sin coordenadas, el servidor geocodifica con Nomina
 
 `PATCH /competitions/:id` acepta `sedeDireccion`, `sedeLat`, `sedeLng` (desde autocomplete OSM), `compensationClubs[]`, `compensationOrganizer`, etc.
 
+`compensationOrganizer` admite tres valores para la cabecera y los correos de pie del recibo: `club` (club(es) organizador(es), toma nombres/correos de `compensationClubs[]`), `aep` ("Asociación Española de Powerlifting") o `custom` (personalizable: reutiliza `compensationClubs[]` como nombres + correos libres). Los correos del pie del recibo varían según el organizador.
+
 `PATCH /referees/:id` acepta `domicilio`, `domicilioLat`, `domicilioLng` (desde autocomplete OSM o geocode Nominatim en servidor). Enviar `domicilio: ""` borra dirección y coordenadas (`NULL` en Postgres).
 
 El **IBAN no se almacena** en base de datos; solo viaja en la petición de export. Ver [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
@@ -165,4 +169,4 @@ servidor; nunca se expone al cliente.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
