@@ -151,6 +151,32 @@ describe("buildCompensationReceiptText", () => {
     expect(text).toContain("celebrado en Las Torres de Cotillas, Murcia, los días");
   });
 
+  it("recibo personalizable (custom): cabecera y correos libres, cuerpo neutro con concordancia", () => {
+    const text = buildCompensationReceiptText({
+      refereeName: "David Muñoz Rey",
+      amountEur: 100,
+      competitionName: "Trofeo de Invierno",
+      sede: "Madrid",
+      fecha: "2026-05-01",
+      fechaFin: "2026-05-01",
+      iban: SAMPLE_IBAN,
+      organizer: {
+        type: "custom",
+        entityName: "Federación Madrileña de Powerlifting",
+        emails: "pagos@fmp.es, tesoreria@fmp.es",
+      },
+    });
+    expect(text).toContain("Federación Madrileña de Powerlifting");
+    expect(text).toContain("a devolver al e-mail: pagos@fmp.es, tesoreria@fmp.es");
+    expect(text).toContain("he recibido la cantidad de 100€");
+    // "Trofeo" es masculino → "en el Trofeo … celebrado".
+    expect(text).toContain("como juez en el Trofeo de Invierno");
+    expect(text).toContain("celebrado en Madrid el día 1 de mayo de 2026");
+    // No arrastra el pie ni la cabecera de AEP.
+    expect(text).not.toContain("JuecesAEP@gmail.com");
+    expect(text).not.toContain("San Fidel");
+  });
+
   it("genera PDF AEP sin sección de desglose", async () => {
     const pdf = await renderCompensationReceiptPdf({
       refereeName: "David Muñoz Rey",

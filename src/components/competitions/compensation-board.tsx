@@ -208,19 +208,20 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                 className={selectFieldClass}
                 value={organizer}
                 aria-label="Tipo organizador"
-                onChange={(e) => setOrganizer(e.target.value as "club" | "aep")}
+                onChange={(e) => setOrganizer(e.target.value as "club" | "aep" | "custom")}
               >
                 <option value="club">Club(es) organizador(es)</option>
-                <option value="aep">AEP nacional</option>
+                <option value="aep">Asociación Española de Powerlifting</option>
+                <option value="custom">Personalizable (nombres y correos)</option>
               </select>
 
-              {organizer === "club" && (
+              {(organizer === "club" || organizer === "custom") && (
                 <>
                   {clubs.map((club, index) => (
                     <div key={index} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          Club {clubs.length > 1 ? index + 1 : ""}
+                          {organizer === "custom" ? "Nombre" : "Club"} {clubs.length > 1 ? index + 1 : ""}
                         </label>
                         <Input
                           list="organizer-clubs-list"
@@ -264,7 +265,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           className="sm:col-span-2 justify-start text-destructive"
                           onClick={() => setClubs((prev) => prev.filter((_, i) => i !== index))}
                         >
-                          Quitar club
+                          {organizer === "custom" ? "Quitar" : "Quitar club"}
                         </Button>
                       )}
                     </div>
@@ -275,12 +276,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                     ))}
                   </datalist>
                   <Button type="button" variant="outline" size="sm" onClick={() => setClubs((p) => [...p, emptyClub()])}>
-                    Añadir otro club
+                    {organizer === "custom" ? "Añadir otro nombre" : "Añadir otro club"}
                   </Button>
-                  <label className="flex items-center gap-2 text-xs text-foreground-secondary">
-                    <input type="checkbox" checked={volunteer} onChange={(e) => setVolunteer(e.target.checked)} />
-                    Colaborador voluntario
-                  </label>
+                  {organizer === "club" && (
+                    <label className="flex items-center gap-2 text-xs text-foreground-secondary">
+                      <input type="checkbox" checked={volunteer} onChange={(e) => setVolunteer(e.target.checked)} />
+                      Colaborador voluntario
+                    </label>
+                  )}
                 </>
               )}
             </div>

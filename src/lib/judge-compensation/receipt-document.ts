@@ -34,14 +34,14 @@ export { RULE_LINE, SIGN_LINE };
 
 export type CompensationReceiptLayout = {
   headerLines: string[];
-  organizerType: "club" | "aep";
+  organizerType: "club" | "aep" | "custom";
   returnEmailLines: string[];
   titleLines: string[];
   bodyParagraph: string;
   bodyClosingLines: string[];
 };
 
-export type CompensationOrganizerType = "club" | "aep";
+export type CompensationOrganizerType = "club" | "aep" | "custom";
 
 export type ClubAffiliationStyle = "afiliado" | "asociacion";
 export type ClubPayerStyle = "club" | "club_deportivo" | "none";
@@ -64,9 +64,19 @@ export interface CompensationReceiptOrganizerAep {
   type: "aep";
 }
 
+/** Organizador personalizable: cabecera y correos de devolución libres. */
+export interface CompensationReceiptOrganizerCustom {
+  type: "custom";
+  /** Nombre(s) de la entidad para la cabecera del recibo. */
+  entityName: string;
+  /** Correos de devolución ya formateados (p. ej. "a@x.com, b@y.com"). */
+  emails: string;
+}
+
 export type CompensationReceiptOrganizer =
   | CompensationReceiptOrganizerClub
-  | CompensationReceiptOrganizerAep;
+  | CompensationReceiptOrganizerAep
+  | CompensationReceiptOrganizerCustom;
 
 export interface CompensationReceiptInput {
   refereeName: string;
@@ -165,6 +175,10 @@ function buildHeaderLines(organizer: CompensationReceiptOrganizer): string[] {
     return [...AEP_HEADER_LINES];
   }
 
+  if (organizer.type === "custom") {
+    return [organizer.entityName];
+  }
+
   const affiliation =
     organizer.affiliation === "asociacion"
       ? "Asociación Española de Powerlifting (AEP)"
@@ -181,11 +195,14 @@ function buildReturnEmailLine(organizer: CompensationReceiptOrganizer): string {
       "y PresidenteAEP@gmail.com",
     ].join("\n");
   }
+  if (organizer.type === "custom") {
+    return `a devolver al e-mail: ${organizer.emails}`;
+  }
   return `a devolver al e-mail: ${organizer.clubEmail}`;
 }
 
 function buildTitleLines(organizer: CompensationReceiptOrganizer): string[] {
-  if (organizer.type === "aep") {
+  if (organizer.type === "aep" || organizer.type === "custom") {
     return [
       "Compensación de gastos de desplazamiento",
       "por arbitraje en competición oficial",
@@ -203,7 +220,7 @@ function buildTitleLines(organizer: CompensationReceiptOrganizer): string[] {
 }
 
 function buildCollaboratorPhrase(organizer: CompensationReceiptOrganizer): string {
-  if (organizer.type === "aep") {
+  if (organizer.type === "aep" || organizer.type === "custom") {
     return "Colaborador Deportivo";
   }
   return organizer.volunteer
@@ -217,6 +234,10 @@ function buildReceivedPhrase(
 ): string {
   if (organizer.type === "aep") {
     return `he recibido, la cantidad de ${amount}`;
+  }
+
+  if (organizer.type === "custom") {
+    return `he recibido la cantidad de ${amount}`;
   }
 
   switch (organizer.payer ?? "club") {
@@ -236,7 +257,7 @@ function buildLaborPhrase(
   organizer: CompensationReceiptOrganizer,
   competitionName: string,
 ): string {
-  if (organizer.type === "aep") {
+  if (organizer.type === "aep" || organizer.type === "custom") {
     const { article } = competitionAgreement(competitionName);
     return `por la labor prestada como juez en ${article} ${competitionName}`;
   }
@@ -266,7 +287,7 @@ function buildBodyParagraph(input: CompensationReceiptInput): string {
   // Para AEP el participio concuerda con el género del campeonato (el Campeonato
   // celebrado / la Copa celebrada). El club conserva su lógica previa.
   const gender =
-    input.organizer.type === "aep"
+    input.organizer.type === "aep" || input.organizer.type === "custom"
       ? competitionAgreement(input.competitionName).celebrated
       : celebrationGender(input.fecha, input.fechaFin);
   const collaborator = buildCollaboratorPhrase(input.organizer);
