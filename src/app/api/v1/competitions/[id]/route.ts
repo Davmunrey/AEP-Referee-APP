@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { resolveZoneCode } from "@/lib/aep-zones";
-import { canManageCompensation } from "@/lib/auth/session";
+import { canManageCompensation, canManageCompetitions } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -28,7 +28,6 @@ export async function GET(_request: Request, context: RouteContext) {
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   const body = await request.json().catch(() => null);
@@ -39,33 +38,39 @@ export async function PATCH(request: Request, context: RouteContext) {
   const competition = await dataService.getCompetition(id);
   if (!competition) return jsonError("Competición no encontrada", 404);
 
-  // Un delegado de zona solo puede editar competiciones de SU zona
-  // y no puede reasignar la competición a otra zona.
-  if (user.role === "delegado_zona") {
-    const userZone = resolveZoneCode(user.zona ?? "") ?? user.zona;
-    const compZone = resolveZoneCode(competition.zona ?? "") ?? competition.zona;
-    if (!user.zona || compZone !== userZone) return jsonError("Sin permiso", 403);
-    if (
-      body.zona !== undefined &&
-      (resolveZoneCode(String(body.zona)) ?? body.zona) !== userZone
-    ) {
-      return jsonError("No puedes mover competiciones a otra zona", 403);
-    }
-  }
+  // Dos permisos distintos sobre el mismo recurso:
+  //  - canManage: editar los campos base del campeonato (tarima). Excluye a
+  //    `responsable_financiero_jueces` y aplica scoping de zona a delegado_zona.
+  //  - canComp:   editar solo los campos de compensación económica.
+  const canManage = canManageCompetitions(user, competition.zona);
+  const canComp = canManageCompensation(user);
+  if (!canManage && !canComp) return jsonError("Sin permiso", 403);
 
   // Lista blanca: solo campos editables del campeonato. Nunca `aprobacion`,
   // `estado`, `confirmados` ni `template` (los gestiona el flujo de roster/aprobación).
   const patch: Partial<Competition> = {};
-  if (typeof body.nombre === "string") patch.nombre = body.nombre;
-  if (typeof body.tipo === "string") patch.tipo = body.tipo as EventType;
-  if (typeof body.fecha === "string") patch.fecha = body.fecha;
-  if (typeof body.fechaFin === "string") patch.fechaFin = body.fechaFin;
-  if (typeof body.sede === "string") patch.sede = body.sede;
-  if (typeof body.zona === "string") patch.zona = body.zona;
-  if (typeof body.sesiones === "number") patch.sesiones = body.sesiones;
-  if (typeof body.requeridos === "number") patch.requeridos = body.requeridos;
+  if (canManage) {
+    // Un delegado de zona no puede reasignar la competición a otra zona.
+    if (user.role === "delegado_zona") {
+      const userZone = resolveZoneCode(user.zona ?? "") ?? user.zona;
+      if (
+        body.zona !== undefined &&
+        (resolveZoneCode(String(body.zona)) ?? body.zona) !== userZone
+      ) {
+        return jsonError("No puedes mover competiciones a otra zona", 403);
+      }
+    }
+    if (typeof body.nombre === "string") patch.nombre = body.nombre;
+    if (typeof body.tipo === "string") patch.tipo = body.tipo as EventType;
+    if (typeof body.fecha === "string") patch.fecha = body.fecha;
+    if (typeof body.fechaFin === "string") patch.fechaFin = body.fechaFin;
+    if (typeof body.sede === "string") patch.sede = body.sede;
+    if (typeof body.zona === "string") patch.zona = body.zona;
+    if (typeof body.sesiones === "number") patch.sesiones = body.sesiones;
+    if (typeof body.requeridos === "number") patch.requeridos = body.requeridos;
+  }
 
-  if (canManageCompensation(user)) {
+  if (canComp) {
     if (body.compensationOrganizer === "club" || body.compensationOrganizer === "aep") {
       patch.compensationOrganizer = body.compensationOrganizer;
     }
@@ -132,12 +137,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   const competition = await dataService.getCompetition(id);
   if (!competition) return jsonError("Competición no encontrada", 404);
-  if (user.role === "delegado_zona" && competition.zona !== user.zona)
+  // Solo quien puede gestionar la tarima de esa zona puede eliminarla; excluye
+  // a `responsable_financiero_jueces` y normaliza la zona para delegado_zona.
+  if (!canManageCompetitions(user, competition.zona))
     return jsonError("Sin permiso", 403);
 
   const ok = await dataService.deleteCompetition(id);

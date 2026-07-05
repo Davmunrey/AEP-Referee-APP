@@ -13,6 +13,8 @@ export function osmThrottle(ms = 1100): Promise<void> {
 
 export interface DistanceMatrixResult {
   distanceKmOneWay: number;
+  /** Ida+vuelta redondeado UNA sola vez desde los metros reales (base de facturación). */
+  distanceKmRoundTrip: number;
   distanceMeters: number;
   durationSeconds?: number;
   source: "osm";
@@ -84,10 +86,15 @@ export async function fetchDrivingDistanceKm(
   }
 
   const distanceMeters = data.routes[0].distance;
+  // El i+v se redondea directamente sobre los metros reales (×2) para no arrastrar
+  // el error de redondear la ida a km enteros y luego duplicar. La ida se mantiene
+  // redondeada solo para mostrarla.
   const distanceKmOneWay = Math.round(distanceMeters / 1000);
+  const distanceKmRoundTrip = Math.round((distanceMeters * 2) / 1000);
 
   return {
     distanceKmOneWay,
+    distanceKmRoundTrip,
     distanceMeters,
     durationSeconds: data.routes[0].duration,
     source: "osm",

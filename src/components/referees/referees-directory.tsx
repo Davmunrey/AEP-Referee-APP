@@ -47,6 +47,12 @@ export function RefereesDirectory({
 }: RefereesDirectoryProps) {
   const searchParams = useSearchParams();
   const [referees, setReferees] = useState(initialReferees);
+  // Re-sincroniza con los datos del servidor cuando cambian (p. ej. tras importar
+  // el Excel maestro, que hace router.refresh()); si no, la tabla mostraría la
+  // lista antigua hasta recargar la página. Igual que CompetitionsTable.
+  useEffect(() => {
+    setReferees(initialReferees);
+  }, [initialReferees]);
   const [showNew, setShowNew] = useState(false);
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [filterZona, setFilterZona] = useState("TODAS");

@@ -1,15 +1,33 @@
+import { z } from "zod";
 import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
-import type {
-  CompensationClaimStatus,
-  CompensationTravelMode,
-} from "@/lib/judge-compensation/types";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
   params: Promise<{ id: string; refereeId: string }>;
 }
+
+// Valida enums y rangos antes de tocar el claim. Antes se casteaba `status`,
+// `travelMode` y los km sin comprobar: un status arbitrario se persistía y
+// rompía la máquina de estados; los km podían llegar como string/NaN.
+const compensationPatchSchema = z
+  .object({
+    travelMode: z.enum(["km_rate", "shared_vehicle_passenger", "none"]).optional(),
+    distanceKmOneWay: z.number().finite().min(0).max(5000).nullable().optional(),
+    distanceKmRoundTrip: z.number().finite().min(0).max(10000).nullable().optional(),
+    distanceSource: z.enum(["osm", "google_maps", "manual"]).nullable().optional(),
+    travelApproved: z.boolean().optional(),
+    travelNotes: z.string().max(1000).nullable().optional(),
+    isCompetitionManager: z.boolean().optional(),
+    competitionManagerPerDay: z.boolean().optional(),
+    isComputerSetup: z.boolean().optional(),
+    computerSetupAmount: z.number().finite().min(0).max(100000).nullable().optional(),
+    lodgingEligibleOverride: z.boolean().nullable().optional(),
+    lodgingDaysOverride: z.number().finite().min(0).max(60).nullable().optional(),
+    status: z.enum(["borrador", "enviado", "aprobado", "pagado", "rechazado"]).optional(),
+    reviewComment: z.string().max(1000).nullable().optional(),
+  });
 
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
@@ -18,46 +36,11 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id, refereeId } = await context.params;
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object") return jsonError("Cuerpo inválido", 400);
+  const parsed = compensationPatchSchema.safeParse(body);
+  if (!parsed.success) return jsonError("Datos de compensación inválidos", 400);
 
   try {
-    const updated = await dataService.updateCompensationClaim(id, refereeId, {
-    travelMode: body.travelMode as CompensationTravelMode | undefined,
-    distanceKmOneWay: body.distanceKmOneWay as number | null | undefined,
-    distanceKmRoundTrip: body.distanceKmRoundTrip as number | null | undefined,
-    distanceSource: body.distanceSource as "osm" | "google_maps" | "manual" | null | undefined,
-    travelApproved: typeof body.travelApproved === "boolean" ? body.travelApproved : undefined,
-    travelNotes: body.travelNotes as string | null | undefined,
-    isCompetitionManager:
-      typeof body.isCompetitionManager === "boolean" ? body.isCompetitionManager : undefined,
-    competitionManagerPerDay:
-      typeof body.competitionManagerPerDay === "boolean"
-        ? body.competitionManagerPerDay
-        : undefined,
-    isComputerSetup:
-      typeof body.isComputerSetup === "boolean" ? body.isComputerSetup : undefined,
-    computerSetupAmount:
-      body.computerSetupAmount === null
-        ? null
-        : typeof body.computerSetupAmount === "number"
-          ? body.computerSetupAmount
-          : undefined,
-    lodgingEligibleOverride:
-      body.lodgingEligibleOverride === null
-        ? null
-        : typeof body.lodgingEligibleOverride === "boolean"
-          ? body.lodgingEligibleOverride
-          : undefined,
-    lodgingDaysOverride:
-      body.lodgingDaysOverride === null
-        ? null
-        : typeof body.lodgingDaysOverride === "number"
-          ? body.lodgingDaysOverride
-          : undefined,
-    status: body.status as CompensationClaimStatus | undefined,
-    reviewComment: body.reviewComment as string | null | undefined,
-    });
-
+    const updated = await dataService.updateCompensationClaim(id, refereeId, parsed.data);
     if (!updated) return jsonError("Claim no encontrado para este juez", 404);
     return jsonOk(updated);
   } catch (err) {

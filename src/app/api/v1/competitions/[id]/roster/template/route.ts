@@ -2,6 +2,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { getPresetForEventType } from "@/lib/roster-template";
+import { rosterTemplateSchema } from "@/lib/validations";
 import type { RosterSession } from "@/lib/types";
 import { dataService } from "@/server/services";
 
@@ -42,10 +43,14 @@ export async function PUT(request: Request, context: RouteContext) {
   if (!comp) return jsonError("Competición no encontrada", 404);
 
   const body = await request.json().catch(() => null);
-  const template = body?.template as RosterSession[] | undefined;
-  if (!Array.isArray(template) || template.length === 0) {
+  // Validación estructural completa: `slots` entero acotado (1–8), claves de rol
+  // del enum, sesiones no vacías. Sin esto, un `slots` gigante o NaN corrompía la
+  // cobertura o agotaba memoria al enumerar huecos.
+  const parsed = rosterTemplateSchema.safeParse(body?.template);
+  if (!parsed.success) {
     return jsonError("Plantilla inválida", 400);
   }
+  const template = parsed.data as RosterSession[];
 
   const result = await dataService.saveCompetitionTemplate(
     competitionId,

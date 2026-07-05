@@ -26,11 +26,6 @@ function resolveTravelAmount(input: {
     case "none":
     case "shared_vehicle_passenger":
       return 0;
-    case "fuel_receipt":
-    case "transport_ticket":
-      return input.travelApproved && input.travelAmountOverride != null
-        ? input.travelAmountOverride
-        : 0;
     case "km_rate":
     default:
       if (input.travelAmountOverride != null && input.travelApproved) {
