@@ -16,7 +16,8 @@ fuerza `tsc` + `eslint` (`next/core-web-vitals`, `next/typescript`).
 
 - **Siempre `@/…`** para importar entre carpetas/feature distintas.
 - **Relativo `./x`** solo entre ficheros de la **misma** carpeta-feature
-  (p. ej. dentro de `src/lib/judge-compensation/**` o `src/server/services/**`).
+  (p. ej. dentro de `src/lib/judge-compensation/**`, `src/lib/judges-registry/**`,
+  `src/lib/schedule-parser/**` o `src/server/services/**`).
 - Nunca `../../..` para saltar de feature a feature: usa el alias.
 
 ```ts

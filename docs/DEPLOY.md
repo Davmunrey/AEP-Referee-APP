@@ -68,8 +68,10 @@ No se requiere ninguna API key de mapas de pago.
   ```bash
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding
   ```
-- **Migraciones**: aplicar en orden hasta la última en `supabase/migrations/` (incl. `030_roster_assignments_indexes`).
+- **Migraciones**: aplicar en orden hasta la última en `supabase/migrations/` (incl. `033_drop_permissive_rls`).
 - **Realtime**: tabla `app_sync_state` publicada (migración `029`) para sincronización en vivo entre usuarios.
+- **Hardening RLS (033)**: elimina las políticas permisivas de `referee_sanctions` y `competition_availability`; ambas tablas quedan solo servidor (acceso vía `service_role`). Los advisors de Supabase ya no muestran esos 2 WARN de políticas permisivas.
+- **Leaked Password Protection**: activar el toggle de Auth (HaveIBeenPwned) — ver «Hardening post-deploy».
 
 ## Dominio en Vercel
 
@@ -84,10 +86,16 @@ Si en el futuro se añade un dominio personalizado en Vercel → Project → Set
 - [ ] https://aep-tarima.vercel.app/sign-in carga correctamente
 - [ ] Login con cuenta de prueba / admin
 - [ ] `/docs` accesible
-- [ ] Migraciones Supabase aplicadas (hasta `030`)
+- [ ] Migraciones Supabase aplicadas (hasta `033`)
 - [ ] Backup reciente (`npm run db:backup`)
 - [ ] Plantillas de correo Auth con branding AEP (si hubo cambios)
 - [ ] Usuario admin / comité esperado activo
+
+## Hardening post-deploy (Supabase Auth)
+
+Un único paso manual pendiente de seguridad, sin código:
+
+- **Leaked Password Protection**: en Supabase → Authentication → Policies (Password), activar el toggle que rechaza contraseñas expuestas en filtraciones conocidas (HaveIBeenPwned). Es un ajuste del panel, no forma parte del repo ni de las migraciones. El resto del endurecimiento RLS ya viene aplicado por la migración `033`.
 
 ## Rollback
 
@@ -113,4 +121,4 @@ Los **recibos PDF de compensación** por campeonato siguen activos (flujo financ
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.8
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
