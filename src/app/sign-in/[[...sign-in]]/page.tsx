@@ -6,7 +6,6 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 const inputClass =
   "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-border-strong";
@@ -28,6 +27,8 @@ export default function SignInPage() {
     if (!forgotEmail.trim()) return;
     setForgotLoading(true);
     setError(null);
+    // Carga el cliente Supabase solo al usarlo, fuera del bundle inicial del login.
+    const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
     const origin = window.location.origin;
     const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
@@ -74,6 +75,7 @@ export default function SignInPage() {
     }
 
     // Refresca el cliente de Supabase con las cookies que fijó el servidor.
+    const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
     await supabase.auth.getSession();
     router.push("/");
