@@ -120,12 +120,13 @@ export function RefereesDirectory({
   };
 
   const filtered = useMemo(() => {
+    const q = search.toLowerCase();
     return referees.filter((a) => {
       if (filterZona !== "TODAS" && a.zona !== filterZona) return false;
       if (filterNivel !== "TODOS" && a.nivel !== filterNivel) return false;
       if (filterEstado !== "TODOS" && a.estado !== filterEstado) return false;
       if (filterCenso !== CENSO_ALL && !activeInYear(a, filterCenso)) return false;
-      if (search && !a.nombre.toLowerCase().includes(search.toLowerCase())) return false;
+      if (q && !a.nombre.toLowerCase().includes(q)) return false;
       return true;
     });
   }, [referees, filterZona, filterNivel, filterEstado, filterCenso, search]);
