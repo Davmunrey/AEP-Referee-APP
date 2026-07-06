@@ -52,9 +52,13 @@ export const competitionService = {
 
   getCompetition: async (id: string): Promise<Competition | undefined> => {
     const supabase = db();
-    const { data } = await supabase.from("competitions").select("*").eq("id", id).single();
+    // Fila y asignaciones en paralelo (antes eran secuenciales). Es una función
+    // muy frecuente: detalle, compensación y cada mutación de roster.
+    const [{ data }, assignments] = await Promise.all([
+      supabase.from("competitions").select("*").eq("id", id).single(),
+      loadAssignments(id),
+    ]);
     if (!data) return undefined;
-    const assignments = await loadAssignments(id);
     const assignmentsByComp = new Map([[id, assignments]]);
     return enrichCompetitionRows([data as Record<string, unknown>], assignmentsByComp)[0];
   },
