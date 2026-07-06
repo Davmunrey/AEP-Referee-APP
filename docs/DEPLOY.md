@@ -13,7 +13,7 @@ AEP Tarima es una **aplicación web en producción** en **Vercel** con base de d
 | Documentación | https://aep-tarima.vercel.app/docs |
 | Panel (requiere sesión) | https://aep-tarima.vercel.app/ |
 
-`NEXT_PUBLIC_APP_URL` en producción debe ser `https://aep-tarima.vercel.app` (sin barra final). Esa URL se usa en correos de Supabase Auth, enlaces del asistente y redirecciones.
+`NEXT_PUBLIC_APP_URL` en producción debe ser `https://aep-tarima.vercel.app` (sin barra final). Esa URL se usa en correos de Supabase Auth y redirecciones.
 
 ## Flujo de deploy (Vercel)
 
@@ -46,7 +46,6 @@ Copiar y adaptar:
 | `OSM_USER_AGENT` | Production (recomendado) | Identificación para Nominatim/OSRM |
 | `NOMINATIM_URL` | Opcional | Geocoding OSM |
 | `OSRM_URL` | Opcional | Rutas OSM |
-| `GEMINI_API_KEY` | Opcional | Asistente IA (sin clave → motor local) |
 | `SUPABASE_ACCESS_TOKEN` | Opcional | Script `npm run supabase:email-branding` |
 
 Variables solo CI (GitHub Secrets, no Vercel):
@@ -121,4 +120,4 @@ Los **recibos PDF de compensación** por campeonato siguen activos (flujo financ
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0

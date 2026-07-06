@@ -24,7 +24,7 @@
 
 - [x] **DOC-01**: URL producción `https://aep-tarima.vercel.app` en código, docs y correos Supabase
 - [x] **DOC-02**: Sección Normativa con Guía AEP, plazas, compensación e IPF
-- [x] **DOC-03**: Asistente de ayuda con base de conocimiento y guía por rol
+- [x] **DOC-03**: Centro de ayuda local (buscador sobre base de conocimiento + guía por rol, sin IA)
 - [x] **DOC-04**: Todos los `.md` del repositorio sincronizados con el estado actual
 - [x] **UX-01**: Autocomplete domicilio funcional (API servidor Photon)
 - [x] **UX-02**: Badges nivel compactos en tarima (R/N/I/II)

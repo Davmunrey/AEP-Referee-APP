@@ -31,7 +31,7 @@
 |---|---|
 | URL | `aep-tarima.vercel.app` en app, Vercel, Supabase Auth, correos |
 | Normativa | `/regulations` — Guía AEP, plazas, compensación, IPF |
-| Ayuda | Asistente ~35 entradas, guía por rol, Gemini opcional |
+| Ayuda | Centro de ayuda local: guía por rol + buscador (~35 temas), sin IA |
 | Geocode | `/api/v1/geocode/search` (Photon servidor) |
 | Tarima UX | Badges nivel compactos R/N/I/II |
 | Docs | Todos los `.md` actualizados |

@@ -2,8 +2,8 @@ import type { UserRole } from "@/lib/types";
 
 /**
  * Tour / guía rápida de primeros pasos, adaptada al rol del usuario. Es una
- * lista de pasos con enlaces directos a cada pantalla; acompaña al asistente
- * en el widget de Ayuda.
+ * lista de pasos con enlaces directos a cada pantalla; es la base del widget
+ * de Ayuda, junto con el buscador local de temas (base de conocimiento).
  */
 
 export interface QuickStartStep {

@@ -11,8 +11,8 @@
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/entrar-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v1.9-22c55e?style=for-the-badge&labelColor=0d1117" />
-  <img alt="Tests" src="https://img.shields.io/badge/tests-354%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.0-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-337%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
 <p align="center">
@@ -59,15 +59,16 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 
 ---
 
-## 🆕 Novedades v1.9
+## 🆕 Novedades v2.0
 
 | Novedad | Detalle |
 |---|---|
+| **Centro de ayuda local** | Widget rediseñado: buscador sobre ~35 temas curados + primeros pasos por rol + temas frecuentes. 100 % en el navegador, sin IA ni red. |
+| **Sin asistente IA** | Retirada del asistente Gemini (ruta, cliente, prompt y rate-limit); la base de conocimiento se conserva para el buscador local. |
+| **Título de pestaña** | La pestaña del navegador muestra simplemente «AEP Tarima». |
 | **Censo por año natural** | Arbitrajes de cada juez separados por año; ficha con selector de año + «Histórico»; filtro de censo por año en el directorio. |
-| **Recibo configurable** | Organizador del recibo con 3 opciones — club(es) organizador(es) · Asociación Española de Powerlifting · personalizable (nombres y correos). PDF con logo. |
-| **Selección rápida = solo disponibles** | Al seleccionar un hueco, la selección rápida trabaja solo sobre los jueces con disponibilidad confirmada, ordenados por idoneidad. |
-| **Import no destructivo** | «Reemplazar censo» solo elimina jueces ausentes del Excel y no asignados; **no toca campeonatos ni cuadrantes**. |
-| **Endurecimiento de seguridad** | Eliminadas las políticas RLS permisivas; los datos sensibles solo se leen desde el servidor. |
+| **Recibo configurable** | Organizador del recibo con 3 opciones — club(es) organizador(es) · Asociación Española de Powerlifting · personalizable. PDF con logo. |
+| **Endurecimiento de seguridad** | Políticas RLS permisivas eliminadas; los datos sensibles solo se leen desde el servidor. |
 
 ---
 
@@ -84,7 +85,7 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 | **Export cuadrante** | PDF formato oficial AEP, Excel, WhatsApp |
 | **Exámenes / Informes / Ascensos** | Gestión nacional y zonal |
 | **Estadísticas** | Histórico por año natural, KPIs, export CSV |
-| **Documentación** | `/docs` web + widget Ayuda (guía + asistente) |
+| **Documentación** | `/docs` web + widget Ayuda (guía por rol + buscador local) |
 | **Usuarios** | Gestión de roles, reset de contraseñas |
 
 ## 👥 Roles
@@ -117,7 +118,7 @@ Navegador
 | **UI** | Tailwind CSS, Radix UI, Lucide |
 | **Geocoding** | Photon + Nominatim/OSRM — todo en servidor |
 | **Realtime** | Supabase Realtime en `app_sync_state` |
-| **Tests** | Vitest — 354 tests, 61 archivos |
+| **Tests** | Vitest — 337 tests, 59 archivos |
 
 ---
 
@@ -174,5 +175,5 @@ Detalle de variables, Supabase y checklist de release: [docs/DEPLOY.md](./docs/D
 ---
 
 <p align="center">
-  <sub>AEP Tarima · v1.9 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
+  <sub>AEP Tarima · v2.0 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
 </p>

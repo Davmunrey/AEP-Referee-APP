@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.9
-milestone_name: censo-anual-seleccion-rapida-seguridad
+milestone: v2.0
+milestone_name: centro-ayuda-local-sin-ia
 status: complete
-last_updated: "2026-07-05"
-last_activity: julio 2026 — arbitrajes por año natural, recibo personalizable, selección rápida por disponibilidad, import seguro del censo, RLS endurecido
+last_updated: "2026-07-06"
+last_activity: julio 2026 — centro de ayuda 100 % local (retirada del asistente IA), título de pestaña «AEP Tarima», triaje de errores de Sentry
 progress:
   total_phases: 6
   completed_phases: 6
@@ -13,8 +13,16 @@ progress:
 
 ## Current Position
 
-Phase: Complete — v1.9 en `main`, producción en Vercel
-Last activity: Arbitrajes por año natural (censo vigente vs histórico), recibo de compensación con organizador personalizable, selección rápida limitada a jueces disponibles, reemplazo seguro del censo y endurecimiento RLS
+Phase: Complete — v2.0 en `main`, producción en Vercel
+Last activity: Rediseño del centro de ayuda como buscador local sobre la base de conocimiento (sin IA), retirada del asistente Gemini, título de pestaña simplificado y triaje de errores de Sentry
+
+## Completed (v2.0)
+
+- **Centro de ayuda local** — widget rediseñado: buscador sobre la base de conocimiento (~35 temas) + primeros pasos por rol + temas frecuentes. Todo en cliente, sin IA ni red
+- **Retirada del asistente IA** — eliminados la ruta `POST /api/v1/assistant`, el cliente Gemini, el prompt de anclaje y el rate-limit; base de conocimiento conservada para el buscador local
+- **Título de pestaña** — «AEP Tarima» (antes «AEP Tarima — Gestión de Jueces»)
+- **Sentry** — 3 issues del 28-jun triados y resueltos (PGRST204 transitorio de la migración 027 y ENOENT de pdfkit ya corregido con `serverExternalPackages`); ruido del refresh token en middleware capturado (PR #69)
+- 337 tests Vitest (338 con 1 skip), 59 archivos
 
 ## Completed (v1.9)
 

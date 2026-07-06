@@ -42,7 +42,7 @@ Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 - El **perfil de usuario** y **Cambiar contraseña** están en el **topbar** (esquina superior derecha).
 - Estado colapsado persiste en `localStorage` (`aep-tarima:sidebar-collapsed`).
 - Auto-colapsa en `< 1024px` (tablet).
-- Widget **Ayuda** (esquina inferior derecha): guía por rol + asistente.
+- Widget **Ayuda** (esquina inferior derecha): primeros pasos por rol + buscador local de temas.
 - **Sincronización en vivo**: cambios en tarima, aprobaciones o compensación se reflejan automáticamente en todas las pestañas abiertas (sin recargar manualmente).
 
 ## Rol `responsable_financiero_jueces`
@@ -55,4 +55,4 @@ Compat de navegación antigua se mantiene solo para no romper enlaces guardados.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0

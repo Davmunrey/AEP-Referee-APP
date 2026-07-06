@@ -123,4 +123,4 @@ Ver captura: `docs/images/10-compensacion.png`.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0

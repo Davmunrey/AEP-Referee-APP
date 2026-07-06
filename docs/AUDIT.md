@@ -1,12 +1,12 @@
 # QA y seguridad
 
-Última revisión: julio 2026 (v1.9). Alcance: repo, CI GitHub, flujos usuario comunes.
+Última revisión: julio 2026 (v2.0). Alcance: repo, CI GitHub, flujos usuario comunes.
 
 **Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 
 ## Veredicto
 
-App **operativa en producción** en Vercel. CI verde, **354 tests** (355 con 1 skip, 61 archivos, Vitest), lint OK, build OK. Migraciones hasta `033` aplicadas en Supabase.
+App **operativa en producción** en Vercel. CI verde, **337 tests** (338 con 1 skip, 59 archivos, Vitest), lint OK, build OK. Migraciones hasta `033` aplicadas en Supabase.
 
 ## QA operativo
 
@@ -24,7 +24,7 @@ App **operativa en producción** en Vercel. CI verde, **354 tests** (355 con 1 s
 | Normativa | OK | 4 pestañas en `/regulations` |
 | Domicilio OSM | OK | Autocomplete API servidor; eliminar ubicación guardada |
 | Compensación | OK | Hub batch, km manual, montaje sistema, export PDF IBAN efímero |
-| Ayuda | OK | Widget guía + asistente (Gemini opcional + fallback local) |
+| Ayuda | OK | Widget guía por rol + buscador local de temas (sin IA) |
 | Usuarios / contraseñas | OK | Self-change + admin-reset |
 | Ascensos | OK | `review_comment` al rechazar |
 | Rendimiento | OK | Consultas optimizadas, caché estática, índices Postgres |
@@ -63,4 +63,4 @@ npm run audit:remote
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
