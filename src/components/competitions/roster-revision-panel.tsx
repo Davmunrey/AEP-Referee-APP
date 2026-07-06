@@ -91,25 +91,17 @@ export function RosterRevisionPanel({
             Vista previa del export · cuadrante
           </p>
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => window.open(`${quadrantUrl}?print=1`, "_blank")}
-            >
-              <Printer className="h-3.5 w-3.5" />
-              Imprimir / PDF
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <a href={`${quadrantUrl}?print=1`} target="_blank" rel="noopener noreferrer">
+                <Printer className="h-3.5 w-3.5" />
+                Imprimir / PDF
+              </a>
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => window.open(quadrantUrl, "_blank")}
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Abrir
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <a href={quadrantUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" />
+                Abrir
+              </a>
             </Button>
           </div>
         </div>
