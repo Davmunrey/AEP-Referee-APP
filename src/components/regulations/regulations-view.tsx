@@ -5,9 +5,8 @@ import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AepGuidePanel } from "@/components/regulations/aep-guide-panel";
 import { CompensationNormativaPanel } from "@/components/regulations/compensation-normativa-panel";
-import { RosterRulesPanel } from "@/components/regulations/roster-rules-panel";
 import { AEP_GUIDE_META } from "@/lib/aep-guide-2026";
-import type { IpfChapter, RegulationRule } from "@/lib/types";
+import type { IpfChapter } from "@/lib/types";
 import { IPF_CHAPTERS } from "@/lib/ipf-chapters";
 import { cn } from "@/lib/utils";
 import {
@@ -128,16 +127,15 @@ function IpfArticleList({
   );
 }
 
-type RegulationsTab = "guide" | "roster" | "compensation" | "ipf";
+type RegulationsTab = "guide" | "compensation" | "ipf";
 
 const TABS: { id: RegulationsTab; label: string }[] = [
   { id: "guide", label: `Guía AEP ${AEP_GUIDE_META.season}` },
-  { id: "roster", label: "Plazas en tarima" },
   { id: "compensation", label: "Compensación jueces" },
   { id: "ipf", label: "Reglamento IPF" },
 ];
 
-export function RegulationsView({ rosterRules }: { rosterRules: RegulationRule[] }) {
+export function RegulationsView() {
   const [tab, setTab] = useState<RegulationsTab>("guide");
   const [openChapters, setOpenChapters] = useState<Set<string>>(
     new Set(IPF_CHAPTERS.map((c) => c.num)),
@@ -171,7 +169,7 @@ export function RegulationsView({ rosterRules }: { rosterRules: RegulationRule[]
       <PageHeader
         eyebrow="Gestión"
         title="Normativa"
-        description="Guía AEP, plazas en tarima, compensación de jueces y reglamento técnico IPF."
+        description="Guía AEP, compensación de jueces y reglamento técnico IPF."
       />
 
       <div
@@ -199,8 +197,6 @@ export function RegulationsView({ rosterRules }: { rosterRules: RegulationRule[]
       </div>
 
       {tab === "guide" && <AepGuidePanel />}
-
-      {tab === "roster" && <RosterRulesPanel rules={rosterRules} />}
 
       {tab === "compensation" && <CompensationNormativaPanel />}
 

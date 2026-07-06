@@ -281,9 +281,9 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
   {
     id: "regulations",
     question: "¿Dónde consulto la normativa?",
-    keywords: ["normativa", "reglas", "reglamento", "ipf", "requisitos", "nivel minimo", "guia", "plazas", "baremo"],
+    keywords: ["normativa", "reglas", "reglamento", "ipf", "requisitos", "guia", "baremo"],
     answer:
-      "En «Normativa» hay cuatro pestañas: Guía AEP 2026, Plazas en tarima (requisitos por tipo de competición), Compensación de jueces (baremo, km, alojamiento, montaje sistema) y Reglamento técnico IPF (buscable por artículo).",
+      "En «Normativa» hay tres pestañas: Guía AEP 2026, Compensación de jueces (baremo, km, alojamiento, montaje sistema) y Reglamento técnico IPF (buscable por artículo).",
     links: [{ label: "Normativa", href: "/regulations" }],
   },
   {
