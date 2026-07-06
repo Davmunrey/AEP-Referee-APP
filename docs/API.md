@@ -146,20 +146,12 @@ Al guardar ficha juez o sede sin coordenadas, el servidor geocodifica con Nomina
 
 El **IBAN no se almacena** en base de datos; solo viaja en la petición de export. Ver [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
 
-## Asistente IA (widget de Ayuda)
+## Ayuda (widget)
 
-| Método | Ruta | Permiso |
-|---|---|---|
-| `POST` | `/assistant` | sesión (self-service) — body `{ question, history? }` |
-
-Respalda el widget de Ayuda. El prompt se ancla al rol del usuario
-(`src/lib/help/assistant-prompt.ts`) y la respuesta la genera **Google Gemini**
-(`gemini-2.0-flash` por defecto, configurable con `GEMINI_MODEL`). Sin
-`GEMINI_API_KEY` la ruta queda inerte (`503 { code: "not_configured" }`) y el
-cliente recurre al **asistente local** basado en la base de conocimiento
-(`src/lib/help/knowledge-base.ts`, `quick-start.ts`). Rate-limit en memoria:
-**30 preguntas / 5 min por usuario** (`429` al exceder). La clave vive solo en el
-servidor; nunca se expone al cliente.
+El widget de Ayuda es **100 % local**: no tiene endpoint ni depende de ningún
+servicio externo. Combina los primeros pasos por rol (`src/lib/help/quick-start.ts`)
+con un buscador sobre la base de conocimiento curada
+(`src/lib/help/knowledge-base.ts`), todo resuelto en el navegador.
 
 ## Seguridad import
 
@@ -169,4 +161,4 @@ servidor; nunca se expone al cliente.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0

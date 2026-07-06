@@ -1,5 +1,13 @@
 # Milestones — AEP Tarima
 
+## v2.0 — Centro de ayuda local, sin IA (2026-07)
+
+- Centro de ayuda rediseñado: buscador local sobre la base de conocimiento (~35 temas) + primeros pasos por rol + temas frecuentes; 100 % en cliente, sin IA ni red
+- Retirada del asistente IA: eliminados la ruta `POST /api/v1/assistant`, el cliente Gemini, el prompt de anclaje y el rate-limit en memoria; se conserva la base de conocimiento para el buscador
+- Título de pestaña simplificado a «AEP Tarima»
+- Triaje de Sentry: 3 issues del 28-jun resueltos (PGRST204 transitorio, ENOENT pdfkit ya corregido); refresh token del middleware capturado (PR #69)
+- 337 tests (338 con 1 skip), 59 archivos; toda la documentación sincronizada a v2.0
+
 ## v1.9 — Censo anual, selección rápida y seguridad (2026-07)
 
 - Arbitrajes por año natural: parser de todas las hojas `ArbitrajesAAAA`, columna `referees.arbitraje_stats_by_year` (migración 032); ficha de juez con selector de año + Histórico; directorio con filtro de censo por año

@@ -51,7 +51,7 @@ Al elegir un hueco, la lista de jueces se ordena por **idoneidad** para ese slot
 
 ## Ayuda y documentación in-app
 
-- Widget flotante (`HelpWidget`): pestaña **Guía** (quick-start por rol) y **Asistente** (Gemini + fallback local).
+- Widget flotante (`HelpWidget`): primeros pasos por rol (quick-start) + buscador local sobre la base de conocimiento. 100 % en cliente, sin IA ni red.
 - Base de conocimiento: `src/lib/help/knowledge-base.ts` (~35 entradas).
 - Documentación web: `/docs` (pública en parte legal; guía operativa con sesión).
 - Normativa: `/regulations` — Guía AEP 2026, plazas en tarima, compensación jueces, reglamento IPF.
@@ -182,4 +182,4 @@ El sidebar se auto-colapsa en `< 1024px` (primer render en tablet) para liberar 
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0

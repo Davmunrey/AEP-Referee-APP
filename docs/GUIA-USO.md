@@ -209,14 +209,15 @@ Desde Usuarios → icono llave de la fila → escribe la nueva contraseña. No n
 
 ---
 
-## 11. Ayuda y asistente
+## 11. Centro de ayuda
 
 Icono **?** en la esquina inferior derecha:
 
-- **Guía**: primeros pasos según tu rol, con enlaces directos.
-- **Asistente**: preguntas sobre el uso de la app; respuestas basadas en la documentación oficial. Si hay IA configurada, la usa; si no, búsqueda local. Tras cada respuesta verás sugerencias de preguntas relacionadas.
+- **Buscador**: escribe lo que necesites (tarima, compensación, ascensos, permisos…) y verás los temas que encajan, con enlaces directos a cada sección.
+- **Primeros pasos**: sin buscar nada, muestra la ruta recomendada para tu rol.
+- **Temas frecuentes**: accesos rápidos a las dudas más habituales.
 
-Documentación completa: `/docs`.
+Todo funciona en local, sin conexión externa ni IA. Documentación completa: `/docs`.
 
 ---
 
@@ -254,4 +255,4 @@ La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de 
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0

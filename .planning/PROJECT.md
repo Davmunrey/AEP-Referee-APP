@@ -10,16 +10,17 @@ Stack: Next.js 15, TypeScript, Supabase (Postgres + Auth + RLS + Realtime), Tail
 
 Solo web en Vercel. Sin app iOS. Sin manual PDF en la app.
 
-## Current Milestone: v1.9 — Censo anual, selección rápida y seguridad (Complete)
+## Current Milestone: v2.0 — Centro de ayuda local, sin IA (Complete)
 
 **Shipped (jul 2026):**
 
-- Arbitrajes por año natural: censo vigente vs histórico (migración `032`), selector de año en ficha y filtro en directorio
-- Recibo de compensación con organizador personalizable (migración `031`), PDF con logo y pie de correo variable
-- Selección rápida de jueces subordinada a la disponibilidad; nivel recomendado como aviso
-- Import Excel maestro «reemplazar censo» seguro (conserva campeonatos, cuadrantes y asignados)
-- Seguridad: RLS endurecido (migración `033`)
-- 354 tests Vitest (355 con 1 skip), 61 archivos; migraciones hasta `033` en Supabase prod
+- Centro de ayuda rediseñado: buscador local sobre la base de conocimiento (~35 temas) + primeros pasos por rol + temas frecuentes; 100 % en cliente, sin IA ni red
+- Retirada del asistente IA (ruta `POST /api/v1/assistant`, cliente Gemini, prompt de anclaje y rate-limit); base de conocimiento conservada
+- Título de pestaña simplificado a «AEP Tarima»
+- Triaje de Sentry: 3 issues del 28-jun resueltos; refresh token del middleware capturado (PR #69)
+- 337 tests Vitest (338 con 1 skip), 59 archivos; migraciones hasta `033` en Supabase prod
+
+**Anterior (v1.9):** censo por año natural (migración `032`), recibo con organizador personalizable (`031`), selección rápida subordinada a disponibilidad, import Excel «reemplazar censo» seguro, RLS endurecido (`033`).
 
 **Backlog menor:** activar Leaked Password Protection (toggle Supabase Auth), OCR client-side (diferido), E2E smoke compensación, E2E profundo, sustitución `xlsx`.
 

@@ -2,9 +2,9 @@ import type { UserRole } from "@/lib/types";
 import { AEP_TARIMA_OFFICIAL_URL } from "@/lib/aep-branding";
 
 /**
- * Base de conocimiento del asistente de ayuda. El widget combina búsqueda local
- * (esta lista) con un modelo de IA cuando está configurado; en ambos casos la
- * respuesta se ancla a estas guías curadas para no inventar funciones.
+ * Base de conocimiento de la Ayuda. El widget la usa como buscador local de
+ * temas: todo funciona en el navegador, sin IA ni llamadas de red, con enlaces
+ * directos a cada sección de la plataforma.
  */
 
 export interface HelpLink {
@@ -363,10 +363,10 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
   },
   {
     id: "help-assistant",
-    question: "¿Cómo funciona el asistente de ayuda?",
-    keywords: ["asistente", "ayuda", "chat", "pregunta", "widget", "bot"],
+    question: "¿Cómo funciona la Ayuda de la plataforma?",
+    keywords: ["ayuda", "guia", "buscar", "temas", "widget", "primeros pasos", "como se usa"],
     answer:
-      "Pulsa el icono de ayuda (esquina inferior derecha). La pestaña Guía muestra primeros pasos según tu rol. La pestaña Asistente responde preguntas sobre el uso de la plataforma; cuando hay IA configurada la usa con estas guías como referencia, y si no, responde con búsqueda local en la documentación curada.",
+      "Pulsa el icono de ayuda (esquina inferior derecha). Arriba tienes un buscador: escribe lo que necesites (tarima, compensación, ascensos, permisos…) y verás los temas que encajan con enlaces directos a cada sección. Si no buscas nada, muestra los primeros pasos recomendados para tu rol. Todo funciona en local, sin conexión externa.",
     links: [{ label: "Documentación", href: "/docs" }],
   },
   {

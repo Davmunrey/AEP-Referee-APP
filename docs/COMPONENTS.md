@@ -7,7 +7,7 @@
 | `AppShell` | Shell dashboard + `AppRealtimeSync` |
 | `Sidebar` | Navegación colapsable (Operaciones + Gestión) |
 | `Topbar` | Breadcrumb, menú usuario (cambiar contraseña, cerrar sesión) |
-| `HelpWidget` | Ayuda flotante: guía por rol + asistente (Gemini / local) |
+| `HelpWidget` | Ayuda flotante: primeros pasos por rol + buscador local de temas (sin IA) |
 | `AppRealtimeSync` | Sincronización en vivo con Supabase (invisible; shell) |
 
 ## Dashboard
@@ -121,4 +121,4 @@
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0

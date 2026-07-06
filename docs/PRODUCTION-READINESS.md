@@ -79,4 +79,4 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
