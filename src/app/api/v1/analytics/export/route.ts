@@ -1,12 +1,16 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { dataService } from "@/server/services";
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
+  const yearParam = new URL(request.url).searchParams.get("year");
+  const parsedYear = yearParam ? Number(yearParam) : NaN;
+  const requestedYear = Number.isInteger(parsedYear) ? parsedYear : undefined;
+
   const [analytics, competitions] = await Promise.all([
-    dataService.getAnalytics(user),
+    dataService.getAnalytics(user, requestedYear),
     dataService.getCompetitions(user),
   ]);
   const competitionsInSelectedYear = competitions.filter((c) =>
