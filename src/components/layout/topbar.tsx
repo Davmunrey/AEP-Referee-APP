@@ -14,11 +14,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PasswordDialog } from "@/components/admin/password-dialog";
-import { createClient } from "@/lib/supabase/client";
+import dynamic from "next/dynamic";
 import { useCompetitionCrumbLabel } from "@/components/layout/competition-crumb-label";
 import { getPageMeta } from "@/lib/navigation";
 import type { CurrentUser } from "@/lib/types";
+
+// El diálogo de contraseña solo se abre desde el menú de usuario: fuera del
+// bundle compartido (la barra superior está en el layout de todas las páginas).
+const PasswordDialog = dynamic(
+  () => import("@/components/admin/password-dialog").then((m) => m.PasswordDialog),
+  { ssr: false },
+);
 
 export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
   const pathname = usePathname();
@@ -37,6 +43,8 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
   };
 
   const handleSignOut = async () => {
+    // Carga el cliente Supabase solo al cerrar sesión, no en el bundle compartido.
+    const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/sign-in");

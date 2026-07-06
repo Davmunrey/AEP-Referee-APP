@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { LevelBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
-import { NewPromotionDialog } from "@/components/promotions/new-promotion-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -14,6 +14,10 @@ import { textareaFieldClass } from "@/lib/design-tokens";
 import type { PromotionRequest, Referee } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+const NewPromotionDialog = dynamic(
+  () => import("@/components/promotions/new-promotion-dialog").then((m) => m.NewPromotionDialog),
+  { ssr: false },
+);
 import {
   ArrowRight,
   CheckCircle2,

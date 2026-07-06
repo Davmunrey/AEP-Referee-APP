@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
@@ -17,7 +18,10 @@ import {
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { AnalyticsPayload } from "@/lib/types";
-import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-dialog";
+const ExportPreviewDialog = dynamic(
+  () => import("@/components/data-transfer/export-preview-dialog").then((m) => m.ExportPreviewDialog),
+  { ssr: false },
+);
 import { api } from "@/lib/api/client";
 import { tokens } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
