@@ -171,7 +171,6 @@ export const analyticsService = {
       coverage,
       activity: activityItems,
     });
-    await applyHealthHistory(health);
 
     const kpiCompetitions = (competitionRows ?? []) as {
       id: string;
@@ -188,13 +187,21 @@ export const analyticsService = {
 
     const coverageLabel = isZoneScoped ? "Cobertura Zonal" : "Cobertura Nacional";
 
-    return {
-      kpis: (await buildKpis({
+    // Independientes entre sí: el histórico de salud (muta `health`), los KPIs y
+    // las alertas de sanción se resuelven en paralelo en vez de en serie.
+    const [, kpis, sanctionAlerts] = await Promise.all([
+      applyHealthHistory(health),
+      buildKpis({
         referees: scopedReferees,
         competitions: kpiCompetitions,
         approvals: scopedApprovals,
         openSlotsByCompetition: kpiOpenSlots,
-      })).map((kpi) =>
+      }),
+      getSanctionAlerts(user, { skipExpire: true }),
+    ]);
+
+    return {
+      kpis: kpis.map((kpi) =>
         kpi.label === "Cobertura Nacional" ? { ...kpi, label: coverageLabel } : kpi,
       ),
       activity: activityItems,
@@ -204,7 +211,7 @@ export const analyticsService = {
       health,
       insights,
       coverage,
-      sanctionAlerts: await getSanctionAlerts(user, { skipExpire: true }),
+      sanctionAlerts,
       generatedAt: new Date().toISOString(),
     };
   },

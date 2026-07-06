@@ -87,14 +87,15 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   const canDedupe = role === "super_admin" || role === "delegado_jueces";
 
   const filtered = useMemo(() => {
+    const q = search.toLowerCase();
     return competitions.filter((e) => {
       if (filterTipo !== "TODOS" && e.tipo !== filterTipo) return false;
       if (filterEstado !== "TODOS" && e.estado !== filterEstado) return false;
       if (filterZona !== "TODOS" && e.zona !== filterZona) return false;
       if (
-        search &&
-        !e.nombre.toLowerCase().includes(search.toLowerCase()) &&
-        !e.sede.toLowerCase().includes(search.toLowerCase())
+        q &&
+        !e.nombre.toLowerCase().includes(q) &&
+        !e.sede.toLowerCase().includes(q)
       )
         return false;
       return true;
