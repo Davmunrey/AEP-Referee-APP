@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
@@ -127,9 +127,22 @@ export function RosterBuilder({
   const plantillaDone = totalSlots > 0;
   const asignacionDone = filledSlots > 0;
 
-  const refreshCompetitionList = () => {
-    router.refresh();
-  };
+  // Reconcilia los datos del servidor (estado/cobertura de la competición) tras
+  // guardar. Debounced: al rellenar una tarima se hacen muchas asignaciones
+  // seguidas; en vez de recargar todo el árbol en cada una (lento), se coalescen
+  // en un único refresco ~800 ms después de la última. El estado local ya se
+  // actualiza al instante desde la respuesta de la API.
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshCompetitionList = useCallback(() => {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => router.refresh(), 800);
+  }, [router]);
+  useEffect(
+    () => () => {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (isEditing || pending) return;
@@ -529,9 +542,14 @@ export function RosterBuilder({
       <EditCompetitionDialog competition={competition} zones={zones} open={editCompetitionOpen} onClose={() => setEditCompetitionOpen(false)} />
       {availabilityOpen && (
         <CompetitionAvailabilityDialog
-          competitionId={competition.id} referees={referees} zones={zones}
+          competitionId={competition.id} referees={referees}
           confirmedIds={confirmedIds} canEdit={canEdit}
-          onClose={() => setAvailabilityOpen(false)}
+          onClose={() => {
+            setAvailabilityOpen(false);
+            // Un único refresco al cerrar reconcilia el servidor, en vez de
+            // recargar todo el árbol en cada clic (lo que hacía lentísimo marcar).
+            router.refresh();
+          }}
           onToggle={(id, confirmed) =>
             setConfirmedIds((prev) => {
               const next = new Set(prev);

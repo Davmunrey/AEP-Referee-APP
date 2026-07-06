@@ -1,18 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { CheckCircle2, Circle, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CheckCircle2, Circle, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/client";
-import type { Referee, Zone } from "@/lib/types";
+import type { Referee } from "@/lib/types";
 import { zoneUiName } from "@/lib/aep-zones";
 
 interface CompetitionAvailabilityDialogProps {
   competitionId: string;
   referees: Referee[];
-  zones: Zone[];
   confirmedIds: Set<string>;
   canEdit: boolean;
   onClose: () => void;
@@ -22,42 +20,53 @@ interface CompetitionAvailabilityDialogProps {
 export function CompetitionAvailabilityDialog({
   competitionId,
   referees,
-  zones,
   confirmedIds,
   canEdit,
   onClose,
   onToggle,
 }: CompetitionAvailabilityDialogProps) {
-  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [pending, startTransition] = useTransition();
+  // Guarda por-juez en curso: solo se bloquea la fila que se está guardando,
+  // no toda la lista, así se pueden marcar varios jueces seguidos sin esperar.
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
-  const filtered = referees.filter(
-    (r) =>
-      r.estado === "Activo" &&
-      (search === "" ||
-        r.nombre.toLowerCase().includes(search.toLowerCase()) ||
-        (r.iniciales ?? "").toLowerCase().includes(search.toLowerCase())),
-  );
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return referees.filter(
+      (r) =>
+        r.estado === "Activo" &&
+        (q === "" ||
+          r.nombre.toLowerCase().includes(q) ||
+          (r.iniciales ?? "").toLowerCase().includes(q)),
+    );
+  }, [referees, search]);
 
   const toggle = (referee: Referee) => {
-    if (!canEdit || pending) return;
+    if (!canEdit || savingIds.has(referee.id)) return;
     const wasConfirmed = confirmedIds.has(referee.id);
     setError(null);
-    startTransition(async () => {
+    // Optimista: el check cambia al instante; revertimos si la red falla.
+    onToggle(referee.id, !wasConfirmed);
+    setSavingIds((prev) => new Set(prev).add(referee.id));
+    void (async () => {
       try {
         if (wasConfirmed) {
           await api.removeCompetitionAvailability(competitionId, referee.id);
         } else {
           await api.addCompetitionAvailability(competitionId, referee.id);
         }
-        onToggle(referee.id, !wasConfirmed);
-        router.refresh();
       } catch (err) {
+        onToggle(referee.id, wasConfirmed); // revertir
         setError(err instanceof Error ? err.message : "Error");
+      } finally {
+        setSavingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(referee.id);
+          return next;
+        });
       }
-    });
+    })();
   };
 
   return (
@@ -89,15 +98,18 @@ export function CompetitionAvailabilityDialog({
         <ul className="flex-1 overflow-y-auto divide-y divide-border-muted">
           {filtered.map((r) => {
             const confirmed = confirmedIds.has(r.id);
+            const saving = savingIds.has(r.id);
             return (
               <li key={r.id}>
                 <button
                   type="button"
-                  disabled={!canEdit || pending}
+                  disabled={!canEdit}
                   onClick={() => toggle(r)}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-hover disabled:opacity-50"
                 >
-                  {confirmed ? (
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-subtle-muted" />
+                  ) : confirmed ? (
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
                   ) : (
                     <Circle className="h-4 w-4 shrink-0 text-subtle-muted" />
@@ -105,7 +117,7 @@ export function CompetitionAvailabilityDialog({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{r.nombre}</p>
                     <p className="text-[11px] text-subtle-muted">
-                      {zoneUiName(zones.find((z) => z.code === r.zona)?.code ?? r.zona)} · {r.nivel}
+                      {zoneUiName(r.zona)} · {r.nivel}
                     </p>
                   </div>
                 </button>
