@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { CalendarPlus } from "lucide-react";
-import { CalendarImportDialog } from "@/components/competitions/calendar-import-dialog";
+
+const CalendarImportDialog = dynamic(
+  () => import("@/components/competitions/calendar-import-dialog").then((m) => m.CalendarImportDialog),
+  { ssr: false },
+);
 
 export function CalendarImportButton() {
   const [open, setOpen] = useState(false);
@@ -18,7 +23,7 @@ export function CalendarImportButton() {
         <CalendarPlus className="h-4 w-4" />
         Importar calendario AEP
       </Button>
-      <CalendarImportDialog open={open} onClose={() => setOpen(false)} />
+      {open && <CalendarImportDialog open onClose={() => setOpen(false)} />}
     </>
   );
 }

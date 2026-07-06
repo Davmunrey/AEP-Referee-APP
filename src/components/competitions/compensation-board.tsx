@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition, Fragment } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -28,8 +29,12 @@ import type { CompensationClaimPatch } from "@/lib/api/client-compensation";
 import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
 import type { Competition } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
-import { CompensationExportDialog } from "./compensation-export-dialog";
 import { CompensationEuroInput, CompensationKmInput } from "./compensation-numeric-inputs";
+
+const CompensationExportDialog = dynamic(
+  () => import("./compensation-export-dialog").then((m) => m.CompensationExportDialog),
+  { ssr: false },
+);
 
 interface CompensationBoardProps {
   competition: Competition;

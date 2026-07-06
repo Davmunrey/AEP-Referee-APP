@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ExportPreviewDialog } from "@/components/data-transfer/export-preview-dialog";
+import dynamic from "next/dynamic";
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, Download, FileSpreadsheet, FileText, Loader2, Send, Share2 } from "lucide-react";
+
+const ExportPreviewDialog = dynamic(
+  () => import("@/components/data-transfer/export-preview-dialog").then((m) => m.ExportPreviewDialog),
+  { ssr: false },
+);
 import { getApiBaseUrl } from "@/lib/api/config";
 import {
   DropdownMenu,

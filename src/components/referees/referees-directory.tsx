@@ -14,8 +14,13 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { JudgesRegistryImportButton } from "@/components/referees/judges-registry-import";
-import { NewRefereeDialog } from "@/components/referees/new-referee-dialog";
+
+const NewRefereeDialog = dynamic(
+  () => import("@/components/referees/new-referee-dialog").then((m) => m.NewRefereeDialog),
+  { ssr: false },
+);
 import { LevelBadge, StatusBadge } from "@/components/aep/badges";
 import { displayUltimo } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -474,12 +479,14 @@ export function RefereesDirectory({
         </div>
       )}
 
-      <NewRefereeDialog
-        zones={zones}
-        levels={levels}
-        open={showNew}
-        onClose={() => setShowNew(false)}
-      />
+      {showNew && (
+        <NewRefereeDialog
+          zones={zones}
+          levels={levels}
+          open
+          onClose={() => setShowNew(false)}
+        />
+      )}
     </div>
   );
 }

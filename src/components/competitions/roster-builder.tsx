@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { formatApiError } from "@/lib/api/error-message";
@@ -121,6 +121,8 @@ export function RosterBuilder({
   const [filterZona, setFilterZona] = useState(defaultZonaFilter);
   const [filterNivel, setFilterNivel] = useState("TODOS");
   const [search, setSearch] = useState("");
+  // Difiere el filtrado/ranking (caro) respecto al input: escribir sigue fluido.
+  const deferredSearch = useDeferredValue(search);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set(initialConfirmedIds));
   const [filterOnlyConfirmed, setFilterOnlyConfirmed] = useState(false);
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
@@ -244,8 +246,8 @@ export function RosterBuilder({
     if (selectedSlot && confirmedIds.size > 0 && !confirmedIds.has(r.id)) return false;
     if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
     if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
-    if (search) {
-      const q = search.toLowerCase();
+    if (deferredSearch) {
+      const q = deferredSearch.toLowerCase();
       if (!r.nombre.toLowerCase().includes(q) && !(r.iniciales ?? "").toLowerCase().includes(q)) return false;
     }
     if (selectedRoleKey && getAssignabilityReason(r, selectedRoleKey, competition.tipo, regulations)) return false;
@@ -256,7 +258,7 @@ export function RosterBuilder({
       if (block && !block.overridable) return false;
     }
     return true;
-  }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, flags, referees, regulations, search, selectedRoleKey, selectedSlot, template]);
+  }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, flags, referees, regulations, deferredSearch, selectedRoleKey, selectedSlot, template]);
 
   const persistAssign = (slotKey: string, refereeId: string) => {
     const block = getOperationalBlock({ template, assignments, slotKey, refereeId, flags });
