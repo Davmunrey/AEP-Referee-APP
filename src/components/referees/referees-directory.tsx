@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { currentSeasonYear } from "@/lib/season";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -333,7 +332,7 @@ export function RefereesDirectory({
                   <th className="px-4 py-2 font-medium">Zona</th>
                   <th className="px-4 py-2 font-medium">Nivel</th>
                   <th className="px-4 py-2 font-medium">Estado</th>
-                  <th className="px-4 py-2 text-right font-medium">Competiciones {currentSeasonYear()}</th>
+                  <th className="px-4 py-2 text-right font-medium">Plazas (histórico)</th>
                   <th className="px-4 py-2 font-medium">Última competición</th>
                   <th className="w-12 px-4 py-2" />
                 </tr>

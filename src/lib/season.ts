@@ -1,12 +1,16 @@
 /**
  * Utilidades de temporada — evita acoplar la app a un año fijo en UI y KPIs.
- * Los datos (competiciones, analytics) siguen siendo multi-año por fechas ISO.
+ * Los datos (competiciones, analytics, arbitrajes) son multi-año por fechas ISO.
  */
 
-/** Año deportivo AEP: a partir de julio la temporada etiqueta el año siguiente. */
+/**
+ * Temporada AEP = **año natural** (enero–diciembre). Coincide exactamente con el
+ * año de las fechas ISO de competiciones, la analítica por año y los arbitrajes
+ * por año natural. No hay desfase julio–junio: cambiar de año natural cambia de
+ * temporada de forma limpia en toda la app.
+ */
 export function currentSeasonYear(now = new Date()): number {
-  const year = now.getFullYear();
-  return now.getMonth() >= 6 ? year + 1 : year;
+  return now.getFullYear();
 }
 
 export function seasonLabel(year = currentSeasonYear()): string {

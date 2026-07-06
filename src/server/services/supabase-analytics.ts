@@ -216,7 +216,7 @@ export const analyticsService = {
     };
   },
 
-  getAnalytics: async (user?: SessionUser): Promise<AnalyticsPayload> => {
+  getAnalytics: async (user?: SessionUser, requestedYear?: number): Promise<AnalyticsPayload> => {
     const userZone =
       user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
     const supabase = db();
@@ -248,7 +248,12 @@ export const analyticsService = {
     const years = Array.from(
       new Set(competitions.map((c) => yearFromIso(c.fecha)).filter((y): y is number => y != null)),
     ).sort((a, b) => a - b);
-    const selectedYear = years[years.length - 1] ?? new Date().getFullYear();
+    // Año seleccionable por el usuario (query ?year=); si no es válido o no tiene
+    // datos, cae al año natural más reciente con actividad.
+    const selectedYear =
+      requestedYear != null && years.includes(requestedYear)
+        ? requestedYear
+        : years[years.length - 1] ?? new Date().getFullYear();
     const yearAgg = new Map<number, { competitions: number; criticalCompetitions: number; requiredSlots: number; filledSlots: number; refereeIds: Set<string> }>();
     const zoneAgg = new Map<string, { competitions: number; criticalCompetitions: number; requiredSlots: number; filledSlots: number; refereeIds: Set<string> }>();
     const topRefAgg = new Map<string, { competitionIds: Set<string>; slots: number }>();

@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
@@ -134,7 +135,13 @@ function SummaryMetric({
 }
 
 export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
+  const router = useRouter();
   const [exportOpen, setExportOpen] = useState(false);
+  // Años naturales seleccionables (más reciente primero).
+  const yearOptions = useMemo(
+    () => [...data.availableYears].sort((a, b) => b - a),
+    [data.availableYears],
+  );
   const exportFilename = `estadisticas-${new Date().toISOString().slice(0, 10)}.csv`;
   const maxCompetitions = Math.max(...data.topReferees.map((r) => r.assignedCompetitions), 1);
 
@@ -160,7 +167,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         open={exportOpen}
         onClose={() => setExportOpen(false)}
         kind="analytics_export"
-        fetchText={() => api.fetchAnalyticsExportText()}
+        fetchText={() => api.fetchAnalyticsExportText(data.selectedYear)}
         filename={exportFilename}
         mime="text/csv;charset=utf-8"
       />
@@ -170,10 +177,36 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         title="Estadísticas"
         description={`Resumen ${data.selectedYear} · campeonatos, plazas de plantilla y asignaciones en tarima.`}
       >
-        <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setExportOpen(true)}>
-          <Download className="h-3.5 w-3.5" aria-hidden="true" />
-          Exportar CSV
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {yearOptions.length > 1 && (
+            <div
+              className="flex flex-wrap items-center gap-1"
+              role="group"
+              aria-label="Año natural"
+            >
+              {yearOptions.map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => router.push(`/analytics?year=${y}`)}
+                  aria-pressed={y === data.selectedYear}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[11px] font-medium tabular-nums transition-colors",
+                    y === data.selectedYear
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border text-subtle-muted hover:bg-surface-hover",
+                  )}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+          )}
+          <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setExportOpen(true)}>
+            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+            Exportar CSV
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Resumen anual */}

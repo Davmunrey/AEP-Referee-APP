@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { currentSeasonYear, operationalQuarterLabel, seasonLabel } from "@/lib/season";
 
 describe("season utilities", () => {
-  it("labels the sports season from July onward", () => {
+  it("season equals the calendar year (no July shift)", () => {
+    expect(currentSeasonYear(new Date(2026, 0, 1))).toBe(2026);
     expect(currentSeasonYear(new Date(2026, 5, 1))).toBe(2026);
-    expect(currentSeasonYear(new Date(2026, 6, 1))).toBe(2027);
+    expect(currentSeasonYear(new Date(2026, 6, 1))).toBe(2026);
+    expect(currentSeasonYear(new Date(2026, 11, 31))).toBe(2026);
   });
 
   it("builds human-readable season label", () => {
