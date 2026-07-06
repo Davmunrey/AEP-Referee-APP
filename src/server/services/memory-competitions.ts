@@ -111,6 +111,17 @@ export async function getCompetitions(user?: SessionUser): Promise<Competition[]
   return list;
 }
 
+export async function getCompetitionOptions(
+  user?: SessionUser,
+): Promise<{ id: string; nombre: string }[]> {
+  let list = getStore().competitions;
+  if (user?.role === "delegado_zona" && user.zona) {
+    const userZone = resolveZoneCode(user.zona);
+    list = list.filter((c) => resolveZoneCode(c.zona) === userZone);
+  }
+  return list.map((c) => ({ id: c.id, nombre: c.nombre }));
+}
+
 export async function getCompetition(id: string) {
   const comp = getStore().competitions.find((c) => c.id === id);
   if (!comp) return undefined;

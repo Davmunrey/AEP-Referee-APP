@@ -50,6 +50,24 @@ export const competitionService = {
     return list;
   },
 
+  /** Lista ligera {id, nombre} para desplegables: sin escanear asignaciones ni
+   * calcular cobertura (a diferencia de getCompetitions). */
+  getCompetitionOptions: async (
+    user?: SessionUser,
+  ): Promise<{ id: string; nombre: string }[]> => {
+    const supabase = db();
+    const { data } = await supabase
+      .from("competitions")
+      .select("id, nombre, zona")
+      .order("fecha");
+    let list = (data ?? []) as { id: string; nombre: string; zona: string }[];
+    if (user?.role === "delegado_zona" && user.zona) {
+      const userZone = resolveZoneCode(user.zona);
+      list = list.filter((c) => resolveZoneCode(String(c.zona)) === userZone);
+    }
+    return list.map((c) => ({ id: String(c.id), nombre: String(c.nombre) }));
+  },
+
   getCompetition: async (id: string): Promise<Competition | undefined> => {
     const supabase = db();
     // Fila y asignaciones en paralelo (antes eran secuenciales). Es una función

@@ -32,7 +32,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   const [profile, meta, competitions] = await Promise.all([
     dataService.getJudgeProfile(id),
     dataService.getMeta(user),
-    dataService.getCompetitions(user),
+    dataService.getCompetitionOptions(user),
   ]);
   if (!profile) notFound();
 
@@ -328,7 +328,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       <ReportsManager
         reports={reports}
         referees={[{ id: referee.id, nombre: referee.nombre }]}
-        competitions={competitions.map((c) => ({ id: c.id, nombre: c.nombre }))}
+        competitions={competitions}
         lockedRefereeId={referee.id}
         canEdit={canEdit}
         canDelete={canDelete}
