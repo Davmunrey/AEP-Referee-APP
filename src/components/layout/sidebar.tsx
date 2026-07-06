@@ -34,13 +34,26 @@ type NavItem = {
   match: (p: string) => boolean;
 };
 
-function buildPrimaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
-  const isFinancial = user.role === "responsable_financiero_jueces";
-  const canCompensation =
-    user.role === "super_admin" || user.role === "responsable_financiero_jueces";
+type NavGroup = { title: string; items: NavItem[] };
 
-  const items: NavItem[] = [
+/**
+ * Navegación agrupada por dominio (5 grupos en vez de 2), respetando el rol:
+ * General · Competiciones · Jueces · Referencia · Administración.
+ * Los grupos vacíos (p. ej. tras filtrar por rol) se omiten al renderizar.
+ */
+function buildNavGroups(counts: NavCounts, user: SessionUser): NavGroup[] {
+  const isFinancial = user.role === "responsable_financiero_jueces";
+  const canCompensation = user.role === "super_admin" || isFinancial;
+  const canSeeUsers = user.role === "super_admin" || user.role === "delegado_jueces";
+
+  // — General: visión de conjunto —
+  const general: NavItem[] = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard, match: (p) => p === "/" },
+    { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
+  ];
+
+  // — Competiciones: todo lo ligado a un campeonato/tarima —
+  const competiciones: NavItem[] = [
     {
       href: "/competitions",
       label: "Campeonatos",
@@ -49,48 +62,18 @@ function buildPrimaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
       match: (p) => p === "/competitions" || p === "/competitions/new",
     },
   ];
-
-  if (canCompensation) {
-    items.push({
-      href: "/compensation",
-      label: "Compensación",
-      icon: Banknote,
-      match: (p) => p === "/compensation" || p.endsWith("/compensation"),
-    });
-  }
-
   if (!isFinancial) {
-    items.push({
-      href: counts.activeRosterHref,
-      label: "Tarima activa",
-      icon: Layers,
-      match: (p) =>
-        p.startsWith("/competitions/") &&
-        p !== "/competitions" &&
-        p !== "/competitions/new" &&
-        !p.endsWith("/compensation"),
-    });
-  }
-
-  items.push({
-    href: "/referees",
-    label: "Directorio",
-    icon: Users,
-    match: (p) => p.startsWith("/referees"),
-  });
-
-  return items;
-}
-
-function buildSecondaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
-  const canSeeUsers =
-    user.role === "super_admin" || user.role === "delegado_jueces";
-  const isFinancial = user.role === "responsable_financiero_jueces";
-
-  const items: NavItem[] = [];
-
-  if (!isFinancial) {
-    items.push(
+    competiciones.push(
+      {
+        href: counts.activeRosterHref,
+        label: "Tarima activa",
+        icon: Layers,
+        match: (p) =>
+          p.startsWith("/competitions/") &&
+          p !== "/competitions" &&
+          p !== "/competitions/new" &&
+          !p.endsWith("/compensation"),
+      },
       {
         href: "/approvals",
         label: "Aprobaciones",
@@ -98,37 +81,53 @@ function buildSecondaryNav(counts: NavCounts, user: SessionUser): NavItem[] {
         badge: counts.approvals,
         match: (p) => p.startsWith("/approvals"),
       },
+    );
+  }
+  if (canCompensation) {
+    competiciones.push({
+      href: "/compensation",
+      label: "Compensación",
+      icon: Banknote,
+      match: (p) => p === "/compensation" || p.endsWith("/compensation"),
+    });
+  }
+
+  // — Jueces: gestión del censo y su carrera —
+  const jueces: NavItem[] = [
+    { href: "/referees", label: "Directorio", icon: Users, match: (p) => p.startsWith("/referees") },
+  ];
+  if (!isFinancial) {
+    jueces.push(
       { href: "/promotions", label: "Ascensos", icon: Award, match: (p) => p.startsWith("/promotions") },
-      {
-        href: "/exams",
-        label: "Exámenes",
-        icon: GraduationCap,
-        match: (p) => p.startsWith("/exams"),
-      },
-      {
-        href: "/reports",
-        label: "Informes",
-        icon: ClipboardList,
-        match: (p) => p.startsWith("/reports"),
-      },
+      { href: "/exams", label: "Exámenes", icon: GraduationCap, match: (p) => p.startsWith("/exams") },
+      { href: "/reports", label: "Informes", icon: ClipboardList, match: (p) => p.startsWith("/reports") },
     );
   }
 
-  items.push(
-    { href: "/analytics", label: "Estadísticas", icon: BarChart3, match: (p) => p.startsWith("/analytics") },
+  // — Referencia: consulta —
+  const referencia: NavItem[] = [
     { href: "/regulations", label: "Normativa", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
     { href: "/docs", label: "Documentación", icon: FileText, match: (p) => p.startsWith("/docs") },
-  );
+  ];
 
+  // — Administración —
+  const administracion: NavItem[] = [];
   if (canSeeUsers) {
-    items.push({
+    administracion.push({
       href: "/admin/users",
       label: "Usuarios",
       icon: UserCog,
       match: (p) => p.startsWith("/admin"),
     });
   }
-  return items;
+
+  return [
+    { title: "General", items: general },
+    { title: "Competiciones", items: competiciones },
+    { title: "Jueces", items: jueces },
+    { title: "Referencia", items: referencia },
+    { title: "Administración", items: administracion },
+  ].filter((g) => g.items.length > 0);
 }
 
 interface SidebarProps {
@@ -144,8 +143,7 @@ export function Sidebar({
   navCounts,
   onToggle,
 }: SidebarProps) {
-  const primaryNav = buildPrimaryNav(navCounts, currentUser);
-  const secondaryNav = buildSecondaryNav(navCounts, currentUser);
+  const navGroups = buildNavGroups(navCounts, currentUser);
   const pathname = usePathname();
 
   const renderLink = (item: NavItem) => {
@@ -226,15 +224,20 @@ export function Sidebar({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto pb-2">
-        <nav className={cn("mt-5 flex flex-col gap-1", collapsed ? "px-0" : "px-3")}>
-          {!collapsed && <p className="friendly-label mb-2 px-3">Operaciones</p>}
-          {primaryNav.map((item) => renderLink(item))}
-        </nav>
-
-        <nav className={cn("mt-5 flex flex-col gap-1", collapsed ? "px-0" : "px-3")}>
-          {!collapsed && <p className="friendly-label mb-2 px-3">Gestión</p>}
-          {secondaryNav.map((item) => renderLink(item))}
-        </nav>
+        {navGroups.map((group, gi) => (
+          <nav
+            key={group.title}
+            className={cn(
+              "flex flex-col gap-1",
+              gi === 0 ? "mt-3" : "mt-5",
+              collapsed ? "px-0" : "px-3",
+            )}
+            aria-label={group.title}
+          >
+            {!collapsed && <p className="friendly-label mb-2 px-3">{group.title}</p>}
+            {group.items.map((item) => renderLink(item))}
+          </nav>
+        ))}
       </div>
 
       <div className={cn("border-t border-border-muted p-3", collapsed && "px-0")}>
