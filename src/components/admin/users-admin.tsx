@@ -37,6 +37,8 @@ interface ProfileRow {
   zona: string | null;
   activo: boolean;
   created_at?: string;
+  /** Último inicio de sesión (auth.users.last_sign_in_at); null si nunca entró. */
+  last_sign_in_at?: string | null;
 }
 
 interface UsersAdminProps {
@@ -74,6 +76,17 @@ function formatRelativeTime(dateStr: string): string {
   if (months < 12) return `hace ${months} mes${months !== 1 ? "es" : ""}`;
   const years = Math.floor(months / 12);
   return `hace ${years} año${years !== 1 ? "s" : ""}`;
+}
+
+/** Fecha y hora absoluta para el tooltip (title) de las celdas de tiempo. */
+function formatAbsolute(dateStr: string): string {
+  return new Date(dateStr).toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function UsersAdmin({ zones }: UsersAdminProps) {
@@ -389,6 +402,7 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
               <DataTableHeadCell>Zona</DataTableHeadCell>
               <DataTableHeadCell>Estado</DataTableHeadCell>
               <DataTableHeadCell>Alta</DataTableHeadCell>
+              <DataTableHeadCell>Último acceso</DataTableHeadCell>
               <DataTableHeadCell>Acciones</DataTableHeadCell>
             </DataTableHeaderRow>
           </DataTableHead>
@@ -416,7 +430,22 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
                     <Badge variant={u.activo ? "success" : "muted"}>{u.activo ? "Activo" : "Inactivo"}</Badge>
                   </DataTableCell>
                   <DataTableCell className="text-xs text-subtle-muted">
-                    {u.created_at ? formatRelativeTime(u.created_at) : "—"}
+                    {u.created_at ? (
+                      <span title={formatAbsolute(u.created_at)}>{formatRelativeTime(u.created_at)}</span>
+                    ) : (
+                      "—"
+                    )}
+                  </DataTableCell>
+                  <DataTableCell className="text-xs">
+                    {u.last_sign_in_at ? (
+                      <span className="text-foreground-secondary" title={formatAbsolute(u.last_sign_in_at)}>
+                        {formatRelativeTime(u.last_sign_in_at)}
+                      </span>
+                    ) : (
+                      <span className="text-subtle-muted" title="Nunca ha iniciado sesión">
+                        Nunca
+                      </span>
+                    )}
                   </DataTableCell>
                   <DataTableCell>
                     <div className="flex items-center gap-2">
