@@ -123,7 +123,7 @@ export function RosterCompetitionHeader({
               {violationCount} violación{violationCount > 1 ? "es" : ""} de normativa
             </p>
           )}
-          <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {canEdit && isEditing && (
               <Button
                 type="button"

@@ -143,7 +143,7 @@ export function ReportCard({
             </>
           )}
           {editingId !== report.id && (
-            <div className="mt-3 flex items-center gap-1">
+            <div className="mt-3 flex items-center gap-2">
               {canEdit && (
                 <Button size="sm" variant="ghost" className="h-7 gap-1 rounded-lg text-[11.5px] text-subtle-muted hover:text-foreground" disabled={busy || editBusy} onClick={onStartEdit}>
                   <Pencil className="h-3 w-3" />
