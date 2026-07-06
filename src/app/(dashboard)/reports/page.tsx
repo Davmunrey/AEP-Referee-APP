@@ -15,7 +15,7 @@ export default async function ReportsPage() {
   const [reports, referees, competitions] = await Promise.all([
     dataService.getReports(undefined, user),
     dataService.getReferees({ user }),
-    dataService.getCompetitions(user),
+    dataService.getCompetitionOptions(user),
   ]);
 
   const incidencias = reports.filter((r) => r.tipo === "Incidencia").length;
@@ -99,7 +99,7 @@ export default async function ReportsPage() {
       <ReportsManager
         reports={reports}
         referees={referees.map((r) => ({ id: r.id, nombre: r.nombre }))}
-        competitions={competitions.map((c) => ({ id: c.id, nombre: c.nombre }))}
+        competitions={competitions}
         canEdit={user.role !== "solo_ver"}
         canDelete={user.role === "super_admin" || user.role === "delegado_jueces"}
       />

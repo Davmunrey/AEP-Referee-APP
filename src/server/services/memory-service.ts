@@ -28,6 +28,7 @@ export const memoryDataService = {
   expireStaleSanctions: admin.expireStaleSanctions,
 
   getCompetitions: competitions.getCompetitions,
+  getCompetitionOptions: competitions.getCompetitionOptions,
   getCompetition: competitions.getCompetition,
   createCompetition: competitions.createCompetition,
   updateCompetition: competitions.updateCompetition,

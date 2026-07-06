@@ -33,6 +33,7 @@ export const supabaseDataService = {
 
   // ── Competitions ──────────────────────────────────────────────────────────
   getCompetitions: competitionService.getCompetitions,
+  getCompetitionOptions: competitionService.getCompetitionOptions,
   getCompetition: competitionService.getCompetition,
   createCompetition: competitionService.createCompetition,
   updateCompetition: competitionService.updateCompetition,

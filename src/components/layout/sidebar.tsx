@@ -244,7 +244,9 @@ export function Sidebar({
           onClick={onToggle}
           className={cn(
             "justify-center rounded-xl text-subtle-muted hover:bg-surface focus-ring",
-            collapsed ? "mx-auto h-9 w-9" : "w-full",
+            // Colapsado: misma caja que los iconos de navegación (h-11 w-11) para
+            // que el chevron quede alineado en la misma columna vertical.
+            collapsed ? "mx-auto h-11 w-11 p-0" : "w-full",
           )}
           aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
         >
