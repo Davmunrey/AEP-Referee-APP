@@ -25,7 +25,7 @@ export function StatCard({ label, value, sub, accent = "neutral", className }: S
         className,
       )}
     >
-      <div className={cn("h-0.5 w-full rounded-t-2xl", style.stripe)} aria-hidden="true" />
+      <div className={cn("h-0.5 w-full rounded-t-lg", style.stripe)} aria-hidden="true" />
       <CardHeader className="flex flex-row items-center gap-2 pb-1">
         <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", style.dot)} aria-hidden="true" />
         <CardTitle className={cn("text-xs font-medium uppercase tracking-widest", tokens.text.muted)}>
