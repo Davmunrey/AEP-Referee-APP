@@ -133,7 +133,14 @@ export function RosterBuilder({
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const [statusIsError, setStatusIsError] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [workflowStep, setWorkflowStep] = useState<RosterWorkflowStep>("asignacion");
+  // Entra al paso REAL según el progreso: sin plantilla → "plantilla"; tarima
+  // completa → "revisión"; si tiene plantilla pero faltan huecos → "asignación".
+  const [workflowStep, setWorkflowStep] = useState<RosterWorkflowStep>(() => {
+    const c = computeRosterCoverage(initialTemplate, initialAssignments, competition.requeridos);
+    if (c.requeridos === 0) return "plantilla";
+    if (c.pct >= 100) return "revision";
+    return "asignacion";
+  });
 
   useEffect(() => {
     setAprobacion(competition.aprobacion);
@@ -439,7 +446,7 @@ export function RosterBuilder({
         )}
         {workflowStep === "revision" && !isEditing && !readOnly ? (
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <RosterRevisionPanel filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} />
+            <RosterRevisionPanel competitionId={competition.id} filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} />
           </div>
         ) : workflowStep === "plantilla" && !isEditing && totalSlots === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
