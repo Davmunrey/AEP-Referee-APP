@@ -17,7 +17,10 @@ export async function getNavCounts(user?: SessionUser) {
   };
 }
 
-export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload> {
+export async function getAnalytics(
+  user?: SessionUser,
+  requestedYear?: number,
+): Promise<AnalyticsPayload> {
   const store = getStore();
   const competitions = await getCompetitions(user);
   const userZone =
@@ -28,7 +31,10 @@ export async function getAnalytics(user?: SessionUser): Promise<AnalyticsPayload
   const years = Array.from(
     new Set(competitions.map((c) => yearFromIso(c.fecha)).filter((y): y is number => y != null)),
   ).sort((a, b) => a - b);
-  const selectedYear = years[years.length - 1] ?? new Date().getFullYear();
+  const selectedYear =
+    requestedYear != null && years.includes(requestedYear)
+      ? requestedYear
+      : years[years.length - 1] ?? new Date().getFullYear();
   const yearAgg = new Map<number, { competitions: number; criticalCompetitions: number; requiredSlots: number; filledSlots: number; refereeIds: Set<string> }>();
   const zoneAgg = new Map<string, { competitions: number; criticalCompetitions: number; requiredSlots: number; filledSlots: number; refereeIds: Set<string> }>();
   const topRefAgg = new Map<string, { competitionIds: Set<string>; slots: number }>();

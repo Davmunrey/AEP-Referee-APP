@@ -96,8 +96,9 @@ export const miscApi = {
 
   analyticsExportUrl: () => `${getApiBaseUrl()}/analytics/export`,
 
-  fetchAnalyticsExportText: async (): Promise<string> => {
-    const res = await fetch(`${getApiBaseUrl()}/analytics/export`, { credentials: "include" });
+  fetchAnalyticsExportText: async (year?: number): Promise<string> => {
+    const qs = year != null ? `?year=${year}` : "";
+    const res = await fetch(`${getApiBaseUrl()}/analytics/export${qs}`, { credentials: "include" });
     if (!res.ok) {
       const parsed = await parseApiResponse<unknown>(res);
       if (isApiError(parsed)) throw new Error(parsed.error);
