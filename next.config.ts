@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["pdfkit"],
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-dialog",
+    ],
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },

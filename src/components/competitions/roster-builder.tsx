@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
@@ -36,11 +37,28 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronRight, FileUp } from "lucide-react";
 import { parseSlotKey } from "@/lib/roster-template";
-import { RosterTemplateEditor } from "@/components/competitions/roster-template-editor";
-import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
-import { QuadrantImportDialog } from "@/components/competitions/quadrant-import-dialog";
-import { CompetitionAvailabilityDialog } from "@/components/competitions/competition-availability-dialog";
-import { EditCompetitionDialog } from "@/components/competitions/edit-competition-dialog";
+// Diálogos/editores pesados: se cargan bajo demanda (al abrirlos), no en el
+// bundle inicial de la ruta de tarima (la más pesada de la app).
+const RosterTemplateEditor = dynamic(
+  () => import("@/components/competitions/roster-template-editor").then((m) => m.RosterTemplateEditor),
+  { ssr: false },
+);
+const ScheduleImportDialog = dynamic(
+  () => import("@/components/competitions/schedule-import-dialog").then((m) => m.ScheduleImportDialog),
+  { ssr: false },
+);
+const QuadrantImportDialog = dynamic(
+  () => import("@/components/competitions/quadrant-import-dialog").then((m) => m.QuadrantImportDialog),
+  { ssr: false },
+);
+const CompetitionAvailabilityDialog = dynamic(
+  () => import("@/components/competitions/competition-availability-dialog").then((m) => m.CompetitionAvailabilityDialog),
+  { ssr: false },
+);
+const EditCompetitionDialog = dynamic(
+  () => import("@/components/competitions/edit-competition-dialog").then((m) => m.EditCompetitionDialog),
+  { ssr: false },
+);
 import { RosterCompetitionHeader } from "./roster-competition-header";
 import { RosterImprevistoBanner } from "./roster-imprevisto-banner";
 import { RosterRefereePanelLeft } from "./roster-referee-panel";
@@ -197,15 +215,23 @@ export function RosterBuilder({
     () => assignedRefereeIdsInSession(assignments, activeSessionKey),
     [assignments, activeSessionKey],
   );
-  const getReferee = (id: string) => referees.find((r) => r.id === id);
-  const checkViolation = (roleKey: RoleKey, refereeId: string) => {
-    const ref = getReferee(refereeId);
-    if (!ref) return undefined;
-    return findRegulationViolation(roleKey, competition.tipo, ref.nivel, regulations);
-  };
+  // Índice por id: evita el find O(n) repetido por slot/render en toda la tarima.
+  const refereeById = useMemo(
+    () => new Map(referees.map((r) => [r.id, r])),
+    [referees],
+  );
+  const getReferee = useCallback((id: string) => refereeById.get(id), [refereeById]);
+  const checkViolation = useCallback(
+    (roleKey: RoleKey, refereeId: string) => {
+      const ref = refereeById.get(refereeId);
+      if (!ref) return undefined;
+      return findRegulationViolation(roleKey, competition.tipo, ref.nivel, regulations);
+    },
+    [refereeById, competition.tipo, regulations],
+  );
   const violationCount = useMemo(
-    () => countRegulationViolations(template, assignments, competition.tipo, (id) => referees.find((r) => r.id === id)?.nivel, regulations),
-    [assignments, template, regulations, competition.tipo, referees],
+    () => countRegulationViolations(template, assignments, competition.tipo, (id) => refereeById.get(id)?.nivel, regulations),
+    [assignments, template, regulations, competition.tipo, refereeById],
   );
   const selectedRoleKey = selectedSlot ? parseSlotKey(selectedSlot)?.roleKey : undefined;
 

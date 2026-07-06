@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AepGuidePanel } from "@/components/regulations/aep-guide-panel";
@@ -143,17 +143,26 @@ export function RegulationsView() {
   const [ipfQuery, setIpfQuery] = useState("");
 
   const q = ipfQuery.trim().toLowerCase();
-  const ipfChapters: IpfChapter[] = !q
-    ? IPF_CHAPTERS
-    : IPF_CHAPTERS.flatMap((c) => {
-        const chapterMatch = `cap ${c.num} ${c.title}`.toLowerCase().includes(q);
-        if (chapterMatch) return [c];
-        const articles = c.articles.filter((a) =>
-          `${c.num}.${a.num} ${a.title ?? ""} ${a.text}`.toLowerCase().includes(q),
-        );
-        return articles.length ? [{ ...c, articles }] : [];
-      });
-  const ipfArticleCount = ipfChapters.reduce((n, c) => n + c.articles.length, 0);
+  // Filtra los 98 artículos (con toLowerCase del texto completo) solo cuando
+  // cambia la consulta, no en cada render/tecla del resto de la vista.
+  const ipfChapters: IpfChapter[] = useMemo(
+    () =>
+      !q
+        ? IPF_CHAPTERS
+        : IPF_CHAPTERS.flatMap((c) => {
+            const chapterMatch = `cap ${c.num} ${c.title}`.toLowerCase().includes(q);
+            if (chapterMatch) return [c];
+            const articles = c.articles.filter((a) =>
+              `${c.num}.${a.num} ${a.title ?? ""} ${a.text}`.toLowerCase().includes(q),
+            );
+            return articles.length ? [{ ...c, articles }] : [];
+          }),
+    [q],
+  );
+  const ipfArticleCount = useMemo(
+    () => ipfChapters.reduce((n, c) => n + c.articles.length, 0),
+    [ipfChapters],
+  );
 
   const toggleChapter = (num: string) => {
     setOpenChapters((prev) => {

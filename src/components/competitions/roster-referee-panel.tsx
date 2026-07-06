@@ -106,6 +106,43 @@ export function RosterRefereePanelLeft({
     assignedIds,
   ]);
   const suggestionsActive = !readOnly && !!selectedSlot && !!selectedRoleKey;
+
+  // Precalcula bloqueo/aviso por fila una sola vez por cambio real de inputs.
+  // Antes se hacía getOperationalBlock/getAssignabilityReason (~90×) en cada
+  // render del padre — incluido cada frame de arrastre (draggedId/isDragging).
+  const rowMeta = useMemo(() => {
+    const map = new Map<string, { blockedReason: string | null; warningReason: string | null }>();
+    if (!selectedRoleKey || !selectedSlot) return map;
+    for (const referee of orderedReferees) {
+      const opBlock = getOperationalBlock({
+        template,
+        assignments,
+        slotKey: selectedSlot,
+        refereeId: referee.id,
+        flags,
+      });
+      const blockedReason =
+        getAssignabilityReason(referee, selectedRoleKey, competitionTipo, regulations) ??
+        (opBlock && !opBlock.overridable ? opBlock.reason : null);
+      const warningReason = !blockedReason
+        ? opBlock?.overridable
+          ? opBlock.reason
+          : getRecommendationWarning(referee, selectedRoleKey, competitionTipo, regulations)
+        : null;
+      map.set(referee.id, { blockedReason, warningReason });
+    }
+    return map;
+  }, [
+    orderedReferees,
+    selectedRoleKey,
+    selectedSlot,
+    template,
+    assignments,
+    flags,
+    competitionTipo,
+    regulations,
+  ]);
+
   return (
     <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
       <div className="border-b border-border px-2.5 py-2">
@@ -204,23 +241,11 @@ export function RosterRefereePanelLeft({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <ul className="space-y-0.5 p-1.5">
           {orderedReferees.map((referee) => {
-            const opBlock =
-              selectedRoleKey && selectedSlot
-                ? getOperationalBlock({ template, assignments, slotKey: selectedSlot, refereeId: referee.id, flags })
-                : null;
             // Bloqueo duro (nivel/normativa o conflicto no forzable) → no asignable.
             // Conflicto forzable (solape) → aviso, sigue siendo asignable (confirma al asignar).
-            const blockedReason =
-              selectedRoleKey && selectedSlot
-                ? getAssignabilityReason(referee, selectedRoleKey, competitionTipo, regulations) ??
-                  (opBlock && !opBlock.overridable ? opBlock.reason : null)
-                : null;
-            const warningReason =
-              selectedRoleKey && !blockedReason
-                ? opBlock?.overridable
-                  ? opBlock.reason
-                  : getRecommendationWarning(referee, selectedRoleKey, competitionTipo, regulations)
-                : null;
+            const meta = rowMeta.get(referee.id);
+            const blockedReason = meta?.blockedReason ?? null;
+            const warningReason = meta?.warningReason ?? null;
             return (
               <RefereeCard
                 key={referee.id}
