@@ -28,7 +28,6 @@ import {
   hasApprovalCompetitionColumns,
   hasApprovalSubmitterColumns,
   loadAssignments,
-  loadCrossZoneMap,
   loadFlags,
   loadRosterAssignmentData,
   parseSlotKey,
@@ -43,9 +42,15 @@ export const rosterService = {
     competitionId: string,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
   ) => {
-    if (!(await getCompetitionFn(competitionId))) return undefined;
-    const template = await getCompetitionTemplate(competitionId);
-    const { assignments, flags, crossZoneMap } = await loadRosterAssignmentData(competitionId);
+    // Paraleliza las tres lecturas (existencia, plantilla, asignaciones) en vez
+    // de encadenarlas: mismo trabajo, ~1 round-trip de latencia en vez de 3.
+    const [comp, template, assignmentData] = await Promise.all([
+      getCompetitionFn(competitionId),
+      getCompetitionTemplate(competitionId),
+      loadRosterAssignmentData(competitionId),
+    ]);
+    if (!comp) return undefined;
+    const { assignments, flags, crossZoneMap } = assignmentData;
     return { template: template ?? [], assignments, flags, crossZoneMap };
   },
 
@@ -203,9 +208,13 @@ export const rosterService = {
     if (blocked) return { error: blocked };
 
     const supabase = db();
-    const assignments = await loadAssignments(competitionId);
-    const template = (await getCompetitionTemplate(competitionId)) ?? [];
-    const existingFlags = await loadFlags(competitionId);
+    // Una sola lectura de roster_assignments (antes loadAssignments + loadFlags
+    // escaneaban la misma tabla 2 veces) en paralelo con la plantilla.
+    const [{ assignments, flags: existingFlags }, templateRaw] = await Promise.all([
+      loadRosterAssignmentData(competitionId),
+      getCompetitionTemplate(competitionId),
+    ]);
+    const template = templateRaw ?? [];
     // El * (compartido) del hueco existente o del nuevo permite forzar el solape.
     const operationFlags =
       slotFlags && (slotFlags.compartido || slotFlags.intercambio)
@@ -242,8 +251,13 @@ export const rosterService = {
     // (constraint, RLS, caída) respondería "OK" con el juez sin asignar.
     if (writeError) return { error: "No se pudo guardar la asignación" };
 
-    const freshAssignments = await loadAssignments(competitionId);
-    const freshFlags = await loadFlags(competitionId);
+    // Relee una sola vez tras la escritura (antes: loadAssignments + loadFlags +
+    // loadCrossZoneMap = 3 escaneos idénticos de la misma tabla).
+    const {
+      assignments: freshAssignments,
+      flags: freshFlags,
+      crossZoneMap: freshCrossZoneMap,
+    } = await loadRosterAssignmentData(competitionId);
     const recheck = validateRosterOperation({
       template,
       assignments: freshAssignments,
@@ -271,7 +285,7 @@ export const rosterService = {
     return {
       assignments: { ...freshAssignments },
       flags: freshFlags,
-      crossZoneMap: await loadCrossZoneMap(competitionId),
+      crossZoneMap: freshCrossZoneMap,
     };
   },
 

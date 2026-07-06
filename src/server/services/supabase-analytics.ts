@@ -212,10 +212,26 @@ export const analyticsService = {
   getAnalytics: async (user?: SessionUser): Promise<AnalyticsPayload> => {
     const userZone =
       user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
-    const competitions = await competitionService.getCompetitions(user);
-    const assignmentsByComp = await cachedLoadAllAssignments();
     const supabase = db();
-    const { data: compTemplates } = await supabase.from("competitions").select("id, template, tipo");
+    // Lecturas independientes en paralelo (antes eran ~6 awaits en serie en la
+    // página más pesada). El cruce cross-zona depende del año y va después.
+    const [
+      competitions,
+      assignmentsByComp,
+      { data: compTemplates },
+      { data: referees },
+      zones,
+      { data: approvals },
+    ] = await Promise.all([
+      competitionService.getCompetitions(user),
+      cachedLoadAllAssignments(),
+      supabase.from("competitions").select("id, template, tipo"),
+      supabase.from("referees").select("id, nombre, nivel, zona, estado"),
+      getZones(),
+      userZone
+        ? supabase.from("approval_proposals").select("status, submitted_at").eq("zona", userZone)
+        : supabase.from("approval_proposals").select("status, submitted_at"),
+    ]);
     const templateById = new Map(
       (compTemplates ?? []).map((row) => {
         const r = row as { id: string; template: RosterSession[] | null; tipo: string };
@@ -264,7 +280,6 @@ export const analyticsService = {
         }
       }
     }
-    const { data: referees } = await supabase.from("referees").select("*");
     const mappedReferees = (referees ?? []).map((r) => ({
       id: String((r as Record<string, unknown>).id),
       nombre: String((r as Record<string, unknown>).nombre),
@@ -275,7 +290,6 @@ export const analyticsService = {
     const scopedReferees = userZone
       ? mappedReferees.filter((r) => resolveZoneCode(r.zona) === userZone)
       : mappedReferees;
-    const zones = await getZones();
     const activityByZone = zones.map((z) => {
       const agg = zoneAgg.get(z.code);
       const activeReferees = scopedReferees.filter(
@@ -292,9 +306,6 @@ export const analyticsService = {
       .filter(Boolean)
       .sort((a, b) => (b!.assignedCompetitions - a!.assignedCompetitions) || (b!.assignedSlots - a!.assignedSlots) || a!.nombre.localeCompare(b!.nombre, "es"))
       .slice(0, 5) as AnalyticsPayload["topReferees"];
-    const { data: approvals } = userZone
-      ? await supabase.from("approval_proposals").select("status, submitted_at").eq("zona", userZone)
-      : await supabase.from("approval_proposals").select("status, submitted_at");
     const approvalsForYear = (approvals ?? []).filter((a) => yearFromIso(String(a.submitted_at ?? "")) === selectedYear);
     const reviewed = approvalsForYear.filter((a) => a.status !== "pendiente").length;
     const rejected = approvalsForYear.filter((a) => a.status === "rechazado").length;
