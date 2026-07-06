@@ -13,13 +13,29 @@ export async function GET() {
   if (!isSupabaseConfigured()) return jsonError("Supabase no configurado", 503);
 
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("profiles")
-    .select("id, email, nombre, rol_label, iniciales, role, zona, activo, created_at")
-    .order("nombre");
+  // Perfiles (profiles) + último inicio de sesión (auth.users, vía Admin API) en
+  // paralelo. `last_sign_in_at` no está en profiles; lo aporta GoTrue.
+  const [{ data, error }, authList] = await Promise.all([
+    admin
+      .from("profiles")
+      .select("id, email, nombre, rol_label, iniciales, role, zona, activo, created_at")
+      .order("nombre"),
+    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+  ]);
 
   if (error) return jsonError(error.message, 500);
-  return jsonOk(data ?? []);
+
+  const lastSignInById = new Map<string, string | null>();
+  for (const authUser of authList.data?.users ?? []) {
+    lastSignInById.set(authUser.id, authUser.last_sign_in_at ?? null);
+  }
+
+  const rows = (data ?? []).map((profile) => ({
+    ...profile,
+    last_sign_in_at: lastSignInById.get(String(profile.id)) ?? null,
+  }));
+
+  return jsonOk(rows);
 }
 
 export async function POST(request: Request) {
