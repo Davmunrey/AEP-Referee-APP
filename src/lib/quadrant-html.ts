@@ -206,10 +206,13 @@ export function generateQuadrantHtml(
 <meta charset="utf-8"/>
 <title>Cuadrante – ${esc(comp.nombre)}</title>
 <style>
-  @page { size: A4 portrait; margin: 12mm 14mm; }
+  /* margin:0 en @page elimina el encabezado/pie que el navegador imprime por
+   * defecto (URL, fecha y título). El margen real del documento lo da el
+   * padding del body. */
+  @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; background: #fff; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; background: #fff; padding: 12mm 14mm; }
 
   /* ── Cabecera ─────────────────────────────── */
   .doc-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 4px; }
