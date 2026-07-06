@@ -119,6 +119,7 @@ export function generateQuadrantHtml(
   refLookup: (id: string) => RefInfo | undefined,
   flags: FlagsMap = {},
   autoPrint = false,
+  embed = false,
 ): string {
   // Agrupa sesiones por día
   const dayOrder: string[] = [];
@@ -251,7 +252,7 @@ export function generateQuadrantHtml(
 </style>
 </head>
 <body>
-<button class="print-btn no-print" onclick="window.print()">Imprimir / Guardar PDF</button>
+${embed ? "" : `<button class="print-btn no-print" onclick="window.print()">Imprimir / Guardar PDF</button>`}
 
 <div class="doc-header">
   <img src="/assets/aep-mark.png" alt="AEP" onerror="this.style.display='none'"/>

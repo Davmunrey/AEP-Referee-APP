@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, ExternalLink, Printer } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,32 @@ export function RosterRevisionPanel({
   // Mismo HTML que genera el export/PDF (ruta del cuadrante): así se revisa
   // exactamente lo que se va a sacar, no una aproximación.
   const quadrantUrl = `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant`;
+
+  // Se descarga el HTML y se inyecta con srcDoc (no por src): así el preview no
+  // depende de las cabeceras de framing (X-Frame-Options / frame-ancestors), que
+  // bloqueaban el iframe. `embed=1` oculta el botón flotante de imprimir.
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPreviewHtml(null);
+    setPreviewError(false);
+    fetch(`${quadrantUrl}?embed=1`, { credentials: "include" })
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then((html) => {
+        if (!cancelled) setPreviewHtml(html);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [quadrantUrl]);
 
   return (
     <div className="space-y-4 p-4 sm:p-5">
@@ -105,11 +132,28 @@ export function RosterRevisionPanel({
             </Button>
           </div>
         </div>
-        <iframe
-          src={quadrantUrl}
-          title="Vista previa del cuadrante que se exportará"
-          className="h-[68vh] w-full rounded-b-xl border border-border bg-white"
-        />
+        {previewError ? (
+          <div className="flex h-[68vh] w-full flex-col items-center justify-center gap-3 rounded-b-xl border border-border bg-muted/40 text-center">
+            <p className="text-sm text-muted-foreground">No se pudo cargar la vista previa.</p>
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <a href={quadrantUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" />
+                Abrir el cuadrante en una pestaña
+              </a>
+            </Button>
+          </div>
+        ) : previewHtml === null ? (
+          <div className="flex h-[68vh] w-full items-center justify-center rounded-b-xl border border-border bg-muted/40">
+            <Loader2 className="h-5 w-5 animate-spin text-subtle-muted" />
+          </div>
+        ) : (
+          <iframe
+            srcDoc={previewHtml}
+            sandbox="allow-same-origin"
+            title="Vista previa del cuadrante que se exportará"
+            className="h-[68vh] w-full rounded-b-xl border border-border bg-white"
+          />
+        )}
       </div>
     </div>
   );
