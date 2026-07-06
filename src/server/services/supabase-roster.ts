@@ -28,7 +28,6 @@ import {
   hasApprovalCompetitionColumns,
   hasApprovalSubmitterColumns,
   loadAssignments,
-  loadFlags,
   loadRosterAssignmentData,
   parseSlotKey,
   persistCompetitionTemplate,
@@ -111,7 +110,12 @@ export const rosterService = {
     flags: SlotFlags,
     actor: string,
   ): Promise<{ flags: FlagsMap } | { error: string }> => {
-    const assignments = await loadAssignments(competitionId);
+    // Una sola lectura de roster_assignments (asignaciones + flags) en paralelo
+    // con la plantilla, en vez de loadAssignments + loadFlags + template en serie.
+    const [{ assignments, flags: currentFlags }, templateRaw] = await Promise.all([
+      loadRosterAssignmentData(competitionId),
+      getCompetitionTemplate(competitionId),
+    ]);
     const refereeId = assignments[slotKey];
     if (!refereeId) {
       return { error: "Asigna un juez antes de marcar flags" };
@@ -127,8 +131,7 @@ export const rosterService = {
     // slots solapados que antes el override permitía. Revalidamos con los flags
     // resultantes antes de persistir; validateRosterOperation ya respeta el * del
     // otro slot en conflicto, así que solo rechaza los solapes realmente ilegales.
-    const template = (await getCompetitionTemplate(competitionId)) ?? [];
-    const currentFlags = await loadFlags(competitionId);
+    const template = templateRaw ?? [];
     const resultingFlags: FlagsMap = { ...currentFlags, [slotKey]: payload };
     const revalidation = validateRosterOperation({
       template,
