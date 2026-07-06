@@ -429,7 +429,7 @@ export function ExamsManager({
                 </p>
               )}
               {(canEdit || canDelete) && (
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <div className="mt-2.5 flex flex-wrap gap-2">
                   {canEdit && exam.resultado === "Pendiente" && (
                     <>
                       <Button

@@ -436,7 +436,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   </DataTableCell>
                   <DataTableCell className="text-right">
                     {isConfirmingDelete ? (
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-2">
                         <span className="text-xs text-destructive">¿Eliminar?</span>
                         <Button
                           variant="destructive"
@@ -462,7 +462,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
