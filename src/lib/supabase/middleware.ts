@@ -39,8 +39,17 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Refresh session — do not add logic between createServerClient and getUser
-  const { data: { user } } = await supabase.auth.getUser();
+  // Refresh session — do not add logic between createServerClient and getUser.
+  // Si el token de refresco está caducado/ausente, getUser() lanza
+  // AuthApiError (refresh_token_not_found): no es un fallo real, solo una sesión
+  // expirada, así que lo tratamos como "no autenticado" y redirigimos a login
+  // en vez de dejar que reviente el middleware (ruido en la monitorización).
+  let user = null;
+  try {
+    ({ data: { user } } = await supabase.auth.getUser());
+  } catch {
+    user = null;
+  }
   const { pathname } = request.nextUrl;
 
   if (!user && !isPublic(pathname)) {
