@@ -7,68 +7,48 @@ import {
   ArrowRight,
   BookOpen,
   HelpCircle,
-  Loader2,
-  MessageCircle,
-  Send,
+  LifeBuoy,
+  Mail,
+  Search,
   Sparkles,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { api } from "@/lib/api/client";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
-import { searchKnowledgeBase, type HelpLink } from "@/lib/help/knowledge-base";
+import {
+  KNOWLEDGE_BASE,
+  searchKnowledgeBase,
+  type HelpEntry,
+} from "@/lib/help/knowledge-base";
 import { quickStartForRole } from "@/lib/help/quick-start";
 
-type Tab = "guia" | "asistente";
+const CONTACT_HREF = "/docs#contacto";
 
-interface ChatMessage {
-  id: number;
-  from: "user" | "bot";
-  text: string;
-  links?: HelpLink[];
-  /** Preguntas sugeridas relacionadas (otras entradas que también encajan). */
-  suggestions?: string[];
-  /** Mientras se espera la respuesta del asistente IA. */
-  pending?: boolean;
+/** Temas destacados para el rol (los primeros de la base relevantes a ese rol). */
+function featuredTopics(role: SessionUser["role"], limit = 6): HelpEntry[] {
+  return KNOWLEDGE_BASE.filter((e) => !e.roles || e.roles.includes(role)).slice(0, limit);
 }
 
-const NO_MATCH =
-  "No he encontrado una respuesta exacta. Puedes consultar la documentación completa o escribir al Comité de Jueces.";
-const NO_MATCH_LINKS: HelpLink[] = [
-  { label: "Documentación", href: "/docs" },
-  { label: "Contacto", href: "/docs#contacto" },
-];
-
-const WELCOME: ChatMessage = {
-  id: 0,
-  from: "bot",
-  text:
-    "Hola 👋 Soy el asistente de AEP Tarima. Pregúntame cómo usar la plataforma (tarima, compensación, normativa, permisos…) y te indico los pasos con enlaces a cada sección. Las respuestas se basan en la documentación oficial de la app.",
-};
-
 /**
- * Widget de Ayuda flotante para usuarios autenticados. Dos pestañas:
- *  - «Guía»: tour de primeros pasos adaptado al rol.
- *  - «Asistente»: bot local que busca en la documentación (sin IA externa).
+ * Widget de Ayuda flotante para usuarios autenticados. Una sola vista:
+ *  - Buscador local de temas (base de conocimiento curada, sin IA ni red).
+ *  - Sin búsqueda: primeros pasos según el rol + temas destacados.
  * Se renderiza en un portal a <body> para que el overlay `fixed` no quede
  * contenido por ancestros con transform/backdrop-filter.
  */
 export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"> }) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>("guia");
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
-  // Cuando el asistente IA no está disponible (sin clave o error), se desactiva
-  // y las siguientes preguntas se resuelven directamente con el asistente local.
-  const [remoteEnabled, setRemoteEnabled] = useState(true);
-  const nextId = useRef(1);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => setMounted(true), []);
 
   const steps = useMemo(() => quickStartForRole(user.role), [user.role]);
+  const topics = useMemo(() => featuredTopics(user.role), [user.role]);
+  const results = useMemo(
+    () => (query.trim() ? searchKnowledgeBase(query, user.role, 6) : []),
+    [query, user.role],
+  );
 
   // Cerrar con Escape.
   useEffect(() => {
@@ -80,67 +60,15 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Autoscroll del chat al añadir mensajes.
+  // Enfocar el buscador al abrir.
   useEffect(() => {
-    if (tab === "asistente") scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages, tab]);
-
-  const ask = async (raw: string) => {
-    const query = raw.trim();
-    if (!query) return;
-
-    // Resultados locales: aportan enlaces de acción y sirven de respaldo.
-    const local = searchKnowledgeBase(query, user.role);
-    const localText = local[0]?.entry.answer ?? NO_MATCH;
-    const localLinks = local.length > 0 ? local[0]?.entry.links : NO_MATCH_LINKS;
-    const suggestions = local.slice(1, 4).map((r) => r.entry.question);
-
-    // Historial para el modelo (sin la bienvenida ni mensajes en curso).
-    const history = messages
-      .filter((m) => m.id !== 0 && !m.pending)
-      .slice(-8)
-      .map((m) => ({ role: m.from === "user" ? ("user" as const) : ("model" as const), text: m.text }));
-
-    setInput("");
-    setMessages((prev) => [...prev, { id: nextId.current++, from: "user", text: query }]);
-
-    if (!remoteEnabled) {
-      setMessages((prev) => [
-        ...prev,
-        { id: nextId.current++, from: "bot", text: localText, links: localLinks, suggestions },
-      ]);
-      return;
-    }
-
-    const pendingId = nextId.current++;
-    setMessages((prev) => [...prev, { id: pendingId, from: "bot", text: "", pending: true }]);
-    try {
-      const { reply } = await api.askAssistant(query, history);
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === pendingId ? { ...m, text: reply, links: localLinks, suggestions, pending: false } : m,
-        ),
-      );
-    } catch {
-      // Sin clave o error del proveedor → fallback al asistente local.
-      setRemoteEnabled(false);
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === pendingId ? { ...m, text: localText, links: localLinks, suggestions, pending: false } : m,
-        ),
-      );
-    }
-  };
+    if (open) window.setTimeout(() => inputRef.current?.focus(), 60);
+  }, [open]);
 
   const launcher = (
     <button
       type="button"
-      onClick={() => {
-        setOpen((o) => !o);
-        if (!open && tab === "asistente") {
-          window.setTimeout(() => inputRef.current?.focus(), 50);
-        }
-      }}
+      onClick={() => setOpen((o) => !o)}
       aria-label={open ? "Cerrar ayuda" : "Abrir ayuda"}
       aria-expanded={open}
       className="fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -149,153 +77,149 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
     </button>
   );
 
+  const searching = query.trim().length > 0;
+
   const panel = open ? (
     <div
       role="dialog"
       aria-modal="false"
       aria-label="Ayuda de AEP Tarima"
-      className="fixed bottom-20 right-5 z-[60] flex max-h-[min(34rem,calc(100vh-7rem))] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-border-strong bg-card shadow-xl"
+      className="fixed bottom-20 right-5 z-[60] flex max-h-[min(36rem,calc(100vh-7rem))] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-border-strong bg-card shadow-xl"
     >
-      {/* Cabecera + pestañas */}
-      <div className="border-b border-border bg-surface px-4 pt-3">
+      {/* Cabecera */}
+      <div className="border-b border-border bg-surface px-4 pb-3 pt-3.5">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <p className="text-sm font-semibold text-foreground">Ayuda</p>
-          <span className="ml-auto text-[11px] text-subtle-muted">{ROLE_LABELS[user.role]}</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <LifeBuoy className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-tight text-foreground">Centro de ayuda</p>
+            <p className="truncate text-[11px] leading-tight text-subtle-muted">
+              {ROLE_LABELS[user.role]}
+            </p>
+          </div>
         </div>
-        <div className="mt-2 flex gap-1">
-          <TabButton active={tab === "guia"} onClick={() => setTab("guia")} icon={BookOpen}>
-            Guía
-          </TabButton>
-          <TabButton
-            active={tab === "asistente"}
-            onClick={() => {
-              setTab("asistente");
-              window.setTimeout(() => inputRef.current?.focus(), 50);
-            }}
-            icon={MessageCircle}
-          >
-            Asistente
-          </TabButton>
+        {/* Buscador */}
+        <div className="relative mt-3">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Busca en la ayuda…"
+            aria-label="Buscar en la ayuda"
+            className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          />
+          {searching && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              aria-label="Limpiar búsqueda"
+              className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {tab === "guia" ? (
-        <div className="flex-1 overflow-y-auto px-4 py-3">
-          <p className="text-xs text-muted-foreground">
-            Primeros pasos para tu rol. Toca un enlace para ir directamente.
-          </p>
-          <ol className="mt-3 space-y-3">
-            {steps.map((step, i) => (
-              <li key={step.title} className="relative pl-8">
-                <span className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {i + 1}
-                </span>
-                <p className="text-sm font-medium text-foreground">{step.title}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{step.body}</p>
-                {step.href && (
-                  <Link
-                    href={step.href}
-                    onClick={() => setOpen(false)}
-                    className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+      {/* Cuerpo */}
+      <div className="flex-1 overflow-y-auto px-4 py-3">
+        {searching ? (
+          results.length > 0 ? (
+            <div className="space-y-2.5">
+              {results.map(({ entry }) => (
+                <TopicCard key={entry.id} entry={entry} onNavigate={() => setOpen(false)} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center">
+              <Search className="mx-auto h-5 w-5 text-subtle-muted" />
+              <p className="mt-2 text-sm text-muted-foreground">
+                No hay temas para «{query.trim()}».
+              </p>
+              <p className="mt-0.5 text-xs text-subtle-muted">
+                Prueba con otra palabra o consulta la documentación completa.
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="space-y-5">
+            {/* Primeros pasos */}
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-subtle-muted">
+                Primeros pasos para tu rol
+              </h3>
+              <ol className="mt-2.5 space-y-3">
+                {steps.map((step, i) => (
+                  <li key={step.title} className="relative pl-8">
+                    <span className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      {i + 1}
+                    </span>
+                    <p className="text-sm font-medium text-foreground">{step.title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{step.body}</p>
+                    {step.href && (
+                      <Link
+                        href={step.href}
+                        onClick={() => setOpen(false)}
+                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {step.linkLabel ?? "Abrir"}
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            {/* Temas destacados */}
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-subtle-muted">
+                Temas frecuentes
+              </h3>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {topics.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => {
+                      setQuery(t.question);
+                      inputRef.current?.focus();
+                    }}
+                    className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground-secondary transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                   >
-                    {step.linkLabel ?? "Abrir"}
-                    <ArrowRight className="h-3 w-3" />
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ol>
-          <Link
-            href="/docs"
-            onClick={() => setOpen(false)}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            <BookOpen className="h-3.5 w-3.5" />
-            Documentación completa
-          </Link>
-        </div>
-      ) : (
-        <>
-          <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-            {messages.map((m) => (
-              <div key={m.id} className={cn("flex", m.from === "user" ? "justify-end" : "justify-start")}>
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
-                    m.from === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-surface text-foreground",
-                  )}
-                >
-                  {m.pending ? (
-                    <p className="flex items-center gap-1 text-muted-foreground" aria-live="polite">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Escribiendo…
-                    </p>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{m.text}</p>
-                  )}
-                  {m.links && m.links.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {m.links.map((l) => (
-                        <Link
-                          key={l.href}
-                          href={l.href}
-                          onClick={() => setOpen(false)}
-                          className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
-                        >
-                          {l.label}
-                          <ArrowRight className="h-3 w-3" />
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                  {m.suggestions && m.suggestions.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-[11px] font-medium text-subtle-muted">También puede interesarte:</p>
-                      {m.suggestions.map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => void ask(s)}
-                          className="block w-full rounded-md px-2 py-1 text-left text-xs text-primary underline-offset-2 hover:bg-muted hover:underline"
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {t.question}
+                  </button>
+                ))}
               </div>
-            ))}
+            </section>
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void ask(input);
-            }}
-            className="flex items-center gap-2 border-t border-border bg-surface px-3 py-2.5"
-          >
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Escribe tu pregunta…"
-              aria-label="Tu pregunta"
-              className="min-w-0 flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              aria-label="Enviar"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
-        </>
-      )}
+        )}
+      </div>
+
+      {/* Pie */}
+      <div className="flex items-center gap-2 border-t border-border bg-surface px-3 py-2.5">
+        <Link
+          href="/docs"
+          onClick={() => setOpen(false)}
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          Documentación
+        </Link>
+        <Link
+          href={CONTACT_HREF}
+          onClick={() => setOpen(false)}
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <Mail className="h-3.5 w-3.5" />
+          Contacto
+        </Link>
+      </div>
     </div>
   ) : null;
 
@@ -310,30 +234,30 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
   );
 }
 
-function TabButton({
-  active,
-  onClick,
-  icon: Icon,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
+/** Tarjeta de un tema de la base de conocimiento con sus enlaces de acción. */
+function TopicCard({ entry, onNavigate }: { entry: HelpEntry; onNavigate: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-1.5 rounded-t-lg border-b-2 px-3 py-1.5 text-xs font-medium transition-colors",
-        active
-          ? "border-primary text-primary"
-          : "border-transparent text-muted-foreground hover:text-foreground",
+    <div className="rounded-xl border border-border bg-surface/60 px-3 py-2.5">
+      <div className="flex items-start gap-2">
+        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+        <p className="text-sm font-semibold leading-snug text-foreground">{entry.question}</p>
+      </div>
+      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{entry.answer}</p>
+      {entry.links && entry.links.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {entry.links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              onClick={onNavigate}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+            >
+              {l.label}
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          ))}
+        </div>
       )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {children}
-    </button>
+    </div>
   );
 }

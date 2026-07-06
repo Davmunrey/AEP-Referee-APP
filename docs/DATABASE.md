@@ -101,4 +101,4 @@ Backups van a `backups/`, ignorado por git. Ejecutar desde entorno con credencia
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v1.9
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
