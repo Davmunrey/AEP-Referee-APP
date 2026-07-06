@@ -13,7 +13,9 @@ export async function GET(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
 
-  const autoPrint = new URL(request.url).searchParams.get("print") === "1";
+  const search = new URL(request.url).searchParams;
+  const autoPrint = search.get("print") === "1";
+  const embed = search.get("embed") === "1";
   const { id } = await context.params;
   const scopeErr = await assertCompetitionInUserZone(user, id);
   if (scopeErr) return scopeErr;
@@ -42,6 +44,7 @@ export async function GET(request: Request, context: RouteContext) {
     },
     roster.flags,
     autoPrint,
+    embed,
   );
 
   return new Response(html, {
