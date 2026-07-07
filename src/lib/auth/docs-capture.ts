@@ -11,5 +11,9 @@ export const DOCS_CAPTURE_SESSION: SessionUser = {
 };
 
 export function isDocsCaptureMode(): boolean {
-  return process.env.AEP_DOCS_CAPTURE === "1";
+  // Nunca en producción: el modo captura devuelve una sesión super_admin sin
+  // credenciales; un flag mal puesto en prod no debe poder abrir la app.
+  return (
+    process.env.AEP_DOCS_CAPTURE === "1" && process.env.NODE_ENV !== "production"
+  );
 }

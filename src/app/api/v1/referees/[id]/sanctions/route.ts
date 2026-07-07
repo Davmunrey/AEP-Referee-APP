@@ -1,6 +1,6 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { canManageSanctions } from "@/lib/permissions";
 import type { SanctionDurationPreset } from "@/lib/types";
 import { dataService } from "@/server/services";
@@ -65,6 +65,6 @@ export async function POST(request: Request, context: RouteContext) {
     });
     return jsonOk(sanction);
   } catch (e) {
-    return jsonError(e instanceof Error ? e.message : "No se pudo crear la sanción", 400);
+    return jsonServerError("sanctions.POST", e, "No se pudo crear la sanción");
   }
 }
