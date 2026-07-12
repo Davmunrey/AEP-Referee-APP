@@ -27,6 +27,12 @@ const AEP1_ROLES: RoleKey[] = [...AEP3_ROLES, "jurado"];
 
 function asNumber(v: unknown): number {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(0, Math.trunc(v));
+  // Celdas de conteo a veces llegan como texto ("3"); coerciónalas en vez de 0,
+  // que descartaría el bucket de arbitrajes del juez para ese año.
+  if (typeof v === "string") {
+    const n = Number(v.trim().replace(",", "."));
+    if (Number.isFinite(n)) return Math.max(0, Math.trunc(n));
+  }
   return 0;
 }
 

@@ -26,6 +26,7 @@ import {
   getCalendarEvents,
   getCompetitionTemplate,
   getStore,
+  nextSeqId,
   pushActivity,
   pushHistory,
   setCompetitionTemplate,
@@ -135,7 +136,14 @@ export async function createCompetition(
   input: Omit<Competition, "id" | "confirmados" | "estado" | "aprobacion">,
 ): Promise<Competition> {
   const store = getStore();
-  const id = `evt-${String(store.competitions.length + 1).padStart(3, "0")}`;
+  // ID por máximo existente, no por longitud: tras borrar una competición
+  // intermedia, `length + 1` reutilizaría un id ya usado y machacaría su roster.
+  const maxNum = store.competitions.reduce((max, c) => {
+    const m = /^evt-(\d+)$/i.exec(c.id);
+    const n = m ? parseInt(m[1]!, 10) : 0;
+    return Number.isFinite(n) ? Math.max(max, n) : max;
+  }, 0);
+  const id = `evt-${String(maxNum + 1).padStart(3, "0")}`;
   const comp: Competition = {
     ...input,
     id,
@@ -434,7 +442,7 @@ export async function submitRoster(
     existing.submittedById = userId;
   } else {
     store.approvals.unshift({
-      id: `apr-${Date.now()}`,
+      id: nextSeqId("apr"),
       competitionId,
       competitionName: comp.nombre,
       zona: comp.zona ?? "—",

@@ -46,11 +46,14 @@ export function isTravelModeResolved(
   oneWayKm?: number | null,
 ): boolean {
   if (travelMode === "none") return true;
+  // No uses `!`: parseIntegerKm devuelve null para km inválidos (negativos,
+  // no finitos) y `null * 2 === 0` marcaría como resuelto un viaje sin distancia.
+  const ow = parseIntegerKm(oneWayKm);
   const rt =
     roundTripKm != null
       ? parseIntegerKm(roundTripKm)
-      : oneWayKm != null
-        ? parseIntegerKm(oneWayKm)! * 2
+      : ow != null
+        ? ow * 2
         : null;
   return isResolvedIntegerKm(rt);
 }

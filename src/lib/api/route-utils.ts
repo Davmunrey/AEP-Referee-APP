@@ -25,3 +25,18 @@ export function jsonError(error: string, status = 400, details?: unknown) {
   const body: ApiError = { error, details };
   return NextResponse.json(body, withNoStore({ status }));
 }
+
+/**
+ * Registra el error real en el servidor y devuelve un mensaje genérico al
+ * cliente. Evita filtrar detalle interno (nombres de tabla/columna/constraint
+ * de Postgres, mensajes de librerías) en respuestas de error — CWE-209.
+ */
+export function jsonServerError(
+  scope: string,
+  err: unknown,
+  clientMessage = "Error interno del servidor",
+  status = 500,
+) {
+  console.error(`[${scope}]`, err instanceof Error ? (err.stack ?? err.message) : err);
+  return jsonError(clientMessage, status);
+}

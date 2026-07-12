@@ -8,10 +8,8 @@ async function signOut(request: Request) {
   return NextResponse.redirect(`${origin}/sign-in`);
 }
 
+// Solo POST: cerrar sesión es un cambio de estado. Exponerlo por GET permitía
+// logout-CSRF (SameSite=Lax envía la cookie en navegaciones top-level GET).
 export async function POST(request: Request) {
-  return signOut(request);
-}
-
-export async function GET(request: Request) {
   return signOut(request);
 }

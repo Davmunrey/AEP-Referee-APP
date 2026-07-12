@@ -155,10 +155,17 @@ function detectHeader(lines: string[]): ParsedHeader {
  */
 export function parseAepHorarioText(input: string): ParsedHorario {
   const rawLines = input.split(/\r?\n/);
+  // Índice de primera aparición precomputado (O(n)) — sustituye a
+  // rawLines.indexOf(l) dentro del filtro, que era O(n²) y podía dispararse con
+  // texto de PDF con muchas líneas de cabecera distintas (DoS algorítmico).
+  const firstIndexOf = new Map<string, number>();
+  for (let i = 0; i < rawLines.length; i++) {
+    if (!firstIndexOf.has(rawLines[i])) firstIndexOf.set(rawLines[i], i);
+  }
   const lines = rawLines
     .map((l) => l.trim())
     .filter((l) => l.length > 0)
-    .filter((l) => !HEADER_TITLE_RE.test(l) || rawLines.indexOf(l) < 6);
+    .filter((l) => !HEADER_TITLE_RE.test(l) || (firstIndexOf.get(l) ?? -1) < 6);
 
   const header = detectHeader(rawLines);
   const days: ParsedDay[] = [];

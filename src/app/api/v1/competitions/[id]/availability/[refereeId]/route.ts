@@ -1,6 +1,6 @@
 import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 export async function DELETE(
@@ -22,6 +22,6 @@ export async function DELETE(
     await dataService.removeCompetitionAvailability(id, refereeId);
     return jsonOk({ ok: true });
   } catch (err) {
-    return jsonError(err instanceof Error ? err.message : "Error al eliminar disponibilidad", 500);
+    return jsonServerError("availability.DELETE", err, "No se pudo eliminar la disponibilidad");
   }
 }

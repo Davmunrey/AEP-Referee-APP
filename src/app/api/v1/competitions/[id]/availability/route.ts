@@ -1,7 +1,7 @@
 import { canEditRoster } from "@/lib/auth/session";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import { z } from "zod";
 
@@ -36,6 +36,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     await dataService.addCompetitionAvailability(id, body.data.refereeId, user.nombre);
     return jsonOk({ ok: true });
   } catch (err) {
-    return jsonError(err instanceof Error ? err.message : "Error al guardar disponibilidad", 500);
+    return jsonServerError("availability.POST", err, "No se pudo guardar la disponibilidad");
   }
 }

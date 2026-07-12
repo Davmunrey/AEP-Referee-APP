@@ -5,14 +5,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Fecha ISO solo-día → Date en hora LOCAL (evita el desfase UTC de `new Date`). */
+function isoToLocalDate(iso: string): Date {
+  const [y, mo, d] = String(iso).split(/[-T]/).map(Number);
+  if (y && mo && d) return new Date(y, mo - 1, d);
+  return new Date(iso);
+}
+
 export function formatDateRange(start: string, end: string) {
   const opts: Intl.DateTimeFormatOptions = {
     day: "numeric",
     month: "short",
     year: "numeric",
   };
-  const s = new Date(start);
-  const e = new Date(end);
+  const s = isoToLocalDate(start);
+  const e = isoToLocalDate(end);
   const sameDay = start === end;
   if (sameDay) {
     return s.toLocaleDateString("es-ES", opts);

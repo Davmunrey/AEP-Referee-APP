@@ -199,15 +199,31 @@ export function normalizeZoneInput(zona?: string | null): string | null {
   return resolveZoneCode(zona) ?? null;
 }
 
+/** Clave de provincia sin acentos ni mayúsculas, para casar imports en MAYÚS. */
+function normalizeProvinceKey(raw: string): string {
+  return raw
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[()]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+const NORMALIZED_PROVINCE_TO_MACRO_ZONE: Record<string, AepMacroZoneId> =
+  Object.fromEntries(
+    Object.entries(PROVINCE_TO_MACRO_ZONE).map(([k, v]) => [normalizeProvinceKey(k), v]),
+  );
+
 export function deduceMacroZone(
   provincia: string | undefined,
   localidad: string,
 ): AepMacroZoneId | undefined {
   const candidates: string[] = [];
-  if (provincia) candidates.push(provincia.replace(/\(|\)/g, "").trim());
-  candidates.push(localidad.replace(/\([^)]*\)/g, "").trim());
+  if (provincia) candidates.push(provincia);
+  candidates.push(localidad.replace(/\([^)]*\)/g, ""));
   for (const c of candidates) {
-    if (PROVINCE_TO_MACRO_ZONE[c]) return PROVINCE_TO_MACRO_ZONE[c];
+    const zone = NORMALIZED_PROVINCE_TO_MACRO_ZONE[normalizeProvinceKey(c)];
+    if (zone) return zone;
   }
   return undefined;
 }
