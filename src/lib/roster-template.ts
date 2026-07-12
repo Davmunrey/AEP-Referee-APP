@@ -103,9 +103,10 @@ export function mergeRosterTemplateSessions(
       replaced.add(session.sesion);
       continue;
     }
-    if (!replaceSessionKeys.has(session.sesion)) {
-      merged.push(cloneTemplate([session])[0]!);
-    }
+    // Conserva la sesión existente en cualquier otro caso — incluso si su clave
+    // estaba marcada para reemplazo pero el import no trajo una versión: sin
+    // sustituto, borrarla sería pérdida de datos.
+    merged.push(cloneTemplate([session])[0]!);
   }
 
   for (const session of incoming) {

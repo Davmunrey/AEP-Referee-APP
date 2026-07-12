@@ -1,7 +1,8 @@
 /** Normaliza km a entero no negativo; devuelve null si no es válido. */
 export function parseIntegerKm(value: string | number | null | undefined): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "number" && String(value).trim() === "") return null;
+  const n = typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.round(n);
 }

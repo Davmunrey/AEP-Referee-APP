@@ -55,7 +55,7 @@ export function getPageMeta(pathname: string): PageMeta {
       ],
     };
   }
-  if (pathname.startsWith("/competitions/")) {
+  if (pathname.startsWith("/competitions/") && pathname !== "/competitions/new") {
     const id = pathname.split("/")[2];
     return {
       title: "Constructor de Tarima",

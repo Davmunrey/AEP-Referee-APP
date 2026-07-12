@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -44,8 +44,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!updated) return jsonError("Claim no encontrado para este juez", 404);
     return jsonOk(updated);
   } catch (err) {
-    console.error("[compensation PATCH]", err);
-    const message = err instanceof Error ? err.message : "Error al guardar compensación";
-    return jsonError(message, 500);
+    return jsonServerError("compensation.PATCH", err, "No se pudo guardar la compensación");
   }
 }

@@ -250,7 +250,15 @@ export function parseJudgesRegistryXlsx(
   options?: ParseJudgesRegistryOptions,
 ): ParsedJudgesRegistry {
   assertReasonableXlsxInput(buffer, options);
-  const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+  // `sheetRows` corta la lectura por hoja: evita que un .xlsx con un rango
+  // declarado gigante (<dimension ref="A1:XFD1048576"/>) o XML muy comprimible
+  // materialice millones de filas en memoria antes de los topes de sheetRows().
+  // +1 sobre el máximo lógico para que el chequeo explícito siga disparando.
+  const wb = XLSX.read(buffer, {
+    type: "array",
+    cellDates: true,
+    sheetRows: MAX_ROWS_PER_SHEET + 1,
+  });
   const warnings: string[] = [];
 
   if (wb.SheetNames.length > MAX_WORKSHEETS) {

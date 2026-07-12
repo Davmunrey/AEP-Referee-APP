@@ -18,6 +18,18 @@ import type { Referee } from "@/lib/types";
 import * as competitions from "./memory-competitions";
 import * as referees from "./memory-referees";
 
+/** Distancia en línea recta (km) entre dos coordenadas — aproximación dev/local. */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
 const store = new Map<string, CompensationClaim>();
 
 function claimId(competitionId: string, refereeId: string): string {
@@ -127,7 +139,19 @@ export const memoryCompensationService = {
     const referee = await referees.getReferee(refereeId);
     if (!competition || !referee?.domicilioLat || !referee.domicilioLng) return undefined;
     if (!competition.sedeLat || !competition.sedeLng) return undefined;
-    const oneWay = 50;
+    // Distancia real (haversine) desde las coordenadas ya validadas, no un 50 km
+    // fijo que facturaba lo mismo a todos los jueces en el backend dev/local.
+    const oneWay = Math.max(
+      1,
+      Math.round(
+        haversineKm(
+          referee.domicilioLat,
+          referee.domicilioLng,
+          competition.sedeLat,
+          competition.sedeLng,
+        ),
+      ),
+    );
     return memoryCompensationService.updateClaim(competitionId, refereeId, {
       distanceKmOneWay: oneWay,
       distanceKmRoundTrip: oneWay * 2,

@@ -6,6 +6,9 @@ export function normalizeCompetitionName(nombre: string): string {
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()
+    // Pliega puntuación (paréntesis, comas, guiones…) a espacio para que
+    // "Cto de España (Junior)" y "Cto de España Junior" compartan clave.
+    .replace(/[^\p{L}\p{N} ]/gu, " ")
     .trim()
     .replace(/\s+/g, " ");
 }

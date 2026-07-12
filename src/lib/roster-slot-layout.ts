@@ -62,7 +62,7 @@ function buildTarimaRow(roles: RosterRole[], placed: Set<string>): SlotLayoutRow
 
   const cells: (SlotCellRef | null)[] = [];
 
-  if (central) {
+  if (central && central.slots > 0) {
     placed.add(slotKey("central", 0));
     cells.push(cellRef(central, 0));
   } else {

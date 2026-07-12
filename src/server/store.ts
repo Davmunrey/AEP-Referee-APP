@@ -93,6 +93,13 @@ export function getCalendarEvents(competitions?: Competition[]) {
   return calendarEventsFromCompetitions(list);
 }
 
+let idSeq = 0;
+/** Id único incluso dentro del mismo milisegundo (evita colisiones de `${prefijo}-${Date.now()}`). */
+export function nextSeqId(prefix: string): string {
+  idSeq += 1;
+  return `${prefix}-${Date.now()}-${idSeq}`;
+}
+
 export function pushActivity(item: ActivityItem) {
   getStore().activity.unshift(item);
   if (getStore().activity.length > 20) getStore().activity.pop();

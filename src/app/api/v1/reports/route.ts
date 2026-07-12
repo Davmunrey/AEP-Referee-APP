@@ -1,7 +1,7 @@
 import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { ReportSubjectType, ReportType } from "@/lib/types";
 
@@ -67,6 +67,6 @@ export async function POST(request: Request) {
     });
     return jsonOk(report);
   } catch (err) {
-    return jsonError(err instanceof Error ? err.message : "Error", 400);
+    return jsonServerError("reports.POST", err, "No se pudo crear el informe");
   }
 }

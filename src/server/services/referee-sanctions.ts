@@ -16,6 +16,7 @@ import type {
 } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSanction, sanctionToDbRow } from "@/server/db/sanction-mappers";
+import { nextSeqId } from "@/server/store";
 
 function db() {
   return createAdminClient();
@@ -147,7 +148,7 @@ export async function createRefereeSanction(input: {
   );
   const zona = normalizeZoneInput(input.zona) ?? input.zona;
   const delegates = await findZoneDelegates(zona);
-  const id = `san-${Date.now()}`;
+  const id = nextSeqId("san");
 
   const draft: RefereeSanction = {
     id,

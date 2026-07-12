@@ -3,7 +3,9 @@ const MAX_SELECTED_KEY_LENGTH = 160;
 
 export function parseSelectedImportKeys(raw: FormDataEntryValue | null): Set<string> | null {
   if (typeof raw !== "string" || !raw.trim()) return null;
-  if (raw.length > MAX_SELECTED_KEYS * MAX_SELECTED_KEY_LENGTH) {
+  // Holgura por el overhead de JSON (comillas, comas, corchetes): el máximo
+  // válido (500 claves de 160 chars) serializa por encima de keys*length.
+  if (raw.length > MAX_SELECTED_KEYS * (MAX_SELECTED_KEY_LENGTH + 4) + 2) {
     throw new Error("Selección demasiado grande");
   }
 

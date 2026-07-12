@@ -39,10 +39,14 @@ const SEVERITY_RANK: Record<InsightSeverity, number> = {
 
 /** Días desde hoy hasta una fecha ISO; null si la fecha no es válida. */
 export function daysUntil(iso: string, now = new Date()): number | null {
-  const target = new Date(iso);
-  if (Number.isNaN(target.getTime())) return null;
+  // Parseo por componentes (no `new Date(iso)`): una fecha solo-día se
+  // interpretaría como UTC y, leída en local, se desplaza un día en husos
+  // negativos (el cliente puede estar fuera de España).
+  const [y, mo, d] = String(iso).split(/[-T]/).map(Number);
+  if (!y || !mo || !d) return null;
+  const day = new Date(y, mo - 1, d);
+  if (Number.isNaN(day.getTime()) || day.getMonth() !== mo - 1) return null;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const day = new Date(target.getFullYear(), target.getMonth(), target.getDate());
   return Math.round((day.getTime() - today.getTime()) / 86_400_000);
 }
 

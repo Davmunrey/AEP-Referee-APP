@@ -3,7 +3,7 @@ import { canManageUsers } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { USER_ROLES, type UserRole } from "@/lib/types";
 
 export async function GET() {
@@ -23,7 +23,7 @@ export async function GET() {
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
   ]);
 
-  if (error) return jsonError(error.message, 500);
+  if (error) return jsonServerError("admin.users.GET", error, "No se pudieron cargar los usuarios");
 
   const lastSignInById = new Map<string, string | null>();
   for (const authUser of authList.data?.users ?? []) {
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
   if (profileError) {
     await admin.auth.admin.deleteUser(userId).catch(() => null);
-    return jsonError(profileError.message, 500);
+    return jsonServerError("admin.users.POST", profileError, "No se pudo crear el perfil del usuario");
   }
 
   return jsonOk({ id: userId, email, nombre, rol_label: rolLabel, iniciales, role, zona, activo: true });

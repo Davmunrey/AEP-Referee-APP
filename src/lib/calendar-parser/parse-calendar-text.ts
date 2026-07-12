@@ -19,6 +19,21 @@ const MONTHS_ES: Record<string, number> = {
   dic: 12,
 };
 
+/**
+ * Resuelve el mes desde abreviatura O nombre completo ("abr" y "abril"),
+ * normalizando acentos/mayúsculas — igual que el parser CSV. El regex acepta
+ * 3–5 letras, así que la búsqueda directa en MONTHS_ES fallaba con nombres
+ * completos como "abril"/"enero"/"marzo".
+ */
+function monthNum(raw: string): number | undefined {
+  const key = raw
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .slice(0, 4);
+  return MONTHS_ES[key] ?? MONTHS_ES[key.slice(0, 3)];
+}
+
 const NIVEL_VALID = new Set([
   "AEP1",
   "AEP2",
@@ -77,7 +92,7 @@ function parseDate(
   const single = trimmed.match(DATE_SINGLE_RE);
   if (single) {
     const day = Number(single[1]);
-    const month = MONTHS_ES[single[2].toLowerCase()];
+    const month = monthNum(single[2]);
     if (!month) return { start: null, end: null, pendiente: false };
     const date = `${year}-${pad2(month)}-${pad2(day)}`;
     return { start: date, end: date, pendiente: false };
@@ -87,7 +102,7 @@ function parseDate(
   if (sameMonth) {
     const startDay = Number(sameMonth[1]);
     const endDay = Number(sameMonth[2]);
-    const month = MONTHS_ES[sameMonth[3].toLowerCase()];
+    const month = monthNum(sameMonth[3]);
     if (!month) return { start: null, end: null, pendiente: false };
     return {
       start: `${year}-${pad2(month)}-${pad2(startDay)}`,
@@ -100,8 +115,8 @@ function parseDate(
   if (cross) {
     const startDay = Number(cross[1]);
     const endDay = Number(cross[2]);
-    const startMonth = MONTHS_ES[cross[3].toLowerCase()];
-    const endMonth = MONTHS_ES[cross[4].toLowerCase()];
+    const startMonth = monthNum(cross[3]);
+    const endMonth = monthNum(cross[4]);
     if (!startMonth || !endMonth)
       return { start: null, end: null, pendiente: false };
     return {
@@ -115,8 +130,8 @@ function parseDate(
   if (spacedCross) {
     const startDay = Number(spacedCross[1]);
     const endDay = Number(spacedCross[3]);
-    const startMonth = MONTHS_ES[spacedCross[2].toLowerCase()];
-    const endMonth = MONTHS_ES[spacedCross[4].toLowerCase()];
+    const startMonth = monthNum(spacedCross[2]);
+    const endMonth = monthNum(spacedCross[4]);
     if (!startMonth || !endMonth)
       return { start: null, end: null, pendiente: false };
     return {
@@ -128,8 +143,8 @@ function parseDate(
 
   const monthRange = trimmed.replace(/\*\*/g, "").trim().match(DATE_MONTH_RANGE_RE);
   if (monthRange) {
-    const startMonth = MONTHS_ES[monthRange[1].toLowerCase()];
-    const endMonth = MONTHS_ES[monthRange[2].toLowerCase()];
+    const startMonth = monthNum(monthRange[1]);
+    const endMonth = monthNum(monthRange[2]);
     if (!startMonth || !endMonth)
       return { start: null, end: null, pendiente: true };
     const endDay = new Date(year, endMonth, 0).getDate();

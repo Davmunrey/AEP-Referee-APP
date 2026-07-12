@@ -40,7 +40,10 @@ export function computeRosterCoverage(
   const fromTemplate = countRequiredSlots(template);
   const requeridos = fromTemplate > 0 ? fromTemplate : Math.max(0, fallbackRequeridos);
 
-  if (template.length === 0) {
+  // Sin plantilla, o plantilla presente pero sin slots reales (todos slots:0):
+  // cuenta confirmados desde las asignaciones reales. Antes, con fromTemplate=0
+  // se fabricaba confirmados = requeridos - openSlots → falso 100%/«Completo».
+  if (template.length === 0 || fromTemplate === 0) {
     const confirmados = Object.values(assignments).filter(Boolean).length;
     const openSlots = Math.max(0, requeridos - confirmados);
     const pct =
