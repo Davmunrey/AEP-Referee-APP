@@ -1,4 +1,4 @@
-import { normalizeZoneInput } from "@/lib/aep-zones";
+import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { importJudgesRegistryToMemory } from "@/server/services/import-judges-registry";
 import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
 import type {
@@ -13,7 +13,7 @@ import type {
   ReportType,
   SessionUser,
 } from "@/lib/types";
-import { REGULATION_RULES, getStore, pushActivity } from "@/server/store";
+import { REGULATION_RULES, getStore, nextSeqId, pushActivity } from "@/server/store";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") throw new Error("Nuevo juez solo puede registrar nivel objetivo Regional");
@@ -23,8 +23,11 @@ function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelAct
 
 export async function getPromotions(user?: SessionUser): Promise<PromotionRequest[]> {
   const list = getStore().promotions;
-  if (user?.role === "delegado_zona" && user.zona) return list.filter((p) => p.zona === user.zona);
-  return list;
+  if (user?.role === "delegado_zona" && user.zona) {
+    const userZone = resolveZoneCode(user.zona) ?? user.zona;
+    return list.filter((p) => (resolveZoneCode(p.zona) ?? p.zona) === userZone);
+  }
+  return [...list];
 }
 
 export async function reviewPromotion(
@@ -62,7 +65,7 @@ export async function createPromotion(input: {
   const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
   if (LEVEL_ORDER.indexOf(input.toLevel) <= LEVEL_ORDER.indexOf(referee.nivel)) throw new Error(`El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`);
   const req: PromotionRequest = {
-    id: `pro-${Date.now()}`, refereeId: input.refereeId, refereeName: referee.nombre,
+    id: nextSeqId("pro"), refereeId: input.refereeId, refereeName: referee.nombre,
     fromLevel: referee.nivel, toLevel: input.toLevel,
     zona: normalizeZoneInput(input.zona) ?? input.zona,
     status: "pendiente", submittedAt: new Date().toISOString().split("T")[0]!,
@@ -73,7 +76,7 @@ export async function createPromotion(input: {
 }
 
 export async function getRegulations(): Promise<RegulationRule[]> {
-  return REGULATION_RULES;
+  return [...REGULATION_RULES];
 }
 
 export async function getCompetitionAvailability(_competitionId: string): Promise<string[]> { return []; }
@@ -84,7 +87,10 @@ export async function getExams(refereeId?: string, user?: SessionUser): Promise<
   const store = getStore();
   let exams = store.exams.slice();
   if (user?.role === "delegado_zona" && user.zona) {
-    const zoneRefs = new Set(store.referees.filter((r) => r.zona === user.zona).map((r) => r.id));
+    const userZone = resolveZoneCode(user.zona) ?? user.zona;
+    const zoneRefs = new Set(
+      store.referees.filter((r) => (resolveZoneCode(r.zona) ?? r.zona) === userZone).map((r) => r.id),
+    );
     exams = exams.filter((e) => zoneRefs.has(e.refereeId));
   }
   if (refereeId) exams = exams.filter((e) => e.refereeId === refereeId);
@@ -100,7 +106,7 @@ export async function createExam(input: {
   if (!referee) throw new Error("Juez no encontrado");
   validateExamLevel(input.tipo, input.nivelObjetivo, referee.nivel);
   const exam: RefereeExam = {
-    id: `exam-${Date.now()}`, refereeId: input.refereeId, refereeName: referee.nombre,
+    id: nextSeqId("exam"), refereeId: input.refereeId, refereeName: referee.nombre,
     tipo: input.tipo, nivelObjetivo: input.nivelObjetivo, fecha: input.fecha,
     examinador: input.examinador, puntuacion: input.puntuacion,
     puntuacionMaxima: input.puntuacionMaxima ?? 100,
@@ -135,7 +141,10 @@ export async function getReport(id: string): Promise<RefereeReport | undefined> 
 export async function getReports(refereeId?: string, user?: SessionUser): Promise<RefereeReport[]> {
   const store = getStore();
   let reports = store.reports.slice();
-  if (user?.role === "delegado_zona" && user.zona) reports = reports.filter((r) => r.zona === user.zona);
+  if (user?.role === "delegado_zona" && user.zona) {
+    const userZone = resolveZoneCode(user.zona) ?? user.zona;
+    reports = reports.filter((r) => (resolveZoneCode(r.zona) ?? r.zona) === userZone);
+  }
   if (refereeId) reports = reports.filter((r) => r.refereeId === refereeId);
   return reports.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
 }
@@ -151,7 +160,7 @@ export async function createReport(input: {
   if (input.subjectType === "juez" && !referee) throw new Error("Juez no encontrado");
   if (input.subjectType === "competicion" && !competition) throw new Error("Competición no encontrada");
   const report: RefereeReport = {
-    id: `rep-${Date.now()}`, subjectType: input.subjectType,
+    id: nextSeqId("rep"), subjectType: input.subjectType,
     zona: referee?.zona ?? competition?.zona ?? input.zona,
     refereeId: referee?.id, refereeName: referee?.nombre,
     competitionId: competition?.id, competitionName: competition?.nombre,

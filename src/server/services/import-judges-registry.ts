@@ -247,7 +247,11 @@ export function importJudgesRegistryToMemory(
   const existingKeys = new Set(
     store.competitions.map((c) => `${c.nombre.toLowerCase().trim()}__${c.fecha}`),
   );
-  let nextNum = store.competitions.length + 1;
+  // max(existing evt-N)+1, no length+1 (un borrado intermedio reutilizaría un id).
+  let nextNum = store.competitions.reduce((max, c) => {
+    const m = /^evt-(\d+)$/i.exec(String(c.id));
+    return m ? Math.max(max, parseInt(m[1]!, 10)) : max;
+  }, 0) + 1;
 
   for (const c of parsed.competitions) {
     const key = `${c.nombre.toLowerCase().trim()}__${c.fecha}`;

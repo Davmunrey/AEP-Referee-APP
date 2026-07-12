@@ -95,7 +95,10 @@ export function parseCompetitionDateRange(
     }
   }
 
-  const fecha = excelDateToIso(startStr);
+  // Pasa el valor ORIGINAL (no `startStr`): con cellDates:true una celda de un
+  // solo día llega como Date/serial; stringificarla antes rompe las ramas
+  // Date/number de excelDateToIso y descartaría la competición.
+  const fecha = excelDateToIso(rawStart);
   if (!fecha) return undefined;
   const fechaFin = endFromCol ?? fecha;
   return { fecha, fechaFin: fechaFin < fecha ? fecha : fechaFin };
