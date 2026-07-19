@@ -33,6 +33,9 @@ Cinco rondas de auditoría con agentes en paralelo peinando cada capa de la app.
 - Pantallas esqueleto en TODAS las rutas — el dashboard cargaba con un spinner solitario; ahora carga con la silueta de sí mismo.
 - Estados honestos: la compensación decía «Sin jueces asignados» mientras cargaba. Ahora dice que está cargando. Revolucionario.
 
+**Zona de Soporte (nueva):**
+- **Tickets internos con fotos** — cualquier usuario puede abrir un ticket (incidencia, mejora, duda) con descripción y hasta 5 fotos; los admins lo trabajan con un hilo de comentarios (también con fotos), lo marcan en progreso y lo resuelven con nota. Los adjuntos viven en un bucket privado y se sirven con URLs firmadas de 1 hora. Migración 035.
+
 **Además:**
 - Migración 034: el ajuste manual del importe de viaje por fin se guarda (existía en la UI, se calculaba… y se perdía al recargar), coordenadas de domicilio persistidas e índice único anti propuestas duplicadas. Todo con sondas de columna: el código funciona igual antes y después de aplicarla.
 - Fijar días de alojamiento a mano ahora paga el alojamiento (antes: días=2, importe=0 €, explicación=ninguna).
