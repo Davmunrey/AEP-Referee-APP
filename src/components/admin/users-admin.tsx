@@ -27,22 +27,17 @@ import { PasswordDialog } from "./password-dialog";
 import type { EditFormState } from "./edit-user-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { CredentialsBanner } from "./credentials-banner";
+import type { AdminUserRow } from "@/server/services/admin-users";
 
-interface ProfileRow {
-  id: string;
-  email: string;
-  nombre: string;
-  rol_label: string;
-  role: UserRole;
-  zona: string | null;
-  activo: boolean;
-  created_at?: string;
-  /** Último inicio de sesión (auth.users.last_sign_in_at); null si nunca entró. */
-  last_sign_in_at?: string | null;
-}
+// El shape de fila vive en la capa de servidor (`listAdminUsers`) para poder
+// reutilizarlo en la carga inicial del Server Component. Import de solo tipo:
+// se borra en compilación, sin arrastrar código de servidor al bundle cliente.
+type ProfileRow = AdminUserRow;
 
 interface UsersAdminProps {
   zones: { code: string; name: string }[];
+  /** Usuarios precargados desde el servidor; si vienen, no se fetchea en el mount. */
+  initialUsers?: ProfileRow[];
 }
 
 const ROLE_BADGE_VARIANT: Record<UserRole, "nacional" | "regional" | "ipf2" | "muted"> = {
@@ -89,9 +84,9 @@ function formatAbsolute(dateStr: string): string {
   });
 }
 
-export function UsersAdmin({ zones }: UsersAdminProps) {
-  const [users, setUsers] = useState<ProfileRow[]>([]);
-  const [loading, setLoading] = useState(true);
+export function UsersAdmin({ zones, initialUsers }: UsersAdminProps) {
+  const [users, setUsers] = useState<ProfileRow[]>(initialUsers ?? []);
+  const [loading, setLoading] = useState(!initialUsers);
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -143,10 +138,13 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
   }, []);
 
   useEffect(() => {
+    // Con datos precargados desde el servidor no se fetchea en el mount; el
+    // fetch queda para el refresco manual y tras mutaciones (botón/altas).
+    if (initialUsers) return;
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [load]);
+  }, [load, initialUsers]);
 
   const q = search.trim().toLowerCase();
   const filteredUsers = users.filter((u) => {
