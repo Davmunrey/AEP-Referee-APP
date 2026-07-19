@@ -13,6 +13,7 @@ import type {
   RosterHistoryEntry,
 } from "@/lib/types";
 import { isClaimTravelResolved } from "@/lib/judge-compensation/readiness";
+import { championshipDayCount } from "@/lib/judge-compensation/rates";
 
 function mapArbitrajeStats(raw: unknown): RefereeArbitrajeStats | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -376,7 +377,11 @@ export function mapCompensationClaimRow(
     sessionCount: Number(row.session_count ?? 0),
     pesajeCount: Number(row.pesaje_count ?? 0),
     functionCount: Number(row.session_count ?? 0) + Number(row.pesaje_count ?? 0),
-    championshipDays: 1,
+    // Recalculado desde las fechas del campeonato: el "1" fijo anterior
+    // etiquetaba mal los claims multi-día recién cargados de BD.
+    championshipDays: competition
+      ? championshipDayCount(competition.fecha, competition.fechaFin)
+      : 1,
     lodgingEligible: Boolean(row.lodging_eligible),
     lodgingDays: Number(row.lodging_days ?? 0),
     financialComplete: isClaimTravelResolved({

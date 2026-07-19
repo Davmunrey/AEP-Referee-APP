@@ -149,10 +149,16 @@ export function validateRosterOperation(input: {
 
     const existingIndex = sessionIndex(input.template, existing.session);
     if (existingIndex < 0 || targetIndex < 0) continue;
+    // Solo hay solape real entre sesiones consecutivas DEL MISMO DÍA: el pesaje
+    // de la primera sesión del sábado no choca con la tarima del viernes.
+    const sameDay =
+      input.template[existingIndex]?.dia === input.template[targetIndex]?.dia;
     const existingSlot = roleTimeSlot(existing.roleKey);
     const targetIsNextPesaje =
+      sameDay &&
       existingSlot === "tarima" && targetSlot === "pesaje" && targetIndex === existingIndex + 1;
     const targetIsPreviousTarima =
+      sameDay &&
       existingSlot === "pesaje" && targetSlot === "tarima" && existingIndex === targetIndex + 1;
 
     if ((targetIsNextPesaje || targetIsPreviousTarima) && !overridden) {

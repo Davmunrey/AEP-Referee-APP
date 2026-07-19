@@ -34,7 +34,15 @@ const LEVEL_MAP: Record<string, RefereeLevel> = {
 export function mapExcelLevel(raw: string | null | undefined): RefereeLevel {
   if (!raw) return "Regional";
   const trimmed = raw.trim();
-  return LEVEL_MAP[trimmed] ?? LEVEL_MAP[trimmed.replace(/\s+/g, " ")] ?? "Regional";
+  const direct = LEVEL_MAP[trimmed] ?? LEVEL_MAP[trimmed.replace(/\s+/g, " ")];
+  if (direct) return direct;
+  // Variantes reales del Excel ("IPF Cat. 2", "IPF-1", "IPF2"…): sin esta
+  // normalización, un juez IPF quedaba degradado a Regional en silencio.
+  const compact = trimmed.toUpperCase().replace(/[\s.\-]|CAT/g, "");
+  if (compact === "IPF2") return "IPF Cat. 2";
+  if (compact === "IPF1") return "IPF Cat. 1";
+  if (compact === "NACIONAL") return "Nacional";
+  return "Regional";
 }
 
 export function mapExcelActivo(
