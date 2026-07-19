@@ -72,6 +72,7 @@ const PROBES = {
   "017": { table: "roster_assignments", column: "cross_zone" },
   "018": { table: "referee_availability", supersededBy: "019" }, // drop en 019
   "019": { table: "competition_availability" },
+  "034": { table: "judge_compensation_claims", column: "travel_amount_override" },
 };
 
 const admin = createClient(url, serviceRoleKey, {

@@ -44,6 +44,7 @@ export const memoryDataService = {
   setSlotFlags: competitions.setSlotFlags,
   validateAssign: competitions.validateAssign,
   assignReferee: competitions.assignReferee,
+  assignRefereesBatch: competitions.assignRefereesBatch,
   clearSlot: competitions.clearSlot,
   clearRosterAssignments: competitions.clearRosterAssignments,
   submitRoster: competitions.submitRoster,

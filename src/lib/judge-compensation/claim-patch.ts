@@ -12,6 +12,7 @@ export type CompensationClaimPatch = Partial<{
   distanceKmOneWay: number | null;
   distanceKmRoundTrip: number | null;
   distanceSource: "osm" | "google_maps" | "manual" | null;
+  travelAmountOverride: number | null;
   travelApproved: boolean;
   travelNotes: string | null;
   isCompetitionManager: boolean;
@@ -99,7 +100,13 @@ export function applyCompensationClaimPatch(
       normalized.reviewComment !== undefined
         ? (normalized.reviewComment ?? undefined)
         : existing.reviewComment,
-    travelAmountOverride: existing.travelAmountOverride,
+    // Override manual del importe de viaje: patcheable (número ≥0 para fijarlo,
+    // null para retirarlo). Al pasar por buildCompensationClaim, cambiarlo dispara
+    // el recálculo de totales igual que el resto de campos monetarios.
+    travelAmountOverride:
+      normalized.travelAmountOverride !== undefined
+        ? (normalized.travelAmountOverride ?? undefined)
+        : existing.travelAmountOverride,
   };
   return buildCompensationClaim(existing.id, input, {
     submittedAt: existing.submittedAt,

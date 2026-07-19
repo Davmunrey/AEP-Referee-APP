@@ -118,6 +118,7 @@ export const memoryCompensationService = {
       distanceKmOneWay: number | null;
       distanceKmRoundTrip: number | null;
       distanceSource: "osm" | "google_maps" | "manual" | null;
+      travelAmountOverride: number | null;
       travelApproved: boolean;
       travelNotes: string | null;
       isCompetitionManager: boolean;

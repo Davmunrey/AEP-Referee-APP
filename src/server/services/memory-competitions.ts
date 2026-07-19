@@ -404,6 +404,38 @@ export async function assignReferee(
   };
 }
 
+export async function assignRefereesBatch(
+  competitionId: string,
+  entries: import("./supabase-roster").RosterBatchAssignment[],
+  actor: string,
+): Promise<{
+  results: { ok: boolean; error?: string }[];
+  assignments: AssignmentsMap;
+  flags: FlagsMap;
+  crossZoneMap: import("@/lib/types").CrossZoneMap;
+}> {
+  // Paridad de RESULTADOS con el backend Supabase (no de rendimiento): itera el
+  // assign existente, que ya valida incrementalmente sobre el store mutado.
+  const results: { ok: boolean; error?: string }[] = [];
+  for (const entry of entries) {
+    const res = await assignReferee(
+      competitionId,
+      entry.slotKey,
+      entry.refereeId,
+      actor,
+      entry.flags,
+    );
+    results.push(res.error ? { ok: false, error: res.error } : { ok: true });
+  }
+  const roster = await getRoster(competitionId);
+  return {
+    results,
+    assignments: roster?.assignments ?? {},
+    flags: roster?.flags ?? {},
+    crossZoneMap: roster?.crossZoneMap ?? {},
+  };
+}
+
 export async function clearSlot(
   competitionId: string,
   slotKey: string,
