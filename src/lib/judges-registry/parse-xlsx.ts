@@ -165,7 +165,9 @@ function parseDatos(
     const { estado, disp } = mapExcelActivo(asBool(row[7]), nombre);
     const ultimoFecha = excelDateToIso(row[6]);
     const antiguedad = excelDateToIso(row[3]);
-    const telefonoRaw = asNumber(row[9]);
+    // Un teléfono es TEXTO: leerlo como número perdía ceros iniciales, el
+    // prefijo +34 (→ NaN → teléfono perdido) y precisión en números largos.
+    const telefonoRaw = asString(row[9]);
     const notaExtra = asString(row[12]) ?? asString(row[11]);
     const notas = /^ERA\s/i.test(nombre)
       ? "Pendiente de completar ficha (Excel)"
@@ -183,7 +185,7 @@ function parseDatos(
       ultimo: formatUltimoLabel(ultimoFecha),
       localidad,
       email: asString(row[8])?.toLowerCase(),
-      telefono: telefonoRaw != null ? String(Math.trunc(telefonoRaw)) : undefined,
+      telefono: telefonoRaw,
       genero: asString(row[10]),
       antiguedad,
       ultimoFecha,

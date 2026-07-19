@@ -145,7 +145,12 @@ function renderPageWithLayout(pageData: {
       }
       rows.sort((a, b) => b.y - a.y); // y mayor = más arriba
 
-      const minX = Math.min(...items.map((it) => it.transform[4]));
+      // reduce, no spread: con decenas de miles de ítems de texto el spread
+      // puede reventar la pila de llamadas (RangeError).
+      const minX = items.reduce(
+        (min, it) => (it.transform[4] < min ? it.transform[4] : min),
+        Number.POSITIVE_INFINITY,
+      );
 
       const lines = rows.map((row) => {
         row.items.sort((a, b) => a.transform[4] - b.transform[4]);

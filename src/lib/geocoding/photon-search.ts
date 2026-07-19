@@ -58,12 +58,16 @@ export async function searchPhotonAddresses(
   const data = (await res.json()) as { features?: PhotonFeature[] };
   if (!Array.isArray(data.features)) return [];
 
-  return data.features.map((feature) => {
-    const [lng, lat] = feature.geometry.coordinates;
-    return {
-      address: formatPhotonAddress(feature),
-      lat,
-      lng,
-    };
-  });
+  return data.features
+    // Photon devuelve ocasionalmente features sin geometría (límites
+    // administrativos); sin este filtro, uno solo tumbaba la búsqueda entera.
+    .filter((feature) => Array.isArray(feature.geometry?.coordinates) && feature.geometry.coordinates.length >= 2)
+    .map((feature) => {
+      const [lng, lat] = feature.geometry.coordinates;
+      return {
+        address: formatPhotonAddress(feature),
+        lat,
+        lng,
+      };
+    });
 }

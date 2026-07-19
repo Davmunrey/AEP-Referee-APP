@@ -38,8 +38,13 @@ export function excelDateToIso(v: unknown): string | undefined {
 
   const dmy = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
   if (dmy) {
+    const dd = Number(dmy[1]);
+    const mm = Number(dmy[2]);
+    // Sin validar rangos, una celda en formato US (MM/DD) producía fechas ISO
+    // inválidas ("2026-13-05") que se colaban en la BD sin aviso.
+    if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return undefined;
     const y = dmy[3]!.length === 2 ? 2000 + Number(dmy[3]) : Number(dmy[3]);
-    return iso(y, pad2(Number(dmy[2])), Number(dmy[1]));
+    return iso(y, pad2(mm), dd);
   }
 
   const es = s.match(
@@ -76,7 +81,10 @@ export function parseCompetitionDateRange(
     const m1 = ES_MONTH[slashRange[2]!.toLowerCase().slice(0, 3)];
     const m2 = ES_MONTH[slashRange[4]!.toLowerCase().slice(0, 3)];
     if (m1 && m2) {
-      const fecha = iso(y, m1, Number(slashRange[1]));
+      // Rango que cruza el año (31-Dic/01-Ene-26): el año escrito corresponde
+      // al extremo FINAL; el inicio en un mes posterior pertenece al año previo.
+      const startYear = m2 < m1 ? y - 1 : y;
+      const fecha = iso(startYear, m1, Number(slashRange[1]));
       const fechaFin = iso(y, m2, Number(slashRange[3]));
       return { fecha, fechaFin: fechaFin < fecha ? fecha : fechaFin };
     }
