@@ -28,6 +28,8 @@ export function db() {
 let approvalCompetitionColumnPromise: Promise<boolean> | null = null;
 let approvalSubmitterColumnPromise: Promise<boolean> | null = null;
 let historyCompetitionColumnPromise: Promise<boolean> | null = null;
+let compensationOverrideColumnPromise: Promise<boolean> | null = null;
+let refereeDomicilioGeoColumnPromise: Promise<boolean> | null = null;
 
 /**
  * Sonda de columna con caché a nivel de módulo. Solo se cachea un veredicto
@@ -83,6 +85,26 @@ export async function hasHistoryCompetitionColumn(): Promise<boolean> {
     "competition_id",
     () => historyCompetitionColumnPromise,
     (p) => { historyCompetitionColumnPromise = p; },
+  );
+}
+
+/** ¿Existe judge_compensation_claims.travel_amount_override? (migración 034) */
+export async function hasCompensationOverrideColumn(): Promise<boolean> {
+  return probeColumns(
+    "judge_compensation_claims",
+    "travel_amount_override",
+    () => compensationOverrideColumnPromise,
+    (p) => { compensationOverrideColumnPromise = p; },
+  );
+}
+
+/** ¿Existen referees.domicilio_lat / domicilio_lng? (migración 034) */
+export async function hasRefereeDomicilioGeoColumns(): Promise<boolean> {
+  return probeColumns(
+    "referees",
+    "domicilio_lat, domicilio_lng",
+    () => refereeDomicilioGeoColumnPromise,
+    (p) => { refereeDomicilioGeoColumnPromise = p; },
   );
 }
 

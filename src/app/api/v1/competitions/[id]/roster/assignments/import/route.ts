@@ -110,27 +110,35 @@ export async function POST(request: Request, context: RouteContext) {
 
   if (!apply) return jsonOk({ preview });
 
+  // Un solo lote: carga los datos una vez, valida en memoria de forma
+  // incremental y persiste con un upsert masivo (antes: ~6-8 consultas por hueco
+  // × N huecos). Se conserva el shape de respuesta y las razones por entrada.
+  const applicable = candidates.filter(
+    (candidate) => candidate.selected && candidate.slotKey && candidate.refereeId,
+  );
+  const batch = await dataService.assignRefereesBatch(
+    competitionId,
+    applicable.map((candidate) => ({
+      slotKey: candidate.slotKey!,
+      refereeId: candidate.refereeId!,
+      flags: candidate.flags,
+    })),
+    user.nombre,
+  );
+
   let applied = 0;
   const errors: string[] = [];
-  for (const candidate of candidates) {
-    if (!candidate.selected || !candidate.slotKey || !candidate.refereeId) continue;
-    const result = await dataService.assignReferee(
-      competitionId,
-      candidate.slotKey,
-      candidate.refereeId,
-      user.nombre,
-      candidate.flags,
-    );
-    if (result.error) errors.push(`${candidate.session} ${candidate.roleLabel}: ${result.error}`);
+  applicable.forEach((candidate, index) => {
+    const result = batch.results[index];
+    if (result?.error) errors.push(`${candidate.session} ${candidate.roleLabel}: ${result.error}`);
     else applied++;
-  }
+  });
 
-  const updatedRoster = await dataService.getRoster(competitionId);
   return jsonOk({
     preview,
     applied,
     errors,
-    assignments: updatedRoster?.assignments ?? {},
-    flags: updatedRoster?.flags ?? {},
+    assignments: batch.assignments,
+    flags: batch.flags,
   });
 }

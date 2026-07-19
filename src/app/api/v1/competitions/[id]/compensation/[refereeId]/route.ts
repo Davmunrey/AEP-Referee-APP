@@ -17,6 +17,8 @@ const compensationPatchSchema = z
     distanceKmOneWay: z.number().finite().min(0).max(5000).nullable().optional(),
     distanceKmRoundTrip: z.number().finite().min(0).max(10000).nullable().optional(),
     distanceSource: z.enum(["osm", "google_maps", "manual"]).nullable().optional(),
+    // Override manual del importe de viaje: número ≥0 para fijarlo, null para retirarlo.
+    travelAmountOverride: z.number().finite().min(0).max(100000).nullable().optional(),
     travelApproved: z.boolean().optional(),
     travelNotes: z.string().max(1000).nullable().optional(),
     isCompetitionManager: z.boolean().optional(),

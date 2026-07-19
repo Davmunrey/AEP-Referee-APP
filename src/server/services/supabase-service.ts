@@ -73,10 +73,20 @@ export const supabaseDataService = {
       actor,
       competitionService.getCompetition,
       refereeService.getReferee,
-      (cId, sKey, rId) =>
-        rosterService.validateAssign(cId, sKey, rId, competitionService.getCompetition, refereeService.getReferee),
       slotFlags,
       crossZoneReason,
+    ),
+  assignRefereesBatch: (
+    competitionId: string,
+    entries: import("./supabase-roster").RosterBatchAssignment[],
+    actor: string,
+  ) =>
+    rosterService.assignRefereesBatch(
+      competitionId,
+      entries,
+      actor,
+      competitionService.getCompetition,
+      refereeService.getRefereesByIds,
     ),
   clearSlot: rosterService.clearSlot,
   clearRosterAssignments: (competitionId: string, actor: string) =>
