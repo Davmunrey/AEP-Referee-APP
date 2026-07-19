@@ -453,7 +453,11 @@ export async function submitRoster(
       assignments,
     });
   }
-  comp.aprobacion = "Propuesta enviada";
+  // Mutar la fila del store, no `comp`: getCompetition devuelve una COPIA
+  // (applyCoverageToCompetition hace {...competition}), así que escribir en la
+  // copia dejaba la competición en "Sin propuesta" y sin candado de aprobación.
+  const storedComp = store.competitions.find((c) => c.id === competitionId);
+  if (storedComp) storedComp.aprobacion = "Propuesta enviada";
   pushActivity({
     tipo: "propuesta",
     actor,
@@ -466,7 +470,11 @@ export async function submitRoster(
 
 export async function saveDraft(competitionId: string, actor: string) {
   const comp = await getCompetition(competitionId);
-  if (comp && comp.estado === "Borrador") comp.estado = "Incompleto";
+  // Igual que en submitRoster: hay que mutar la fila del store, no la copia.
+  if (comp && comp.estado === "Borrador") {
+    const storedComp = getStore().competitions.find((c) => c.id === competitionId);
+    if (storedComp) storedComp.estado = "Incompleto";
+  }
   pushHistory({
     competitionId,
     at: new Date().toISOString(),

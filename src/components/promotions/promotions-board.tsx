@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { LevelBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
@@ -89,6 +89,12 @@ export function PromotionsBoard({
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectComment, setRejectComment] = useState("");
   const router = useRouter();
+
+  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
+  // patrón que competitions-table).
+  useEffect(() => {
+    setItems(initial);
+  }, [initial]);
 
   const pendingCount = items.filter((p) => p.status === "pendiente").length;
   const approvedCount = items.filter((p) => p.status === "aprobado").length;

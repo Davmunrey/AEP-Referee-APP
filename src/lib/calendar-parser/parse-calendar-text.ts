@@ -21,9 +21,9 @@ const MONTHS_ES: Record<string, number> = {
 
 /**
  * Resuelve el mes desde abreviatura O nombre completo ("abr" y "abril"),
- * normalizando acentos/mayúsculas — igual que el parser CSV. El regex acepta
- * 3–5 letras, así que la búsqueda directa en MONTHS_ES fallaba con nombres
- * completos como "abril"/"enero"/"marzo".
+ * normalizando acentos/mayúsculas — igual que el parser CSV. Los regex de fecha
+ * aceptan 3–10 letras para cubrir también los nombres completos largos
+ * ("septiembre", "noviembre"), que con el límite anterior de 5 nunca casaban.
  */
 function monthNum(raw: string): number | undefined {
   const key = raw
@@ -47,13 +47,13 @@ const NIVEL_VALID = new Set([
 
 import { deduceGeographicZone } from "@/lib/aep-zones";
 
-const DATE_SINGLE_RE = /^(\d{1,2})-([a-záéíóú]{3,5})$/i;
-const DATE_RANGE_SAME_RE = /^(\d{1,2})(?:-\d{1,2})*-(\d{1,2})\s+([a-záéíóú]{3,5})$/i;
+const DATE_SINGLE_RE = /^(\d{1,2})-([a-záéíóú]{3,10})$/i;
+const DATE_RANGE_SAME_RE = /^(\d{1,2})(?:-\d{1,2})*-(\d{1,2})\s+([a-záéíóú]{3,10})$/i;
 const DATE_RANGE_CROSS_RE =
-  /^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3,5})-([a-záéíóú]{3,5})$/i;
+  /^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3,10})-([a-záéíóú]{3,10})$/i;
 const DATE_RANGE_SPACED_CROSS_RE =
-  /^(\d{1,2})\s+([a-záéíóú]{3,5})\s*-\s*(\d{1,2})\s+([a-záéíóú]{3,5})$/i;
-const DATE_MONTH_RANGE_RE = /^([a-záéíóú]{3,5})\s*-\s*([a-záéíóú]{3,5})(?:\s+\*\*)?$/i;
+  /^(\d{1,2})\s+([a-záéíóú]{3,10})\s*-\s*(\d{1,2})\s+([a-záéíóú]{3,10})$/i;
+const DATE_MONTH_RANGE_RE = /^([a-záéíóú]{3,10})\s*-\s*([a-záéíóú]{3,10})(?:\s+\*\*)?$/i;
 
 const HEADER_LINE_RE = /^(FECHA|LOCALIDAD|ORGANIZADOR|NIVEL|DIVISIONES|COMPETICIONES.*TRIMESTRE.*\d{4}|FINAL DE A[ÑN]O|EVENTO PATROCINADO|ASOCIACI[ÓO]N\s+ESPA[ÑN]OLA.*POWERLIFTING|CALENDARIO\s+de\s+COMPETICIONES\s+\d{4}|\*\s+Actualizado.*$)/i;
 

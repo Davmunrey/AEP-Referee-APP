@@ -256,9 +256,9 @@ export function RosterRefereePanelLeft({
                 blockedReason={blockedReason}
                 warningReason={warningReason}
                 competitionZona={competitionZona}
-                onDragStart={() => onDragStart(referee.id)}
+                onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
-                onClick={() => onQuickAssign(referee.id)}
+                onClick={onQuickAssign}
                 highlight={!!selectedSlot && !readOnly}
                 isDragging={isDragging}
                 readOnly={readOnly}

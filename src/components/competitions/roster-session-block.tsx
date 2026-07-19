@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import type {
   AssignmentsMap,
   FlagsMap,
@@ -104,7 +104,7 @@ export function SessionOverviewCard({
  * vive en una tira con scroll horizontal: montar 12 sesiones cuesta lo mismo en
  * alto que montar 2, y cambiar de sesión no obliga a hacer scroll.
  */
-export function SessionTab({
+export const SessionTab = memo(function SessionTab({
   session,
   assignments,
   active,
@@ -113,14 +113,14 @@ export function SessionTab({
   session: RosterSession;
   assignments: AssignmentsMap;
   active: boolean;
-  onClick: () => void;
+  onClick: (sesion: string) => void;
 }) {
   const { filled, slots, pct } = sessionProgress(session, assignments);
   const done = slots > 0 && filled >= slots;
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => onClick(session.sesion)}
       aria-pressed={active}
       title={`${session.sesion} · ${session.nombre}`}
       className={cn(
@@ -155,9 +155,11 @@ export function SessionTab({
       </span>
     </button>
   );
-}
+});
 
-export function SessionBlock({
+// Memoizado: evita repintar toda la parrilla de la sesión cuando el builder
+// re-renderiza por cambios que no la afectan (búsqueda, filtros, arrastre).
+export const SessionBlock = memo(function SessionBlock({
   session,
   assignments,
   flags,
@@ -286,4 +288,4 @@ export function SessionBlock({
       )}
     </article>
   );
-}
+});

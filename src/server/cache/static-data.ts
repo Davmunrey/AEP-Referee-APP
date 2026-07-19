@@ -8,7 +8,10 @@ const STATIC_TTL_SECONDS = 3600;
 
 async function fetchZones(): Promise<{ code: string; name: string }[]> {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("zones").select("code, name").order("code");
+  const { data, error } = await supabase.from("zones").select("code, name").order("code");
+  // Un fallo puntual no debe cachearse como "[] durante 1 h": lanzar evita que
+  // unstable_cache persista el resultado vacío.
+  if (error) throw error;
   return (data ?? []).map((z) => ({ code: z.code, name: z.name }));
 }
 
@@ -19,7 +22,8 @@ export const getZonesCached = unstable_cache(fetchZones, ["aep-static-zones"], {
 
 async function fetchRegulations(): Promise<RegulationRule[]> {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("regulation_rules").select("*");
+  const { data, error } = await supabase.from("regulation_rules").select("*");
+  if (error) throw error;
   return (data ?? []).map((r) => mapRegulation(r as Record<string, unknown>));
 }
 

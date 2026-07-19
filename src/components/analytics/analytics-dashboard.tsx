@@ -163,14 +163,17 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
 
   return (
     <PageShell className="space-y-5">
-      <ExportPreviewDialog
-        open={exportOpen}
-        onClose={() => setExportOpen(false)}
-        kind="analytics_export"
-        fetchText={() => api.fetchAnalyticsExportText(data.selectedYear)}
-        filename={exportFilename}
-        mime="text/csv;charset=utf-8"
-      />
+      {/* Montaje condicional: no monta el diálogo (ni su estado) hasta abrirlo. */}
+      {exportOpen && (
+        <ExportPreviewDialog
+          open={exportOpen}
+          onClose={() => setExportOpen(false)}
+          kind="analytics_export"
+          fetchText={() => api.fetchAnalyticsExportText(data.selectedYear)}
+          filename={exportFilename}
+          mime="text/csv;charset=utf-8"
+        />
+      )}
 
       <PageHeader
         eyebrow="Gestión"

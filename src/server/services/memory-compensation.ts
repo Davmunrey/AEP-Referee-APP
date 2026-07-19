@@ -1,7 +1,6 @@
-import {
-  buildCompensationClaim,
-  applyCompensationClaimPatch,
-} from "@/lib/judge-compensation";
+// Submódulos concretos: el barrel arrastra receipt-pdf (→ pdfkit) al cold start.
+import { buildCompensationClaim } from "@/lib/judge-compensation/calculate";
+import { applyCompensationClaimPatch } from "@/lib/judge-compensation/claim-patch";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { buildHubSummary } from "@/lib/judge-compensation/hub";
 import type {
@@ -30,7 +29,16 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-const store = new Map<string, CompensationClaim>();
+// Colgado de globalThis como el store principal (store.ts): en dev con HMR y
+// bundles por ruta cada instancia del módulo tendría su propio Map y las
+// claims guardadas desde una ruta no se verían desde otra.
+const globalForCompensation = globalThis as unknown as {
+  __aepCompensationStore?: Map<string, CompensationClaim>;
+};
+const store = (globalForCompensation.__aepCompensationStore ??= new Map<
+  string,
+  CompensationClaim
+>());
 
 function claimId(competitionId: string, refereeId: string): string {
   return `cmp-${competitionId}-${refereeId}`;

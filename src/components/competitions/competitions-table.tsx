@@ -67,14 +67,6 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     router.refresh();
   }, [router]);
 
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void refreshEvents();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refreshEvents]);
-
   const duplicateGroups = useMemo(() => groupCompetitionDuplicates(competitions), [competitions]);
   const duplicateIds = useMemo(() => {
     const ids = new Set<string>();

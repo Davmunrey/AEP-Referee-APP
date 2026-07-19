@@ -72,6 +72,12 @@ export function ExamsManager({
   const router = useRouter();
   const [exams, setExams] = useState(initialExams);
   const [showForm, setShowForm] = useState(false);
+
+  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
+  // patrón que competitions-table). Solo toca la lista, no el formulario.
+  useEffect(() => {
+    setExams(initialExams);
+  }, [initialExams]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

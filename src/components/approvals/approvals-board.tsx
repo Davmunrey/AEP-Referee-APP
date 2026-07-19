@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
@@ -105,6 +105,12 @@ export function ApprovalsBoard({
   const [page, setPage] = useState(0);
   const router = useRouter();
 
+  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
+  // patrón que competitions-table / referees-directory).
+  useEffect(() => {
+    setItems(initial);
+  }, [initial]);
+
   const pendingCount = items.filter((a) => a.status === "pendiente").length;
   const approvedCount = items.filter((a) => a.status === "aprobado").length;
   const rejectedCount = items.filter((a) => a.status === "rechazado").length;
@@ -129,12 +135,9 @@ export function ApprovalsBoard({
     startTransition(async () => {
       try {
         const updated = await api.reviewApproval(selected.id, approve, comment || undefined);
-        setItems((prev) => {
-          const next = prev.map((a) => (a.id === updated.id ? updated : a));
-          const nextPending = next.find((a) => a.status === "pendiente");
-          setSelected(nextPending ?? null);
-          return next;
-        });
+        const next = items.map((a) => (a.id === updated.id ? updated : a));
+        setItems(next);
+        setSelected(next.find((a) => a.status === "pendiente") ?? null);
         setComment("");
         router.refresh();
       } catch (err) {

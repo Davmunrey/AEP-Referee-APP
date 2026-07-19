@@ -1,10 +1,13 @@
+// Submódulos concretos en vez del barrel: el índice re-exporta receipt-pdf
+// (→ pdfkit), que se cargaba en el cold start de TODAS las rutas API vía el
+// grafo de dataService aunque solo la ruta de export lo usa.
+import { buildCompensationClaim } from "@/lib/judge-compensation/calculate";
 import {
-  buildCompensationClaim,
   fetchDrivingDistanceKm,
   geocodeAddress,
   osmThrottle,
-  applyCompensationClaimPatch,
-} from "@/lib/judge-compensation";
+} from "@/lib/judge-compensation/osm-distance";
+import { applyCompensationClaimPatch } from "@/lib/judge-compensation/claim-patch";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { buildHubSummary } from "@/lib/judge-compensation/hub";
 import type {
