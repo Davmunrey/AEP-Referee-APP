@@ -119,6 +119,11 @@ function claimInput(overrides: Partial<CompensationClaimInput> = {}): Compensati
       },
     ],
     travelMode: "km_rate",
+    travelApproved: false,
+    isCompetitionManager: false,
+    competitionManagerPerDay: false,
+    isComputerSetup: false,
+    status: "borrador",
     ...overrides,
   };
 }
@@ -167,8 +172,9 @@ describe("consistencia desglose ↔ total", () => {
       "cmp-1",
       claimInput({
         distanceKmRoundTrip: 300,
-        competitionManager: true,
-        computerSetupHalfHours: 2,
+        isCompetitionManager: true,
+        isComputerSetup: true,
+        computerSetupManualAmount: 20,
       }),
     );
     const breakdown = buildClaimBreakdown(claim);
