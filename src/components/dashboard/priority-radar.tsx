@@ -119,7 +119,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
         {leader && (
           <Link
             href={`/competitions/${leader.id}`}
-            className="group block rounded-2xl border border-primary/15 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
+            className="group block rounded-2xl border border-primary/15 bg-primary/5 p-4 transition-colors hover:bg-primary/10 focus-ring"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -187,7 +187,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
           <Link
             key={item.id}
             href={`/competitions/${item.id}`}
-            className="group flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-surface-hover"
+            className="group flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-surface-hover focus-ring"
           >
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-hover font-mono text-xs font-bold text-muted-foreground">
               {index + 2}

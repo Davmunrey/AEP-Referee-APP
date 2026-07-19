@@ -106,6 +106,7 @@ function CoverageMeter({
       <div
         className="h-2 overflow-hidden rounded-full bg-surface-active"
         role="progressbar"
+        aria-label={noTemplate ? "Sin plantilla" : `Cobertura ${filled} de ${required}`}
         aria-valuenow={width}
         aria-valuemin={0}
         aria-valuemax={100}
@@ -162,7 +163,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
   );
 
   return (
-    <PageShell className="space-y-5">
+    <PageShell>
       {/* Montaje condicional: no monta el diálogo (ni su estado) hasta abrirlo. */}
       {exportOpen && (
         <ExportPreviewDialog
@@ -194,7 +195,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                   onClick={() => router.push(`/analytics?year=${y}`)}
                   aria-pressed={y === data.selectedYear}
                   className={cn(
-                    "rounded-full border px-2.5 py-1 text-[11px] font-medium tabular-nums transition-colors",
+                    "rounded-full border px-3 py-1.5 text-[11px] font-medium tabular-nums transition-colors focus-ring",
                     y === data.selectedYear
                       ? "border-primary/40 bg-primary/10 text-primary"
                       : "border-border text-subtle-muted hover:bg-surface-hover",
@@ -221,6 +222,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                 "relative flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-2xl border",
                 yearTone.pill,
               )}
+              role="img"
               aria-label={`Cobertura anual ${yearCoveragePct ?? 0} por ciento`}
             >
               <span className={cn("text-3xl font-bold tabular-nums tracking-tight", yearTone.value)}>
@@ -270,7 +272,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         </section>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card className="overflow-hidden">
           <CardHeader className="border-b border-border-muted bg-surface/30 pb-4">
             <div className="flex items-center gap-2">
@@ -392,7 +394,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         </Card>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card className="overflow-hidden">
           <CardHeader className="border-b border-border-muted bg-surface/30 pb-4">
             <div className="flex items-center gap-2">
@@ -460,7 +462,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               <CardTitle className="text-sm">Glosario</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-2 p-4 sm:grid-cols-1">
+          <CardContent className="grid gap-2 p-4">
             {[
               {
                 title: "Plazas cubiertas",
@@ -523,7 +525,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                     <DataTableCell>
                       <Link
                         href={`/competitions/${e.id}`}
-                        className="font-medium text-foreground transition-colors hover:text-primary"
+                        className="rounded-sm font-medium text-foreground transition-colors hover:text-primary focus-ring"
                       >
                         {e.nombre}
                       </Link>

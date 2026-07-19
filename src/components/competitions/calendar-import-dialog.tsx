@@ -261,7 +261,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                     <td className="px-2 py-1.5 align-top">
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-border text-primary accent-primary disabled:opacity-30"
+                        className="h-4 w-4 rounded border-border accent-primary disabled:opacity-30"
                         checked={selectedKeys.has(e.key)}
                         disabled={!e.importable}
                         aria-label={`Importar ${e.nombre}`}

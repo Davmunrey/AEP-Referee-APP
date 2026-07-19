@@ -104,7 +104,7 @@ function YearChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+      className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors focus-ring ${
         active
           ? "border-primary/40 bg-primary/10 text-primary"
           : "border-border text-subtle-muted hover:bg-surface-hover"

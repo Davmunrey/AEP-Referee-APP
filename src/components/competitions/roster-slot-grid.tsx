@@ -120,8 +120,17 @@ function SlotCell({
           if (readOnly) return;
           onSelectSlot(isSelected ? null : slotKey);
         }}
+        role="button"
+        tabIndex={readOnly ? -1 : 0}
+        onKeyDown={(e) => {
+          if (readOnly) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelectSlot(isSelected ? null : slotKey);
+          }
+        }}
         className={cn(
-          "relative min-h-[52px] rounded border p-1.5 transition-all duration-100",
+          "relative min-h-[52px] rounded border p-1.5 transition-all duration-100 focus-ring",
           !readOnly && "cursor-pointer",
           isDropTarget
             ? "border-primary bg-primary/10 shadow-md"
@@ -148,7 +157,7 @@ function SlotCell({
                     </span>
                   )}
                   {slotFlags?.intercambio && (
-                    <span className="ml-0.5 font-mono text-[10px] text-accent" title="Intercambio">
+                    <span className="ml-0.5 font-mono text-[10px] text-info" title="Intercambio">
                       ↑↓
                     </span>
                   )}
@@ -158,7 +167,7 @@ function SlotCell({
                   {isCrossZone && (
                     <span
                       title={`Fuera de zona (${referee.zona})`}
-                      className="rounded border border-orange-400/50 px-1 py-px text-[9px] font-semibold text-orange-600"
+                      className="rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
                     >
                       ⟳
                     </span>
@@ -204,7 +213,7 @@ function SlotCell({
                   className={cn(
                     "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-colors",
                     slotFlags?.compartido
-                      ? "border-primary bg-primary text-white"
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-background text-subtle-muted hover:border-primary/50",
                   )}
                 >
@@ -221,8 +230,8 @@ function SlotCell({
                   className={cn(
                     "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-colors",
                     slotFlags?.intercambio
-                      ? "border-accent bg-accent text-white"
-                      : "border-border bg-background text-subtle-muted hover:border-accent/50",
+                      ? "border-info bg-info text-primary-foreground"
+                      : "border-border bg-background text-subtle-muted hover:border-info/50",
                   )}
                 >
                   ↑↓

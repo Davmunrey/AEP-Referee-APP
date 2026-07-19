@@ -59,15 +59,20 @@ export function CompensationExportDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-labelledby="export-receipt-title" className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
         <div className="mb-4 flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-sm font-semibold">Exportar recibo</h3>
+            <h3 id="export-receipt-title" className="text-sm font-semibold">Exportar recibo</h3>
             <p className="mt-1 text-xs text-muted-foreground">{claim.refereeName}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar">
-            <X className="h-4 w-4 text-subtle-muted" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="rounded-md p-1.5 text-subtle-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-ring"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -126,16 +131,16 @@ export function CompensationExportDialog({
         />
         {ibanHint && <p className="mt-2 text-xs text-destructive">{ibanHint}</p>}
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={pending}>
+            Cancelar
+          </Button>
           <Button
             type="button"
             onClick={onExport}
             disabled={pending || !ibanReady || !claim.financialComplete}
           >
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Descargar PDF"}
-          </Button>
-          <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
-            Cancelar
           </Button>
         </div>
       </div>

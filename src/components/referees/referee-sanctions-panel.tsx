@@ -163,7 +163,7 @@ export function RefereeSanctionsPanel({
               de fin.
             </p>
             <div>
-              <label className="mb-1 block text-xs font-medium">Motivo</label>
+              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Motivo</label>
               <textarea
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
@@ -176,7 +176,7 @@ export function RefereeSanctionsPanel({
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium">Inicio</label>
+                <label className="mb-1 block text-xs font-medium text-foreground-secondary">Inicio</label>
                 <Input
                   type="date"
                   value={fechaInicio}
@@ -185,7 +185,7 @@ export function RefereeSanctionsPanel({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium">Duración</label>
+                <label className="mb-1 block text-xs font-medium text-foreground-secondary">Duración</label>
                 <select
                   value={duration}
                   onChange={(e) => setDuration(e.target.value as SanctionDurationPreset)}
@@ -201,7 +201,7 @@ export function RefereeSanctionsPanel({
             </div>
             {duration === "custom" && (
               <div>
-                <label className="mb-1 block text-xs font-medium">Fin</label>
+                <label className="mb-1 block text-xs font-medium text-foreground-secondary">Fin</label>
                 <Input
                   type="date"
                   value={fechaFin}
@@ -212,7 +212,7 @@ export function RefereeSanctionsPanel({
               </div>
             )}
             <div>
-              <label className="mb-1 block text-xs font-medium">Notas internas (opcional)</label>
+              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Notas internas (opcional)</label>
               <Input value={notas} onChange={(e) => setNotas(e.target.value)} />
             </div>
             {error && (

@@ -65,7 +65,7 @@ export function InsightsPanel({ insights }: { insights: Insight[] }) {
             <CheckCircle2 className="h-8 w-8 text-success/60" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium text-foreground/70">Todo en orden</p>
-              <p className="mt-0.5 text-xs text-muted-foreground/60">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 No hay recomendaciones pendientes.
               </p>
             </div>
@@ -77,7 +77,7 @@ export function InsightsPanel({ insights }: { insights: Insight[] }) {
           return (
             <div
               key={insight.id}
-              className={cn("flex gap-3 px-4 py-3.5 transition-colors hover:bg-surface-hover", s.rowBg)}
+              className={cn("flex gap-3 px-4 py-3.5", s.rowBg)}
             >
               {/* Severity rail */}
               <span aria-hidden="true" className={cn("mt-0.5 w-1 shrink-0 rounded-full", s.rail)} />
@@ -105,7 +105,7 @@ export function InsightsPanel({ insights }: { insights: Insight[] }) {
                 {insight.action && (
                   <Link
                     href={insight.action.href}
-                    className="mt-2 inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10"
+                    className="mt-2 inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10 focus-ring"
                   >
                     {insight.action.label}
                     <ArrowRight className="h-3 w-3" />

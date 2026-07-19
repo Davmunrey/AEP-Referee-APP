@@ -24,7 +24,7 @@ export function RosterHelpPanel() {
       <div
         className={cn(
           "grid gap-2 overflow-hidden text-xs text-muted-foreground transition-all",
-          open ? "mt-3 max-h-48 opacity-100" : "max-h-0 opacity-0",
+          open ? "mt-3 max-h-96 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         <ol className="list-decimal space-y-1.5 pl-4">

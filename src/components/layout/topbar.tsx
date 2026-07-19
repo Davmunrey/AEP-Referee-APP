@@ -80,9 +80,11 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
         </nav>
         {meta.title && !pathname.startsWith("/competitions/") && (
           <div className="hidden min-w-0 border-l border-border-muted pl-3 xl:block">
-            <h1 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
+            {/* <p>, no <h1>: el h1 canónico de cada página lo pone PageHeader;
+                dos h1 simultáneos rompen la jerarquía para lectores de pantalla. */}
+            <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
               {meta.title}
-            </h1>
+            </p>
             {meta.subtitle && <p className="text-xs text-subtle-muted">{meta.subtitle}</p>}
           </div>
         )}
@@ -112,7 +114,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
           <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-full focus-ring">
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-foreground">{currentUser.nombre}</p>
-              <p className="max-w-[140px] truncate text-[10px] text-subtle-muted">{currentUser.rol}</p>
+              <p className="max-w-[140px] truncate text-[11px] text-muted-foreground">{currentUser.rol}</p>
             </div>
             <Avatar className="h-8 w-8 ring-2 ring-border transition-shadow hover:ring-primary/30">
               <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">

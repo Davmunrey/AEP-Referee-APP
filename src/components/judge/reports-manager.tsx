@@ -128,7 +128,7 @@ export function ReportsManager({
           <span className="text-xs font-normal text-subtle-muted">({reports.length})</span>
         </CardTitle>
         {canEdit && (
-          <Button size="sm" variant={showForm ? "outline" : "default"} className="gap-1.5 rounded-xl" onClick={() => setShowForm((v) => !v)}>
+          <Button size="sm" variant={showForm ? "outline" : "default"} className="gap-1.5" onClick={() => setShowForm((v) => !v)}>
             {showForm ? <X className="h-3.5 w-3.5" /> : <Upload className="h-3.5 w-3.5" />}
             {showForm ? "Cancelar" : "Subir informe"}
           </Button>
@@ -195,7 +195,7 @@ export function ReportsManager({
           </label>
           {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
           <div className="flex justify-end">
-            <Button size="sm" className="rounded-xl" disabled={busy} onClick={() => void submit()}>
+            <Button size="sm" disabled={busy} onClick={() => void submit()}>
               {busy ? "Subiendo…" : "Subir informe"}
             </Button>
           </div>

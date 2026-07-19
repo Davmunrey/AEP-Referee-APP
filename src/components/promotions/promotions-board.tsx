@@ -250,7 +250,7 @@ export function PromotionsBoard({
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="divide-y divide-border p-0">
+              <CardContent className="divide-y divide-border-muted p-0">
                 {groupItems.length === 0 ? (
                   <EmptyState
                     icon={TrendingUp}
@@ -306,7 +306,7 @@ export function PromotionsBoard({
                                   <button
                                     type="button"
                                     onClick={() => toggleMotivo(p.id)}
-                                    className="mt-0.5 inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline"
+                                    className="mt-0.5 inline-flex items-center gap-0.5 rounded text-[11px] text-primary hover:underline focus-ring"
                                   >
                                     {motivoExpanded ? (
                                       <>

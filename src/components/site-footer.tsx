@@ -8,26 +8,26 @@ export function SiteFooter({ className = "" }: { className?: string }) {
   const year = new Date().getFullYear();
   return (
     <footer
-      className={`flex flex-col items-center gap-1.5 text-center text-[11px] text-muted-foreground/70 ${className}`}
+      className={`flex flex-col items-center gap-1.5 text-center text-[11px] text-muted-foreground ${className}`}
     >
       <nav className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
         <Link
           href="/docs"
-          className="underline-offset-2 transition-colors hover:text-foreground hover:underline"
+          className="rounded-sm underline-offset-2 transition-colors hover:text-foreground hover:underline focus-ring"
         >
           Documentación
         </Link>
         <span aria-hidden="true" className="text-border">·</span>
         <Link
           href="/docs#privacidad"
-          className="underline-offset-2 transition-colors hover:text-foreground hover:underline"
+          className="rounded-sm underline-offset-2 transition-colors hover:text-foreground hover:underline focus-ring"
         >
           Privacidad
         </Link>
         <span aria-hidden="true" className="text-border">·</span>
         <Link
           href="/docs#contacto"
-          className="underline-offset-2 transition-colors hover:text-foreground hover:underline"
+          className="rounded-sm underline-offset-2 transition-colors hover:text-foreground hover:underline focus-ring"
         >
           Contacto
         </Link>

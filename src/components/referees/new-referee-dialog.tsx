@@ -76,7 +76,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-referee-title"
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface p-0 shadow-2xl outline-none"
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Dialog header */}

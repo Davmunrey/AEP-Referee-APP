@@ -458,7 +458,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
                           onClick={() =>
                             window.open(
                               `${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`,
@@ -480,7 +480,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                            className="h-8 w-8 text-destructive opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
                             disabled={deletingId === competition.id}
                             onClick={() => setConfirmDeleteId(competition.id)}
                             aria-label={`Eliminar ${competition.nombre}`}

@@ -82,7 +82,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
 
       {/* Hero card */}
       <Card className="overflow-hidden p-0">
-        <div className="px-6 py-5">
+        <div className="px-5 py-4">
           <div className="flex flex-wrap items-start gap-4">
             {/* Avatar */}
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/20 bg-primary/10 text-lg font-bold text-primary">
@@ -302,10 +302,10 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         </Card>
 
         {/* Trajectory stats — 2/5 */}
-        <div className="grid grid-cols-2 content-start gap-3 lg:col-span-2">
+        <div className="grid grid-cols-2 content-start gap-4 lg:col-span-2">
           {trayectoria.map((t) => (
             <Card key={t.label}>
-              <CardContent className="px-5 py-4">
+              <CardContent className="px-4 py-3.5">
                 <p className="friendly-label mb-1">{t.label}</p>
                 <p className="text-2xl font-bold tracking-tight text-foreground">
                   {t.value}

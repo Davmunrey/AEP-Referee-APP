@@ -176,7 +176,7 @@ export function AddressAutocompleteField({
               <li key={`${suggestion.address}-${suggestion.lat}`} role="option" aria-selected={false}>
                 <button
                   type="button"
-                  className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-surface"
+                  className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickSuggestion(suggestion)}
                 >
@@ -188,7 +188,7 @@ export function AddressAutocompleteField({
         )}
       </div>
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
-      <p className="text-[11px] text-success">
+      <p className="text-[11px] text-muted-foreground">
         Autocomplete OpenStreetMap (gratuito) — elige una sugerencia de la lista.
       </p>
       {loading && <p className="text-[11px] text-muted-foreground">Buscando…</p>}
