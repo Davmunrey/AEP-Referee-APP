@@ -41,8 +41,24 @@ interface CompensationBoardProps {
   canManage: boolean;
 }
 
-function emptyClub(): CompensationClubContact {
-  return { name: "", emails: [] };
+/**
+ * Fila editable de club con id estable de UI (no se envía a la API): evita
+ * usar el índice como key en una lista con borrado por posición.
+ */
+type ClubDraft = CompensationClubContact & { draftId: string };
+
+function newDraftId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `club-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function withDraftIds(contacts: CompensationClubContact[]): ClubDraft[] {
+  return contacts.map((c) => ({ ...c, draftId: newDraftId() }));
+}
+
+function emptyClub(): ClubDraft {
+  return { draftId: newDraftId(), name: "", emails: [] };
 }
 
 function applyClaimUpdate(
@@ -80,11 +96,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const [organizer, setOrganizer] = useState(competition.compensationOrganizer ?? "club");
-  const [clubs, setClubs] = useState<CompensationClubContact[]>(
-    () => competitionClubContacts(competition).length > 0
-      ? competitionClubContacts(competition)
-      : [emptyClub()],
-  );
+  const [clubs, setClubs] = useState<ClubDraft[]>(() => {
+    const contacts = competitionClubContacts(competition);
+    return contacts.length > 0 ? withDraftIds(contacts) : [emptyClub()];
+  });
   const [volunteer, setVolunteer] = useState(competition.compensationVolunteer ?? false);
   const patchChainRef = useRef(Promise.resolve());
 
@@ -124,7 +139,8 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           compensationVolunteer: volunteer,
         });
         setCompetition(updated);
-        setClubs(competitionClubContacts(updated).length ? competitionClubContacts(updated) : [emptyClub()]);
+        const updatedContacts = competitionClubContacts(updated);
+        setClubs(updatedContacts.length ? withDraftIds(updatedContacts) : [emptyClub()]);
         load();
       } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo guardar el organizador");
@@ -223,7 +239,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               {(organizer === "club" || organizer === "custom") && (
                 <>
                   {clubs.map((club, index) => (
-                    <div key={index} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
+                    <div key={club.draftId} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           {organizer === "custom" ? "Nombre" : "Club"} {clubs.length > 1 ? index + 1 : ""}
@@ -235,8 +251,8 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           onChange={(e) => {
                             const name = e.target.value;
                             setClubs((prev) =>
-                              prev.map((c, i) => {
-                                if (i !== index) return c;
+                              prev.map((c) => {
+                                if (c.draftId !== club.draftId) return c;
                                 const suggested = suggestedEmailsForClubName(name);
                                 const emails =
                                   suggested.length > 0 && c.emails.length === 0 ? suggested : c.emails;
@@ -255,8 +271,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           value={Array.isArray(club.emails) ? club.emails.join(", ") : ""}
                           onChange={(e) =>
                             setClubs((prev) =>
-                              prev.map((c, i) =>
-                                i === index ? { ...c, emails: normalizeClubEmails(e.target.value) } : c,
+                              prev.map((c) =>
+                                c.draftId === club.draftId
+                                  ? { ...c, emails: normalizeClubEmails(e.target.value) }
+                                  : c,
                               ),
                             )
                           }
@@ -268,7 +286,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           variant="ghost"
                           size="sm"
                           className="sm:col-span-2 justify-start text-destructive"
-                          onClick={() => setClubs((prev) => prev.filter((_, i) => i !== index))}
+                          onClick={() => setClubs((prev) => prev.filter((c) => c.draftId !== club.draftId))}
                         >
                           {organizer === "custom" ? "Quitar" : "Quitar club"}
                         </Button>

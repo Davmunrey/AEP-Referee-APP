@@ -27,20 +27,25 @@ export default function SignInPage() {
     if (!forgotEmail.trim()) return;
     setForgotLoading(true);
     setError(null);
-    // Carga el cliente Supabase solo al usarlo, fuera del bundle inicial del login.
-    const { createClient } = await import("@/lib/supabase/client");
-    const supabase = createClient();
-    const origin = window.location.origin;
-    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: `${origin}/auth/callback`,
-    });
-    setForgotLoading(false);
-    if (err) {
-      setError(err.message);
-      return;
+    try {
+      // Carga el cliente Supabase solo al usarlo, fuera del bundle inicial del login.
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const origin = window.location.origin;
+      const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${origin}/auth/callback`,
+      });
+      if (err) {
+        setError(err.message);
+        return;
+      }
+      setInfo("Si la cuenta existe, te enviaremos un email con instrucciones.");
+      setShowForgotPassword(false);
+    } catch {
+      setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
+    } finally {
+      setForgotLoading(false);
     }
-    setInfo("Si la cuenta existe, te enviaremos un email con instrucciones.");
-    setShowForgotPassword(false);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -50,36 +55,40 @@ export default function SignInPage() {
     setInfo(null);
     const emailNormalized = email.trim().toLowerCase();
 
-    const limitRes = await fetch(`${getApiBaseUrl()}/auth/password`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "check", email: emailNormalized }),
-    });
-    if (!limitRes.ok) {
-      setError("Demasiados intentos. Espera unos minutos antes de reintentar.");
-      setLoading(false);
-      return;
-    }
+    try {
+      const limitRes = await fetch(`${getApiBaseUrl()}/auth/password`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "check", email: emailNormalized }),
+      });
+      if (!limitRes.ok) {
+        setError("Demasiados intentos. Espera unos minutos antes de reintentar.");
+        return;
+      }
 
-    const loginRes = await fetch(`${getApiBaseUrl()}/auth/login`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: emailNormalized, password }),
-    });
-    if (!loginRes.ok) {
-      setError("Email o contraseña incorrectos.");
-      setLoading(false);
-      return;
-    }
+      const loginRes = await fetch(`${getApiBaseUrl()}/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailNormalized, password }),
+      });
+      if (!loginRes.ok) {
+        setError("Email o contraseña incorrectos.");
+        return;
+      }
 
-    // Refresca el cliente de Supabase con las cookies que fijó el servidor.
-    const { createClient } = await import("@/lib/supabase/client");
-    const supabase = createClient();
-    await supabase.auth.getSession();
-    router.push("/");
-    router.refresh();
+      // Refresca el cliente de Supabase con las cookies que fijó el servidor.
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      await supabase.auth.getSession();
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

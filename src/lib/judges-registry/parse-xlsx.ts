@@ -295,13 +295,6 @@ export function parseJudgesRegistryXlsx(
   return { referees, competitions, warnings };
 }
 
-export function inicialesFromNombre(nombre: string): string {
-  return nombre
-    .replace(/[^a-zA-ZÀ-ÿ ]/g, "")
-    .trim()
-    .split(/\s+/)
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() || "??";
-}
+// Movida a ./maps (módulo ligero, sin dependencia xlsx); se re-exporta aquí
+// para no romper a los consumidores existentes.
+export { inicialesFromNombre } from "./maps";

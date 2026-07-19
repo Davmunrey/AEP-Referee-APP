@@ -65,3 +65,18 @@ export function mapExcelEventType(raw: string | null | undefined): EventType | n
 export function refereeIdFromExcelId(excelId: number): string {
   return `j-${excelId}`;
 }
+
+/**
+ * Vive aquí (módulo ligero) y no en parse-xlsx para que los consumidores del
+ * servidor no arrastren la dependencia xlsx solo por unas iniciales.
+ */
+export function inicialesFromNombre(nombre: string): string {
+  return nombre
+    .replace(/[^a-zA-ZÀ-ÿ ]/g, "")
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "??";
+}

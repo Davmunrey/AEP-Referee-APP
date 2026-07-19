@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { Referee, Zone } from "@/lib/types";
 import { LevelBadge } from "@/components/aep/badges";
 import { topArbitrajeRoles } from "@/lib/judges-registry/arbitraje-stats";
@@ -7,7 +8,9 @@ import { GripVertical, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { zoneName } from "./roster-session-helpers";
 
-export function RefereeCard({
+// Memoizado: la lista se re-renderiza con cada tecleo/arrastre del builder;
+// con props primitivas y callbacks estables, solo repintan las filas que cambian.
+export const RefereeCard = memo(function RefereeCard({
   zones,
   referee,
   assigned,
@@ -30,9 +33,9 @@ export function RefereeCard({
   blockedReason?: string | null;
   warningReason?: string | null;
   competitionZona?: string;
-  onDragStart: () => void;
+  onDragStart: (id: string) => void;
   onDragEnd: () => void;
-  onClick: () => void;
+  onClick: (id: string) => void;
   highlight: boolean;
   isDragging: boolean;
   readOnly?: boolean;
@@ -53,10 +56,10 @@ export function RefereeCard({
       onDragStart={(e) => {
         if (locked) return;
         e.dataTransfer.setData("text/plain", referee.id);
-        onDragStart();
+        onDragStart(referee.id);
       }}
       onDragEnd={onDragEnd}
-      onClick={() => !locked && onClick()}
+      onClick={() => !locked && onClick(referee.id)}
       className={cn(
         "flex cursor-grab items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-all duration-100 active:cursor-grabbing",
         assigned && "opacity-55",
@@ -103,4 +106,4 @@ export function RefereeCard({
       <LevelBadge level={referee.nivel} compact />
     </li>
   );
-}
+});

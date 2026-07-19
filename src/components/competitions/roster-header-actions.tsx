@@ -58,6 +58,7 @@ export function RosterHeaderActions({
 
   return (
     <>
+      {exportOpen && (
       <ExportPreviewDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}
@@ -84,6 +85,7 @@ export function RosterHeaderActions({
           },
         ]}
       />
+      )}
     <div className="flex flex-col items-end gap-1.5">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {/* Coverage card: plazas + barra de progreso */}

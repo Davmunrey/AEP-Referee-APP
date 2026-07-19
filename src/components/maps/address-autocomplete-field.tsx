@@ -60,19 +60,27 @@ export function AddressAutocompleteField({
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const search = useCallback(async (query: string) => {
     const q = query.trim();
+    // Aborta la búsqueda en vuelo: una respuesta lenta de una query anterior
+    // no debe sobrescribir las sugerencias de la más reciente.
+    abortRef.current?.abort();
     if (q.length < 3) {
       setSuggestions([]);
       setSearchError(null);
       return;
     }
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     setSearchError(null);
     try {
       const params = new URLSearchParams({ q });
-      const res = await fetch(`/api/v1/geocode/search?${params.toString()}`);
+      const res = await fetch(`/api/v1/geocode/search?${params.toString()}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) {
         setSuggestions([]);
         setSearchError("No se pudo buscar. Inténtalo de nuevo.");
@@ -85,17 +93,19 @@ export function AddressAutocompleteField({
       if (next.length === 0) {
         setSearchError("Sin resultados. Prueba con calle y población o guarda para geocodificar al guardar.");
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setSuggestions([]);
       setSearchError("No se pudo buscar. Comprueba tu conexión.");
     } finally {
-      setLoading(false);
+      if (abortRef.current === controller) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
     };
   }, []);
 

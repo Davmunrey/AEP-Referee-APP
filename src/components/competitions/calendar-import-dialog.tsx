@@ -254,7 +254,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
               <tbody>
                 {preview.entries.map((e, i) => (
                   <tr
-                    key={i}
+                    key={e.key}
                     className="transfer-row-stagger border-t border-border"
                     style={{ animationDelay: `${Math.min(i, 7) * 40}ms` }}
                   >

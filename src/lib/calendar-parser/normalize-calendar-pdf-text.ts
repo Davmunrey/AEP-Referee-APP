@@ -186,11 +186,11 @@ function isDateLine(line: string): boolean {
     /^pendiente$/i.test(line) ||
     /^sin confirmar$/i.test(line) ||
     /^variable(?:\s+\*\*)?$/i.test(line) ||
-    /^[a-záéíóú]{3,5}\s*-\s*[a-záéíóú]{3,5}(?:\s+\*\*)?$/i.test(line) ||
-    /^\d{1,2}-[a-záéíóú]{3,5}$/i.test(line) ||
-    /^\d{1,2}(?:-\d{1,2})*-\d{1,2}\s+[a-záéíóú]{3,5}$/i.test(line) ||
-    /^\d{1,2}-\d{1,2}\s+[a-záéíóú]{3,5}-[a-záéíóú]{3,5}$/i.test(line) ||
-    /^\d{1,2}\s+[a-záéíóú]{3,5}\s*-\s*\d{1,2}\s+[a-záéíóú]{3,5}$/i.test(line)
+    /^[a-záéíóú]{3,10}\s*-\s*[a-záéíóú]{3,10}(?:\s+\*\*)?$/i.test(line) ||
+    /^\d{1,2}-[a-záéíóú]{3,10}$/i.test(line) ||
+    /^\d{1,2}(?:-\d{1,2})*-\d{1,2}\s+[a-záéíóú]{3,10}$/i.test(line) ||
+    /^\d{1,2}-\d{1,2}\s+[a-záéíóú]{3,10}-[a-záéíóú]{3,10}$/i.test(line) ||
+    /^\d{1,2}\s+[a-záéíóú]{3,10}\s*-\s*\d{1,2}\s+[a-záéíóú]{3,10}$/i.test(line)
   );
 }
 

@@ -74,7 +74,18 @@ async function syncRefereeAfterSanctionChange(refereeId: string): Promise<void> 
     .eq("estado", "Sancionado");
 }
 
-export async function expireStaleSanctions(): Promise<number> {
+// El barrido de expiración corre como máximo una vez cada 5 min por instancia:
+// se ejecutaba en CADA listado de jueces y cada dashboard (2 consultas extra por
+// request en el caso común "nada que expirar"). La deriva máxima de 5 min es
+// irrelevante para sanciones cuya granularidad es de días.
+const EXPIRE_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+let lastExpireSweepAt = 0;
+
+export async function expireStaleSanctions(options?: { force?: boolean }): Promise<number> {
+  const now = Date.now();
+  if (!options?.force && now - lastExpireSweepAt < EXPIRE_SWEEP_INTERVAL_MS) return 0;
+  lastExpireSweepAt = now;
+
   const supabase = db();
   const today = todayIso();
   const { data: expired } = await supabase
@@ -92,9 +103,7 @@ export async function expireStaleSanctions(): Promise<number> {
     .in("id", ids);
 
   const refereeIds = [...new Set(expired.map((r) => String(r.referee_id)))];
-  for (const rid of refereeIds) {
-    await syncRefereeAfterSanctionChange(rid);
-  }
+  await Promise.all(refereeIds.map((rid) => syncRefereeAfterSanctionChange(rid)));
   return expired.length;
 }
 

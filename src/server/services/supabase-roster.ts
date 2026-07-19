@@ -71,24 +71,21 @@ export const rosterService = {
       .from("roster_assignments")
       .select("slot_key")
       .eq("competition_id", competitionId);
-    for (const row of existingRows ?? []) {
-      if (!validKeys.has(row.slot_key)) {
-        await supabase
-          .from("roster_assignments")
-          .delete()
-          .eq("competition_id", competitionId)
-          .eq("slot_key", row.slot_key);
-      }
+    // Un único DELETE ... IN para las filas huérfanas (antes: un round-trip por
+    // slot). Las filas restantes ya tienen sus flags correctos, así que no hace
+    // falta reescribirlos uno a uno.
+    const staleKeys = (existingRows ?? [])
+      .map((row) => String(row.slot_key))
+      .filter((key) => !validKeys.has(key));
+    if (staleKeys.length > 0) {
+      await supabase
+        .from("roster_assignments")
+        .delete()
+        .eq("competition_id", competitionId)
+        .in("slot_key", staleKeys);
     }
     const { assignments, flags } = await loadRosterAssignmentData(competitionId);
     const pruned = pruneAssignments(template, assignments, flags);
-    for (const [slotKey, flagVal] of Object.entries(pruned.flags)) {
-      await supabase
-        .from("roster_assignments")
-        .update({ flags: flagVal })
-        .eq("competition_id", competitionId)
-        .eq("slot_key", slotKey);
-    }
     await supabase
       .from("competitions")
       .update({ sesiones: template.length })
@@ -362,7 +359,8 @@ export const rosterService = {
       if (updateError) return undefined;
     } else {
       const { error: insertError } = await supabase.from("approval_proposals").insert({
-        id: `apr-${Date.now()}`,
+        // randomUUID: dos submits en el mismo milisegundo colisionaban en PK.
+        id: `apr-${crypto.randomUUID()}`,
         [competitionIdColumn]: competitionId,
         [competitionNameColumn]: comp.nombre,
         zona: comp.zona ?? "—",
@@ -472,10 +470,16 @@ export const rosterService = {
     const reviewerIdCol = (await hasApprovalSubmitterColumns())
       ? { reviewed_by_id: reviewerId ?? null }
       : {};
-    await supabase
+    // Guard condicional contra doble revisión concurrente: el UPDATE solo gana
+    // si la propuesta sigue "pendiente"; si otro revisor llegó antes, no se
+    // reescribe el roster ni se duplica la actividad.
+    const { data: claimed } = await supabase
       .from("approval_proposals")
       .update({ status, reviewed_by: reviewer, reviewed_at: now, comment: comment ?? null, ...reviewerIdCol })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("status", "pendiente")
+      .select("id");
+    if (!claimed || claimed.length === 0) return undefined;
 
     if (comp) {
       if (approve) {
@@ -567,7 +571,10 @@ export const rosterService = {
       .from("roster_history")
       .select("*")
       .eq(competitionColumn, competitionId)
-      .order("at", { ascending: false });
+      .order("at", { ascending: false })
+      // Cota superior: el historial crece sin límite y la UI solo muestra los
+      // movimientos recientes; sin esto la respuesta crecía sin tope.
+      .limit(200);
     return (data ?? []).map((r) => mapHistory(r as Record<string, unknown>));
   },
 
@@ -579,11 +586,17 @@ export const rosterService = {
     >,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
   ) => {
-    const roster = await getRosterFn(competitionId);
-    const comp = await getCompetitionFn(competitionId);
+    const [roster, comp] = await Promise.all([
+      getRosterFn(competitionId),
+      getCompetitionFn(competitionId),
+    ]);
     if (!roster || !comp) return null;
     const supabase = db();
-    const { data: referees } = await supabase.from("referees").select("id, nombre, nivel");
+    // Solo los jueces asignados a la tarima, no el censo completo.
+    const assignedIds = [...new Set(Object.values(roster.assignments).filter(Boolean))];
+    const { data: referees } = assignedIds.length
+      ? await supabase.from("referees").select("id, nombre, nivel").in("id", assignedIds)
+      : { data: [] };
     const refMap = new Map((referees ?? []).map((r) => [r.id, r]));
     return formatRosterExport(
       comp,

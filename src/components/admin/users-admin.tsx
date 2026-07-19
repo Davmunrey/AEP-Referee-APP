@@ -125,22 +125,28 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
     zona: zones[0]?.code ?? "",
   });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${getApiBaseUrl()}/admin/users`, { credentials: "include" });
+      const res = await fetch(`${getApiBaseUrl()}/admin/users`, { credentials: "include", signal });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Error al cargar usuarios");
       setUsers(json.data ?? []);
     } catch (e) {
+      // Petición cancelada (desmontaje): no tocar estado.
+      if (signal?.aborted) return;
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
 
   const q = search.trim().toLowerCase();
   const filteredUsers = users.filter((u) => {

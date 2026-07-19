@@ -41,10 +41,14 @@ export const examsService = {
     const { data: req } = await supabase.from("promotion_requests").select("*").eq("id", id).single();
     if (!req || req.status !== "pendiente") return undefined;
     const status = approve ? "aprobado" : "rechazado";
-    await supabase
+    // Guard contra doble revisión concurrente: solo gana el primer revisor.
+    const { data: claimed } = await supabase
       .from("promotion_requests")
       .update({ status, review_comment: comment ?? null })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("status", "pendiente")
+      .select("id");
+    if (!claimed || claimed.length === 0) return undefined;
     if (approve) {
       // Solo aplica el ascenso si sigue siendo una subida frente al nivel ACTUAL
       // del juez (evita degradar si su nivel cambió tras crear la solicitud).
@@ -88,7 +92,7 @@ export const examsService = {
     const fromIdx = LEVEL_ORDER.indexOf(referee.nivel as string);
     const toIdx = LEVEL_ORDER.indexOf(input.toLevel);
     if (toIdx <= fromIdx) throw new Error(`El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`);
-    const id = `pro-${Date.now()}`;
+    const id = `pro-${crypto.randomUUID()}`;
     const row = {
       id,
       referee_id: input.refereeId,
@@ -136,7 +140,7 @@ export const examsService = {
     if (!ref) throw new Error("Juez no encontrado");
     validateExamLevel(input.tipo, input.nivelObjetivo, ref.nivel as RefereeLevel);
     const row = {
-      id: `exam-${Date.now()}`,
+      id: `exam-${crypto.randomUUID()}`,
       referee_id: input.refereeId,
       referee_name: ref.nombre,
       tipo: input.tipo,
@@ -221,7 +225,7 @@ export const examsService = {
       zona = String(comp.zona ?? zona);
     }
     const row = {
-      id: `rep-${Date.now()}`,
+      id: `rep-${crypto.randomUUID()}`,
       subject_type: input.subjectType,
       zona,
       referee_id: input.refereeId ?? null,
