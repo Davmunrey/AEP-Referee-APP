@@ -69,7 +69,7 @@ function Section({
   return (
     <section id={id} className="scroll-mt-24">
       <div className="flex items-center gap-2.5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-muted text-primary">
           <IconCmp className="h-4 w-4" />
         </span>
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
@@ -84,7 +84,7 @@ function Section({
 function FeatureCard({ icon: IconCmp, title, desc }: { icon: Icon; title: string; desc: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-muted text-primary">
         <IconCmp className="h-5 w-5" />
       </span>
       <h3 className="mt-3 text-sm font-semibold text-foreground">{title}</h3>
@@ -108,7 +108,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 function FlowStep({ icon: IconCmp, label }: { icon: Icon; label: string }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-4 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-muted text-primary">
         <IconCmp className="h-5 w-5" />
       </span>
       <span className="text-xs font-medium text-foreground">{label}</span>
@@ -142,7 +142,7 @@ export default async function DocsPage() {
           </div>
           <Link
             href={backHref}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-ring"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             {backLabel}
@@ -301,7 +301,7 @@ export default async function DocsPage() {
           </>
           ) : (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary-muted text-primary">
                 <Lock className="h-5 w-5" aria-hidden="true" />
               </span>
               <h2 className="mt-3 text-base font-semibold text-foreground">
@@ -314,7 +314,7 @@ export default async function DocsPage() {
               </p>
               <Link
                 href="/sign-in"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-ring focus-visible:ring-offset-2"
               >
                 <KeyRound className="h-4 w-4" aria-hidden="true" />
                 Iniciar sesión
@@ -451,7 +451,7 @@ export default async function DocsPage() {
 
           <Section id="contacto" icon={Building2} title="Contacto">
             <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-muted text-primary">
                 <Mail className="h-5 w-5" />
               </span>
               <p className="text-sm text-muted-foreground">
@@ -466,7 +466,7 @@ export default async function DocsPage() {
         <div className="mt-12 flex flex-col items-center gap-3 border-t border-border pt-6">
           <Link
             href={backHref}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             {backLabel}

@@ -231,7 +231,7 @@ export function ApprovalsBoard({
                     <p className="mt-1 text-xs text-subtle-muted">
                       {item.zona} · {item.submittedBy}
                     </p>
-                    <p className="mt-0.5 font-mono text-[11px] text-subtle-muted/70">
+                    <p className="mt-0.5 font-mono text-[11px] text-subtle-muted">
                       {item.submittedAt.slice(0, 10)}
                     </p>
                   </button>
@@ -246,7 +246,7 @@ export function ApprovalsBoard({
                       disabled={page === 0}
                       aria-label="Página anterior"
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs transition-colors",
+                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors focus-ring",
                         page === 0
                           ? "cursor-not-allowed border-border text-muted-foreground opacity-40"
                           : "border-border hover:border-border-strong hover:bg-surface-hover",
@@ -264,7 +264,7 @@ export function ApprovalsBoard({
                       disabled={page >= totalPages - 1}
                       aria-label="Página siguiente"
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs transition-colors",
+                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors focus-ring",
                         page >= totalPages - 1
                           ? "cursor-not-allowed border-border text-muted-foreground opacity-40"
                           : "border-border hover:border-border-strong hover:bg-surface-hover",
@@ -362,7 +362,7 @@ export function ApprovalsBoard({
                       <p className="mt-1 text-xs opacity-80">{selected.comment}</p>
                     )}
                     {selected.reviewedBy && (
-                      <p className="mt-1 text-[11px] opacity-60">
+                      <p className="mt-1 text-[11px] opacity-80">
                         por {selected.reviewedBy}
                         {selected.reviewedAt ? ` · ${selected.reviewedAt.slice(0, 10)}` : ""}
                       </p>

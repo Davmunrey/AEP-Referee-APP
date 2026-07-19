@@ -70,7 +70,7 @@ export function TransferDialogShell({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-3"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       role="presentation"
       onClick={onClose}
     >
@@ -80,7 +80,7 @@ export function TransferDialogShell({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "transfer-enter flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-2xl border border-border-muted/80 bg-card/95 shadow-card backdrop-blur-md",
+          "transfer-enter flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-2xl border border-border-muted bg-card shadow-card",
           maxWidthClass,
         )}
         onClick={(e) => e.stopPropagation()}
