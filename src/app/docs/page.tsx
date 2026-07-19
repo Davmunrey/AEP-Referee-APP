@@ -18,9 +18,11 @@ import {
   Lock,
   Mail,
   ShieldCheck,
+  Sparkles,
   TrendingUp,
   Users,
 } from "lucide-react";
+import { DocsChangelog } from "@/components/docs/docs-changelog";
 
 export const metadata: Metadata = {
   title: "Documentación y privacidad · AEP Tarima",
@@ -46,6 +48,7 @@ const tocSections: TocItem[] = [
   { id: "roles", label: "Roles y permisos", internal: true },
   { id: "niveles", label: "Niveles arbitrales" },
   { id: "faq", label: "Preguntas frecuentes", internal: true },
+  { id: "novedades", label: "Novedades", internal: true },
   { id: "privacidad", label: "Privacidad y datos" },
   { id: "seguridad", label: "Seguridad" },
   { id: "cookies", label: "Cookies y sesión" },
@@ -367,6 +370,18 @@ export default async function DocsPage() {
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
                 </details>
               ))}
+            </div>
+          </Section>
+          )}
+
+          {isAuthenticated && (
+          <Section id="novedades" icon={Sparkles} title="Novedades — historial de versiones">
+            <p>
+              Qué ha cambiado en cada versión desplegada de AEP Tarima, de la más reciente a la
+              primera. La última versión aparece desplegada; el resto se puede expandir.
+            </p>
+            <div className="mt-4">
+              <DocsChangelog />
             </div>
           </Section>
           )}
