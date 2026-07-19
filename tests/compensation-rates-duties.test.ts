@@ -176,3 +176,26 @@ describe("consistencia desglose ↔ total", () => {
     expect(sum).toBe(claim.totalAmount);
   });
 });
+
+describe("override de días de alojamiento implica concesión", () => {
+  it("fijar días > 0 sin elegibilidad automática paga el alojamiento", () => {
+    const totals = calculateCompensationTotals(
+      claimInput({ distanceKmRoundTrip: 50, lodgingDaysOverride: 2 }),
+    );
+    expect(totals.lodgingEligible).toBe(true);
+    expect(totals.lodgingDays).toBe(2);
+    expect(totals.lodgingAmount).toBe(50); // 2 días × 25 €
+  });
+
+  it("el override explícito de elegibilidad a false sigue mandando", () => {
+    const totals = calculateCompensationTotals(
+      claimInput({
+        distanceKmRoundTrip: 50,
+        lodgingDaysOverride: 2,
+        lodgingEligibleOverride: false,
+      }),
+    );
+    expect(totals.lodgingEligible).toBe(false);
+    expect(totals.lodgingAmount).toBe(0);
+  });
+});
