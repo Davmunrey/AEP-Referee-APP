@@ -13,22 +13,46 @@ export async function GET() {
   if (!isSupabaseConfigured()) return jsonError("Supabase no configurado", 503);
 
   const admin = createAdminClient();
-  // Perfiles (profiles) + último inicio de sesión (auth.users, vía Admin API) en
-  // paralelo. `last_sign_in_at` no está en profiles; lo aporta GoTrue.
-  const [{ data, error }, authList] = await Promise.all([
+
+  // `last_sign_in_at` no está en profiles; lo aporta GoTrue vía Admin API,
+  // que pagina (perPage máx. efectivo: 1000). Se recorren páginas hasta agotar
+  // usuarios (con tope de seguridad). Si la Admin API falla, se degrada a
+  // columna vacía (se registra el error) en vez de tumbar todo el listado.
+  const loadLastSignIns = async (): Promise<Map<string, string | null>> => {
+    const map = new Map<string, string | null>();
+    const perPage = 1000;
+    const maxPages = 10; // tope de seguridad: hasta 10.000 usuarios
+    for (let page = 1; page <= maxPages; page += 1) {
+      const { data: authData, error: authError } = await admin.auth.admin.listUsers({
+        page,
+        perPage,
+      });
+      if (authError) {
+        console.error(
+          "[admin.users.GET] listUsers falló; last_sign_in_at quedará vacío:",
+          authError,
+        );
+        break;
+      }
+      const users = authData?.users ?? [];
+      for (const authUser of users) {
+        map.set(authUser.id, authUser.last_sign_in_at ?? null);
+      }
+      if (users.length < perPage) break;
+    }
+    return map;
+  };
+
+  // Perfiles (profiles) + último inicio de sesión (auth.users) en paralelo.
+  const [{ data, error }, lastSignInById] = await Promise.all([
     admin
       .from("profiles")
       .select("id, email, nombre, rol_label, iniciales, role, zona, activo, created_at")
       .order("nombre"),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    loadLastSignIns(),
   ]);
 
   if (error) return jsonServerError("admin.users.GET", error, "No se pudieron cargar los usuarios");
-
-  const lastSignInById = new Map<string, string | null>();
-  for (const authUser of authList.data?.users ?? []) {
-    lastSignInById.set(authUser.id, authUser.last_sign_in_at ?? null);
-  }
 
   const rows = (data ?? []).map((profile) => ({
     ...profile,

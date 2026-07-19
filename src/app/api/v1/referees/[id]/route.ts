@@ -3,6 +3,12 @@ import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertRefereeInUserZone, stripRefereePII } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import {
+  REFEREE_LEVELS,
+  REFEREE_STATUSES,
+  isRefereeLevel,
+  isRefereeStatus,
+} from "@/app/api/_lib/validation";
 import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import { dataService } from "@/server/services";
 import type { Referee } from "@/lib/types";
@@ -52,7 +58,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   const patch: Partial<Referee> = {};
   if (typeof raw.nombre === "string") patch.nombre = raw.nombre;
   if (typeof raw.zona === "string") patch.zona = raw.zona;
-  if (typeof raw.nivel === "string") patch.nivel = raw.nivel as Referee["nivel"];
+  if (typeof raw.nivel === "string") {
+    if (!isRefereeLevel(raw.nivel)) {
+      return jsonError(
+        `Nivel no válido. Valores permitidos: ${REFEREE_LEVELS.join(", ")}`,
+        400,
+      );
+    }
+    patch.nivel = raw.nivel;
+  }
   if (typeof raw.estado === "string") {
     if (raw.estado === "Sancionado") {
       return jsonError(
@@ -60,7 +74,13 @@ export async function PATCH(request: Request, context: RouteContext) {
         400,
       );
     }
-    patch.estado = raw.estado as Referee["estado"];
+    if (!isRefereeStatus(raw.estado)) {
+      return jsonError(
+        `Estado no válido. Valores permitidos: ${REFEREE_STATUSES.join(", ")}`,
+        400,
+      );
+    }
+    patch.estado = raw.estado;
   }
   if (typeof raw.eventos === "number") patch.eventos = raw.eventos;
   if (typeof raw.ultimo === "string") patch.ultimo = raw.ultimo;

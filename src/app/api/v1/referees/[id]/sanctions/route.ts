@@ -2,6 +2,8 @@ import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { canManageSanctions } from "@/lib/permissions";
+import { SANCTION_DURATION_PRESETS } from "@/lib/sanctions";
+import { ISO_DATE_RE } from "@/app/api/_lib/validation";
 import type { SanctionDurationPreset } from "@/lib/types";
 import { dataService } from "@/server/services";
 
@@ -45,10 +47,23 @@ export async function POST(request: Request, context: RouteContext) {
   const fechaInicio = String(
     (body as { fechaInicio?: string }).fechaInicio ?? "",
   ).slice(0, 10);
-  const duration = String(
-    (body as { duration?: string }).duration ?? "30d",
-  ) as SanctionDurationPreset;
+  // Valida formato y presets ANTES de castear: entradas malformadas son un
+  // 400 con mensaje claro, no un 500 genérico.
+  if (fechaInicio && !ISO_DATE_RE.test(fechaInicio)) {
+    return jsonError("La fecha de inicio debe tener formato AAAA-MM-DD", 400);
+  }
+  const durationRaw = String((body as { duration?: string }).duration ?? "30d");
+  if (!SANCTION_DURATION_PRESETS.some((p) => p.id === durationRaw)) {
+    return jsonError("Duración de sanción no válida", 400);
+  }
+  const duration = durationRaw as SanctionDurationPreset;
   const fechaFinCustom = (body as { fechaFin?: string }).fechaFin;
+  if (
+    duration === "custom" &&
+    (typeof fechaFinCustom !== "string" || !ISO_DATE_RE.test(fechaFinCustom))
+  ) {
+    return jsonError("Indica una fecha de fin válida", 400);
+  }
   const notas = (body as { notas?: string }).notas;
 
   try {
@@ -65,6 +80,15 @@ export async function POST(request: Request, context: RouteContext) {
     });
     return jsonOk(sanction);
   } catch (e) {
+    // Errores de validación de resolveSanctionEndDate → 400 con su mensaje.
+    const msg = e instanceof Error ? e.message : "";
+    if (
+      msg.startsWith("Indica una fecha") ||
+      msg.startsWith("La fecha de fin") ||
+      msg.startsWith("Duración de sanción")
+    ) {
+      return jsonError(msg, 400);
+    }
     return jsonServerError("sanctions.POST", e, "No se pudo crear la sanción");
   }
 }

@@ -3,7 +3,7 @@ import { canManageUsers } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { USER_ROLES, type UserRole } from "@/lib/types";
 
 interface RouteContext {
@@ -69,7 +69,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const { data, error } = await admin.from("profiles").update(patch).eq("id", id).select().single();
-  if (error || !data) return jsonError("Usuario no encontrado", 404);
+  if (error) {
+    // PGRST116 = cero filas con .single(): el usuario ya no existe → 404.
+    // Cualquier otro error es un fallo real de la base de datos → 500.
+    if ((error as { code?: string }).code === "PGRST116") {
+      return jsonError("Usuario no encontrado", 404);
+    }
+    return jsonServerError("admin.users.PATCH", error, "No se pudo actualizar el usuario");
+  }
+  if (!data) return jsonError("Usuario no encontrado", 404);
   return jsonOk(data);
 }
 

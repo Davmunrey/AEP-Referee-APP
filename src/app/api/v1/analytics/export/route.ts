@@ -9,6 +9,11 @@ export async function GET(request: Request) {
   const parsedYear = yearParam ? Number(yearParam) : NaN;
   const requestedYear = Number.isInteger(parsedYear) ? parsedYear : undefined;
 
+  // Limitación conocida: getAnalytics ya carga las competiciones internamente,
+  // pero su payload solo expone agregados y criticalEvents (no la lista
+  // completa que necesita la sección CAMPEONATOS_AÑO_ACTIVO), así que hay que
+  // pedirlas otra vez. Evitarlo requeriría ampliar AnalyticsPayload en
+  // src/server/services.
   const [analytics, competitions] = await Promise.all([
     dataService.getAnalytics(user, requestedYear),
     dataService.getCompetitions(user),

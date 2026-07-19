@@ -18,6 +18,30 @@ interface Bucket {
 const ipEmailBuckets = new Map<string, Bucket>();
 const emailBuckets = new Map<string, Bucket>();
 
+// Purga periódica: las entradas expiradas (resetAt <= now) nunca se borraban,
+// así que los mapas crecían sin límite con cada IP/email nuevo. Cada
+// SWEEP_EVERY registros de fallo se barren ambos mapas (coste O(n) amortizado
+// y acotado; no hace falta un timer).
+const SWEEP_EVERY = 500;
+let opsSinceSweep = 0;
+
+function sweepExpired(current: number): void {
+  for (const [key, bucket] of ipEmailBuckets) {
+    if (bucket.resetAt <= current) ipEmailBuckets.delete(key);
+  }
+  for (const [key, bucket] of emailBuckets) {
+    if (bucket.resetAt <= current) emailBuckets.delete(key);
+  }
+}
+
+function maybeSweep(current: number): void {
+  opsSinceSweep += 1;
+  if (opsSinceSweep >= SWEEP_EVERY) {
+    opsSinceSweep = 0;
+    sweepExpired(current);
+  }
+}
+
 function now() {
   return Date.now();
 }
@@ -76,6 +100,7 @@ export function canAttemptLogin(
 
 export function recordFailedLogin(ip: string, email: string): void {
   const current = now();
+  maybeSweep(current);
   bump(ipEmailBuckets, loginRateLimitKey(ip, email), current);
   bump(emailBuckets, normalizeEmail(email), current);
 }
