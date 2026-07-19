@@ -61,6 +61,8 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 
 ## 🆕 Novedades v2.0
 
+> Historial completo de versiones desplegadas en [CHANGELOG.md](CHANGELOG.md).
+
 | Novedad | Detalle |
 |---|---|
 | **Centro de ayuda local** | Widget rediseñado: buscador sobre ~35 temas curados + primeros pasos por rol + temas frecuentes. 100 % en el navegador, sin IA ni red. |
