@@ -1,187 +1,189 @@
 # Changelog — AEP Tarima
 
-Historial de versiones desplegadas de la plataforma de gestión de jueces de la
-Asociación Española de Powerlifting. Cada versión corresponde a un despliegue en
-producción (`main` → [aep-tarima.vercel.app](https://aep-tarima.vercel.app/)).
-
-El formato sigue [Keep a Changelog](https://keepachangelog.com/es/) adaptado al
-proyecto; los cambios se agrupan en **Añadido**, **Corregido**, **Rendimiento**,
-**Diseño/UX** y **Seguridad**.
+Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel.app](https://aep-tarima.vercel.app/)).
 
 ---
 
-## [v2.1] — Sin publicar (PR #72, en revisión)
+## 🔬 **AEP Tarima v2.1** — _«La Gran Auditoría»_ (sin publicar · PR #72)
 
-Auditoría integral en cinco rondas: caza de bugs, rendimiento, pulido visual,
-lógica de negocio y persistencias. La suite pasa de 356 a ~400 tests.
+Cinco rondas de auditoría con agentes en paralelo peinando cada capa de la app. Encontramos cosas. Muchas cosas. Ya no están.
 
-### Corregido
-- **Alta de jueces rota tras cualquier borrado**: el id se generaba con
-  `count(*)+1` y colisionaba con claves existentes; ahora `max(jN)+1` con
-  reintento ante altas concurrentes. Mismo criterio en campeonatos (`evt-NNN`).
-- **Cierres de sesión aleatorios**: el middleware descartaba las cookies del
-  token de refresco recién rotado en redirecciones y respuestas 401.
-- **Login colgado ante un fallo de red** (botón bloqueado sin mensaje).
-- **Doble revisión concurrente** de aprobaciones de tarima y ascensos: solo
-  gana el primer revisor (guard condicional por estado).
-- IDs de propuestas/exámenes/informes/historial con `randomUUID` (antes
-  `Date.now()`, que colisionaba y perdía historial en silencio).
-- La caché de zonas/normativa ya no persiste una lista vacía durante 1 h tras
-  un fallo puntual de Supabase; las sondas de columnas legacy no cachean
-  errores transitorios.
-- Códigos de estado correctos en la API: duplicados → 409, errores de negocio
-  → 400 (antes 500 genérico), body JSON malformado → 400, signout con 303.
-- El PATCH de campeonatos valida lo mismo que el POST (rangos, fechas, enums);
-  la puntuación de exámenes se limita a la puntuación máxima real del examen.
-- Sanciones calculadas en hora española (`Europe/Madrid`): expiraban y
-  activaban con 1–2 h de deriva respecto a la medianoche local.
-- Parsers de calendario: los meses escritos completos («septiembre»,
-  «noviembre»…) no se reconocían y la entrada se perdía sin aviso.
-- Historial de competiciones de un juez corrupto con sesiones que contienen
-  guion bajo; falso bloqueo de solape tarima→pesaje entre días distintos.
-- Importación del censo: fechas US coladas como ISO inválido, rangos que
-  cruzan el año (Dic→Ene), CSV con `;` (Excel español) que descartaba todas
-  las filas en silencio, teléfonos que perdían el 0 inicial o el prefijo +34,
-  y niveles IPF con variantes de escritura degradados a Regional sin aviso.
-- Compensaciones: fijar días de alojamiento manualmente ahora concede el
-  alojamiento (antes quedaba en 0 € sin aviso si no se marcaba también la
-  elegibilidad); los días de campeonato ya no se etiquetan como 1 al recargar.
-- Backend de desarrollo: el estado de aprobación no se persistía (mutación
-  sobre una copia) y el almacén de compensaciones se perdía con el HMR.
+**Lo gordo — bugs que llevaban tiempo agazapados:**
+- **El alta de jueces se rompía para siempre tras borrar uno** — el id se calculaba con `count+1`, que tras un borrado colisionaba con un id ya existente. Para siempre. Ahora `max+1` con reintento. Matemáticas: 1, burocracia: 0.
+- **Cierres de sesión aleatorios** — el middleware tiraba a la basura la cookie del token recién renovado al redirigir. El navegador se quedaba con el token viejo, ya invalidado. Misterio resuelto: no eras tú, era el middleware.
+- **Dos revisores podían aprobar la misma propuesta a la vez** — ahora solo gana el primero. Las carreras, en la tarima, no en la base de datos.
+- **Las sanciones expiraban en horario de Greenwich** — un juez sancionado hasta «hoy» seguía sancionado hasta la 1–2 de la madrugada española. Ahora el reloj oficial es el de Madrid, como debe ser.
+- **«septiembre» no existía** — los regex del parser de calendario solo aceptaban meses de 3 a 5 letras. Septiembre, noviembre y diciembre, los meses más largos del año, no se importaban. Sin comentarios.
 
-### Rendimiento
-- `pdfkit` y `xlsx` fuera del arranque en frío de **todas** las rutas API
-  (solo se cargan en las 2 rutas que los usan).
-- Importación del censo: de ~900 consultas a ~15 (mapas precargados + lotes).
-- Importación de calendario de O(N²) a O(N); asignación de jueces con lecturas
-  paralelizadas y sin trabajos redundantes; exportaciones (acta, cuadrante
-  HTML/Excel) cargan solo los jueces asignados, no el censo completo.
-- Barrido de sanciones caducadas con limitación de frecuencia (corría en cada
-  listado y cada dashboard); cliente admin de Supabase como singleton;
-  historial de tarima acotado; listado de usuarios de admin paginado.
-- Admin de usuarios precargado desde el servidor (sin destello de carga);
-  breadcrumb con caché de nombre; diálogos pesados descargan su código solo
-  al abrirse; `React.memo` en tarjetas de juez y bloques de sesión.
+**La importación del censo ya no miente:**
+- CSV exportado con `;` (o sea, cualquier Excel en español) → antes: «0 campeonatos» sin explicación; ahora: se importa.
+- Fechas en formato americano coladas como `2026-13-05` → descartadas con educación en vez de guardadas con vergüenza.
+- Teléfonos que perdían el 0 inicial y el +34 por leerse como número → un teléfono es texto. Siempre lo fue.
+- Jueces «IPF Cat. 2» degradados a Regional por una errata de formato → normalización de variantes. Los ascensos, mejor por méritos que por regex.
 
-### Diseño/UX
-- Auditoría visual completa por zonas (93+ hallazgos aplicados): tokens de
-  color exactos en toda la app (sin colores crudos ni opacidades sueltas),
-  contraste AA en microtextos, un solo `h1` por página, radios y overlays de
-  diálogo unificados, foco visible (`focus-ring`) en ~50 interactivos.
-- **Teclado**: el flujo completo de asignación de tarima es operable sin ratón
-  (huecos y tarjetas de juez con Enter/Espacio); los diálogos de administración
-  cierran con Escape.
-- **Pantallas esqueleto** en todas las rutas (incluido el dashboard raíz, que
-  era un simple spinner), imitando la estructura real de cada página.
-- Estados honestos: indicadores reales de carga y error en compensación y
-  administración (antes mostraban vacíos engañosos), estados vacíos ricos,
-  «Sin plantilla» en lugar de un 0 % confuso.
-- La tabla de compensación ancha se desplaza en vez de recortar columnas; el
-  calendario operativo ya no desborda en móvil.
+**Rendimiento (tokenizado, como pediste):**
+- `pdfkit` y `xlsx` ya no se cargan en el arranque en frío de las 56 rutas API. Solo en las 2 que los usan. Las otras 54 respiran.
+- Importar el censo: de ~900 consultas a ~15. Importar el calendario: de O(N²) a O(N). Las matemáticas vuelven a estar de nuestro lado.
+- Asignar un juez toca la mitad de base de datos que antes; las exportaciones cargan solo los jueces asignados, no el censo entero «por si acaso».
+- La geocodificación se guarda: Nominatim ya no recibe la misma pregunta dos veces. Nominatim nos lo agradece.
 
-### Añadido
-- Migración `034`: columna para el ajuste manual del importe de viaje
-  (`travel_amount_override`, ahora persistido de extremo a extremo),
-  coordenadas del domicilio del juez (la geocodificación se guarda y no se
-  repite contra Nominatim en cada recálculo de km) e índice único que impide
-  propuestas pendientes duplicadas. El código funciona igual con o sin la
-  migración aplicada (sondas de columna).
-- ~45 tests nuevos: baremo completo de tarifas por tipo/ámbito, clasificación
-  de funciones, frontera exacta del alojamiento (150 vs 151 km), consistencia
-  desglose↔total del recibo, validación compartida de la API y regresiones de
-  todos los bugs corregidos en esta versión.
+**Diseño y accesibilidad — 93+ hallazgos aplicados:**
+- El flujo completo de asignación funciona **sin ratón** (Enter/Espacio en huecos y tarjetas). Los diálogos cierran con Escape. Bienvenidos a la accesibilidad.
+- Foco visible en ~50 interactivos, contraste AA en los microtextos, un solo `h1` por página, cero colores fuera de la paleta de tokens. El check verde del stepper era verde sobre verde: invisible desde su nacimiento. Ahora se ve.
+- Pantallas esqueleto en TODAS las rutas — el dashboard cargaba con un spinner solitario; ahora carga con la silueta de sí mismo.
+- Estados honestos: la compensación decía «Sin jueces asignados» mientras cargaba. Ahora dice que está cargando. Revolucionario.
+
+**Además:**
+- Migración 034: el ajuste manual del importe de viaje por fin se guarda (existía en la UI, se calculaba… y se perdía al recargar), coordenadas de domicilio persistidas e índice único anti propuestas duplicadas. Todo con sondas de columna: el código funciona igual antes y después de aplicarla.
+- Fijar días de alojamiento a mano ahora paga el alojamiento (antes: días=2, importe=0 €, explicación=ninguna).
+- De 356 a ~400 tests, incluyendo por primera vez el baremo completo de tarifas y la frontera exacta de los 150 km. El dinero, testeado.
+
+_La app ahora sabe qué día es en España. Hemos tocado techo._ 🇪🇸
 
 ---
 
-## [v2.0] — 12 jul 2026 (PRs #64–#71)
+## 🧠 **AEP Tarima v2.0** — _«Adiós, IA; hola, saber local»_ (2026-07-12 · PRs #64–#71)
 
-### Añadido
-- **Centro de ayuda local**: buscador sobre ~35 temas curados, primeros pasos
-  por rol y temas frecuentes — 100 % en el navegador, sin IA ni red (#70).
-- Título de pestaña simplificado a «AEP Tarima» (#70).
+El asistente con IA respondía bien, pero necesitaba red, una API key y fe. Lo jubilamos con honores.
 
-### Corregido
-- Lote de hardening de seguridad + correcciones de bugs con tests de
-  regresión (#71).
-- El token de refresco caducado se trata como sesión expirada en el middleware
-  (fin de los errores ruidosos de autenticación) (#69).
-- Vista previa del cuadrante por `srcDoc`, inmune a cabeceras de framing
-  (#68); impresión sin encabezado del navegador (#66).
+**Lo grande:**
+- **Centro de ayuda 100 % local** — buscador sobre ~35 temas curados, primeros pasos por rol y temas frecuentes. Cero red, cero IA, cero excusas. El conocimiento, en el navegador.
+- **Retirada del asistente Gemini** — ruta, cliente, prompt y rate-limit eliminados. La base de conocimiento se queda; el intermediario, no.
 
-### Seguridad
-- Retirada del asistente IA (Gemini) y de sus rutas; políticas RLS permisivas
-  eliminadas — los datos sensibles solo se leen desde el servidor (#70, #71).
+**Seguridad:**
+- Políticas RLS permisivas eliminadas — los datos sensibles solo se leen desde el servidor. Cerramos la puerta y también la gatera.
+- Lote de hardening + correcciones con tests de regresión (#71).
 
-### Diseño/UX
-- El flujo de tarima entra en el paso real según el progreso y la Revisión
-  muestra el export del cuadrante (#65).
-- Espaciado unificado entre botones y micro-interacciones más suaves con
-  shimmer de carga (#63, #64).
-- Despliegue restringido a `main` (sin previews de ramas de trabajo) (#67).
+**También:**
+- El token de refresco caducado ya se trata como «sesión expirada» y no como «incendio en el middleware» (#69).
+- Vista previa del cuadrante inmune a cabeceras de framing (#68) e impresión sin el encabezado del navegador (#66).
+- La pestaña dice «AEP Tarima». Antes decía más cosas. Menos es más.
+
+_Nuestro asistente ya no alucina. Porque ya no hay asistente._ 🧘
 
 ---
 
-## [v1.9+] — 6 jul 2026 (PRs #54–#62) · ola de rendimiento
+## ⚡ **AEP Tarima v1.9+** — _«La ola de rendimiento»_ (2026-07-06 · PRs #54–#62)
 
-### Rendimiento
-- Disponibilidad instantánea en tarima (#54); dedupe y paralelización de
-  lecturas en rutas calientes del servidor (#55, #57); memoización y
-  code-splitting del cliente (#56, #58); lista ligera de campeonatos y más
-  esqueletos de carga (#59).
+Nueve PRs en un día. La app estaba bien, pero queríamos que volara.
 
-### Añadido
-- Soporte multiaño: temporada = año natural con selector de año en analítica
-  (#60); navegación agrupada por dominio en 5 grupos (#61); último inicio de
-  sesión y fechas detalladas en administración de usuarios (#62).
+- **Disponibilidad instantánea en tarima** — marcar un juez disponible ya no recarga medio universo (#54).
+- **Dedupe y paralelización** en las rutas calientes del servidor; memoización y code-splitting en el cliente (#55–#58). Los diálogos pesados ya no viajan en el bundle inicial.
+- **Multiaño de verdad** — temporada = año natural, con selector de año en la analítica (#60). El pasado por fin tiene su sitio.
+- **Navegación agrupada en 5 dominios** (#61) y último inicio de sesión visible en administración (#62).
+
+_El servidor hace menos consultas que un becario con miedo a preguntar._ 🏎️
 
 ---
 
-## [v1.9] — 5 jul 2026 (PRs #46–#53)
+## 🛡️ **AEP Tarima v1.9** — _«Censo anual y manos en la masa»_ (2026-07-05 · PRs #46–#53)
 
-### Corregido
-- Lote 1 de auditoría: RBAC, integridad del acta, PII, compensación y
-  cuadrantes (#46).
-- La disponibilidad domina la selección rápida de jueces (#50, #52).
-- Recibo AEP con concordancia de género y logo grande (#47).
+Primera gran auditoría externa. Sobrevivimos, y de paso el censo aprendió qué año es.
 
-### Añadido
-- Organizador de recibo personalizable + verificación de datos con Supabase
-  (#48); reemplazo seguro del censo y selección rápida de jueces (#49);
-  arbitrajes por año natural con endurecimiento RLS (#51).
+- **Arbitrajes por año natural** — parser de todas las hojas `ArbitrajesAAAA`, ficha con selector de año e «Histórico», filtro anual en el directorio (#51).
+- **Lote 1 de auditoría** — RBAC, integridad del acta, PII, compensación y cuadrantes (#46). Los permisos ahora permiten lo que deben. Solo eso.
+- **Recibo configurable** — organizador con 3 opciones (club / AEP / personalizable) y PDF con logo (#47, #48).
+- **Reemplazo seguro del censo** — reimportar el Excel maestro ya no se lleva por delante campeonatos ni cuadrantes (#49).
+- **Selección rápida subordinada a la disponibilidad** — la app ya no te sugiere jueces que dijeron que no podían (#50, #52).
+- RLS endurecido (migración 033). Las políticas permisivas pasaron a mejor vida.
 
----
-
-## [v1.8] — 28 jun 2026
-
-### Añadido
-- Sincronización en tiempo real con Supabase Realtime.
-- Botón para eliminar la ubicación del domicilio del juez.
-
-### Rendimiento
-- Caché con TTL para zonas/normativa, filtros SQL de árbitros e índices;
-  reducción de latencia en consultas y sincronización del cliente.
+_El censo ya sabe en qué año vive. Nosotros, a ratos._ 📅
 
 ---
 
-## [v1.7] — 28 jun 2026
+## 📡 **AEP Tarima v1.8** — _«En producción, y en tiempo real»_ (2026-06-28)
 
-### Añadido
-- Sección de normativa unificada: Guía AEP, plazas de tarima e IPF.
-- Asistente de ayuda actualizado con el estado completo de la plataforma.
+El gran salto: de «funciona en mi máquina» a «funciona en la de todos».
 
-### Corregido
-- Recibo PDF idéntico a la plantilla oficial AEP (IBAN legible, descarga en
-  móvil, sin popup de compartir); campos de km y montaje editables como texto
-  numérico; guardado de km al salir del campo sin errores concurrentes.
-- Autocomplete de domicilio con OpenStreetMap; badges de nivel abreviados en
-  tarima (R, N, I, II).
-- Dominio de producción: `aep-tarima.vercel.app`.
+- **Producción en Vercel** — [aep-tarima.vercel.app](https://aep-tarima.vercel.app/), deploy automático desde `main`.
+- **Tiempo real con Supabase Realtime** — lo que cambia un delegado lo ve el comité sin pulsar F5 (migración 029). F5 sigue funcionando, por nostalgia.
+- **Rendimiento** — consultas batch, `React.cache`, contadores de navegación baratos, caché con TTL para zonas y normativa, índices (migración 030).
+- Botón para eliminar la ubicación del domicilio. Por si te mudas. O por si nunca viviste ahí.
+
+_331 tests en verde y una URL de verdad. Somos mayores._ 🌐
 
 ---
 
-## Anteriores a v1.7
+## 📚 **AEP Tarima v1.7** — _«Normativa para todos»_ (2026-06-28)
 
-Los orígenes del proyecto (estructura Next.js + Supabase, módulos de
-campeonatos, censo, tarima, aprobaciones, exámenes/ascensos, compensaciones y
-documentación) se consolidaron en los despliegues iniciales de junio de 2026,
-previos al versionado formal de la documentación.
+La normativa dejó de vivir en un PDF que nadie encontraba.
+
+- **Sección de normativa unificada** — 4 pestañas: Guía AEP, plazas de tarima, IPF y compensación.
+- **Recibo PDF clavado a la plantilla oficial AEP** — IBAN legible, descarga en móvil, sin popup de compartir. La contabilidad, por fin, imprimible.
+- **Autocomplete de domicilio** con OpenStreetMap vía API propia del servidor.
+- Badges de nivel compactos en tarima (R, N, I, II) — porque el espacio en un cuadrante es oro.
+- Branding en los correos de Supabase (migración 028). Hasta los emails van de uniforme.
+
+_El PDF del recibo es idéntico al oficial. El delegado financiero lloró (de alegría)._ 🧾
+
+---
+
+## 💶 **AEP Tarima v1.6** — _«El Hub de Compensación»_ (2026-06)
+
+El dinero de todos los campeonatos, en una sola pantalla. Se acabó abrir 14 pestañas.
+
+- **Panel `/compensation`** — vista global del estado de compensación de todos los campeonatos, con su API de hub.
+- **Km manual, vehículo compartido y montaje de sistema** — cada modalidad con su casilla y su lógica.
+- **~180 clubes AEP precargados** con soporte multi-club por campeonato (migraciones 026–027).
+
+_Un hub para gobernarlos a todos._ 💍
+
+---
+
+## 🧮 **AEP Tarima v1.5** — _«Que no falte ni un céntimo»_ (2026-06)
+
+La compensación de jueces pasó de hoja de cálculo compartida a sistema de verdad.
+
+- **Compensación end-to-end** — dietas por sesión y función, kilometraje, pernocta, todo calculado desde la tarima real (migraciones 023–025).
+- **IBAN efímero** — se usa para el recibo y no se queda a vivir en la base de datos.
+- **Nuevo rol `responsable_financiero_jueces`** — alguien tiene que firmar.
+- UI de tarima más densa: más información, mismos píxeles.
+
+_El Excel de compensaciones ha sido jubilado con todos los honores._ 🪦
+
+---
+
+## 🔒 **AEP Tarima v1.4** — _«Endurecimiento general»_ (2026-06)
+
+La versión en la que dejamos de confiar en que todo el mundo haría lo correcto.
+
+- **Roster serio** — plazas requeridas por campeonato, detección de conflictos, flujo de imprevistos con desbloqueo y re-aprobación.
+- **Privacidad zonal** — cada delegado ve su zona y solo su zona. Las demás no existen (para él).
+- **Login server-side** y **multi-temporada** (`season.ts`).
+
+(De la v1.3 no hay registros. Los historiadores discrepan.)
+
+_La app ahora desconfía profesionalmente. Como un buen juez central._ 🕵️
+
+---
+
+## 🧪 **AEP Tarima v1.2** — _«Calidad y limpieza»_ (2025-05)
+
+- **Edición de campeonatos** completa.
+- **Corrección de tests** — los que pasaban por casualidad ahora pasan por convicción.
+- **Refactor de los archivos de +500 líneas** — divididos con cariño y sin anestesia.
+
+_Menos líneas por archivo, más años de vida por desarrollador._ ✂️
+
+---
+
+## 🧩 **AEP Tarima v1.1** — _«Completar el flujo»_ (2025-05)
+
+- **Asignación cross-zona** con motivo — pedir un juez prestado a otra zona, con papeleo incluido.
+- **Editor de plantillas de tarima** e **importación de PDFs** (horarios y cuadrantes).
+- **Disponibilidad por campeonato** — los jueces dicen si pueden ir ANTES de que los pongas en el cuadrante. Idea audaz.
+- Cobertura en la analítica y mejoras de UI del roster.
+
+_El flujo completo, del PDF al acta. Sin pasar por WhatsApp._ 📋
+
+---
+
+## 🌱 **AEP Tarima v1.0** — _«Génesis»_ (2025)
+
+En el principio era el caos: Excels, PDFs y cadenas de emails. Y dijimos: hágase la plataforma.
+
+- **La base de todo** — Next.js + Supabase, con los módulos fundacionales: campeonatos, censo de jueces, tarima con drag-and-drop, aprobaciones, exámenes y ascensos.
+- **Roles y permisos** — super admin, delegado de jueces, delegados de zona, solo-lectura.
+- **El cuadrante** — de arrastrar nombres en una pizarra a arrastrarlos en un navegador.
+
+_Todo lo demás es historia. Literalmente: está aquí arriba._ 🏛️
