@@ -12,7 +12,7 @@ import {
 export function CompensationNormativaPanel() {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-primary/20 bg-primary-muted/30 px-4 py-3 text-sm leading-relaxed text-foreground-secondary">
+      <div className="rounded-xl border border-primary-border bg-primary-muted px-4 py-3 text-sm leading-relaxed text-foreground-secondary">
         <p>
           <strong className="text-foreground">{COMPENSATION_NORMATIVA_META.title}</strong> — baremo
           vigente desde {COMPENSATION_NORMATIVA_META.revisionLabel}. La aplicación calcula

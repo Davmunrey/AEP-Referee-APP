@@ -71,9 +71,9 @@ export function FileDropZone({
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
         className={cn(
-          "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-all duration-200 ease-out",
+          "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-all duration-200 ease-out focus-ring",
           dragOver
-            ? "border-primary bg-primary-soft/40 shadow-card"
+            ? "border-primary bg-primary-muted shadow-card"
             : "border-border-muted bg-surface/50 hover:border-border-strong hover:bg-surface-hover",
           disabled && "pointer-events-none opacity-50",
         )}
