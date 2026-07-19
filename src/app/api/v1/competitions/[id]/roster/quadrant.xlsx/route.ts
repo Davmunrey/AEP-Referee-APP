@@ -23,12 +23,18 @@ export async function GET(_request: Request, context: RouteContext) {
   ]);
   if (!roster || !comp) return jsonError("Competición no encontrada", 404);
 
-  const supabase = createAdminClient();
-  const { data: referees } = await supabase
-    .from("referees")
-    .select("id, nombre, nivel")
-    .returns<Array<{ id: string; nombre: string; nivel: string }>>();
-  const refMap = new Map((referees ?? []).map((r) => [r.id, r]));
+  // Solo hacen falta los jueces asignados a la tarima, no el censo completo.
+  const assignedIds = [...new Set(Object.values(roster.assignments ?? {}).filter(Boolean))];
+  const refMap = new Map<string, { id: string; nombre: string; nivel: string }>();
+  if (assignedIds.length > 0) {
+    const supabase = createAdminClient();
+    const { data: referees } = await supabase
+      .from("referees")
+      .select("id, nombre, nivel")
+      .in("id", assignedIds)
+      .returns<Array<{ id: string; nombre: string; nivel: string }>>();
+    for (const r of referees ?? []) refMap.set(r.id, r);
+  }
 
   const buffer = generateQuadrantExcel(
     comp,

@@ -1,6 +1,6 @@
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { RefereeLevel } from "@/lib/types";
 
@@ -37,6 +37,16 @@ export async function POST(request: Request) {
     return jsonError("No puedes solicitar ascensos fuera de tu zona", 403);
   }
 
-  const req = await dataService.createPromotion({ refereeId, toLevel, zona, motivo });
-  return jsonOk(req);
+  try {
+    const req = await dataService.createPromotion({ refereeId, toLevel, zona, motivo });
+    return jsonOk(req);
+  } catch (e) {
+    // El servicio lanza errores de validación de negocio con mensaje legible
+    // (p. ej. "El nivel destino (…) debe ser superior al actual (…)").
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.startsWith("El nivel destino") || msg === "Juez no encontrado") {
+      return jsonError(msg, 400);
+    }
+    return jsonServerError("promotions.POST", e, "No se pudo crear la solicitud de ascenso");
+  }
 }

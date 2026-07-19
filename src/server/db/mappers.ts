@@ -123,13 +123,17 @@ export function mapCompetition(row: Record<string, unknown>): Competition {
     nombre: String(row.nombre),
     tipo: row.tipo as Competition["tipo"],
     fecha: String(row.fecha),
-    fechaFin: String(row.fecha_fin),
+    // Guardas de nulos: String(null) produciría el literal "null". El tipo
+    // declara ambos campos como string obligatorio, así que se usa el valor
+    // neutro del dominio: sin fecha_fin ⇒ campeonato de un día (fecha) y sin
+    // aprobacion ⇒ "Sin propuesta" (el valor por defecto en la creación).
+    fechaFin: row.fecha_fin != null ? String(row.fecha_fin) : String(row.fecha),
     sede: String(row.sede),
     sesiones: Number(row.sesiones),
     requeridos: Number(row.requeridos),
     confirmados: Number(row.confirmados),
     estado: row.estado as Competition["estado"],
-    aprobacion: String(row.aprobacion),
+    aprobacion: row.aprobacion != null ? String(row.aprobacion) : "Sin propuesta",
     zona: row.zona ? String(row.zona) : undefined,
     sedeDireccion: row.sede_direccion ? String(row.sede_direccion) : undefined,
     sedeLat: row.sede_lat != null ? Number(row.sede_lat) : undefined,

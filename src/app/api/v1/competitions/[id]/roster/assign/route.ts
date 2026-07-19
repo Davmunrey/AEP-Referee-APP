@@ -18,7 +18,10 @@ export async function POST(request: Request, context: RouteContext) {
   if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return jsonError("Cuerpo de solicitud inválido", 400);
+  }
   const parsed = assignRefereeSchema.safeParse({
     competitionId,
     slotKey: body.slotKey,
