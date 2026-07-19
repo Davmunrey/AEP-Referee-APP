@@ -3,6 +3,7 @@ import * as analytics from "./memory-analytics";
 import * as competitions from "./memory-competitions";
 import * as referees from "./memory-referees";
 import { memoryCompensationService } from "./memory-compensation";
+import { ticketService } from "./memory-tickets";
 
 export const memoryDataService = {
   getMeta: referees.getMeta,
@@ -79,4 +80,10 @@ export const memoryDataService = {
   calculateAllCompensationDistances: memoryCompensationService.calculateAllDistances,
   getCompensationClaimForExport: memoryCompensationService.getClaimForExport,
   getCompensationHub: memoryCompensationService.getHub,
+
+  getTickets: ticketService.getTickets,
+  getTicket: ticketService.getTicket,
+  createTicket: ticketService.createTicket,
+  addTicketComment: ticketService.addComment,
+  updateTicketStatus: ticketService.updateTicketStatus,
 };
