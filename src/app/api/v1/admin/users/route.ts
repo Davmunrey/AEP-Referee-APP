@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { listAdminUsers } from "@/server/services/admin-users";
 import { USER_ROLES, type UserRole } from "@/lib/types";
 
 export async function GET() {
@@ -12,54 +13,12 @@ export async function GET() {
   if (!canManageUsers(user)) return jsonError("Sin permiso", 403);
   if (!isSupabaseConfigured()) return jsonError("Supabase no configurado", 503);
 
-  const admin = createAdminClient();
-
-  // `last_sign_in_at` no está en profiles; lo aporta GoTrue vía Admin API,
-  // que pagina (perPage máx. efectivo: 1000). Se recorren páginas hasta agotar
-  // usuarios (con tope de seguridad). Si la Admin API falla, se degrada a
-  // columna vacía (se registra el error) en vez de tumbar todo el listado.
-  const loadLastSignIns = async (): Promise<Map<string, string | null>> => {
-    const map = new Map<string, string | null>();
-    const perPage = 1000;
-    const maxPages = 10; // tope de seguridad: hasta 10.000 usuarios
-    for (let page = 1; page <= maxPages; page += 1) {
-      const { data: authData, error: authError } = await admin.auth.admin.listUsers({
-        page,
-        perPage,
-      });
-      if (authError) {
-        console.error(
-          "[admin.users.GET] listUsers falló; last_sign_in_at quedará vacío:",
-          authError,
-        );
-        break;
-      }
-      const users = authData?.users ?? [];
-      for (const authUser of users) {
-        map.set(authUser.id, authUser.last_sign_in_at ?? null);
-      }
-      if (users.length < perPage) break;
-    }
-    return map;
-  };
-
-  // Perfiles (profiles) + último inicio de sesión (auth.users) en paralelo.
-  const [{ data, error }, lastSignInById] = await Promise.all([
-    admin
-      .from("profiles")
-      .select("id, email, nombre, rol_label, iniciales, role, zona, activo, created_at")
-      .order("nombre"),
-    loadLastSignIns(),
-  ]);
-
-  if (error) return jsonServerError("admin.users.GET", error, "No se pudieron cargar los usuarios");
-
-  const rows = (data ?? []).map((profile) => ({
-    ...profile,
-    last_sign_in_at: lastSignInById.get(String(profile.id)) ?? null,
-  }));
-
-  return jsonOk(rows);
+  try {
+    const rows = await listAdminUsers();
+    return jsonOk(rows);
+  } catch (error) {
+    return jsonServerError("admin.users.GET", error, "No se pudieron cargar los usuarios");
+  }
 }
 
 export async function POST(request: Request) {

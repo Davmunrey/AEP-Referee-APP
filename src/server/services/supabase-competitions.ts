@@ -114,16 +114,29 @@ export const competitionService = {
 
   createCompetition: async (
     input: Omit<Competition, "id" | "confirmados" | "estado" | "aprobacion">,
+    context?: { existing?: { id: string; nombre: string; fecha: string; tipo: string }[] },
   ): Promise<Competition> => {
     const supabase = db();
-    const existing = await supabase.from("competitions").select("id, nombre, fecha, tipo");
-    const key = competitionDedupKey(input);
-    const dupe = (existing.data ?? []).find(
-      (r) =>
-        competitionDedupKey({
+    // En importaciones por lotes se pasa `context.existing` para dedupe + max-id
+    // y evitar releer la tabla en cada inserción (O(N²) → O(N)). Sin contexto,
+    // comportamiento idéntico: una lectura ligera de la tabla.
+    const existingRows =
+      context?.existing ??
+      ((await supabase.from("competitions").select("id, nombre, fecha, tipo")).data ?? []).map(
+        (r) => ({
+          id: String(r.id),
           nombre: String(r.nombre),
           fecha: String(r.fecha),
           tipo: String(r.tipo),
+        }),
+      );
+    const key = competitionDedupKey(input);
+    const dupe = existingRows.find(
+      (r) =>
+        competitionDedupKey({
+          nombre: r.nombre,
+          fecha: r.fecha,
+          tipo: r.tipo,
         }) === key,
     );
     if (dupe) {
@@ -131,7 +144,7 @@ export const competitionService = {
         `Ya existe un campeonato igual (${String(dupe.nombre)}, ${String(dupe.fecha)}). Id: ${String(dupe.id)}`,
       );
     }
-    const maxNum = (existing.data ?? []).reduce((max, row) => {
+    const maxNum = existingRows.reduce((max, row) => {
       const m = /^evt-(\d+)$/i.exec(String(row.id));
       const n = m ? Number.parseInt(m[1]!, 10) : 0;
       return Number.isFinite(n) ? Math.max(max, n) : max;

@@ -1,4 +1,5 @@
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import { competitionDedupKey } from "@/lib/competition-dedup";
 import {
   applyCoverageToCompetition,
   isRosterLockedByApproval,
@@ -134,11 +135,34 @@ export async function getCompetition(id: string) {
 
 export async function createCompetition(
   input: Omit<Competition, "id" | "confirmados" | "estado" | "aprobacion">,
+  context?: { existing?: { id: string; nombre: string; fecha: string; tipo: string }[] },
 ): Promise<Competition> {
   const store = getStore();
+  // En importaciones por lotes se pasa `context.existing` para dedupe + max-id
+  // sin recorrer el store en cada inserción. Sin contexto: comportamiento
+  // idéntico al actual (max-id sobre el store, sin dedupe).
+  const existingList =
+    context?.existing ??
+    store.competitions.map((c) => ({
+      id: c.id,
+      nombre: c.nombre,
+      fecha: c.fecha,
+      tipo: c.tipo,
+    }));
+  if (context?.existing) {
+    const key = competitionDedupKey(input);
+    const dupe = existingList.find(
+      (r) => competitionDedupKey({ nombre: r.nombre, fecha: r.fecha, tipo: r.tipo }) === key,
+    );
+    if (dupe) {
+      throw new Error(
+        `Ya existe un campeonato igual (${dupe.nombre}, ${dupe.fecha}). Id: ${dupe.id}`,
+      );
+    }
+  }
   // ID por máximo existente, no por longitud: tras borrar una competición
   // intermedia, `length + 1` reutilizaría un id ya usado y machacaría su roster.
-  const maxNum = store.competitions.reduce((max, c) => {
+  const maxNum = existingList.reduce((max, c) => {
     const m = /^evt-(\d+)$/i.exec(c.id);
     const n = m ? parseInt(m[1]!, 10) : 0;
     return Number.isFinite(n) ? Math.max(max, n) : max;
