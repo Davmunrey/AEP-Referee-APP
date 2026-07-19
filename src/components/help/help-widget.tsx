@@ -71,7 +71,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       onClick={() => setOpen((o) => !o)}
       aria-label={open ? "Cerrar ayuda" : "Abrir ayuda"}
       aria-expanded={open}
-      className="fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      className="fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       {open ? <X className="h-5 w-5" /> : <HelpCircle className="h-6 w-6" />}
     </button>
@@ -108,7 +108,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Busca en la ayuda…"
             aria-label="Buscar en la ayuda"
-            className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-9 text-sm text-foreground placeholder:text-subtle-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:border-primary-border focus-visible:bg-card"
           />
           {searching && (
             <button
@@ -118,7 +118,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                 inputRef.current?.focus();
               }}
               aria-label="Limpiar búsqueda"
-              className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-ring"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -165,7 +165,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                       <Link
                         href={step.href}
                         onClick={() => setOpen(false)}
-                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                        className="mt-1 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-primary underline-offset-2 hover:underline focus-ring"
                       >
                         {step.linkLabel ?? "Abrir"}
                         <ArrowRight className="h-3 w-3" />
@@ -190,7 +190,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                       setQuery(t.question);
                       inputRef.current?.focus();
                     }}
-                    className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground-secondary transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                    className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground-secondary transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-ring"
                   >
                     {t.question}
                   </button>
@@ -206,7 +206,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
         <Link
           href="/docs"
           onClick={() => setOpen(false)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-ring"
         >
           <BookOpen className="h-3.5 w-3.5" />
           Documentación
@@ -214,7 +214,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
         <Link
           href={CONTACT_HREF}
           onClick={() => setOpen(false)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-ring"
         >
           <Mail className="h-3.5 w-3.5" />
           Contacto
@@ -250,7 +250,7 @@ function TopicCard({ entry, onNavigate }: { entry: HelpEntry; onNavigate: () => 
               key={l.href}
               href={l.href}
               onClick={onNavigate}
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-primary underline-offset-2 hover:underline focus-ring"
             >
               {l.label}
               <ArrowRight className="h-3 w-3" />

@@ -66,7 +66,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={() => setOpen(false)}
     >
       <div
@@ -75,7 +75,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
         role="dialog"
         aria-modal="true"
         aria-labelledby="promotion-dialog-title"
-        className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-background p-0 shadow-xl outline-none"
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

@@ -36,8 +36,8 @@ export function RoleRows({ title, accentClass, roles, allowedKeys, onChange, onA
   const baseKeys = allowedKeys ?? ROLE_KEYS;
   return (
     <div className="space-y-2">
-      <div className={cn("flex items-center justify-between rounded px-2 py-1", accentClass)}>
-        <p className="text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">{title}</p>
+      <div className={cn("flex items-center justify-between rounded-lg px-2 py-1", accentClass)}>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">{title}</p>
         <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs" onClick={onAdd}>
           <Plus className="h-3 w-3" />
           Rol
@@ -46,7 +46,7 @@ export function RoleRows({ title, accentClass, roles, allowedKeys, onChange, onA
       {roles.map((role, idx) => (
         <div
           key={`${role.key}-${idx}`}
-          className="flex items-center gap-2 rounded border border-border bg-background px-2 py-1.5"
+          className="flex items-center gap-2 rounded-lg border border-border bg-background px-2 py-1.5"
         >
           <select
             value={role.key}
@@ -74,7 +74,7 @@ export function RoleRows({ title, accentClass, roles, allowedKeys, onChange, onA
         </div>
       ))}
       {roles.length === 0 && (
-        <p className="rounded border border-dashed border-border py-2 text-center text-[11px] text-subtle-muted">
+        <p className="rounded-lg border border-dashed border-border py-2 text-center text-[11px] text-subtle-muted">
           Sin roles — añade uno
         </p>
       )}

@@ -104,7 +104,8 @@ export function RosterCompetitionHeader({
                   size="icon"
                   onClick={onOpenEdit}
                   title="Editar campeonato"
-                  className="ml-1 h-6 w-6 shrink-0"
+                  aria-label="Editar campeonato"
+                  className="ml-1 h-7 w-7 shrink-0"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>

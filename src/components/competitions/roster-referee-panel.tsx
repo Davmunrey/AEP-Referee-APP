@@ -160,7 +160,7 @@ export function RosterRefereePanelLeft({
           </p>
         )}
         {suggestionsActive && (
-          <p className="mt-0.5 flex items-center gap-1 text-[9.5px] text-subtle-muted">
+          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-subtle-muted">
             <Sparkles className="h-2.5 w-2.5 text-primary" />
             {confirmedIds.size > 0
               ? "Solo disponibles · ordenados por idoneidad"
@@ -172,7 +172,7 @@ export function RosterRefereePanelLeft({
             <button
               type="button"
               onClick={onAvailabilityOpen}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium text-foreground-secondary hover:bg-surface-hover"
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-[11px] font-medium text-foreground-secondary hover:bg-surface-hover focus-ring"
             >
               <Users className="h-3 w-3" />
               Disp.
@@ -187,7 +187,7 @@ export function RosterRefereePanelLeft({
             <button
               type="button"
               onClick={() => onFilterConfirmed((v) => !v)}
-              className={`rounded-md border px-2 py-1 text-[10px] font-medium ${filterOnlyConfirmed ? "border-success/40 bg-success/10 text-success" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
+              className={`rounded-md border px-2 py-1 text-[10px] font-medium ${filterOnlyConfirmed ? "border-success/40 bg-success/10 text-success" : "border-border text-subtle-muted hover:bg-surface-hover focus-ring"}`}
             >
               Confirmados
             </button>
@@ -196,7 +196,7 @@ export function RosterRefereePanelLeft({
             <button
               type="button"
               onClick={() => onSelectSlot(null)}
-              className="rounded-md border border-primary/25 px-2 py-1 text-[10px] text-primary hover:bg-primary/5"
+              className="rounded-md border border-primary/25 px-2 py-1.5 text-[11px] text-primary hover:bg-primary/5 focus-ring"
             >
               Cancelar hueco
             </button>
@@ -277,7 +277,7 @@ export function RosterRefereePanelLeft({
       </div>
 
       <div className="hidden border-t border-border px-2 py-1 sm:block">
-        <p className="truncate text-[9px] text-subtle-muted" title="Arrastra un juez a un hueco, o selecciona hueco y juez.">
+        <p className="truncate text-[10px] text-subtle-muted" title="Arrastra un juez a un hueco, o selecciona hueco y juez.">
           Arrastra o clic hueco → juez
         </p>
       </div>

@@ -57,7 +57,7 @@ export function RosterStepper({
               className={cn(
                 "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-ring",
                 isCurrent && "border-primary bg-primary/10 text-primary",
-                !isCurrent && done && "border-success-border bg-success-subtle text-success",
+                !isCurrent && done && "border-success-border bg-success-muted text-success",
                 !isCurrent && !done && "border-border bg-surface text-muted-foreground hover:border-border-strong",
                 disabled && "pointer-events-none opacity-50",
               )}
@@ -67,7 +67,7 @@ export function RosterStepper({
                 className={cn(
                   "flex h-[18px] w-[18px] items-center justify-center rounded-full text-[10px] font-bold",
                   isCurrent && "bg-primary text-primary-foreground",
-                  !isCurrent && done && "bg-success text-success-foreground",
+                  !isCurrent && done && "bg-success text-primary-foreground",
                   !isCurrent && !done && "bg-muted text-muted-foreground",
                 )}
               >

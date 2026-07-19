@@ -267,7 +267,7 @@ export function RefereesDirectory({
         </div>
 
         {/* Mobile card list */}
-        <div className="divide-y divide-border/50 md:hidden">
+        <div className="divide-y divide-border-muted md:hidden">
           {rows.length === 0 && (
             <p className="px-4 py-12 text-center text-sm text-subtle-muted">
               {referees.length === 0
@@ -371,10 +371,10 @@ export function RefereesDirectory({
                     <td className="px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
                       {referee.eventos}
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-[10.5px] text-subtle-muted">
+                    <td className="px-4 py-2.5 font-mono text-[11px] text-subtle-muted">
                       {displayUltimo(referee.ultimo)}
                     </td>
-                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity group-hover:opacity-100">
+                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                           <Link
@@ -464,14 +464,14 @@ export function RefereesDirectory({
       {deleteError && (
         <div
           role="alert"
-          className="flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive"
+          className="flex items-center justify-between gap-3 rounded-lg border border-destructive-border bg-destructive-muted px-4 py-2.5 text-sm text-destructive"
         >
           <span>{deleteError}</span>
           <button
             type="button"
             aria-label="Cerrar aviso"
             onClick={() => setDeleteError(null)}
-            className="shrink-0 opacity-70 hover:opacity-100"
+            className="-m-1.5 shrink-0 rounded-md p-1.5 opacity-70 hover:opacity-100 focus-ring"
           >
             <X className="h-4 w-4" />
           </button>

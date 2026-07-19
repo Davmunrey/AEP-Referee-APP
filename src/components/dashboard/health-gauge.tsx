@@ -108,7 +108,7 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
             <span className={cn("text-[2rem] font-bold leading-none tracking-tight xl:text-[2.2rem]", style.text)}>
               {health.score}
             </span>
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground/50">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
               / 100
             </span>
             {typeof health.delta === "number" && (
@@ -163,7 +163,7 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
                     style={{ width: `${Math.max(f.score, 3)}%` }}
                   />
                 </div>
-                <p className="mt-0.5 text-[10.5px] text-muted-foreground/60">{f.detail}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{f.detail}</p>
               </li>
             ))}
           </ul>

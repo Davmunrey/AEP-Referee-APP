@@ -120,7 +120,7 @@ export function NewPromotionDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={() => setOpen(false)}
     >
       <div
@@ -129,11 +129,11 @@ export function NewPromotionDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-promo-title"
-        className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-xl outline-none"
+        className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between">
-          <h2 id="new-promo-title" className="text-lg font-semibold">
+          <h2 id="new-promo-title" className="text-base font-semibold text-foreground">
             Solicitar ascenso de nivel
           </h2>
           <Button variant="ghost" size="icon" aria-label="Cerrar" onClick={() => setOpen(false)}>

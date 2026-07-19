@@ -25,16 +25,16 @@ function relativeTime(isoString: string): string {
 function actionDotClass(action: string): string {
   const lower = action.toLowerCase();
   if (lower.includes("asign") || lower.includes("añad") || lower.includes("guardar"))
-    return "bg-success border-success/30";
+    return "bg-success ring-success/30";
   if (lower.includes("quitar") || lower.includes("elimin") || lower.includes("borra"))
-    return "bg-warning border-warning/30";
+    return "bg-warning ring-warning/30";
   if (lower.includes("envi") || lower.includes("aprobac") || lower.includes("submit"))
-    return "bg-primary border-primary/30";
+    return "bg-primary ring-primary/30";
   if (lower.includes("plantilla") || lower.includes("template") || lower.includes("import"))
-    return "bg-accent border-accent/30";
+    return "bg-info ring-info/30";
   if (lower.includes("marcador") || lower.includes("flag") || lower.includes("compartid"))
-    return "bg-muted-foreground border-muted-foreground/30";
-  return "bg-muted-foreground/50 border-border";
+    return "bg-muted-foreground ring-border";
+  return "bg-muted-foreground/50 ring-border";
 }
 
 function actionTextClass(action: string): string {

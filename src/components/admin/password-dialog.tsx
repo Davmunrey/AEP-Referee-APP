@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/client";
 import { formatApiError } from "@/lib/api/error-message";
 import { Check, Loader2 } from "lucide-react";
+import { useEscapeClose } from "@/hooks/use-escape-close";
 
 interface PasswordDialogProps {
   /** "admin": resetea la de otro usuario. "self": cambia la propia. */
@@ -20,6 +21,7 @@ interface PasswordDialogProps {
 }
 
 export function PasswordDialog({ mode, userId, subject, onClose, onDone }: PasswordDialogProps) {
+  const panelRef = useEscapeClose(onClose);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -73,7 +75,7 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl">
+      <div ref={panelRef} tabIndex={-1} className="outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl">
         <h3 id="password-title" className="text-base font-semibold text-foreground">
           {mode === "self" ? "Cambiar mi contraseña" : "Resetear contraseña"}
         </h3>

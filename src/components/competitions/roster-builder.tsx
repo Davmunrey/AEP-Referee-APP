@@ -406,7 +406,7 @@ export function RosterBuilder({
 
   return (
     <>
-      <div className="flex h-[calc(100dvh-3.5rem)] flex-col">
+      <div className="flex h-[calc(100dvh-3rem)] flex-col">
         {/* Render condicional: así el chunk dynamic solo se descarga al abrir
             el diálogo, no al montar la ruta. */}
         {importOpen && (

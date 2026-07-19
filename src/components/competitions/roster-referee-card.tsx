@@ -60,15 +60,24 @@ export const RefereeCard = memo(function RefereeCard({
       }}
       onDragEnd={onDragEnd}
       onClick={() => !locked && onClick(referee.id)}
+      role="button"
+      tabIndex={locked ? -1 : 0}
+      onKeyDown={(e) => {
+        if (locked) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(referee.id);
+        }
+      }}
       className={cn(
-        "flex cursor-grab items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-all duration-100 active:cursor-grabbing",
+        "flex cursor-grab items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-all duration-100 active:cursor-grabbing focus-ring",
         assigned && "opacity-55",
         locked && "cursor-default",
         dragging && "scale-[0.98] opacity-40",
         !locked && highlight && "cursor-pointer border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10",
         !locked && isDragging && !dragging && "hover:border-success/50 hover:bg-success/5",
         !locked && !highlight && !isDragging && "hover:border-border-strong hover:bg-surface",
-        alertText && !blockedReason && referee.eventos >= 8 && "border-amber-400/30",
+        alertText && !blockedReason && referee.eventos >= 8 && "border-warning-border/60",
         blockedReason && "border-warning-border/60 bg-warning-subtle/40",
       )}
     >
@@ -92,7 +101,7 @@ export const RefereeCard = memo(function RefereeCard({
           ) : null}
         </div>
         <p className="truncate text-[10px] leading-tight text-subtle-muted">
-          <span className={cn(isFromOtherZone && "font-medium text-orange-500")}>
+          <span className={cn(isFromOtherZone && "font-medium text-warning")}>
             {isFromOtherZone ? `⟳ ${zoneLabel}` : zoneLabel}
           </span>
           <span className="mx-1 text-border">·</span>

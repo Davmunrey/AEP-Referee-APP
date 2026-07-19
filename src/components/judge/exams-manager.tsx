@@ -190,7 +190,7 @@ export function ExamsManager({
           <Button
             size="sm"
             variant={showForm ? "outline" : "default"}
-            className="gap-1.5 rounded-xl"
+            className="gap-1.5"
             onClick={() => setShowForm((v) => !v)}
           >
             {showForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -306,7 +306,7 @@ export function ExamsManager({
             </p>
           )}
           <div className="flex justify-end">
-            <Button size="sm" className="rounded-xl" disabled={busy} onClick={submit}>
+            <Button size="sm" disabled={busy} onClick={submit}>
               {busy ? "Guardando…" : "Registrar examen"}
             </Button>
           </div>
@@ -345,7 +345,7 @@ export function ExamsManager({
           {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
             <button
               type="button"
-              className="flex items-center gap-1 text-[11px] text-subtle-muted hover:text-foreground"
+              className="flex items-center gap-1 rounded text-[11px] text-subtle-muted hover:text-foreground focus-ring"
               onClick={() => { setFilterTipo("TODOS"); setFilterResultado("TODOS"); }}
             >
               <X className="h-3 w-3" />

@@ -18,7 +18,7 @@ export function OpenRostersPanel({ competitions, maxItems = 6 }: OpenRostersPane
   if (active.length === 0) return null;
 
   return (
-    <section className="mb-6 rounded-lg border border-border bg-surface/50 p-4">
+    <section className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-card">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <LayoutGrid className="h-4 w-4 text-primary" aria-hidden />
@@ -34,7 +34,7 @@ export function OpenRostersPanel({ competitions, maxItems = 6 }: OpenRostersPane
           return (
             <li
               key={competition.id}
-              className="flex flex-col gap-2 rounded-md border border-border-muted bg-background p-3"
+              className="flex flex-col gap-2 rounded-xl border border-border-muted bg-surface/40 p-3"
             >
               <div className="flex flex-wrap items-center gap-1.5">
                 <EventTypeBadge tipo={competition.tipo} />

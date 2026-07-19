@@ -15,7 +15,7 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
-import { selectFieldClass } from "@/lib/design-tokens";
+import { selectFieldClass, selectFieldClassSm } from "@/lib/design-tokens";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { api } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -309,10 +309,10 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
         className="glass-panel mb-8 grid gap-4 rounded-2xl border border-border-muted p-6 md:grid-cols-2"
       >
         <h2 className="friendly-label md:col-span-2">Nuevo usuario</h2>
-        <Input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
-        <Input placeholder="Contraseña (mín. 8)" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required minLength={8} />
-        <Input placeholder="Nombre completo" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
-        <Input placeholder="Etiqueta de rol (ej. Resp. Cataluña)" value={form.rolLabel} onChange={(e) => setForm((f) => ({ ...f, rolLabel: e.target.value }))} required />
+        <Input placeholder="Email" aria-label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
+        <Input placeholder="Contraseña (mín. 8)" aria-label="Contraseña" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required minLength={8} />
+        <Input placeholder="Nombre completo" aria-label="Nombre completo" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
+        <Input placeholder="Etiqueta de rol (ej. Resp. Cataluña)" aria-label="Etiqueta de rol" value={form.rolLabel} onChange={(e) => setForm((f) => ({ ...f, rolLabel: e.target.value }))} required />
         <select className={selectFieldClass} value={form.role} aria-label="Rol del usuario" onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
           <option value="super_admin">Super Admin</option>
           <option value="delegado_jueces">Delegado de Jueces</option>
@@ -335,8 +335,8 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
 
       {/* Filter row */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Input placeholder="Buscar por nombre o email…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 w-52" aria-label="Buscar usuarios" />
-        <select className="h-9 rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground-secondary focus-ring" value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | "TODOS")} aria-label="Filtrar por rol">
+        <Input placeholder="Buscar por nombre o email…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 w-44 text-xs" aria-label="Buscar usuarios" />
+        <select className={selectFieldClassSm} value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | "TODOS")} aria-label="Filtrar por rol">
           <option value="TODOS">Todos los roles</option>
           <option value="super_admin">{ROLE_LABELS.super_admin}</option>
           <option value="delegado_jueces">{ROLE_LABELS.delegado_jueces}</option>
@@ -346,11 +346,11 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           </option>
           <option value="solo_ver">{ROLE_LABELS.solo_ver}</option>
         </select>
-        <select className="h-9 rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground-secondary focus-ring" value={filterZone} onChange={(e) => setFilterZone(e.target.value)} aria-label="Filtrar por zona">
+        <select className={selectFieldClassSm} value={filterZone} onChange={(e) => setFilterZone(e.target.value)} aria-label="Filtrar por zona">
           <option value="TODOS">Todas las zonas</option>
           {zones.map((z) => <option key={z.code} value={z.code}>{z.name}</option>)}
         </select>
-        <select className="h-9 rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground-secondary focus-ring" value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as "todos" | "activo" | "inactivo")} aria-label="Filtrar por estado">
+        <select className={selectFieldClassSm} value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as "todos" | "activo" | "inactivo")} aria-label="Filtrar por estado">
           <option value="todos">Todos los estados</option>
           <option value="activo">Activos</option>
           <option value="inactivo">Inactivos</option>
@@ -381,7 +381,14 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
 
       {/* Table or states */}
       {loading ? (
-        <p className="text-sm text-subtle-muted">Cargando usuarios…</p>
+        <div className="flex items-center justify-center gap-2 py-12 text-sm text-subtle-muted">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          Cargando usuarios…
+        </div>
+      ) : error && users.length === 0 ? (
+        <div role="alert" className="rounded-lg border border-destructive-border bg-destructive-muted px-4 py-2.5 text-sm text-destructive">
+          {error}
+        </div>
       ) : filteredUsers.length === 0 ? (
         <EmptyState
           icon={Users}

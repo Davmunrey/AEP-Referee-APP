@@ -58,7 +58,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
   const { items, totalPendingKm, readyCount } = hub;
 
   return (
-    <PageShell className="space-y-4">
+    <PageShell>
       <PageHeader
         title="Compensación de jueces"
         description="Acceso directo a facturación y recibos por campeonato, sin ir tarima a tarima."

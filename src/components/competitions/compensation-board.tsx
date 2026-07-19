@@ -194,7 +194,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
   };
 
   return (
-    <PageShell className="space-y-4">
+    <PageShell>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" size="sm" className="gap-1.5" asChild>
           <Link href="/compensation">
@@ -303,7 +303,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   </Button>
                   {organizer === "club" && (
                     <label className="flex items-center gap-2 text-xs text-foreground-secondary">
-                      <input type="checkbox" checked={volunteer} onChange={(e) => setVolunteer(e.target.checked)} />
+                      <input type="checkbox" className="h-4 w-4 rounded border-border accent-primary" checked={volunteer} onChange={(e) => setVolunteer(e.target.checked)} />
                       Colaborador voluntario
                     </label>
                   )}
@@ -318,7 +318,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       )}
 
       {readiness && readiness.issues.length > 0 && (
-        <div className="flex gap-3 rounded-2xl border border-warning-border bg-warning-subtle px-4 py-3 text-sm">
+        <div className="flex gap-3 rounded-xl border border-warning-border bg-warning-subtle px-4 py-3 text-sm">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <ul className="list-inside list-disc space-y-1 text-foreground-secondary">
             {readiness.issues.map((issue) => (
@@ -351,12 +351,12 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       </div>
 
       {error && (
-        <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive-muted px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive-border bg-destructive-muted px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-border-muted">
+      <div className="overflow-x-auto rounded-2xl border border-border-muted">
         <table className="w-full min-w-[880px] text-left text-sm">
           <thead className="border-b border-border-muted bg-surface/50 text-[11px] uppercase tracking-wide text-subtle-muted">
             <tr>
@@ -386,7 +386,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                     <td className="px-2 py-2">
                       <button
                         type="button"
-                        className="text-muted-foreground hover:text-foreground"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-ring"
                         onClick={() => toggleExpanded(claim.refereeId)}
                         aria-label={isOpen ? "Ocultar desglose" : "Ver desglose"}
                       >
@@ -429,6 +429,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       {canManage ? (
                         <input
                           type="checkbox"
+                          className="h-4 w-4 rounded border-border accent-primary"
                           checked={claim.travelMode === "shared_vehicle_passenger"}
                           onChange={(e) =>
                             patchClaim(claim.refereeId, {
@@ -451,6 +452,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       {canManage ? (
                         <input
                           type="checkbox"
+                          className="h-4 w-4 rounded border-border accent-primary"
                           checked={claim.isCompetitionManager}
                           onChange={(e) =>
                             patchClaim(claim.refereeId, { isCompetitionManager: e.target.checked })
@@ -468,6 +470,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         <div className="flex items-center gap-1.5">
                           <input
                             type="checkbox"
+                            className="h-4 w-4 rounded border-border accent-primary"
                             checked={claim.isComputerSetup}
                             onChange={(e) =>
                               patchClaim(claim.refereeId, {
@@ -577,8 +580,15 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
             })}
             {claims.length === 0 && (
               <tr>
-                <td colSpan={canManage ? 9 : 8} className="px-3 py-8 text-center text-sm text-muted-foreground">
-                  Sin jueces asignados en tarima. Monta la tarima y pulsa recalcular funciones.
+                <td colSpan={canManage ? 10 : 9} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                  {!summary && pending ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      Cargando compensación…
+                    </span>
+                  ) : (
+                    "Sin jueces asignados en tarima. Monta la tarima y pulsa recalcular funciones."
+                  )}
                 </td>
               </tr>
             )}
