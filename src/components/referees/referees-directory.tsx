@@ -10,7 +10,9 @@ import {
   MoreHorizontal,
   SlidersHorizontal,
   Trash2,
+  UserCheck,
   UserPlus,
+  UserX,
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -109,6 +111,31 @@ export function RefereesDirectory({
     const t = setTimeout(() => setDeleteError(null), 5000);
     return () => clearTimeout(t);
   }, [deleteError]);
+
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Alternar Activo ↔ Inactivo desde la fila, sin pasar por la ficha. El caso
+  // «Sancionado» queda fuera: ese estado lo gobierna el flujo de sanciones y
+  // la API lo bloquea igualmente.
+  const toggleEstado = async (referee: { id: string; nombre: string; estado: string }) => {
+    const nextEstado = referee.estado === "Activo" ? "Inactivo" : "Activo";
+    setTogglingId(referee.id);
+    try {
+      // disp acompaña al estado (mismo criterio que el import del Excel):
+      // inactivo ⇒ no disponible para designaciones.
+      const updated = await api.updateReferee(referee.id, {
+        estado: nextEstado as Referee["estado"],
+        disp: nextEstado === "Activo",
+      });
+      setReferees((prev) => prev.map((r) => (r.id === referee.id ? { ...r, ...updated } : r)));
+    } catch (e) {
+      setDeleteError(
+        e instanceof Error ? e.message : `No se pudo cambiar el estado de ${referee.nombre}`,
+      );
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const deleteReferee = async (id: string, nombre: string) => {
     if (!confirm(`¿Eliminar al juez "${nombre}"? Esta acción no se puede deshacer.`)) return;
@@ -299,6 +326,29 @@ export function RefereesDirectory({
                     <MoreHorizontal className="h-4 w-4" />
                   </Link>
                 </Button>
+                {canEdit && referee.estado !== "Sancionado" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={togglingId === referee.id}
+                    onClick={() => void toggleEstado(referee)}
+                    title={referee.estado === "Activo" ? "Marcar inactivo" : "Marcar activo"}
+                    aria-label={
+                      referee.estado === "Activo"
+                        ? `Marcar inactivo a ${referee.nombre}`
+                        : `Marcar activo a ${referee.nombre}`
+                    }
+                  >
+                    {togglingId === referee.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : referee.estado === "Activo" ? (
+                      <UserX className="h-3.5 w-3.5 text-warning" />
+                    ) : (
+                      <UserCheck className="h-3.5 w-3.5 text-success" />
+                    )}
+                  </Button>
+                )}
                 {canEdit && (
                   <Button
                     variant="ghost"
@@ -384,6 +434,29 @@ export function RefereesDirectory({
                             <MoreHorizontal className="h-4 w-4" />
                           </Link>
                         </Button>
+                        {canEdit && referee.estado !== "Sancionado" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={togglingId === referee.id}
+                            onClick={() => void toggleEstado(referee)}
+                            title={referee.estado === "Activo" ? "Marcar inactivo" : "Marcar activo"}
+                            aria-label={
+                              referee.estado === "Activo"
+                                ? `Marcar inactivo a ${referee.nombre}`
+                                : `Marcar activo a ${referee.nombre}`
+                            }
+                          >
+                            {togglingId === referee.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : referee.estado === "Activo" ? (
+                              <UserX className="h-3.5 w-3.5 text-warning" />
+                            ) : (
+                              <UserCheck className="h-3.5 w-3.5 text-success" />
+                            )}
+                          </Button>
+                        )}
                         {canEdit && (
                           <Button
                             variant="ghost"

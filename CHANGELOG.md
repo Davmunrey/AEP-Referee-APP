@@ -39,6 +39,7 @@ Cinco rondas de auditoría con agentes en paralelo peinando cada capa de la app.
 **Además:**
 - Migración 034: el ajuste manual del importe de viaje por fin se guarda (existía en la UI, se calculaba… y se perdía al recargar), coordenadas de domicilio persistidas e índice único anti propuestas duplicadas. Todo con sondas de columna: el código funciona igual antes y después de aplicarla.
 - Fijar días de alojamiento a mano ahora paga el alojamiento (antes: días=2, importe=0 €, explicación=ninguna).
+- **Activar/desactivar jueces desde el directorio** — antes el estado solo se cambiaba entrando a editar la ficha; la única acción rápida era… eliminar. Ahora hay botón de alternar (el estado «Sancionado» sigue gobernado por el flujo de sanciones).
 - De 356 a ~400 tests, incluyendo por primera vez el baremo completo de tarifas y la frontera exacta de los 150 km. El dinero, testeado.
 
 _La app ahora sabe qué día es en España. Hemos tocado techo._ 🇪🇸
