@@ -57,6 +57,12 @@ CREATE TABLE IF NOT EXISTS approval_proposals_duplicadas_034 (
 COMMENT ON TABLE approval_proposals_duplicadas_034 IS
   'Propuestas pendientes duplicadas apartadas por la migración 034 al crear el índice único. Conservadas para poder revisarlas o restaurarlas; se puede vaciar cuando se haya comprobado que no hacían falta.';
 
+-- Sin políticas y con RLS activada: solo servidor, como el resto del esquema
+-- desde la 033. Sin esta línea la tabla nacería con los privilegios por defecto
+-- de Supabase para anon/authenticated y quedaría legible Y escribible con la
+-- clave anónima pública — y guarda filas completas de propuestas de aprobación.
+ALTER TABLE approval_proposals_duplicadas_034 ENABLE ROW LEVEL SECURITY;
+
 -- Idempotente: tras la primera pasada no quedan duplicados, así que el DELETE no
 -- afecta a ninguna fila y no se archiva nada nuevo.
 WITH descartadas AS (

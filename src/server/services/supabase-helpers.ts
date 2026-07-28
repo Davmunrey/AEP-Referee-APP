@@ -186,17 +186,43 @@ export async function loadCrossZoneMap(
 }
 
 /**
- * Carga TODAS las asignaciones de roster en una sola consulta y las agrupa por
- * `competition_id` en memoria. Evita el patrón N+1 de llamar a
- * `loadAssignments(competitionId)` una vez por competición.
+ * Carga TODAS las asignaciones de roster y las agrupa por `competition_id` en
+ * memoria. Evita el patrón N+1 de llamar a `loadAssignments(competitionId)` una
+ * vez por competición.
+ *
+ * Va PAGINADA a propósito. PostgREST recorta toda respuesta a `max_rows` (1000
+ * por defecto en Supabase) sin avisar de ninguna forma: no hay error, solo
+ * faltan filas. Y aquí eso no se queda en un listado incompleto — como
+ * `applyCoverageToCompetition` recalcula `confirmados` y `estado` a partir de
+ * este mapa, los campeonatos que quedan fuera del corte se pintan como
+ * «Crítico / 0 confirmados» aunque tengan la tarima llena, y el resumen de
+ * compensación devuelve vacío para ellos. Con los presets reales (27-48 filas
+ * por campeonato) el tope se alcanza hacia el campeonato 20-35.
+ *
+ * El orden es explícito porque sin ORDER BY las páginas pueden solaparse o
+ * saltarse filas entre consultas.
  */
+const ASSIGNMENTS_PAGE_SIZE = 1000;
+
 export async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>> {
   const supabase = db();
-  const { data } = await supabase
-    .from("roster_assignments")
-    .select("competition_id, slot_key, referee_id");
+  const rows: { competition_id: unknown; slot_key: string; referee_id: string }[] = [];
+  for (let from = 0; ; from += ASSIGNMENTS_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("roster_assignments")
+      .select("competition_id, slot_key, referee_id")
+      .order("competition_id", { ascending: true })
+      .order("slot_key", { ascending: true })
+      .range(from, from + ASSIGNMENTS_PAGE_SIZE - 1);
+    // Antes se descartaba el error: un fallo de red devolvía un mapa vacío que
+    // la app interpretaba como «ningún juez asignado en toda la temporada».
+    if (error) throw new Error(`roster_assignments: ${error.message}`);
+    const page = data ?? [];
+    rows.push(...page);
+    if (page.length < ASSIGNMENTS_PAGE_SIZE) break;
+  }
   const grouped = new Map<string, { slot_key: string; referee_id: string }[]>();
-  for (const row of data ?? []) {
+  for (const row of rows) {
     const id = String(row.competition_id);
     const bucket = grouped.get(id);
     if (bucket) bucket.push(row);
