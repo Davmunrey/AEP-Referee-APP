@@ -138,10 +138,20 @@ for (const file of visibleFiles) {
   const rel = toPosix(relative(root, file));
   const src = readFileSync(file, "utf8");
   if (/\(Excel:/i.test(src)) fail("UX-01", `${rel} expone fuente Excel en UI`);
+  // Busca restos del renombrado «evento» -> «campeonato» en texto que ve el
+  // usuario. La segunda lista descarta los usos en los que «evento» es una
+  // CLAVE de datos y no algo que se pinte: nombres de campo en uniones de
+  // tipos (`field: "tipo" | "evento" | …`) y comparaciones sobre esa clave
+  // (`field === "evento"`). Un aviso que salta donde no hay nada que arreglar
+  // acaba enseñando a ignorar los avisos.
   const visibleLegacy = src
     .split(/\r?\n/)
     .filter((line) => /(?:>|["'`])[^<"'`]*(?:Evento|evento)[^<"'`]*(?:<|["'`])/.test(line))
-    .filter((line) => !/useState|setEvento|editEvento|item\.evento|report\.evento|referee\.eventos|eventosCompletados/.test(line));
+    .filter(
+      (line) =>
+        !/useState|setEvento|editEvento|item\.evento|report\.evento|referee\.eventos|eventosCompletados/.test(line) &&
+        !/\bfield\s*(?::|===|==)/.test(line),
+    );
   if (visibleLegacy?.length && rel.includes("components/")) {
     warn("UX-02", `${rel} contiene literal visible legado: ${visibleLegacy[0].trim()}`);
   }
