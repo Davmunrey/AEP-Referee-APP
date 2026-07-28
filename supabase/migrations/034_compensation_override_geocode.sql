@@ -35,20 +35,50 @@ COMMENT ON COLUMN referees.domicilio_lng IS 'Longitud geocodificada del domicili
 -- renombrada desde event_id en 016, que ya corre antes que esta). El estado
 -- 'pendiente' es el valor del enum approval_status (001).
 --
--- Antes de crear el índice se limpian posibles duplicados PREEXISTENTES: si hubiera
+-- Antes de crear el índice hay que resolver duplicados PREEXISTENTES: si hubiera
 -- dos o más propuestas pendientes para el mismo campeonato, CREATE UNIQUE INDEX
--- fallaría. Se conserva la MÁS RECIENTE (mayor submitted_at; desempate por id) y se
--- borran las demás. El borrado es idempotente: tras la primera pasada no quedan
--- duplicados y el DELETE no afecta a ninguna fila en ejecuciones posteriores.
-DELETE FROM approval_proposals a
-USING approval_proposals b
-WHERE a.status = 'pendiente'
-  AND b.status = 'pendiente'
-  AND a.competition_id = b.competition_id
-  AND (
-    a.submitted_at < b.submitted_at
-    OR (a.submitted_at = b.submitted_at AND a.id < b.id)
-  );
+-- fallaría. Se conserva la MÁS RECIENTE (mayor submitted_at; desempate por id).
+--
+-- Las que sobran NO se borran sin más: se archivan antes en una tabla de
+-- cuarentena. Esta migración la aplica un workflow desatendido, y un DELETE a
+-- secas sobre propuestas de aprobación reales sería irreversible y además
+-- invisible: nadie sabría qué desapareció ni podría devolverlo. Guardadas como
+-- jsonb se conserva la fila entera sea cual sea el esquema del momento, y
+-- recuperar una es un INSERT desde el JSON.
+CREATE TABLE IF NOT EXISTS approval_proposals_duplicadas_034 (
+  archivada_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  fila         JSONB       NOT NULL
+);
+
+COMMENT ON TABLE approval_proposals_duplicadas_034 IS
+  'Propuestas pendientes duplicadas apartadas por la migración 034 al crear el índice único. Conservadas para poder revisarlas o restaurarlas; se puede vaciar cuando se haya comprobado que no hacían falta.';
+
+-- Idempotente: tras la primera pasada no quedan duplicados, así que el DELETE no
+-- afecta a ninguna fila y no se archiva nada nuevo.
+WITH descartadas AS (
+  DELETE FROM approval_proposals a
+  USING approval_proposals b
+  WHERE a.status = 'pendiente'
+    AND b.status = 'pendiente'
+    AND a.competition_id = b.competition_id
+    AND (
+      a.submitted_at < b.submitted_at
+      OR (a.submitted_at = b.submitted_at AND a.id < b.id)
+    )
+  RETURNING a.*
+)
+INSERT INTO approval_proposals_duplicadas_034 (fila)
+SELECT to_jsonb(descartadas) FROM descartadas;
+
+-- Deja constancia en el log del workflow de cuántas se apartaron.
+DO $$
+DECLARE n bigint;
+BEGIN
+  SELECT count(*) INTO n FROM approval_proposals_duplicadas_034;
+  IF n > 0 THEN
+    RAISE NOTICE 'Migración 034: % propuestas pendientes duplicadas archivadas en approval_proposals_duplicadas_034 (revisar antes de vaciar).', n;
+  END IF;
+END $$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS approval_proposals_one_pending
   ON approval_proposals (competition_id)
