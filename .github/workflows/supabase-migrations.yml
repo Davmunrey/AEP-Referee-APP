@@ -1,34 +1,48 @@
-# Aplica solas las migraciones pendientes de supabase/migrations/ contra la
-# base de datos de producción, en cada push a main. Sin pasos manuales.
+# Aplica solas las migraciones pendientes de supabase/migrations/ contra la base
+# de datos de PRODUCCIÓN, en cuanto llegan a main. Toda la lógica vive aquí.
 #
 # ── El único secret que hay que crear ────────────────────────────────────────
 #   SUPABASE_DB_URL
 #     Supabase → Project Settings → Database → Connection string → *Session
 #     pooler* (puerto 5432), con la contraseña dentro.
+#     · NO vale la conexión directa db.<ref>.supabase.co: solo resuelve por IPv6
+#       y los runners de GitHub solo tienen IPv4.
+#     · Si la contraseña lleva @ : / ? # o %, escápalos (%40 %3A %2F %3F %23 %25).
+#   Sin el secret el workflow falla en el primer paso sin tocar nada.
 #
-#     Dos avisos que cuestan un despliegue si se pasan por alto:
-#       · NO uses la conexión directa db.<ref>.supabase.co: solo resuelve por
-#         IPv6 y los runners de GitHub únicamente tienen IPv4.
-#       · La cadena debe ir percent-encoded (lo exige el CLI). Si la contraseña
-#         lleva @ : / ? # o %, sustitúyelos por %40 %3A %2F %3F %23 %25.
+# ── Por qué un registro propio y no el del CLI de Supabase ───────────────────
+# `supabase db push` no sirve en este proyecto. Compara las versiones locales
+# con las de supabase_migrations.schema_migrations posicionalmente, y esa tabla
+# ya está escrita por otra vía: las migraciones 023, 024 y 025 se aplicaron con
+# el MCP de Supabase (.planning/phases/08-backlog-detailed/PLAN.md), que graba
+# versiones con formato de timestamp. Esas versiones ordenan por encima de los
+# prefijos 001-035 de este repo, así que el CLI las clasifica como «remotas sin
+# fichero local» y aborta con ErrMissingLocal. «Arreglarlo» desde CI obligaría a
+# borrar filas de la tabla que el dashboard y el propio MCP usan como registro.
 #
-# ── Por qué hay un paso de "punto de partida" ────────────────────────────────
-# Las migraciones 001 a 033 se aplicaron a mano en el editor SQL, antes de que
-# existiera este workflow, así que la tabla de control del CLI
-# (supabase_migrations.schema_migrations) está vacía. Y el CLI, cuando esa tabla
-# no existe, concluye literalmente que «the remote project has no migrations»
-# (pkg/migration/list.go): un `db push` a secas intentaría reaplicar las 33
-# desde la 001 sobre datos reales. El paso de repair las marca como aplicadas
-# sin ejecutarlas, y deja que a partir de ahí solo corra lo nuevo.
+# Este workflow usa su propio registro en el esquema `deploy` y NO toca
+# supabase_migrations.schema_migrations: lo lee para detectar conflictos, nunca
+# lo escribe. Los nombres de fichero siguen siendo válidos para el CLI, así que
+# migrar a `db push` en el futuro sigue siendo posible.
 name: Migraciones Supabase
 
 on:
   push:
     branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      # Incluirse a sí mismo hace que la primera ejecución arranque sola al
+      # fusionar este fichero, sin tener que ir a Actions a lanzarla.
+      - ".github/workflows/supabase-migrations.yml"
   workflow_dispatch:
+    inputs:
+      solo_plan:
+        description: "Solo mostrar qué se aplicaría, sin tocar la base"
+        type: boolean
+        default: false
 
-# Dos pushes seguidos no pueden migrar a la vez; el segundo espera al primero
-# en vez de cancelarlo (cancelar a mitad de un DDL es justo lo que no queremos).
+# Dos pushes seguidos no migran a la vez, y el segundo espera en vez de
+# cancelar al primero: cancelar a mitad de un DDL es justo lo que no queremos.
 concurrency:
   group: supabase-migrations
   cancel-in-progress: false
@@ -39,50 +53,230 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      PGURL: ${{ secrets.SUPABASE_DB_URL }}
+      SOLO_PLAN: ${{ inputs.solo_plan && 'true' || 'false' }}
+      # Las 32 migraciones aplicadas a mano en el editor SQL antes de que
+      # existiera este workflow. Lista LITERAL y congelada a propósito: con un
+      # «<= 033» cualquier fichero futuro con número bajo se daría por aplicado
+      # sin ejecutarse, en silencio y para siempre.
+      BASELINE: "001 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 030 031 032 033"
     steps:
       - uses: actions/checkout@v4
 
       - name: Comprobar que el secret existe
         run: |
-          if [ -z "${SUPABASE_DB_URL}" ]; then
-            echo "::error title=Falta SUPABASE_DB_URL::Crea el secret en Settings → Secrets and variables → Actions con la cadena del Session pooler (puerto 5432, percent-encoded)."
+          if [ -z "${PGURL}" ]; then
+            echo "::error title=Falta SUPABASE_DB_URL::Créalo en Settings → Secrets and variables → Actions con la cadena del Session pooler (puerto 5432, percent-encoded)."
             exit 1
           fi
 
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      # ── Todo lo que sigue hasta «Aplicar» es de SOLO LECTURA ────────────────
 
-      - name: Marcar como aplicadas las migraciones que ya se pasaron a mano
+      - name: Inventario de migraciones del repositorio
+        id: inventario
         run: |
           set -euo pipefail
-          # Todo lo anterior o igual a la 033 se aplicó manualmente. Comparación
-          # de cadenas, válida porque los prefijos van con ceros a la izquierda.
-          versiones=$(
-            find supabase/migrations -maxdepth 1 -name '*.sql' -printf '%f\n' \
-              | cut -d_ -f1 \
-              | awk '$1 <= "033"' \
-              | sort
-          )
-          if [ -z "$versiones" ]; then
-            echo "No hay migraciones de referencia que marcar."
-            exit 0
-          fi
-          echo "Punto de partida: $(echo "$versiones" | tr '\n' ' ')"
-          # Idempotente: reafirmar que algo aplicado sigue aplicado no hace nada,
-          # así que este paso puede correr en cada push sin efectos secundarios.
-          # shellcheck disable=SC2086
-          supabase migration repair --db-url "$SUPABASE_DB_URL" --status applied $versiones
+          declare -A vistas
+          : > /tmp/inventario.txt
+          for f in $(find supabase/migrations -maxdepth 1 -name '*.sql' | sort); do
+            n=$(basename "$f")
+            if ! [[ "$n" =~ ^([0-9]+)_(.+)\.sql$ ]]; then
+              echo "::error::Fichero de migración con nombre inválido: $n (debe ser <numero>_<nombre>.sql)"
+              exit 1
+            fi
+            v="${BASH_REMATCH[1]}"
+            if [ -n "${vistas[$v]:-}" ]; then
+              echo "::error::Versión duplicada $v: '${vistas[$v]}' y '$n'"
+              exit 1
+            fi
+            vistas[$v]="$n"
+            printf '%s\t%s\n' "$v" "$f" >> /tmp/inventario.txt
+          done
+          echo "Migraciones en el repositorio: $(wc -l < /tmp/inventario.txt)"
 
-      - name: Ver qué se va a aplicar
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+      - name: Calcular qué está pendiente
+        id: plan
+        run: |
+          set -euo pipefail
+          # Crea el registro si no existe. Es la única escritura de esta fase y
+          # es inocua: una tabla vacía en un esquema propio, fuera de `public`
+          # (donde PostREST la expondría y el Security Advisor la señalaría).
+          psql "$PGURL" -X -q -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE SCHEMA IF NOT EXISTS deploy;
+          CREATE TABLE IF NOT EXISTS deploy.applied_migrations (
+            version     text PRIMARY KEY,
+            name        text        NOT NULL,
+            checksum    text        NOT NULL,
+            applied_at  timestamptz NOT NULL DEFAULT now(),
+            applied_by  text        NOT NULL DEFAULT 'workflow'
+          );
+          COMMENT ON TABLE deploy.applied_migrations IS
+            'Registro de migraciones aplicadas por el workflow de GitHub Actions. Deliberadamente separado de supabase_migrations.schema_migrations, que escriben el CLI y el MCP de Supabase.';
+          SQL
+
+          psql "$PGURL" -X -tAq -c \
+            'SELECT version FROM deploy.applied_migrations' | sort > /tmp/registradas.txt
+
+          : > /tmp/pendientes.txt
+          : > /tmp/baseline_faltante.txt
+          while IFS=$'\t' read -r v f; do
+            grep -qxF "$v" /tmp/registradas.txt && continue
+            if [[ " $BASELINE " == *" $v "* ]]; then
+              printf '%s\t%s\n' "$v" "$f" >> /tmp/baseline_faltante.txt
+            else
+              printf '%s\t%s\n' "$v" "$f" >> /tmp/pendientes.txt
+            fi
+          done < /tmp/inventario.txt
+
+          # Un fichero con número por debajo del baseline que NO esté en la
+          # lista literal es un error humano, no algo que dar por aplicado.
+          while IFS=$'\t' read -r v f; do
+            if [[ "$v" < "034" ]] && [[ " $BASELINE " != *" $v "* ]]; then
+              echo "::error::La migración $v ($f) tiene un número por debajo del baseline pero no está en la lista BASELINE. Revísalo a mano: no se va a aplicar ni a dar por aplicada."
+              exit 1
+            fi
+          done < /tmp/inventario.txt
+
+          nb=$(wc -l < /tmp/baseline_faltante.txt)
+          np=$(wc -l < /tmp/pendientes.txt)
+          echo "baseline_faltante=$nb" >> "$GITHUB_OUTPUT"
+          echo "pendientes=$np" >> "$GITHUB_OUTPUT"
+          echo "Por registrar como ya aplicadas (baseline): $nb"
+          echo "Pendientes de ejecutar: $np"
+          if [ "$np" -gt 0 ]; then cut -f2 /tmp/pendientes.txt | sed 's/^/  · /'; fi
+
+      - name: Revisar que lo pendiente no sea destructivo
+        if: steps.plan.outputs.pendientes != '0'
+        run: |
+          set -euo pipefail
+          problemas=0
+          while IFS=$'\t' read -r v f; do
+            # Se quitan los comentarios de línea (para no saltar por un DROP
+            # citado dentro de una explicación) y se normaliza a una sola línea
+            # en minúsculas, porque estas comprobaciones son por SENTENCIA y no
+            # por línea: un DELETE y su WHERE suelen estar en líneas distintas.
+            cuerpo=$(sed 's/--.*$//' "$f" | tr '\n' ' ' | tr '[:upper:]' '[:lower:]')
+
+            if grep -qE '(drop[[:space:]]+(table|column|schema|database)|truncate[[:space:]])' <<< "$cuerpo"; then
+              echo "::error::$f contiene una sentencia destructiva (DROP TABLE/COLUMN/SCHEMA o TRUNCATE). Aplícala a mano y con copia previa: este workflow no ejecuta borrados desatendidos."
+              problemas=1
+            fi
+
+            # ALTER TYPE ... ADD VALUE no puede ejecutarse en la misma
+            # transacción que consume el valor nuevo, y aquí cada fichero va en
+            # una sola transacción.
+            if grep -qE 'alter[[:space:]]+type[[:space:]]+.*add[[:space:]]+value' <<< "$cuerpo"; then
+              echo "::error::$f usa ALTER TYPE ... ADD VALUE, que no admite ejecutarse dentro de una transacción junto con su uso. Sepáralo en su propio fichero o aplícalo a mano."
+              problemas=1
+            fi
+
+            # DELETE o UPDATE sin WHERE arrasan la tabla entera. Se parte por
+            # ';' y se mira cada sentencia por separado; ante la duda se marca,
+            # que el coste de una revisión a mano es menor que el de un borrado.
+            while IFS= read -r st; do
+              [ -n "$st" ] || continue
+              if grep -qE '^[[:space:]]*(delete[[:space:]]+from|update)[[:space:]]' <<< "$st" \
+                 && ! grep -qE '[[:space:]]where[[:space:]]' <<< "$st"; then
+                echo "::error::$f tiene un DELETE o UPDATE sin WHERE: «$(cut -c1-80 <<< "$st")…». Aplícalo a mano."
+                problemas=1
+              fi
+            done < <(tr ';' '\n' <<< "$cuerpo")
+          done < /tmp/pendientes.txt
+          [ "$problemas" -eq 0 ] || exit 1
+          echo "Sin sentencias destructivas ni incompatibles con transacción."
+
+      - name: Comprobar que no las aplicó ya el MCP o el CLI
+        if: steps.plan.outputs.pendientes != '0'
+        run: |
+          set -euo pipefail
+          # supabase_migrations.schema_migrations puede no existir; eso es normal.
+          otras=$(psql "$PGURL" -X -tAq -c \
+            "SELECT string_agg(version, ' ') FROM supabase_migrations.schema_migrations" 2>/dev/null || true)
+          [ -n "$otras" ] || { echo "El registro del CLI está vacío o no existe: sin conflictos."; exit 0; }
+          echo "Versiones en el registro del CLI/MCP: $otras"
+          conflicto=0
+          while IFS=$'\t' read -r v f; do
+            if [[ " $otras " == *" $v "* ]]; then
+              echo "::error::La migración $v ya figura como aplicada en supabase_migrations.schema_migrations (la aplicó el CLI o el MCP). Regístrala a mano en deploy.applied_migrations en vez de dejar que se ejecute dos veces."
+              conflicto=1
+            fi
+          done < /tmp/pendientes.txt
+          [ "$conflicto" -eq 0 ] || exit 1
+
+      - name: Detectar migraciones ya aplicadas que se hayan editado
+        run: |
+          set -euo pipefail
+          while IFS=$'\t' read -r v f; do
+            reg=$(psql "$PGURL" -X -tAq -c \
+              "SELECT checksum FROM deploy.applied_migrations WHERE version = '$v'")
+            [ -n "$reg" ] || continue
+            act=$(sha256sum "$f" | cut -d' ' -f1)
+            if [ "$reg" != "$act" ] && [ "$reg" != "baseline" ]; then
+              echo "::warning::$f cambió después de aplicarse. No se va a reejecutar; si el cambio importa, haz una migración nueva."
+            fi
+          done < /tmp/inventario.txt
+
+      - name: Parar aquí si solo se pedía el plan
+        if: env.SOLO_PLAN == 'true'
+        run: |
+          echo "Solo plan: no se ha escrito nada en la base más allá del registro vacío."
+          exit 0
+
+      # ── A partir de aquí sí se escribe ─────────────────────────────────────
+
+      - name: Registrar el baseline
+        if: env.SOLO_PLAN != 'true' && steps.plan.outputs.baseline_faltante != '0'
+        run: |
+          set -euo pipefail
+          # Marca como aplicadas, SIN ejecutarlas, las que se pasaron a mano.
+          # checksum='baseline' las distingue de las que aplicó el workflow, y
+          # evita avisar de deriva sobre ficheros que nadie ejecutó aquí.
+          # Por entrada estándar y no con -c: psql solo interpola las variables
+          # :'...' cuando lee de fichero o de stdin, nunca en -c.
+          while IFS=$'\t' read -r v f; do
+            n=$(basename "$f")
+            psql "$PGURL" -X -q -v ON_ERROR_STOP=1 -v ver="$v" -v nom="$n" <<'SQL'
+          INSERT INTO deploy.applied_migrations (version, name, checksum, applied_by)
+          VALUES (:'ver', :'nom', 'baseline', 'baseline: aplicada a mano en el editor SQL')
+          ON CONFLICT (version) DO NOTHING;
+          SQL
+            echo "  baseline · $n"
+          done < /tmp/baseline_faltante.txt
 
       - name: Aplicar
-        # --yes porque `db push` pide confirmación por consola y en CI no hay
-        # nadie para dársela: sin el flag el job se queda esperando.
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --yes
+        id: aplicar
+        if: env.SOLO_PLAN != 'true' && steps.plan.outputs.pendientes != '0'
+        run: |
+          set -euo pipefail
+          aplicadas=0
+          while IFS=$'\t' read -r v f; do
+            n=$(basename "$f")
+            s=$(sha256sum "$f" | cut -d' ' -f1)
+            echo "── Aplicando $n"
+            # Una transacción por fichero. El INSERT va DENTRO y es además el
+            # cerrojo: la clave primaria hace que una segunda ejecución
+            # simultánea choque y aborte sin llegar a ejecutar el SQL.
+            psql "$PGURL" -X -q -v ON_ERROR_STOP=1 --single-transaction \
+              -v ver="$v" -v nom="$n" -v sum="$s" <<SQL
+          INSERT INTO deploy.applied_migrations (version, name, checksum)
+          VALUES (:'ver', :'nom', :'sum');
+          \\i '$f'
+          SQL
+            aplicadas=$((aplicadas + 1))
+            echo "   ✓ $n"
+          done < /tmp/pendientes.txt
+          echo "aplicadas=$aplicadas" >> "$GITHUB_OUTPUT"
+          echo "Aplicadas $aplicadas migraciones."
 
-      - name: Estado final del historial
-        if: always()
-        run: supabase migration list --db-url "$SUPABASE_DB_URL" || true
+      - name: Refrescar la caché de esquema de PostgREST
+        # always(): si algo falló a mitad de la tanda, las que sí se aplicaron
+        # necesitan igualmente que PostgREST recargue, o la API devolverá
+        # PGRST204/205 sobre columnas que ya existen.
+        if: always() && env.SOLO_PLAN != 'true' && steps.aplicar.outputs.aplicadas != '' && steps.aplicar.outputs.aplicadas != '0'
+        run: psql "$PGURL" -X -q -c "NOTIFY pgrst, 'reload schema'" || true
+
+      - name: Estado final
+        if: always() && env.SOLO_PLAN != 'true'
+        run: |
+          psql "$PGURL" -X -c \
+            "SELECT version, name, applied_at, applied_by FROM deploy.applied_migrations ORDER BY version" || true
