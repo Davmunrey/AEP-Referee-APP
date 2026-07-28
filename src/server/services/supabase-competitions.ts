@@ -8,6 +8,7 @@ import { pickActiveRosterHref } from "@/lib/nav-utils";
 import { applyCoverageToCompetition } from "@/lib/roster-coverage";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type { Competition, RosterSession, SessionUser } from "@/lib/types";
+import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
 import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import {
   cachedLoadAllAssignments,
@@ -198,6 +199,20 @@ export const competitionService = {
 
   deleteCompetition: async (id: string): Promise<boolean> => {
     const supabase = db();
+    // Las liquidaciones cuelgan del campeonato con ON DELETE CASCADE (024:16),
+    // así que borrarlo se las llevaba en silencio, incluidas las ya pagadas.
+    // Aquí se corta antes: el dinero liquidado no se tira por deduplicar un
+    // calendario. La migración 036 pone además RESTRICT en la propia clave
+    // ajena, para que no dependa solo de este camino.
+    const { count: claims, error: claimsError } = await supabase
+      .from("judge_compensation_claims")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", id);
+    // Si la tabla aún no existe (024 sin aplicar) no hay nada que proteger.
+    if (!claimsError && (claims ?? 0) > 0) {
+      throw new CompetitionHasClaimsError(claims ?? 0);
+    }
+
     const [hasApprovalCols, hasHistoryCol] = await Promise.all([
       hasApprovalCompetitionColumns(),
       hasHistoryCompetitionColumn(),
@@ -243,8 +258,20 @@ export const competitionService = {
       const keep = group.competitions.find((e) => !toDrop.some((d) => d.id === e.id));
       if (keep) kept.push(keep.id);
       for (const c of toDrop) {
-        const ok = await deleteCompetitionFn(c.id);
-        if (ok) removed.push(c.id);
+        try {
+          const ok = await deleteCompetitionFn(c.id);
+          if (ok) removed.push(c.id);
+        } catch (err) {
+          // Un duplicado con liquidaciones se conserva en lugar de borrarse.
+          // El criterio de qué copia sobrevive (`pickCompetitionToKeep`) solo
+          // mira la tarima, así que la marcada para eliminar puede ser
+          // justamente la que tiene el dinero: ante la duda, no se toca.
+          if (err instanceof CompetitionHasClaimsError) {
+            kept.push(c.id);
+            continue;
+          }
+          throw err;
+        }
       }
     }
     return { removed, kept, groups: groups.length };
