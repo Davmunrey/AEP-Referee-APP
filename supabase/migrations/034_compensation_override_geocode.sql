@@ -21,8 +21,10 @@ COMMENT ON COLUMN judge_compensation_claims.travel_amount_override IS
 
 -- (2) Coordenadas geocodificadas del domicilio del juez. Se rellenan la primera
 -- vez que se calcula la distancia (Nominatim, throttle ~1 req/s) y se reutilizan
--- en recálculos posteriores para NO volver a geocodificar. double precision para
--- ser consistente con competitions.sede_lat / sede_lng (024).
+-- en recálculos posteriores para NO volver a geocodificar.
+-- OJO: la 024 (líneas 5-6) YA las crea, con este mismo tipo. Esto es un no-op en
+-- cualquier base que la tenga aplicada; se conserva como red por si alguna la
+-- tuviera a medias, que para eso es ADD COLUMN IF NOT EXISTS.
 ALTER TABLE referees
   ADD COLUMN IF NOT EXISTS domicilio_lat DOUBLE PRECISION;
 ALTER TABLE referees
@@ -32,9 +34,10 @@ COMMENT ON COLUMN referees.domicilio_lat IS 'Latitud geocodificada del domicilio
 COMMENT ON COLUMN referees.domicilio_lng IS 'Longitud geocodificada del domicilio (caché de Nominatim).';
 
 -- (3) Índice único parcial: como MÁXIMO una propuesta pendiente por campeonato.
--- En instalaciones modernas la columna es competition_id (creada así en 001 y
--- renombrada desde event_id en 016, que ya corre antes que esta). El estado
--- 'pendiente' es el valor del enum approval_status (001).
+-- La columna se llama competition_id porque así nace en 001:88; el RENAME de la
+-- 016 va guardado por un IF EXISTS sobre 'event_id' que en este repo nunca se
+-- cumple, así que aquella migración solo tocó índices. El estado 'pendiente' es
+-- el valor del enum approval_status (001).
 --
 -- Antes de crear el índice hay que resolver duplicados PREEXISTENTES: si hubiera
 -- dos o más propuestas pendientes para el mismo campeonato, CREATE UNIQUE INDEX
