@@ -111,7 +111,7 @@ function CoverageMeter({
         aria-valuemin={0}
         aria-valuemax={100}
       >
-        <div className={cn("h-full rounded-full transition-all duration-500", tone.bar)} style={{ width: `${width}%` }} />
+        <div className={cn("h-full rounded-full transition-[width] duration-500", tone.bar)} style={{ width: `${width}%` }} />
       </div>
     </div>
   );
@@ -432,7 +432,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                     <p className="truncate text-sm font-medium text-foreground">{r.nombre}</p>
                     <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-active">
                       <div
-                        className="h-full rounded-full bg-primary/70 transition-all duration-500"
+                        className="h-full rounded-full bg-primary/70 transition-[width] duration-500"
                         style={{ width: `${barW}%` }}
                         aria-hidden="true"
                       />

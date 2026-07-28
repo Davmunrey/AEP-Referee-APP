@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/tickets-client";
 import { CATEGORY_LABELS, TICKET_CATEGORIES } from "@/components/tickets/ticket-shared";
 import type { TicketCategory } from "@/lib/types";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 const inputClass =
   "h-9 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-foreground placeholder:text-subtle-muted focus-ring";
@@ -94,7 +95,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}
       onClick={onClose}
     >
       <div
@@ -103,7 +104,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-ticket-title"
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl outline-none"
+        className={`max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between">

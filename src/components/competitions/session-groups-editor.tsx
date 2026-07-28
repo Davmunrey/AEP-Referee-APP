@@ -44,7 +44,9 @@ export function SessionGroupsEditor({
             <Input
               type="number"
               min={0}
-              className="w-20"
+              // Sin flechas: el campo mide 5rem y las flechas se comen la cifra;
+              // aquí se teclea, no se sube de uno en uno.
+              className="w-20 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               value={grupo.levantadores ?? ""}
               onChange={(e) => onPatchGrupo(gi, { levantadores: e.target.value ? Math.max(0, Number(e.target.value)) : undefined })}
               placeholder="lev."

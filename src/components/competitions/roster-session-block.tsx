@@ -11,8 +11,9 @@ import type {
   RegulationRule,
   RosterSession,
 } from "@/lib/types";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { disclosureEnter } from "@/components/aep/motion";
 import { summarizeRequiredSlots } from "@/lib/roster-template";
 import { sessionProgress, summarizeSessionCategories, summarizeSessionGroups } from "./roster-session-helpers";
 import { SlotGrid, type SlotGridProps } from "./roster-slot-grid";
@@ -64,7 +65,7 @@ export function SessionOverviewCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full rounded-lg border px-2.5 py-2 text-left transition-all focus-ring",
+        "w-full rounded-lg border px-2.5 py-2 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.995] focus-ring",
         active ? "border-primary bg-primary/8 shadow-sm" : "border-border bg-background/75 hover:border-border-strong hover:bg-surface",
       )}
       aria-pressed={active}
@@ -90,7 +91,12 @@ export function SessionOverviewCard({
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
         <div
-          className={cn("h-full rounded-full transition-all duration-300", pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary")}
+          className={cn(
+            // Una sola ley para todas las barras de cobertura de la tarima:
+            // 300 ms, misma curva, y solo el ancho (lo demás no cambia).
+            "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
+            pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
+          )}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -124,7 +130,7 @@ export const SessionTab = memo(function SessionTab({
       aria-pressed={active}
       title={`${session.sesion} · ${session.nombre}`}
       className={cn(
-        "flex w-[160px] shrink-0 flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-left transition-colors focus-ring",
+        "flex w-[160px] shrink-0 flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.985] focus-ring",
         active
           ? "border-primary bg-primary/8 shadow-sm"
           : "border-border bg-background/75 hover:border-border-strong hover:bg-surface",
@@ -147,7 +153,7 @@ export const SessionTab = memo(function SessionTab({
       <span className="block h-1 overflow-hidden rounded-full bg-muted">
         <span
           className={cn(
-            "block h-full rounded-full transition-[width] duration-300",
+            "block h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
             pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
           )}
           style={{ width: `${pct}%` }}
@@ -217,16 +223,19 @@ export const SessionBlock = memo(function SessionBlock({
       <header className="grid gap-1.5 border-b border-border-muted p-2 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.5fr)_auto] lg:items-center">
         <button
           type="button"
-          className="rounded text-subtle-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="rounded text-subtle-muted transition-colors duration-100 hover:text-foreground focus-ring"
           aria-label={collapsed ? "Expandir sesión" : "Colapsar sesión"}
           aria-expanded={!collapsed}
           onClick={() => setCollapsed((v) => !v)}
         >
-          {collapsed ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronUp className="h-4 w-4" />
-          )}
+          {/* Un solo icono que gira en vez de dos que se intercambian: el giro
+              explica el cambio de estado; el intercambio solo lo sustituye. */}
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform duration-200 ease-(--ease-out)",
+              !collapsed && "rotate-180",
+            )}
+          />
         </button>
 
         <div className="min-w-0">
@@ -255,7 +264,10 @@ export const SessionBlock = memo(function SessionBlock({
         <div className="min-w-[86px] shrink-0">
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
-              className={cn("h-full rounded-full transition-all duration-500", barColor)}
+              className={cn(
+                "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
+                barColor,
+              )}
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -266,7 +278,7 @@ export const SessionBlock = memo(function SessionBlock({
       </header>
 
       {!collapsed && (
-        <div className="px-2.5 pb-2.5 pt-2">
+        <div className={cn("px-2.5 pb-2.5 pt-2", disclosureEnter)}>
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-secondary">
             Competición
           </p>

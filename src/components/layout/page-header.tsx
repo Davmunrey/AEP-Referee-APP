@@ -18,11 +18,16 @@ export function PageHeader({ eyebrow, title, description, children, className }:
             {eyebrow}
           </p>
         )}
-        <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.01em] text-foreground sm:text-[25px]">
+        {/* text-balance / text-pretty: reparte el título en líneas de largo
+            parecido y evita que la descripción deje una palabra huérfana al
+            final —los títulos de esta app rompen a dos líneas en portátil. */}
+        <h1 className="text-balance text-[24px] font-semibold leading-tight tracking-[-0.01em] text-foreground sm:text-[25px]">
           {title}
         </h1>
         {description && (
-          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground sm:text-sm">{description}</p>
+          <p className="mt-1 text-pretty text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
+            {description}
+          </p>
         )}
       </div>
       {children ? <div className="flex flex-wrap items-center gap-2">{children}</div> : null}

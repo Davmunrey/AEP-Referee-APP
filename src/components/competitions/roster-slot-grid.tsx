@@ -130,10 +130,15 @@ function SlotCell({
           }
         }}
         className={cn(
-          "relative min-h-[52px] rounded border p-1.5 transition-all duration-100 focus-ring",
+          // El hueco es la contraparte física de la ficha: misma duración y misma
+          // curva que ella, y solo propiedades que no repintan layout (la parrilla
+          // entera está viva mientras se arrastra).
+          "relative min-h-[52px] rounded border p-1.5 transition-[color,background-color,border-color,box-shadow,scale] duration-100 ease-(--ease-out) focus-ring",
           !readOnly && "cursor-pointer",
           isDropTarget
-            ? "border-primary bg-primary/10 shadow-md"
+            // Crece un 1.5% bajo el puntero: el hueco "acepta" antes de soltar.
+            // `z-10` para que crezca por encima de sus vecinos, no por debajo.
+            ? "z-10 scale-[1.015] border-primary bg-primary/10 shadow-md"
             : isSelected
               ? "border-primary bg-primary/5 shadow-sm"
               : violation
@@ -211,7 +216,7 @@ function SlotCell({
                   title="Compartido (*) — permite solape tarima/pesaje"
                   aria-pressed={slotFlags?.compartido ? "true" : "false"}
                   className={cn(
-                    "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-colors",
+                    "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.compartido
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-background text-subtle-muted hover:border-primary/50",
@@ -228,7 +233,7 @@ function SlotCell({
                   title="Intercambio (↑↓)"
                   aria-pressed={slotFlags?.intercambio ? "true" : "false"}
                   className={cn(
-                    "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-colors",
+                    "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.intercambio
                       ? "border-info bg-info text-primary-foreground"
                       : "border-border bg-background text-subtle-muted hover:border-info/50",

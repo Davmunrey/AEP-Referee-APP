@@ -218,7 +218,7 @@ export function ApprovalsBoard({
                     onClick={() => setSelected(item)}
                     aria-pressed={selected?.id === item.id}
                     className={cn(
-                      "w-full rounded-xl border p-3.5 text-left transition-all focus-ring",
+                      "w-full rounded-xl border p-3.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.99] focus-ring",
                       selected?.id === item.id
                         ? "border-primary-border bg-primary-muted shadow-glow-primary"
                         : "border-border hover:border-border-strong hover:bg-surface-hover",
@@ -231,7 +231,7 @@ export function ApprovalsBoard({
                     <p className="mt-1 text-xs text-subtle-muted">
                       {item.zona} · {item.submittedBy}
                     </p>
-                    <p className="mt-0.5 font-mono text-[11px] text-subtle-muted">
+                    <p className="mt-0.5 font-mono text-[11px] tabular-nums text-subtle-muted">
                       {item.submittedAt.slice(0, 10)}
                     </p>
                   </button>

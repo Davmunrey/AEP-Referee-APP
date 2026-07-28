@@ -70,9 +70,13 @@ export const RefereeCard = memo(function RefereeCard({
         }
       }}
       className={cn(
-        "flex cursor-grab items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-all duration-100 active:cursor-grabbing focus-ring",
+        // Solo color/opacidad/escala: nada que fuerce layout mientras se arrastra
+        // una lista de ~90 filas. 100 ms es feedback, no animación.
+        "flex select-none items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-[color,background-color,border-color,opacity,scale] duration-100 ease-(--ease-out) focus-ring",
         assigned && "opacity-55",
-        locked && "cursor-default",
+        // La ficha es el objeto que se agarra: la mano al pasar, el puño al
+        // pulsar y un hundido de 1.5% que confirma que el gesto se ha oído.
+        locked ? "cursor-default" : "cursor-grab active:scale-[0.985] active:cursor-grabbing",
         dragging && "scale-[0.98] opacity-40",
         !locked && highlight && "cursor-pointer border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10",
         !locked && isDragging && !dragging && "hover:border-success/50 hover:bg-success/5",
@@ -95,9 +99,12 @@ export const RefereeCard = memo(function RefereeCard({
           {assigned ? (
             <Check className="h-3 w-3 shrink-0 text-success" aria-label="Asignado en esta sesión" />
           ) : isConfirmed ? (
-            <span className="shrink-0 text-[9px] font-bold text-success" title="Disponibilidad confirmada">
-              ✓
-            </span>
+            // Misma familia de iconos que "asignado", un paso por debajo en peso:
+            // confirmar disponibilidad no es lo mismo que estar en la sesión.
+            <Check
+              className="h-2.5 w-2.5 shrink-0 text-success/60"
+              aria-label="Disponibilidad confirmada"
+            />
           ) : null}
         </div>
         <p className="truncate text-[10px] leading-tight text-subtle-muted">

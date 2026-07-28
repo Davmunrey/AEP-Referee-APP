@@ -126,7 +126,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span
                     className={cn(
-                      "rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold",
+                      "rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tabular-nums",
                       riskTone(leader.risk),
                     )}
                   >
@@ -153,7 +153,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
                 </div>
               </div>
               <div className="shrink-0 rounded-xl bg-background/70 px-3 py-2 text-right">
-                <p className="font-mono text-lg font-bold text-foreground">
+                <p className="font-mono text-lg font-bold tabular-nums text-foreground">
                   {leader.filled}/{leader.required}
                 </p>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -203,7 +203,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
             </div>
             <span
               className={cn(
-                "shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold",
+                "shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tabular-nums",
                 riskTone(item.risk),
               )}
             >

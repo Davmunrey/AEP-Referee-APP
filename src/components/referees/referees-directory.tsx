@@ -375,15 +375,18 @@ export function RefereesDirectory({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
+                {/* Mismo peso de cabecera que la tabla compartida (DataTable):
+                    en una tabla de nueve columnas los títulos tienen que pesar
+                    más que el dato para poder guiar la lectura. */}
                 <tr className="border-b border-border/80 text-left font-mono text-[10px] uppercase tracking-wider text-subtle-muted">
                   <th className="w-10 px-4 py-2" />
-                  <th className="px-4 py-2 font-medium">Juez</th>
-                  <th className="px-4 py-2 font-medium">Localidad</th>
-                  <th className="px-4 py-2 font-medium">Zona</th>
-                  <th className="px-4 py-2 font-medium">Nivel</th>
-                  <th className="px-4 py-2 font-medium">Estado</th>
-                  <th className="px-4 py-2 text-right font-medium">Plazas (histórico)</th>
-                  <th className="px-4 py-2 font-medium">Última competición</th>
+                  <th className="px-4 py-2 font-semibold">Juez</th>
+                  <th className="px-4 py-2 font-semibold">Localidad</th>
+                  <th className="px-4 py-2 font-semibold">Zona</th>
+                  <th className="px-4 py-2 font-semibold">Nivel</th>
+                  <th className="px-4 py-2 font-semibold">Estado</th>
+                  <th className="px-4 py-2 text-right font-semibold">Plazas (histórico)</th>
+                  <th className="px-4 py-2 font-semibold">Última competición</th>
                   <th className="w-12 px-4 py-2" />
                 </tr>
               </thead>
@@ -391,7 +394,7 @@ export function RefereesDirectory({
                 {rows.map((referee) => (
                   <tr
                     key={referee.id}
-                    className="group border-b border-border/50 transition-colors hover:bg-muted/30"
+                    className="group border-b border-border/50 transition-colors duration-100 hover:bg-muted/30"
                   >
                     <td className="px-4 py-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border-strong bg-muted text-xs font-semibold text-foreground-secondary">
@@ -421,10 +424,15 @@ export function RefereesDirectory({
                     <td className="px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
                       {referee.eventos}
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-subtle-muted">
+                    {/* Las fechas son cifras: sin `tabular-nums` los dígitos
+                        bailan de fila en fila y la columna deja de ser una
+                        columna. */}
+                    <td className="px-4 py-2.5 font-mono text-[11px] tabular-nums text-subtle-muted">
                       {displayUltimo(referee.ultimo)}
                     </td>
-                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    {/* En puntero grueso (tablet) no hay hover: las acciones se
+                        quedarían invisibles para siempre. */}
+                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity duration-100 group-hover:opacity-100 pointer-coarse:opacity-100 focus-within:opacity-100">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                           <Link

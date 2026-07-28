@@ -71,7 +71,9 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
         <span className="text-xs font-medium text-foreground/70">
           {isPending ? "Actualizando…" : auto ? "En vivo" : "Pausado"}
         </span>
-        <span className="text-[11px] text-muted-foreground">
+        {/* tabular-nums: el contador se reescribe cada segundo; con cifras de
+            ancho variable la línea entera daría un salto por tick. */}
+        <span className="text-[11px] tabular-nums text-muted-foreground">
           · {relativeLabel(elapsed)}
         </span>
       </div>

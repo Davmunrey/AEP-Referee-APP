@@ -12,6 +12,7 @@ import { selectFieldClass } from "@/lib/design-tokens";
 import { zoneUiName } from "@/lib/aep-zones";
 import { AEP_COMPETITION_TYPE_DESC } from "@/lib/aep-guide-2026";
 import { cn } from "@/lib/utils";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 const EVENT_TYPES = ["AEP-1", "AEP-2", "AEP-3"] as const;
 
@@ -99,8 +100,8 @@ export function EditCompetitionDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}>
+      <div className={`w-full max-w-md rounded-2xl border border-border bg-card shadow-xl ${dialogPanelEnter}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
           <div className="flex items-center gap-2">
