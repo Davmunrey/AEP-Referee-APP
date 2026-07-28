@@ -1,6 +1,7 @@
 # Base de datos
 
-Supabase Postgres. Migraciones en `supabase/migrations`.
+Supabase Postgres. Migraciones en `supabase/migrations`. Hallazgos del esquema y
+decisiones abiertas: [AUDIT-DATABASE.md](./AUDIT-DATABASE.md).
 
 **Producción:** proyecto `foaemadggmpbcrhtpems` (eu-west-2).
 
