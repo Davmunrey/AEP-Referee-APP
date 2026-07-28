@@ -49,8 +49,9 @@ next-env.d.ts
 # supabase cli cache
 /supabase/.temp/
 
-# claude code worktrees / local
-.claude/
+# claude code worktrees / local (las skills de diseño del proyecto SÍ se versionan)
+.claude/*
+!.claude/skills/
 
 # local agent tooling
 .codex/
