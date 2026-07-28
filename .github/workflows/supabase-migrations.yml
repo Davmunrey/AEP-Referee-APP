@@ -98,10 +98,21 @@ jobs:
         id: plan
         run: |
           set -euo pipefail
-          # Crea el registro si no existe. Es la única escritura de esta fase y
-          # es inocua: una tabla vacía en un esquema propio, fuera de `public`
-          # (donde PostREST la expondría y el Security Advisor la señalaría).
-          psql "$PGURL" -X -q -v ON_ERROR_STOP=1 <<'SQL'
+          : > /tmp/registradas.txt
+          existe=$(psql "$PGURL" -X -tAq -c \
+            "SELECT to_regclass('deploy.applied_migrations') IS NOT NULL")
+
+          if [ "$existe" = "t" ]; then
+            psql "$PGURL" -X -tAq -c \
+              'SELECT version FROM deploy.applied_migrations' | sort > /tmp/registradas.txt
+          elif [ "$SOLO_PLAN" = "true" ]; then
+            # El modo «solo plan» no escribe NADA, ni siquiera una tabla vacía:
+            # si el registro no existe, se planifica como si estuviera vacío.
+            echo "El registro aún no existe. En modo solo plan no se crea."
+          else
+            # El registro vive en un esquema propio y no en `public`, donde
+            # PostgREST lo expondría y el Security Advisor lo señalaría.
+            psql "$PGURL" -X -q -v ON_ERROR_STOP=1 <<'SQL'
           CREATE SCHEMA IF NOT EXISTS deploy;
           CREATE TABLE IF NOT EXISTS deploy.applied_migrations (
             version     text PRIMARY KEY,
@@ -113,9 +124,7 @@ jobs:
           COMMENT ON TABLE deploy.applied_migrations IS
             'Registro de migraciones aplicadas por el workflow de GitHub Actions. Deliberadamente separado de supabase_migrations.schema_migrations, que escriben el CLI y el MCP de Supabase.';
           SQL
-
-          psql "$PGURL" -X -tAq -c \
-            'SELECT version FROM deploy.applied_migrations' | sort > /tmp/registradas.txt
+          fi
 
           : > /tmp/pendientes.txt
           : > /tmp/baseline_faltante.txt
@@ -206,9 +215,12 @@ jobs:
       - name: Detectar migraciones ya aplicadas que se hayan editado
         run: |
           set -euo pipefail
+          # El registro puede no existir todavía (primera ejecución, o modo solo
+          # plan, que no lo crea): en ese caso no hay nada contra lo que comparar.
+          [ -s /tmp/registradas.txt ] || { echo "Sin migraciones registradas: nada que comparar."; exit 0; }
           while IFS=$'\t' read -r v f; do
             reg=$(psql "$PGURL" -X -tAq -c \
-              "SELECT checksum FROM deploy.applied_migrations WHERE version = '$v'")
+              "SELECT checksum FROM deploy.applied_migrations WHERE version = '$v'" 2>/dev/null || true)
             [ -n "$reg" ] || continue
             act=$(sha256sum "$f" | cut -d' ' -f1)
             if [ "$reg" != "$act" ] && [ "$reg" != "baseline" ]; then
