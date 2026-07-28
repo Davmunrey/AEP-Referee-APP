@@ -4,8 +4,9 @@
 --   (2) cachear las coordenadas geocodificadas del domicilio del juez,
 --   (3) impedir propuestas de aprobación pendientes duplicadas por campeonato.
 -- Todo es opcional: el código funciona igual con y sin esta migración aplicada
--- (sondas de columna con caché en el servidor). Como el resto del proyecto, se
--- ejecuta A MANO en: Supabase Dashboard -> SQL Editor.
+-- (sondas de columna con caché en el servidor). La aplica el workflow
+-- «Migraciones Supabase» al llegar a main; también puede pegarse a mano en el
+-- editor SQL de Supabase, porque es idempotente.
 
 -- (1) Override del importe de viaje. Cuando el revisor fija un importe manual y
 -- lo aprueba (travel_approved = true), calculate.ts lo prioriza sobre el baremo
