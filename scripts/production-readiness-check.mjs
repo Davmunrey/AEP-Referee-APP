@@ -56,9 +56,18 @@ const publicApi = new Set([
 ]);
 
 // Rutas self-service: EXIGEN sesión (sujetas a API-01) pero no llevan guard
-// RBAC porque solo operan sobre la cuenta del propio llamante.
+// RBAC porque no hay rol que otorgue más permiso que otro — solo operan sobre
+// datos del propio llamante, o sobre filas cuya visibilidad ya ha verificado
+// el servicio antes de dejar escribir.
+//
+// Soporte entra aquí a propósito: abrir un ticket y comentar en él está
+// abierto a todos los roles (también a `solo_ver`, que también necesita
+// reportar fallos). Lo que sí es privilegiado —mover un ticket a cualquier
+// estado— vive en tickets/[id]/route.ts y allí hay guard explícito.
 const selfServiceApi = new Set([
   "src/app/api/v1/auth/change-password/route.ts",
+  "src/app/api/v1/tickets/route.ts",
+  "src/app/api/v1/tickets/[id]/comments/route.ts",
 ]);
 
 for (const file of apiRoutes) {

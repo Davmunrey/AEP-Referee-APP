@@ -44,8 +44,13 @@ export function isTicketStatus(value: unknown): value is TicketStatus {
   return typeof value === "string" && TICKET_STATUSES.includes(value as TicketStatus);
 }
 
-/** Admins de tickets: autoridad total sobre la zona de soporte. */
-export function isTicketAdmin(user: SessionUser): boolean {
+/**
+ * Admins de tickets: autoridad total sobre la zona de soporte. Mismo par de
+ * roles que `canAdminJudges`, y mismo prefijo `can…` a propósito: las rutas
+ * API deben dejar el guard RBAC a la vista, y la comprobación de production
+ * readiness (API-02) busca justamente esa convención.
+ */
+export function canAdminTickets(user: SessionUser): boolean {
   return user.role === "super_admin" || user.role === "delegado_jueces";
 }
 

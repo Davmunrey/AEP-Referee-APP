@@ -6,7 +6,7 @@ import type {
   SupportTicketAttachment,
   SupportTicketComment,
 } from "@/lib/types";
-import { isTicketAdmin } from "@/lib/tickets/validation";
+import { canAdminTickets } from "@/lib/tickets/validation";
 import {
   type AddTicketCommentInput,
   type CreateTicketInput,
@@ -141,7 +141,7 @@ function mapTicket(
 }
 
 function canView(user: GetTicketsInput["user"], ticket: StoredTicket): boolean {
-  return isTicketAdmin(user) || ticket.createdById === user.id;
+  return canAdminTickets(user) || ticket.createdById === user.id;
 }
 
 export const ticketService = {
@@ -221,7 +221,7 @@ export const ticketService = {
   }: UpdateTicketStatusInput): Promise<SupportTicket | undefined> => {
     const ticket = store.get(ticketId);
     if (!ticket) return undefined;
-    const admin = isTicketAdmin(user);
+    const admin = canAdminTickets(user);
     const isOwner = ticket.createdById === user.id;
     if (!admin) {
       if (!isOwner) return undefined;
