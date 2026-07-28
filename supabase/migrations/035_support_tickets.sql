@@ -2,7 +2,8 @@
 -- Zona de tickets de soporte interno con comentarios y adjuntos.
 -- Tres tablas nuevas + un bucket de storage privado para los ficheros.
 --
--- Como el resto del proyecto, se ejecuta A MANO en: Supabase Dashboard -> SQL Editor.
+-- La aplica el workflow «Migraciones Supabase» al llegar a main; también puede
+-- pegarse a mano en el editor SQL de Supabase, porque es idempotente.
 -- Todo es idempotente (IF NOT EXISTS / ON CONFLICT): re-ejecutarla no rompe nada.
 --
 -- RLS: se habilita en las tres tablas SIN políticas permisivas (patrón post-033).

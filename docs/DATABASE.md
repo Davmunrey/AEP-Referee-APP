@@ -2,7 +2,11 @@
 
 Supabase Postgres. Migraciones en `supabase/migrations`.
 
-**Producción:** proyecto `foaemadggmpbcrhtpems` (eu-west-2). Migraciones hasta `033` aplicadas.
+**Producción:** proyecto `foaemadggmpbcrhtpems` (eu-west-2).
+
+**Cómo se aplican.** Las `001`–`033` se ejecutaron a mano en el editor SQL (y las `023`–`025`, con el MCP de Supabase). A partir de la `034` las aplica sola la acción «Migraciones Supabase» en cada push a `main`; ver [DEPLOY.md](./DEPLOY.md) para el secret que necesita y las salvaguardas que trae.
+
+Una migración nueva debe ser **idempotente** (`IF NOT EXISTS`, `OR REPLACE`, `ON CONFLICT`) y **no destructiva**: el workflow rechaza `DROP`, `TRUNCATE` y `DELETE`/`UPDATE` sin `WHERE`, y también `ALTER TYPE … ADD VALUE`, que no admite ir en la misma transacción que lo consume. Si de verdad hace falta borrar algo, aparta las filas antes en una tabla de cuarentena —como hace la `034` con las propuestas pendientes duplicadas— o aplícala a mano con copia previa.
 
 ## Tipos de ID
 
