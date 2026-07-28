@@ -5,14 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { Competition } from "@/lib/types";
 import { formatDateRange } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarClock } from "lucide-react";
 
 export function CompetitionsTable({ competitions }: { competitions: Competition[] }) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Plantillas de jueces — próximos campeonatos</CardTitle>
-        <span className="text-xs text-subtle-muted">Estado de completitud del roster</span>
+      <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
+        <CardTitle className="text-sm font-semibold">Plantillas de jueces — próximos campeonatos</CardTitle>
+        <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          Completitud del roster
+        </span>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
@@ -30,11 +32,16 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
             <tbody>
               {competitions.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-10 text-center text-xs text-subtle-muted"
-                  >
-                    Sin competiciones próximas.
+                  <td colSpan={6} className="px-6 py-10">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <CalendarClock className="h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground/70">Sin competiciones próximas</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Crea un campeonato para empezar a montar su tarima.
+                        </p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -56,15 +63,21 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
                       <EventTypeBadge tipo={competition.tipo} />
                     </td>
                     <td className="px-6 py-4 min-w-[140px]">
-                      <div className="flex items-center gap-2">
-                        <Progress value={pct} className="flex-1" />
-                        <span className="w-10 text-right font-mono text-xs text-muted-foreground">
-                          {pct}%
-                        </span>
-                      </div>
-                      <p className="mt-1 text-[11px] text-subtle-muted">
-                        {competition.confirmados}/{competition.requeridos} confirmados
-                      </p>
+                      {competition.requeridos > 0 ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <Progress value={pct} className="h-2 flex-1" />
+                            <span className="w-10 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                              {pct}%
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] tabular-nums text-subtle-muted">
+                            {competition.confirmados}/{competition.requeridos} confirmados
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Sin plantilla</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <EventStatusBadge status={competition.estado} />

@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   AlertCircle,
   ArrowLeft,
-  ChevronDown,
   ChevronRight,
   FileDown,
   Loader2,
@@ -29,6 +28,8 @@ import type { CompensationClaimPatch } from "@/lib/api/client-compensation";
 import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
 import type { Competition } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
+import { disclosureEnter } from "@/components/aep/motion";
 import { CompensationEuroInput, CompensationKmInput } from "./compensation-numeric-inputs";
 
 const CompensationExportDialog = dynamic(
@@ -41,8 +42,24 @@ interface CompensationBoardProps {
   canManage: boolean;
 }
 
-function emptyClub(): CompensationClubContact {
-  return { name: "", emails: [] };
+/**
+ * Fila editable de club con id estable de UI (no se envía a la API): evita
+ * usar el índice como key en una lista con borrado por posición.
+ */
+type ClubDraft = CompensationClubContact & { draftId: string };
+
+function newDraftId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `club-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function withDraftIds(contacts: CompensationClubContact[]): ClubDraft[] {
+  return contacts.map((c) => ({ ...c, draftId: newDraftId() }));
+}
+
+function emptyClub(): ClubDraft {
+  return { draftId: newDraftId(), name: "", emails: [] };
 }
 
 function applyClaimUpdate(
@@ -80,11 +97,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const [organizer, setOrganizer] = useState(competition.compensationOrganizer ?? "club");
-  const [clubs, setClubs] = useState<CompensationClubContact[]>(
-    () => competitionClubContacts(competition).length > 0
-      ? competitionClubContacts(competition)
-      : [emptyClub()],
-  );
+  const [clubs, setClubs] = useState<ClubDraft[]>(() => {
+    const contacts = competitionClubContacts(competition);
+    return contacts.length > 0 ? withDraftIds(contacts) : [emptyClub()];
+  });
   const [volunteer, setVolunteer] = useState(competition.compensationVolunteer ?? false);
   const patchChainRef = useRef(Promise.resolve());
 
@@ -124,7 +140,8 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           compensationVolunteer: volunteer,
         });
         setCompetition(updated);
-        setClubs(competitionClubContacts(updated).length ? competitionClubContacts(updated) : [emptyClub()]);
+        const updatedContacts = competitionClubContacts(updated);
+        setClubs(updatedContacts.length ? withDraftIds(updatedContacts) : [emptyClub()]);
         load();
       } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo guardar el organizador");
@@ -178,7 +195,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
   };
 
   return (
-    <PageShell className="space-y-4">
+    <PageShell>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" size="sm" className="gap-1.5" asChild>
           <Link href="/compensation">
@@ -223,7 +240,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               {(organizer === "club" || organizer === "custom") && (
                 <>
                   {clubs.map((club, index) => (
-                    <div key={index} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
+                    <div key={club.draftId} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           {organizer === "custom" ? "Nombre" : "Club"} {clubs.length > 1 ? index + 1 : ""}
@@ -235,8 +252,8 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           onChange={(e) => {
                             const name = e.target.value;
                             setClubs((prev) =>
-                              prev.map((c, i) => {
-                                if (i !== index) return c;
+                              prev.map((c) => {
+                                if (c.draftId !== club.draftId) return c;
                                 const suggested = suggestedEmailsForClubName(name);
                                 const emails =
                                   suggested.length > 0 && c.emails.length === 0 ? suggested : c.emails;
@@ -255,8 +272,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           value={Array.isArray(club.emails) ? club.emails.join(", ") : ""}
                           onChange={(e) =>
                             setClubs((prev) =>
-                              prev.map((c, i) =>
-                                i === index ? { ...c, emails: normalizeClubEmails(e.target.value) } : c,
+                              prev.map((c) =>
+                                c.draftId === club.draftId
+                                  ? { ...c, emails: normalizeClubEmails(e.target.value) }
+                                  : c,
                               ),
                             )
                           }
@@ -268,7 +287,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           variant="ghost"
                           size="sm"
                           className="sm:col-span-2 justify-start text-destructive"
-                          onClick={() => setClubs((prev) => prev.filter((_, i) => i !== index))}
+                          onClick={() => setClubs((prev) => prev.filter((c) => c.draftId !== club.draftId))}
                         >
                           {organizer === "custom" ? "Quitar" : "Quitar club"}
                         </Button>
@@ -285,7 +304,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   </Button>
                   {organizer === "club" && (
                     <label className="flex items-center gap-2 text-xs text-foreground-secondary">
-                      <input type="checkbox" checked={volunteer} onChange={(e) => setVolunteer(e.target.checked)} />
+                      <input type="checkbox" className="h-4 w-4 rounded border-border accent-primary" checked={volunteer} onChange={(e) => setVolunteer(e.target.checked)} />
                       Colaborador voluntario
                     </label>
                   )}
@@ -300,7 +319,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       )}
 
       {readiness && readiness.issues.length > 0 && (
-        <div className="flex gap-3 rounded-2xl border border-warning-border bg-warning-subtle px-4 py-3 text-sm">
+        <div className="flex gap-3 rounded-xl border border-warning-border bg-warning-subtle px-4 py-3 text-sm">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <ul className="list-inside list-disc space-y-1 text-foreground-secondary">
             {readiness.issues.map((issue) => (
@@ -318,14 +337,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           </Button>
         )}
         <div className="ml-auto text-right">
-          <p className="font-mono text-sm font-semibold text-foreground">
+          <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
             Total confirmado:{" "}
             {readiness?.readyForExport
               ? formatReceiptAmountEur(summary?.grandTotal ?? 0)
               : "—"}
           </p>
           {!readiness?.readyForExport && (summary?.provisionalTotal ?? 0) > 0 && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs tabular-nums text-muted-foreground">
               Provisional (sin km): {formatReceiptAmountEur(summary?.provisionalTotal ?? 0)}
             </p>
           )}
@@ -333,21 +352,24 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       </div>
 
       {error && (
-        <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive-muted px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive-border bg-destructive-muted px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-border-muted">
+      <div className="overflow-x-auto rounded-2xl border border-border-muted">
         <table className="w-full min-w-[880px] text-left text-sm">
-          <thead className="border-b border-border-muted bg-surface/50 text-[11px] uppercase tracking-wide text-subtle-muted">
+          {/* Cabecera: peso semibold como en el resto de tablas de la app, y las
+              columnas de dinero alineadas a la derecha junto a sus cifras — un
+              importe se lee por la coma, no por la primera letra. */}
+          <thead className="border-b border-border-muted bg-surface/50 text-[11px] font-semibold uppercase tracking-wide text-subtle-muted">
             <tr>
               <th className="w-8 px-2 py-2" />
               <th className="px-3 py-2">Juez</th>
               <th className="px-3 py-2">Funciones</th>
               <th className="px-3 py-2">Km i+v</th>
               <th className="px-3 py-2">Comparte</th>
-              <th className="px-3 py-2">Aloj.</th>
+              <th className="px-3 py-2 text-right">Aloj.</th>
               <th className="px-3 py-2">Resp.</th>
               <th
                 className="px-3 py-2"
@@ -364,15 +386,24 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               const isOpen = expanded.has(claim.refereeId);
               return (
                 <Fragment key={claim.refereeId}>
-                  <tr className="border-b border-border-muted/60">
+                  {/* Nueve columnas de ancho: sin realce de fila al pasar, seguir
+                      la horizontal de un juez hasta su total es pura fe. */}
+                  <tr className="border-b border-border-muted/60 transition-colors duration-100 hover:bg-surface-hover/60">
                     <td className="px-2 py-2">
                       <button
                         type="button"
-                        className="text-muted-foreground hover:text-foreground"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-100 ease-(--ease-out) hover:bg-surface-hover hover:text-foreground active:scale-90 focus-ring"
                         onClick={() => toggleExpanded(claim.refereeId)}
                         aria-label={isOpen ? "Ocultar desglose" : "Ver desglose"}
                       >
-                        {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        {/* Gira en vez de cambiar de icono: el giro explica que se
+                            abre lo que hay debajo. */}
+                        <ChevronRight
+                          className={cn(
+                            "h-4 w-4 transition-transform duration-200 ease-(--ease-out)",
+                            isOpen && "rotate-90",
+                          )}
+                        />
                       </button>
                     </td>
                     <td className="px-3 py-2 font-medium">{claim.refereeName}</td>
@@ -401,7 +432,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           }}
                         />
                       ) : (
-                        <span className="font-mono text-xs">{claim.distanceKmRoundTrip ?? "—"}</span>
+                        <span className="font-mono text-xs tabular-nums">{claim.distanceKmRoundTrip ?? "—"}</span>
                       )}
                       {claim.travelMode === "shared_vehicle_passenger" && (
                         <p className="mt-0.5 text-[10px] text-muted-foreground">sin cobro km</p>
@@ -411,6 +442,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       {canManage ? (
                         <input
                           type="checkbox"
+                          className="h-4 w-4 rounded border-border accent-primary"
                           checked={claim.travelMode === "shared_vehicle_passenger"}
                           onChange={(e) =>
                             patchClaim(claim.refereeId, {
@@ -426,13 +458,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs">
+                    <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
                       {claim.financialComplete ? formatReceiptAmountEur(claim.lodgingAmount) : "—"}
                     </td>
                     <td className="px-3 py-2">
                       {canManage ? (
                         <input
                           type="checkbox"
+                          className="h-4 w-4 rounded border-border accent-primary"
                           checked={claim.isCompetitionManager}
                           onChange={(e) =>
                             patchClaim(claim.refereeId, { isCompetitionManager: e.target.checked })
@@ -450,6 +483,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         <div className="flex items-center gap-1.5">
                           <input
                             type="checkbox"
+                            className="h-4 w-4 rounded border-border accent-primary"
                             checked={claim.isComputerSetup}
                             onChange={(e) =>
                               patchClaim(claim.refereeId, {
@@ -483,7 +517,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono font-semibold">
+                    <td className="px-3 py-2 text-right font-mono font-semibold tabular-nums">
                       {claim.financialComplete ? (
                         formatReceiptAmountEur(claim.totalAmount)
                       ) : (
@@ -510,7 +544,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   </tr>
                   {isOpen && (
                     <tr className="bg-surface/30">
-                      <td colSpan={canManage ? 10 : 9} className="px-4 py-3">
+                      <td colSpan={canManage ? 10 : 9} className={cn("px-4 py-3", disclosureEnter)}>
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           Desglose · {claim.refereeName}
                         </p>
@@ -559,8 +593,15 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
             })}
             {claims.length === 0 && (
               <tr>
-                <td colSpan={canManage ? 9 : 8} className="px-3 py-8 text-center text-sm text-muted-foreground">
-                  Sin jueces asignados en tarima. Monta la tarima y pulsa recalcular funciones.
+                <td colSpan={canManage ? 10 : 9} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                  {!summary && pending ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      Cargando compensación…
+                    </span>
+                  ) : (
+                    "Sin jueces asignados en tarima. Monta la tarima y pulsa recalcular funciones."
+                  )}
                 </td>
               </tr>
             )}

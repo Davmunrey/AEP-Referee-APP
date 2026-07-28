@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 import type { RefereeLevel } from "@/lib/types";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
 const MOTIVO_MAX = 300;
@@ -66,7 +67,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
     >
       <div
@@ -75,7 +76,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
         role="dialog"
         aria-modal="true"
         aria-labelledby="promotion-dialog-title"
-        className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-background p-0 shadow-xl outline-none"
+        className={`w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-xl outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

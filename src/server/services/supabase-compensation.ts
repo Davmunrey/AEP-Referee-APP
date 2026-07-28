@@ -1,10 +1,13 @@
+// Submódulos concretos en vez del barrel: el índice re-exporta receipt-pdf
+// (→ pdfkit), que se cargaba en el cold start de TODAS las rutas API vía el
+// grafo de dataService aunque solo la ruta de export lo usa.
+import { buildCompensationClaim } from "@/lib/judge-compensation/calculate";
 import {
-  buildCompensationClaim,
   fetchDrivingDistanceKm,
   geocodeAddress,
   osmThrottle,
-  applyCompensationClaimPatch,
-} from "@/lib/judge-compensation";
+} from "@/lib/judge-compensation/osm-distance";
+import { applyCompensationClaimPatch } from "@/lib/judge-compensation/claim-patch";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { buildHubSummary } from "@/lib/judge-compensation/hub";
 import type {
@@ -27,7 +30,14 @@ import {
 import { competitionService } from "./supabase-competitions";
 import { refereeService } from "./supabase-referees";
 import { rosterService } from "./supabase-roster";
-import { cachedLoadAllAssignments, db, getCompetitionTemplate, loadRosterAssignmentData } from "./supabase-helpers";
+import {
+  cachedLoadAllAssignments,
+  db,
+  getCompetitionTemplate,
+  hasCompensationOverrideColumn,
+  hasRefereeDomicilioGeoColumns,
+  loadRosterAssignmentData,
+} from "./supabase-helpers";
 
 function claimId(competitionId: string, refereeId: string): string {
   return `cmp-${competitionId}-${refereeId}`;
@@ -106,6 +116,12 @@ function mergeClaimFromRoster(input: {
 async function persistClaim(claim: CompensationClaim, options?: { syncDutyLines?: boolean }): Promise<void> {
   const supabase = db();
   const row = claimToDbRow(claim);
+  // claimToDbRow es síncrona y no puede sondar el esquema; la columna de override
+  // (migración 034) se añade aquí solo si existe, para no romper el upsert cuando
+  // la migración aún no está aplicada.
+  if (await hasCompensationOverrideColumn()) {
+    row.travel_amount_override = claim.travelAmountOverride ?? null;
+  }
   const { error } = await supabase.from("judge_compensation_claims").upsert(row);
   if (error) throw new Error(error.message);
 
@@ -329,6 +345,7 @@ export const compensationService = {
       distanceKmOneWay: number | null;
       distanceKmRoundTrip: number | null;
       distanceSource: "osm" | "google_maps" | "manual" | null;
+      travelAmountOverride: number | null;
       travelApproved: boolean;
       travelNotes: string | null;
       isCompetitionManager: boolean;
@@ -374,6 +391,19 @@ export const compensationService = {
       origin.lat = geo.lat;
       origin.lng = geo.lng;
       await osmThrottle();
+      // Persistir la geocodificación (best-effort) para no repetir Nominatim en
+      // cada recálculo. Solo si la migración 034 añadió las columnas; un fallo del
+      // UPDATE no debe romper el cálculo de distancia.
+      if (origin.lat != null && origin.lng != null && (await hasRefereeDomicilioGeoColumns())) {
+        try {
+          await db()
+            .from("referees")
+            .update({ domicilio_lat: origin.lat, domicilio_lng: origin.lng })
+            .eq("id", referee.id);
+        } catch {
+          /* best-effort: la caché de coordenadas es opcional */
+        }
+      }
     }
     if (destination.lat == null || destination.lng == null) {
       const addr = competition.sedeDireccion ?? competition.sede;
@@ -382,6 +412,18 @@ export const compensationService = {
       destination.lat = geo.lat;
       destination.lng = geo.lng;
       await osmThrottle();
+      // sede_lat / sede_lng ya existen desde la migración 024, sin sonda. Best-effort:
+      // cachear la geocodificación de la sede para futuros recálculos.
+      if (destination.lat != null && destination.lng != null) {
+        try {
+          await db()
+            .from("competitions")
+            .update({ sede_lat: destination.lat, sede_lng: destination.lng })
+            .eq("id", competition.id);
+        } catch {
+          /* best-effort */
+        }
+      }
     }
 
     const result = await fetchDrivingDistanceKm(origin, destination);

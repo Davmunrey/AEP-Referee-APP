@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["pdfkit"],
+  // /docs lee CHANGELOG.md con fs en runtime (sección «Novedades»); sin esto,
+  // el file tracing de Vercel no incluiría el fichero en el bundle serverless.
+  outputFileTracingIncludes: {
+    "/docs": ["./CHANGELOG.md"],
+  },
   experimental: {
     optimizePackageImports: [
       "lucide-react",

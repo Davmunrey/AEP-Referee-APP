@@ -10,9 +10,9 @@ export function SanctionsAlerts({ alerts }: { alerts: SanctionAlert[] }) {
     <Card className="border-warning-border/50">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <ShieldBan className="h-4 w-4 text-warning" />
+          <ShieldBan className="h-4 w-4 text-warning" aria-hidden="true" />
           Sanciones activas
-          <span className="rounded-full bg-warning-subtle px-2 py-0.5 text-[10px] font-mono text-warning">
+          <span className="rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 font-mono text-[11px] font-semibold text-warning">
             {alerts.length}
           </span>
         </CardTitle>
@@ -22,12 +22,12 @@ export function SanctionsAlerts({ alerts }: { alerts: SanctionAlert[] }) {
           {alerts.map((a) => (
             <li
               key={a.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border-muted px-3 py-2 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border-muted px-3 py-2 text-sm"
             >
               <div>
                 <Link
                   href={`/referees/${a.refereeId}`}
-                  className="font-medium text-primary hover:underline"
+                  className="rounded-sm font-medium text-primary hover:underline focus-ring"
                 >
                   {a.refereeName}
                 </Link>
@@ -35,7 +35,7 @@ export function SanctionsAlerts({ alerts }: { alerts: SanctionAlert[] }) {
                   {a.zonaName} · fin {a.fechaFin}
                   {a.kind === "por_vencer" && (
                     <span className="ml-1 inline-flex items-center gap-0.5 text-warning">
-                      <AlertTriangle className="h-3 w-3" />
+                      <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                       {a.daysLeft}d
                     </span>
                   )}

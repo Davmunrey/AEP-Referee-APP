@@ -114,16 +114,29 @@ export const competitionService = {
 
   createCompetition: async (
     input: Omit<Competition, "id" | "confirmados" | "estado" | "aprobacion">,
+    context?: { existing?: { id: string; nombre: string; fecha: string; tipo: string }[] },
   ): Promise<Competition> => {
     const supabase = db();
-    const existing = await supabase.from("competitions").select("id, nombre, fecha, tipo");
-    const key = competitionDedupKey(input);
-    const dupe = (existing.data ?? []).find(
-      (r) =>
-        competitionDedupKey({
+    // En importaciones por lotes se pasa `context.existing` para dedupe + max-id
+    // y evitar releer la tabla en cada inserción (O(N²) → O(N)). Sin contexto,
+    // comportamiento idéntico: una lectura ligera de la tabla.
+    const existingRows =
+      context?.existing ??
+      ((await supabase.from("competitions").select("id, nombre, fecha, tipo")).data ?? []).map(
+        (r) => ({
+          id: String(r.id),
           nombre: String(r.nombre),
           fecha: String(r.fecha),
           tipo: String(r.tipo),
+        }),
+      );
+    const key = competitionDedupKey(input);
+    const dupe = existingRows.find(
+      (r) =>
+        competitionDedupKey({
+          nombre: r.nombre,
+          fecha: r.fecha,
+          tipo: r.tipo,
         }) === key,
     );
     if (dupe) {
@@ -131,28 +144,38 @@ export const competitionService = {
         `Ya existe un campeonato igual (${String(dupe.nombre)}, ${String(dupe.fecha)}). Id: ${String(dupe.id)}`,
       );
     }
-    const maxNum = (existing.data ?? []).reduce((max, row) => {
+    const maxNum = existingRows.reduce((max, row) => {
       const m = /^evt-(\d+)$/i.exec(String(row.id));
       const n = m ? Number.parseInt(m[1]!, 10) : 0;
       return Number.isFinite(n) ? Math.max(max, n) : max;
     }, 0);
-    const id = `evt-${String(maxNum + 1).padStart(3, "0")}`;
-    const row = {
-      id,
-      nombre: input.nombre,
-      tipo: input.tipo,
-      fecha: input.fecha,
-      fecha_fin: input.fechaFin,
-      sede: input.sede,
-      sesiones: input.sesiones,
-      requeridos: input.requeridos,
-      confirmados: 0,
-      estado: "Borrador",
-      aprobacion: "Sin propuesta",
-      zona: normalizeZoneInput(input.zona),
-      template: [],
-    };
-    const { data, error } = await supabase.from("competitions").insert(row).select().single();
+    // Reintento ante 23505 (unique_violation): dos creaciones concurrentes
+    // calculan el mismo evt-NNN; el perdedor prueba el siguiente número en vez
+    // de fallar con un 500.
+    let data: Record<string, unknown> | null = null;
+    let error: { code?: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const id = `evt-${String(maxNum + 1 + attempt).padStart(3, "0")}`;
+      const row = {
+        id,
+        nombre: input.nombre,
+        tipo: input.tipo,
+        fecha: input.fecha,
+        fecha_fin: input.fechaFin,
+        sede: input.sede,
+        sesiones: input.sesiones,
+        requeridos: input.requeridos,
+        confirmados: 0,
+        estado: "Borrador",
+        aprobacion: "Sin propuesta",
+        zona: normalizeZoneInput(input.zona),
+        template: [],
+      };
+      const result = await supabase.from("competitions").insert(row).select().single();
+      data = result.data as Record<string, unknown> | null;
+      error = result.error;
+      if (!error || error.code !== "23505") break;
+    }
     if (error) throw error;
     return mapCompetition(data as Record<string, unknown>);
   },
@@ -175,15 +198,18 @@ export const competitionService = {
 
   deleteCompetition: async (id: string): Promise<boolean> => {
     const supabase = db();
-    const approvalCompetitionColumn = (await hasApprovalCompetitionColumns())
-      ? "competition_id"
-      : "event_id";
-    const historyCompetitionColumn = (await hasHistoryCompetitionColumn())
-      ? "competition_id"
-      : "event_id";
-    await supabase.from("roster_assignments").delete().eq("competition_id", id);
-    await supabase.from("approval_proposals").delete().eq(approvalCompetitionColumn, id);
-    await supabase.from("roster_history").delete().eq(historyCompetitionColumn, id);
+    const [hasApprovalCols, hasHistoryCol] = await Promise.all([
+      hasApprovalCompetitionColumns(),
+      hasHistoryCompetitionColumn(),
+    ]);
+    const approvalCompetitionColumn = hasApprovalCols ? "competition_id" : "event_id";
+    const historyCompetitionColumn = hasHistoryCol ? "competition_id" : "event_id";
+    // Los tres borrados hijos son independientes entre sí.
+    await Promise.all([
+      supabase.from("roster_assignments").delete().eq("competition_id", id),
+      supabase.from("approval_proposals").delete().eq(approvalCompetitionColumn, id),
+      supabase.from("roster_history").delete().eq(historyCompetitionColumn, id),
+    ]);
     const { data, error } = await supabase
       .from("competitions")
       .delete()

@@ -13,6 +13,7 @@ import type {
   RosterHistoryEntry,
 } from "@/lib/types";
 import { isClaimTravelResolved } from "@/lib/judge-compensation/readiness";
+import { championshipDayCount } from "@/lib/judge-compensation/rates";
 
 function mapArbitrajeStats(raw: unknown): RefereeArbitrajeStats | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -123,13 +124,17 @@ export function mapCompetition(row: Record<string, unknown>): Competition {
     nombre: String(row.nombre),
     tipo: row.tipo as Competition["tipo"],
     fecha: String(row.fecha),
-    fechaFin: String(row.fecha_fin),
+    // Guardas de nulos: String(null) produciría el literal "null". El tipo
+    // declara ambos campos como string obligatorio, así que se usa el valor
+    // neutro del dominio: sin fecha_fin ⇒ campeonato de un día (fecha) y sin
+    // aprobacion ⇒ "Sin propuesta" (el valor por defecto en la creación).
+    fechaFin: row.fecha_fin != null ? String(row.fecha_fin) : String(row.fecha),
     sede: String(row.sede),
     sesiones: Number(row.sesiones),
     requeridos: Number(row.requeridos),
     confirmados: Number(row.confirmados),
     estado: row.estado as Competition["estado"],
-    aprobacion: String(row.aprobacion),
+    aprobacion: row.aprobacion != null ? String(row.aprobacion) : "Sin propuesta",
     zona: row.zona ? String(row.zona) : undefined,
     sedeDireccion: row.sede_direccion ? String(row.sede_direccion) : undefined,
     sedeLat: row.sede_lat != null ? Number(row.sede_lat) : undefined,
@@ -347,6 +352,8 @@ export function mapCompensationClaimRow(
     distanceKmRoundTrip:
       row.distance_km_round_trip != null ? Number(row.distance_km_round_trip) : undefined,
     distanceSource: row.distance_source as "osm" | "google_maps" | "manual" | undefined,
+    travelAmountOverride:
+      row.travel_amount_override != null ? Number(row.travel_amount_override) : undefined,
     travelApproved: Boolean(row.travel_approved),
     travelNotes: row.travel_notes ? String(row.travel_notes) : undefined,
     isCompetitionManager: Boolean(row.is_competition_manager),
@@ -372,7 +379,11 @@ export function mapCompensationClaimRow(
     sessionCount: Number(row.session_count ?? 0),
     pesajeCount: Number(row.pesaje_count ?? 0),
     functionCount: Number(row.session_count ?? 0) + Number(row.pesaje_count ?? 0),
-    championshipDays: 1,
+    // Recalculado desde las fechas del campeonato: el "1" fijo anterior
+    // etiquetaba mal los claims multi-día recién cargados de BD.
+    championshipDays: competition
+      ? championshipDayCount(competition.fecha, competition.fechaFin)
+      : 1,
     lodgingEligible: Boolean(row.lodging_eligible),
     lodgingDays: Number(row.lodging_days ?? 0),
     financialComplete: isClaimTravelResolved({

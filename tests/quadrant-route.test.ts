@@ -16,11 +16,14 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: () => ({
       select: () => ({
-        returns: async () => ({
-          data: [
-            { id: "r1", nombre: "Ana Vázquez", nivel: "IPF Cat. 1" },
-            { id: "r2", nombre: "Isa García", nivel: "Nacional" },
-          ],
+        // La ruta filtra por los jueces asignados (.in("id", …)) antes de .returns().
+        in: (_col: string, ids: string[]) => ({
+          returns: async () => ({
+            data: [
+              { id: "r1", nombre: "Ana Vázquez", nivel: "IPF Cat. 1" },
+              { id: "r2", nombre: "Isa García", nivel: "Nacional" },
+            ].filter((r) => ids.includes(r.id)),
+          }),
         }),
       }),
     }),

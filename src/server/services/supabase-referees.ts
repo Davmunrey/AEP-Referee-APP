@@ -121,21 +121,37 @@ export const refereeService = {
 
   createReferee: async (input: Omit<Referee, "id" | "iniciales">): Promise<Referee> => {
     const supabase = db();
-    const { count } = await supabase.from("referees").select("*", { count: "exact", head: true });
-    const id = `j${String((count ?? 0) + 1).padStart(3, "0")}`;
+    // max(jN)+1 en vez de count(): tras un borrado, count+1 colisiona con una
+    // PK existente y el alta de jueces queda rota para siempre. Mismo criterio
+    // que el backend en memoria. El reintento cubre altas concurrentes.
+    const { data: idRows } = await supabase.from("referees").select("id");
+    let maxSeq = 0;
+    for (const r of idRows ?? []) {
+      const m = /^j(\d+)$/.exec(String(r.id));
+      if (m) maxSeq = Math.max(maxSeq, Number(m[1]));
+    }
     const iniciales = input.nombre
       .split(" ")
       .map((p) => p[0])
       .join("")
       .slice(0, 2)
       .toUpperCase();
-    const row = refereeToDbRow({
-      ...input,
-      id,
-      iniciales,
-      zona: normalizeZoneInput(input.zona) ?? input.zona,
-    });
-    const { data, error } = await supabase.from("referees").insert(row).select().single();
+    let data: Record<string, unknown> | null = null;
+    let error: { code?: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const id = `j${String(maxSeq + 1 + attempt).padStart(3, "0")}`;
+      const row = refereeToDbRow({
+        ...input,
+        id,
+        iniciales,
+        zona: normalizeZoneInput(input.zona) ?? input.zona,
+      });
+      const result = await supabase.from("referees").insert(row).select().single();
+      data = result.data as Record<string, unknown> | null;
+      error = result.error;
+      // 23505 = unique_violation: otro alta concurrente ganó ese id; probar el siguiente.
+      if (!error || error.code !== "23505") break;
+    }
     if (error) throw error;
     await pushActivity({
       tipo: "cambio",
@@ -174,8 +190,10 @@ export const refereeService = {
 
   deleteReferee: async (id: string): Promise<boolean> => {
     const supabase = db();
-    const { error } = await supabase.from("referees").delete().eq("id", id);
-    return !error;
+    // select("id") devuelve las filas borradas: sin él, borrar un id
+    // inexistente respondía {deleted:true} en vez de 404.
+    const { data, error } = await supabase.from("referees").delete().eq("id", id).select("id");
+    return !error && (data ?? []).length > 0;
   },
 
   getJudgeProfile: async (

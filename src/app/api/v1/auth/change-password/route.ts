@@ -1,5 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import {
+  canAttemptLogin,
+  clearLoginAttempts,
+  recordFailedLogin,
+  requestIp,
+} from "@/lib/api/login-rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseAnonKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -30,6 +36,15 @@ export async function POST(request: Request) {
   }
   if (!user.email) return jsonError("La cuenta no tiene email asociado", 400);
 
+  // La verificación con signInWithPassword es un intento de login a efectos
+  // prácticos: pasa por el mismo rate-limit que /auth/login para impedir
+  // fuerza bruta sobre la contraseña actual desde una sesión abierta.
+  const ip = requestIp(request);
+  const limit = canAttemptLogin(ip, user.email);
+  if (!limit.allowed) {
+    return jsonError("Demasiados intentos. Espera unos minutos antes de reintentar.", 429);
+  }
+
   // Verifica la contraseña actual con un cliente sin sesión persistente.
   const verifier = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -38,7 +53,11 @@ export async function POST(request: Request) {
     email: user.email,
     password: currentPassword,
   });
-  if (verifyError) return jsonError("La contraseña actual no es correcta", 400);
+  if (verifyError) {
+    recordFailedLogin(ip, user.email);
+    return jsonError("La contraseña actual no es correcta", 400);
+  }
+  clearLoginAttempts(ip, user.email);
 
   // Actualiza por id con la service role.
   const admin = createAdminClient();

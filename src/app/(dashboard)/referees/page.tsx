@@ -16,7 +16,7 @@ export default async function RefereesPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Operaciones"
+        eyebrow="Gestión de jueces"
         title="Directorio de jueces"
         description={`${referees.length} jueces · ${zones.length} zonas federativas`}
       />

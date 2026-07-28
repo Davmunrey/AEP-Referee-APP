@@ -42,8 +42,8 @@ export default async function CompetitionsPage() {
       <OpenRostersPanel competitions={competitions} />
 
       <Card>
-        <CardHeader className="border-b border-border-muted pb-4">
-          <CardTitle>Todos los campeonatos</CardTitle>
+        <CardHeader className="border-b border-border-muted">
+          <CardTitle className="text-sm font-semibold">Todos los campeonatos</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <CompetitionsTable initialCompetitions={competitions} role={user.role} userZona={user.zona} />

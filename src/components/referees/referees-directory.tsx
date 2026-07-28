@@ -10,7 +10,9 @@ import {
   MoreHorizontal,
   SlidersHorizontal,
   Trash2,
+  UserCheck,
   UserPlus,
+  UserX,
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -109,6 +111,31 @@ export function RefereesDirectory({
     const t = setTimeout(() => setDeleteError(null), 5000);
     return () => clearTimeout(t);
   }, [deleteError]);
+
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Alternar Activo ↔ Inactivo desde la fila, sin pasar por la ficha. El caso
+  // «Sancionado» queda fuera: ese estado lo gobierna el flujo de sanciones y
+  // la API lo bloquea igualmente.
+  const toggleEstado = async (referee: { id: string; nombre: string; estado: string }) => {
+    const nextEstado = referee.estado === "Activo" ? "Inactivo" : "Activo";
+    setTogglingId(referee.id);
+    try {
+      // disp acompaña al estado (mismo criterio que el import del Excel):
+      // inactivo ⇒ no disponible para designaciones.
+      const updated = await api.updateReferee(referee.id, {
+        estado: nextEstado as Referee["estado"],
+        disp: nextEstado === "Activo",
+      });
+      setReferees((prev) => prev.map((r) => (r.id === referee.id ? { ...r, ...updated } : r)));
+    } catch (e) {
+      setDeleteError(
+        e instanceof Error ? e.message : `No se pudo cambiar el estado de ${referee.nombre}`,
+      );
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const deleteReferee = async (id: string, nombre: string) => {
     if (!confirm(`¿Eliminar al juez "${nombre}"? Esta acción no se puede deshacer.`)) return;
@@ -267,7 +294,7 @@ export function RefereesDirectory({
         </div>
 
         {/* Mobile card list */}
-        <div className="divide-y divide-border/50 md:hidden">
+        <div className="divide-y divide-border-muted md:hidden">
           {rows.length === 0 && (
             <p className="px-4 py-12 text-center text-sm text-subtle-muted">
               {referees.length === 0
@@ -299,6 +326,29 @@ export function RefereesDirectory({
                     <MoreHorizontal className="h-4 w-4" />
                   </Link>
                 </Button>
+                {canEdit && referee.estado !== "Sancionado" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={togglingId === referee.id}
+                    onClick={() => void toggleEstado(referee)}
+                    title={referee.estado === "Activo" ? "Marcar inactivo" : "Marcar activo"}
+                    aria-label={
+                      referee.estado === "Activo"
+                        ? `Marcar inactivo a ${referee.nombre}`
+                        : `Marcar activo a ${referee.nombre}`
+                    }
+                  >
+                    {togglingId === referee.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : referee.estado === "Activo" ? (
+                      <UserX className="h-3.5 w-3.5 text-warning" />
+                    ) : (
+                      <UserCheck className="h-3.5 w-3.5 text-success" />
+                    )}
+                  </Button>
+                )}
                 {canEdit && (
                   <Button
                     variant="ghost"
@@ -325,15 +375,18 @@ export function RefereesDirectory({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
+                {/* Mismo peso de cabecera que la tabla compartida (DataTable):
+                    en una tabla de nueve columnas los títulos tienen que pesar
+                    más que el dato para poder guiar la lectura. */}
                 <tr className="border-b border-border/80 text-left font-mono text-[10px] uppercase tracking-wider text-subtle-muted">
                   <th className="w-10 px-4 py-2" />
-                  <th className="px-4 py-2 font-medium">Juez</th>
-                  <th className="px-4 py-2 font-medium">Localidad</th>
-                  <th className="px-4 py-2 font-medium">Zona</th>
-                  <th className="px-4 py-2 font-medium">Nivel</th>
-                  <th className="px-4 py-2 font-medium">Estado</th>
-                  <th className="px-4 py-2 text-right font-medium">Plazas (histórico)</th>
-                  <th className="px-4 py-2 font-medium">Última competición</th>
+                  <th className="px-4 py-2 font-semibold">Juez</th>
+                  <th className="px-4 py-2 font-semibold">Localidad</th>
+                  <th className="px-4 py-2 font-semibold">Zona</th>
+                  <th className="px-4 py-2 font-semibold">Nivel</th>
+                  <th className="px-4 py-2 font-semibold">Estado</th>
+                  <th className="px-4 py-2 text-right font-semibold">Plazas (histórico)</th>
+                  <th className="px-4 py-2 font-semibold">Última competición</th>
                   <th className="w-12 px-4 py-2" />
                 </tr>
               </thead>
@@ -341,7 +394,7 @@ export function RefereesDirectory({
                 {rows.map((referee) => (
                   <tr
                     key={referee.id}
-                    className="group border-b border-border/50 transition-colors hover:bg-muted/30"
+                    className="group border-b border-border/50 transition-colors duration-100 hover:bg-muted/30"
                   >
                     <td className="px-4 py-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border-strong bg-muted text-xs font-semibold text-foreground-secondary">
@@ -371,10 +424,15 @@ export function RefereesDirectory({
                     <td className="px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
                       {referee.eventos}
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-[10.5px] text-subtle-muted">
+                    {/* Las fechas son cifras: sin `tabular-nums` los dígitos
+                        bailan de fila en fila y la columna deja de ser una
+                        columna. */}
+                    <td className="px-4 py-2.5 font-mono text-[11px] tabular-nums text-subtle-muted">
                       {displayUltimo(referee.ultimo)}
                     </td>
-                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity group-hover:opacity-100">
+                    {/* En puntero grueso (tablet) no hay hover: las acciones se
+                        quedarían invisibles para siempre. */}
+                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity duration-100 group-hover:opacity-100 pointer-coarse:opacity-100 focus-within:opacity-100">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                           <Link
@@ -384,6 +442,29 @@ export function RefereesDirectory({
                             <MoreHorizontal className="h-4 w-4" />
                           </Link>
                         </Button>
+                        {canEdit && referee.estado !== "Sancionado" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={togglingId === referee.id}
+                            onClick={() => void toggleEstado(referee)}
+                            title={referee.estado === "Activo" ? "Marcar inactivo" : "Marcar activo"}
+                            aria-label={
+                              referee.estado === "Activo"
+                                ? `Marcar inactivo a ${referee.nombre}`
+                                : `Marcar activo a ${referee.nombre}`
+                            }
+                          >
+                            {togglingId === referee.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : referee.estado === "Activo" ? (
+                              <UserX className="h-3.5 w-3.5 text-warning" />
+                            ) : (
+                              <UserCheck className="h-3.5 w-3.5 text-success" />
+                            )}
+                          </Button>
+                        )}
                         {canEdit && (
                           <Button
                             variant="ghost"
@@ -464,14 +545,14 @@ export function RefereesDirectory({
       {deleteError && (
         <div
           role="alert"
-          className="flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive"
+          className="flex items-center justify-between gap-3 rounded-lg border border-destructive-border bg-destructive-muted px-4 py-2.5 text-sm text-destructive"
         >
           <span>{deleteError}</span>
           <button
             type="button"
             aria-label="Cerrar aviso"
             onClick={() => setDeleteError(null)}
-            className="shrink-0 opacity-70 hover:opacity-100"
+            className="-m-1.5 shrink-0 rounded-md p-1.5 opacity-70 hover:opacity-100 focus-ring"
           >
             <X className="h-4 w-4" />
           </button>

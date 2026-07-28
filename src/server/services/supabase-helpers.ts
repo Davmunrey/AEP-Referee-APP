@@ -28,36 +28,84 @@ export function db() {
 let approvalCompetitionColumnPromise: Promise<boolean> | null = null;
 let approvalSubmitterColumnPromise: Promise<boolean> | null = null;
 let historyCompetitionColumnPromise: Promise<boolean> | null = null;
+let compensationOverrideColumnPromise: Promise<boolean> | null = null;
+let refereeDomicilioGeoColumnPromise: Promise<boolean> | null = null;
+
+/**
+ * Sonda de columna con caché a nivel de módulo. Solo se cachea un veredicto
+ * fiable: "existe" (sin error) o "no existe" (42703 / undefined column). Un
+ * error transitorio (red, timeout, caída de Supabase) NO debe cachearse como
+ * "columna ausente" para toda la vida de la instancia — en ese caso se asume
+ * el esquema moderno y se reintenta la sonda en la siguiente llamada.
+ */
+function probeColumns(
+  table: string,
+  columns: string,
+  getCached: () => Promise<boolean> | null,
+  setCached: (p: Promise<boolean> | null) => void,
+): Promise<boolean> {
+  const cached = getCached();
+  if (cached) return cached;
+  const probe = Promise.resolve(db().from(table).select(columns).limit(1)).then(({ error }) => {
+    if (!error) return true;
+    const isMissingColumn =
+      error.code === "42703" || /column|columna/i.test(error.message ?? "");
+    if (!isMissingColumn) {
+      setCached(null); // transitorio: no cachear, reintentar la próxima vez
+      return true;
+    }
+    return false;
+  });
+  setCached(probe);
+  return probe;
+}
 
 export async function hasApprovalCompetitionColumns(): Promise<boolean> {
-  approvalCompetitionColumnPromise ??= Promise.resolve(
-    db()
-      .from("approval_proposals")
-      .select("competition_id, competition_name")
-      .limit(1),
-  ).then(({ error }) => !error);
-  return approvalCompetitionColumnPromise;
+  return probeColumns(
+    "approval_proposals",
+    "competition_id, competition_name",
+    () => approvalCompetitionColumnPromise,
+    (p) => { approvalCompetitionColumnPromise = p; },
+  );
 }
 
 /** ¿Existen las columnas submitted_by_id / reviewed_by_id? (migración 022) */
 export async function hasApprovalSubmitterColumns(): Promise<boolean> {
-  approvalSubmitterColumnPromise ??= Promise.resolve(
-    db()
-      .from("approval_proposals")
-      .select("submitted_by_id, reviewed_by_id")
-      .limit(1),
-  ).then(({ error }) => !error);
-  return approvalSubmitterColumnPromise;
+  return probeColumns(
+    "approval_proposals",
+    "submitted_by_id, reviewed_by_id",
+    () => approvalSubmitterColumnPromise,
+    (p) => { approvalSubmitterColumnPromise = p; },
+  );
 }
 
 export async function hasHistoryCompetitionColumn(): Promise<boolean> {
-  historyCompetitionColumnPromise ??= Promise.resolve(
-    db()
-      .from("roster_history")
-      .select("competition_id")
-      .limit(1),
-  ).then(({ error }) => !error);
-  return historyCompetitionColumnPromise;
+  return probeColumns(
+    "roster_history",
+    "competition_id",
+    () => historyCompetitionColumnPromise,
+    (p) => { historyCompetitionColumnPromise = p; },
+  );
+}
+
+/** ¿Existe judge_compensation_claims.travel_amount_override? (migración 034) */
+export async function hasCompensationOverrideColumn(): Promise<boolean> {
+  return probeColumns(
+    "judge_compensation_claims",
+    "travel_amount_override",
+    () => compensationOverrideColumnPromise,
+    (p) => { compensationOverrideColumnPromise = p; },
+  );
+}
+
+/** ¿Existen referees.domicilio_lat / domicilio_lng? (migración 034) */
+export async function hasRefereeDomicilioGeoColumns(): Promise<boolean> {
+  return probeColumns(
+    "referees",
+    "domicilio_lat, domicilio_lng",
+    () => refereeDomicilioGeoColumnPromise,
+    (p) => { refereeDomicilioGeoColumnPromise = p; },
+  );
 }
 
 export { parseSlotKey } from "@/lib/roster-template";
@@ -166,13 +214,14 @@ export const cachedLoadAllAssignments = cache(loadAllAssignments);
 
 export async function syncCompetitionCoverage(competitionId: string) {
   const supabase = db();
-  const template = (await getCompetitionTemplate(competitionId)) ?? [];
-  const assignments = await loadAssignments(competitionId);
-  const { data: row } = await supabase
-    .from("competitions")
-    .select("requeridos")
-    .eq("id", competitionId)
-    .maybeSingle();
+  // Las tres lecturas son independientes: en paralelo ahorran dos round-trips
+  // en la ruta de mutación más caliente (cada asignación de juez pasa por aquí).
+  const [templateResult, assignments, { data: row }] = await Promise.all([
+    getCompetitionTemplate(competitionId),
+    loadAssignments(competitionId),
+    supabase.from("competitions").select("requeridos").eq("id", competitionId).maybeSingle(),
+  ]);
+  const template = templateResult ?? [];
   const fallbackRequeridos = row?.requeridos != null ? Number(row.requeridos) : 0;
   const coverage = computeRosterCoverage(template, assignments, fallbackRequeridos);
   const estado = deriveCompetitionEstado(coverage);
@@ -202,8 +251,10 @@ export async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
   const competitionColumn = (await hasHistoryCompetitionColumn())
     ? "competition_id"
     : "event_id";
+  // randomUUID en vez de Date.now(): dos mutaciones en el mismo milisegundo
+  // colisionaban en PK y el insert fallaba en silencio (historial perdido).
   await supabase.from("roster_history").insert({
-    id: `hist-${Date.now()}`,
+    id: `hist-${crypto.randomUUID()}`,
     [competitionColumn]: entry.competitionId,
     at: entry.at,
     actor: entry.actor,

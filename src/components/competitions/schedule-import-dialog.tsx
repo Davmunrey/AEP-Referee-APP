@@ -242,7 +242,7 @@ export function ScheduleImportDialog({
                     type="checkbox"
                     checked={confirmReplace}
                     onChange={(e) => setConfirmReplace(e.target.checked)}
-                    className="mt-0.5"
+                    className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
                   />
                   <span>Entiendo que se reemplaza la plantilla actual de tarima</span>
                 </label>
@@ -272,6 +272,7 @@ export function ScheduleImportDialog({
                     <td className="px-2 py-1.5">
                       <input
                         type="checkbox"
+                        className="h-4 w-4 rounded border-border accent-primary"
                         checked={selectedKeys.has(s.sesion)}
                         onChange={() => toggleSession(s.sesion)}
                         aria-label={`Seleccionar ${s.sesion}`}

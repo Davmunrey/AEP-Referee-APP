@@ -67,14 +67,6 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     router.refresh();
   }, [router]);
 
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void refreshEvents();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refreshEvents]);
-
   const duplicateGroups = useMemo(() => groupCompetitionDuplicates(competitions), [competitions]);
   const duplicateIds = useMemo(() => {
     const ids = new Set<string>();
@@ -403,8 +395,11 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   <DataTableCell>
                     <p className="font-medium text-foreground">
                       {competition.nombre}
+                      {/* Dos avisos con el mismo chip pesaban igual, y no lo son:
+                          "Solo lectura" es un hecho (baja a etiqueta plana),
+                          "Duplicado" pide una acción (conserva el chip). */}
                       {isPast && (
-                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                        <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-subtle-muted">
                           Solo lectura
                         </span>
                       )}
@@ -416,7 +411,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                     </p>
                     <p className="text-xs text-subtle-muted">{competition.sede}</p>
                   </DataTableCell>
-                  <DataTableCell className="font-mono text-xs text-muted-foreground">
+                  <DataTableCell className="font-mono text-xs tabular-nums text-muted-foreground">
                     {formatDateRange(competition.fecha, competition.fechaFin)}
                   </DataTableCell>
                   <DataTableCell>
@@ -427,7 +422,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   </DataTableCell>
                   <DataTableCell className="min-w-[140px]">
                     <Progress value={pct} />
-                    <p className="mt-1 text-[11px] text-subtle-muted">
+                    <p className="mt-1 text-[11px] tabular-nums text-subtle-muted">
                       {competition.confirmados}/{competition.requeridos} · {pct}%
                     </p>
                   </DataTableCell>
@@ -466,7 +461,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity duration-100 hover:text-foreground group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
                           onClick={() =>
                             window.open(
                               `${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`,
@@ -488,7 +483,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                            className="h-8 w-8 text-destructive opacity-0 transition-opacity duration-100 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
                             disabled={deletingId === competition.id}
                             onClick={() => setConfirmDeleteId(competition.id)}
                             aria-label={`Eliminar ${competition.nombre}`}

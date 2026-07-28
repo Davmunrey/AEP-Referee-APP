@@ -6,6 +6,8 @@ import { selectFieldClass } from "@/lib/design-tokens";
 import { ROLE_LABELS } from "@/lib/types";
 import type { UserRole } from "@/lib/types";
 import { Loader2 } from "lucide-react";
+import { useEscapeClose } from "@/hooks/use-escape-close";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 export interface EditFormState {
   nombre: string;
@@ -35,15 +37,16 @@ export function EditUserDialog({
   onSubmit,
   onClose,
 }: EditUserDialogProps) {
+  const panelRef = useEscapeClose(onClose);
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-user-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl">
+      <div ref={panelRef} tabIndex={-1} className={`outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl ${dialogPanelEnter}`}>
         <h3 id="edit-user-title" className="text-base font-semibold text-foreground">
           Editar usuario
         </h3>

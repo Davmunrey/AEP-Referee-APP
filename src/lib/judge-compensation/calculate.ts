@@ -47,6 +47,11 @@ function resolveLodging(input: {
   const kmOk = (input.roundTripKm ?? 0) > LODGING_MIN_ROUND_TRIP_KM;
   const functionsOk = input.functionCount >= MIN_FUNCTIONS_FOR_LODGING;
   let lodgingEligible = kmOk && functionsOk;
+  // Fijar días de alojamiento manualmente (>0) expresa la intención de
+  // concederlo: antes ese override se ignoraba sin elegibilidad automática y
+  // el importe quedaba en 0 € sin aviso. El override explícito de
+  // elegibilidad (true/false) sigue mandando sobre todo lo demás.
+  if (input.lodgingDaysOverride != null && input.lodgingDaysOverride > 0) lodgingEligible = true;
   if (input.lodgingEligibleOverride === true) lodgingEligible = true;
   if (input.lodgingEligibleOverride === false) lodgingEligible = false;
 

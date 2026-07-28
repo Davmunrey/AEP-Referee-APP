@@ -71,6 +71,14 @@ import {
   groupSessionsByDay,
 } from "./roster-session-helpers";
 
+// Defaults estables a nivel de módulo: un literal `{}` inline crearía un objeto
+// nuevo por render y, al ser dependencia del efecto de re-sincronización, podría
+// provocar un bucle infinito de renders si un caller omitiera estas props.
+const EMPTY_FLAGS: FlagsMap = {};
+const EMPTY_CROSS_ZONE_MAP: CrossZoneMap = {};
+const EMPTY_REGULATIONS: RegulationRule[] = [];
+const EMPTY_CONFIRMED_IDS: string[] = [];
+
 interface RosterBuilderProps {
   competition: Competition;
   template: RosterSession[];
@@ -93,16 +101,16 @@ export function RosterBuilder({
   competition,
   template: initialTemplate,
   initialAssignments,
-  initialFlags = {},
-  initialCrossZoneMap = {},
+  initialFlags = EMPTY_FLAGS,
+  initialCrossZoneMap = EMPTY_CROSS_ZONE_MAP,
   canEdit = false,
   canManageCompensation = false,
   isPast = false,
   referees,
   zones,
   levels,
-  regulations = [],
-  initialConfirmedIds = [],
+  regulations = EMPTY_REGULATIONS,
+  initialConfirmedIds = EMPTY_CONFIRMED_IDS,
   defaultZonaFilter = "TODAS",
 }: RosterBuilderProps) {
   const router = useRouter();
@@ -267,7 +275,10 @@ export function RosterBuilder({
     return true;
   }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, flags, referees, regulations, deferredSearch, selectedRoleKey, selectedSlot, template]);
 
-  const persistAssign = (slotKey: string, refereeId: string) => {
+  // useCallback en persistAssign/persistClear/onDrop/onQuickAssign/toggleFlag:
+  // son props de SessionBlock/RefereeCard (memoizados); si se recrearan en cada
+  // render el memo no serviría de nada.
+  const persistAssign = useCallback((slotKey: string, refereeId: string) => {
     const block = getOperationalBlock({ template, assignments, slotKey, refereeId, flags });
     let forceShared = false;
     if (block) {
@@ -305,26 +316,36 @@ export function RosterBuilder({
         setStatusMsg(formatApiError(err, "No se pudo guardar la asignación")); setStatusIsError(true);
       }
     });
-  };
+  }, [template, assignments, flags, competition.id, refreshCompetitionList, startTransition]);
 
-  const persistClear = (slotKey: string) => {
+  const persistClear = useCallback((slotKey: string) => {
     const snapshot = assignments;
     setAssignments((prev) => { const next = { ...prev }; delete next[slotKey]; return next; });
     startTransition(async () => {
       try { const res = await api.clearSlot(competition.id, slotKey); setAssignments(res.assignments); setStatusMsg(null); setStatusIsError(false); }
       catch (err) { setAssignments(snapshot); setStatusMsg(formatApiError(err, "No se pudo quitar la asignación")); setStatusIsError(true); }
     });
-  };
+  }, [assignments, competition.id, startTransition]);
 
-  const onDrop = (slotKey: string, refereeId: string) => {
+  const onDrop = useCallback((slotKey: string, refereeId: string) => {
     if (rosterReadOnly) return;
     persistAssign(slotKey, refereeId);
     setDraggedId(null); setSelectedSlot(null);
-  };
+  }, [rosterReadOnly, persistAssign]);
 
-  const onQuickAssign = (refereeId: string) => { if (!selectedSlot || rosterReadOnly) return; persistAssign(selectedSlot, refereeId); };
+  const onQuickAssign = useCallback((refereeId: string) => {
+    if (!selectedSlot || rosterReadOnly) return;
+    persistAssign(selectedSlot, refereeId);
+  }, [selectedSlot, rosterReadOnly, persistAssign]);
 
-  const toggleFlag = (slotKey: string, field: keyof SlotFlags) => {
+  const onDragEnd = useCallback(() => setDraggedId(null), []);
+
+  const onSelectSession = useCallback((sesion: string) => {
+    setActiveSessionKey(sesion);
+    setSelectedSlot(null);
+  }, []);
+
+  const toggleFlag = useCallback((slotKey: string, field: keyof SlotFlags) => {
     if (rosterReadOnly || !assignments[slotKey]) return;
     const next: SlotFlags = { ...(flags[slotKey] ?? {}), [field]: !(flags[slotKey]?.[field]) };
     const snapshot = flags;
@@ -333,7 +354,7 @@ export function RosterBuilder({
       try { const res = await api.setSlotFlags(competition.id, slotKey, next); setFlags(res.flags); }
       catch (err) { setFlags(snapshot); setStatusMsg(formatApiError(err, "No se pudieron guardar los marcadores del slot")); setStatusIsError(true); }
     });
-  };
+  }, [rosterReadOnly, assignments, flags, competition.id, startTransition]);
 
   const saveTemplate = (next: RosterSession[]) => {
     setSavingTemplate(true);
@@ -385,20 +406,26 @@ export function RosterBuilder({
 
   return (
     <>
-      <div className="flex h-[calc(100dvh-3.5rem)] flex-col">
-        <ScheduleImportDialog
-          competitionId={competition.id}
-          open={importOpen}
-          hasExistingTemplate={template.length > 0}
-          onClose={() => setImportOpen(false)}
-          onApplied={(tpl) => { setTemplate(tpl); setImportOpen(false); setWorkflowStep("asignacion"); setStatusMsg("Plantilla importada desde PDF"); setStatusIsError(false); }}
-        />
-        <QuadrantImportDialog
-          competitionId={competition.id}
-          open={quadrantImportOpen}
-          onClose={() => setQuadrantImportOpen(false)}
-          onApplied={(nextAssignments, nextFlags) => { setAssignments(nextAssignments); if (nextFlags) setFlags(nextFlags); setQuadrantImportOpen(false); setWorkflowStep("asignacion"); setStatusMsg("Cuadrante aplicado"); setStatusIsError(false); }}
-        />
+      <div className="flex h-[calc(100dvh-3rem)] flex-col">
+        {/* Render condicional: así el chunk dynamic solo se descarga al abrir
+            el diálogo, no al montar la ruta. */}
+        {importOpen && (
+          <ScheduleImportDialog
+            competitionId={competition.id}
+            open={importOpen}
+            hasExistingTemplate={template.length > 0}
+            onClose={() => setImportOpen(false)}
+            onApplied={(tpl) => { setTemplate(tpl); setImportOpen(false); setWorkflowStep("asignacion"); setStatusMsg("Plantilla importada desde PDF"); setStatusIsError(false); }}
+          />
+        )}
+        {quadrantImportOpen && (
+          <QuadrantImportDialog
+            competitionId={competition.id}
+            open={quadrantImportOpen}
+            onClose={() => setQuadrantImportOpen(false)}
+            onApplied={(nextAssignments, nextFlags) => { setAssignments(nextAssignments); if (nextFlags) setFlags(nextFlags); setQuadrantImportOpen(false); setWorkflowStep("asignacion"); setStatusMsg("Cuadrante aplicado"); setStatusIsError(false); }}
+          />
+        )}
         <RosterCompetitionHeader
           competition={{ ...competition, aprobacion }}
           isPast={isPast} canEdit={canEdit}
@@ -487,7 +514,7 @@ export function RosterBuilder({
                 onSelectSlot={setSelectedSlot} onAvailabilityOpen={() => setAvailabilityOpen(true)}
                 onFilterZona={setFilterZona} onFilterNivel={setFilterNivel}
                 onSearch={setSearch} onFilterConfirmed={setFilterOnlyConfirmed}
-                onDragStart={(id) => setDraggedId(id)} onDragEnd={() => setDraggedId(null)}
+                onDragStart={setDraggedId} onDragEnd={onDragEnd}
                 onQuickAssign={onQuickAssign}
               />
             )}
@@ -513,7 +540,7 @@ export function RosterBuilder({
                               session={session}
                               assignments={assignments}
                               active={activeSession?.sesion === session.sesion}
-                              onClick={() => { setActiveSessionKey(session.sesion); setSelectedSlot(null); }}
+                              onClick={onSelectSession}
                             />
                           ))}
                         </div>
@@ -574,7 +601,12 @@ export function RosterBuilder({
           </div>
         )}
       </div>
-      <EditCompetitionDialog competition={competition} zones={zones} open={editCompetitionOpen} onClose={() => setEditCompetitionOpen(false)} />
+      {/* Montaje condicional: descarga el chunk solo al abrir y garantiza que el
+          formulario se inicialice con los datos vigentes de la competición en
+          cada apertura (sin valores "fantasma" de una edición cancelada). */}
+      {editCompetitionOpen && (
+        <EditCompetitionDialog competition={competition} zones={zones} open={editCompetitionOpen} onClose={() => setEditCompetitionOpen(false)} />
+      )}
       {availabilityOpen && (
         <CompetitionAvailabilityDialog
           competitionId={competition.id} referees={referees}

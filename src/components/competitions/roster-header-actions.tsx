@@ -58,6 +58,7 @@ export function RosterHeaderActions({
 
   return (
     <>
+      {exportOpen && (
       <ExportPreviewDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}
@@ -84,6 +85,7 @@ export function RosterHeaderActions({
           },
         ]}
       />
+      )}
     <div className="flex flex-col items-end gap-1.5">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {/* Coverage card: plazas + barra de progreso */}
@@ -97,7 +99,11 @@ export function RosterHeaderActions({
           </span>
           <div className="h-1 w-16 overflow-hidden rounded-full bg-muted">
             <div
-              className={cn("h-full rounded-full transition-all duration-500", coverageBarColor)}
+              className={cn(
+                // Misma ley que las barras de cobertura de las sesiones.
+                "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
+                coverageBarColor,
+              )}
               style={{ width: `${fillPct}%` }}
             />
           </div>
@@ -171,8 +177,11 @@ export function RosterHeaderActions({
         <Button
           size="sm"
           className={cn(
-            "h-8 gap-1.5 px-2.5 text-xs font-semibold shadow-sm transition-all",
-            fillPct >= 100 && "animate-pulse",
+            "h-8 gap-1.5 px-2.5 text-xs font-semibold shadow-sm transition-[color,background-color,box-shadow,scale] duration-150 ease-(--ease-out)",
+            // Tarima completa: se marca con un halo fijo, no con un latido. Este
+            // botón está en pantalla toda la sesión de montaje; un bucle infinito
+            // ahí deja de informar y pasa a molestar.
+            fillPct >= 100 && "shadow-glow-primary-lg",
           )}
           disabled={pending || rosterLocked}
           onClick={() => {

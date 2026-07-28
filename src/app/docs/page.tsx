@@ -18,9 +18,11 @@ import {
   Lock,
   Mail,
   ShieldCheck,
+  Sparkles,
   TrendingUp,
   Users,
 } from "lucide-react";
+import { DocsChangelog } from "@/components/docs/docs-changelog";
 
 export const metadata: Metadata = {
   title: "Documentación y privacidad · AEP Tarima",
@@ -46,6 +48,7 @@ const tocSections: TocItem[] = [
   { id: "roles", label: "Roles y permisos", internal: true },
   { id: "niveles", label: "Niveles arbitrales" },
   { id: "faq", label: "Preguntas frecuentes", internal: true },
+  { id: "novedades", label: "Novedades", internal: true },
   { id: "privacidad", label: "Privacidad y datos" },
   { id: "seguridad", label: "Seguridad" },
   { id: "cookies", label: "Cookies y sesión" },
@@ -69,12 +72,16 @@ function Section({
   return (
     <section id={id} className="scroll-mt-24">
       <div className="flex items-center gap-2.5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-muted text-primary">
           <IconCmp className="h-4 w-4" />
         </span>
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground">
+      {/* Medida de lectura acotada a ~68ch solo en los párrafos: a 896px de
+          contenedor la prosa llegaba a ~110 caracteres por línea y el ojo
+          pierde el salto de renglón. Las rejillas de tarjetas siguen a ancho
+          completo porque no son texto corrido. */}
+      <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground [&>p]:max-w-[68ch]">
         {children}
       </div>
     </section>
@@ -84,7 +91,7 @@ function Section({
 function FeatureCard({ icon: IconCmp, title, desc }: { icon: Icon; title: string; desc: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-muted text-primary">
         <IconCmp className="h-5 w-5" />
       </span>
       <h3 className="mt-3 text-sm font-semibold text-foreground">{title}</h3>
@@ -100,7 +107,9 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
         {n}
       </span>
       <p className="text-sm font-semibold text-foreground">{title}</p>
-      <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{children}</p>
+      <p className="mt-0.5 max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground">
+        {children}
+      </p>
     </li>
   );
 }
@@ -108,7 +117,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 function FlowStep({ icon: IconCmp, label }: { icon: Icon; label: string }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-4 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-muted text-primary">
         <IconCmp className="h-5 w-5" />
       </span>
       <span className="text-xs font-medium text-foreground">{label}</span>
@@ -142,7 +151,7 @@ export default async function DocsPage() {
           </div>
           <Link
             href={backHref}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-ring"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             {backLabel}
@@ -160,7 +169,7 @@ export default async function DocsPage() {
             height={64}
             className="mx-auto h-14 w-auto"
           />
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground">
             AEP Tarima — Documentación
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
@@ -185,7 +194,7 @@ export default async function DocsPage() {
               <li key={item.id}>
                 <a
                   href={`#${item.id}`}
-                  className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+                  className="inline-flex items-center gap-1 rounded-sm text-sm text-primary underline-offset-2 transition-colors hover:underline focus-ring"
                 >
                   <ArrowRight className="h-3 w-3" aria-hidden="true" />
                   {item.label}
@@ -301,7 +310,7 @@ export default async function DocsPage() {
           </>
           ) : (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary-muted text-primary">
                 <Lock className="h-5 w-5" aria-hidden="true" />
               </span>
               <h2 className="mt-3 text-base font-semibold text-foreground">
@@ -314,7 +323,7 @@ export default async function DocsPage() {
               </p>
               <Link
                 href="/sign-in"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-ring focus-visible:ring-offset-2"
               >
                 <KeyRound className="h-4 w-4" aria-hidden="true" />
                 Iniciar sesión
@@ -367,6 +376,18 @@ export default async function DocsPage() {
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
                 </details>
               ))}
+            </div>
+          </Section>
+          )}
+
+          {isAuthenticated && (
+          <Section id="novedades" icon={Sparkles} title="Novedades — historial de versiones">
+            <p>
+              Qué ha cambiado en cada versión desplegada de AEP Tarima, de la más reciente a la
+              primera. La última versión aparece desplegada; el resto se puede expandir.
+            </p>
+            <div className="mt-4">
+              <DocsChangelog />
             </div>
           </Section>
           )}
@@ -451,7 +472,7 @@ export default async function DocsPage() {
 
           <Section id="contacto" icon={Building2} title="Contacto">
             <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-muted text-primary">
                 <Mail className="h-5 w-5" />
               </span>
               <p className="text-sm text-muted-foreground">
@@ -466,7 +487,7 @@ export default async function DocsPage() {
         <div className="mt-12 flex flex-col items-center gap-3 border-t border-border pt-6">
           <Link
             href={backHref}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-ring"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             {backLabel}

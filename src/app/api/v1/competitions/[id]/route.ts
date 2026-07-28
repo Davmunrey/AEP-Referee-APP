@@ -4,6 +4,7 @@ import { canManageCompensation, canManageCompetitions } from "@/lib/auth/session
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { validateCompetitionFields } from "@/app/api/_lib/validation";
 import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import type { CompensationClubContact } from "@/lib/judge-compensation/types";
 import { normalizeClubEmails } from "@/lib/organizer-clubs";
@@ -66,8 +67,23 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (typeof body.fechaFin === "string") patch.fechaFin = body.fechaFin;
     if (typeof body.sede === "string") patch.sede = body.sede;
     if (typeof body.zona === "string") patch.zona = body.zona;
-    if (typeof body.sesiones === "number") patch.sesiones = body.sesiones;
-    if (typeof body.requeridos === "number") patch.requeridos = body.requeridos;
+    if (typeof body.sesiones === "number") patch.sesiones = Math.round(body.sesiones);
+    if (typeof body.requeridos === "number") patch.requeridos = Math.round(body.requeridos);
+
+    // Mismas comprobaciones que el POST de /competitions, aplicadas a los
+    // campos presentes en el body. El cruce fecha/fechaFin usa los valores
+    // actuales de la competición como base cuando solo se envía uno.
+    const validationError = validateCompetitionFields(
+      {
+        tipo: patch.tipo,
+        fecha: patch.fecha,
+        fechaFin: patch.fechaFin,
+        sesiones: patch.sesiones,
+        requeridos: patch.requeridos,
+      },
+      { fecha: competition.fecha, fechaFin: competition.fechaFin },
+    );
+    if (validationError) return jsonError(validationError, 400);
   }
 
   if (canComp) {

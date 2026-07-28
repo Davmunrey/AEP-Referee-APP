@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function RosterHelpPanel() {
@@ -19,12 +19,19 @@ export function RosterHelpPanel() {
           <HelpCircle className="h-3.5 w-3.5 text-primary" aria-hidden />
           Cómo montar una tarima
         </span>
-        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 transition-transform duration-200 ease-(--ease-out)",
+            open && "rotate-180",
+          )}
+        />
       </button>
       <div
         className={cn(
-          "grid gap-2 overflow-hidden text-xs text-muted-foreground transition-all",
-          open ? "mt-3 max-h-48 opacity-100" : "max-h-0 opacity-0",
+          // `transition-all` animaba también color y sombra sin motivo. Aquí lo
+          // que cambia es alto y opacidad, y nada más.
+          "grid gap-2 overflow-hidden text-xs text-muted-foreground transition-[max-height,opacity,margin] duration-200 ease-(--ease-out)",
+          open ? "mt-3 max-h-96 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         <ol className="list-decimal space-y-1.5 pl-4">

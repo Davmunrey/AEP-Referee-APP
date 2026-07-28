@@ -77,7 +77,7 @@ function MarksTable({
 export function AepGuidePanel() {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-primary/20 bg-primary-muted/30 px-4 py-3 text-sm leading-relaxed text-foreground-secondary">
+      <div className="rounded-xl border border-primary-border bg-primary-muted px-4 py-3 text-sm leading-relaxed text-foreground-secondary">
         <p>
           <strong className="text-foreground">{AEP_GUIDE_META.title}</strong> — temporada{" "}
           {AEP_GUIDE_META.season}. Última actualización: {AEP_GUIDE_META.updated}. Referencia

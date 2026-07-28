@@ -188,21 +188,41 @@ export async function POST(request: Request) {
 
   const created: Competition[] = [];
   const errors: string[] = [];
+  // Una sola lectura para todo el lote: `existing` ya está cargado arriba. Se
+  // reutiliza su {id, nombre, fecha, tipo} para el dedupe + max-id de cada
+  // inserción, y se le añaden las creadas para que la siguiente iteración
+  // deduplique y numere correctamente (antes cada createCompetition releía la
+  // tabla entera → O(N²)).
+  const existingForDedup = existing.map((c) => ({
+    id: c.id,
+    nombre: c.nombre,
+    fecha: c.fecha,
+    tipo: c.tipo,
+  }));
   for (const entry of toCreate) {
     if (!entry.fechaInicio || !entry.tipo) continue;
     try {
-      const comp = await dataService.createCompetition({
-        nombre: entry.nombre,
-        tipo: entry.tipo,
-        fecha: entry.fechaInicio,
-        fechaFin: entry.fechaFin ?? entry.fechaInicio,
-        sede: entry.localidad,
-        sesiones: entry.tipo === "AEP-1" ? 4 : entry.tipo === "AEP-2" ? 3 : 2,
-        requeridos:
-          entry.tipo === "AEP-1" ? 12 : entry.tipo === "AEP-2" ? 9 : 6,
-        zona: entry.zona,
-      });
+      const comp = await dataService.createCompetition(
+        {
+          nombre: entry.nombre,
+          tipo: entry.tipo,
+          fecha: entry.fechaInicio,
+          fechaFin: entry.fechaFin ?? entry.fechaInicio,
+          sede: entry.localidad,
+          sesiones: entry.tipo === "AEP-1" ? 4 : entry.tipo === "AEP-2" ? 3 : 2,
+          requeridos:
+            entry.tipo === "AEP-1" ? 12 : entry.tipo === "AEP-2" ? 9 : 6,
+          zona: entry.zona,
+        },
+        { existing: existingForDedup },
+      );
       created.push(comp);
+      existingForDedup.push({
+        id: comp.id,
+        nombre: comp.nombre,
+        fecha: comp.fecha,
+        tipo: comp.tipo,
+      });
     } catch (e) {
       errors.push(
         `${entry.nombre}: ${e instanceof Error ? e.message : "error desconocido"}`,

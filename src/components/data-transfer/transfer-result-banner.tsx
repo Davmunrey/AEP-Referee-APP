@@ -22,8 +22,8 @@ export function TransferResultBanner({
       className={cn(
         "mb-4 flex gap-3 rounded-lg border p-3 text-sm",
         isOk
-          ? "border-success-border bg-success-muted/40 text-foreground"
-          : "border-destructive-border bg-destructive-muted/30 text-foreground",
+          ? "border-success-border bg-success-muted text-foreground"
+          : "border-destructive-border bg-destructive-muted text-foreground",
         className,
       )}
     >

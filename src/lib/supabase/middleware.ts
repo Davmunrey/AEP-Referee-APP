@@ -52,16 +52,27 @@ export async function updateSession(request: NextRequest) {
   }
   const { pathname } = request.nextUrl;
 
+  // Cualquier respuesta alternativa (redirect/401) debe llevar las cookies que
+  // setAll escribió en supabaseResponse: si getUser() acaba de rotar el token de
+  // refresco y las descartamos, el navegador conserva un token ya invalidado y
+  // la sesión se cierra aleatoriamente.
+  const withSessionCookies = (response: NextResponse) => {
+    supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+    return response;
+  };
+
   if (!user && !isPublic(pathname)) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+      return withSessionCookies(
+        NextResponse.json({ error: "No autenticado" }, { status: 401 }),
+      );
     }
     const signIn = new URL("/sign-in", request.url);
-    return NextResponse.redirect(signIn);
+    return withSessionCookies(NextResponse.redirect(signIn));
   }
 
   if (user && (pathname === "/sign-in" || pathname === "/sign-up" || pathname === "/login")) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return withSessionCookies(NextResponse.redirect(new URL("/", request.url)));
   }
 
   return supabaseResponse;

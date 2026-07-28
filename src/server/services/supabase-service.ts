@@ -5,6 +5,7 @@ import { examsService } from "./supabase-exams";
 import { refereeService } from "./supabase-referees";
 import { rosterService } from "./supabase-roster";
 import { compensationService } from "./supabase-compensation";
+import { ticketService } from "./supabase-tickets";
 
 export const supabaseDataService = {
   // ── Meta / Analytics ─────────────────────────────────────────────────────
@@ -73,10 +74,20 @@ export const supabaseDataService = {
       actor,
       competitionService.getCompetition,
       refereeService.getReferee,
-      (cId, sKey, rId) =>
-        rosterService.validateAssign(cId, sKey, rId, competitionService.getCompetition, refereeService.getReferee),
       slotFlags,
       crossZoneReason,
+    ),
+  assignRefereesBatch: (
+    competitionId: string,
+    entries: import("./supabase-roster").RosterBatchAssignment[],
+    actor: string,
+  ) =>
+    rosterService.assignRefereesBatch(
+      competitionId,
+      entries,
+      actor,
+      competitionService.getCompetition,
+      refereeService.getRefereesByIds,
     ),
   clearSlot: rosterService.clearSlot,
   clearRosterAssignments: (competitionId: string, actor: string) =>
@@ -131,4 +142,11 @@ export const supabaseDataService = {
     compensationService.getClaimForExport(competitionId, refereeId),
   getCompensationHub: (user: import("@/lib/types").SessionUser) =>
     compensationService.getHub(user),
+
+  // ── Tickets de soporte ────────────────────────────────────────────────────
+  getTickets: ticketService.getTickets,
+  getTicket: ticketService.getTicket,
+  createTicket: ticketService.createTicket,
+  addTicketComment: ticketService.addComment,
+  updateTicketStatus: ticketService.updateTicketStatus,
 };

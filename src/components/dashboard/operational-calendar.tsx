@@ -21,14 +21,20 @@ const statusDot: Record<EventStatus, string> = {
   Completo: "bg-success",
   Incompleto: "bg-warning",
   Crítico: "bg-destructive",
-  Borrador: "bg-muted-foreground/40",
+  // bg-subtle: mismo gris que usa Borrador en coverage-forecast y kpi-cards.
+  Borrador: "bg-subtle",
 };
 
-const statusCellBg: Record<EventStatus, string> = {
-  Completo: "rgba(63,159,106,0.10)",
-  Crítico: "rgba(212,52,38,0.10)",
-  Incompleto: "rgba(232,168,44,0.10)",
-  Borrador: "rgba(122,114,105,0.07)",
+// Clases semánticas, no rgba() sueltos: los tonos hex anteriores ni siquiera
+// pertenecían a la paleta del tema.
+// El hover sube el mismo tinte de estado (10% → 22%) en lugar de aclarar con
+// `brightness`: sobre un tinte claro el filtro casi no se nota y además lava
+// el color del texto encima, que no debería moverse.
+const statusCellClass: Record<EventStatus, string> = {
+  Completo: "bg-success/10 hover:bg-success/22",
+  Crítico: "bg-destructive/10 hover:bg-destructive/22",
+  Incompleto: "bg-warning/10 hover:bg-warning/22",
+  Borrador: "bg-subtle/10 hover:bg-subtle/22",
 };
 
 function buildWeeks(year: number, month: number): { day: number; month: number; year: number }[][] {
@@ -102,7 +108,7 @@ export function OperationalCalendar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 rounded-lg"
+            className="h-8 w-8 rounded-lg"
             aria-label="Mes anterior"
             onClick={goBack}
           >
@@ -111,7 +117,7 @@ export function OperationalCalendar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 rounded-lg"
+            className="h-8 w-8 rounded-lg"
             aria-label="Mes siguiente"
             onClick={goNext}
           >
@@ -121,14 +127,16 @@ export function OperationalCalendar({
       </CardHeader>
       <CardContent className="p-0">
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 border-b border-border bg-surface/50">
+        {/* select-none: las iniciales de los días son cromo de la rejilla; al
+            arrastrar sobre el calendario no deberían quedar seleccionadas. */}
+        <div className="grid select-none grid-cols-7 border-b border-border bg-surface/50">
           {WEEKDAYS.map((d, idx) => (
             <div
               key={d}
               className={cn(
                 "border-r border-border/50 px-2 py-1.5 font-mono text-[10px] tracking-widest last:border-r-0",
                 // Weekend tone (SAB=5, DOM=6)
-                idx >= 5 ? "text-muted-foreground/40" : "text-muted-foreground/60",
+                idx >= 5 ? "text-muted-foreground/70" : "text-muted-foreground",
               )}
             >
               {d}
@@ -150,7 +158,9 @@ export function OperationalCalendar({
                 <div
                   key={`${wi}-${di}`}
                   className={cn(
-                    "relative min-h-[64px] border-b border-r border-border/50 last:border-r-0 xl:min-h-[68px]",
+                    // min-w-0: sin él, el badge whitespace-nowrap fuerza columnas
+                    // de >66px y la rejilla de 7 desborda (días recortados en móvil).
+                    "relative min-h-[64px] min-w-0 overflow-hidden border-b border-r border-border/50 last:border-r-0 xl:min-h-[68px]",
                     otherMonth && "bg-surface/30 opacity-50",
                     isWeekend && !otherMonth && "bg-surface/40",
                   )}
@@ -192,15 +202,18 @@ export function OperationalCalendar({
                     <Link
                       href={`/competitions/${evt.id}`}
                       className={cn(
-                        "mx-1.5 mb-1.5 mt-0.5 block rounded-lg px-1.5 py-1 transition-colors hover:brightness-110",
+                        "mx-1.5 mb-1.5 mt-0.5 block rounded-lg px-1.5 py-1 transition-colors focus-ring",
+                        statusCellClass[evt.estado],
                         evt.rangePosition === "middle" && "rounded-l-none rounded-r-none",
                         evt.rangePosition === "start" && "rounded-r-none",
                         evt.rangePosition === "end" && "rounded-l-none",
                       )}
-                      style={{ background: statusCellBg[evt.estado] }}
                       title={`${evt.label} · ${evt.fecha}${evt.fechaFin !== evt.fecha ? ` → ${evt.fechaFin}` : ""}`}
                     >
-                      <EventTypeBadge tipo={evt.tipo} />
+                      {/* En móvil solo la etiqueta truncada: el badge nowrap desbordaba la rejilla. */}
+                      <span className="hidden md:block">
+                        <EventTypeBadge tipo={evt.tipo} />
+                      </span>
                       <p className="mt-0.5 truncate text-[10px] font-medium leading-tight text-foreground/70">
                         {evt.label}
                       </p>

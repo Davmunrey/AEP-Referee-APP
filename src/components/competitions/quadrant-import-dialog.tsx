@@ -242,7 +242,7 @@ export function QuadrantImportDialog({
                     <td className="px-2 py-1.5">
                       <input
                         type="checkbox"
-                        className="h-4 w-4 accent-primary disabled:opacity-30"
+                        className="h-4 w-4 rounded border-border accent-primary disabled:opacity-30"
                         checked={selectedKeys.has(candidate.key)}
                         disabled={!candidate.importable}
                         onChange={() => toggleKey(candidate.key)}

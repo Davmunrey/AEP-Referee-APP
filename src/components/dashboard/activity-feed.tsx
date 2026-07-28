@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight, History } from "lucide-react";
 import { ActivityTypeBadge } from "@/components/aep/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ActivityItem } from "@/lib/types";
@@ -20,7 +21,7 @@ function avatarColor(name: string): string {
     "bg-info/15 text-info-soft",
     "bg-success/15 text-success",
     "bg-warning/15 text-warning",
-    "bg-purple-500/15 text-purple-400",
+    "bg-surface-active text-foreground-secondary",
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
@@ -37,21 +38,31 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
     <Card className="overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
         <CardTitle className="text-sm font-semibold">Actividad reciente</CardTitle>
-        <Link href="/approvals" className="text-xs font-medium text-primary hover:text-primary/80">
-          Ver todo →
+        <Link
+          href="/approvals"
+          className="inline-flex items-center gap-1 rounded-md text-xs font-medium text-primary hover:text-primary/80 focus-ring"
+        >
+          Ver todo
+          <ArrowRight className="h-3 w-3" aria-hidden="true" />
         </Link>
       </CardHeader>
       <CardContent className="p-0">
         {activity.length === 0 && (
-          <p className="px-4 py-10 text-center text-xs text-muted-foreground/60">
-            Sin actividad reciente.
-          </p>
+          <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+            <History className="h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-medium text-foreground/70">Sin actividad reciente</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Los cambios en tarimas, aprobaciones y censo aparecerán aquí.
+              </p>
+            </div>
+          </div>
         )}
         <ul>
           {activity.map((item, i) => (
             <li
               key={i}
-              className="flex gap-3 px-4 py-3 transition-colors hover:bg-surface-hover"
+              className="flex gap-3 px-4 py-3"
             >
               {/* Actor avatar */}
               <div
@@ -68,7 +79,7 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
               <div className="min-w-0 flex-1 pt-0.5">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <ActivityTypeBadge tipo={item.tipo} />
-                  <time className="font-mono text-[10px] text-muted-foreground/50">
+                  <time className="font-mono text-[10px] text-muted-foreground">
                     {relativeTime(item.hace)}
                   </time>
                 </div>

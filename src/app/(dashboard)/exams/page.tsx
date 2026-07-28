@@ -63,12 +63,16 @@ export default async function ExamsPage() {
 
   return (
     <PageShell>
-      <PageHeader
-        eyebrow="Gestión de jueces"
-        title="Exámenes de jueces"
-        description="Altas de nuevos jueces, ascensos a categoría IPF y recertificaciones"
-      />
-      <p className="-mt-2 text-sm text-subtle-muted">{AEP_JUDGE_LICENSE_NOTE}</p>
+      <div>
+        <PageHeader
+          eyebrow="Gestión de jueces"
+          title="Exámenes de jueces"
+          description="Altas de nuevos jueces, ascensos a categoría IPF y recertificaciones"
+        />
+        <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+          {AEP_JUDGE_LICENSE_NOTE}
+        </p>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label}>

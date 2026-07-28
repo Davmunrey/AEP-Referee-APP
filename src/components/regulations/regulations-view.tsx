@@ -29,7 +29,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
         part.toLowerCase() === query.toLowerCase() ? (
           <mark
             key={i}
-            className="rounded-sm bg-warning/25 px-0.5 font-medium text-foreground not-italic"
+            className="rounded-sm bg-warning-muted px-0.5 font-medium text-foreground not-italic"
           >
             {part}
           </mark>

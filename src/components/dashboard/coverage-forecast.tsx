@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { daysUntil } from "@/lib/dashboard-intelligence";
 import type { EventCoverage, EventStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { CalendarClock } from "lucide-react";
+import { ArrowRight, CalendarClock } from "lucide-react";
 import Link from "next/link";
 
 const BAR_TONE: Record<EventStatus, string> = {
@@ -48,14 +48,15 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
         </CardTitle>
         <Link
           href="/competitions"
-          className="text-xs font-medium text-primary hover:text-primary/80"
+          className="inline-flex items-center gap-1 rounded-md text-xs font-medium text-primary hover:text-primary/80 focus-ring"
         >
-          Ver campeonatos →
+          Ver campeonatos
+          <ArrowRight className="h-3 w-3" aria-hidden="true" />
         </Link>
       </CardHeader>
       <CardContent className="space-y-1 p-3">
         {upcoming.length === 0 && (
-          <p className="py-8 text-center text-xs text-muted-foreground/60">
+          <p className="py-8 text-center text-xs text-muted-foreground">
             Sin competiciones programadas.
           </p>
         )}
@@ -66,7 +67,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
             <Link
               key={c.id}
               href={`/competitions/${c.id}`}
-              className="group block rounded-xl p-2.5 transition-colors hover:bg-surface-hover"
+              className="group block rounded-xl p-2.5 transition-colors hover:bg-surface-hover focus-ring"
             >
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="truncate text-[13px] font-medium text-foreground">
@@ -75,7 +76,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
                 {/* Days-until pill */}
                 <span
                   className={cn(
-                    "shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold",
+                    "shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
                     day.pill,
                   )}
                 >
@@ -86,7 +87,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
               {/* Progress bar — taller, rounded, with hover detail */}
               <div className="flex items-center gap-2.5">
                 <div
-                  className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface-active"
+                  className="relative h-2 flex-1 overflow-hidden rounded-full bg-surface-active"
                   role="progressbar"
                   aria-valuenow={pct}
                   aria-valuemin={0}
@@ -95,7 +96,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
                 >
                   <div
                     className={cn(
-                      "h-full rounded-full transition-all duration-500",
+                      "h-full rounded-full transition-[width] duration-500",
                       BAR_TONE[c.estado],
                     )}
                     style={{ width: `${Math.max(pct, 3)}%` }}
@@ -103,7 +104,10 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
                 </div>
                 <span
                   className={cn(
-                    "shrink-0 font-mono text-[11px] font-semibold",
+                    // w-14 + text-right: la columna de progreso queda alineada
+                    // entre filas en vez de bailar con el ancho de "3/12" vs
+                    // "12/12"; sin ella las barras tienen longitudes distintas.
+                    "w-14 shrink-0 text-right font-mono text-[11px] font-semibold tabular-nums",
                     STATUS_TEXT[c.estado],
                   )}
                 >
