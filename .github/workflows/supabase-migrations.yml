@@ -1,40 +1,88 @@
-# Aplica las migraciones pendientes de supabase/migrations/ contra la base
-# de datos de producción en cada merge a main que las toque (o a mano desde
-# la pestaña Actions con "Run workflow").
+# Aplica solas las migraciones pendientes de supabase/migrations/ contra la
+# base de datos de producción, en cada push a main. Sin pasos manuales.
 #
-# Secret necesario (Settings → Secrets and variables → Actions):
-#   SUPABASE_DB_URL — cadena de conexión del *Session pooler* (puerto 5432),
-#     de Supabase → Project Settings → Database → Connection string.
-#     La conexión directa db.<ref>.supabase.co no vale: es solo IPv6 y los
-#     runners de GitHub solo tienen IPv4.
+# ── El único secret que hay que crear ────────────────────────────────────────
+#   SUPABASE_DB_URL
+#     Supabase → Project Settings → Database → Connection string → *Session
+#     pooler* (puerto 5432), con la contraseña dentro.
+#
+#     Dos avisos que cuestan un despliegue si se pasan por alto:
+#       · NO uses la conexión directa db.<ref>.supabase.co: solo resuelve por
+#         IPv6 y los runners de GitHub únicamente tienen IPv4.
+#       · La cadena debe ir percent-encoded (lo exige el CLI). Si la contraseña
+#         lleva @ : / ? # o %, sustitúyelos por %40 %3A %2F %3F %23 %25.
+#
+# ── Por qué hay un paso de "punto de partida" ────────────────────────────────
+# Las migraciones 001 a 033 se aplicaron a mano en el editor SQL, antes de que
+# existiera este workflow, así que la tabla de control del CLI
+# (supabase_migrations.schema_migrations) está vacía. Y el CLI, cuando esa tabla
+# no existe, concluye literalmente que «the remote project has no migrations»
+# (pkg/migration/list.go): un `db push` a secas intentaría reaplicar las 33
+# desde la 001 sobre datos reales. El paso de repair las marca como aplicadas
+# sin ejecutarlas, y deja que a partir de ahí solo corra lo nuevo.
 name: Migraciones Supabase
 
 on:
   push:
     branches: [main]
-    paths:
-      - "supabase/migrations/**"
   workflow_dispatch:
 
+# Dos pushes seguidos no pueden migrar a la vez; el segundo espera al primero
+# en vez de cancelarlo (cancelar a mitad de un DDL es justo lo que no queremos).
 concurrency:
   group: supabase-migrations
   cancel-in-progress: false
 
 jobs:
   aplicar:
+    name: Aplicar migraciones pendientes
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Comprobar secret
+      - name: Comprobar que el secret existe
         run: |
-          if [ -z "${{ secrets.SUPABASE_DB_URL }}" ]; then
-            echo "::error::Falta el secret SUPABASE_DB_URL (cadena del Session pooler, puerto 5432)."
+          if [ -z "${SUPABASE_DB_URL}" ]; then
+            echo "::error title=Falta SUPABASE_DB_URL::Crea el secret en Settings → Secrets and variables → Actions con la cadena del Session pooler (puerto 5432, percent-encoded)."
             exit 1
           fi
 
-      - name: Aplicar migraciones pendientes
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: ./scripts/apply-migrations.sh
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Marcar como aplicadas las migraciones que ya se pasaron a mano
+        run: |
+          set -euo pipefail
+          # Todo lo anterior o igual a la 033 se aplicó manualmente. Comparación
+          # de cadenas, válida porque los prefijos van con ceros a la izquierda.
+          versiones=$(
+            find supabase/migrations -maxdepth 1 -name '*.sql' -printf '%f\n' \
+              | cut -d_ -f1 \
+              | awk '$1 <= "033"' \
+              | sort
+          )
+          if [ -z "$versiones" ]; then
+            echo "No hay migraciones de referencia que marcar."
+            exit 0
+          fi
+          echo "Punto de partida: $(echo "$versiones" | tr '\n' ' ')"
+          # Idempotente: reafirmar que algo aplicado sigue aplicado no hace nada,
+          # así que este paso puede correr en cada push sin efectos secundarios.
+          # shellcheck disable=SC2086
+          supabase migration repair --db-url "$SUPABASE_DB_URL" --status applied $versiones
+
+      - name: Ver qué se va a aplicar
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+
+      - name: Aplicar
+        # --yes porque `db push` pide confirmación por consola y en CI no hay
+        # nadie para dársela: sin el flag el job se queda esperando.
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --yes
+
+      - name: Estado final del historial
+        if: always()
+        run: supabase migration list --db-url "$SUPABASE_DB_URL" || true
