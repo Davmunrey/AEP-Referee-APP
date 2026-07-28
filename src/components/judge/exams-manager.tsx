@@ -287,7 +287,8 @@ export function ExamsManager({
                 value={puntuacion}
                 onChange={(e) => setPuntuacion(e.target.value)}
                 placeholder="—"
-                className={selectFieldClass}
+                // Una nota de 0 a 100 se teclea; las flechas solo estorban.
+                className={cn(selectFieldClass, "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none")}
               />
             </label>
           </div>
@@ -418,13 +419,15 @@ export function ExamsManager({
                   >
                     <div
                       className={cn(
-                        "h-full rounded-full transition-all",
+                        // Solo el ancho, y con la misma curva/duración que el
+                        // resto de barras de progreso de la app.
+                        "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
                         pct >= 60 ? "bg-success" : "bg-destructive",
                       )}
                       style={{ width: `${Math.max(pct, 3)}%` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-subtle-muted">
+                  <span className="font-mono text-[11px] tabular-nums text-subtle-muted">
                     {exam.puntuacion}/{exam.puntuacionMaxima}
                   </span>
                 </div>

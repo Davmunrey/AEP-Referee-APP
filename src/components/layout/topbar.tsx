@@ -105,7 +105,9 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
               onKeyDown={(e) => {
                 if (e.key === "Enter") runSearch();
               }}
-              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-all duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60 xl:focus-visible:w-[17rem]"
+              // Propiedades explícitas en vez de `all`: lo único que cambia
+              // aquí es el color, el borde, el foco y el ancho al enfocar.
+              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-[color,background-color,border-color,box-shadow,width] duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60 xl:focus-visible:w-[17rem]"
               aria-label="Buscar jueces — pulsa Enter"
             />
           </div>

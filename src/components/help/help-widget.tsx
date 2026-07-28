@@ -71,7 +71,10 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       onClick={() => setOpen((o) => !o)}
       aria-label={open ? "Cerrar ayuda" : "Abrir ayuda"}
       aria-expanded={open}
-      className="fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      // Sombra teñida con el propio color del botón (los shadow-lg/xl de serie
+      // son negro plano y no pertenecen a la escala del tema). El scale al
+      // pulsar devuelve la sensación de que el botón ha oído el clic.
+      className="fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-primary transition-[background-color,box-shadow,transform] duration-150 hover:bg-primary/90 hover:shadow-primary-lg active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       {open ? <X className="h-5 w-5" /> : <HelpCircle className="h-6 w-6" />}
     </button>
@@ -84,7 +87,9 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       role="dialog"
       aria-modal="false"
       aria-label="Ayuda de AEP Tarima"
-      className="fixed bottom-20 right-5 z-[60] flex max-h-[min(36rem,calc(100vh-7rem))] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-border-strong bg-card shadow-xl"
+      // pop-in anclado abajo-derecha: el panel crece desde el botón que lo
+      // abre, en vez de materializarse de golpe en mitad de la pantalla.
+      className="pop-in [--pop-origin:bottom_right] fixed bottom-20 right-5 z-[60] flex max-h-[min(36rem,calc(100vh-7rem))] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-border-strong bg-card shadow-md"
     >
       {/* Cabecera */}
       <div className="border-b border-border bg-surface px-4 pb-3 pt-3.5">

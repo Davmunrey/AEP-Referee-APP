@@ -55,7 +55,9 @@ export function DashboardHero({
             <h1 className="text-[24px] font-semibold tracking-tight text-foreground sm:text-[26px]">
               {greet(user.nombre)}
             </h1>
-            <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+            {/* text-pretty: la frase de contexto cambia de longitud según los
+                datos del día; sin esto acaba a menudo en palabra huérfana. */}
+            <p className="mt-1.5 max-w-3xl text-pretty text-[13px] leading-relaxed text-muted-foreground">
               {pendingApprovals && Number(pendingApprovals.value) > 0 ? (
                 <>
                   Tienes{" "}

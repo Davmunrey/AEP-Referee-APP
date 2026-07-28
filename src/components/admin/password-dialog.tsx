@@ -8,6 +8,7 @@ import { api } from "@/lib/api/client";
 import { formatApiError } from "@/lib/api/error-message";
 import { Check, Loader2 } from "lucide-react";
 import { useEscapeClose } from "@/hooks/use-escape-close";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 interface PasswordDialogProps {
   /** "admin": resetea la de otro usuario. "self": cambia la propia. */
@@ -70,12 +71,12 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
       role="dialog"
       aria-modal="true"
       aria-labelledby="password-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div ref={panelRef} tabIndex={-1} className="outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl">
+      <div ref={panelRef} tabIndex={-1} className={`outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl ${dialogPanelEnter}`}>
         <h3 id="password-title" className="text-base font-semibold text-foreground">
           {mode === "self" ? "Cambiar mi contraseña" : "Resetear contraseña"}
         </h3>

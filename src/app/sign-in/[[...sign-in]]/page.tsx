@@ -7,8 +7,15 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+// Mismo foco que el resto de la app: el anillo usa el token --ring (no el
+// primario a pelo) y se separa 1px del borde, igual que <Input>.
 const inputClass =
-  "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-border-strong";
+  "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 transition-[color,background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:border-primary-border hover:border-border-strong";
+
+// Botones de la pantalla de acceso: no usan <Button> (esta ruta va sin el
+// bundle de la app), así que replican su gesto de pulsación.
+const submitClass =
+  "transition-[background-color,box-shadow,transform] duration-150 hover:bg-primary/90 active:scale-[0.98] focus-ring disabled:opacity-60 disabled:active:scale-100";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -153,7 +160,7 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
+                className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground ${submitClass}`}
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -167,7 +174,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="rounded text-xs text-muted-foreground/70 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="rounded text-xs text-muted-foreground/70 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline focus-ring"
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -188,7 +195,7 @@ export default function SignInPage() {
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
+                    className={`shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground ${submitClass}`}
                   >
                     {forgotLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -203,7 +210,9 @@ export default function SignInPage() {
             {error && (
               <div
                 role="alert"
-                className="mt-4 flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive-muted px-3.5 py-2.5"
+                // rise-in: el aviso no debe materializarse de golpe bajo el
+                // formulario; entra desde 4px con la curva del sistema.
+                className="rise-in mt-4 flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive-muted px-3.5 py-2.5"
               >
                 <AlertCircle
                   className="mt-px h-4 w-4 shrink-0 text-destructive"
@@ -215,7 +224,7 @@ export default function SignInPage() {
             {info && (
               <div
                 role="status"
-                className="mt-4 flex items-start gap-2.5 rounded-xl border border-success/20 bg-success-muted px-3.5 py-2.5"
+                className="rise-in mt-4 flex items-start gap-2.5 rounded-xl border border-success/20 bg-success-muted px-3.5 py-2.5"
               >
                 <CheckCircle2
                   className="mt-px h-4 w-4 shrink-0 text-success"

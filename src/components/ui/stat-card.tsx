@@ -19,7 +19,10 @@ export function StatCard({ label, value, sub, accent = "neutral", className }: S
   return (
     <Card
       className={cn(
-        "overflow-hidden transition-all duration-200",
+        // Card ya trae su propia transición acotada (color/fondo/borde/sombra);
+        // `transition-all duration-200` aquí solo la pisaba con una lista
+        // abierta —y con otra duración— sin que la tarjeta tenga hover alguno.
+        "overflow-hidden",
         style.border,
         style.glow,
         className,
@@ -33,7 +36,9 @@ export function StatCard({ label, value, sub, accent = "neutral", className }: S
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className={cn("text-[2rem] font-bold leading-none tracking-tight", style.value)}>{value}</p>
+        <p className={cn("text-[2rem] font-bold leading-none tracking-tight tabular-nums", style.value)}>
+          {value}
+        </p>
         {sub ? <p className={cn("mt-2 text-xs", tokens.text.subtle)}>{sub}</p> : null}
       </CardContent>
     </Card>

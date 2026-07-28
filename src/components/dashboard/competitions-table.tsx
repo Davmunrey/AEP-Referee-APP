@@ -67,11 +67,11 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
                         <>
                           <div className="flex items-center gap-2">
                             <Progress value={pct} className="h-2 flex-1" />
-                            <span className="w-10 text-right font-mono text-xs text-muted-foreground">
+                            <span className="w-10 text-right font-mono text-xs tabular-nums text-muted-foreground">
                               {pct}%
                             </span>
                           </div>
-                          <p className="mt-1 text-[11px] text-subtle-muted">
+                          <p className="mt-1 text-[11px] tabular-nums text-subtle-muted">
                             {competition.confirmados}/{competition.requeridos} confirmados
                           </p>
                         </>

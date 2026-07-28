@@ -71,14 +71,22 @@ export function FileDropZone({
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
         className={cn(
-          "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-all duration-200 ease-out focus-ring",
+          // Misma ley que los huecos de la tarima: la zona crece un poco cuando
+          // el archivo está encima, para que se note que va a aceptarlo.
+          "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) focus-ring",
           dragOver
-            ? "border-primary bg-primary-muted shadow-card"
-            : "border-border-muted bg-surface/50 hover:border-border-strong hover:bg-surface-hover",
+            ? "scale-[1.01] border-primary bg-primary-muted shadow-card"
+            : "border-border-muted bg-surface/50 hover:border-border-strong hover:bg-surface-hover active:scale-[0.995]",
           disabled && "pointer-events-none opacity-50",
         )}
       >
-        <Upload className="h-8 w-8 text-subtle-muted" aria-hidden="true" />
+        <Upload
+          className={cn(
+            "h-8 w-8 transition-colors duration-150",
+            dragOver ? "text-primary" : "text-subtle-muted",
+          )}
+          aria-hidden="true"
+        />
         <span className="text-sm font-medium text-foreground">
           {file ? file.name : "Arrastra un archivo o haz clic para elegir"}
         </span>

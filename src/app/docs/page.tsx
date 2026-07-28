@@ -77,7 +77,11 @@ function Section({
         </span>
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground">
+      {/* Medida de lectura acotada a ~68ch solo en los párrafos: a 896px de
+          contenedor la prosa llegaba a ~110 caracteres por línea y el ojo
+          pierde el salto de renglón. Las rejillas de tarjetas siguen a ancho
+          completo porque no son texto corrido. */}
+      <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground [&>p]:max-w-[68ch]">
         {children}
       </div>
     </section>
@@ -103,7 +107,9 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
         {n}
       </span>
       <p className="text-sm font-semibold text-foreground">{title}</p>
-      <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{children}</p>
+      <p className="mt-0.5 max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground">
+        {children}
+      </p>
     </li>
   );
 }
@@ -163,7 +169,7 @@ export default async function DocsPage() {
             height={64}
             className="mx-auto h-14 w-auto"
           />
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground">
             AEP Tarima — Documentación
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
@@ -188,7 +194,7 @@ export default async function DocsPage() {
               <li key={item.id}>
                 <a
                   href={`#${item.id}`}
-                  className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+                  className="inline-flex items-center gap-1 rounded-sm text-sm text-primary underline-offset-2 transition-colors hover:underline focus-ring"
                 >
                   <ArrowRight className="h-3 w-3" aria-hidden="true" />
                   {item.label}
@@ -481,7 +487,7 @@ export default async function DocsPage() {
         <div className="mt-12 flex flex-col items-center gap-3 border-t border-border pt-6">
           <Link
             href={backHref}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-ring"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             {backLabel}

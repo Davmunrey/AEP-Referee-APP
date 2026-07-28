@@ -27,11 +27,14 @@ const statusDot: Record<EventStatus, string> = {
 
 // Clases semánticas, no rgba() sueltos: los tonos hex anteriores ni siquiera
 // pertenecían a la paleta del tema.
+// El hover sube el mismo tinte de estado (10% → 22%) en lugar de aclarar con
+// `brightness`: sobre un tinte claro el filtro casi no se nota y además lava
+// el color del texto encima, que no debería moverse.
 const statusCellClass: Record<EventStatus, string> = {
-  Completo: "bg-success/10",
-  Crítico: "bg-destructive/10",
-  Incompleto: "bg-warning/10",
-  Borrador: "bg-subtle/10",
+  Completo: "bg-success/10 hover:bg-success/22",
+  Crítico: "bg-destructive/10 hover:bg-destructive/22",
+  Incompleto: "bg-warning/10 hover:bg-warning/22",
+  Borrador: "bg-subtle/10 hover:bg-subtle/22",
 };
 
 function buildWeeks(year: number, month: number): { day: number; month: number; year: number }[][] {
@@ -124,7 +127,9 @@ export function OperationalCalendar({
       </CardHeader>
       <CardContent className="p-0">
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 border-b border-border bg-surface/50">
+        {/* select-none: las iniciales de los días son cromo de la rejilla; al
+            arrastrar sobre el calendario no deberían quedar seleccionadas. */}
+        <div className="grid select-none grid-cols-7 border-b border-border bg-surface/50">
           {WEEKDAYS.map((d, idx) => (
             <div
               key={d}
@@ -197,7 +202,7 @@ export function OperationalCalendar({
                     <Link
                       href={`/competitions/${evt.id}`}
                       className={cn(
-                        "mx-1.5 mb-1.5 mt-0.5 block rounded-lg px-1.5 py-1 transition-colors hover:brightness-110 focus-ring",
+                        "mx-1.5 mb-1.5 mt-0.5 block rounded-lg px-1.5 py-1 transition-colors focus-ring",
                         statusCellClass[evt.estado],
                         evt.rangePosition === "middle" && "rounded-l-none rounded-r-none",
                         evt.rangePosition === "start" && "rounded-r-none",

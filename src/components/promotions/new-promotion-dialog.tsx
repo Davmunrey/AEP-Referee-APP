@@ -9,6 +9,7 @@ import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 import type { Referee, RefereeLevel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ArrowRight, TrendingUp, X } from "lucide-react";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
 
@@ -120,7 +121,7 @@ export function NewPromotionDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
     >
       <div
@@ -129,7 +130,7 @@ export function NewPromotionDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-promo-title"
-        className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl outline-none"
+        className={`w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between">
@@ -193,7 +194,7 @@ export function NewPromotionDialog({
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, toLevel: l }))}
                     className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all focus-ring",
+                      "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-95 focus-ring",
                       form.toLevel === l
                         ? "border-primary bg-primary text-primary-foreground shadow-glow-primary"
                         : "border-border bg-surface text-foreground hover:border-border-strong hover:bg-surface-hover",

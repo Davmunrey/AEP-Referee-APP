@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   AlertCircle,
   ArrowLeft,
-  ChevronDown,
   ChevronRight,
   FileDown,
   Loader2,
@@ -29,6 +28,8 @@ import type { CompensationClaimPatch } from "@/lib/api/client-compensation";
 import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
 import type { Competition } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
+import { disclosureEnter } from "@/components/aep/motion";
 import { CompensationEuroInput, CompensationKmInput } from "./compensation-numeric-inputs";
 
 const CompensationExportDialog = dynamic(
@@ -336,14 +337,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           </Button>
         )}
         <div className="ml-auto text-right">
-          <p className="font-mono text-sm font-semibold text-foreground">
+          <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
             Total confirmado:{" "}
             {readiness?.readyForExport
               ? formatReceiptAmountEur(summary?.grandTotal ?? 0)
               : "—"}
           </p>
           {!readiness?.readyForExport && (summary?.provisionalTotal ?? 0) > 0 && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs tabular-nums text-muted-foreground">
               Provisional (sin km): {formatReceiptAmountEur(summary?.provisionalTotal ?? 0)}
             </p>
           )}
@@ -358,14 +359,17 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
 
       <div className="overflow-x-auto rounded-2xl border border-border-muted">
         <table className="w-full min-w-[880px] text-left text-sm">
-          <thead className="border-b border-border-muted bg-surface/50 text-[11px] uppercase tracking-wide text-subtle-muted">
+          {/* Cabecera: peso semibold como en el resto de tablas de la app, y las
+              columnas de dinero alineadas a la derecha junto a sus cifras — un
+              importe se lee por la coma, no por la primera letra. */}
+          <thead className="border-b border-border-muted bg-surface/50 text-[11px] font-semibold uppercase tracking-wide text-subtle-muted">
             <tr>
               <th className="w-8 px-2 py-2" />
               <th className="px-3 py-2">Juez</th>
               <th className="px-3 py-2">Funciones</th>
               <th className="px-3 py-2">Km i+v</th>
               <th className="px-3 py-2">Comparte</th>
-              <th className="px-3 py-2">Aloj.</th>
+              <th className="px-3 py-2 text-right">Aloj.</th>
               <th className="px-3 py-2">Resp.</th>
               <th
                 className="px-3 py-2"
@@ -382,15 +386,24 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               const isOpen = expanded.has(claim.refereeId);
               return (
                 <Fragment key={claim.refereeId}>
-                  <tr className="border-b border-border-muted/60">
+                  {/* Nueve columnas de ancho: sin realce de fila al pasar, seguir
+                      la horizontal de un juez hasta su total es pura fe. */}
+                  <tr className="border-b border-border-muted/60 transition-colors duration-100 hover:bg-surface-hover/60">
                     <td className="px-2 py-2">
                       <button
                         type="button"
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-ring"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-100 ease-(--ease-out) hover:bg-surface-hover hover:text-foreground active:scale-90 focus-ring"
                         onClick={() => toggleExpanded(claim.refereeId)}
                         aria-label={isOpen ? "Ocultar desglose" : "Ver desglose"}
                       >
-                        {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        {/* Gira en vez de cambiar de icono: el giro explica que se
+                            abre lo que hay debajo. */}
+                        <ChevronRight
+                          className={cn(
+                            "h-4 w-4 transition-transform duration-200 ease-(--ease-out)",
+                            isOpen && "rotate-90",
+                          )}
+                        />
                       </button>
                     </td>
                     <td className="px-3 py-2 font-medium">{claim.refereeName}</td>
@@ -419,7 +432,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           }}
                         />
                       ) : (
-                        <span className="font-mono text-xs">{claim.distanceKmRoundTrip ?? "—"}</span>
+                        <span className="font-mono text-xs tabular-nums">{claim.distanceKmRoundTrip ?? "—"}</span>
                       )}
                       {claim.travelMode === "shared_vehicle_passenger" && (
                         <p className="mt-0.5 text-[10px] text-muted-foreground">sin cobro km</p>
@@ -445,7 +458,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs">
+                    <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
                       {claim.financialComplete ? formatReceiptAmountEur(claim.lodgingAmount) : "—"}
                     </td>
                     <td className="px-3 py-2">
@@ -504,7 +517,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono font-semibold">
+                    <td className="px-3 py-2 text-right font-mono font-semibold tabular-nums">
                       {claim.financialComplete ? (
                         formatReceiptAmountEur(claim.totalAmount)
                       ) : (
@@ -531,7 +544,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   </tr>
                   {isOpen && (
                     <tr className="bg-surface/30">
-                      <td colSpan={canManage ? 10 : 9} className="px-4 py-3">
+                      <td colSpan={canManage ? 10 : 9} className={cn("px-4 py-3", disclosureEnter)}>
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           Desglose · {claim.refereeName}
                         </p>

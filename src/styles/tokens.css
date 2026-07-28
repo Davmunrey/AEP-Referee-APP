@@ -125,6 +125,21 @@
   --tracking-wider: 0.075em;
   --tracking-widest: 0.095em;
 
+  /* ── Movimiento ────────────────────────────────────────────────────── */
+  /* Curva única de salida. La `ease-out` de serie (0,0,.2,1) es demasiado
+   * blanda: arranca sin fuerza y la interfaz se percibe lenta justo en el
+   * instante que el usuario mira. Esta arranca rápido y frena largo.
+   * Es exactamente la que ya usan las entradas de diálogo de la app
+   * (components/aep/motion.ts, hasta ahora como valor arbitrario repetido):
+   * al vivir aquí, toda la app —hover, foco, menús, modales— frena igual. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Ritmo por defecto de cualquier `transition-*` que no declare duración ni
+   * curva: unifica de una vez las decenas de `transition-colors` sueltos que
+   * heredaban 150ms + ease-in-out (arranque lento = sensación de lag). */
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: var(--ease-out);
+
   /* ── Sombras (suaves, para fondo claro) ────────────────────────────── */
   --shadow-sm: 0 1px 2px color-mix(in srgb, var(--neutral-900) 6%, transparent);
   --shadow-md: 0 4px 16px color-mix(in srgb, var(--neutral-900) 8%, transparent);

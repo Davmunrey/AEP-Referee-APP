@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -70,7 +71,10 @@ export function TransferDialogShell({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm",
+        dialogOverlayEnter,
+      )}
       role="presentation"
       onClick={onClose}
     >
@@ -80,7 +84,12 @@ export function TransferDialogShell({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "transfer-enter flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-2xl border border-border-muted bg-card shadow-card",
+          // El panel entra como cualquier otro modal de la app. Antes usaba el
+          // keyframe `transfer-enter`, que además duplicaba la entrada: el marco
+          // y su contenido subían a la vez y el gesto se leía borroso. Ese
+          // keyframe sigue siendo el de los pasos interiores, no el del marco.
+          "flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-2xl border border-border-muted bg-card shadow-card",
+          dialogPanelEnter,
           maxWidthClass,
         )}
         onClick={(e) => e.stopPropagation()}

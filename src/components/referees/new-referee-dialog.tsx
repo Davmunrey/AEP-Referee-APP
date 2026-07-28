@@ -8,6 +8,7 @@ import type { RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { selectFieldClass } from "@/lib/design-tokens";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 const STATUSES: RefereeStatus[] = ["Activo", "Inactivo", "Sancionado"];
 
@@ -67,7 +68,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm ${dialogOverlayEnter}`}
       onClick={onClose}
     >
       <div
@@ -76,7 +77,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-referee-title"
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-xl outline-none"
+        className={`w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-xl outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Dialog header */}
