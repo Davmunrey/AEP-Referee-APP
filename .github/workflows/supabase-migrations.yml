@@ -1,0 +1,40 @@
+# Aplica las migraciones pendientes de supabase/migrations/ contra la base
+# de datos de producción en cada merge a main que las toque (o a mano desde
+# la pestaña Actions con "Run workflow").
+#
+# Secret necesario (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL — cadena de conexión del *Session pooler* (puerto 5432),
+#     de Supabase → Project Settings → Database → Connection string.
+#     La conexión directa db.<ref>.supabase.co no vale: es solo IPv6 y los
+#     runners de GitHub solo tienen IPv4.
+name: Migraciones Supabase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-migrations
+  cancel-in-progress: false
+
+jobs:
+  aplicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobar secret
+        run: |
+          if [ -z "${{ secrets.SUPABASE_DB_URL }}" ]; then
+            echo "::error::Falta el secret SUPABASE_DB_URL (cadena del Session pooler, puerto 5432)."
+            exit 1
+          fi
+
+      - name: Aplicar migraciones pendientes
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: ./scripts/apply-migrations.sh
