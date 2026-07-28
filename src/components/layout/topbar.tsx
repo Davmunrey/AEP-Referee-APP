@@ -80,9 +80,11 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
         </nav>
         {meta.title && !pathname.startsWith("/competitions/") && (
           <div className="hidden min-w-0 border-l border-border-muted pl-3 xl:block">
-            <h1 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
+            {/* <p>, no <h1>: el h1 canónico de cada página lo pone PageHeader;
+                dos h1 simultáneos rompen la jerarquía para lectores de pantalla. */}
+            <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
               {meta.title}
-            </h1>
+            </p>
             {meta.subtitle && <p className="text-xs text-subtle-muted">{meta.subtitle}</p>}
           </div>
         )}
@@ -103,7 +105,9 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
               onKeyDown={(e) => {
                 if (e.key === "Enter") runSearch();
               }}
-              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-all duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60 xl:focus-visible:w-[17rem]"
+              // Propiedades explícitas en vez de `all`: lo único que cambia
+              // aquí es el color, el borde, el foco y el ancho al enfocar.
+              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-[color,background-color,border-color,box-shadow,width] duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60 xl:focus-visible:w-[17rem]"
               aria-label="Buscar jueces — pulsa Enter"
             />
           </div>
@@ -112,7 +116,7 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
           <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-full focus-ring">
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-foreground">{currentUser.nombre}</p>
-              <p className="max-w-[140px] truncate text-[10px] text-subtle-muted">{currentUser.rol}</p>
+              <p className="max-w-[140px] truncate text-[11px] text-muted-foreground">{currentUser.rol}</p>
             </div>
             <Avatar className="h-8 w-8 ring-2 ring-border transition-shadow hover:ring-primary/30">
               <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">

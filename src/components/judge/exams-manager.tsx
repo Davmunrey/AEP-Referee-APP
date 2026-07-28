@@ -72,6 +72,12 @@ export function ExamsManager({
   const router = useRouter();
   const [exams, setExams] = useState(initialExams);
   const [showForm, setShowForm] = useState(false);
+
+  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
+  // patrón que competitions-table). Solo toca la lista, no el formulario.
+  useEffect(() => {
+    setExams(initialExams);
+  }, [initialExams]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -184,7 +190,7 @@ export function ExamsManager({
           <Button
             size="sm"
             variant={showForm ? "outline" : "default"}
-            className="gap-1.5 rounded-xl"
+            className="gap-1.5"
             onClick={() => setShowForm((v) => !v)}
           >
             {showForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -281,7 +287,8 @@ export function ExamsManager({
                 value={puntuacion}
                 onChange={(e) => setPuntuacion(e.target.value)}
                 placeholder="—"
-                className={selectFieldClass}
+                // Una nota de 0 a 100 se teclea; las flechas solo estorban.
+                className={cn(selectFieldClass, "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none")}
               />
             </label>
           </div>
@@ -300,7 +307,7 @@ export function ExamsManager({
             </p>
           )}
           <div className="flex justify-end">
-            <Button size="sm" className="rounded-xl" disabled={busy} onClick={submit}>
+            <Button size="sm" disabled={busy} onClick={submit}>
               {busy ? "Guardando…" : "Registrar examen"}
             </Button>
           </div>
@@ -339,7 +346,7 @@ export function ExamsManager({
           {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
             <button
               type="button"
-              className="flex items-center gap-1 text-[11px] text-subtle-muted hover:text-foreground"
+              className="flex items-center gap-1 rounded text-[11px] text-subtle-muted hover:text-foreground focus-ring"
               onClick={() => { setFilterTipo("TODOS"); setFilterResultado("TODOS"); }}
             >
               <X className="h-3 w-3" />
@@ -412,13 +419,15 @@ export function ExamsManager({
                   >
                     <div
                       className={cn(
-                        "h-full rounded-full transition-all",
+                        // Solo el ancho, y con la misma curva/duración que el
+                        // resto de barras de progreso de la app.
+                        "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
                         pct >= 60 ? "bg-success" : "bg-destructive",
                       )}
                       style={{ width: `${Math.max(pct, 3)}%` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-subtle-muted">
+                  <span className="font-mono text-[11px] tabular-nums text-subtle-muted">
                     {exam.puntuacion}/{exam.puntuacionMaxima}
                   </span>
                 </div>

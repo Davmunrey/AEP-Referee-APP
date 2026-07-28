@@ -25,11 +25,6 @@ export function AppShell({
   navCounts: NavCounts;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [liveNavCounts, setLiveNavCounts] = useState(navCounts);
-
-  useEffect(() => {
-    setLiveNavCounts(navCounts);
-  }, [navCounts]);
 
   useEffect(() => {
     try {
@@ -65,7 +60,7 @@ export function AppShell({
       <Sidebar
         collapsed={collapsed}
         currentUser={currentUser}
-        navCounts={liveNavCounts}
+        navCounts={navCounts}
         onToggle={toggleCollapsed}
       />
       <div className="app-mesh relative flex min-w-0 flex-1 flex-col">

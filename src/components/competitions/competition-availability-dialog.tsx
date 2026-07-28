@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/client";
 import type { Referee } from "@/lib/types";
 import { zoneUiName } from "@/lib/aep-zones";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 interface CompetitionAvailabilityDialogProps {
   competitionId: string;
@@ -70,8 +71,8 @@ export function CompetitionAvailabilityDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl border border-border bg-surface shadow-xl">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}>
+      <div className={`flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl border border-border bg-card shadow-xl ${dialogPanelEnter}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
           <div className="flex items-center gap-2">

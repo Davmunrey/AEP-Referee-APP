@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatApiError } from "@/lib/api/error-message";
 import {
@@ -39,6 +39,14 @@ export function ExportPreviewDialog({
   const [text, setText] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Los padres suelen pasar `fetchText` como arrow inline (nueva en cada
+  // render); leerla desde un ref evita relanzar la exportación completa cada
+  // vez que el padre se re-renderiza con el diálogo abierto.
+  const fetchTextRef = useRef(fetchText);
+  useEffect(() => {
+    fetchTextRef.current = fetchText;
+  });
+
   useEffect(() => {
     if (!open) {
       setText(null);
@@ -52,7 +60,7 @@ export function ExportPreviewDialog({
       setLoading(true);
       setError(null);
       try {
-        const body = await fetchText();
+        const body = await fetchTextRef.current();
         if (!cancelled) setText(body);
       } catch (e) {
         if (!cancelled) setError(formatApiError(e, "No se pudo generar la exportación"));
@@ -63,7 +71,7 @@ export function ExportPreviewDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, fetchText]);
+  }, [open]);
 
   const truncatedPreview = text ? truncateTextPreview(text) : null;
 

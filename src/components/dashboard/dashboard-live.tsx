@@ -68,10 +68,12 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
             )}
           />
         </span>
-        <span className="text-[11.5px] font-medium text-foreground/70">
+        <span className="text-xs font-medium text-foreground/70">
           {isPending ? "Actualizando…" : auto ? "En vivo" : "Pausado"}
         </span>
-        <span className="text-[11px] text-muted-foreground/50">
+        {/* tabular-nums: el contador se reescribe cada segundo; con cifras de
+            ancho variable la línea entera daría un salto por tick. */}
+        <span className="text-[11px] tabular-nums text-muted-foreground">
           · {relativeLabel(elapsed)}
         </span>
       </div>
@@ -83,7 +85,7 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
           onClick={() => setAuto((v) => !v)}
           aria-pressed={auto}
           aria-label={auto ? "Pausar actualización automática" : "Reanudar actualización automática"}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring"
         >
           {auto ? (
             <Pause className="h-3 w-3" aria-hidden="true" />
@@ -97,7 +99,7 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
           onClick={refresh}
           disabled={isPending}
           aria-label="Actualizar panel ahora"
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring disabled:opacity-40"
         >
           <RefreshCw
             className={cn("h-3 w-3", isPending && "animate-spin")}

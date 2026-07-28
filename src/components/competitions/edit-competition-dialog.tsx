@@ -12,6 +12,7 @@ import { selectFieldClass } from "@/lib/design-tokens";
 import { zoneUiName } from "@/lib/aep-zones";
 import { AEP_COMPETITION_TYPE_DESC } from "@/lib/aep-guide-2026";
 import { cn } from "@/lib/utils";
+import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
 const EVENT_TYPES = ["AEP-1", "AEP-2", "AEP-3"] as const;
 
@@ -99,8 +100,8 @@ export function EditCompetitionDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface shadow-xl">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}>
+      <div className={`w-full max-w-md rounded-2xl border border-border bg-card shadow-xl ${dialogPanelEnter}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
           <div className="flex items-center gap-2">
@@ -134,7 +135,7 @@ export function EditCompetitionDialog({
           </div>
 
           {/* Tipo + Zona */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Tipo AEP
@@ -170,7 +171,7 @@ export function EditCompetitionDialog({
           </div>
 
           {/* Fechas */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Fecha inicio
@@ -217,7 +218,7 @@ export function EditCompetitionDialog({
 
           {/* Global error */}
           {globalError && (
-            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+            <div className="flex items-start gap-2 rounded-lg border border-destructive-border bg-destructive-muted px-3 py-2.5 text-sm text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               {globalError}
             </div>

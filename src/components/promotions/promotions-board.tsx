@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { LevelBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
@@ -89,6 +89,12 @@ export function PromotionsBoard({
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectComment, setRejectComment] = useState("");
   const router = useRouter();
+
+  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
+  // patrón que competitions-table).
+  useEffect(() => {
+    setItems(initial);
+  }, [initial]);
 
   const pendingCount = items.filter((p) => p.status === "pendiente").length;
   const approvedCount = items.filter((p) => p.status === "aprobado").length;
@@ -244,7 +250,7 @@ export function PromotionsBoard({
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="divide-y divide-border p-0">
+              <CardContent className="divide-y divide-border-muted p-0">
                 {groupItems.length === 0 ? (
                   <EmptyState
                     icon={TrendingUp}
@@ -300,7 +306,7 @@ export function PromotionsBoard({
                                   <button
                                     type="button"
                                     onClick={() => toggleMotivo(p.id)}
-                                    className="mt-0.5 inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline"
+                                    className="mt-0.5 inline-flex items-center gap-0.5 rounded text-[11px] text-primary hover:underline focus-ring"
                                   >
                                     {motivoExpanded ? (
                                       <>

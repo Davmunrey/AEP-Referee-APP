@@ -113,7 +113,7 @@ function parseDate(raw: string, year: number) {
     return { start: null, end: null, pendiente: true };
   }
 
-  const single = text.match(/^(\d{1,2})\s*[-/]?\s*([a-záéíóú]{3,5})$/i);
+  const single = text.match(/^(\d{1,2})\s*[-/]?\s*([a-záéíóú]{3,10})$/i);
   if (single) {
     const m = month(single[2]!);
     if (!m) return { start: null, end: null, pendiente: false };
@@ -122,7 +122,7 @@ function parseDate(raw: string, year: number) {
     return { start: date, end: date, pendiente: false };
   }
 
-  const sameMonth = text.match(/^(\d{1,2})(?:-\d{1,2})*-(\d{1,2})\s+([a-záéíóú]{3,5})$/i);
+  const sameMonth = text.match(/^(\d{1,2})(?:-\d{1,2})*-(\d{1,2})\s+([a-záéíóú]{3,10})$/i);
   if (sameMonth) {
     const m = month(sameMonth[3]!);
     if (!m) return { start: null, end: null, pendiente: false };
@@ -133,7 +133,7 @@ function parseDate(raw: string, year: number) {
     };
   }
 
-  const crossCompact = text.match(/^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3,5})-([a-záéíóú]{3,5})$/i);
+  const crossCompact = text.match(/^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3,10})-([a-záéíóú]{3,10})$/i);
   if (crossCompact) {
     const startMonth = month(crossCompact[3]!);
     const endMonth = month(crossCompact[4]!);
@@ -145,7 +145,7 @@ function parseDate(raw: string, year: number) {
     };
   }
 
-  const crossSpaced = text.match(/^(\d{1,2})\s+([a-záéíóú]{3,5})\s*-\s*(\d{1,2})\s+([a-záéíóú]{3,5})$/i);
+  const crossSpaced = text.match(/^(\d{1,2})\s+([a-záéíóú]{3,10})\s*-\s*(\d{1,2})\s+([a-záéíóú]{3,10})$/i);
   if (crossSpaced) {
     const startMonth = month(crossSpaced[2]!);
     const endMonth = month(crossSpaced[4]!);
@@ -157,7 +157,7 @@ function parseDate(raw: string, year: number) {
     };
   }
 
-  const monthRange = lower.match(/^([a-záéíóú]{3,5})\s*-\s*([a-záéíóú]{3,5})$/i);
+  const monthRange = lower.match(/^([a-záéíóú]{3,10})\s*-\s*([a-záéíóú]{3,10})$/i);
   if (monthRange) {
     const startMonth = month(monthRange[1]!);
     const endMonth = month(monthRange[2]!);

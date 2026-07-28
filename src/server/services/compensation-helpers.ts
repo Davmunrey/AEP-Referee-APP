@@ -1,8 +1,9 @@
+// Submódulos concretos: el barrel arrastra receipt-pdf (→ pdfkit) al cold start.
 import {
   buildCompensationClaim,
   calculateCompensationTotals,
-  classifyCompensationDuties,
-} from "@/lib/judge-compensation";
+} from "@/lib/judge-compensation/calculate";
+import { classifyCompensationDuties } from "@/lib/judge-compensation/classify-duties";
 import type { CompensationReceiptOrganizer } from "@/lib/judge-compensation/receipt-document";
 import {
   assessCompensationReadiness,

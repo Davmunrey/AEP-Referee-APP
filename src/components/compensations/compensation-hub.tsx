@@ -58,7 +58,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
   const { items, totalPendingKm, readyCount } = hub;
 
   return (
-    <PageShell className="space-y-4">
+    <PageShell>
       <PageHeader
         title="Compensación de jueces"
         description="Acceso directo a facturación y recibos por campeonato, sin ir tarima a tarima."
@@ -78,7 +78,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
       </div>
 
       {error && (
-        <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive-muted px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-lg border border-destructive-border bg-destructive-muted px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}

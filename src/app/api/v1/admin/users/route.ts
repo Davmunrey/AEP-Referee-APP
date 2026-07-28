@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { listAdminUsers } from "@/server/services/admin-users";
 import { USER_ROLES, type UserRole } from "@/lib/types";
 
 export async function GET() {
@@ -12,30 +13,12 @@ export async function GET() {
   if (!canManageUsers(user)) return jsonError("Sin permiso", 403);
   if (!isSupabaseConfigured()) return jsonError("Supabase no configurado", 503);
 
-  const admin = createAdminClient();
-  // Perfiles (profiles) + último inicio de sesión (auth.users, vía Admin API) en
-  // paralelo. `last_sign_in_at` no está en profiles; lo aporta GoTrue.
-  const [{ data, error }, authList] = await Promise.all([
-    admin
-      .from("profiles")
-      .select("id, email, nombre, rol_label, iniciales, role, zona, activo, created_at")
-      .order("nombre"),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-  ]);
-
-  if (error) return jsonServerError("admin.users.GET", error, "No se pudieron cargar los usuarios");
-
-  const lastSignInById = new Map<string, string | null>();
-  for (const authUser of authList.data?.users ?? []) {
-    lastSignInById.set(authUser.id, authUser.last_sign_in_at ?? null);
+  try {
+    const rows = await listAdminUsers();
+    return jsonOk(rows);
+  } catch (error) {
+    return jsonServerError("admin.users.GET", error, "No se pudieron cargar los usuarios");
   }
-
-  const rows = (data ?? []).map((profile) => ({
-    ...profile,
-    last_sign_in_at: lastSignInById.get(String(profile.id)) ?? null,
-  }));
-
-  return jsonOk(rows);
 }
 
 export async function POST(request: Request) {

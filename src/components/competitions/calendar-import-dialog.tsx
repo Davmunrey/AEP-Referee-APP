@@ -254,14 +254,14 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
               <tbody>
                 {preview.entries.map((e, i) => (
                   <tr
-                    key={i}
+                    key={e.key}
                     className="transfer-row-stagger border-t border-border"
                     style={{ animationDelay: `${Math.min(i, 7) * 40}ms` }}
                   >
                     <td className="px-2 py-1.5 align-top">
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-border text-primary accent-primary disabled:opacity-30"
+                        className="h-4 w-4 rounded border-border accent-primary disabled:opacity-30"
                         checked={selectedKeys.has(e.key)}
                         disabled={!e.importable}
                         aria-label={`Importar ${e.nombre}`}

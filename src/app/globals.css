@@ -106,6 +106,26 @@
     font-feature-settings: "ss01", "ss02";
   }
 
+  /*
+   * Preflight de Tailwind v4 ya no devuelve el puntero a los <button>: sin
+   * esto, media app (colapsar sidebar, pausar el directo, cambiar de mes,
+   * abrir ayuda, enviar el login) se siente inerte al pasar por encima.
+   * Solo los habilitados: un botón deshabilitado no debe prometer clic.
+   */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /*
+   * Barras de scroll: WebKit ya iba a 6px (abajo); Firefox se quedaba con las
+   * de serie, gruesas y grises, rompiendo el mismo panel en dos navegadores.
+   */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
   ::selection {
     background: var(--selection-bg);
     color: var(--selection-fg);
@@ -183,7 +203,9 @@
   }
 
   .skip-link {
-    @apply absolute -top-full left-4 z-[9999] rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-150 focus:top-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    /* transition-[top], no `all`: lo único que se mueve al enfocar es la
+     * posición vertical; `all` arrastraba también color, sombra y anillo. */
+    @apply absolute -top-full left-4 z-[9999] rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-[top] duration-150 focus:top-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
   .data-table-zebra tbody tr:nth-child(even) {
@@ -222,9 +244,79 @@
     }
   }
 
+  /*
+   * Entradas de superficies flotantes (menús, panel de ayuda) y de mensajes
+   * en línea. Nunca desde scale(0): nada aparece de la nada, así que se parte
+   * de un tamaño ya visible. Salen más rápido de lo que entran.
+   * `--pop-origin` deja anclar el escalado al disparador en vez de al centro.
+   */
+  .pop-in {
+    transform-origin: var(--pop-origin, center);
+    animation: pop-in 160ms var(--ease-out) both;
+  }
+
+  .rise-in {
+    animation: rise-in 180ms var(--ease-out) both;
+  }
+
+  .dropdown-pop {
+    transform-origin: var(--radix-dropdown-menu-content-transform-origin, center);
+  }
+
+  .dropdown-pop[data-state="open"] {
+    animation: pop-in 150ms var(--ease-out) both;
+  }
+
+  .dropdown-pop[data-state="closed"] {
+    animation: pop-out 100ms var(--ease-out) both;
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pop-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /*
+   * Solo el anillo. El `transition: box-shadow 120ms` que había aquí era un
+   * atajo (shorthand) y esta clase se emite DESPUÉS de las utilidades de
+   * Tailwind: pisaba la `transition-property` de todo elemento que llevara
+   * `focus-ring`, que es casi todo lo pulsable de la app. Resultado: el hover
+   * de los botones cambiaba de color de golpe y el `active:scale-[0.98]` del
+   * <Button> saltaba sin animar — el gesto estaba escrito pero no ocurría.
+   * Cada elemento declara ya su propia transición (Button, Input y Card
+   * incluyen box-shadow, así que el anillo sigue entrando suave); donde no la
+   * hay, el foco aparece instantáneo, que es justo lo que se quiere del foco.
+   */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
-    transition: box-shadow 120ms ease-out;
   }
 
   .bg-role-nacional {
@@ -347,8 +439,15 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    /* Sin desplazamiento ni escalado: el elemento aparece ya en su sitio.
+     * (La red global de arriba solo acorta la duración; aquí se elimina el
+     * movimiento, que es lo que molesta a quien pide movimiento reducido.) */
     .transfer-enter,
-    .transfer-row-stagger {
+    .transfer-row-stagger,
+    .pop-in,
+    .rise-in,
+    .dropdown-pop[data-state="open"],
+    .dropdown-pop[data-state="closed"] {
       animation: none;
     }
   }

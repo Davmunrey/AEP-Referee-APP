@@ -149,7 +149,7 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
           checked={replace}
           onChange={(e) => handleReplaceChange(e.target.checked)}
           disabled={loading || !!result}
-          className="mt-1"
+          className="mt-1 h-4 w-4 rounded border-border-strong accent-primary"
         />
         <span>
           Reemplazar el censo: elimina los jueces que ya no estén en este Excel y

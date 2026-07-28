@@ -30,7 +30,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (typeof body.puntuacion !== "number" || Number.isNaN(body.puntuacion)) {
       return jsonError("Puntuación inválida", 400);
     }
-    body.puntuacion = Math.min(100, Math.max(0, Math.round(body.puntuacion)));
+    // Clampa contra la puntuación máxima configurada en el examen (no un 100
+    // fijo): los exámenes tienen `puntuacionMaxima` configurable.
+    const maxScore = visibleExam.puntuacionMaxima > 0 ? visibleExam.puntuacionMaxima : 100;
+    body.puntuacion = Math.min(maxScore, Math.max(0, Math.round(body.puntuacion)));
   }
   const updated = await dataService.updateExam(id, body);
   if (!updated) return jsonError("Examen no encontrado", 404);

@@ -1,6 +1,7 @@
 import { canCreateCompetition } from "@/lib/permissions";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { validateCompetitionFields } from "@/app/api/_lib/validation";
 import { dataService } from "@/server/services";
 import type { Competition } from "@/lib/types";
 
@@ -22,17 +23,18 @@ export async function POST(request: Request) {
   if (!body.nombre || !body.tipo || !body.fecha || !body.fechaFin || !body.sede) {
     return jsonError("Faltan campos obligatorios", 400);
   }
-  if (body.fechaFin < body.fecha) {
-    return jsonError("La fecha de fin no puede ser anterior a la de inicio", 400);
-  }
   const sesiones = Math.round(Number(body.sesiones ?? 3));
   const requeridos = Math.round(Number(body.requeridos ?? 9));
-  if (!Number.isFinite(sesiones) || sesiones < 1 || sesiones > 6) {
-    return jsonError("Las sesiones deben estar entre 1 y 6", 400);
-  }
-  if (!Number.isFinite(requeridos) || requeridos < 1) {
-    return jsonError("Las plazas requeridas deben ser al menos 1", 400);
-  }
+  // Validación compartida con el PATCH de /competitions/[id]:
+  // enum de tipo, formato de fechas, fechaFin >= fecha y rangos numéricos.
+  const validationError = validateCompetitionFields({
+    tipo: body.tipo,
+    fecha: body.fecha,
+    fechaFin: body.fechaFin,
+    sesiones,
+    requeridos,
+  });
+  if (validationError) return jsonError(validationError, 400);
 
   // Un delegado de zona solo puede crear competiciones en SU zona.
   // Solo el super_admin puede asignar una zona arbitraria.
@@ -47,15 +49,24 @@ export async function POST(request: Request) {
     zona = body.zona ?? "";
   }
 
-  const comp = await dataService.createCompetition({
-    nombre: body.nombre,
-    tipo: body.tipo,
-    fecha: body.fecha,
-    fechaFin: body.fechaFin,
-    sede: body.sede,
-    sesiones,
-    requeridos,
-    zona,
-  });
-  return jsonOk(comp);
+  try {
+    const comp = await dataService.createCompetition({
+      nombre: body.nombre,
+      tipo: body.tipo,
+      fecha: body.fecha,
+      fechaFin: body.fechaFin,
+      sede: body.sede,
+      sesiones,
+      requeridos,
+      zona,
+    });
+    return jsonOk(comp);
+  } catch (e) {
+    // El servicio lanza un Error legible cuando detecta un duplicado
+    // (mismo nombre+fecha+tipo) → conflicto, no error interno.
+    if (e instanceof Error && e.message.startsWith("Ya existe un campeonato")) {
+      return jsonError(e.message, 409);
+    }
+    return jsonServerError("competitions.POST", e, "No se pudo crear el campeonato");
+  }
 }

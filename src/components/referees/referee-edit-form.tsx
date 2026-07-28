@@ -8,7 +8,7 @@ import { AddressAutocompleteField } from "@/components/maps/address-autocomplete
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { selectFieldClass } from "@/lib/design-tokens";
+import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 
 const STATUSES: RefereeStatus[] = ["Activo", "Inactivo"];
 
@@ -137,7 +137,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Editar ficha</CardTitle>
+        <CardTitle className="text-sm font-semibold">Editar ficha</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-3">
@@ -263,7 +263,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              className={textareaFieldClass}
             />
           </div>
 
@@ -273,7 +273,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
               type="checkbox"
               checked={disp}
               onChange={(e) => setDisp(e.target.checked)}
-              className="rounded border-border-strong"
+              className="h-4 w-4 rounded border-border-strong accent-primary"
             />
             Disponible para designaciones
           </label>

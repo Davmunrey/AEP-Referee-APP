@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { selectFieldClass } from "@/lib/design-tokens";
 import type { RosterGrupo } from "@/lib/types";
 import { Plus, Trash2 } from "lucide-react";
@@ -32,7 +33,7 @@ export function SessionGroupsEditor({
         </Button>
       </div>
       {list.map((grupo, gi) => (
-        <div key={`${grupo.nombre}-${gi}`} className="space-y-2 rounded border border-border bg-background p-2">
+        <div key={`${grupo.nombre}-${gi}`} className="space-y-2 rounded-lg border border-border bg-background p-2">
           <div className="flex flex-wrap items-center gap-2">
             <Input
               className="w-32"
@@ -43,7 +44,9 @@ export function SessionGroupsEditor({
             <Input
               type="number"
               min={0}
-              className="w-20"
+              // Sin flechas: el campo mide 5rem y las flechas se comen la cifra;
+              // aquí se teclea, no se sube de uno en uno.
+              className="w-20 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               value={grupo.levantadores ?? ""}
               onChange={(e) => onPatchGrupo(gi, { levantadores: e.target.value ? Math.max(0, Number(e.target.value)) : undefined })}
               placeholder="lev."
@@ -62,7 +65,7 @@ export function SessionGroupsEditor({
               <select
                 value={cat.genero}
                 onChange={(e) => onPatchGrupoCat(gi, ci, "genero", e.target.value)}
-                className={selectFieldClass}
+                className={cn(selectFieldClass, "h-8 rounded-lg")}
                 aria-label={`Género grupo categoría ${ci + 1}`}
               >
                 <option value="Hombres">Hombres</option>

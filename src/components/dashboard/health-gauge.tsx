@@ -101,20 +101,20 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
               className={style.ring}
               stroke="currentColor"
               strokeDasharray={`${dash} ${circumference}`}
-              style={{ transition: "stroke-dasharray 0.6s ease" }}
+              style={{ transition: "stroke-dasharray 500ms var(--ease-out)" }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-[2rem] font-bold leading-none tracking-tight xl:text-[2.2rem]", style.text)}>
+            <span className={cn("text-[2rem] font-bold leading-none tracking-tight tabular-nums xl:text-[2.2rem]", style.text)}>
               {health.score}
             </span>
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground/50">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
               / 100
             </span>
             {typeof health.delta === "number" && (
               <span
                 className={cn(
-                  "mt-1.5 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                  "mt-1.5 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
                   health.delta > 0
                     ? "bg-success-muted text-success"
                     : health.delta < 0
@@ -159,11 +159,11 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
                   aria-label={`${f.label}: ${f.score} de 100`}
                 >
                   <div
-                    className={cn("h-full rounded-full transition-all duration-500", factorTone(f.score))}
+                    className={cn("h-full rounded-full transition-[width] duration-500", factorTone(f.score))}
                     style={{ width: `${Math.max(f.score, 3)}%` }}
                   />
                 </div>
-                <p className="mt-0.5 text-[10.5px] text-muted-foreground/60">{f.detail}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{f.detail}</p>
               </li>
             ))}
           </ul>

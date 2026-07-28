@@ -36,6 +36,34 @@ import {
   syncCompetitionCoverage,
 } from "./supabase-helpers";
 
+/** Entrada de una asignación dentro de un lote de importación. */
+export interface RosterBatchAssignment {
+  slotKey: string;
+  refereeId: string;
+  flags?: SlotFlags;
+  crossZoneReason?: string;
+}
+
+/**
+ * Núcleo puro de validateAssign: mismos checks, mismo orden y mismos mensajes,
+ * pero sobre datos ya cargados (competición, juez y plantilla). Permite validar
+ * sin volver a golpear la base de datos cuando el llamante ya tiene los datos.
+ */
+function validateAssignWithData(
+  comp: Competition | undefined,
+  referee: Referee | undefined,
+  slotKey: string,
+  template: RosterSession[],
+): AssignValidation {
+  if (!comp || !referee) return { ok: false, error: "Datos no válidos" };
+  const parsed = parseSlotKey(slotKey);
+  if (!parsed) return { ok: false, error: "Slot inválido" };
+  if (!isSlotKeyInTemplate(template, slotKey)) {
+    return { ok: false, error: "El hueco no existe en la plantilla del campeonato" };
+  }
+  return validateAssignment(referee, parsed.roleKey as RoleKey, comp.tipo);
+}
+
 export const rosterService = {
   getRoster: async (
     competitionId: string,
@@ -71,24 +99,21 @@ export const rosterService = {
       .from("roster_assignments")
       .select("slot_key")
       .eq("competition_id", competitionId);
-    for (const row of existingRows ?? []) {
-      if (!validKeys.has(row.slot_key)) {
-        await supabase
-          .from("roster_assignments")
-          .delete()
-          .eq("competition_id", competitionId)
-          .eq("slot_key", row.slot_key);
-      }
+    // Un único DELETE ... IN para las filas huérfanas (antes: un round-trip por
+    // slot). Las filas restantes ya tienen sus flags correctos, así que no hace
+    // falta reescribirlos uno a uno.
+    const staleKeys = (existingRows ?? [])
+      .map((row) => String(row.slot_key))
+      .filter((key) => !validKeys.has(key));
+    if (staleKeys.length > 0) {
+      await supabase
+        .from("roster_assignments")
+        .delete()
+        .eq("competition_id", competitionId)
+        .in("slot_key", staleKeys);
     }
     const { assignments, flags } = await loadRosterAssignmentData(competitionId);
     const pruned = pruneAssignments(template, assignments, flags);
-    for (const [slotKey, flagVal] of Object.entries(pruned.flags)) {
-      await supabase
-        .from("roster_assignments")
-        .update({ flags: flagVal })
-        .eq("competition_id", competitionId)
-        .eq("slot_key", slotKey);
-    }
     await supabase
       .from("competitions")
       .update({ sesiones: template.length })
@@ -172,16 +197,14 @@ export const rosterService = {
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
     getRefereeFn: (id: string) => Promise<Referee | undefined>,
   ): Promise<AssignValidation> => {
-    const comp = await getCompetitionFn(competitionId);
-    const referee = await getRefereeFn(refereeId);
-    if (!comp || !referee) return { ok: false, error: "Datos no válidos" };
-    const parsed = parseSlotKey(slotKey);
-    if (!parsed) return { ok: false, error: "Slot inválido" };
-    const template = (await getCompetitionTemplate(competitionId)) ?? [];
-    if (!isSlotKeyInTemplate(template, slotKey)) {
-      return { ok: false, error: "El hueco no existe en la plantilla del campeonato" };
-    }
-    return validateAssignment(referee, parsed.roleKey as RoleKey, comp.tipo);
+    // Las tres lecturas son independientes: en paralelo ahorran round-trips sin
+    // cambiar la semántica (los checks se aplican después, en el mismo orden).
+    const [comp, referee, templateRaw] = await Promise.all([
+      getCompetitionFn(competitionId),
+      getRefereeFn(refereeId),
+      getCompetitionTemplate(competitionId),
+    ]);
+    return validateAssignWithData(comp, referee, slotKey, templateRaw ?? []);
   },
 
   assignReferee: async (
@@ -191,7 +214,6 @@ export const rosterService = {
     actor: string,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
     getRefereeFn: (id: string) => Promise<Referee | undefined>,
-    validateAssignFn: (cId: string, sKey: string, rId: string) => Promise<AssignValidation>,
     slotFlags?: SlotFlags,
     crossZoneReason?: string,
   ): Promise<{
@@ -200,24 +222,25 @@ export const rosterService = {
     crossZoneMap?: import("@/lib/types").CrossZoneMap;
     error?: string;
   }> => {
-    const [validation, comp, referee] = await Promise.all([
-      validateAssignFn(competitionId, slotKey, refereeId),
+    // Carga UNA vez, en paralelo, todo lo necesario: competición, juez,
+    // asignaciones+flags actuales y plantilla. Antes validateAssign volvía a
+    // cargar competición+juez+plantilla (≈10 consultas donde bastan ≈5); ahora
+    // se validan esos mismos datos ya cargados y la plantilla se reutiliza en el
+    // validateRosterOperation posterior.
+    const [comp, referee, { assignments, flags: existingFlags }, templateRaw] = await Promise.all([
       getCompetitionFn(competitionId),
       getRefereeFn(refereeId),
+      loadRosterAssignmentData(competitionId),
+      getCompetitionTemplate(competitionId),
     ]);
+    const template = templateRaw ?? [];
+    const validation = validateAssignWithData(comp, referee, slotKey, template);
     if (!validation.ok) return { error: validation.error };
     if (!comp) return { error: "Competición no encontrada" };
     const blocked = rosterMutationBlockedMessage(comp.aprobacion);
     if (blocked) return { error: blocked };
 
     const supabase = db();
-    // Una sola lectura de roster_assignments (antes loadAssignments + loadFlags
-    // escaneaban la misma tabla 2 veces) en paralelo con la plantilla.
-    const [{ assignments, flags: existingFlags }, templateRaw] = await Promise.all([
-      loadRosterAssignmentData(competitionId),
-      getCompetitionTemplate(competitionId),
-    ]);
-    const template = templateRaw ?? [];
     // El * (compartido) del hueco existente o del nuevo permite forzar el solape.
     const operationFlags =
       slotFlags && (slotFlags.compartido || slotFlags.intercambio)
@@ -292,6 +315,147 @@ export const rosterService = {
     };
   },
 
+  /**
+   * Aplica un lote de asignaciones con una única carga de datos y un único
+   * upsert masivo. Sustituye el bucle secuencial de `assignReferee` por hueco
+   * (≈6-8 consultas × N huecos) por: 4 lecturas iniciales en paralelo, 1 upsert,
+   * 1 syncCompetitionCoverage y 1 entrada de history resumen. La semántica de
+   * validación por entrada es idéntica a `assignReferee`: se valida
+   * incrementalmente sobre un mapa de asignaciones que se actualiza con cada
+   * entrada aceptada, respetando los flags (* compartido) igual que el flujo
+   * individual.
+   */
+  assignRefereesBatch: async (
+    competitionId: string,
+    entries: RosterBatchAssignment[],
+    actor: string,
+    getCompetitionFn: (id: string) => Promise<Competition | undefined>,
+    getRefereesByIdsFn: (ids: string[]) => Promise<Map<string, Referee>>,
+  ): Promise<{
+    results: { ok: boolean; error?: string }[];
+    assignments: AssignmentsMap;
+    flags: FlagsMap;
+    crossZoneMap: import("@/lib/types").CrossZoneMap;
+  }> => {
+    const [comp, templateRaw, current, refMap] = await Promise.all([
+      getCompetitionFn(competitionId),
+      getCompetitionTemplate(competitionId),
+      loadRosterAssignmentData(competitionId),
+      getRefereesByIdsFn(entries.map((e) => e.refereeId)),
+    ]);
+    const template = templateRaw ?? [];
+    const blocked = comp ? rosterMutationBlockedMessage(comp.aprobacion) : undefined;
+
+    // Mapas de trabajo: parten del estado persistido y se van actualizando con
+    // cada entrada aceptada, para que las validaciones posteriores del mismo
+    // lote vean los huecos ya ocupados (igual que la recarga por hueco del flujo
+    // secuencial). `rowsBySlot` deduplica por slot: si dos entradas apuntan al
+    // mismo hueco, gana la última (idéntico a upsert).
+    const workingAssignments: AssignmentsMap = { ...current.assignments };
+    const workingFlags: FlagsMap = { ...current.flags };
+    const rowsBySlot = new Map<
+      string,
+      {
+        competition_id: string;
+        slot_key: string;
+        referee_id: string;
+        flags: SlotFlags;
+        cross_zone: boolean;
+        cross_zone_reason: string | null;
+      }
+    >();
+    const results: { ok: boolean; error?: string }[] = [];
+
+    for (const entry of entries) {
+      const referee = refMap.get(entry.refereeId);
+      const validation = validateAssignWithData(comp, referee, entry.slotKey, template);
+      if (!validation.ok) {
+        results.push({ ok: false, error: validation.error });
+        continue;
+      }
+      if (!comp) {
+        results.push({ ok: false, error: "Competición no encontrada" });
+        continue;
+      }
+      if (blocked) {
+        results.push({ ok: false, error: blocked });
+        continue;
+      }
+
+      const shared = Boolean(entry.flags && (entry.flags.compartido || entry.flags.intercambio));
+      const operationFlags = shared
+        ? { ...workingFlags, [entry.slotKey]: entry.flags! }
+        : workingFlags;
+      const operation = validateRosterOperation({
+        template,
+        assignments: workingAssignments,
+        slotKey: entry.slotKey,
+        refereeId: entry.refereeId,
+        flags: operationFlags,
+      });
+      if (!operation.ok) {
+        results.push({ ok: false, error: operation.error });
+        continue;
+      }
+
+      const flagPayload: SlotFlags = shared
+        ? {
+            compartido: Boolean(entry.flags!.compartido),
+            intercambio: Boolean(entry.flags!.intercambio),
+          }
+        : workingFlags[entry.slotKey] ?? {};
+      const isCrossZone =
+        !!comp.zona &&
+        !!referee!.zona &&
+        (resolveZoneCode(comp.zona) ?? comp.zona) !==
+          (resolveZoneCode(referee!.zona) ?? referee!.zona);
+
+      workingAssignments[entry.slotKey] = entry.refereeId;
+      workingFlags[entry.slotKey] = flagPayload;
+      rowsBySlot.set(entry.slotKey, {
+        competition_id: competitionId,
+        slot_key: entry.slotKey,
+        referee_id: entry.refereeId,
+        flags: flagPayload,
+        cross_zone: isCrossZone,
+        cross_zone_reason: isCrossZone ? (entry.crossZoneReason ?? null) : null,
+      });
+      results.push({ ok: true });
+    }
+
+    const rows = [...rowsBySlot.values()];
+    if (rows.length > 0) {
+      const supabase = db();
+      const { error: writeError } = await supabase.from("roster_assignments").upsert(rows);
+      if (writeError) {
+        // El upsert masivo falló: las entradas que se habían aceptado no se
+        // persistieron, así que se marcan como fallidas (mismo criterio que el
+        // flujo individual ante un error de escritura).
+        for (let i = 0; i < results.length; i++) {
+          if (results[i]!.ok) results[i] = { ok: false, error: "No se pudo guardar la asignación" };
+        }
+      } else {
+        await syncCompetitionCoverage(competitionId);
+        const appliedCount = results.filter((r) => r.ok).length;
+        await pushHistory({
+          competitionId,
+          at: new Date().toISOString(),
+          actor,
+          action: "Importación de asignaciones",
+          detail: `${appliedCount} asignaciones aplicadas`,
+        });
+      }
+    }
+
+    const roster = await loadRosterAssignmentData(competitionId);
+    return {
+      results,
+      assignments: roster.assignments,
+      flags: roster.flags,
+      crossZoneMap: roster.crossZoneMap,
+    };
+  },
+
   clearSlot: async (competitionId: string, slotKey: string, actor: string) => {
     const supabase = db();
     await supabase
@@ -362,7 +526,8 @@ export const rosterService = {
       if (updateError) return undefined;
     } else {
       const { error: insertError } = await supabase.from("approval_proposals").insert({
-        id: `apr-${Date.now()}`,
+        // randomUUID: dos submits en el mismo milisegundo colisionaban en PK.
+        id: `apr-${crypto.randomUUID()}`,
         [competitionIdColumn]: competitionId,
         [competitionNameColumn]: comp.nombre,
         zona: comp.zona ?? "—",
@@ -472,10 +637,16 @@ export const rosterService = {
     const reviewerIdCol = (await hasApprovalSubmitterColumns())
       ? { reviewed_by_id: reviewerId ?? null }
       : {};
-    await supabase
+    // Guard condicional contra doble revisión concurrente: el UPDATE solo gana
+    // si la propuesta sigue "pendiente"; si otro revisor llegó antes, no se
+    // reescribe el roster ni se duplica la actividad.
+    const { data: claimed } = await supabase
       .from("approval_proposals")
       .update({ status, reviewed_by: reviewer, reviewed_at: now, comment: comment ?? null, ...reviewerIdCol })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("status", "pendiente")
+      .select("id");
+    if (!claimed || claimed.length === 0) return undefined;
 
     if (comp) {
       if (approve) {
@@ -567,7 +738,10 @@ export const rosterService = {
       .from("roster_history")
       .select("*")
       .eq(competitionColumn, competitionId)
-      .order("at", { ascending: false });
+      .order("at", { ascending: false })
+      // Cota superior: el historial crece sin límite y la UI solo muestra los
+      // movimientos recientes; sin esto la respuesta crecía sin tope.
+      .limit(200);
     return (data ?? []).map((r) => mapHistory(r as Record<string, unknown>));
   },
 
@@ -579,11 +753,17 @@ export const rosterService = {
     >,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
   ) => {
-    const roster = await getRosterFn(competitionId);
-    const comp = await getCompetitionFn(competitionId);
+    const [roster, comp] = await Promise.all([
+      getRosterFn(competitionId),
+      getCompetitionFn(competitionId),
+    ]);
     if (!roster || !comp) return null;
     const supabase = db();
-    const { data: referees } = await supabase.from("referees").select("id, nombre, nivel");
+    // Solo los jueces asignados a la tarima, no el censo completo.
+    const assignedIds = [...new Set(Object.values(roster.assignments).filter(Boolean))];
+    const { data: referees } = assignedIds.length
+      ? await supabase.from("referees").select("id, nombre, nivel").in("id", assignedIds)
+      : { data: [] };
     const refMap = new Map((referees ?? []).map((r) => [r.id, r]));
     return formatRosterExport(
       comp,

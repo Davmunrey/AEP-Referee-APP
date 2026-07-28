@@ -17,8 +17,14 @@ export const SANCTION_DURATION_PRESETS: {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Zona horaria de negocio: las fechas de sanción son días naturales en España. */
+const BUSINESS_TZ = "Europe/Madrid";
+
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  // "Hoy" en hora española, no en UTC: con toISOString() una sanción que
+  // termina hoy seguía activa (y el barrido no la expiraba) entre la
+  // medianoche local y la 01:00–02:00.
+  return new Intl.DateTimeFormat("en-CA", { timeZone: BUSINESS_TZ }).format(new Date());
 }
 
 export function addDaysIso(startIso: string, days: number): string {
@@ -49,9 +55,14 @@ export function resolveSanctionEndDate(
 }
 
 export function daysUntil(isoDate: string): number {
-  const end = new Date(`${isoDate}T23:59:59`);
-  const now = new Date();
-  return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Diferencia en días naturales respecto a "hoy" en la zona de negocio,
+  // contando el propio día de fin (hoy → 1), como hacía la versión anterior
+  // pero sin mezclar UTC con hora local del servidor.
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  const end = Date.parse(`${isoDate}T00:00:00Z`);
+  const today = Date.parse(`${todayIso()}T00:00:00Z`);
+  if (!Number.isFinite(end) || !Number.isFinite(today)) return 0;
+  return Math.round((end - today) / MS_PER_DAY) + 1;
 }
 
 export function isSanctionActive(s: Pick<RefereeSanction, "status" | "fechaFin">): boolean {

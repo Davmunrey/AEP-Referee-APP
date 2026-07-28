@@ -15,7 +15,7 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
-import { selectFieldClass } from "@/lib/design-tokens";
+import { selectFieldClass, selectFieldClassSm } from "@/lib/design-tokens";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { api } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -27,22 +27,17 @@ import { PasswordDialog } from "./password-dialog";
 import type { EditFormState } from "./edit-user-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { CredentialsBanner } from "./credentials-banner";
+import type { AdminUserRow } from "@/server/services/admin-users";
 
-interface ProfileRow {
-  id: string;
-  email: string;
-  nombre: string;
-  rol_label: string;
-  role: UserRole;
-  zona: string | null;
-  activo: boolean;
-  created_at?: string;
-  /** Último inicio de sesión (auth.users.last_sign_in_at); null si nunca entró. */
-  last_sign_in_at?: string | null;
-}
+// El shape de fila vive en la capa de servidor (`listAdminUsers`) para poder
+// reutilizarlo en la carga inicial del Server Component. Import de solo tipo:
+// se borra en compilación, sin arrastrar código de servidor al bundle cliente.
+type ProfileRow = AdminUserRow;
 
 interface UsersAdminProps {
   zones: { code: string; name: string }[];
+  /** Usuarios precargados desde el servidor; si vienen, no se fetchea en el mount. */
+  initialUsers?: ProfileRow[];
 }
 
 const ROLE_BADGE_VARIANT: Record<UserRole, "nacional" | "regional" | "ipf2" | "muted"> = {
@@ -89,9 +84,9 @@ function formatAbsolute(dateStr: string): string {
   });
 }
 
-export function UsersAdmin({ zones }: UsersAdminProps) {
-  const [users, setUsers] = useState<ProfileRow[]>([]);
-  const [loading, setLoading] = useState(true);
+export function UsersAdmin({ zones, initialUsers }: UsersAdminProps) {
+  const [users, setUsers] = useState<ProfileRow[]>(initialUsers ?? []);
+  const [loading, setLoading] = useState(!initialUsers);
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -125,22 +120,31 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
     zona: zones[0]?.code ?? "",
   });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${getApiBaseUrl()}/admin/users`, { credentials: "include" });
+      const res = await fetch(`${getApiBaseUrl()}/admin/users`, { credentials: "include", signal });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Error al cargar usuarios");
       setUsers(json.data ?? []);
     } catch (e) {
+      // Petición cancelada (desmontaje): no tocar estado.
+      if (signal?.aborted) return;
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    // Con datos precargados desde el servidor no se fetchea en el mount; el
+    // fetch queda para el refresco manual y tras mutaciones (botón/altas).
+    if (initialUsers) return;
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
+  }, [load, initialUsers]);
 
   const q = search.trim().toLowerCase();
   const filteredUsers = users.filter((u) => {
@@ -303,10 +307,10 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
         className="glass-panel mb-8 grid gap-4 rounded-2xl border border-border-muted p-6 md:grid-cols-2"
       >
         <h2 className="friendly-label md:col-span-2">Nuevo usuario</h2>
-        <Input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
-        <Input placeholder="Contraseña (mín. 8)" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required minLength={8} />
-        <Input placeholder="Nombre completo" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
-        <Input placeholder="Etiqueta de rol (ej. Resp. Cataluña)" value={form.rolLabel} onChange={(e) => setForm((f) => ({ ...f, rolLabel: e.target.value }))} required />
+        <Input placeholder="Email" aria-label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
+        <Input placeholder="Contraseña (mín. 8)" aria-label="Contraseña" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required minLength={8} />
+        <Input placeholder="Nombre completo" aria-label="Nombre completo" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
+        <Input placeholder="Etiqueta de rol (ej. Resp. Cataluña)" aria-label="Etiqueta de rol" value={form.rolLabel} onChange={(e) => setForm((f) => ({ ...f, rolLabel: e.target.value }))} required />
         <select className={selectFieldClass} value={form.role} aria-label="Rol del usuario" onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
           <option value="super_admin">Super Admin</option>
           <option value="delegado_jueces">Delegado de Jueces</option>
@@ -329,8 +333,8 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
 
       {/* Filter row */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Input placeholder="Buscar por nombre o email…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 w-52" aria-label="Buscar usuarios" />
-        <select className="h-9 rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground-secondary focus-ring" value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | "TODOS")} aria-label="Filtrar por rol">
+        <Input placeholder="Buscar por nombre o email…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 w-44 text-xs" aria-label="Buscar usuarios" />
+        <select className={selectFieldClassSm} value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | "TODOS")} aria-label="Filtrar por rol">
           <option value="TODOS">Todos los roles</option>
           <option value="super_admin">{ROLE_LABELS.super_admin}</option>
           <option value="delegado_jueces">{ROLE_LABELS.delegado_jueces}</option>
@@ -340,11 +344,11 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
           </option>
           <option value="solo_ver">{ROLE_LABELS.solo_ver}</option>
         </select>
-        <select className="h-9 rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground-secondary focus-ring" value={filterZone} onChange={(e) => setFilterZone(e.target.value)} aria-label="Filtrar por zona">
+        <select className={selectFieldClassSm} value={filterZone} onChange={(e) => setFilterZone(e.target.value)} aria-label="Filtrar por zona">
           <option value="TODOS">Todas las zonas</option>
           {zones.map((z) => <option key={z.code} value={z.code}>{z.name}</option>)}
         </select>
-        <select className="h-9 rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground-secondary focus-ring" value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as "todos" | "activo" | "inactivo")} aria-label="Filtrar por estado">
+        <select className={selectFieldClassSm} value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as "todos" | "activo" | "inactivo")} aria-label="Filtrar por estado">
           <option value="todos">Todos los estados</option>
           <option value="activo">Activos</option>
           <option value="inactivo">Inactivos</option>
@@ -375,7 +379,14 @@ export function UsersAdmin({ zones }: UsersAdminProps) {
 
       {/* Table or states */}
       {loading ? (
-        <p className="text-sm text-subtle-muted">Cargando usuarios…</p>
+        <div className="flex items-center justify-center gap-2 py-12 text-sm text-subtle-muted">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          Cargando usuarios…
+        </div>
+      ) : error && users.length === 0 ? (
+        <div role="alert" className="rounded-lg border border-destructive-border bg-destructive-muted px-4 py-2.5 text-sm text-destructive">
+          {error}
+        </div>
       ) : filteredUsers.length === 0 ? (
         <EmptyState
           icon={Users}

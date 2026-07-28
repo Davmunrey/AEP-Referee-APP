@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
@@ -105,6 +105,12 @@ export function ApprovalsBoard({
   const [page, setPage] = useState(0);
   const router = useRouter();
 
+  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
+  // patrón que competitions-table / referees-directory).
+  useEffect(() => {
+    setItems(initial);
+  }, [initial]);
+
   const pendingCount = items.filter((a) => a.status === "pendiente").length;
   const approvedCount = items.filter((a) => a.status === "aprobado").length;
   const rejectedCount = items.filter((a) => a.status === "rechazado").length;
@@ -129,12 +135,9 @@ export function ApprovalsBoard({
     startTransition(async () => {
       try {
         const updated = await api.reviewApproval(selected.id, approve, comment || undefined);
-        setItems((prev) => {
-          const next = prev.map((a) => (a.id === updated.id ? updated : a));
-          const nextPending = next.find((a) => a.status === "pendiente");
-          setSelected(nextPending ?? null);
-          return next;
-        });
+        const next = items.map((a) => (a.id === updated.id ? updated : a));
+        setItems(next);
+        setSelected(next.find((a) => a.status === "pendiente") ?? null);
         setComment("");
         router.refresh();
       } catch (err) {
@@ -215,7 +218,7 @@ export function ApprovalsBoard({
                     onClick={() => setSelected(item)}
                     aria-pressed={selected?.id === item.id}
                     className={cn(
-                      "w-full rounded-xl border p-3.5 text-left transition-all focus-ring",
+                      "w-full rounded-xl border p-3.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.99] focus-ring",
                       selected?.id === item.id
                         ? "border-primary-border bg-primary-muted shadow-glow-primary"
                         : "border-border hover:border-border-strong hover:bg-surface-hover",
@@ -228,7 +231,7 @@ export function ApprovalsBoard({
                     <p className="mt-1 text-xs text-subtle-muted">
                       {item.zona} · {item.submittedBy}
                     </p>
-                    <p className="mt-0.5 font-mono text-[11px] text-subtle-muted/70">
+                    <p className="mt-0.5 font-mono text-[11px] tabular-nums text-subtle-muted">
                       {item.submittedAt.slice(0, 10)}
                     </p>
                   </button>
@@ -243,7 +246,7 @@ export function ApprovalsBoard({
                       disabled={page === 0}
                       aria-label="Página anterior"
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs transition-colors",
+                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors focus-ring",
                         page === 0
                           ? "cursor-not-allowed border-border text-muted-foreground opacity-40"
                           : "border-border hover:border-border-strong hover:bg-surface-hover",
@@ -261,7 +264,7 @@ export function ApprovalsBoard({
                       disabled={page >= totalPages - 1}
                       aria-label="Página siguiente"
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs transition-colors",
+                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors focus-ring",
                         page >= totalPages - 1
                           ? "cursor-not-allowed border-border text-muted-foreground opacity-40"
                           : "border-border hover:border-border-strong hover:bg-surface-hover",
@@ -359,7 +362,7 @@ export function ApprovalsBoard({
                       <p className="mt-1 text-xs opacity-80">{selected.comment}</p>
                     )}
                     {selected.reviewedBy && (
-                      <p className="mt-1 text-[11px] opacity-60">
+                      <p className="mt-1 text-[11px] opacity-80">
                         por {selected.reviewedBy}
                         {selected.reviewedAt ? ` · ${selected.reviewedAt.slice(0, 10)}` : ""}
                       </p>

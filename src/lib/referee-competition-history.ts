@@ -1,4 +1,4 @@
-import { ROLE_LABELS } from "@/lib/roster-template";
+import { ROLE_LABELS, parseSlotKey } from "@/lib/roster-template";
 import type {
   Competition,
   RefereeCompetitionHistoryItem,
@@ -50,17 +50,16 @@ export function parseRosterSlotPosition(
   slotKey: string,
   flags?: RefereeAssignmentHistoryRow["flags"],
 ): RefereeCompetitionPosition | null {
-  const parts = slotKey.split("_");
-  if (parts.length < 3) return null;
-  const session = parts[0]!;
-  const roleKey = parts[1] as RoleKey;
-  const slotIndex = Number(parts[2]);
+  // parseSlotKey canónico (últimos segmentos = rol/índice): las sesiones pueden
+  // contener guiones bajos y el split posicional corrompía rol y orden.
+  const parsed = parseSlotKey(slotKey);
+  if (!parsed) return null;
   return {
     slotKey,
-    session,
-    roleKey,
-    roleLabel: ROLE_LABELS[roleKey] ?? roleKey,
-    slotIndex: Number.isInteger(slotIndex) && slotIndex >= 0 ? slotIndex : 0,
+    session: parsed.session,
+    roleKey: parsed.roleKey,
+    roleLabel: ROLE_LABELS[parsed.roleKey] ?? parsed.roleKey,
+    slotIndex: parsed.index,
     flags: normalizeFlags(flags),
   };
 }

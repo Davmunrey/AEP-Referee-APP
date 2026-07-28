@@ -509,3 +509,52 @@ export interface AnalyticsPayload {
     openSlots: number;
   };
 }
+
+// ── Soporte: tickets internos con adjuntos ──────────────────────────────────
+
+export type TicketCategory = "incidencia" | "mejora" | "duda" | "otro";
+export type TicketStatus = "abierto" | "en_progreso" | "resuelto" | "cerrado";
+
+export interface SupportTicketAttachment {
+  id: string;
+  ticketId: string;
+  /** null = adjunto del ticket; si no, id del comentario al que pertenece. */
+  commentId: string | null;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  /** URL firmada de corta duración generada en servidor al leer el ticket. */
+  signedUrl?: string;
+  createdAt: string;
+}
+
+export interface SupportTicketComment {
+  id: string;
+  ticketId: string;
+  authorId?: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+  attachments: SupportTicketAttachment[];
+}
+
+export interface SupportTicket {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  categoria: TicketCategory;
+  status: TicketStatus;
+  createdById?: string;
+  createdByName: string;
+  createdByRole?: string;
+  zona?: string;
+  resolutionNote?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  attachments: SupportTicketAttachment[];
+  /** Solo en el detalle; en listados va vacío. */
+  comments: SupportTicketComment[];
+  commentCount: number;
+}

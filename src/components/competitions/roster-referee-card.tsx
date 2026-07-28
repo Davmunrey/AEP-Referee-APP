@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { Referee, Zone } from "@/lib/types";
 import { LevelBadge } from "@/components/aep/badges";
 import { topArbitrajeRoles } from "@/lib/judges-registry/arbitraje-stats";
@@ -7,7 +8,9 @@ import { GripVertical, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { zoneName } from "./roster-session-helpers";
 
-export function RefereeCard({
+// Memoizado: la lista se re-renderiza con cada tecleo/arrastre del builder;
+// con props primitivas y callbacks estables, solo repintan las filas que cambian.
+export const RefereeCard = memo(function RefereeCard({
   zones,
   referee,
   assigned,
@@ -30,9 +33,9 @@ export function RefereeCard({
   blockedReason?: string | null;
   warningReason?: string | null;
   competitionZona?: string;
-  onDragStart: () => void;
+  onDragStart: (id: string) => void;
   onDragEnd: () => void;
-  onClick: () => void;
+  onClick: (id: string) => void;
   highlight: boolean;
   isDragging: boolean;
   readOnly?: boolean;
@@ -53,19 +56,32 @@ export function RefereeCard({
       onDragStart={(e) => {
         if (locked) return;
         e.dataTransfer.setData("text/plain", referee.id);
-        onDragStart();
+        onDragStart(referee.id);
       }}
       onDragEnd={onDragEnd}
-      onClick={() => !locked && onClick()}
+      onClick={() => !locked && onClick(referee.id)}
+      role="button"
+      tabIndex={locked ? -1 : 0}
+      onKeyDown={(e) => {
+        if (locked) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(referee.id);
+        }
+      }}
       className={cn(
-        "flex cursor-grab items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-all duration-100 active:cursor-grabbing",
+        // Solo color/opacidad/escala: nada que fuerce layout mientras se arrastra
+        // una lista de ~90 filas. 100 ms es feedback, no animación.
+        "flex select-none items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-[color,background-color,border-color,opacity,scale] duration-100 ease-(--ease-out) focus-ring",
         assigned && "opacity-55",
-        locked && "cursor-default",
+        // La ficha es el objeto que se agarra: la mano al pasar, el puño al
+        // pulsar y un hundido de 1.5% que confirma que el gesto se ha oído.
+        locked ? "cursor-default" : "cursor-grab active:scale-[0.985] active:cursor-grabbing",
         dragging && "scale-[0.98] opacity-40",
         !locked && highlight && "cursor-pointer border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10",
         !locked && isDragging && !dragging && "hover:border-success/50 hover:bg-success/5",
         !locked && !highlight && !isDragging && "hover:border-border-strong hover:bg-surface",
-        alertText && !blockedReason && referee.eventos >= 8 && "border-amber-400/30",
+        alertText && !blockedReason && referee.eventos >= 8 && "border-warning-border/60",
         blockedReason && "border-warning-border/60 bg-warning-subtle/40",
       )}
     >
@@ -83,13 +99,16 @@ export function RefereeCard({
           {assigned ? (
             <Check className="h-3 w-3 shrink-0 text-success" aria-label="Asignado en esta sesión" />
           ) : isConfirmed ? (
-            <span className="shrink-0 text-[9px] font-bold text-success" title="Disponibilidad confirmada">
-              ✓
-            </span>
+            // Misma familia de iconos que "asignado", un paso por debajo en peso:
+            // confirmar disponibilidad no es lo mismo que estar en la sesión.
+            <Check
+              className="h-2.5 w-2.5 shrink-0 text-success/60"
+              aria-label="Disponibilidad confirmada"
+            />
           ) : null}
         </div>
         <p className="truncate text-[10px] leading-tight text-subtle-muted">
-          <span className={cn(isFromOtherZone && "font-medium text-orange-500")}>
+          <span className={cn(isFromOtherZone && "font-medium text-warning")}>
             {isFromOtherZone ? `⟳ ${zoneLabel}` : zoneLabel}
           </span>
           <span className="mx-1 text-border">·</span>
@@ -103,4 +122,4 @@ export function RefereeCard({
       <LevelBadge level={referee.nivel} compact />
     </li>
   );
-}
+});

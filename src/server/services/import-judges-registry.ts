@@ -1,4 +1,8 @@
-import { inicialesFromNombre, type ParsedJudgesRegistry } from "@/lib/judges-registry";
+// import type + submódulo ligero: el barrel de judges-registry re-exporta
+// parse-xlsx (→ xlsx, CJS pesado), que se cargaba en el cold start de todas
+// las rutas API vía el grafo de dataService.
+import type { ParsedJudgesRegistry } from "@/lib/judges-registry/parse-xlsx";
+import { inicialesFromNombre } from "@/lib/judges-registry/maps";
 import { getPresetForEventType } from "@/lib/roster-template";
 import type { JudgesRegistryImportApplyResult, Referee } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -46,6 +50,18 @@ export async function importJudgesRegistryToSupabase(
     }
   }
 
+  // Una sola carga de ids/excel_ids existentes (antes: 2 SELECT por juez,
+  // ~600 round-trips para 300 jueces). Con los mapas en memoria, cada juez
+  // necesita como mucho 1 escritura, y las altas van en lotes.
+  const { data: existingRefs } = await supabase.from("referees").select("id, excel_id");
+  const idByExcelId = new Map<number, string>();
+  const existingIds = new Set<string>();
+  for (const ref of existingRefs ?? []) {
+    existingIds.add(String(ref.id));
+    if (ref.excel_id != null) idByExcelId.set(Number(ref.excel_id), String(ref.id));
+  }
+
+  const toInsert: { row: Record<string, unknown>; nombre: string }[] = [];
   for (const r of parsed.referees) {
     const row = {
       id: r.id,
@@ -71,14 +87,9 @@ export async function importJudgesRegistryToSupabase(
       arbitraje_stats_by_year: r.arbitrajeStatsByYear ?? null,
     };
 
-    const { data: byExcel } = await supabase
-      .from("referees")
-      .select("id")
-      .eq("excel_id", r.excelId)
-      .maybeSingle();
-
-    if (byExcel) {
-      const { error } = await supabase.from("referees").update(row).eq("id", byExcel.id);
+    const targetId = idByExcelId.get(r.excelId) ?? (existingIds.has(r.id) ? r.id : undefined);
+    if (targetId) {
+      const { error } = await supabase.from("referees").update(row).eq("id", targetId);
       if (error) {
         refereesSkipped++;
         warnings.push(`${r.nombre}: ${error.message}`);
@@ -87,67 +98,59 @@ export async function importJudgesRegistryToSupabase(
       }
       continue;
     }
+    toInsert.push({ row, nombre: r.nombre });
+  }
 
-    const { data: byId } = await supabase
+  // Altas por lotes; si un lote falla (fila conflictiva), cae a fila a fila
+  // para conservar la atribución del error en los warnings.
+  const INSERT_CHUNK = 100;
+  for (let i = 0; i < toInsert.length; i += INSERT_CHUNK) {
+    const chunk = toInsert.slice(i, i + INSERT_CHUNK);
+    const { error: chunkError } = await supabase
       .from("referees")
-      .select("id")
-      .eq("id", r.id)
-      .maybeSingle();
-
-    if (byId) {
-      const { error } = await supabase.from("referees").update(row).eq("id", r.id);
-      if (error) {
-        refereesSkipped++;
-        warnings.push(`${r.nombre}: ${error.message}`);
-      } else {
-        refereesUpdated++;
-      }
+      .insert(chunk.map((c) => c.row));
+    if (!chunkError) {
+      refereesCreated += chunk.length;
       continue;
     }
-
-    const { error } = await supabase.from("referees").insert(row);
-    if (error) {
-      refereesSkipped++;
-      warnings.push(`${r.nombre}: ${error.message}`);
-    } else {
-      refereesCreated++;
+    for (const item of chunk) {
+      const { error } = await supabase.from("referees").insert(item.row);
+      if (error) {
+        refereesSkipped++;
+        warnings.push(`${item.nombre}: ${error.message}`);
+      } else {
+        refereesCreated++;
+      }
     }
   }
 
-  const { data: existingComps } = await supabase.from("competitions").select("nombre, fecha");
-  const existingKeys = new Set(
-    (existingComps ?? []).map(
-      (c) => `${String(c.nombre).toLowerCase().trim()}__${String(c.fecha)}`,
-    ),
-  );
-
-  const { data: idRows } = await supabase.from("competitions").select("id");
+  // id incluido en la misma consulta: evita el SELECT extra por duplicado
+  // dentro del bucle de campeonatos.
+  const { data: existingComps } = await supabase.from("competitions").select("id, nombre, fecha");
+  const existingIdByKey = new Map<string, string>();
   let nextNum = 1;
-  for (const row of idRows ?? []) {
-    const m = /^evt-(\d+)$/i.exec(String(row.id));
+  for (const c of existingComps ?? []) {
+    existingIdByKey.set(
+      `${String(c.nombre).toLowerCase().trim()}__${String(c.fecha)}`,
+      String(c.id),
+    );
+    const m = /^evt-(\d+)$/i.exec(String(c.id));
     if (m) nextNum = Math.max(nextNum, parseInt(m[1]!, 10) + 1);
   }
 
   for (const c of parsed.competitions) {
     const key = `${c.nombre.toLowerCase().trim()}__${c.fecha}`;
-    if (existingKeys.has(key)) {
-      const { data: existing } = await supabase
+    const existingId = existingIdByKey.get(key);
+    if (existingId) {
+      await supabase
         .from("competitions")
-        .select("id")
-        .eq("nombre", c.nombre)
-        .eq("fecha", c.fecha)
-        .maybeSingle();
-      if (existing?.id) {
-        await supabase
-          .from("competitions")
-          .update({
-            tipo: c.tipo,
-            fecha_fin: c.fechaFin,
-            sede: c.sede,
-            zona: c.zona,
-          })
-          .eq("id", existing.id);
-      }
+        .update({
+          tipo: c.tipo,
+          fecha_fin: c.fechaFin,
+          sede: c.sede,
+          zona: c.zona,
+        })
+        .eq("id", existingId);
       competitionsSkipped++;
       continue;
     }
@@ -174,7 +177,7 @@ export async function importJudgesRegistryToSupabase(
       competitionsSkipped++;
     } else {
       competitionsCreated++;
-      existingKeys.add(key);
+      existingIdByKey.set(key, id);
     }
   }
 

@@ -7,7 +7,7 @@ import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 import type { RefereeReport, ReportSubjectType, ReportType } from "@/lib/types";
 import { FileText, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ReportCard } from "./report-card";
 
 const REPORT_TYPES: ReportType[] = ["General", "Incidencia", "Evaluación"];
@@ -32,6 +32,12 @@ export function ReportsManager({
   const router = useRouter();
   const [reports, setReports] = useState(initialReports);
   const [showForm, setShowForm] = useState(false);
+
+  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
+  // patrón que competitions-table). Solo toca la lista, no los formularios.
+  useEffect(() => {
+    setReports(initialReports);
+  }, [initialReports]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());
@@ -122,7 +128,7 @@ export function ReportsManager({
           <span className="text-xs font-normal text-subtle-muted">({reports.length})</span>
         </CardTitle>
         {canEdit && (
-          <Button size="sm" variant={showForm ? "outline" : "default"} className="gap-1.5 rounded-xl" onClick={() => setShowForm((v) => !v)}>
+          <Button size="sm" variant={showForm ? "outline" : "default"} className="gap-1.5" onClick={() => setShowForm((v) => !v)}>
             {showForm ? <X className="h-3.5 w-3.5" /> : <Upload className="h-3.5 w-3.5" />}
             {showForm ? "Cancelar" : "Subir informe"}
           </Button>
@@ -189,7 +195,7 @@ export function ReportsManager({
           </label>
           {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
           <div className="flex justify-end">
-            <Button size="sm" className="rounded-xl" disabled={busy} onClick={() => void submit()}>
+            <Button size="sm" disabled={busy} onClick={() => void submit()}>
               {busy ? "Subiendo…" : "Subir informe"}
             </Button>
           </div>

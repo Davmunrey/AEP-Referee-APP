@@ -1,4 +1,5 @@
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import { competitionDedupKey } from "@/lib/competition-dedup";
 import {
   applyCoverageToCompetition,
   isRosterLockedByApproval,
@@ -134,11 +135,34 @@ export async function getCompetition(id: string) {
 
 export async function createCompetition(
   input: Omit<Competition, "id" | "confirmados" | "estado" | "aprobacion">,
+  context?: { existing?: { id: string; nombre: string; fecha: string; tipo: string }[] },
 ): Promise<Competition> {
   const store = getStore();
+  // En importaciones por lotes se pasa `context.existing` para dedupe + max-id
+  // sin recorrer el store en cada inserción. Sin contexto: comportamiento
+  // idéntico al actual (max-id sobre el store, sin dedupe).
+  const existingList =
+    context?.existing ??
+    store.competitions.map((c) => ({
+      id: c.id,
+      nombre: c.nombre,
+      fecha: c.fecha,
+      tipo: c.tipo,
+    }));
+  if (context?.existing) {
+    const key = competitionDedupKey(input);
+    const dupe = existingList.find(
+      (r) => competitionDedupKey({ nombre: r.nombre, fecha: r.fecha, tipo: r.tipo }) === key,
+    );
+    if (dupe) {
+      throw new Error(
+        `Ya existe un campeonato igual (${dupe.nombre}, ${dupe.fecha}). Id: ${dupe.id}`,
+      );
+    }
+  }
   // ID por máximo existente, no por longitud: tras borrar una competición
   // intermedia, `length + 1` reutilizaría un id ya usado y machacaría su roster.
-  const maxNum = store.competitions.reduce((max, c) => {
+  const maxNum = existingList.reduce((max, c) => {
     const m = /^evt-(\d+)$/i.exec(c.id);
     const n = m ? parseInt(m[1]!, 10) : 0;
     return Number.isFinite(n) ? Math.max(max, n) : max;
@@ -380,6 +404,38 @@ export async function assignReferee(
   };
 }
 
+export async function assignRefereesBatch(
+  competitionId: string,
+  entries: import("./supabase-roster").RosterBatchAssignment[],
+  actor: string,
+): Promise<{
+  results: { ok: boolean; error?: string }[];
+  assignments: AssignmentsMap;
+  flags: FlagsMap;
+  crossZoneMap: import("@/lib/types").CrossZoneMap;
+}> {
+  // Paridad de RESULTADOS con el backend Supabase (no de rendimiento): itera el
+  // assign existente, que ya valida incrementalmente sobre el store mutado.
+  const results: { ok: boolean; error?: string }[] = [];
+  for (const entry of entries) {
+    const res = await assignReferee(
+      competitionId,
+      entry.slotKey,
+      entry.refereeId,
+      actor,
+      entry.flags,
+    );
+    results.push(res.error ? { ok: false, error: res.error } : { ok: true });
+  }
+  const roster = await getRoster(competitionId);
+  return {
+    results,
+    assignments: roster?.assignments ?? {},
+    flags: roster?.flags ?? {},
+    crossZoneMap: roster?.crossZoneMap ?? {},
+  };
+}
+
 export async function clearSlot(
   competitionId: string,
   slotKey: string,
@@ -453,7 +509,11 @@ export async function submitRoster(
       assignments,
     });
   }
-  comp.aprobacion = "Propuesta enviada";
+  // Mutar la fila del store, no `comp`: getCompetition devuelve una COPIA
+  // (applyCoverageToCompetition hace {...competition}), así que escribir en la
+  // copia dejaba la competición en "Sin propuesta" y sin candado de aprobación.
+  const storedComp = store.competitions.find((c) => c.id === competitionId);
+  if (storedComp) storedComp.aprobacion = "Propuesta enviada";
   pushActivity({
     tipo: "propuesta",
     actor,
@@ -466,7 +526,11 @@ export async function submitRoster(
 
 export async function saveDraft(competitionId: string, actor: string) {
   const comp = await getCompetition(competitionId);
-  if (comp && comp.estado === "Borrador") comp.estado = "Incompleto";
+  // Igual que en submitRoster: hay que mutar la fila del store, no la copia.
+  if (comp && comp.estado === "Borrador") {
+    const storedComp = getStore().competitions.find((c) => c.id === competitionId);
+    if (storedComp) storedComp.estado = "Incompleto";
+  }
   pushHistory({
     competitionId,
     at: new Date().toISOString(),

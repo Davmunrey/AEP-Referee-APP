@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Check, Copy } from "lucide-react";
+import { useEscapeClose } from "@/hooks/use-escape-close";
 
 interface CredentialsBannerProps {
   email: string;
@@ -18,6 +19,7 @@ export function CredentialsBanner({
   onCopy,
   onClose,
 }: CredentialsBannerProps) {
+  const panelRef = useEscapeClose(onClose);
   return (
     <div
       role="dialog"
@@ -26,7 +28,7 @@ export function CredentialsBanner({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl">
+      <div ref={panelRef} tabIndex={-1} className="outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl">
         <h3 id="credentials-title" className="text-base font-semibold text-foreground">
           Usuario creado
         </h3>

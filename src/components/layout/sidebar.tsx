@@ -16,6 +16,7 @@ import {
   GraduationCap,
   Layers,
   LayoutDashboard,
+  LifeBuoy,
   UserCog,
   Users,
 } from "lucide-react";
@@ -108,6 +109,7 @@ function buildNavGroups(counts: NavCounts, user: SessionUser): NavGroup[] {
   const referencia: NavItem[] = [
     { href: "/regulations", label: "Normativa", icon: BookOpen, match: (p) => p.startsWith("/regulations") },
     { href: "/docs", label: "Documentación", icon: FileText, match: (p) => p.startsWith("/docs") },
+    { href: "/tickets", label: "Soporte", icon: LifeBuoy, match: (p) => p.startsWith("/tickets") },
   ];
 
   // — Administración —
