@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { SessionUser } from "@/lib/types";
 import {
-  isTicketAdmin,
+  canAdminTickets,
   isTicketCategory,
   isTicketStatus,
   sanitizeFileName,
@@ -111,12 +111,12 @@ describe("sanitizeFileName", () => {
   });
 });
 
-describe("isTicketAdmin", () => {
+describe("canAdminTickets", () => {
   it("solo super_admin y delegado_jueces son admins de tickets", () => {
-    expect(isTicketAdmin(makeUser({ role: "super_admin" }))).toBe(true);
-    expect(isTicketAdmin(makeUser({ role: "delegado_jueces" }))).toBe(true);
-    expect(isTicketAdmin(makeUser({ role: "delegado_zona" }))).toBe(false);
-    expect(isTicketAdmin(makeUser({ role: "solo_ver" }))).toBe(false);
+    expect(canAdminTickets(makeUser({ role: "super_admin" }))).toBe(true);
+    expect(canAdminTickets(makeUser({ role: "delegado_jueces" }))).toBe(true);
+    expect(canAdminTickets(makeUser({ role: "delegado_zona" }))).toBe(false);
+    expect(canAdminTickets(makeUser({ role: "solo_ver" }))).toBe(false);
   });
 });
 

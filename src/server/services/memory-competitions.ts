@@ -10,6 +10,7 @@ import { countOpenSlots, isSlotKeyInTemplate, validateAssignment, validateRoster
 import { formatRosterExport } from "@/lib/roster-export";
 import { pruneAssignments } from "@/lib/roster-template";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
+import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
 import type {
   ApprovalProposal,
   AssignmentsMap,
@@ -199,6 +200,19 @@ export async function updateCompetition(id: string, patch: Partial<Competition>)
 
 export async function deleteCompetition(id: string): Promise<boolean> {
   const store = getStore();
+  // Misma protección que el backend de Supabase: un campeonato con
+  // liquidaciones no se borra. Se lee el store de compensación por globalThis
+  // en vez de importarlo porque memory-compensation ya importa este módulo y
+  // el import inverso cerraría un ciclo.
+  const claimsStore = (
+    globalThis as unknown as { __aepCompensationStore?: Map<string, { competitionId: string }> }
+  ).__aepCompensationStore;
+  if (claimsStore) {
+    let n = 0;
+    for (const claim of claimsStore.values()) if (claim.competitionId === id) n += 1;
+    if (n > 0) throw new CompetitionHasClaimsError(n);
+  }
+
   const idx = store.competitions.findIndex((c) => c.id === id);
   if (idx < 0) return false;
   store.competitions.splice(idx, 1);
@@ -623,7 +637,16 @@ export async function removeDuplicateCompetitions(user?: SessionUser) {
     const keep = group.competitions.find((e) => !toDrop.some((d) => d.id === e.id));
     if (keep) kept.push(keep.id);
     for (const c of toDrop) {
-      if (await deleteCompetition(c.id)) removed.push(c.id);
+      try {
+        if (await deleteCompetition(c.id)) removed.push(c.id);
+      } catch (err) {
+        // Un duplicado con liquidaciones se conserva, no se borra.
+        if (err instanceof CompetitionHasClaimsError) {
+          kept.push(c.id);
+          continue;
+        }
+        throw err;
+      }
     }
   }
   return { removed, kept, groups: groups.length };

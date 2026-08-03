@@ -8,6 +8,7 @@ import { validateCompetitionFields } from "@/app/api/_lib/validation";
 import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import type { CompensationClubContact } from "@/lib/judge-compensation/types";
 import { normalizeClubEmails } from "@/lib/organizer-clubs";
+import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
 import { dataService } from "@/server/services";
 import type { Competition, EventType } from "@/lib/types";
 
@@ -166,7 +167,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!canManageCompetitions(user, competition.zona))
     return jsonError("Sin permiso", 403);
 
-  const ok = await dataService.deleteCompetition(id);
+  let ok: boolean;
+  try {
+    ok = await dataService.deleteCompetition(id);
+  } catch (err) {
+    // 409: no es un fallo del servidor, es que hay dinero liquidado colgando.
+    if (err instanceof CompetitionHasClaimsError) return jsonError(err.message, 409);
+    throw err;
+  }
   if (!ok) return jsonError("No se pudo eliminar el campeonato en la base de datos", 500);
   revalidatePath("/competitions");
   revalidatePath("/");

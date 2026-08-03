@@ -4,7 +4,7 @@ import type {
   SupportTicketAttachment,
   SupportTicketComment,
 } from "@/lib/types";
-import { isTicketAdmin, sanitizeFileName } from "@/lib/tickets/validation";
+import { canAdminTickets, sanitizeFileName } from "@/lib/tickets/validation";
 import {
   type AddTicketCommentInput,
   type CreateTicketInput,
@@ -147,7 +147,7 @@ async function uploadAttachments(
 
 /** ¿Puede el usuario ver este ticket? Autor o admin. */
 function canView(user: CreateTicketInput["user"], createdById: string | null): boolean {
-  return isTicketAdmin(user) || createdById === user.id;
+  return canAdminTickets(user) || createdById === user.id;
 }
 
 export const ticketService = {
@@ -157,7 +157,7 @@ export const ticketService = {
       .from("support_tickets")
       .select("*")
       .order("updated_at", { ascending: false });
-    if (!isTicketAdmin(user)) query = query.eq("created_by_id", user.id);
+    if (!canAdminTickets(user)) query = query.eq("created_by_id", user.id);
     if (status) query = query.eq("status", status);
     const { data, error } = await query;
     if (error) {
@@ -335,7 +335,7 @@ export const ticketService = {
     }
     if (!ticket) return undefined;
 
-    const admin = isTicketAdmin(user);
+    const admin = canAdminTickets(user);
     const isOwner = (ticket.created_by_id as string | null) === user.id;
     if (!admin) {
       if (!isOwner) return undefined; // no revela existencia

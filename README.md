@@ -155,6 +155,7 @@ Estado en producción: migraciones hasta `033` aplicadas en el proyecto Supabase
 | [API](./docs/API.md) | Referencia `/api/v1` |
 | [Auth/RBAC](./docs/AUTH.md) | Roles y permisos |
 | [Base de datos](./docs/DATABASE.md) | Tablas, RLS, migraciones |
+| [Auditoría de la BD](./docs/AUDIT-DATABASE.md) | Hallazgos del esquema y decisiones pendientes |
 | [Rutas](./docs/ROUTES.md) | Mapa de páginas |
 | [Componentes](./docs/COMPONENTS.md) | Inventario UI |
 | [Diseño](./docs/DESIGN.md) | Tokens y principios UX |

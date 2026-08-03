@@ -1,7 +1,7 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
-import { DESCRIPCION_MAX, isTicketStatus } from "@/lib/tickets/validation";
+import { canAdminTickets, DESCRIPCION_MAX, isTicketStatus } from "@/lib/tickets/validation";
 import {
   TicketPermissionError,
   TicketsNotMigratedError,
@@ -40,6 +40,15 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   if (body.status === undefined) return jsonError("Falta el estado", 400);
   if (!isTicketStatus(body.status)) return jsonError("Estado no válido", 400);
+
+  // Guard RBAC explícito, antes de tocar la base: solo un admin de soporte
+  // puede llevar un ticket a cualquier estado. Quien no lo es como mucho podrá
+  // cerrar, y solo los suyos — la propiedad la comprueba el servicio, que es
+  // quien conoce al creador. Este corte es un prefijo estricto de esa regla,
+  // así que no puede divergir de ella.
+  if (!canAdminTickets(user) && body.status !== "cerrado") {
+    return jsonError("Solo puedes cerrar tus propios tickets", 403);
+  }
 
   let resolutionNote: string | undefined;
   if (body.resolutionNote !== undefined) {
