@@ -61,8 +61,11 @@ if (failures.length === 0) {
     }
   }
 
-  // Migraciones de vinculación juez-usuario y remitente de aprobaciones (021/022):
-  // aviso NO bloqueante si faltan, para no romper CI pero avisar de aplicarlas en Supabase.
+  // Migraciones aplicadas a mano en el editor SQL de Supabase: aviso NO
+  // bloqueante si faltan, para no romper CI pero recordar que hay que
+  // aplicarlas. Van aquí y NO en `criticalTables` a propósito: allí una tabla
+  // ausente es fallo duro, y eso dejaría la rama en rojo por una migración
+  // pendiente en vez de por un problema de código.
   const schemaChecks = [
     {
       id: "SCHEMA-01",
@@ -73,6 +76,33 @@ if (failures.length === 0) {
       id: "SCHEMA-02",
       detail: "columna approval_proposals.submitted_by_id (migración 022) no accesible",
       run: () => admin.from("approval_proposals").select("submitted_by_id", { head: true }).limit(1),
+    },
+    {
+      id: "SCHEMA-03",
+      detail:
+        "columna judge_compensation_claims.travel_amount_override (migración 034) no accesible",
+      run: () =>
+        admin.from("judge_compensation_claims").select("travel_amount_override", { head: true }).limit(1),
+    },
+    {
+      id: "SCHEMA-04",
+      detail: "columnas referees.domicilio_lat/lng (migración 034) no accesibles",
+      run: () => admin.from("referees").select("domicilio_lat", { head: true }).limit(1),
+    },
+    {
+      id: "SCHEMA-05",
+      detail: "tabla support_tickets (migración 035) no accesible",
+      run: () => admin.from("support_tickets").select("id", { head: true }).limit(1),
+    },
+    {
+      id: "SCHEMA-06",
+      detail: "tabla support_ticket_comments (migración 035) no accesible",
+      run: () => admin.from("support_ticket_comments").select("id", { head: true }).limit(1),
+    },
+    {
+      id: "SCHEMA-07",
+      detail: "tabla support_ticket_attachments (migración 035) no accesible",
+      run: () => admin.from("support_ticket_attachments").select("id", { head: true }).limit(1),
     },
   ];
   for (const check of schemaChecks) {

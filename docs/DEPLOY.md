@@ -67,7 +67,11 @@ No se requiere ninguna API key de mapas de pago.
   ```bash
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding
   ```
-- **Migraciones**: aplicar en orden hasta la última en `supabase/migrations/` (incl. `033_drop_permissive_rls`).
+- **Migraciones**: se aplican **solas**. El workflow «Migraciones Supabase» ejecuta lo pendiente de `supabase/migrations/` en cada push a `main` que las toque. Requiere el secret `SUPABASE_DB_URL` (cadena del *Session pooler*, puerto 5432, percent-encoded; la conexión directa `db.<ref>.supabase.co` no vale porque es solo IPv6 y los runners solo tienen IPv4).
+  - Las 001–033 se aplicaron a mano en su día; el workflow las registra como tales sin reejecutarlas.
+  - Antes de tocar nada aborta si una migración pendiente trae `DROP`, `TRUNCATE`, un `DELETE`/`UPDATE` sin `WHERE` o un `ALTER TYPE … ADD VALUE`. Esas hay que aplicarlas a mano y con copia previa.
+  - Para ver qué haría sin escribir: Actions → «Migraciones Supabase» → Run workflow → marcar *Solo mostrar qué se aplicaría*.
+  - El registro vive en `deploy.applied_migrations`, aparte de `supabase_migrations.schema_migrations` (que escriben el CLI y el MCP de Supabase y aquí solo se lee para detectar conflictos).
 - **Realtime**: tabla `app_sync_state` publicada (migración `029`) para sincronización en vivo entre usuarios.
 - **Hardening RLS (033)**: elimina las políticas permisivas de `referee_sanctions` y `competition_availability`; ambas tablas quedan solo servidor (acceso vía `service_role`). Los advisors de Supabase ya no muestran esos 2 WARN de políticas permisivas.
 - **Leaked Password Protection**: activar el toggle de Auth (HaveIBeenPwned) — ver «Hardening post-deploy».
@@ -85,7 +89,8 @@ Si en el futuro se añade un dominio personalizado en Vercel → Project → Set
 - [ ] https://aep-tarima.vercel.app/sign-in carga correctamente
 - [ ] Login con cuenta de prueba / admin
 - [ ] `/docs` accesible
-- [ ] Migraciones Supabase aplicadas (hasta `033`)
+- [ ] Secret `SUPABASE_DB_URL` creado (lo necesita el workflow de migraciones)
+- [ ] Workflow «Migraciones Supabase» en verde tras el push
 - [ ] Backup reciente (`npm run db:backup`)
 - [ ] Plantillas de correo Auth con branding AEP (si hubo cambios)
 - [ ] Usuario admin / comité esperado activo

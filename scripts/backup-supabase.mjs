@@ -7,6 +7,9 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const backupDir = join(process.cwd(), "backups");
 
+// Tablas que DEBEN existir: si falta alguna, la copia falla. Son las que ya
+// estaban en producción cuando se escribió este script, más las que se han
+// confirmado después.
 const tables = [
   "profiles",
   "zones",
@@ -23,6 +26,23 @@ const tables = [
   "referee_exams",
   "referee_reports",
   "referee_sanctions",
+];
+
+// Tablas que se copian SI existen. Aquí viven las de migraciones que aún pueden
+// estar sin aplicar: si fueran obligatorias, la copia nocturna entera fallaría
+// por una migración pendiente, que es peor que la laguna que vienen a tapar.
+//
+// La lista había divergido once migraciones: la compensación económica de los
+// jueces —importes, dietas, kilometraje— NO se estaba respaldando en absoluto.
+const optionalTables = [
+  "judge_compensation_claims", // 024
+  "judge_compensation_duty_lines", // 024
+  "competition_availability", // 019
+  "app_sync_state", // 029
+  "approval_proposals_duplicadas_034", // 034: propuestas apartadas por el índice único
+  "support_tickets", // 035
+  "support_ticket_comments", // 035
+  "support_ticket_attachments", // 035
 ];
 
 function requireEnv() {
@@ -63,10 +83,27 @@ async function createBackup() {
   const stream = createWriteStream(output, { encoding: "utf8", flags: "wx" });
 
   stream.write(`{"createdAt":${JSON.stringify(createdAt)},"tables":{`);
-  for (const [index, table] of tables.entries()) {
+  let escritas = 0;
+  for (const table of tables) {
     const rows = await fetchAll(client, table);
-    if (index > 0) stream.write(",");
+    if (escritas > 0) stream.write(",");
     stream.write(`${JSON.stringify(table)}:${JSON.stringify(rows)}`);
+    escritas += 1;
+    console.log(`${table}: ${rows.length}`);
+  }
+  const ausentes = [];
+  for (const table of optionalTables) {
+    let rows;
+    try {
+      rows = await fetchAll(client, table);
+    } catch {
+      // Migración aún sin aplicar: se anota y se sigue.
+      ausentes.push(table);
+      continue;
+    }
+    if (escritas > 0) stream.write(",");
+    stream.write(`${JSON.stringify(table)}:${JSON.stringify(rows)}`);
+    escritas += 1;
     console.log(`${table}: ${rows.length}`);
   }
   stream.write("}}\n");
@@ -76,7 +113,12 @@ async function createBackup() {
     stream.on("error", reject);
   });
 
-  console.log(`Backup creado: ${output}`);
+  if (ausentes.length) {
+    console.warn(
+      `Aviso: sin copiar (migración pendiente): ${ausentes.join(", ")}`,
+    );
+  }
+  console.log(`Backup creado: ${output} (${escritas} tablas)`);
 }
 
 function verifyBackup() {
@@ -93,6 +135,12 @@ function verifyBackup() {
 
   console.log(`Backup válido: ${file}`);
   for (const table of tables) console.log(`${table}: ${parsed.tables[table].length}`);
+  for (const table of optionalTables) {
+    const rows = parsed.tables[table];
+    console.log(
+      Array.isArray(rows) ? `${table}: ${rows.length}` : `${table}: ausente (migración pendiente)`,
+    );
+  }
 }
 
 async function restoreDryRun() {
@@ -111,6 +159,21 @@ async function restoreDryRun() {
     const rows = parsed.tables[table];
     const { error } = await client.from(table).select("*", { count: "exact", head: true });
     if (error) throw new Error(`${table}: ${error.message}`);
+    const sample = rows[0];
+    if (sample && (typeof sample !== "object" || Array.isArray(sample))) {
+      throw new Error(`${table}: filas inválidas`);
+    }
+    console.log(`${table}: ${rows.length} filas listas`);
+  }
+  for (const table of optionalTables) {
+    const rows = parsed.tables[table];
+    if (!Array.isArray(rows)) continue;
+    const { error } = await client.from(table).select("*", { count: "exact", head: true });
+    if (error) {
+      // La copia la tiene pero la base ya no: se avisa, no se aborta el ensayo.
+      console.warn(`${table}: en la copia pero no en la base (${error.message})`);
+      continue;
+    }
     const sample = rows[0];
     if (sample && (typeof sample !== "object" || Array.isArray(sample))) {
       throw new Error(`${table}: filas inválidas`);

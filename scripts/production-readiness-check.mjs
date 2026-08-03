@@ -56,9 +56,18 @@ const publicApi = new Set([
 ]);
 
 // Rutas self-service: EXIGEN sesión (sujetas a API-01) pero no llevan guard
-// RBAC porque solo operan sobre la cuenta del propio llamante.
+// RBAC porque no hay rol que otorgue más permiso que otro — solo operan sobre
+// datos del propio llamante, o sobre filas cuya visibilidad ya ha verificado
+// el servicio antes de dejar escribir.
+//
+// Soporte entra aquí a propósito: abrir un ticket y comentar en él está
+// abierto a todos los roles (también a `solo_ver`, que también necesita
+// reportar fallos). Lo que sí es privilegiado —mover un ticket a cualquier
+// estado— vive en tickets/[id]/route.ts y allí hay guard explícito.
 const selfServiceApi = new Set([
   "src/app/api/v1/auth/change-password/route.ts",
+  "src/app/api/v1/tickets/route.ts",
+  "src/app/api/v1/tickets/[id]/comments/route.ts",
 ]);
 
 for (const file of apiRoutes) {
@@ -129,10 +138,20 @@ for (const file of visibleFiles) {
   const rel = toPosix(relative(root, file));
   const src = readFileSync(file, "utf8");
   if (/\(Excel:/i.test(src)) fail("UX-01", `${rel} expone fuente Excel en UI`);
+  // Busca restos del renombrado «evento» -> «campeonato» en texto que ve el
+  // usuario. La segunda lista descarta los usos en los que «evento» es una
+  // CLAVE de datos y no algo que se pinte: nombres de campo en uniones de
+  // tipos (`field: "tipo" | "evento" | …`) y comparaciones sobre esa clave
+  // (`field === "evento"`). Un aviso que salta donde no hay nada que arreglar
+  // acaba enseñando a ignorar los avisos.
   const visibleLegacy = src
     .split(/\r?\n/)
     .filter((line) => /(?:>|["'`])[^<"'`]*(?:Evento|evento)[^<"'`]*(?:<|["'`])/.test(line))
-    .filter((line) => !/useState|setEvento|editEvento|item\.evento|report\.evento|referee\.eventos|eventosCompletados/.test(line));
+    .filter(
+      (line) =>
+        !/useState|setEvento|editEvento|item\.evento|report\.evento|referee\.eventos|eventosCompletados/.test(line) &&
+        !/\bfield\s*(?::|===|==)/.test(line),
+    );
   if (visibleLegacy?.length && rel.includes("components/")) {
     warn("UX-02", `${rel} contiene literal visible legado: ${visibleLegacy[0].trim()}`);
   }
