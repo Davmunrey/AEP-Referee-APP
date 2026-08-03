@@ -71,6 +71,7 @@ jobs:
           fi
 
       - name: Comprobar que la cadena de conexión es utilizable
+        id: conexion
         # Diagnostica ANTES de tocar nada. Sin este paso, una cadena mal formada
         # produce el error más confuso posible de psql —«connection to server on
         # socket /var/run/postgresql/... failed»—, que parece un problema del
@@ -101,6 +102,7 @@ jobs:
             echo "  · Que al pegar el secret no se haya colado un espacio, un salto de línea o unas comillas."
             exit 1
           fi
+          echo "ok=true" >> "$GITHUB_OUTPUT"
           echo "Conexión correcta."
 
       # ── Todo lo que sigue hasta «Aplicar» es de SOLO LECTURA ────────────────
@@ -317,11 +319,15 @@ jobs:
         # always(): si algo falló a mitad de la tanda, las que sí se aplicaron
         # necesitan igualmente que PostgREST recargue, o la API devolverá
         # PGRST204/205 sobre columnas que ya existen.
-        if: always() && env.SOLO_PLAN != 'true' && steps.aplicar.outputs.aplicadas != '' && steps.aplicar.outputs.aplicadas != '0'
+        if: always() && env.SOLO_PLAN != 'true' && steps.conexion.outputs.ok == 'true' && steps.aplicar.outputs.aplicadas != '' && steps.aplicar.outputs.aplicadas != '0'
         run: psql "$PGURL" -X -q -c "NOTIFY pgrst, 'reload schema'" || true
 
       - name: Estado final
-        if: always() && env.SOLO_PLAN != 'true'
+        # Solo si llegó a haber conexión. Sin esta condición, cuando la cadena
+        # es inválida este paso vuelve a intentarlo y el log TERMINA con el
+        # error de socket de psql, tapando el diagnóstico claro que se emitió
+        # unos pasos antes — justo el ruido que este workflow quiere evitar.
+        if: always() && env.SOLO_PLAN != 'true' && steps.conexion.outputs.ok == 'true'
         run: |
           psql "$PGURL" -X -c \
             "SELECT version, name, applied_at, applied_by FROM deploy.applied_migrations ORDER BY version" || true
