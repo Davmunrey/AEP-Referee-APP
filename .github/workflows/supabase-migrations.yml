@@ -70,6 +70,39 @@ jobs:
             exit 1
           fi
 
+      - name: Comprobar que la cadena de conexión es utilizable
+        # Diagnostica ANTES de tocar nada. Sin este paso, una cadena mal formada
+        # produce el error más confuso posible de psql —«connection to server on
+        # socket /var/run/postgresql/... failed»—, que parece un problema del
+        # runner cuando en realidad psql ha interpretado el valor como un simple
+        # nombre de base de datos y ha caído al socket local por defecto.
+        #
+        # Nada de lo que se imprime aquí revela credenciales: psql nunca vuelca
+        # la contraseña, y el host del pooler no es un secreto.
+        run: |
+          set -uo pipefail
+          case "$PGURL" in
+            postgres://*|postgresql://*) ;;
+            *)
+              echo "::error title=SUPABASE_DB_URL no es una URI::El valor no empieza por postgresql://, así que psql lo toma como nombre de base de datos e intenta conectarse al socket local. Copia la cadena entera desde Supabase → Project Settings → Database → Connection string → Session pooler, incluidos el esquema, el usuario, la contraseña, el host y el puerto."
+              exit 1 ;;
+          esac
+
+          if printf '%s' "$PGURL" | grep -q '@db\.[a-z0-9]\{16,\}\.supabase\.co'; then
+            echo "::error title=Esa conexión no la alcanzan los runners::Estás usando la conexión directa db.<ref>.supabase.co, que solo resuelve por IPv6; los runners de GitHub solo tienen IPv4. Usa la cadena del Session pooler (host …pooler.supabase.com, puerto 5432)."
+            exit 1
+          fi
+
+          if ! psql "$PGURL" -X -tAc 'SELECT 1' >/dev/null 2>/tmp/psql_err; then
+            echo "::error title=No se pudo conectar a la base de datos::$(head -2 /tmp/psql_err | tr '\n' ' ')"
+            echo "Repasa, por este orden:"
+            echo "  · Que sea la cadena del *Session pooler* (puerto 5432), no la directa ni la de transaction pooler (6543)."
+            echo "  · Que la contraseña esté completa y percent-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23, % → %25."
+            echo "  · Que al pegar el secret no se haya colado un espacio, un salto de línea o unas comillas."
+            exit 1
+          fi
+          echo "Conexión correcta."
+
       # ── Todo lo que sigue hasta «Aplicar» es de SOLO LECTURA ────────────────
 
       - name: Inventario de migraciones del repositorio
