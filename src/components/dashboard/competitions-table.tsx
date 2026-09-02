@@ -3,6 +3,7 @@ import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { coveragePct } from "@/lib/roster-coverage";
 import type { Competition } from "@/lib/types";
 import { formatDateRange } from "@/lib/utils";
 import { ArrowRight, CalendarClock } from "lucide-react";
@@ -46,7 +47,7 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
                 </tr>
               )}
               {competitions.map((competition) => {
-                const pct = competition.requeridos > 0 ? Math.round((competition.confirmados / competition.requeridos) * 100) : 0;
+                const pct = coveragePct(competition.confirmados, competition.requeridos);
                 return (
                   <tr
                     key={competition.id}

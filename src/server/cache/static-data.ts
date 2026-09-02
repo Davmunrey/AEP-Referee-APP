@@ -22,7 +22,11 @@ export const getZonesCached = unstable_cache(fetchZones, ["aep-static-zones"], {
 
 async function fetchRegulations(): Promise<RegulationRule[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase.from("regulation_rules").select("*");
+  // Orden explícito: PostgREST no lo garantiza, y `findRegulationViolation`
+  // resuelve con `.find()`. Con la lista sin ordenar, dos reglas que casen el
+  // mismo rol y tipo darían un mínimo recomendado distinto en cada refresco de
+  // la caché. Además estabiliza el payload cacheado.
+  const { data, error } = await supabase.from("regulation_rules").select("*").order("id");
   if (error) throw error;
   return (data ?? []).map((r) => mapRegulation(r as Record<string, unknown>));
 }

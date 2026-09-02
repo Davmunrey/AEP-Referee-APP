@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { dispatchAppDataSync } from "@/lib/realtime/sync-events";
+import { dispatchAppDataSync, isAutoSyncPaused } from "@/lib/realtime/sync-events";
 
 const POLL_MS = 30_000;
 const DEBOUNCE_MS = 400;
@@ -24,6 +24,10 @@ export function AppRealtimeSync() {
 
   const applySync = useCallback(
     (source: "realtime" | "poll" | "manual") => {
+      // Con la sincronización pausada solo pasa el refresco manual. El cambio
+      // que se salta no se pierde para siempre: al reanudar, el control fuerza
+      // un refresco (la versión ya está anotada y no volvería a dispararse).
+      if (source !== "manual" && isAutoSyncPaused()) return;
       if (pendingRef.current) return;
       pendingRef.current = true;
       if (debounceRef.current) clearTimeout(debounceRef.current);

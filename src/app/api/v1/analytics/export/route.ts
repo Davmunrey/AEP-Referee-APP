@@ -1,4 +1,5 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { coveragePct } from "@/lib/roster-coverage";
 import { dataService } from "@/server/services";
 
 export async function GET(request: Request) {
@@ -102,7 +103,7 @@ export async function GET(request: Request) {
         c.estado,
         c.confirmados,
         c.requeridos,
-        `${c.requeridos > 0 ? Math.round((c.confirmados / c.requeridos) * 100) : 0}%`,
+        `${coveragePct(c.confirmados, c.requeridos)}%`,
       ),
     ),
     "",

@@ -12,6 +12,20 @@ export type RosterCoverage = {
   pct: number;
 };
 
+/**
+ * Porcentaje de cobertura: única fórmula para toda la aplicación.
+ *
+ * Estaba copiada en seis sitios y en tres variantes: los listados capaban al
+ * 100 % y devolvían 0 sin plazas requeridas, la exportación CSV no capaba, y el
+ * panel (previsión y radar) además devolvía **100 %** cuando no había nada que
+ * cubrir — un campeonato sin plantilla salía con la barra verde llena en el
+ * panel y al 0 % en la tabla de campeonatos.
+ */
+export function coveragePct(confirmados: number, requeridos: number): number {
+  if (!(requeridos > 0)) return 0;
+  return Math.min(100, Math.max(0, Math.round((confirmados / requeridos) * 100)));
+}
+
 export function countRequiredSlots(template: RosterSession[]): number {
   let total = 0;
   for (const session of template) {
@@ -46,16 +60,12 @@ export function computeRosterCoverage(
   if (template.length === 0 || fromTemplate === 0) {
     const confirmados = Object.values(assignments).filter(Boolean).length;
     const openSlots = Math.max(0, requeridos - confirmados);
-    const pct =
-      requeridos > 0 ? Math.min(100, Math.round((confirmados / requeridos) * 100)) : 0;
-    return { requeridos, confirmados, openSlots, pct };
+    return { requeridos, confirmados, openSlots, pct: coveragePct(confirmados, requeridos) };
   }
 
   const openSlots = countOpenSlots(template, assignments);
   const confirmados = Math.max(0, requeridos - openSlots);
-  const pct =
-    requeridos > 0 ? Math.min(100, Math.round((confirmados / requeridos) * 100)) : 0;
-  return { requeridos, confirmados, openSlots, pct };
+  return { requeridos, confirmados, openSlots, pct: coveragePct(confirmados, requeridos) };
 }
 
 /** IDs únicos con plaza válida en plantilla (ignora claves huérfanas). */
