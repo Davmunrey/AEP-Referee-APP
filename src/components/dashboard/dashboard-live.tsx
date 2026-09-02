@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Pause, Play, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { APP_DATA_SYNC_EVENT } from "@/lib/realtime/sync-events";
+import { APP_DATA_SYNC_EVENT, setAutoSyncPaused } from "@/lib/realtime/sync-events";
 
 function relativeLabel(seconds: number): string {
   if (seconds < 5) return "ahora mismo";
@@ -35,6 +35,25 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
   const refresh = useCallback(() => {
     startTransition(() => router.refresh());
   }, [router]);
+
+  // El botón solo cambiaba su propia etiqueta: la sincronización global seguía
+  // refrescando con cada cambio en tiempo real y con el poll de 30 s, así que
+  // la barra decía «Pausado» mientras los datos cambiaban debajo. Ahora la
+  // pausa es real, y al reanudar se refresca de inmediato: mientras estuvo
+  // pausada la versión siguió anotándose, de modo que ningún cambio posterior
+  // dispararía por sí solo el refresco que faltaba.
+  const toggleAuto = useCallback(() => {
+    setAuto((prev) => {
+      const next = !prev;
+      setAutoSyncPaused(!next);
+      if (next) refresh();
+      return next;
+    });
+  }, [refresh]);
+
+  // Si la pantalla se desmonta pausada, la pausa no puede quedarse activa para
+  // el resto de la aplicación.
+  useEffect(() => () => setAutoSyncPaused(false), []);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -82,7 +101,7 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
       <div className="flex items-center gap-1">
         <button
           type="button"
-          onClick={() => setAuto((v) => !v)}
+          onClick={toggleAuto}
           aria-pressed={auto}
           aria-label={auto ? "Pausar actualización automática" : "Reanudar actualización automática"}
           className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring"
