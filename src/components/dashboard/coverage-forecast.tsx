@@ -35,7 +35,13 @@ function dayLabel(d: number | null): { text: string; tone: string; pill: string 
 
 /** Previsión de cobertura — progreso de cada plantilla y tiempo restante. */
 export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
+  // Solo eventos futuros (o de fecha desconocida): sin el filtro, la
+  // "previsión" mostraba los 6 campeonatos más antiguos, todos finalizados.
   const upcoming = [...coverage]
+    .filter((c) => {
+      const d = daysUntil(c.fecha);
+      return d === null || d >= 0;
+    })
     .sort((a, b) => a.fecha.localeCompare(b.fecha))
     .slice(0, 6);
 

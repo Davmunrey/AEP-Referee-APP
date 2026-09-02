@@ -21,10 +21,17 @@ export function computeJudgeProfile(
     (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
   );
   const passed = exams.filter((e) => e.resultado === "Aprobado").length;
-  const scored = exams.filter((e) => typeof e.puntuacion === "number");
+  // Media normalizada a /100: cada examen tiene su propia puntuación máxima
+  // (18/20 y 90/100 promediaban 54 "sobre 100" en vez de 90).
+  const scored = exams.filter(
+    (e) => typeof e.puntuacion === "number" && e.puntuacionMaxima > 0,
+  );
   const avgScore = scored.length
     ? Math.round(
-        scored.reduce((acc, e) => acc + (e.puntuacion ?? 0), 0) / scored.length,
+        scored.reduce(
+          (acc, e) => acc + ((e.puntuacion ?? 0) / e.puntuacionMaxima) * 100,
+          0,
+        ) / scored.length,
       )
     : null;
   const sortedSanctions = [...sanctions].sort((a, b) =>
