@@ -73,7 +73,7 @@ function dateKey(year: number, month: number, day: number) {
 export function OperationalCalendar({
   calendar,
 }: {
-  calendar: Record<string, CalendarDayEvent>;
+  calendar: Record<string, CalendarDayEvent[]>;
 }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -149,7 +149,9 @@ export function OperationalCalendar({
           {weeks.map((week, wi) =>
             week.map((cell, di) => {
               const key = dateKey(cell.year, cell.month, cell.day);
-              const evt = calendar[key];
+              const dayEvents = calendar[key] ?? [];
+              const evt = dayEvents[0];
+              const extraEvents = dayEvents.length - 1;
               const otherMonth = cell.month !== viewMonth;
               const isToday = key === todayKey;
               const isWeekend = di >= 5;
@@ -208,7 +210,12 @@ export function OperationalCalendar({
                         evt.rangePosition === "start" && "rounded-r-none",
                         evt.rangePosition === "end" && "rounded-l-none",
                       )}
-                      title={`${evt.label} · ${evt.fecha}${evt.fechaFin !== evt.fecha ? ` → ${evt.fechaFin}` : ""}`}
+                      title={dayEvents
+                        .map(
+                          (e) =>
+                            `${e.label} · ${e.fecha}${e.fechaFin !== e.fecha ? ` → ${e.fechaFin}` : ""}`,
+                        )
+                        .join("\n")}
                     >
                       {/* En móvil solo la etiqueta truncada: el badge nowrap desbordaba la rejilla. */}
                       <span className="hidden md:block">
@@ -218,6 +225,14 @@ export function OperationalCalendar({
                         {evt.label}
                       </p>
                     </Link>
+                  )}
+
+                  {/* Varios campeonatos el mismo día: antes el último pisaba a
+                      los anteriores y solo se veía uno. */}
+                  {extraEvents > 0 && (
+                    <p className="mx-1.5 mb-1.5 text-[10px] font-medium leading-tight text-muted-foreground">
+                      +{extraEvents} más
+                    </p>
                   )}
                 </div>
               );
