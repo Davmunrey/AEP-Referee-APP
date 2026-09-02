@@ -33,7 +33,9 @@ export function SessionGroupsEditor({
         </Button>
       </div>
       {list.map((grupo, gi) => (
-        <div key={`${grupo.nombre}-${gi}`} className="space-y-2 rounded-lg border border-border bg-background p-2">
+        // Posición como clave: `grupo.nombre` es el valor del input de al lado,
+        // así que cada pulsación remontaba la tarjeta y el campo perdía el foco.
+        <div key={gi} className="space-y-2 rounded-lg border border-border bg-background p-2">
           <div className="flex flex-wrap items-center gap-2">
             <Input
               className="w-32"

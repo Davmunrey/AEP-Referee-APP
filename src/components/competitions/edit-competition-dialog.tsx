@@ -85,7 +85,18 @@ export function EditCompetitionDialog({
 
     startTransition(async () => {
       try {
-        await api.updateCompetition(competition.id, { nombre, tipo, fecha, fechaFin, sede, zona });
+        // La fecha de fin es opcional en el formulario, pero la API exige
+        // AAAA-MM-DD: vaciarla devolvía un 400 que el usuario no podía
+        // resolver desde el diálogo. Un campeonato de un solo día termina el
+        // día que empieza.
+        await api.updateCompetition(competition.id, {
+          nombre,
+          tipo,
+          fecha,
+          fechaFin: fechaFin || fecha,
+          sede,
+          zona,
+        });
         onClose();
         router.refresh();
       } catch (err) {

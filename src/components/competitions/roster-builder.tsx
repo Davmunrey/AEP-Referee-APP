@@ -179,8 +179,19 @@ export function RosterBuilder({
     [],
   );
 
+  // Los guardas viven en refs a propósito: como dependencias, al terminar una
+  // transición `pending` pasaba a false y el efecto se volvía a ejecutar
+  // reescribiendo el estado recién guardado con las props del último render del
+  // servidor, que aún son las anteriores (el refresh va con 800 ms de retardo).
+  // El resultado era ver reaparecer el juez que acababas de quitar. Ahora el
+  // efecto solo corre cuando cambian de verdad los datos del servidor.
+  const isEditingRef = useRef(isEditing);
+  isEditingRef.current = isEditing;
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
+
   useEffect(() => {
-    if (isEditing || pending) return;
+    if (isEditingRef.current || pendingRef.current) return;
     setTemplate(initialTemplate);
     setAssignments(initialAssignments);
     setFlags(initialFlags);
@@ -192,8 +203,6 @@ export function RosterBuilder({
     initialFlags,
     initialCrossZoneMap,
     initialTemplate,
-    isEditing,
-    pending,
   ]);
 
   const handleUnlockImprevisto = () => {
@@ -322,10 +331,10 @@ export function RosterBuilder({
     const snapshot = assignments;
     setAssignments((prev) => { const next = { ...prev }; delete next[slotKey]; return next; });
     startTransition(async () => {
-      try { const res = await api.clearSlot(competition.id, slotKey); setAssignments(res.assignments); setStatusMsg(null); setStatusIsError(false); }
+      try { const res = await api.clearSlot(competition.id, slotKey); setAssignments(res.assignments); setStatusMsg(null); setStatusIsError(false); refreshCompetitionList(); }
       catch (err) { setAssignments(snapshot); setStatusMsg(formatApiError(err, "No se pudo quitar la asignación")); setStatusIsError(true); }
     });
-  }, [assignments, competition.id, startTransition]);
+  }, [assignments, competition.id, refreshCompetitionList, startTransition]);
 
   const onDrop = useCallback((slotKey: string, refereeId: string) => {
     if (rosterReadOnly) return;
@@ -351,10 +360,10 @@ export function RosterBuilder({
     const snapshot = flags;
     setFlags((prev) => ({ ...prev, [slotKey]: next }));
     startTransition(async () => {
-      try { const res = await api.setSlotFlags(competition.id, slotKey, next); setFlags(res.flags); }
+      try { const res = await api.setSlotFlags(competition.id, slotKey, next); setFlags(res.flags); refreshCompetitionList(); }
       catch (err) { setFlags(snapshot); setStatusMsg(formatApiError(err, "No se pudieron guardar los marcadores del slot")); setStatusIsError(true); }
     });
-  }, [rosterReadOnly, assignments, flags, competition.id, startTransition]);
+  }, [rosterReadOnly, assignments, flags, competition.id, refreshCompetitionList, startTransition]);
 
   const saveTemplate = (next: RosterSession[]) => {
     setSavingTemplate(true);
@@ -364,6 +373,7 @@ export function RosterBuilder({
         setTemplate(res.template); setAssignments(res.assignments); setFlags(res.flags);
         setIsEditing(false); setWorkflowStep("asignacion");
         setStatusMsg("Plantilla guardada"); setStatusIsError(false);
+        refreshCompetitionList();
       } catch (err) { setStatusMsg(formatApiError(err, "No se pudo guardar la plantilla")); setStatusIsError(true); }
       finally { setSavingTemplate(false); }
     });

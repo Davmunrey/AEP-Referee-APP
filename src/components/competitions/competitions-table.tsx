@@ -23,6 +23,7 @@ import { getApiBaseUrl } from "@/lib/api/config";
 import { isCompetitionPast } from "@/lib/competition-status";
 import { groupCompetitionDuplicates } from "@/lib/competition-dedup";
 import { selectFieldClassSm } from "@/lib/design-tokens";
+import { zoneFilterOptions } from "@/lib/competitions/list-filters";
 import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
 
@@ -51,13 +52,10 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   );
   const [deduping, setDeduping] = useState(false);
 
-  const zoneOptions = useMemo(() => {
-    const codes = new Set<string>();
-    for (const e of competitions) {
-      if (e.zona) codes.add(e.zona);
-    }
-    return [...codes].sort();
-  }, [competitions]);
+  const zoneOptions = useMemo(
+    () => zoneFilterOptions(competitions, userZona),
+    [competitions, userZona],
+  );
 
   useEffect(() => {
     setCompetitions(initialCompetitions);

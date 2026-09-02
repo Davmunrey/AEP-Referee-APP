@@ -118,3 +118,17 @@ export function collectOpenSlots(session: RosterSession, assignments: Assignment
     }>,
   );
 }
+
+/** Reordena el conjunto de sesiones colapsadas (guardado por posición) cuando
+ * dos sesiones intercambian su sitio. Sin esto, subir una sesión colapsada
+ * colapsaba a la vecina y desplegaba la que se acababa de mover. */
+export function swapCollapsedIndexes(collapsed: Set<number>, a: number, b: number): Set<number> {
+  const next = new Set(collapsed);
+  const aCollapsed = collapsed.has(a);
+  const bCollapsed = collapsed.has(b);
+  next.delete(a);
+  next.delete(b);
+  if (aCollapsed) next.add(b);
+  if (bCollapsed) next.add(a);
+  return next;
+}

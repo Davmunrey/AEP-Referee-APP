@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { selectFieldClass } from "@/lib/design-tokens";
+import { swapCollapsedIndexes } from "./roster-session-helpers";
+import { formatTimeRange, parseTimeRange } from "@/lib/time-range";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, cloneTemplate } from "@/lib/roster-template";
 import type { RoleKey, RosterCategoria, RosterGrupo, RosterRole, RosterSession } from "@/lib/types";
@@ -33,16 +35,6 @@ const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "
 const timeFieldClass =
   "h-9 rounded-xl border border-border-strong bg-surface px-2 text-sm text-foreground focus-ring";
 
-// "10:00 - 13:00" → ["10:00","13:00"], normalizando a HH:MM para <input type=time>.
-function parseTimeRange(value: string): [string, string] {
-  const norm = (t?: string) => {
-    const m = (t ?? "").trim().match(/^(\d{1,2}):(\d{2})$/);
-    return m ? `${m[1]!.padStart(2, "0")}:${m[2]}` : "";
-  };
-  const parts = value.split(/[–-]/).map((s) => s.trim());
-  return [norm(parts[0]), norm(parts[1])];
-}
-
 function TimeRangeInput({
   value,
   onChange,
@@ -53,7 +45,7 @@ function TimeRangeInput({
   ariaLabel: string;
 }) {
   const [start, end] = parseTimeRange(value);
-  const set = (s: string, e: string) => onChange(s && e ? `${s} - ${e}` : s || e || "");
+  const set = (s: string, e: string) => onChange(formatTimeRange(s, e));
   return (
     <div className="flex items-center gap-2">
       <input
@@ -184,6 +176,8 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
     const t = idx + dir;
     if (t < 0 || t >= sessions.length) return;
     setSessions((prev) => { const n = [...prev]; [n[idx], n[t]] = [n[t]!, n[idx]!]; return n; });
+    // El colapso se guarda por posición: hay que moverlo con la sesión.
+    setCollapsedIdx((prev) => swapCollapsedIndexes(prev, idx, t));
   };
 
   return (
@@ -224,7 +218,11 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
       {sessions.map((session, si) => {
         const isCollapsed = collapsedIdx.has(si);
         return (
-          <div key={`${session.sesion}-${si}`} className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+          // La clave es la posición y no el código de sesión: ese código es el
+          // valor del propio input de al lado, así que cada pulsación cambiaba
+          // la clave, React desmontaba la tarjeta entera y el campo perdía el
+          // foco tras escribir una sola letra.
+          <div key={si} className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
             <div className="flex flex-wrap items-center gap-2 border-b border-border bg-surface px-4 py-3">
               <button
                 type="button"

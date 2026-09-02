@@ -9,13 +9,20 @@ import { useEffect, useRef } from "react";
  */
 export function useEscapeClose<T extends HTMLElement = HTMLDivElement>(onClose: () => void) {
   const panelRef = useRef<T>(null);
+  // El callback vive en un ref para que el efecto se monte una sola vez. Antes
+  // dependía de `onClose`, y los diálogos que reciben una lambda del padre
+  // (`onClose={() => setOpen(false)}`) reenfocaban el panel en cada render del
+  // padre: el foco saltaba del campo que se estaba escribiendo al contenedor.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", handler);
     panelRef.current?.focus();
     return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, []);
   return panelRef;
 }

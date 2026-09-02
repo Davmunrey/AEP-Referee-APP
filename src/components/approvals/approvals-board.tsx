@@ -12,6 +12,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { api } from "@/lib/api/client";
 import { textareaFieldClass } from "@/lib/design-tokens";
 import { parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
+import { selectedApproval } from "@/lib/approvals/select";
 import type { ApprovalProposal, Competition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
@@ -96,9 +97,11 @@ export function ApprovalsBoard({
   competitions = [],
 }: ApprovalsBoardProps) {
   const [items, setItems] = useState(initial);
-  const [selected, setSelected] = useState<ApprovalProposal | null>(
-    initial.find((a) => a.status === "pendiente") ?? initial[0] ?? null,
-  );
+  // Se guarda el id, no la propuesta: al refrescar desde el servidor el objeto
+  // capturado quedaba obsoleto y el panel de detalle seguía mostrando el estado
+  // y el comentario anteriores (o una propuesta que ya no está en la lista)
+  // mientras la columna de la izquierda ya se había actualizado.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [pending, startTransition] = useTransition();
   const [reviewError, setReviewError] = useState<string | null>(null);
@@ -110,6 +113,8 @@ export function ApprovalsBoard({
   useEffect(() => {
     setItems(initial);
   }, [initial]);
+
+  const selected = selectedApproval(items, selectedId);
 
   const pendingCount = items.filter((a) => a.status === "pendiente").length;
   const approvedCount = items.filter((a) => a.status === "aprobado").length;
@@ -137,7 +142,7 @@ export function ApprovalsBoard({
         const updated = await api.reviewApproval(selected.id, approve, comment || undefined);
         const next = items.map((a) => (a.id === updated.id ? updated : a));
         setItems(next);
-        setSelected(next.find((a) => a.status === "pendiente") ?? null);
+        setSelectedId(next.find((a) => a.status === "pendiente")?.id ?? null);
         setComment("");
         router.refresh();
       } catch (err) {
@@ -215,7 +220,7 @@ export function ApprovalsBoard({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setSelected(item)}
+                    onClick={() => setSelectedId(item.id)}
                     aria-pressed={selected?.id === item.id}
                     className={cn(
                       "w-full rounded-xl border p-3.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.99] focus-ring",
