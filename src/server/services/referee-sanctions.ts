@@ -88,19 +88,35 @@ export async function expireStaleSanctions(options?: { force?: boolean }): Promi
 
   const supabase = db();
   const today = todayIso();
-  const { data: expired } = await supabase
+  const { data: expired, error: readError } = await supabase
     .from("referee_sanctions")
     .select("id, referee_id")
     .eq("status", "activa")
     .lt("fecha_fin", today);
 
+  // La marca de barrido se pone antes de trabajar para evitar estampidas, pero
+  // si el barrido no llega a hacerse hay que soltarla: si no, un fallo puntual
+  // dejaba a los jueces «Sancionado» cinco minutos más de lo debido en cada
+  // reintento.
+  if (readError) {
+    lastExpireSweepAt = 0;
+    return 0;
+  }
+
   if (!expired?.length) return 0;
 
   const ids = expired.map((r) => r.id);
-  await supabase
+  const { error: updateError } = await supabase
     .from("referee_sanctions")
     .update({ status: "cumplida", updated_at: new Date().toISOString() })
     .in("id", ids);
+  // Sin esto se sincronizaban los jueces a «Activo» con las sanciones todavía
+  // activas en la base de datos, y el siguiente barrido volvía a darles la
+  // vuelta.
+  if (updateError) {
+    lastExpireSweepAt = 0;
+    return 0;
+  }
 
   const refereeIds = [...new Set(expired.map((r) => String(r.referee_id)))];
   await Promise.all(refereeIds.map((rid) => syncRefereeAfterSanctionChange(rid)));
