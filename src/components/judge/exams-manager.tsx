@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api/client";
+import { todayIso } from "@/lib/business-date";
 import { selectFieldClass, selectFieldClassSm, textareaFieldClass } from "@/lib/design-tokens";
 import type {
   ExamResult,
@@ -89,7 +90,9 @@ export function ExamsManager({
   const [refereeId, setRefereeId] = useState(lockedRefereeId ?? "");
   const [tipo, setTipo] = useState<ExamType>("Nuevo juez");
   const [nivelObjetivo, setNivelObjetivo] = useState<RefereeLevel>("Nacional");
-  const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+  // Día natural español: con toISOString() el campo salía con la fecha de
+  // ayer entre la medianoche y las 01:00–02:00.
+  const [fecha, setFecha] = useState(() => todayIso());
   const [examinador, setExaminador] = useState("");
   const [puntuacion, setPuntuacion] = useState("");
   const [notas, setNotas] = useState("");

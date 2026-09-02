@@ -1,3 +1,4 @@
+import { todayIso } from "@/lib/business-date";
 import type { Competition } from "@/lib/types";
 
 /** Primer campeonato operativo para el acceso rápido «Tarima activa». */
@@ -6,7 +7,9 @@ export function pickActiveRosterHref(
 ): string {
   if (competitions.length === 0) return "/competitions";
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Día natural español: en UTC, entre medianoche y las 01:00–02:00 el
+  // campeonato de hoy dejaba de contar como próximo.
+  const today = todayIso();
   const sorted = [...competitions].sort((a, b) => a.fecha.localeCompare(b.fecha));
 
   const focus =
