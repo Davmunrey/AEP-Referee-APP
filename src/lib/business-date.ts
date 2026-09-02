@@ -27,3 +27,20 @@ export function addDaysIso(startIso: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/**
+ * Hora (0-23) en la zona horaria de negocio.
+ *
+ * El saludo del panel la usaba vía `new Date().getHours()`, que en el servidor
+ * es UTC y en el navegador es la hora local: entre las 22:00 y la medianoche
+ * españolas el HTML servido decía «Buenas tardes» y el cliente lo reescribía a
+ * «Buenas noches», con el aviso de hidratación correspondiente.
+ */
+export function businessHour(now = new Date()): number {
+  const hour = new Intl.DateTimeFormat("en-GB", {
+    timeZone: BUSINESS_TZ,
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(now);
+  return Number(hour);
+}
