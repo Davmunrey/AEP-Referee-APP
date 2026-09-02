@@ -9,7 +9,9 @@ export interface FilenameMeta {
   subtitulo?: string;
 }
 
-const FILE_RE = /^(\d{4})(\d{2})(\d{2})_AEP(\d)_(.+?)(?:_rev\d+)?\.(?:pdf|PDF)$/;
+// AEP([123]): con `\d` un fichero "…_AEP7_…" producía el tipo inexistente
+// "AEP-7", que llegaba hasta la creación del campeonato para morir en un 400.
+const FILE_RE = /^(\d{4})(\d{2})(\d{2})_AEP([123])_(.+?)(?:_rev\d+)?\.(?:pdf|PDF)$/;
 
 /**
  * Extrae metadatos de nombres como `20260517_AEP1_Horario-Junior_rev3.pdf`.
