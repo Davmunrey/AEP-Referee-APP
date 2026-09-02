@@ -4,6 +4,7 @@ import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { canManageSanctions } from "@/lib/permissions";
 import { SANCTION_DURATION_PRESETS } from "@/lib/sanctions";
 import { ISO_DATE_RE } from "@/app/api/_lib/validation";
+import { todayIso } from "@/lib/business-date";
 import type { SanctionDurationPreset } from "@/lib/types";
 import { dataService } from "@/server/services";
 
@@ -77,7 +78,7 @@ export async function POST(request: Request, context: RouteContext) {
       refereeName: referee.nombre,
       zona: referee.zona,
       motivo,
-      fechaInicio: fechaInicio || new Date().toISOString().slice(0, 10),
+      fechaInicio: fechaInicio || todayIso(),
       duration,
       fechaFinCustom,
       notas,
