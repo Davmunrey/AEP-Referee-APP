@@ -28,6 +28,9 @@ export async function POST(request: Request, context: RouteContext) {
     refereeId: body.refereeId,
     flags: body.flags,
     crossZoneReason: body.crossZoneReason,
+    // `undefined` (ausente) desactiva la comprobación; `null` significa «lo vi
+    // vacío». Hay que distinguirlos, así que no se normaliza.
+    expectedRefereeId: "expectedRefereeId" in body ? body.expectedRefereeId : undefined,
   });
   if (!parsed.success) {
     return jsonError("Datos de asignación inválidos", 400, parsed.error.flatten());
@@ -40,7 +43,11 @@ export async function POST(request: Request, context: RouteContext) {
     user.nombre,
     parsed.data.flags,
     parsed.data.crossZoneReason,
+    parsed.data.expectedRefereeId,
   );
+  // 409, no 400: la petición era válida; lo que cambió fue el estado del hueco
+  // por debajo. El cliente distingue así «dato mal enviado» de «llegas tarde».
+  if (result.conflict) return jsonError(result.error ?? "Conflicto en el hueco", 409);
   if (result.error) return jsonError(result.error, 400);
   return jsonOk({
     assignments: result.assignments,

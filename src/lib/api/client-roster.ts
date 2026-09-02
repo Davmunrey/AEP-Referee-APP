@@ -24,22 +24,40 @@ export const rosterApi = {
       { method: "PUT", body: JSON.stringify({ template }) },
     ),
 
+  /**
+   * `expectedRefereeId` es el juez que la pantalla tiene ahora mismo en el
+   * hueco (null = vacío). El servidor rechaza la asignación con un 409 si la
+   * realidad ya no coincide, en vez de pisar el trabajo de otro usuario.
+   */
   assignReferee: (
     competitionId: string,
     slotKey: string,
     refereeId: string,
     flags?: SlotFlags,
     crossZoneReason?: string,
+    expectedRefereeId?: string | null,
   ) =>
     request<{ assignments: AssignmentsMap; flags?: FlagsMap; crossZoneMap?: CrossZoneMap }>(
       `/competitions/${competitionId}/roster/assign`,
-      { method: "POST", body: JSON.stringify({ slotKey, refereeId, flags, crossZoneReason }) },
+      {
+        method: "POST",
+        body: JSON.stringify({
+          slotKey,
+          refereeId,
+          flags,
+          crossZoneReason,
+          ...(expectedRefereeId !== undefined ? { expectedRefereeId } : {}),
+        }),
+      },
     ),
 
-  clearSlot: (competitionId: string, slotKey: string) =>
+  clearSlot: (competitionId: string, slotKey: string, expectedRefereeId?: string | null) =>
     request<{ assignments: AssignmentsMap }>(`/competitions/${competitionId}/roster/clear`, {
       method: "POST",
-      body: JSON.stringify({ slotKey }),
+      body: JSON.stringify({
+        slotKey,
+        ...(expectedRefereeId !== undefined ? { expectedRefereeId } : {}),
+      }),
     }),
 
   clearRosterAssignments: (competitionId: string) =>

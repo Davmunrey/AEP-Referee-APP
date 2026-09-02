@@ -3,6 +3,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { ApiRequestError } from "@/lib/api/request";
 import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
 import {
@@ -314,7 +315,16 @@ export function RosterBuilder({
     else setSelectedSlot(null);
     startTransition(async () => {
       try {
-        const res = await api.assignReferee(competition.id, slotKey, refereeId, flagPayload);
+        // Se declara el ocupante que la pantalla tiene ahora: si otro usuario
+        // tocó el hueco entretanto, el servidor responde 409 en vez de pisarlo.
+        const res = await api.assignReferee(
+          competition.id,
+          slotKey,
+          refereeId,
+          flagPayload,
+          undefined,
+          snapshot[slotKey] ?? null,
+        );
         setAssignments(res.assignments);
         if (res.flags) setFlags(res.flags);
         if (res.crossZoneMap) setCrossZoneMap(res.crossZoneMap);
@@ -323,6 +333,9 @@ export function RosterBuilder({
       } catch (err) {
         setAssignments(snapshot); setFlags(flagsSnapshot); setSelectedSlot(slotKey);
         setStatusMsg(formatApiError(err, "No se pudo guardar la asignación")); setStatusIsError(true);
+        // 409 = otro usuario tocó el hueco. Con el mensaje no basta: hay que
+        // traer la tarima real, o el usuario sigue mirando la que ya no existe.
+        if (err instanceof ApiRequestError && err.status === 409) refreshCompetitionList();
       }
     });
   }, [template, assignments, flags, competition.id, refreshCompetitionList, startTransition]);
@@ -331,8 +344,13 @@ export function RosterBuilder({
     const snapshot = assignments;
     setAssignments((prev) => { const next = { ...prev }; delete next[slotKey]; return next; });
     startTransition(async () => {
-      try { const res = await api.clearSlot(competition.id, slotKey); setAssignments(res.assignments); setStatusMsg(null); setStatusIsError(false); refreshCompetitionList(); }
-      catch (err) { setAssignments(snapshot); setStatusMsg(formatApiError(err, "No se pudo quitar la asignación")); setStatusIsError(true); }
+      try { const res = await api.clearSlot(competition.id, slotKey, snapshot[slotKey] ?? null); setAssignments(res.assignments); setStatusMsg(null); setStatusIsError(false); refreshCompetitionList(); }
+      catch (err) {
+        setAssignments(snapshot);
+        setStatusMsg(formatApiError(err, "No se pudo quitar la asignación"));
+        setStatusIsError(true);
+        if (err instanceof ApiRequestError && err.status === 409) refreshCompetitionList();
+      }
     });
   }, [assignments, competition.id, refreshCompetitionList, startTransition]);
 
