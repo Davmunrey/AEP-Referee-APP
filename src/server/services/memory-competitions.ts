@@ -558,9 +558,13 @@ export async function saveDraft(competitionId: string, actor: string) {
 }
 
 export async function getApprovals(user?: SessionUser): Promise<ApprovalProposal[]> {
-  const list = getStore().approvals;
+  // Copia y zona canonicalizada, como el twin de Supabase: devolver el array
+  // vivo del store dejaba que un llamante lo mutara, y comparar `zona` en
+  // crudo ocultaba las propuestas con códigos legados al delegado.
+  const list = [...getStore().approvals];
   if (user?.role === "delegado_zona" && user.zona) {
-    return list.filter((a) => a.zona === user.zona);
+    const userZone = resolveZoneCode(user.zona) ?? user.zona;
+    return list.filter((a) => (resolveZoneCode(a.zona) ?? a.zona) === userZone);
   }
   return list;
 }

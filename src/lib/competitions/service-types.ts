@@ -27,3 +27,24 @@ export class CompetitionHasClaimsError extends Error {
     this.claims = claims;
   }
 }
+
+/**
+ * Se ha intentado eliminar un juez que tiene liquidaciones de dietas.
+ *
+ * Mismo caso que el campeonato: `judge_compensation_claims.referee_id` es
+ * `ON DELETE CASCADE` (024:17), así que borrar la ficha del juez se llevaba por
+ * delante su dinero, incluido el ya marcado como `pagado`, sin dejar rastro.
+ */
+export class RefereeHasClaimsError extends Error {
+  readonly claims: number;
+
+  constructor(claims: number) {
+    super(
+      claims === 1
+        ? "El juez tiene 1 liquidación de dietas asociada. Anúlala antes de eliminarlo."
+        : `El juez tiene ${claims} liquidaciones de dietas asociadas. Anúlalas antes de eliminarlo.`,
+    );
+    this.name = "RefereeHasClaimsError";
+    this.claims = claims;
+  }
+}

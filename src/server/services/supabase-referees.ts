@@ -18,6 +18,7 @@ import {
   markSanctionDelegateNotified,
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
+import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
 import { db, pushActivity } from "./supabase-helpers";
 
 async function loadRefereeCompetitionHistory(
@@ -190,6 +191,17 @@ export const refereeService = {
 
   deleteReferee: async (id: string): Promise<boolean> => {
     const supabase = db();
+    // Las liquidaciones cuelgan del juez con ON DELETE CASCADE (024:17), igual
+    // que las del campeonato: borrar la ficha se llevaba su dinero, incluido el
+    // ya pagado. Mismo corte que en deleteCompetition.
+    const { count: claims, error: claimsError } = await supabase
+      .from("judge_compensation_claims")
+      .select("id", { count: "exact", head: true })
+      .eq("referee_id", id);
+    // Si la tabla aún no existe (024 sin aplicar) no hay nada que proteger.
+    if (!claimsError && (claims ?? 0) > 0) {
+      throw new RefereeHasClaimsError(claims ?? 0);
+    }
     // select("id") devuelve las filas borradas: sin él, borrar un id
     // inexistente respondía {deleted:true} en vez de 404.
     const { data, error } = await supabase.from("referees").delete().eq("id", id).select("id");
