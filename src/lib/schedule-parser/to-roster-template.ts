@@ -47,10 +47,34 @@ function sessionToRoster(
   };
 }
 
+/**
+ * Sufijo para códigos repetidos: S1, S1B, S1C…
+ *
+ * El código sale tal cual del PDF (`SESIÓN 1:` → `S1`), y un horario que
+ * reinicia la numeración cada día trae dos «Sesión 1». La clave de cada hueco
+ * es `${sesion}_${rol}_${indice}`, así que dos sesiones con el mismo código
+ * comparten huecos: el juez asignado a una salía también en la otra y la
+ * tarima no llegaba nunca al 100 %. El primero conserva su código; solo se
+ * desambiguan las repeticiones.
+ */
+function withUniqueSessionCodes(sessions: RosterSession[]): RosterSession[] {
+  const seen = new Set<string>();
+  return sessions.map((session) => {
+    let code = session.sesion;
+    let suffix = 1;
+    while (seen.has(code.trim().toLowerCase())) {
+      suffix += 1;
+      code = `${session.sesion}${String.fromCharCode(64 + suffix)}`;
+    }
+    seen.add(code.trim().toLowerCase());
+    return code === session.sesion ? session : { ...session, sesion: code };
+  });
+}
+
 /** Convierte un horario parseado en un `RosterSession[]` listo para guardar. */
 export function parsedToRosterTemplate(
   parsed: ParsedHorario,
   tipo: EventType,
 ): RosterSession[] {
-  return parsed.sessions.map((s) => sessionToRoster(s, tipo));
+  return withUniqueSessionCodes(parsed.sessions.map((s) => sessionToRoster(s, tipo)));
 }

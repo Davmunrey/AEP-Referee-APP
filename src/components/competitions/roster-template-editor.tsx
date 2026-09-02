@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { selectFieldClass } from "@/lib/design-tokens";
@@ -72,6 +72,21 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
   const [importOpen, setImportOpen] = useState(false);
   const [collapsedIdx, setCollapsedIdx] = useState<Set<number>>(new Set());
   const isDirty = JSON.stringify(sessions) !== JSON.stringify(initialTemplate);
+
+  // La clave de cada hueco es `${sesion}_${rol}_${indice}`: dos sesiones con el
+  // mismo código comparten huecos, así que el juez asignado a una aparece
+  // también en la otra y la cobertura no llega nunca al 100 %. El servidor lo
+  // rechaza; aquí se avisa antes de intentar guardar.
+  const duplicateSessionCodes = useMemo(() => {
+    const seen = new Set<string>();
+    const repeated = new Set<string>();
+    for (const s of sessions) {
+      const code = s.sesion.trim().toLowerCase();
+      if (seen.has(code)) repeated.add(code);
+      else seen.add(code);
+    }
+    return repeated;
+  }, [sessions]);
 
   const handleCancel = () => {
     if (isDirty) {
@@ -192,11 +207,23 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
             <Plus className="mr-1 h-4 w-4" /> Sesión
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={handleCancel} disabled={saving}>Cancelar</Button>
-          <Button type="button" size="sm" onClick={() => onSave(sessions)} disabled={saving}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => onSave(sessions)}
+            disabled={saving || duplicateSessionCodes.size > 0}
+          >
             {saving ? "Guardando…" : "Guardar plantilla"}
           </Button>
         </div>
       </div>
+
+      {duplicateSessionCodes.size > 0 && (
+        <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          Hay sesiones que repiten código ({[...duplicateSessionCodes].join(", ").toUpperCase()}).
+          Cada sesión necesita uno distinto: si no, comparten los huecos de la tarima.
+        </p>
+      )}
 
       {sessions.length > 0 && (
         <div className="rounded-lg border border-border-muted bg-surface/40 px-3 py-2">

@@ -59,7 +59,23 @@ export const rosterSessionSchema = z.object({
   grupos: z.array(rosterGrupoSchema).optional(),
 });
 
-export const rosterTemplateSchema = z.array(rosterSessionSchema).min(1);
+/**
+ * Los códigos de sesión tienen que ser únicos: la clave de cada hueco es
+ * `${sesion}_${rol}_${indice}`, así que dos sesiones con el mismo código
+ * generan claves idénticas. El juez asignado a una aparecía también en la otra
+ * y la cobertura contaba los huecos dos veces pero las asignaciones una, de
+ * modo que la tarima no llegaba nunca al 100 %.
+ */
+export const rosterTemplateSchema = z
+  .array(rosterSessionSchema)
+  .min(1)
+  .refine(
+    (sessions) => {
+      const codes = sessions.map((s) => s.sesion.trim().toLowerCase());
+      return new Set(codes).size === codes.length;
+    },
+    { message: "Hay dos sesiones con el mismo código; cada sesión necesita uno distinto." },
+  );
 
 export type AssignRefereeInput = z.infer<typeof assignRefereeSchema>;
 export type ClearSlotInput = z.infer<typeof clearSlotSchema>;
