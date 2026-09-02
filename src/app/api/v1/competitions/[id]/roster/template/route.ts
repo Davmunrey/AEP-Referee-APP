@@ -48,7 +48,10 @@ export async function PUT(request: Request, context: RouteContext) {
   // cobertura o agotaba memoria al enumerar huecos.
   const parsed = rosterTemplateSchema.safeParse(body?.template);
   if (!parsed.success) {
-    return jsonError("Plantilla inválida", 400);
+    // El choque de códigos de sesión es corregible por el usuario, así que se
+    // devuelve su mensaje en vez del genérico.
+    const duplicate = parsed.error.issues.find((i) => i.code === "custom");
+    return jsonError(duplicate?.message ?? "Plantilla inválida", 400);
   }
   const template = parsed.data as RosterSession[];
 
