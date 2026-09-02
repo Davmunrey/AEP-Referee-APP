@@ -6,15 +6,24 @@ import { ArrowRight, Download, FileSearch, Plus, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/lib/api/client";
+import { businessHour, todayIso } from "@/lib/business-date";
 import { canCreateCompetition } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
+// Hora y trimestre en zona de negocio: con la hora local, el servidor (UTC) y
+// el navegador (Madrid) calculaban saludos distintos entre las 22:00 y la
+// medianoche, y React tenía que reescribir el encabezado al hidratar.
 function greet(nombre: string): string {
-  const h = new Date().getHours();
+  const h = businessHour();
   const firstName = nombre.split(" ")[0];
   if (h < 13) return `Buenos días, ${firstName}`;
   if (h < 20) return `Buenas tardes, ${firstName}`;
   return `Buenas noches, ${firstName}`;
+}
+
+function businessQuarter(): string {
+  const [year, month] = todayIso().split("-").map(Number);
+  return `T${Math.ceil((month ?? 1) / 3)} ${year}`;
 }
 
 export function DashboardHero({
@@ -27,8 +36,7 @@ export function DashboardHero({
   const pendingApprovals = dashboard.kpis.find((k) => k.label.includes("Aprobaciones"));
   const openSlots = dashboard.kpis.find((k) => k.label.includes("Plazas"));
   const criticalEvent = dashboard.coverage.find((c) => c.estado === "Crítico");
-  const now = new Date();
-  const quarter = `T${Math.ceil((now.getMonth() + 1) / 3)} ${now.getFullYear()}`;
+  const quarter = businessQuarter();
   const nextAction = dashboard.insights.find(
     (i) => (i.severity === "crítico" || i.severity === "alerta") && i.action,
   );
