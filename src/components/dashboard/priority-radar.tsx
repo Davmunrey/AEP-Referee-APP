@@ -1,6 +1,7 @@
 import { EventStatusBadge } from "@/components/aep/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { daysUntil } from "@/lib/dashboard-intelligence";
+import { coveragePct } from "@/lib/roster-coverage";
 import type { EventCoverage } from "@/lib/types";
 import { cn, formatDateRange } from "@/lib/utils";
 import {
@@ -66,7 +67,7 @@ function buildRadar(coverage: EventCoverage[]): RadarItem[] {
   return coverage
     .map((c) => {
       const days = daysUntil(c.fecha);
-      const pct = c.required > 0 ? Math.round((c.filled / c.required) * 100) : 100;
+      const pct = coveragePct(c.filled, c.required);
       return {
         ...c,
         days,

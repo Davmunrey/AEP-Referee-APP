@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { daysUntil } from "@/lib/dashboard-intelligence";
+import { coveragePct } from "@/lib/roster-coverage";
 import type { EventCoverage, EventStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ArrowRight, CalendarClock } from "lucide-react";
@@ -67,7 +68,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
           </p>
         )}
         {upcoming.map((c) => {
-          const pct = c.required > 0 ? Math.round((c.filled / c.required) * 100) : 100;
+          const pct = coveragePct(c.filled, c.required);
           const day = dayLabel(daysUntil(c.fecha));
           return (
             <Link

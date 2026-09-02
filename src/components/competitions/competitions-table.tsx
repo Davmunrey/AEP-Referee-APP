@@ -21,6 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api/client";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { isCompetitionPast } from "@/lib/competition-status";
+import { coveragePct } from "@/lib/roster-coverage";
 import { groupCompetitionDuplicates } from "@/lib/competition-dedup";
 import { selectFieldClassSm } from "@/lib/design-tokens";
 import { zoneFilterOptions } from "@/lib/competitions/list-filters";
@@ -274,10 +275,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
         {/* Mobile card list */}
         <div className="divide-y divide-border/50 md:hidden">
           {pageRows.map((competition) => {
-            const pct =
-              competition.requeridos > 0
-                ? Math.min(100, Math.round((competition.confirmados / competition.requeridos) * 100))
-                : 0;
+            const pct = coveragePct(competition.confirmados, competition.requeridos);
             const isPast = isCompetitionPast(competition);
             const isConfirmingDelete = confirmDeleteId === competition.id;
             return (
@@ -376,10 +374,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           </DataTableHead>
           <DataTableBody>
             {pageRows.map((competition) => {
-              const pct =
-                competition.requeridos > 0
-                  ? Math.min(100, Math.round((competition.confirmados / competition.requeridos) * 100))
-                  : 0;
+              const pct = coveragePct(competition.confirmados, competition.requeridos);
               const isConfirmingDelete = confirmDeleteId === competition.id;
               const isPast = isCompetitionPast(competition);
               return (
