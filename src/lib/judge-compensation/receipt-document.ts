@@ -127,7 +127,17 @@ export function formatCompetitionDatePhrase(fecha: string, fechaFin: string): st
   }
 
   if (start.year === end.year) {
-    return `los días ${start.day} de ${startMonth} y ${end.day} de ${endMonth} de ${start.year}`;
+    const spanDays = Math.round(
+      (Date.UTC(end.year, end.month, end.day) - Date.UTC(start.year, start.month, start.day)) /
+        86_400_000,
+    );
+    // Solo dos días consecutivos entre meses (30 abr y 1 may) se enumeran con
+    // "y"; un rango mayor usa "del … al …" — antes "29 de abril y 2 de mayo"
+    // afirmaba dos días y hacía desaparecer el 30 y el 1 del recibo.
+    if (spanDays === 1) {
+      return `los días ${start.day} de ${startMonth} y ${end.day} de ${endMonth} de ${start.year}`;
+    }
+    return `del ${start.day} de ${startMonth} al ${end.day} de ${endMonth} de ${start.year}`;
   }
 
   return `del ${start.day} de ${startMonth} de ${start.year} al ${end.day} de ${endMonth} de ${end.year}`;
@@ -262,6 +272,10 @@ function buildLaborPhrase(
     return `por la labor prestada como juez en ${article} ${competitionName}`;
   }
 
+  // Seguimiento: sin `competitionArticle` explícito se usa "la" (la mayoría de
+  // recibos de club son Copas). `competitionAgreement` mira solo la primera
+  // palabra y daría "el Young Ambition Cup"; hace falta una regla que busque el
+  // sustantivo (Cup/Copa → la, Campeonato/Open → el) antes de cambiar esto.
   const article = organizer.competitionArticle ?? "la";
   if (organizer.laborAsJudge === false) {
     return `por la labor prestada en ${article} ${competitionName}`;

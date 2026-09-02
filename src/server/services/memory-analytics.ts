@@ -53,15 +53,18 @@ export async function getAnalytics(
     stats.refereeIds.forEach((id) => y.refereeIds.add(id));
     yearAgg.set(year, y);
     if (year === selectedYear && c.zona) {
+      // Sin `continue`: una zona no resoluble saltaba también el bloque de
+      // topReferees de abajo (la versión Supabase sí los cuenta).
       const zoneCode = resolveZoneCode(c.zona);
-      if (!zoneCode) continue;
-      const z = zoneAgg.get(zoneCode) ?? { competitions: 0, criticalCompetitions: 0, requiredSlots: 0, filledSlots: 0, refereeIds: new Set<string>() };
-      z.competitions += 1;
-      z.criticalCompetitions += c.estado === "Crítico" ? 1 : 0;
-      z.requiredSlots += stats.requiredSlots;
-      z.filledSlots += stats.filledSlots;
-      stats.refereeIds.forEach((id) => z.refereeIds.add(id));
-      zoneAgg.set(zoneCode, z);
+      if (zoneCode) {
+        const z = zoneAgg.get(zoneCode) ?? { competitions: 0, criticalCompetitions: 0, requiredSlots: 0, filledSlots: 0, refereeIds: new Set<string>() };
+        z.competitions += 1;
+        z.criticalCompetitions += c.estado === "Crítico" ? 1 : 0;
+        z.requiredSlots += stats.requiredSlots;
+        z.filledSlots += stats.filledSlots;
+        stats.refereeIds.forEach((id) => z.refereeIds.add(id));
+        zoneAgg.set(zoneCode, z);
+      }
     }
     if (year === selectedYear) {
       const validKeys = new Set(enumerateSlotKeys(template));

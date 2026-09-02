@@ -1,3 +1,4 @@
+import { isCompetitionPast } from "@/lib/competition-status";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { currentSeasonYear } from "@/lib/season";
 import { LEVELS } from "@/lib/mock-data";
@@ -143,6 +144,12 @@ export const analyticsService = {
     const competitions = (competitionRows ?? []).map((r) =>
       mapCompetition(r as Record<string, unknown>),
     );
+    // El dashboard es operativo: solo campeonatos no celebrados. Sin filtro,
+    // eventos de temporadas pasadas inflaban KPIs, salud e insights para
+    // siempre y encabezaban la tabla de "próximos". El calendario sí conserva
+    // el histórico completo.
+    const dashboardCompetitions = competitions.filter((c) => !isCompetitionPast(c));
+    const dashboardIds = new Set(dashboardCompetitions.map((c) => c.id));
     const competitionNames = new Set(competitions.map((c) => c.nombre));
     const templateByComp = new Map(
       (competitionRows ?? []).map((r) => {
@@ -150,12 +157,14 @@ export const analyticsService = {
         return [row.id, normalizeCompetitionTemplate(row.template, row.tipo as Competition["tipo"])] as const;
       }),
     );
-    const coverage = competitions.map((c) => {
+    // Misma fórmula que analítica y que el `estado` derivado (helper compartido):
+    // la versión ad hoc contaba claves huérfanas como cubiertas e ignoraba el
+    // fallback de `requeridos` cuando aún no hay plantilla.
+    const coverage = dashboardCompetitions.map((c) => {
       const assignments = assignmentsByComp.get(c.id) ?? {};
-      const filled = Object.values(assignments).filter(Boolean).length;
       const tpl = templateByComp.get(c.id) ?? [];
-      const open = countOpenSlots(tpl, assignments);
-      return { id: c.id, nombre: c.nombre, fecha: c.fecha, estado: c.estado, filled, open, required: filled + open };
+      const s = rosterAnalyticsStats(tpl, assignments, c.requeridos);
+      return { id: c.id, nombre: c.nombre, fecha: c.fecha, estado: c.estado, filled: s.filledSlots, open: s.openSlots, required: s.requiredSlots };
     });
     const activityItems = (activity ?? [])
       .map((r) => mapActivity(r as Record<string, unknown>))
@@ -165,14 +174,16 @@ export const analyticsService = {
     const scopedPromotions = (promotions ?? []) as { status: string }[];
     const { health, insights } = buildIntelligence({
       referees: scopedReferees,
-      competitions,
+      competitions: dashboardCompetitions,
       approvals: scopedApprovals,
       promotions: scopedPromotions,
       coverage,
       activity: activityItems,
     });
 
-    const kpiCompetitions = (competitionRows ?? []) as {
+    const kpiCompetitions = (competitionRows ?? []).filter((r) =>
+      dashboardIds.has(String((r as { id: string }).id)),
+    ) as {
       id: string;
       estado: string;
       template: RosterSession[] | null;
@@ -206,7 +217,7 @@ export const analyticsService = {
       ),
       activity: activityItems,
       calendar: calendarEventsFromCompetitions(competitions),
-      upcomingCompetitions: competitions.slice(0, 6),
+      upcomingCompetitions: dashboardCompetitions.slice(0, 6),
       currentUser: user,
       health,
       insights,
@@ -341,7 +352,13 @@ export const analyticsService = {
       const count = crossZoneByComp.get(c.id) ?? 0;
       if (count > 0) crossZoneByZone.set(zoneCode, (crossZoneByZone.get(zoneCode) ?? 0) + count);
     }
-    const totalCrossZoneSlots = [...crossZoneByZone.values()].reduce((a, n) => a + n, 0);
+    // Total sobre TODAS las competiciones del año (incluidas las sin zona
+    // resoluble): antes el numerador las excluía y el denominador no.
+    let totalCrossZoneSlots = 0;
+    for (const c of competitions) {
+      if (yearFromIso(c.fecha) !== selectedYear) continue;
+      totalCrossZoneSlots += crossZoneByComp.get(c.id) ?? 0;
+    }
     const filledForYear = selectedYearAgg?.filledSlots ?? 0;
     return {
       availableYears: years,

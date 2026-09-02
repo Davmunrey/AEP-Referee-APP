@@ -24,7 +24,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const admin = createAdminClient();
   const { data: target } = await admin
     .from("profiles")
-    .select("id, role")
+    .select("id, role, zona")
     .eq("id", id)
     .maybeSingle();
   if (!target) return jsonError("Usuario no encontrado", 404);
@@ -55,13 +55,28 @@ export async function PATCH(request: Request, context: RouteContext) {
     patch.role = body.role;
   }
   if (body.zona !== undefined) {
-    patch.zona = body.zona ? normalizeZoneInput(String(body.zona)) : null;
+    if (body.zona) {
+      // Una zona no reconocida se guardaba como null en silencio y dejaba a un
+      // delegado de zona sin zona → 403 en todo el scoping (bloqueo de cuenta).
+      const zona = normalizeZoneInput(String(body.zona));
+      if (!zona) return jsonError("Zona no válida", 400);
+      patch.zona = zona;
+    } else {
+      patch.zona = null;
+    }
   }
   if (typeof body.nombre === "string" && body.nombre.trim()) {
     patch.nombre = body.nombre.trim();
   }
   if (typeof body.rolLabel === "string" && body.rolLabel.trim()) {
     patch.rol_label = body.rolLabel.trim();
+  }
+
+  // Misma regla que el POST: un delegado de zona siempre necesita zona.
+  const effectiveRole = (patch.role as string | undefined) ?? targetRole;
+  const effectiveZona = patch.zona !== undefined ? patch.zona : (target.zona ?? null);
+  if (effectiveRole === "delegado_zona" && !effectiveZona) {
+    return jsonError("Los delegados de zona requieren zona", 400);
   }
 
   if (Object.keys(patch).length === 0) {
@@ -107,8 +122,16 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (authError) {
     return jsonError(`No se pudo eliminar el usuario: ${authError.message}`, 500);
   }
-  // Elimina el perfil explícitamente (no se asume FK ON DELETE CASCADE).
-  await admin.from("profiles").delete().eq("id", id);
+  // Elimina el perfil explícitamente (no se asume FK ON DELETE CASCADE) y
+  // comprueba el resultado: un perfil huérfano seguía apareciendo en el listado.
+  const { error: profileError } = await admin.from("profiles").delete().eq("id", id);
+  if (profileError) {
+    return jsonServerError(
+      "admin.users.DELETE",
+      profileError,
+      "Se eliminó el acceso pero no se pudo borrar el perfil",
+    );
+  }
 
   return jsonOk({ deleted: true });
 }
