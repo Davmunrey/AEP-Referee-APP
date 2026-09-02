@@ -1,3 +1,4 @@
+import { RosterSlotConflictError } from "@/lib/competitions/service-types";
 import { clearSlotSchema } from "@/lib/validations";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
@@ -22,7 +23,11 @@ export async function POST(request: Request, context: RouteContext) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
-  const parsed = clearSlotSchema.safeParse({ competitionId, slotKey: body.slotKey });
+  const parsed = clearSlotSchema.safeParse({
+    competitionId,
+    slotKey: body.slotKey,
+    expectedRefereeId: "expectedRefereeId" in body ? body.expectedRefereeId : undefined,
+  });
   if (!parsed.success) {
     return jsonError("Datos de slot inválidos", 400, parsed.error.flatten());
   }
@@ -32,9 +37,11 @@ export async function POST(request: Request, context: RouteContext) {
       parsed.data.competitionId,
       parsed.data.slotKey,
       user.nombre,
+      parsed.data.expectedRefereeId,
     );
     return jsonOk({ assignments });
   } catch (err) {
+    if (err instanceof RosterSlotConflictError) return jsonError(err.message, 409);
     return jsonServerError("roster/clear", err, "No se pudo liberar el hueco");
   }
 }

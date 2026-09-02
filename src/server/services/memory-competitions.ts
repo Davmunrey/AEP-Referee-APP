@@ -12,7 +12,7 @@ import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from
 import { formatRosterExport } from "@/lib/roster-export";
 import { pruneAssignments } from "@/lib/roster-template";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
-import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
+import { CompetitionHasClaimsError, RosterSlotConflictError } from "@/lib/competitions/service-types";
 import type {
   ApprovalProposal,
   AssignmentsMap,
@@ -350,11 +350,13 @@ export async function assignReferee(
   refereeId: string,
   actor: string,
   slotFlags?: SlotFlags,
+  expectedRefereeId?: string | null,
 ): Promise<{
   assignments?: AssignmentsMap;
   flags?: FlagsMap;
   crossZoneMap?: import("@/lib/types").CrossZoneMap;
   error?: string;
+  conflict?: boolean;
 }> {
   const validation = await validateAssign(competitionId, slotKey, refereeId);
   if (!validation.ok) return { error: validation.error };
@@ -381,6 +383,21 @@ export async function assignReferee(
     flags: operationFlags,
   });
   if (!operation.ok) return { error: operation.error };
+  // Mismo control optimista que el twin de Supabase, para que ambos backends
+  // respondan igual ante dos usuarios sobre la misma tarima.
+  if (expectedRefereeId !== undefined) {
+    const current = assignments[slotKey] ?? null;
+    if (current !== expectedRefereeId) {
+      const occupant = current ? store.referees.find((r) => r.id === current) : undefined;
+      return {
+        conflict: true,
+        error: current
+          ? `Otro usuario asignó ${occupant?.nombre ?? "a otro juez"} a ese hueco. Actualiza la tarima antes de reasignar.`
+          : "Otro usuario liberó ese hueco mientras lo editabas. Actualiza la tarima antes de reasignar.",
+      };
+    }
+  }
+  const replacedRefereeId = assignments[slotKey];
   assignments[slotKey] = refereeId;
   store.assignments.set(competitionId, assignments);
   const flagMap = { ...(store.slotFlags.get(competitionId) ?? {}) };
@@ -413,7 +430,11 @@ export async function assignReferee(
     at: new Date().toISOString(),
     actor,
     action: "Asignación",
-    detail: `${slotKey} → ${refereeId}`,
+    // Igual que el twin de Supabase: la sustitución deja constancia del juez
+    // desplazado, que antes desaparecía del historial sin rastro.
+    detail: `${slotKey} → ${refereeId}${
+      replacedRefereeId && replacedRefereeId !== refereeId ? ` (sustituye a ${replacedRefereeId})` : ""
+    }`,
   });
   return {
     assignments: { ...assignments },
@@ -458,9 +479,21 @@ export async function clearSlot(
   competitionId: string,
   slotKey: string,
   actor: string,
+  expectedRefereeId?: string | null,
 ): Promise<AssignmentsMap> {
   const store = getStore();
   const assignments = { ...(store.assignments.get(competitionId) ?? {}) };
+  // Mismo control optimista que el twin de Supabase.
+  if (expectedRefereeId !== undefined) {
+    const current = assignments[slotKey] ?? null;
+    if (current !== expectedRefereeId) {
+      throw new RosterSlotConflictError(
+        current
+          ? "Otro usuario cambió ese hueco mientras lo editabas. Actualiza la tarima antes de liberarlo."
+          : "Ese hueco ya está libre. Actualiza la tarima.",
+      );
+    }
+  }
   delete assignments[slotKey];
   store.assignments.set(competitionId, assignments);
   const flagMap = { ...(store.slotFlags.get(competitionId) ?? {}) };
