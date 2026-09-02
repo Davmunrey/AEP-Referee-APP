@@ -1,4 +1,5 @@
 import { macroZoneName, resolveZoneCode, type AepMacroZoneId } from "@/lib/aep-zones";
+import { addDaysIso, BUSINESS_TZ, todayIso } from "@/lib/business-date";
 import type { RefereeSanction, SanctionDurationPreset, ZoneDelegate } from "@/lib/types";
 
 export const SANCTION_DURATION_PRESETS: {
@@ -17,21 +18,10 @@ export const SANCTION_DURATION_PRESETS: {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Zona horaria de negocio: las fechas de sanción son días naturales en España. */
-const BUSINESS_TZ = "Europe/Madrid";
-
-export function todayIso(): string {
-  // "Hoy" en hora española, no en UTC: con toISOString() una sanción que
-  // termina hoy seguía activa (y el barrido no la expiraba) entre la
-  // medianoche local y la 01:00–02:00.
-  return new Intl.DateTimeFormat("en-CA", { timeZone: BUSINESS_TZ }).format(new Date());
-}
-
-export function addDaysIso(startIso: string, days: number): string {
-  const d = new Date(`${startIso}T12:00:00`);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
+// Las fechas de sanción son días naturales en España: "hoy" en hora española,
+// no en UTC. Con toISOString() una sanción que termina hoy seguía activa (y el
+// barrido no la expiraba) entre la medianoche local y la 01:00–02:00.
+export { addDaysIso, BUSINESS_TZ, todayIso } from "@/lib/business-date";
 
 export function resolveSanctionEndDate(
   fechaInicio: string,
@@ -72,7 +62,9 @@ export function isSanctionActive(s: Pick<RefereeSanction, "status" | "fechaFin">
 
 export function formatSanctionPeriod(fechaInicio: string, fechaFin: string): string {
   const fmt = (iso: string) =>
-    new Date(`${iso}T12:00:00`).toLocaleDateString("es-ES", {
+    // Zona explícita: sin ella el formato depende del huso del servidor.
+    new Date(`${iso}T12:00:00Z`).toLocaleDateString("es-ES", {
+      timeZone: BUSINESS_TZ,
       day: "numeric",
       month: "short",
       year: "numeric",
