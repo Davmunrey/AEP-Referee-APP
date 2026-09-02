@@ -18,11 +18,17 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
-/** Calendario operativo derivado de campeonatos en BD (sin datos demo). */
+/**
+ * Calendario operativo derivado de campeonatos en BD (sin datos demo).
+ *
+ * Cada día lleva una lista: antes era un solo evento por fecha y la asignación
+ * pisaba al anterior, así que de dos campeonatos el mismo día —cosa normal con
+ * cinco zonas— el calendario solo enseñaba uno y el otro desaparecía sin rastro.
+ */
 export function calendarEventsFromCompetitions(
   competitions: Competition[],
-): Record<string, CalendarDayEvent> {
-  const out: Record<string, CalendarDayEvent> = {};
+): Record<string, CalendarDayEvent[]> {
+  const out: Record<string, CalendarDayEvent[]> = {};
   for (const c of competitions) {
     const label =
       c.nombre.length > 28 ? `${c.nombre.slice(0, 26).trim()}…` : c.nombre;
@@ -36,7 +42,8 @@ export function calendarEventsFromCompetitions(
     );
     for (let i = 0; i < days; i++) {
       const key = isoDate(addDays(start, i));
-      out[key] = {
+      const day = (out[key] ??= []);
+      day.push({
         id: c.id,
         label,
         tipo: c.tipo,
@@ -45,7 +52,7 @@ export function calendarEventsFromCompetitions(
         fechaFin: c.fechaFin || c.fecha,
         rangePosition:
           days === 1 ? "single" : i === 0 ? "start" : i === days - 1 ? "end" : "middle",
-      };
+      });
     }
   }
   return out;

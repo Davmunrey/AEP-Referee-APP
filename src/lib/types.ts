@@ -288,7 +288,7 @@ export interface EventCoverage {
 export interface DashboardPayload {
   kpis: DashboardKpi[];
   activity: ActivityItem[];
-  calendar: Record<string, CalendarDayEvent>;
+  calendar: Record<string, CalendarDayEvent[]>;
   upcomingCompetitions: Competition[];
   currentUser: SessionUser;
   health: OperationalHealth;
