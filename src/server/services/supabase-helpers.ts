@@ -143,7 +143,7 @@ export async function persistCompetitionTemplate(competitionId: string, template
 
 export async function getCalendarEvents(
   getCompetitions: () => Promise<Competition[]>,
-): Promise<Record<string, CalendarDayEvent>> {
+): Promise<Record<string, CalendarDayEvent[]>> {
   const competitions = await getCompetitions();
   return calendarEventsFromCompetitions(competitions);
 }

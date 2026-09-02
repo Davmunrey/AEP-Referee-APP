@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { resolveSessionUser } from "@/lib/auth/session";
 
