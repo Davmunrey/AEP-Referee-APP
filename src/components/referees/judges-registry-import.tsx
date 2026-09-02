@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/data-transfer/file-drop-zone";
@@ -60,18 +60,28 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
 
   const step: TransferStep = result ? "result" : preview ? "preview" : "upload";
 
+  // Marcar y desmarcar «reemplazar» (o elegir otro fichero) mientras hay una
+  // previsualización en vuelo lanzaba dos peticiones: si ganaba la lenta, el
+  // resumen mostrado correspondía a la otra opción y «Importar» acababa
+  // aplicando un borrado completo que el usuario nunca vio previsualizado. Solo
+  // se atiende la respuesta de la última petición emitida.
+  const previewSeq = useRef(0);
+
   const runPreview = async (selected: File, replaceFlag: boolean) => {
+    const seq = ++previewSeq.current;
     setLoading(true);
     setError(null);
     setPreview(null);
     setResult(null);
     try {
       const res = await api.importJudgesRegistry(selected, { replace: replaceFlag, apply: false });
+      if (seq !== previewSeq.current) return;
       setPreview(res.preview);
     } catch (e) {
+      if (seq !== previewSeq.current) return;
       setError(formatApiError(e, "Error al leer el Excel"));
     } finally {
-      setLoading(false);
+      if (seq === previewSeq.current) setLoading(false);
     }
   };
 
@@ -88,6 +98,7 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
 
   const apply = async () => {
     if (!file || !preview) return;
+    previewSeq.current += 1;
     setLoading(true);
     setError(null);
     try {

@@ -107,7 +107,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     setSaved(false);
     try {
       const trimmedDomicilio = domicilio.trim();
-      await api.updateReferee(referee.id, {
+      const updated = await api.updateReferee(referee.id, {
         nombre,
         zona,
         nivel,
@@ -125,6 +125,17 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
         notas: notas || undefined,
         disp,
       });
+      // Cuando el domicilio se escribe sin elegir sugerencia, el servidor lo
+      // geocodifica al guardar y devuelve las coordenadas. Sin recogerlas de la
+      // respuesta el formulario seguía marcándose como «sin ubicación» y con
+      // cambios pendientes hasta que el refresh del servidor llegase, y el
+      // siguiente guardado volvía a geocodificar la misma dirección.
+      setDomicilio(updated.domicilio ?? "");
+      setDomicilioCoords(
+        updated.domicilioLat != null && updated.domicilioLng != null
+          ? { lat: updated.domicilioLat, lng: updated.domicilioLng }
+          : null,
+      );
       setSaved(true);
       router.refresh();
     } catch (err) {
