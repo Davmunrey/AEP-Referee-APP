@@ -32,6 +32,7 @@ const base = {
   sede: "Madrid",
   zona: "CENTRO",
   sesiones: 1,
+  requeridos: 3,
 };
 
 beforeEach(() => {

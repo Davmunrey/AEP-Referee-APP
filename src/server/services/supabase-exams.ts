@@ -1,4 +1,4 @@
-import { normalizeZoneInput } from "@/lib/aep-zones";
+import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { importJudgesRegistryToSupabase } from "@/server/services/import-judges-registry";
 import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
 import type {
@@ -30,10 +30,17 @@ function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelAct
 export const examsService = {
   getPromotions: async (user?: SessionUser): Promise<PromotionRequest[]> => {
     const supabase = db();
-    let query = supabase.from("promotion_requests").select("*");
-    if (user?.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
-    const { data } = await query;
-    return (data ?? []).map((r) => mapPromotion(r as Record<string, unknown>));
+    const { data, error } = await supabase.from("promotion_requests").select("*");
+    if (error) throw new Error(`promotion_requests: ${error.message}`);
+    const list = (data ?? []).map((r) => mapPromotion(r as Record<string, unknown>));
+    // `zona` es texto libre (códigos legados pre-013 como "MAD"/"Centro"): un
+    // `.eq` crudo ocultaba esas solicitudes al delegado; se canonicaliza como
+    // en el twin en memoria.
+    if (user?.role === "delegado_zona" && user.zona) {
+      const userZone = resolveZoneCode(user.zona) ?? user.zona;
+      return list.filter((p) => (resolveZoneCode(p.zona) ?? p.zona) === userZone);
+    }
+    return list;
   },
 
   reviewPromotion: async (id: string, approve: boolean, reviewer: string, comment?: string) => {
@@ -176,8 +183,10 @@ export const examsService = {
 
   deleteExam: async (id: string): Promise<boolean> => {
     const supabase = db();
-    const { error } = await supabase.from("referee_exams").delete().eq("id", id);
-    return !error;
+    // `.select("id")`: un DELETE que no casa filas no es error, así que se
+    // devolvía true para un id inexistente (el twin en memoria devuelve false).
+    const { data, error } = await supabase.from("referee_exams").delete().eq("id", id).select("id");
+    return !error && (data?.length ?? 0) > 0;
   },
 
   getReport: async (id: string): Promise<RefereeReport | undefined> => {
@@ -263,8 +272,8 @@ export const examsService = {
 
   deleteReport: async (id: string): Promise<boolean> => {
     const supabase = db();
-    const { error } = await supabase.from("referee_reports").delete().eq("id", id);
-    return !error;
+    const { data, error } = await supabase.from("referee_reports").delete().eq("id", id).select("id");
+    return !error && (data?.length ?? 0) > 0;
   },
 
   importJudgesRegistry: async (

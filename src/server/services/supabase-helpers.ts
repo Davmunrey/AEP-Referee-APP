@@ -112,11 +112,19 @@ export { parseSlotKey } from "@/lib/roster-template";
 
 export async function getCompetitionTemplate(competitionId: string): Promise<RosterSession[] | undefined> {
   const supabase = db();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("competitions")
     .select("template, tipo")
     .eq("id", competitionId)
     .single();
+  // PGRST116 = cero filas con .single(): la competición no existe → undefined.
+  // Cualquier otro error se propaga: antes se tragaba y syncCompetitionCoverage
+  // recalculaba contra una plantilla vacía y escribía «0 confirmados / Borrador»
+  // sobre una tarima completa.
+  if (error) {
+    if ((error as { code?: string }).code === "PGRST116") return undefined;
+    throw new Error(`competitions.template: ${error.message}`);
+  }
   if (!data) return undefined;
   return normalizeCompetitionTemplate(
     (data.template as RosterSession[] | null) ?? null,
@@ -126,7 +134,11 @@ export async function getCompetitionTemplate(competitionId: string): Promise<Ros
 
 export async function persistCompetitionTemplate(competitionId: string, template: RosterSession[]) {
   const supabase = db();
-  await supabase.from("competitions").update({ template }).eq("id", competitionId);
+  const { error } = await supabase.from("competitions").update({ template }).eq("id", competitionId);
+  // Si la escritura falla hay que PARAR: saveCompetitionTemplate seguía
+  // adelante y podaba asignaciones vivas calculadas contra la plantilla nueva
+  // aunque la BD conservase la antigua (pérdida de datos sin plantilla guardada).
+  if (error) throw new Error(`competitions.template: ${error.message}`);
 }
 
 export async function getCalendarEvents(
@@ -152,10 +164,13 @@ export async function loadRosterAssignmentData(competitionId: string): Promise<{
   crossZoneMap: import("@/lib/types").CrossZoneMap;
 }> {
   const supabase = db();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("roster_assignments")
     .select("slot_key, referee_id, flags, cross_zone")
     .eq("competition_id", competitionId);
+  // Mismo criterio que loadAllAssignments: un fallo de red devolvía un mapa
+  // vacío que syncCompetitionCoverage persistía como «0 confirmados / Borrador».
+  if (error) throw new Error(`roster_assignments: ${error.message}`);
   const rows = data ?? [];
   const crossZoneMap: import("@/lib/types").CrossZoneMap = {};
   for (const row of rows) {
@@ -321,3 +336,44 @@ export async function applyHealthHistory(
 }
 
 export { mapActivity };
+
+// PostgREST recorta toda respuesta a `max_rows` (1000) sin error ni señal, así
+// que cualquier lectura que pueda superar esa cifra tiene que paginar con un
+// ORDER BY estable. Además, un `.in(...)` con miles de ids revienta la longitud
+// de la URL, de modo que la lista se trocea antes de consultar.
+export const POSTGREST_PAGE_SIZE = 1000;
+export const IN_FILTER_CHUNK = 300;
+
+export function chunkList<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+/** Lee todas las filas de `table` cuyo `column` esté en `ids`, paginando y
+ * troceando el filtro. Propaga el error en vez de devolver filas de menos. */
+export async function fetchAllRowsIn(
+  table: string,
+  column: string,
+  ids: string[],
+  orderColumn = "id",
+): Promise<Record<string, unknown>[]> {
+  if (ids.length === 0) return [];
+  const supabase = db();
+  const rows: Record<string, unknown>[] = [];
+  for (const idsChunk of chunkList(ids, IN_FILTER_CHUNK)) {
+    for (let from = 0; ; from += POSTGREST_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .in(column, idsChunk)
+        .order(orderColumn, { ascending: true })
+        .range(from, from + POSTGREST_PAGE_SIZE - 1);
+      if (error) throw new Error(`${table}: ${error.message}`);
+      const page = (data ?? []) as Record<string, unknown>[];
+      rows.push(...page);
+      if (page.length < POSTGREST_PAGE_SIZE) break;
+    }
+  }
+  return rows;
+}

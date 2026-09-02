@@ -115,14 +115,16 @@ export const analyticsService = {
 
     let competitionQuery = supabase.from("competitions").select("*").order("fecha", { ascending: true });
     let refereeQuery = supabase.from("referees").select("estado, disp, zona");
-    let approvalQuery = supabase.from("approval_proposals").select("status, zona");
-    let promotionQuery = supabase.from("promotion_requests").select("status, zona");
+    const approvalQuery = supabase.from("approval_proposals").select("status, zona");
+    const promotionQuery = supabase.from("promotion_requests").select("status, zona");
 
     if (userZone) {
+      // competitions.zona y referees.zona son FK a códigos canónicos: `.eq` es
+      // seguro. approval_proposals.zona y promotion_requests.zona son texto
+      // libre (filas anteriores a la migración 013 conservan códigos legados
+      // como "MAD" o "Centro"), así que se filtran en memoria canonicalizando.
       competitionQuery = competitionQuery.eq("zona", userZone);
       refereeQuery = refereeQuery.eq("zona", userZone);
-      approvalQuery = approvalQuery.eq("zona", userZone);
-      promotionQuery = promotionQuery.eq("zona", userZone);
     }
 
     const [
@@ -170,8 +172,14 @@ export const analyticsService = {
       .map((r) => mapActivity(r as Record<string, unknown>))
       .filter((item) => !userZone || competitionNames.has(item.evento));
     const scopedReferees = (referees ?? []) as { estado: string; disp?: boolean }[];
-    const scopedApprovals = (approvals ?? []) as { status: string }[];
-    const scopedPromotions = (promotions ?? []) as { status: string }[];
+    const inUserZone = (r: { zona?: unknown }) =>
+      !userZone || resolveZoneCode(String(r.zona ?? "")) === userZone;
+    const scopedApprovals = ((approvals ?? []) as { status: string; zona?: unknown }[]).filter(
+      inUserZone,
+    );
+    const scopedPromotions = ((promotions ?? []) as { status: string; zona?: unknown }[]).filter(
+      inUserZone,
+    );
     const { health, insights } = buildIntelligence({
       referees: scopedReferees,
       competitions: dashboardCompetitions,

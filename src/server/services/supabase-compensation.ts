@@ -33,6 +33,7 @@ import { rosterService } from "./supabase-roster";
 import {
   cachedLoadAllAssignments,
   db,
+  fetchAllRowsIn,
   getCompetitionTemplate,
   hasCompensationOverrideColumn,
   hasRefereeDomicilioGeoColumns,
@@ -51,16 +52,13 @@ async function loadDutyLinesByClaim(
   claimIds: string[],
 ): Promise<Map<string, ReturnType<typeof mapCompensationDutyLine>[]>> {
   const map = new Map<string, ReturnType<typeof mapCompensationDutyLine>[]>();
-  if (claimIds.length === 0) return map;
-  const supabase = db();
-  const { data } = await supabase
-    .from("judge_compensation_duty_lines")
-    .select("*")
-    .in("claim_id", claimIds);
-  for (const row of data ?? []) {
-    const cid = String((row as Record<string, unknown>).claim_id);
+  // Sin paginar ni trocear el `.in()`, un hub con muchas competiciones perdía
+  // líneas de servicio en silencio (PostgREST corta en 1000 filas) y las
+  // liquidaciones salían con importes de menos.
+  for (const row of await fetchAllRowsIn("judge_compensation_duty_lines", "claim_id", claimIds)) {
+    const cid = String(row.claim_id);
     const lines = map.get(cid) ?? [];
-    lines.push(mapCompensationDutyLine(row as Record<string, unknown>));
+    lines.push(mapCompensationDutyLine(row));
     map.set(cid, lines);
   }
   return map;
@@ -191,17 +189,13 @@ async function loadStoredClaimsBatch(
 
   const compIds = competitions.map((c) => c.id);
   const compById = new Map(competitions.map((c) => [c.id, c]));
-  const supabase = db();
-  const { data: claimRows } = await supabase
-    .from("judge_compensation_claims")
-    .select("*")
-    .in("competition_id", compIds);
+  const claimRows = await fetchAllRowsIn("judge_compensation_claims", "competition_id", compIds);
 
-  const claimIds = (claimRows ?? []).map((r) => String((r as Record<string, unknown>).id));
+  const claimIds = claimRows.map((r) => String(r.id));
   const dutyMap = await loadDutyLinesByClaim(claimIds);
 
-  for (const row of claimRows ?? []) {
-    const rec = row as Record<string, unknown>;
+  for (const row of claimRows) {
+    const rec = row;
     const compId = String(rec.competition_id);
     const comp = compById.get(compId);
     if (!comp) continue;

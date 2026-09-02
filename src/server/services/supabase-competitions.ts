@@ -123,14 +123,20 @@ export const competitionService = {
     // comportamiento idéntico: una lectura ligera de la tabla.
     const existingRows =
       context?.existing ??
-      ((await supabase.from("competitions").select("id, nombre, fecha, tipo")).data ?? []).map(
-        (r) => ({
+      (await (async () => {
+        const { data, error } = await supabase
+          .from("competitions")
+          .select("id, nombre, fecha, tipo");
+        // Antes se tragaba el error: la lista vacía saltaba el dedupe y dejaba
+        // maxNum=0 → id "evt-001" en colisión con el ya existente.
+        if (error) throw new Error(`competitions: ${error.message}`);
+        return (data ?? []).map((r) => ({
           id: String(r.id),
           nombre: String(r.nombre),
           fecha: String(r.fecha),
           tipo: String(r.tipo),
-        }),
-      );
+        }));
+      })());
     const key = competitionDedupKey(input);
     const dupe = existingRows.find(
       (r) =>
