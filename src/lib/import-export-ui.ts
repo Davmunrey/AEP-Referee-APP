@@ -106,11 +106,15 @@ export function canApplyPreview(preview: {
   eligibleCount?: number;
   sessionCount?: number;
   refereeCount?: number;
+  competitionCount?: number;
 }): boolean {
   if (preview.toCreateCount != null && preview.toCreateCount > 0) return true;
   if (preview.eligibleCount != null && preview.eligibleCount > 0) return true;
   if (preview.sessionCount != null && preview.sessionCount > 0) return true;
   if (preview.refereeCount != null && preview.refereeCount > 0) return true;
+  // El Excel del censo trae dos hojas: uno con solo campeonatos dejaba el botón
+  // «Importar» deshabilitado aunque hubiera trabajo que aplicar.
+  if (preview.competitionCount != null && preview.competitionCount > 0) return true;
   return false;
 }
 

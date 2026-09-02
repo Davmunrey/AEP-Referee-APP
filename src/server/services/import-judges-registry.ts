@@ -6,6 +6,7 @@ import { inicialesFromNombre } from "@/lib/judges-registry/maps";
 import { getPresetForEventType } from "@/lib/roster-template";
 import type { JudgesRegistryImportApplyResult, Referee } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { loadAllAssignments, POSTGREST_PAGE_SIZE } from "./supabase-helpers";
 import { getStore } from "@/server/store";
 
 function db() {
@@ -29,16 +30,43 @@ export async function importJudgesRegistryToSupabase(
     // ni cuadrantes (son datos operativos ajenos al Excel) y conserva a los
     // jueces que ya están asignados en alguna tarima (respeta la FK de
     // roster_assignments); esos se avisan en lugar de romper la importación.
-    const { data: assignedRows } = await supabase
-      .from("roster_assignments")
-      .select("referee_id");
-    const assignedIds = new Set(
-      (assignedRows ?? []).map((a) => String(a.referee_id)),
-    );
-    const { data: allRefs } = await supabase.from("referees").select("id");
+    // Vía loadAllAssignments (paginada): el SELECT directo se comía el corte de
+    // 1000 filas de PostgREST, así que a partir de ~25 campeonatos había jueces
+    // asignados que salían como borrables. La FK de roster_assignments es
+    // RESTRICT, de modo que el DELETE en bloque fallaba entero y «reemplazar el
+    // censo» se quedaba en no hacer nada, con un aviso.
+    const assignmentsByComp = await loadAllAssignments();
+    const assignedIds = new Set<string>();
+    for (const slots of assignmentsByComp.values()) {
+      for (const refereeId of Object.values(slots)) {
+        if (refereeId) assignedIds.add(String(refereeId));
+      }
+    }
+
+    // Las liquidaciones cuelgan del juez con ON DELETE CASCADE (024:17), así
+    // que borrarlo se llevaba por delante su dinero, incluido el ya pagado. Es
+    // el mismo criterio que protege a los campeonatos con liquidaciones.
+    const claimedIds = new Set<string>();
+    for (let from = 0; ; from += POSTGREST_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from("judge_compensation_claims")
+        .select("referee_id")
+        .order("id", { ascending: true })
+        .range(from, from + POSTGREST_PAGE_SIZE - 1);
+      // Si la tabla aún no existe (024 sin aplicar) no hay nada que proteger.
+      if (error) break;
+      const page = data ?? [];
+      for (const row of page) claimedIds.add(String(row.referee_id));
+      if (page.length < POSTGREST_PAGE_SIZE) break;
+    }
+
+    const { data: allRefs, error: allRefsError } = await supabase
+      .from("referees")
+      .select("id");
+    if (allRefsError) throw new Error(`referees: ${allRefsError.message}`);
     const deletable = (allRefs ?? [])
       .map((r) => String(r.id))
-      .filter((id) => !assignedIds.has(id));
+      .filter((id) => !assignedIds.has(id) && !claimedIds.has(id));
     if (deletable.length) {
       const { error } = await supabase.from("referees").delete().in("id", deletable);
       if (error) warnings.push(`No se pudieron eliminar jueces previos: ${error.message}`);
@@ -46,6 +74,12 @@ export async function importJudgesRegistryToSupabase(
     if (assignedIds.size) {
       warnings.push(
         `${assignedIds.size} juez(ces) asignados en alguna tarima no se eliminaron (protección de asignaciones); se actualizan con el Excel.`,
+      );
+    }
+    const claimedOnly = [...claimedIds].filter((id) => !assignedIds.has(id));
+    if (claimedOnly.length) {
+      warnings.push(
+        `${claimedOnly.length} juez(ces) con liquidaciones registradas no se eliminaron (protección de compensaciones); se actualizan con el Excel.`,
       );
     }
   }

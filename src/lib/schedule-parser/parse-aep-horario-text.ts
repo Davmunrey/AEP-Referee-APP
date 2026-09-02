@@ -65,11 +65,37 @@ function dayToIso(raw: string): string | undefined {
   const month = MONTHS[m[2].toLowerCase()];
   const year = Number(m[3]);
   if (!day || !month || !year) return undefined;
+  // Un "31 de febrero" del PDF producía "2026-02-31", que ninguna capa
+  // posterior rechazaba por tener el formato correcto.
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return undefined;
   return `${year}-${pad2(month)}-${pad2(day)}`;
 }
 
+/** Día de la semana canónico ("Lunes"…"Domingo") a partir del prefijo. */
+const WEEKDAY_BY_PREFIX: [RegExp, string][] = [
+  [/^lun/i, "Lunes"],
+  [/^mar/i, "Martes"],
+  [/^mi[eé]/i, "Miércoles"],
+  [/^jue/i, "Jueves"],
+  [/^vie/i, "Viernes"],
+  [/^s[aá]b/i, "Sábado"],
+  [/^dom/i, "Domingo"],
+];
+
+/**
+ * Etiqueta corta del día. Antes se cortaba por la coma, así que de los cuatro
+ * formatos que acepta DAY_RE solo funcionaba uno ("Sábado, 17 de mayo…"): los
+ * abreviados y los que no llevan coma se colaban enteros como nombre del día y
+ * salían así en el editor de plantilla y en el cuadrante. Se normaliza al día
+ * de la semana completo, que además es una de las opciones del desplegable.
+ */
 function dayShort(raw: string): string {
-  return raw.split(",")[0].trim();
+  const trimmed = raw.trim();
+  for (const [re, name] of WEEKDAY_BY_PREFIX) {
+    if (re.test(trimmed)) return name;
+  }
+  return trimmed.split(",")[0]!.trim();
 }
 
 function makeDay(raw: string): ParsedDay {
