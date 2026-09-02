@@ -12,6 +12,7 @@ import {
   getZones,
   pushActivity,
 } from "@/server/store";
+import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
 import { buildMemoryCompetitionHistory } from "./memory-helpers";
 
 export async function getMeta(user: SessionUser): Promise<AppMeta> {
@@ -115,6 +116,18 @@ export async function deleteReferee(id: string): Promise<boolean> {
   const store = getStore();
   const idx = store.referees.findIndex((r) => r.id === id);
   if (idx < 0) return false;
+  // Mismo corte que el twin de Supabase: la liquidación no se tira por borrar
+  // una ficha (allí la clave ajena es ON DELETE CASCADE). El store de
+  // compensación se lee por globalThis, igual que en deleteCompetition, para no
+  // cerrar un ciclo de imports.
+  const claimsStore = (
+    globalThis as unknown as { __aepCompensationStore?: Map<string, { refereeId: string }> }
+  ).__aepCompensationStore;
+  if (claimsStore) {
+    let claims = 0;
+    for (const claim of claimsStore.values()) if (claim.refereeId === id) claims += 1;
+    if (claims > 0) throw new RefereeHasClaimsError(claims);
+  }
   store.referees.splice(idx, 1);
   return true;
 }
