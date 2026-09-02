@@ -89,17 +89,23 @@ export const competitionService = {
       user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
 
     let compQuery = supabase.from("competitions").select("id, fecha, estado").order("fecha");
-    let apprQuery = supabase
+    // `competitions.zona` es FK canónica, pero `approval_proposals.zona` es
+    // texto libre con códigos anteriores a la 013: con `.eq` el delegado veía un
+    // contador de aprobaciones más bajo que su propia bandeja. Se traen las
+    // pendientes (son pocas) y se cuentan canonicalizando.
+    const apprQuery = supabase
       .from("approval_proposals")
-      .select("id", { count: "exact", head: true })
+      .select("zona")
       .eq("status", "pendiente");
 
     if (userZone) {
       compQuery = compQuery.eq("zona", userZone);
-      apprQuery = apprQuery.eq("zona", userZone);
     }
 
-    const [{ data: comps }, { count: apprCount }] = await Promise.all([compQuery, apprQuery]);
+    const [{ data: comps }, { data: apprRows }] = await Promise.all([compQuery, apprQuery]);
+    const apprCount = (apprRows ?? []).filter(
+      (row) => !userZone || (resolveZoneCode(String(row.zona ?? "")) ?? row.zona) === userZone,
+    ).length;
     const navComps = (comps ?? []).map((r) => ({
       id: String(r.id),
       fecha: String(r.fecha),
@@ -108,7 +114,7 @@ export const competitionService = {
 
     return {
       competitions: navComps.length,
-      approvals: apprCount ?? 0,
+      approvals: apprCount,
       activeRosterHref: pickActiveRosterHref(navComps),
     };
   },
