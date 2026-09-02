@@ -25,8 +25,9 @@ export async function POST(request: Request) {
     currentPassword?: string;
     newPassword?: string;
   } | null;
-  const currentPassword = String(body?.currentPassword ?? "");
-  const newPassword = String(body?.newPassword ?? "");
+  // Solo strings: `String({})` daba contraseñas literales "[object Object]".
+  const currentPassword = typeof body?.currentPassword === "string" ? body.currentPassword : "";
+  const newPassword = typeof body?.newPassword === "string" ? body.newPassword : "";
 
   if (newPassword.length < 8) {
     return jsonError("La nueva contraseña debe tener al menos 8 caracteres", 400);

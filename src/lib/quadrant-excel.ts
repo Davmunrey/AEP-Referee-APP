@@ -1,3 +1,4 @@
+import { sessionOrder } from "@/lib/session-order";
 import * as XLSX from "xlsx";
 import { ROLE_LABELS } from "@/lib/roster-template";
 import type { AssignmentsMap, Competition, FlagsMap, RoleKey, RosterSession } from "@/lib/types";
@@ -80,6 +81,7 @@ export function generateQuadrantExcel(
     return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
   }
 
+  const usedSheetNames = new Set<string>();
   dayOrder.forEach((dia, di) => {
     const sessions = byDay.get(dia)!;
     const rows: (string | number)[][] = [];
@@ -87,7 +89,7 @@ export function generateQuadrantExcel(
     rows.push([`${comp.tipo} · ${comp.sede} · ${comp.fecha}${comp.fechaFin && comp.fechaFin !== comp.fecha ? ` – ${comp.fechaFin}` : ""}`]);
     rows.push([]);
     rows.push([dia]);
-    rows.push(["", ...sessions.map((s) => `SESIÓN ${s.sesion.replace(/^S/i, "")}`)]);
+    rows.push(["", ...sessions.map((s) => sessionHeader(s.sesion))]);
     rows.push(["", ...sessions.map(categoria)]);
     rows.push(["Competición", ...sessions.map((s) => s.horarioCompeticion ?? "")]);
 
@@ -117,10 +119,27 @@ export function generateQuadrantExcel(
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws["!cols"] = [{ wch: 18 }, ...sessions.map(() => ({ wch: 24 }))];
-    // Nombre de hoja: máx 31 chars, sin caracteres inválidos
-    const name = (dia.replace(/[\\/?*[\]:]/g, " ").slice(0, 28) || `Día ${di + 1}`).trim();
-    XLSX.utils.book_append_sheet(wb, ws, name || `Día ${di + 1}`);
+    // Nombre de hoja: máx 31 chars, sin caracteres inválidos, sin apóstrofos en
+    // los extremos (SheetJS los rechaza) y ÚNICO ignorando mayúsculas: dos días
+    // que truncaban al mismo nombre ("… – mañana" / "… – tarde") hacían que
+    // book_append_sheet lanzara y la ruta devolviera un 500 en vez del fichero.
+    const base =
+      (dia.replace(/[\\/?*[\]:]/g, " ").replace(/^'+|'+$/g, "").slice(0, 28) || `Día ${di + 1}`)
+        .trim() || `Día ${di + 1}`;
+    let name = base;
+    for (let k = 2; usedSheetNames.has(name.toLowerCase()); k++) {
+      const suffix = ` (${k})`;
+      name = `${base.slice(0, 31 - suffix.length)}${suffix}`;
+    }
+    usedSheetNames.add(name.toLowerCase());
+    XLSX.utils.book_append_sheet(wb, ws, name);
   });
 
   return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+}
+
+/** "SESIÓN n" para ids numéricos (S1, "Sesión 3"); ids libres se muestran tal cual. */
+function sessionHeader(sesion: string): string {
+  const n = sessionOrder(sesion);
+  return n < Number.MAX_SAFE_INTEGER ? `SESIÓN ${n}` : sesion;
 }

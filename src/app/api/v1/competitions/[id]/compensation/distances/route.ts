@@ -13,5 +13,9 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!canManageCompensation(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
+  // Paridad con /compensation y /recalculate: un campeonato inexistente es un
+  // 404, no un resumen vacío con 200.
+  const comp = await dataService.getCompetition(id);
+  if (!comp) return jsonError("Competición no encontrada", 404);
   return jsonOk(await dataService.calculateAllCompensationDistances(id));
 }

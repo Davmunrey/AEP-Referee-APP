@@ -32,7 +32,8 @@ export async function POST(request: Request) {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
   const email = String(body.email ?? "").trim().toLowerCase();
-  const password = String(body.password ?? "");
+  // Solo string: `String({})` daba la contraseña literal "[object Object]".
+  const password = typeof body.password === "string" ? body.password : "";
   const nombre = String(body.nombre ?? "").trim();
   const rolLabel = String(body.rolLabel ?? "").trim();
   const role = body.role as UserRole;
@@ -92,5 +93,15 @@ export async function POST(request: Request) {
     return jsonServerError("admin.users.POST", profileError, "No se pudo crear el perfil del usuario");
   }
 
-  return jsonOk({ id: userId, email, nombre, rol_label: rolLabel, iniciales, role, zona, activo: true });
+  // Devuelve la zona realmente guardada (solo delegado_zona la conserva).
+  return jsonOk({
+    id: userId,
+    email,
+    nombre,
+    rol_label: rolLabel,
+    iniciales,
+    role,
+    zona: role === "delegado_zona" ? zona : null,
+    activo: true,
+  });
 }

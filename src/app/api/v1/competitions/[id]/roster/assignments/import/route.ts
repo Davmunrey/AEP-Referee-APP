@@ -41,7 +41,10 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     selectedKeys = parseSelectedImportKeys(formData.get("selectedKeys"));
   } catch (e) {
-    return jsonError(e instanceof Error ? e.message : "Selección inválida", 400);
+    return jsonError(
+      e instanceof SyntaxError ? "Selección inválida" : e instanceof Error ? e.message : "Selección inválida",
+      400,
+    );
   }
 
   const file = formData.get("file");

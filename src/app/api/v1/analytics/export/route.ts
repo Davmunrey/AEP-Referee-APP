@@ -113,7 +113,8 @@ export async function GET(request: Request) {
     ),
   ];
 
-  return new Response(lines.join("\n"), {
+  // BOM UTF-8: sin él, Excel (Windows) abre "Año"/acentos como mojibake.
+  return new Response("\uFEFF" + lines.join("\n"), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="aep-temporada-${new Date().toISOString().slice(0, 10)}.csv"`,

@@ -1,3 +1,4 @@
+import { sessionOrder } from "@/lib/session-order";
 import type { AssignmentsMap, Competition, FlagsMap, RoleKey, RosterSession } from "@/lib/types";
 
 interface RefInfo {
@@ -144,8 +145,7 @@ export function generateQuadrantHtml(
     // Fila de sesiones: SESIÓN N + categoría
     html += `<tr>`;
     for (const s of sessions) {
-      const num = s.sesion.replace(/^S/i, "");
-      html += `<td class="cell-sess"><span class="sess-n">SESIÓN ${esc(num)}</span><span class="sess-cat">${esc(categoriaLabel(s))}</span></td>`;
+      html += `<td class="cell-sess"><span class="sess-n">${esc(sessionHeader(s.sesion))}</span><span class="sess-cat">${esc(categoriaLabel(s))}</span></td>`;
     }
     html += `</tr>`;
 
@@ -185,17 +185,26 @@ export function generateQuadrantHtml(
   for (const k of usedRoleKeys) {
     if (!legendKeys.includes(k as RoleKey)) legendKeys.push(k as RoleKey);
   }
+  // Dedupe por etiqueta: `speaker` y `mesa` comparten "MESA/SPEAKER" y salían
+  // como dos chips idénticos cuando la plantilla usaba ambas claves.
+  const seenLabels = new Set<string>();
   const legendChips = legendKeys
-    .map((k) => {
-      const st = styleFor(k);
-      return `<span class="leg-chip" style="background:${st.bg};color:${st.fg}">${esc(st.label)}</span>`;
-    })
+    .map((k) => styleFor(k))
+    .filter((st) => (seenLabels.has(st.label) ? false : (seenLabels.add(st.label), true)))
+    .map((st) => `<span class="leg-chip" style="background:${st.bg};color:${st.fg}">${esc(st.label)}</span>`)
     .join("");
 
   const fechaRange = comp.fecha === comp.fechaFin || !comp.fechaFin
     ? comp.fecha
     : `${comp.fecha} - ${comp.fechaFin}`;
-  const hoy = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" });
+  // Fecha del documento en hora de Madrid: el servidor (Vercel) va en UTC y a
+  // las 00:30 del 16 estampaba "15/05".
+  const hoy = new Date().toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Europe/Madrid",
+  });
 
   const body = tables.length > 0
     ? tables.join("\n")
@@ -277,4 +286,10 @@ ${tables.length > 0 ? `<div class="legend">${legendChips}</div>
 ${autoPrint ? `<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});</script>` : ""}
 </body>
 </html>`;
+}
+
+/** "SESIÓN n" para ids numéricos (S1, "Sesión 3"); ids libres se muestran tal cual. */
+function sessionHeader(sesion: string): string {
+  const n = sessionOrder(sesion);
+  return n < Number.MAX_SAFE_INTEGER ? `SESIÓN ${n}` : sesion;
 }

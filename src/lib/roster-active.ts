@@ -6,8 +6,10 @@ export function listActiveTarimaCompetitions(competitions: Competition[]): Compe
   return competitions
     .filter((e) => !isCompetitionPast(e))
     .sort((a, b) => {
-      const pctA = a.requeridos > 0 ? a.confirmados / a.requeridos : 0;
-      const pctB = b.requeridos > 0 ? b.confirmados / b.requeridos : 0;
+      // Sin plazas requeridas no hay cobertura que medir: van al final, no
+      // encabezando la lista como "0 % cubierto".
+      const pctA = a.requeridos > 0 ? a.confirmados / a.requeridos : Number.POSITIVE_INFINITY;
+      const pctB = b.requeridos > 0 ? b.confirmados / b.requeridos : Number.POSITIVE_INFINITY;
       if (pctA !== pctB) return pctA - pctB;
       return a.fecha.localeCompare(b.fecha);
     });

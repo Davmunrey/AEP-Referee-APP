@@ -1,3 +1,4 @@
+import { isCompetitionPast } from "@/lib/competition-status";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { competitionDedupKey } from "@/lib/competition-dedup";
 import {
@@ -5,8 +6,9 @@ import {
   isRosterLockedByApproval,
   rosterMutationBlockedMessage,
   ROSTER_IMPREVISTO_STATE,
+  rosterAnalyticsStats,
 } from "@/lib/roster-coverage";
-import { countOpenSlots, isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
+import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
 import { pruneAssignments } from "@/lib/roster-template";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
@@ -56,23 +58,25 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
   const activity = userZone
     ? store.activity.filter((item) => competitionNames.has(item.evento))
     : store.activity;
-  const coverage = competitions.map((c) => {
+  // Solo campeonatos no celebrados: los pasados inflaban KPIs, salud e
+  // "insights" indefinidamente. Misma fórmula de cobertura que la analítica.
+  const dashboardCompetitions = competitions.filter((c) => !isCompetitionPast(c));
+  const coverage = dashboardCompetitions.map((c) => {
     const assignments = store.assignments.get(c.id) ?? {};
-    const filled = Object.values(assignments).filter(Boolean).length;
-    const open = countOpenSlots(getCompetitionTemplate(c.id), assignments);
+    const s = rosterAnalyticsStats(getCompetitionTemplate(c.id), assignments, c.requeridos);
     return {
       id: c.id,
       nombre: c.nombre,
       fecha: c.fecha,
       estado: c.estado,
-      filled,
-      open,
-      required: filled + open,
+      filled: s.filledSlots,
+      open: s.openSlots,
+      required: s.requiredSlots,
     };
   });
   const { health, insights } = buildIntelligence({
     referees: scopedReferees,
-    competitions,
+    competitions: dashboardCompetitions,
     approvals: scopedApprovals,
     promotions: scopedPromotions,
     coverage,
@@ -90,7 +94,7 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
     kpis: buildKpis(user),
     activity,
     calendar: getCalendarEvents(competitions),
-    upcomingCompetitions: competitions.slice(0, 6),
+    upcomingCompetitions: dashboardCompetitions.slice(0, 6),
     currentUser: user,
     health,
     insights,

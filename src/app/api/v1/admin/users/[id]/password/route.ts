@@ -17,8 +17,11 @@ export async function POST(request: Request, context: RouteContext) {
 
   const { id } = await context.params;
   const body = (await request.json().catch(() => null)) as { password?: string } | null;
-  const password = String(body?.password ?? "");
-  if (password.length < 8) return jsonError("La contraseña debe tener al menos 8 caracteres", 400);
+  // Solo string: `String({})` fijaba la contraseña literal "[object Object]".
+  const password = body?.password;
+  if (typeof password !== "string" || password.length < 8) {
+    return jsonError("La contraseña debe tener al menos 8 caracteres", 400);
+  }
 
   const admin = createAdminClient();
   const { data: target } = await admin

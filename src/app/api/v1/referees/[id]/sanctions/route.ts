@@ -64,7 +64,12 @@ export async function POST(request: Request, context: RouteContext) {
   ) {
     return jsonError("Indica una fecha de fin válida", 400);
   }
-  const notas = (body as { notas?: string }).notas;
+  // `notas: {}` reventaba en `.trim()` dentro del servicio → 500; es un 400.
+  const notasRaw = (body as { notas?: unknown }).notas;
+  if (notasRaw != null && typeof notasRaw !== "string") {
+    return jsonError("Notas no válidas", 400);
+  }
+  const notas = typeof notasRaw === "string" ? notasRaw : undefined;
 
   try {
     const sanction = await dataService.createRefereeSanction({

@@ -28,7 +28,7 @@ export async function POST(_request: Request, context: RouteContext) {
 
   const preset = getPresetForEventType(comp.tipo);
   const result = await dataService.saveCompetitionTemplate(competitionId, preset, user.nombre);
-  if (!result) return jsonError("No se pudo generar la plantilla", 400);
+  if (!result) return jsonError("No se pudo generar la plantilla", 500);
   return jsonOk(result);
 }
 
@@ -57,7 +57,7 @@ export async function PUT(request: Request, context: RouteContext) {
     template,
     user.nombre,
   );
-  if (!result) return jsonError("No se pudo guardar la plantilla", 400);
+  if (!result) return jsonError("No se pudo guardar la plantilla", 500);
   return jsonOk(result);
 }
 
@@ -72,6 +72,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!comp) return jsonError("Competición no encontrada", 404);
 
   const result = await dataService.saveCompetitionTemplate(competitionId, [], user.nombre);
-  if (!result) return jsonError("No se pudo borrar la plantilla", 400);
+  if (!result) return jsonError("No se pudo borrar la plantilla", 500);
   return jsonOk(result);
 }

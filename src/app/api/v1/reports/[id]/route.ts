@@ -30,7 +30,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     Pick<RefereeReport, "titulo" | "tipo" | "evento" | "contenido" | "adjuntoUrl">
   > = {};
   if (typeof raw.titulo === "string") patch.titulo = raw.titulo;
-  if (typeof raw.tipo === "string" && ALLOWED_TIPOS.includes(raw.tipo as ReportType)) {
+  // Un `tipo` desconocido es un 400, no se descarta en silencio (el cliente
+  // creía haber cambiado el tipo y el informe seguía igual).
+  if (raw.tipo !== undefined) {
+    if (typeof raw.tipo !== "string" || !ALLOWED_TIPOS.includes(raw.tipo as ReportType)) {
+      return jsonError("Tipo de informe no válido", 400);
+    }
     patch.tipo = raw.tipo as ReportType;
   }
   if (typeof raw.evento === "string") patch.evento = raw.evento;
@@ -44,7 +49,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const updated = await dataService.updateReport(id, patch);
-  if (!updated) return jsonError("Informe no encontrado", 404);
+  // Ya comprobamos que existe: un `undefined` aquí es un fallo de escritura.
+  if (!updated) return jsonError("No se pudo actualizar el informe", 500);
   return jsonOk(updated);
 }
 

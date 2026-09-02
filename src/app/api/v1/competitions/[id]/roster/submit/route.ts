@@ -30,7 +30,7 @@ export async function POST(_request: Request, context: RouteContext) {
   }
 
   const proposal = await dataService.submitRoster(id, user.nombre, user.id);
-  if (!proposal) return jsonError("No se pudo enviar", 400);
+  if (!proposal) return jsonError("No se pudo enviar la propuesta", 500);
   return jsonOk({
     message: "Propuesta enviada a aprobación nacional",
     proposal,

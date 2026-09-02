@@ -32,6 +32,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const body = bodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return jsonError("Cuerpo de solicitud inválido", 400);
 
+  // Un juez inexistente violaba la FK en la BD y salía como 500 genérico.
+  const referee = await dataService.getReferee(body.data.refereeId);
+  if (!referee) return jsonError("Juez no encontrado", 404);
+
   try {
     await dataService.addCompetitionAvailability(id, body.data.refereeId, user.nombre);
     return jsonOk({ ok: true });

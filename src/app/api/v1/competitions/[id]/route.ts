@@ -67,7 +67,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (typeof body.fecha === "string") patch.fecha = body.fecha;
     if (typeof body.fechaFin === "string") patch.fechaFin = body.fechaFin;
     if (typeof body.sede === "string") patch.sede = body.sede;
-    if (typeof body.zona === "string") patch.zona = body.zona;
+    if (typeof body.zona === "string") {
+      // Una zona no reconocida se normalizaba a null en el servicio y la
+      // competición desaparecía para todos los delegados de zona.
+      if (body.zona && !resolveZoneCode(body.zona)) return jsonError("Zona no válida", 400);
+      patch.zona = body.zona;
+    }
     if (typeof body.sesiones === "number") patch.sesiones = Math.round(body.sesiones);
     if (typeof body.requeridos === "number") patch.requeridos = Math.round(body.requeridos);
 

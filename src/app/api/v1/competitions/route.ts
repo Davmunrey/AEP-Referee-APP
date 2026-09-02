@@ -1,3 +1,4 @@
+import { resolveZoneCode } from "@/lib/aep-zones";
 import { canCreateCompetition } from "@/lib/permissions";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
@@ -46,6 +47,11 @@ export async function POST(request: Request) {
     zona = user.zona ?? "";
     if (!zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
   } else {
+    // Una zona no reconocida se normalizaba a null en el servicio: la
+    // competición nacía invisible para todos los delegados de zona.
+    if (body.zona && !resolveZoneCode(String(body.zona))) {
+      return jsonError("Zona no válida", 400);
+    }
     zona = body.zona ?? "";
   }
 

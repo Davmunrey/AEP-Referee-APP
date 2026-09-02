@@ -149,9 +149,12 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
   const { coverage, approvals, promotions, referees } = input;
   const insights: Insight[] = [];
 
-  // 1 — Campeonatos críticos: máxima prioridad.
+  // 1 — Campeonatos críticos: máxima prioridad. Los ya celebrados se omiten:
+  // sin este guard un evento crítico de temporadas pasadas generaba el aviso
+  // "asigna jueces cuanto antes" para siempre.
   for (const c of coverage.filter((e) => e.estado === "Crítico")) {
     const d = daysUntil(c.fecha, now);
+    if (d !== null && d < 0) continue;
     insights.push({
       id: `critical-${c.id}`,
       severity: "crítico",
