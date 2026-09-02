@@ -1,6 +1,8 @@
 import {
   canAttemptLogin,
   clearLoginAttempts,
+  MAX_LOGIN_EMAIL_LENGTH,
+  MAX_LOGIN_PASSWORD_LENGTH,
   recordFailedLogin,
   requestIp,
 } from "@/lib/api/login-rate-limit";
@@ -20,6 +22,10 @@ export async function POST(request: Request) {
   const password = String(body?.password ?? "");
   if (!email) return jsonError("Email obligatorio", 400);
   if (!password) return jsonError("Contraseña obligatoria", 400);
+  // Cotas antes de tocar nada: el endpoint es público y estos valores llegan a
+  // ser claves del rate-limit y entrada del hash de contraseña.
+  if (email.length > MAX_LOGIN_EMAIL_LENGTH) return jsonError("Email no válido", 400);
+  if (password.length > MAX_LOGIN_PASSWORD_LENGTH) return jsonError("Contraseña no válida", 400);
 
   const ip = requestIp(request);
   const limit = canAttemptLogin(ip, email);
