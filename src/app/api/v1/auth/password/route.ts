@@ -1,4 +1,8 @@
-import { canAttemptLogin, requestIp } from "@/lib/api/login-rate-limit";
+import {
+  canAttemptLogin,
+  MAX_LOGIN_EMAIL_LENGTH,
+  requestIp,
+} from "@/lib/api/login-rate-limit";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 
 export async function POST(request: Request) {
@@ -9,6 +13,7 @@ export async function POST(request: Request) {
   const action = body?.action ?? "check";
   const email = String(body?.email ?? "").trim().toLowerCase();
   if (!email) return jsonError("Email obligatorio", 400);
+  if (email.length > MAX_LOGIN_EMAIL_LENGTH) return jsonError("Email no válido", 400);
 
   if (action === "fail" || action === "success") {
     return jsonError("Acción no permitida. Usa POST /auth/login.", 403);

@@ -18,11 +18,24 @@ interface Bucket {
 const ipEmailBuckets = new Map<string, Bucket>();
 const emailBuckets = new Map<string, Bucket>();
 
+// Longitud máxima de las claves. El email entra sin autenticar y se usa como
+// clave del mapa: sin este tope, un email de un megabyte por intento fallido
+// hinchaba la memoria del proceso, y el propio rate-limit no lo frenaba porque
+// cada email distinto estrena bucket. 254 es el máximo de RFC 5321.
+export const MAX_LOGIN_EMAIL_LENGTH = 254;
+// Supabase (bcrypt) solo usa los primeros 72 bytes; el tope evita hashear
+// megabytes de entrada por petición.
+export const MAX_LOGIN_PASSWORD_LENGTH = 200;
+const MAX_IP_LENGTH = 45; // IPv6 con zona
+
 // Purga periódica: las entradas expiradas (resetAt <= now) nunca se borraban,
 // así que los mapas crecían sin límite con cada IP/email nuevo. Cada
 // SWEEP_EVERY registros de fallo se barren ambos mapas (coste O(n) amortizado
 // y acotado; no hace falta un timer).
 const SWEEP_EVERY = 500;
+// Tope duro de entradas vivas: por encima se barre de inmediato en vez de
+// esperar al siguiente múltiplo de SWEEP_EVERY.
+const MAX_BUCKETS = 20_000;
 let opsSinceSweep = 0;
 
 function sweepExpired(current: number): void {
@@ -36,7 +49,11 @@ function sweepExpired(current: number): void {
 
 function maybeSweep(current: number): void {
   opsSinceSweep += 1;
-  if (opsSinceSweep >= SWEEP_EVERY) {
+  if (
+    opsSinceSweep >= SWEEP_EVERY ||
+    ipEmailBuckets.size > MAX_BUCKETS ||
+    emailBuckets.size > MAX_BUCKETS
+  ) {
     opsSinceSweep = 0;
     sweepExpired(current);
   }
@@ -47,16 +64,18 @@ function now() {
 }
 
 function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
+  return email.trim().toLowerCase().slice(0, MAX_LOGIN_EMAIL_LENGTH);
 }
 
 /** IP del cliente a partir de las cabeceras de proxy. */
 export function requestIp(request: Request): string {
-  return (
+  // La cabecera la controla el cliente en un endpoint público: se recorta para
+  // que tampoco pueda inflar la clave del bucket.
+  const raw =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
-    "unknown"
-  );
+    "unknown";
+  return raw.slice(0, MAX_IP_LENGTH);
 }
 
 export function loginRateLimitKey(ip: string, email: string): string {
