@@ -101,7 +101,7 @@ describe("importJudgesRegistryToSupabase (replace)", () => {
     const result = await importJudgesRegistryToSupabase(emptyParsed as never, { replace: true });
 
     expect(deletedIds()).toEqual(["ref-libre"]);
-    expect(result.warnings.some((w) => w.includes("asignados en alguna tarima"))).toBe(true);
+    expect((result.warnings ?? []).some((w) => w.includes("asignados en alguna tarima"))).toBe(true);
   });
 
   it("no borra a un juez con liquidaciones registradas", async () => {
@@ -113,13 +113,13 @@ describe("importJudgesRegistryToSupabase (replace)", () => {
     const result = await importJudgesRegistryToSupabase(emptyParsed as never, { replace: true });
 
     expect(deletedIds()).toEqual(["ref-libre"]);
-    expect(result.warnings.some((w) => w.includes("liquidaciones registradas"))).toBe(true);
+    expect((result.warnings ?? []).some((w) => w.includes("liquidaciones registradas"))).toBe(true);
   });
 
   it("sin protecciones que aplicar borra todo el censo anterior", async () => {
     refereeRows = [{ id: "ref-1" }, { id: "ref-2" }];
     const result = await importJudgesRegistryToSupabase(emptyParsed as never, { replace: true });
     expect(deletedIds()).toEqual(["ref-1", "ref-2"]);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings ?? []).toEqual([]);
   });
 });

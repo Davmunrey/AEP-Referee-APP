@@ -28,10 +28,16 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
   const nombre = String(meta.full_name ?? meta.name ?? email.split("@")[0] ?? "Usuario");
   const invited = meta.invited === true;
 
-  const { count } = await admin
+  const { count, error: countError } = await admin
     .from("profiles")
     .select("id", { count: "exact", head: true });
-  const isFirst = (count ?? 0) === 0;
+  // Este recuento decide si el usuario se crea como super_admin. Si la consulta
+  // falla, `count` llegaba como null y se leía como «no hay perfiles todavía»:
+  // cualquiera que se registrase durante un fallo transitorio de la base de
+  // datos se daba de alta como super_admin activo. Ante la duda no se crea el
+  // perfil; el usuario reintenta y entra por el camino normal.
+  if (countError || count == null) return null;
+  const isFirst = count === 0;
   const activo = isFirst || invited;
 
   await admin
@@ -59,8 +65,11 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
   return (data as ProfileRow) ?? null;
 }
 
-/** Resuelve el perfil de la app (y RBAC) para un usuario auth de Supabase. */
-async function resolveSessionUser(admin: AdminClient, user: User): Promise<SessionUser | null> {
+/**
+ * Resuelve el perfil de la app (y RBAC) para un usuario auth de Supabase.
+ * Exportada para poder probar el alta de perfil sin montar toda la sesión SSR.
+ */
+export async function resolveSessionUser(admin: AdminClient, user: User): Promise<SessionUser | null> {
   let { data: profile } = await admin
     .from("profiles")
     .select("id, email, nombre, rol_label, iniciales, role, zona, activo")
