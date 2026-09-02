@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { businessHour } from "@/lib/business-date";
 import { coveragePct } from "@/lib/roster-coverage";
 import {
   isAutoSyncPaused,
@@ -52,5 +53,22 @@ describe("pausa de la sincronización automática", () => {
     expect(isAutoSyncPaused()).toBe(true);
     setAutoSyncPaused(false);
     expect(isAutoSyncPaused()).toBe(false);
+  });
+});
+
+describe("businessHour", () => {
+  it("da la hora española aunque el proceso vaya en UTC", () => {
+    // 22:30 UTC = 00:30 en Madrid (CEST). Con `new Date().getHours()` el
+    // servidor decía «Buenas tardes» (22) y el navegador «Buenas noches» (0),
+    // así que React reescribía el encabezado al hidratar.
+    expect(businessHour(new Date("2026-06-30T22:30:00Z"))).toBe(0);
+    expect(new Date("2026-06-30T22:30:00Z").getUTCHours()).toBe(22);
+  });
+
+  it("cubre el rango completo del día", () => {
+    // Invierno (CET, +1) y verano (CEST, +2).
+    expect(businessHour(new Date("2026-01-15T23:00:00Z"))).toBe(0);
+    expect(businessHour(new Date("2026-06-15T10:00:00Z"))).toBe(12);
+    expect(businessHour(new Date("2026-06-15T21:00:00Z"))).toBe(23);
   });
 });
