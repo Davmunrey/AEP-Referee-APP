@@ -55,14 +55,16 @@ function resolveLodging(input: {
   if (input.lodgingEligibleOverride === true) lodgingEligible = true;
   if (input.lodgingEligibleOverride === false) lodgingEligible = false;
 
-  const lodgingDays =
-    input.lodgingDaysOverride != null && input.lodgingDaysOverride >= 0
+  // Sin elegibilidad no hay días que contar: denegar el alojamiento a mano
+  // dejaba el override de días intacto, así que la liquidación guardaba «3
+  // días» junto a un importe de 0 €.
+  const lodgingDays = !lodgingEligible
+    ? 0
+    : input.lodgingDaysOverride != null && input.lodgingDaysOverride >= 0
       ? input.lodgingDaysOverride
-      : lodgingEligible
-        ? championshipDays
-        : 0;
+      : championshipDays;
 
-  const lodgingAmount = lodgingEligible ? lodgingDays * LODGING_PER_DAY_EUR : 0;
+  const lodgingAmount = lodgingDays * LODGING_PER_DAY_EUR;
   return { lodgingEligible, lodgingDays, lodgingAmount };
 }
 

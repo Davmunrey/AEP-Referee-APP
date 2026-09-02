@@ -254,9 +254,9 @@ export const analyticsService = {
       supabase.from("competitions").select("id, template, tipo"),
       supabase.from("referees").select("id, nombre, nivel, zona, estado"),
       getZones(),
-      userZone
-        ? supabase.from("approval_proposals").select("status, submitted_at").eq("zona", userZone)
-        : supabase.from("approval_proposals").select("status, submitted_at"),
+      // Sin `.eq("zona")`: la columna es texto libre con códigos anteriores a la
+      // migración 013, que no normalizó esta tabla. Se filtra abajo en memoria.
+      supabase.from("approval_proposals").select("status, submitted_at, zona"),
     ]);
     const templateById = new Map(
       (compTemplates ?? []).map((row) => {
@@ -337,7 +337,9 @@ export const analyticsService = {
       .filter(Boolean)
       .sort((a, b) => (b!.assignedCompetitions - a!.assignedCompetitions) || (b!.assignedSlots - a!.assignedSlots) || a!.nombre.localeCompare(b!.nombre, "es"))
       .slice(0, 5) as AnalyticsPayload["topReferees"];
-    const approvalsForYear = (approvals ?? []).filter((a) => yearFromIso(String(a.submitted_at ?? "")) === selectedYear);
+    const approvalsForYear = ((approvals ?? []) as { status: string; submitted_at?: unknown; zona?: unknown }[])
+      .filter((a) => !userZone || (resolveZoneCode(String(a.zona ?? "")) ?? a.zona) === userZone)
+      .filter((a) => yearFromIso(String(a.submitted_at ?? "")) === selectedYear);
     const reviewed = approvalsForYear.filter((a) => a.status !== "pendiente").length;
     const rejected = approvalsForYear.filter((a) => a.status === "rechazado").length;
     const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : 0;

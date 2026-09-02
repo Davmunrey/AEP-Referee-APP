@@ -162,24 +162,28 @@ export async function loadRosterAssignmentData(competitionId: string): Promise<{
   assignments: AssignmentsMap;
   flags: FlagsMap;
   crossZoneMap: import("@/lib/types").CrossZoneMap;
+  crossZoneReasons: Record<string, string>;
 }> {
   const supabase = db();
   const { data, error } = await supabase
     .from("roster_assignments")
-    .select("slot_key, referee_id, flags, cross_zone")
+    .select("slot_key, referee_id, flags, cross_zone, cross_zone_reason")
     .eq("competition_id", competitionId);
   // Mismo criterio que loadAllAssignments: un fallo de red devolvía un mapa
   // vacío que syncCompetitionCoverage persistía como «0 confirmados / Borrador».
   if (error) throw new Error(`roster_assignments: ${error.message}`);
   const rows = data ?? [];
   const crossZoneMap: import("@/lib/types").CrossZoneMap = {};
+  const crossZoneReasons: Record<string, string> = {};
   for (const row of rows) {
     if (row.cross_zone) crossZoneMap[String(row.slot_key)] = true;
+    if (row.cross_zone_reason) crossZoneReasons[String(row.slot_key)] = String(row.cross_zone_reason);
   }
   return {
     assignments: assignmentsFromRows(rows),
     flags: flagsFromRows(rows),
     crossZoneMap,
+    crossZoneReasons,
   };
 }
 

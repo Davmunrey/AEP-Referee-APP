@@ -95,10 +95,14 @@ export const rosterService = {
     await persistCompetitionTemplate(competitionId, template);
     const supabase = db();
     const validKeys = new Set(enumerateSlotKeys(template));
-    const { data: existingRows } = await supabase
+    const { data: existingRows, error: existingError } = await supabase
       .from("roster_assignments")
       .select("slot_key")
       .eq("competition_id", competitionId);
+    // Tragarse este error dejaba las filas huérfanas en la base de datos: al
+    // volver a crear más adelante una sesión con el mismo código, el juez que
+    // ocupaba aquel hueco reaparecía asignado sin que nadie lo pusiera.
+    if (existingError) throw new Error(`roster_assignments: ${existingError.message}`);
     // Un único DELETE ... IN para las filas huérfanas (antes: un round-trip por
     // slot). Las filas restantes ya tienen sus flags correctos, así que no hace
     // falta reescribirlos uno a uno.
@@ -106,18 +110,20 @@ export const rosterService = {
       .map((row) => String(row.slot_key))
       .filter((key) => !validKeys.has(key));
     if (staleKeys.length > 0) {
-      await supabase
+      const { error: deleteError } = await supabase
         .from("roster_assignments")
         .delete()
         .eq("competition_id", competitionId)
         .in("slot_key", staleKeys);
+      if (deleteError) throw new Error(`roster_assignments: ${deleteError.message}`);
     }
     const { assignments, flags } = await loadRosterAssignmentData(competitionId);
     const pruned = pruneAssignments(template, assignments, flags);
-    await supabase
+    const { error: sessionsError } = await supabase
       .from("competitions")
       .update({ sesiones: template.length })
       .eq("id", competitionId);
+    if (sessionsError) throw new Error(`competitions.sesiones: ${sessionsError.message}`);
     await syncCompetitionCoverage(competitionId);
     await pushHistory({
       competitionId,
@@ -227,7 +233,12 @@ export const rosterService = {
     // cargar competición+juez+plantilla (≈10 consultas donde bastan ≈5); ahora
     // se validan esos mismos datos ya cargados y la plantilla se reutiliza en el
     // validateRosterOperation posterior.
-    const [comp, referee, { assignments, flags: existingFlags }, templateRaw] = await Promise.all([
+    const [
+      comp,
+      referee,
+      { assignments, flags: existingFlags, crossZoneMap: existingCrossZone, crossZoneReasons },
+      templateRaw,
+    ] = await Promise.all([
       getCompetitionFn(competitionId),
       getRefereeFn(refereeId),
       loadRosterAssignmentData(competitionId),
@@ -292,11 +303,27 @@ export const rosterService = {
       flags: freshFlags,
     });
     if (!recheck.ok) {
-      await supabase
-        .from("roster_assignments")
-        .delete()
-        .eq("competition_id", competitionId)
-        .eq("slot_key", slotKey);
+      // Deshacer no es borrar el hueco: si ya había un juez, el upsert lo
+      // sobrescribió y el DELETE se lo llevaba por delante, de modo que una
+      // colisión entre dos asignaciones simultáneas dejaba el puesto vacío en
+      // vez de conservar al que ya estaba. Se restaura la fila anterior.
+      const previousRefereeId = assignments[slotKey];
+      if (previousRefereeId) {
+        await supabase.from("roster_assignments").upsert({
+          competition_id: competitionId,
+          slot_key: slotKey,
+          referee_id: previousRefereeId,
+          flags: existingFlags[slotKey] ?? {},
+          cross_zone: Boolean(existingCrossZone[slotKey]),
+          cross_zone_reason: crossZoneReasons[slotKey] ?? null,
+        });
+      } else {
+        await supabase
+          .from("roster_assignments")
+          .delete()
+          .eq("competition_id", competitionId)
+          .eq("slot_key", slotKey);
+      }
       return { error: recheck.error };
     }
 
@@ -458,11 +485,15 @@ export const rosterService = {
 
   clearSlot: async (competitionId: string, slotKey: string, actor: string) => {
     const supabase = db();
-    await supabase
+    const { error } = await supabase
       .from("roster_assignments")
       .delete()
       .eq("competition_id", competitionId)
       .eq("slot_key", slotKey);
+    // Sin esto, un borrado rechazado seguía adelante y la ruta respondía 200:
+    // el juez seguía en la tarima y nadie se enteraba de que no se había
+    // liberado el hueco.
+    if (error) throw new Error(`roster_assignments: ${error.message}`);
     const assignments = await loadAssignments(competitionId);
     await syncCompetitionCoverage(competitionId);
     await pushHistory({
@@ -483,7 +514,11 @@ export const rosterService = {
     const comp = await getCompetitionFn(competitionId);
     if (!comp) return undefined;
     const supabase = db();
-    await supabase.from("roster_assignments").delete().eq("competition_id", competitionId);
+    const { error } = await supabase
+      .from("roster_assignments")
+      .delete()
+      .eq("competition_id", competitionId);
+    if (error) throw new Error(`roster_assignments: ${error.message}`);
     await syncCompetitionCoverage(competitionId);
     await pushHistory({
       competitionId,
@@ -541,10 +576,14 @@ export const rosterService = {
       // dejaríamos un estado enviado sin propuesta real que aprobar.
       if (insertError) return undefined;
     }
-    await supabase
+    const { error: stateError } = await supabase
       .from("competitions")
       .update({ aprobacion: "Propuesta enviada" })
       .eq("id", competitionId);
+    // La propuesta ya está creada: si la competición no queda marcada, la
+    // tarima seguiría editable con una propuesta pendiente encima. Reintentar
+    // es seguro (el submit reutiliza la propuesta pendiente que ya existe).
+    if (stateError) throw new Error(`competitions.aprobacion: ${stateError.message}`);
     await pushActivity({
       tipo: "propuesta",
       actor,
@@ -581,13 +620,20 @@ export const rosterService = {
 
   getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
     const supabase = db();
-    let query = supabase
+    const { data, error } = await supabase
       .from("approval_proposals")
       .select("*")
       .order("submitted_at", { ascending: false });
-    if (user?.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
-    const { data } = await query;
-    return (data ?? []).map((r) => mapApproval(r as Record<string, unknown>));
+    if (error) throw new Error(`approval_proposals: ${error.message}`);
+    const list = (data ?? []).map((r) => mapApproval(r as Record<string, unknown>));
+    // `zona` es texto libre y las propuestas anteriores a la migración 013
+    // guardan códigos legados ("MAD", "Centro"): el `.eq` crudo las ocultaba al
+    // delegado, que veía su bandeja vacía con propuestas pendientes de su zona.
+    if (user?.role === "delegado_zona" && user.zona) {
+      const userZone = resolveZoneCode(user.zona) ?? user.zona;
+      return list.filter((p) => (resolveZoneCode(p.zona) ?? p.zona) === userZone);
+    }
+    return list;
   },
 
   reviewApproval: async (
@@ -652,14 +698,24 @@ export const rosterService = {
       if (approve) {
         // Conserva flags (*, ↑↓) y cross-zona de las filas vivas al re-insertar
         // la propuesta aprobada; antes se perdían y el acta salía sin marcas.
-        const { data: liveRows } = await supabase
+        const { data: liveRows, error: liveError } = await supabase
           .from("roster_assignments")
           .select("slot_key, referee_id, flags, cross_zone, cross_zone_reason")
           .eq("competition_id", proposalCompetitionId);
+        // Esta lectura es la copia de seguridad del borrado que viene justo
+        // después: si falla y se sigue adelante, no hay nada que restaurar si
+        // el insert se tuerce, y de paso el acta pierde flags y cross-zona.
+        if (liveError) throw new Error(`roster_assignments: ${liveError.message}`);
         const liveBySlot = new Map(
           (liveRows ?? []).map((r) => [String(r.slot_key), r as Record<string, unknown>]),
         );
-        await supabase.from("roster_assignments").delete().eq("competition_id", proposalCompetitionId);
+        const { error: clearError } = await supabase
+          .from("roster_assignments")
+          .delete()
+          .eq("competition_id", proposalCompetitionId);
+        // Si el borrado falla, el insert siguiente chocaría con la clave
+        // primaria y el «rollback» duplicaría filas. Mejor parar aquí.
+        if (clearError) throw new Error(`roster_assignments: ${clearError.message}`);
         const rows = Object.entries(assignments).map(([slot_key, referee_id]) => {
           const live = liveBySlot.get(slot_key);
           return {

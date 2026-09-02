@@ -1,7 +1,7 @@
 import { clearSlotSchema } from "@/lib/validations";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -27,12 +27,16 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonError("Datos de slot inválidos", 400, parsed.error.flatten());
   }
 
-  const assignments = await dataService.clearSlot(
-    parsed.data.competitionId,
-    parsed.data.slotKey,
-    user.nombre,
-  );
-  return jsonOk({ assignments });
+  try {
+    const assignments = await dataService.clearSlot(
+      parsed.data.competitionId,
+      parsed.data.slotKey,
+      user.nombre,
+    );
+    return jsonOk({ assignments });
+  } catch (err) {
+    return jsonServerError("roster/clear", err, "No se pudo liberar el hueco");
+  }
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -45,7 +49,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
 
-  const result = await dataService.clearRosterAssignments(competitionId, user.nombre);
-  if (!result) return jsonError("No se pudieron borrar las asignaciones", 400);
-  return jsonOk(result);
+  try {
+    const result = await dataService.clearRosterAssignments(competitionId, user.nombre);
+    if (!result) return jsonError("No se pudieron borrar las asignaciones", 400);
+    return jsonOk(result);
+  } catch (err) {
+    return jsonServerError("roster/clear-all", err, "No se pudieron borrar las asignaciones");
+  }
 }
