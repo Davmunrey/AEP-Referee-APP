@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { addDaysIso, todayIso } from "@/lib/business-date";
+import { isCompetitionPast } from "@/lib/competition-status";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import { formatSanctionPeriod, isSanctionActive, resolveSanctionEndDate } from "@/lib/sanctions";
 
@@ -67,5 +68,29 @@ describe("pickActiveRosterHref", () => {
       { id: "evt-pasado", fecha: "2026-06-01", estado: "Incompleto" },
     ]);
     expect(href).toBe("/competitions/evt-hoy");
+  });
+});
+
+describe("isCompetitionPast", () => {
+  it("un campeonato terminado ayer cuenta como pasado desde la medianoche española", () => {
+    // En UTC seguía contando como vigente hasta las 02:00 de España, así que
+    // aparecía dos horas de más en el panel y en el filtro de campeonatos.
+    vi.useFakeTimers();
+    vi.setSystemTime(MEDIANOCHE_MADRID);
+    expect(isCompetitionPast({ fecha: "2026-06-30", fechaFin: "2026-06-30" })).toBe(true);
+  });
+
+  it("el de hoy y el de mañana no son pasado", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(MEDIANOCHE_MADRID);
+    expect(isCompetitionPast({ fecha: "2026-07-01", fechaFin: "2026-07-01" })).toBe(false);
+    expect(isCompetitionPast({ fecha: "2026-07-05", fechaFin: "2026-07-06" })).toBe(false);
+  });
+
+  it("sin fecha fin usa la de inicio, y sin ninguna no es pasado", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(MEDIANOCHE_MADRID);
+    expect(isCompetitionPast({ fecha: "2026-06-01", fechaFin: "" })).toBe(true);
+    expect(isCompetitionPast({ fecha: "", fechaFin: "" })).toBe(false);
   });
 });
