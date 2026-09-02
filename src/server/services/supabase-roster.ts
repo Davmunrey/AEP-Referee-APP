@@ -21,6 +21,7 @@ import type {
   SessionUser,
   SlotFlags,
 } from "@/lib/types";
+import { RosterSlotConflictError } from "@/lib/competitions/service-types";
 import { mapApproval, mapHistory } from "@/server/db/mappers";
 import {
   db,
@@ -222,11 +223,13 @@ export const rosterService = {
     getRefereeFn: (id: string) => Promise<Referee | undefined>,
     slotFlags?: SlotFlags,
     crossZoneReason?: string,
+    expectedRefereeId?: string | null,
   ): Promise<{
     assignments?: AssignmentsMap;
     flags?: FlagsMap;
     crossZoneMap?: import("@/lib/types").CrossZoneMap;
     error?: string;
+    conflict?: boolean;
   }> => {
     // Carga UNA vez, en paralelo, todo lo necesario: competición, juez,
     // asignaciones+flags actuales y plantilla. Antes validateAssign volvía a
@@ -251,6 +254,24 @@ export const rosterService = {
     const blocked = rosterMutationBlockedMessage(comp.aprobacion);
     if (blocked) return { error: blocked };
 
+    // Control de concurrencia optimista. El upsert no miraba quién ocupaba el
+    // hueco, así que dos delegados sobre la misma tarima se pisaban: el segundo
+    // sustituía al juez del primero sin error, sin aviso y sin rastro. Con el
+    // ocupante esperado, una discrepancia se rechaza y el usuario recarga.
+    // Sustituir a un juez sigue funcionando: el cliente manda el que ve.
+    if (expectedRefereeId !== undefined) {
+      const current = assignments[slotKey] ?? null;
+      if (current !== expectedRefereeId) {
+        const occupant = current ? await getRefereeFn(current) : undefined;
+        return {
+          conflict: true,
+          error: current
+            ? `Otro usuario asignó ${occupant?.nombre ?? "a otro juez"} a ese hueco. Actualiza la tarima antes de reasignar.`
+            : "Otro usuario liberó ese hueco mientras lo editabas. Actualiza la tarima antes de reasignar.",
+        };
+      }
+    }
+
     const supabase = db();
     // El * (compartido) del hueco existente o del nuevo permite forzar el solape.
     const operationFlags =
@@ -271,6 +292,7 @@ export const rosterService = {
         ? { compartido: Boolean(slotFlags.compartido), intercambio: Boolean(slotFlags.intercambio) }
         : existingFlags[slotKey] ?? {};
 
+    const replacedRefereeId = assignments[slotKey];
     const isCrossZone =
       !!comp?.zona &&
       !!referee?.zona &&
@@ -333,7 +355,11 @@ export const rosterService = {
       at: new Date().toISOString(),
       actor,
       action: isCrossZone ? "Asignación cross-zona" : "Asignación",
-      detail: `${slotKey} → ${refereeId}${isCrossZone ? ` (${referee?.zona})` : ""}`,
+      // La sustitución queda registrada: antes el juez desplazado desaparecía
+      // del historial y no había forma de saber quién estaba antes.
+      detail: `${slotKey} → ${refereeId}${
+        replacedRefereeId && replacedRefereeId !== refereeId ? ` (sustituye a ${replacedRefereeId})` : ""
+      }${isCrossZone ? ` (${referee?.zona})` : ""}`,
     });
     return {
       assignments: { ...freshAssignments },
@@ -483,7 +509,25 @@ export const rosterService = {
     };
   },
 
-  clearSlot: async (competitionId: string, slotKey: string, actor: string) => {
+  clearSlot: async (
+    competitionId: string,
+    slotKey: string,
+    actor: string,
+    expectedRefereeId?: string | null,
+  ) => {
+    // Mismo control optimista que en la asignación: liberar un hueco que otro
+    // usuario acaba de rellenar borraba su trabajo sin decir nada.
+    if (expectedRefereeId !== undefined) {
+      const { assignments } = await loadRosterAssignmentData(competitionId);
+      const current = assignments[slotKey] ?? null;
+      if (current !== expectedRefereeId) {
+        throw new RosterSlotConflictError(
+          current
+            ? "Otro usuario cambió ese hueco mientras lo editabas. Actualiza la tarima antes de liberarlo."
+            : "Ese hueco ya está libre. Actualiza la tarima.",
+        );
+      }
+    }
     const supabase = db();
     const { error } = await supabase
       .from("roster_assignments")

@@ -4,6 +4,13 @@ export const assignRefereeSchema = z.object({
   competitionId: z.string().min(1),
   slotKey: z.string().min(1),
   refereeId: z.string().min(1),
+  /**
+   * Juez que el cliente creía tener en el hueco (null = vacío). Control de
+   * concurrencia optimista: si la realidad no coincide, otro usuario tocó ese
+   * hueco entretanto y la asignación se rechaza en vez de pisarla en silencio.
+   * Ausente = sin comprobación, para no romper clientes que no lo envían.
+   */
+  expectedRefereeId: z.string().min(1).nullable().optional(),
   flags: z
     .object({
       compartido: z.boolean().optional(),
@@ -16,6 +23,8 @@ export const assignRefereeSchema = z.object({
 export const clearSlotSchema = z.object({
   competitionId: z.string().min(1),
   slotKey: z.string().min(1),
+  /** Mismo control optimista que en la asignación (ver `assignRefereeSchema`). */
+  expectedRefereeId: z.string().min(1).nullable().optional(),
 });
 
 const rosterRoleSchema = z.object({

@@ -66,6 +66,7 @@ export const supabaseDataService = {
     actor: string,
     slotFlags?: SlotFlags,
     crossZoneReason?: string,
+    expectedRefereeId?: string | null,
   ) =>
     rosterService.assignReferee(
       competitionId,
@@ -76,6 +77,7 @@ export const supabaseDataService = {
       refereeService.getReferee,
       slotFlags,
       crossZoneReason,
+      expectedRefereeId,
     ),
   assignRefereesBatch: (
     competitionId: string,

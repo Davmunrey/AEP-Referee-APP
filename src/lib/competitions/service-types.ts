@@ -48,3 +48,18 @@ export class RefereeHasClaimsError extends Error {
     this.claims = claims;
   }
 }
+
+/**
+ * Otro usuario cambió el hueco mientras este lo editaba.
+ *
+ * La tarima es el recurso más disputado de la aplicación: dos delegados
+ * revisando el mismo campeonato escriben sobre los mismos huecos. Sin este
+ * corte, el segundo en llegar pisaba el trabajo del primero sin error, sin
+ * aviso y sin dejar rastro de a quién había desplazado.
+ */
+export class RosterSlotConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RosterSlotConflictError";
+  }
+}
