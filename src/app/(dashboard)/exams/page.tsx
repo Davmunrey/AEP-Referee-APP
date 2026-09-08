@@ -1,7 +1,7 @@
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { ExamsManager } from "@/components/judge/exams-manager";
 import { Card, CardContent } from "@/components/ui/card";
-import { getSession } from "@/lib/auth/session";
+import { canAdminJudges, canManageJudges, getSession } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -98,8 +98,11 @@ export default async function ExamsPage() {
       <ExamsManager
         exams={exams}
         referees={referees.map((r) => ({ id: r.id, nombre: r.nombre, nivel: r.nivel }))}
-        canEdit={user.role !== "solo_ver"}
-        canDelete={user.role === "super_admin" || user.role === "delegado_jueces"}
+        // Los mismos permisos que exige la API: con `role !== "solo_ver"` se
+        // pintaban botones de alta y edición a roles nacionales que luego
+        // recibían un 403 al pulsarlos.
+        canEdit={canManageJudges(user)}
+        canDelete={canAdminJudges(user)}
       />
     </PageShell>
   );
