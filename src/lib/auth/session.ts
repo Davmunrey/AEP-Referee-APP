@@ -147,8 +147,12 @@ export function canApprove(user: SessionUser): boolean {
  *
  * No es desconfianza hacia el delegado de jueces: es que el permiso de
  * gestionar cuentas no debería incluir, de propina, el acceso al dinero.
+ *
+ * La lista está en `lib/types` (`SUPER_ADMIN_ONLY_ROLES`) porque la pantalla de
+ * administración es cliente y este módulo arrastra código de servidor.
+ *
+ * ¿Puede este usuario asignar ese rol a alguien?
  */
-/** ¿Puede este usuario asignar ese rol a alguien? */
 export function canAssignRole(user: SessionUser, role: UserRole): boolean {
   if (!canManageUsers(user)) return false;
   return SUPER_ADMIN_ONLY_ROLES.includes(role) ? user.role === "super_admin" : true;

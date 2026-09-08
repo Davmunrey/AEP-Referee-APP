@@ -19,7 +19,13 @@ import {
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
 import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
-import { db, fetchAllRows, fetchAllRowsIn, pushActivity } from "./supabase-helpers";
+import {
+  db,
+  fetchAllRows,
+  fetchAllRowsIn,
+  isMissingTableError,
+  pushActivity,
+} from "./supabase-helpers";
 
 async function loadRefereeCompetitionHistory(
   refereeId: string,
@@ -209,7 +215,13 @@ export const refereeService = {
       .from("judge_compensation_claims")
       .select("id", { count: "exact", head: true })
       .eq("referee_id", id);
-    // Si la tabla aún no existe (024 sin aplicar) no hay nada que proteger.
+    // Ídem que en deleteCompetition: solo la tabla ausente vale como «no hay
+    // nada que proteger»; con cualquier otro error no se borra.
+    if (claimsError && !isMissingTableError(claimsError)) {
+      throw new Error(
+        `No se pudo comprobar si el juez tiene liquidaciones (${claimsError.message}). No se ha borrado nada.`,
+      );
+    }
     if (!claimsError && (claims ?? 0) > 0) {
       throw new RefereeHasClaimsError(claims ?? 0);
     }
