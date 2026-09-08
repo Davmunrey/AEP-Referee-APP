@@ -6,6 +6,7 @@ import { Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEscapeClose } from "@/hooks/use-escape-close";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
+import { attachmentWarningMessage } from "@/lib/tickets/attachment-warning";
 import { formatApiError } from "@/lib/api/error-message";
 import {
   createTicket,
@@ -84,9 +85,17 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
 
     startTransition(async () => {
       try {
-        await createTicket(form);
-        onClose();
+        const creado = await createTicket(form);
+        // El ticket ya existe: cerrar sin más daría por buenos unos adjuntos
+        // que no llegaron. Se deja el diálogo abierto con el aviso.
+        const aviso = attachmentWarningMessage(creado.attachmentWarnings);
         router.refresh();
+        if (aviso) {
+          setFiles([]);
+          setError(aviso);
+          return;
+        }
+        onClose();
       } catch (err) {
         setError(formatApiError(err, "No se pudo crear el ticket."));
       }

@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2, Loader2, Upload, X } from "lucide-react";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { attachmentWarningMessage } from "@/lib/tickets/attachment-warning";
 import { formatApiError } from "@/lib/api/error-message";
 import { textareaFieldClass } from "@/lib/design-tokens";
 import {
@@ -438,11 +439,14 @@ function CommentForm({
 
     startTransition(async () => {
       try {
-        await addTicketComment(ticketId, form);
+        const actualizado = await addTicketComment(ticketId, form);
         setBody("");
         setFiles([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
         onAdded();
+        // El comentario ya está publicado; lo que falta es decir qué adjunto
+        // no llegó, en vez de dejarlo en un `console.warn` del servidor.
+        setError(attachmentWarningMessage(actualizado?.attachmentWarnings));
       } catch (err) {
         setError(formatApiError(err, "No se pudo publicar el comentario."));
       }
