@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "./config";
+import { API_BASE_PATH, getApiBaseUrl } from "./config";
 import { parseApiResponse } from "./http";
 import { isApiError } from "./types";
 import { request } from "./request";
@@ -87,7 +87,8 @@ export const miscApi = {
 
   getAnalytics: () => request<AnalyticsPayload>("/analytics"),
 
-  analyticsExportUrl: () => `${getApiBaseUrl()}/analytics/export`,
+  // Relativa a propósito: va dentro de un `href` renderizado en el servidor.
+  analyticsExportUrl: () => `${API_BASE_PATH}/analytics/export`,
 
   fetchAnalyticsExportText: async (year?: number): Promise<string> => {
     const qs = year != null ? `?year=${year}` : "";
