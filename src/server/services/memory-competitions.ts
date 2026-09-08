@@ -592,6 +592,13 @@ export async function submitRoster(
     evento: comp.nombre,
     hace: "ahora",
   });
+  pushHistory({
+    competitionId,
+    at: new Date().toISOString(),
+    actor,
+    action: "Propuesta enviada a aprobación",
+    detail: `${Object.values(assignments).filter(Boolean).length} asignaciones`,
+  });
   return store.approvals.find((a) => a.competitionId === competitionId && a.status === "pendiente");
 }
 
@@ -667,6 +674,15 @@ export async function reviewApproval(
     accion: approve ? "aprobó roster para" : "rechazó propuesta para",
     evento: proposal.competitionName,
     hace: "ahora",
+  });
+  // Igual que el twin de Supabase: los hitos del ciclo de aprobación también
+  // van al historial de la competición.
+  pushHistory({
+    competitionId: proposal.competitionId,
+    at: proposal.reviewedAt!,
+    actor: reviewer,
+    action: approve ? "Propuesta aprobada" : "Propuesta rechazada",
+    detail: comment?.trim() || undefined,
   });
   return proposal;
 }

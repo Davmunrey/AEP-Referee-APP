@@ -637,6 +637,16 @@ export const rosterService = {
       evento: comp.nombre,
       hace: "ahora",
     });
+    // El historial de la tarima registraba cada asignación suelta pero ninguno
+    // de los tres hitos del ciclo de aprobación: quien lo abría veía el trabajo
+    // y no la decisión.
+    await pushHistory({
+      competitionId,
+      at: now,
+      actor,
+      action: "Propuesta enviada a aprobación",
+      detail: `${Object.values(assignments).filter(Boolean).length} asignaciones`,
+    });
     const { data, error: readError } = await supabase
       .from("approval_proposals")
       .select("*")
@@ -864,6 +874,15 @@ export const rosterService = {
       accion: approve ? "aprobó roster para" : "rechazó propuesta para",
       evento: proposalCompetitionName,
       hace: "ahora",
+    });
+    // El motivo del rechazo queda también en el historial de la competición,
+    // que es donde lo busca quien tiene que corregirla.
+    await pushHistory({
+      competitionId: proposalCompetitionId,
+      at: now,
+      actor: reviewer,
+      action: approve ? "Propuesta aprobada" : "Propuesta rechazada",
+      detail: comment?.trim() || undefined,
     });
     const { data } = await supabase.from("approval_proposals").select("*").eq("id", id).single();
     return data ? mapApproval(data as Record<string, unknown>) : undefined;

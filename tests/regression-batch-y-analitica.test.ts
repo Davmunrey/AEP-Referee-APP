@@ -8,13 +8,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type QueryResult = { data: unknown; error: { message: string } | null };
 
-let respond: (ctx: { table: string; range?: [number, number] }) => QueryResult;
-let calls: { table: string; range?: [number, number] }[];
+let respond: (ctx: { table: string; op: string; range?: [number, number] }) => QueryResult;
+let calls: { table: string; op: string; range?: [number, number] }[];
+/** Payloads de INSERT por tabla, para comprobar lo que se registra. */
+let inserted: { table: string; row: Record<string, unknown> }[];
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: (table: string) => {
-      const state = { table, range: undefined as [number, number] | undefined };
+      const state = { table, op: "select", range: undefined as [number, number] | undefined };
       const finish = () => {
         calls.push({ ...state });
         return respond(state);
@@ -30,8 +32,13 @@ vi.mock("@/lib/supabase/admin", () => ({
         or: () => q,
         limit: () => q,
         order: () => q,
-        update: () => q,
-        insert: () => q,
+        update: () => ((state.op = "update"), q),
+        delete: () => ((state.op = "delete"), q),
+        insert: (row: Record<string, unknown> | Record<string, unknown>[]) => {
+          state.op = "insert";
+          for (const r of Array.isArray(row) ? row : [row]) inserted.push({ table, row: r });
+          return q;
+        },
         single: async () => finish(),
         maybeSingle: async () => finish(),
         range: async (from: number, to: number) => {
@@ -77,6 +84,7 @@ beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test-key";
   calls = [];
+  inserted = [];
 });
 
 describe("panel y analítica ante un fallo de lectura", () => {
@@ -168,5 +176,45 @@ describe("la última propuesta de una competición", () => {
     await expect(rosterService.getLatestApproval("c1")).resolves.toBeUndefined();
     respond = () => ({ data: null, error: { message: "connection reset" } });
     await expect(rosterService.getLatestApproval("c1")).rejects.toThrow(/approval_proposals/);
+  });
+});
+
+describe("el historial de la tarima registra el ciclo de aprobación", () => {
+  it("un rechazo deja constancia con su motivo", async () => {
+    const proposal = {
+      id: "apr-1",
+      competition_id: "c1",
+      competition_name: "Copa",
+      zona: "CENTRO",
+      submitted_by: "Delegado",
+      submitted_at: "2026-03-02",
+      status: "pendiente",
+      assignments: { S1_central_0: "j1" },
+    };
+    respond = ({ table, op }) => {
+      if (table === "approval_proposals") {
+        // El UPDATE con guarda devuelve la fila reclamada; el SELECT, la propuesta.
+        return op === "update"
+          ? { data: [{ id: "apr-1" }], error: null }
+          : { data: proposal, error: null };
+      }
+      return { data: [], error: null };
+    };
+
+    await rosterService.reviewApproval(
+      "apr-1",
+      false,
+      "Nacional",
+      undefined,
+      async () => undefined,
+      "Falta el jurado de la sesión 3",
+    );
+
+    // Antes el historial de la competición registraba cada asignación suelta
+    // pero ninguno de los hitos del ciclo de aprobación.
+    const entry = inserted.find((i) => i.table === "roster_history");
+    expect(entry?.row.action).toBe("Propuesta rechazada");
+    expect(entry?.row.detail).toBe("Falta el jurado de la sesión 3");
+    expect(entry?.row.actor).toBe("Nacional");
   });
 });
