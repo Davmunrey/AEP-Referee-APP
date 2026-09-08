@@ -170,6 +170,7 @@ export const SessionBlock = memo(function SessionBlock({
   assignments,
   flags,
   crossZoneMap = {},
+  paidRefereeIds,
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -185,6 +186,8 @@ export const SessionBlock = memo(function SessionBlock({
   assignments: AssignmentsMap;
   flags: FlagsMap;
   crossZoneMap?: CrossZoneMap;
+  /** Jueces con la liquidación pagada: su puesto queda congelado. */
+  paidRefereeIds?: ReadonlySet<string>;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -207,6 +210,7 @@ export const SessionBlock = memo(function SessionBlock({
     assignments,
     flags,
     crossZoneMap,
+    paidRefereeIds,
     getReferee,
     selectedSlot,
     onSelectSlot,

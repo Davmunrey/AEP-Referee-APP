@@ -12,7 +12,7 @@ import type {
   RosterRole,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Lock, X } from "lucide-react";
 import { LevelBadge } from "@/components/aep/badges";
 import { abbreviateRefereeLevel } from "@/lib/referee-level-label";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,8 @@ export interface SlotGridProps {
   assignments: AssignmentsMap;
   flags: FlagsMap;
   crossZoneMap?: CrossZoneMap;
+  /** Jueces con la liquidación pagada: su puesto no se puede tocar. */
+  paidRefereeIds?: ReadonlySet<string>;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -41,6 +43,8 @@ export interface SlotGridProps {
   variant?: "competition" | "pesaje";
 }
 
+const EMPTY_PAID_IDS: ReadonlySet<string> = new Set<string>();
+
 function slotKeyFor(sesion: string, cell: SlotCellRef): string {
   return `${sesion}_${cell.role.key}_${cell.slotIndex}`;
 }
@@ -51,6 +55,7 @@ function SlotCell({
   assignments,
   flags,
   crossZoneMap,
+  paidRefereeIds,
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -68,6 +73,7 @@ function SlotCell({
   assignments: AssignmentsMap;
   flags: FlagsMap;
   crossZoneMap: CrossZoneMap;
+  paidRefereeIds: ReadonlySet<string>;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -88,6 +94,9 @@ function SlotCell({
   const violation = refereeId ? checkViolation(cell.role.key, refereeId) : undefined;
   const slotFlags = flags[slotKey];
   const isCrossZone = !!crossZoneMap[slotKey];
+  // Con la liquidación pagada el puesto queda congelado: el servidor rechaza
+  // la sustitución, así que conviene verlo antes de intentarla.
+  const isPaid = !!refereeId && paidRefereeIds.has(refereeId);
   const slotLabel =
     cell.role.slots > 1 ? `${cell.role.rol} ${cell.slotIndex + 1}` : cell.role.rol;
 
@@ -175,6 +184,15 @@ function SlotCell({
                       className="rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
                     >
                       ⟳
+                    </span>
+                  )}
+                  {isPaid && (
+                    <span
+                      title="Liquidación pagada: no se puede sustituir ni liberar este puesto"
+                      className="flex items-center gap-0.5 rounded border border-border-strong bg-muted px-1 py-px text-[9px] font-semibold text-muted-foreground"
+                    >
+                      <Lock className="h-2.5 w-2.5" />
+                      Pagada
                     </span>
                   )}
                   {violation && (
@@ -272,6 +290,7 @@ export function SlotGrid({
   assignments,
   flags,
   crossZoneMap = {},
+  paidRefereeIds,
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -309,6 +328,7 @@ export function SlotGrid({
     isDragging,
     dragOverKey,
     setDragOverKey,
+    paidRefereeIds: paidRefereeIds ?? EMPTY_PAID_IDS,
   };
 
   return (

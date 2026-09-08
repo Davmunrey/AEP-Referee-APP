@@ -54,6 +54,7 @@ export const memoryDataService = {
   saveDraft: competitions.saveDraft,
   getApprovals: competitions.getApprovals,
   getLatestApproval: competitions.getLatestApproval,
+  getPaidClaimRefereeIds: competitions.getPaidClaimRefereeIds,
   reviewApproval: competitions.reviewApproval,
   getRosterHistory: competitions.getRosterHistory,
   exportRoster: competitions.exportRoster,
