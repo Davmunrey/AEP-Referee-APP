@@ -127,11 +127,14 @@ export async function listRefereeSanctions(
   refereeId: string,
 ): Promise<RefereeSanction[]> {
   const supabase = db();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("referee_sanctions")
     .select("*")
     .eq("referee_id", refereeId)
     .order("created_at", { ascending: false });
+  // Una lista vacía por error de lectura presenta como limpio a un juez
+  // sancionado: es justo la información por la que se consulta.
+  if (error) throw new Error(`referee_sanctions: ${error.message}`);
   return (data ?? []).map((r) => mapSanction(r as Record<string, unknown>));
 }
 
@@ -300,12 +303,15 @@ export async function getSanctionAlerts(
     await expireStaleSanctions();
   }
   const supabase = db();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("referee_sanctions")
     .select("*")
     .eq("status", "activa")
     .gte("fecha_fin", todayIso())
     .order("fecha_fin", { ascending: true });
+  // Ídem: sin sanciones activas la aplicación da por bueno asignar a
+  // cualquiera.
+  if (error) throw new Error(`referee_sanctions: ${error.message}`);
 
   const userZone =
     user?.role === "delegado_zona" && user.zona

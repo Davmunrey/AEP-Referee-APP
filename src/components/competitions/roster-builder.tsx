@@ -15,6 +15,7 @@ import {
 import { RosterHelpPanel } from "@/components/competitions/roster-help-panel";
 import { RosterRevisionPanel } from "@/components/competitions/roster-revision-panel";
 import { RosterStepper } from "@/components/competitions/roster-stepper";
+import type { RefereeBusyMap } from "@/lib/roster-conflicts";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type {
@@ -81,6 +82,7 @@ const EMPTY_FLAGS: FlagsMap = {};
 const EMPTY_CROSS_ZONE_MAP: CrossZoneMap = {};
 const EMPTY_REGULATIONS: RegulationRule[] = [];
 const EMPTY_CONFIRMED_IDS: string[] = [];
+const EMPTY_BUSY_MAP: RefereeBusyMap = {};
 
 interface RosterBuilderProps {
   competition: Competition;
@@ -97,6 +99,8 @@ interface RosterBuilderProps {
   levels: RefereeLevel[];
   regulations?: RegulationRule[];
   initialConfirmedIds?: string[];
+  /** Jueces ya asignados en otro campeonato que solapa fechas con este. */
+  refereeBusyMap?: RefereeBusyMap;
   defaultZonaFilter?: string;
 }
 
@@ -114,6 +118,7 @@ export function RosterBuilder({
   levels,
   regulations = EMPTY_REGULATIONS,
   initialConfirmedIds = EMPTY_CONFIRMED_IDS,
+  refereeBusyMap = EMPTY_BUSY_MAP,
   defaultZonaFilter = "TODAS",
 }: RosterBuilderProps) {
   const router = useRouter();
@@ -541,7 +546,7 @@ export function RosterBuilder({
                 referees={availableReferees} assignedIds={activeSessionAssignedIds}
                 canEdit={canEdit} readOnly={rosterReadOnly}
                 selectedSlot={selectedSlot} selectedSlotMeta={selectedSlotMeta}
-                confirmedIds={confirmedIds} filterOnlyConfirmed={filterOnlyConfirmed}
+                confirmedIds={confirmedIds} busyElsewhere={refereeBusyMap} filterOnlyConfirmed={filterOnlyConfirmed}
                 filterZona={filterZona} filterNivel={filterNivel} search={search}
                 zones={zones} levels={levels} isDragging={isDragging} draggedId={draggedId}
                 competitionTipo={competition.tipo} competitionZona={competition.zona}

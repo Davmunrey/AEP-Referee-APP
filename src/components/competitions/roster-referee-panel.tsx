@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Sparkles, Users } from "lucide-react";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { getAssignabilityReason, getOperationalBlock, getRecommendationWarning, rankRefereesForSlot } from "@/lib/roster-ui";
+import { busyElsewhereLabel, type RefereeBusyMap } from "@/lib/roster-conflicts";
 import { RefereeCard } from "./roster-referee-card";
 
 interface RosterRefereePanelProps {
@@ -16,6 +17,8 @@ interface RosterRefereePanelProps {
   selectedSlot: string | null;
   selectedSlotMeta: { sessionLabel: string; roleLabel: string; slotNumber: number } | null;
   confirmedIds: Set<string>;
+  /** refereeId → campeonatos solapados en los que ya está asignado. */
+  busyElsewhere: RefereeBusyMap;
   filterOnlyConfirmed: boolean;
   filterZona: string;
   filterNivel: string;
@@ -50,6 +53,7 @@ export function RosterRefereePanelLeft({
   selectedSlot,
   selectedSlotMeta,
   confirmedIds,
+  busyElsewhere,
   filterOnlyConfirmed,
   filterZona,
   filterNivel,
@@ -75,6 +79,11 @@ export function RosterRefereePanelLeft({
   onDragEnd,
   onQuickAssign,
 }: RosterRefereePanelProps) {
+  const busyElsewhereIds = useMemo(
+    () => new Set(Object.keys(busyElsewhere)),
+    [busyElsewhere],
+  );
+
   // Selección rápida: al elegir un hueco, ordena los jueces por idoneidad
   // (elegibles y disponibles de la misma zona/nivel arriba; inasignables al fondo).
   const orderedReferees = useMemo(() => {
@@ -90,6 +99,7 @@ export function RosterRefereePanelLeft({
       regulations,
       confirmedIds,
       assignedIds,
+      busyElsewhereIds,
     });
   }, [
     referees,
@@ -104,6 +114,7 @@ export function RosterRefereePanelLeft({
     regulations,
     confirmedIds,
     assignedIds,
+    busyElsewhereIds,
   ]);
   const suggestionsActive = !readOnly && !!selectedSlot && !!selectedRoleKey;
 
@@ -258,6 +269,7 @@ export function RosterRefereePanelLeft({
                 dragging={draggedId === referee.id}
                 blockedReason={blockedReason}
                 warningReason={warningReason}
+                busyReason={busyElsewhereLabel(busyElsewhere[referee.id])}
                 competitionZona={competitionZona}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}

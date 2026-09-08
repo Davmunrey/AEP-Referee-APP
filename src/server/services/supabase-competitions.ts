@@ -7,12 +7,18 @@ import {
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import { applyCoverageToCompetition } from "@/lib/roster-coverage";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
+import {
+  buildRefereeBusyMap,
+  competitionDateRange,
+  type RefereeBusyMap,
+} from "@/lib/roster-conflicts";
 import type { Competition, RosterSession, SessionUser } from "@/lib/types";
 import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
 import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import {
   cachedLoadAllAssignments,
   db,
+  fetchAllRowsIn,
   hasApprovalCompetitionColumns,
   hasHistoryCompetitionColumn,
   loadAssignments,
@@ -57,10 +63,11 @@ export const competitionService = {
     user?: SessionUser,
   ): Promise<{ id: string; nombre: string }[]> => {
     const supabase = db();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("competitions")
       .select("id, nombre, zona")
       .order("fecha");
+    if (error) throw new Error(`competitions: ${error.message}`);
     let list = (data ?? []) as { id: string; nombre: string; zona: string }[];
     if (user?.role === "delegado_zona" && user.zona) {
       const userZone = resolveZoneCode(user.zona);
@@ -289,12 +296,71 @@ export const competitionService = {
     return { removed, kept, groups: groups.length };
   },
 
+  /**
+   * Jueces ya asignados a OTRO campeonato que solapa fechas con este.
+   *
+   * Las reglas de tarima solo miran dentro de un campeonato, así que sentar al
+   * mismo juez en dos tarimas del mismo fin de semana no producía ningún aviso
+   * y el choque se descubría el día de la competición.
+   */
+  getRefereeBusyMap: async (competitionId: string): Promise<RefereeBusyMap> => {
+    const supabase = db();
+    const { data: self, error: selfError } = await supabase
+      .from("competitions")
+      .select("id, fecha, fecha_fin")
+      .eq("id", competitionId)
+      .maybeSingle();
+    if (selfError) throw new Error(`competitions: ${selfError.message}`);
+    const range = competitionDateRange({
+      fecha: self?.fecha as string | undefined,
+      fechaFin: self?.fecha_fin as string | undefined,
+    });
+    if (!self || !range) return {};
+
+    // Solape de rangos en SQL: empieza antes de que acabemos y acaba después de
+    // que empecemos. `fecha_fin` es NOT NULL en el esquema.
+    const { data: others, error: othersError } = await supabase
+      .from("competitions")
+      .select("id, nombre, fecha, fecha_fin")
+      .neq("id", competitionId)
+      .lte("fecha", range.end)
+      .gte("fecha_fin", range.start);
+    if (othersError) throw new Error(`competitions: ${othersError.message}`);
+    const overlapping = (others ?? []).map((row) => ({
+      id: String(row.id),
+      nombre: String(row.nombre),
+      fecha: String(row.fecha),
+      fechaFin: String(row.fecha_fin),
+    }));
+    if (overlapping.length === 0) return {};
+
+    // `roster_assignments` no tiene columna `id`: se ordena por `slot_key`, que
+    // sí forma parte de su clave primaria.
+    const rows = await fetchAllRowsIn(
+      "roster_assignments",
+      "competition_id",
+      overlapping.map((c) => c.id),
+      "slot_key",
+    );
+    return buildRefereeBusyMap({
+      competition: { id: competitionId, fecha: range.start, fechaFin: range.end },
+      others: overlapping,
+      assignments: rows.map((row) => ({
+        competitionId: String(row.competition_id),
+        refereeId: String(row.referee_id),
+      })),
+    });
+  },
+
   getCompetitionAvailability: async (competitionId: string): Promise<string[]> => {
     const supabase = db();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("competition_availability")
       .select("referee_id")
       .eq("competition_id", competitionId);
+    // «Nadie ha confirmado» y «no he podido leerlo» llevan a decisiones
+    // distintas al montar la tarima.
+    if (error) throw new Error(`competition_availability: ${error.message}`);
     return (data ?? []).map((row) => String(row.referee_id));
   },
 

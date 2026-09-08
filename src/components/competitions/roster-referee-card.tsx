@@ -17,6 +17,7 @@ export const RefereeCard = memo(function RefereeCard({
   dragging,
   blockedReason,
   warningReason,
+  busyReason,
   competitionZona,
   onDragStart,
   onDragEnd,
@@ -32,6 +33,8 @@ export const RefereeCard = memo(function RefereeCard({
   dragging: boolean;
   blockedReason?: string | null;
   warningReason?: string | null;
+  /** Ya asignado en otro campeonato que solapa fechas con este. */
+  busyReason?: string | null;
   competitionZona?: string;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
@@ -47,7 +50,11 @@ export const RefereeCard = memo(function RefereeCard({
     : [];
   const isFromOtherZone = !!competitionZona && referee.zona !== competitionZona;
   const zoneLabel = zoneName(zones, referee.zona);
-  const alertText = blockedReason ?? warningReason ?? (referee.eventos >= 8 ? `Alta carga (${referee.eventos})` : null);
+  const alertText =
+    blockedReason ??
+    warningReason ??
+    busyReason ??
+    (referee.eventos >= 8 ? `Alta carga (${referee.eventos})` : null);
 
   return (
     <li
@@ -82,6 +89,7 @@ export const RefereeCard = memo(function RefereeCard({
         !locked && isDragging && !dragging && "hover:border-success/50 hover:bg-success/5",
         !locked && !highlight && !isDragging && "hover:border-border-strong hover:bg-surface",
         alertText && !blockedReason && referee.eventos >= 8 && "border-warning-border/60",
+        busyReason && !blockedReason && "border-warning-border/60",
         blockedReason && "border-warning-border/60 bg-warning-subtle/40",
       )}
     >
@@ -118,6 +126,13 @@ export const RefereeCard = memo(function RefereeCard({
               ` · ${topRoles.map((r) => `${r.count}×${r.role.split(" ")[0]}`).join(" ")}`}
           </span>
         </p>
+        {busyReason && (
+          // Visible, no solo en el `title`: el choque entre campeonatos no se
+          // ve en ninguna otra pantalla de la tarima.
+          <p className="truncate text-[10px] font-medium leading-tight text-warning" title={busyReason}>
+            ⚠ {busyReason}
+          </p>
+        )}
       </div>
       <LevelBadge level={referee.nivel} compact />
     </li>

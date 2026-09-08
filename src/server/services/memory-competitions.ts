@@ -12,6 +12,7 @@ import {
 import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
 import { pruneAssignments } from "@/lib/roster-template";
+import { buildRefereeBusyMap, type RefereeBusyMap } from "@/lib/roster-conflicts";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import { CompetitionHasClaimsError, RosterSlotConflictError } from "@/lib/competitions/service-types";
 import type {
@@ -103,6 +104,24 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
     sanctionAlerts: [],
     generatedAt: new Date().toISOString(),
   };
+}
+
+/** Mismo criterio que el twin de Supabase, sobre el store en memoria. */
+export async function getRefereeBusyMap(competitionId: string): Promise<RefereeBusyMap> {
+  const store = getStore();
+  const competition = store.competitions.find((c) => c.id === competitionId);
+  if (!competition) return {};
+  const assignments: Array<{ competitionId: string; refereeId: string }> = [];
+  for (const [id, map] of store.assignments) {
+    for (const refereeId of Object.values(map)) {
+      if (refereeId) assignments.push({ competitionId: id, refereeId });
+    }
+  }
+  return buildRefereeBusyMap({
+    competition,
+    others: store.competitions,
+    assignments,
+  });
 }
 
 export async function getCompetitions(user?: SessionUser): Promise<Competition[]> {
