@@ -143,16 +143,14 @@ export function formatCompetitionDatePhrase(fecha: string, fechaFin: string): st
   return `del ${start.day} de ${startMonth} de ${start.year} al ${end.day} de ${endMonth} de ${end.year}`;
 }
 
-function celebrationGender(fecha: string, fechaFin: string): "a" | "o" {
-  return fecha === fechaFin ? "a" : "o";
-}
-
-// Sustantivos de competición femeninos; el resto (Campeonato, Trofeo, Torneo,
-// Open, Clasificatorio, Memorial, Regional…) son masculinos.
+/** Sustantivos de competición femeninos, incluidos los ingleses de uso común
+ * en nombres de club (una «Cup» es una copa: «la Young Ambition Cup»). */
 const FEMININE_COMPETITION_WORDS = new Set([
   "copa",
   "supercopa",
+  "cup",
   "liga",
+  "league",
   "competicion",
   "final",
   "jornada",
@@ -160,24 +158,58 @@ const FEMININE_COMPETITION_WORDS = new Set([
   "exhibicion",
   "prueba",
   "concentracion",
+  "olimpiada",
+  "clasificatoria",
+  "categoria",
+]);
+
+/** Sustantivos de competición masculinos. */
+const MASCULINE_COMPETITION_WORDS = new Set([
+  "campeonato",
+  "trofeo",
+  "torneo",
+  "open",
+  "memorial",
+  "circuito",
+  "encuentro",
+  "clasificatorio",
+  "regional",
+  "nacional",
+  "autonomico",
+  "master",
+  "meeting",
+  "challenge",
+  "campus",
+  "gran",
+  "premio",
 ]);
 
 /**
- * Artículo (`el`/`la`) que concuerda con el nombre del campeonato. Ignora un
- * prefijo de numeral romano u ordinal ("III Campeonato…") y mira el primer
- * sustantivo. Para nombres combinados ("Campeonato … y Regional …") decide por
- * el primero. Devuelve también el género para el participio "celebrad{o/a}".
+ * Artículo (`el`/`la`) y participio (`celebrad{o|a}`) que concuerdan con el
+ * nombre del campeonato.
+ *
+ * Busca el **sustantivo principal en cualquier posición**, no solo la primera
+ * palabra: los nombres de club suelen llevarlo al final («Young Ambition Cup»),
+ * y mirar solo el principio daba «el Young Ambition Cup». Se salta numerales
+ * romanos, ordinales y las palabras que no son sustantivo de competición, y
+ * decide por el primero que reconoce, de modo que un nombre combinado
+ * («Campeonato … y Copa …») concuerda con el primero, que es el que manda.
+ *
+ * Sin sustantivo reconocible se usa el masculino, que es la forma no marcada.
  */
 function competitionAgreement(name: string): { article: "el" | "la"; celebrated: "a" | "o" } {
-  const cleaned = name
-    .trim()
-    .replace(/^(?:[ivxlcdm]+|\d+[.ºªo]?)\s+/i, "");
-  const first = (cleaned.split(/\s+/)[0] ?? "")
+  const tokens = name
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-  const feminine = FEMININE_COMPETITION_WORDS.has(first);
-  return { article: feminine ? "la" : "el", celebrated: feminine ? "a" : "o" };
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+
+  for (const token of tokens) {
+    if (FEMININE_COMPETITION_WORDS.has(token)) return { article: "la", celebrated: "a" };
+    if (MASCULINE_COMPETITION_WORDS.has(token)) return { article: "el", celebrated: "o" };
+  }
+  return { article: "el", celebrated: "o" };
 }
 
 function buildHeaderLines(organizer: CompensationReceiptOrganizer): string[] {
@@ -272,11 +304,10 @@ function buildLaborPhrase(
     return `por la labor prestada como juez en ${article} ${competitionName}`;
   }
 
-  // Seguimiento: sin `competitionArticle` explícito se usa "la" (la mayoría de
-  // recibos de club son Copas). `competitionAgreement` mira solo la primera
-  // palabra y daría "el Young Ambition Cup"; hace falta una regla que busque el
-  // sustantivo (Cup/Copa → la, Campeonato/Open → el) antes de cambiar esto.
-  const article = organizer.competitionArticle ?? "la";
+  // El club usaba "la" fijo porque la regla anterior solo miraba la primera
+  // palabra y no acertaba con los nombres de club. Ahora concuerda igual que
+  // los demás; `competitionArticle` sigue mandando cuando se fija a mano.
+  const article = organizer.competitionArticle ?? competitionAgreement(competitionName).article;
   if (organizer.laborAsJudge === false) {
     return `por la labor prestada en ${article} ${competitionName}`;
   }
@@ -298,12 +329,12 @@ function formatCelebrationPhrase(
 
 function buildBodyParagraph(input: CompensationReceiptInput): string {
   const amount = formatReceiptAmountEur(input.amountEur);
-  // Para AEP el participio concuerda con el género del campeonato (el Campeonato
-  // celebrado / la Copa celebrada). El club conserva su lógica previa.
-  const gender =
-    input.organizer.type === "aep" || input.organizer.type === "custom"
-      ? competitionAgreement(input.competitionName).celebrated
-      : celebrationGender(input.fecha, input.fechaFin);
+  // El participio concuerda con el género del campeonato (el Campeonato
+  // celebrado / la Copa celebrada), igual para todos los organizadores. Antes
+  // el club lo decidía por la DURACIÓN —un día «celebrada», varios
+  // «celebrado»—, que acierta por casualidad cuando las pruebas de un día son
+  // copas y falla en cuanto no lo son.
+  const gender = competitionAgreement(input.competitionName).celebrated;
   const collaborator = buildCollaboratorPhrase(input.organizer);
   const received = buildReceivedPhrase(input.organizer, amount);
   const labor = buildLaborPhrase(input.organizer, input.competitionName);
