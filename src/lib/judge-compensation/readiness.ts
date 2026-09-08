@@ -13,6 +13,30 @@ export interface CompensationReadiness {
   readyForExport: boolean;
 }
 
+/**
+ * Por qué el botón «Recibo» de un juez está apagado.
+ *
+ * El botón se deshabilitaba sin decir nada: quien lo miraba no tenía forma de
+ * saber que lo único que falta son los km. Mismo motivo que devuelve la ruta
+ * de exportación con un 422.
+ */
+export const RECEIPT_INCOMPLETE_HINT =
+  "Faltan los km de desplazamiento de este juez: introdúcelos (o marca que comparte vehículo) para poder exportar su recibo.";
+
+/**
+ * Etiqueta del total provisional.
+ *
+ * Ponía «Provisional (sin km)» siempre, también cuando ya había km metidos y
+ * el importe sí los incluía: la cifra y su rótulo decían cosas distintas. Con
+ * el número de jueces pendientes se dice lo que de verdad falta.
+ */
+export function provisionalTotalLabel(pendingTravelCount: number): string {
+  if (pendingTravelCount <= 0) return "Provisional";
+  return pendingTravelCount === 1
+    ? "Provisional · falta el km de 1 juez"
+    : `Provisional · faltan los km de ${pendingTravelCount} jueces`;
+}
+
 export function competitionClubContacts(
   comp: Pick<Competition, "compensationClubs" | "compensationClubName" | "compensationClubEmail">,
 ): CompensationClubContact[] {
