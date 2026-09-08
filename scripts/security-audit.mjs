@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const allowedAdvisories = new Set([
   "GHSA-4r6h-8v6p-xvw6",
@@ -65,6 +66,51 @@ if (!pdfExtractor.includes("hasPdfSignature")) {
 const importSecurity = readFileSync("src/lib/import-security.ts", "utf8");
 if (!importSecurity.includes("MAX_SELECTED_KEYS")) {
   fail("IMP-02", "Selección import sin límite centralizado");
+}
+
+// ── RLS: nada permisivo para `authenticated` sobre datos de la aplicación ────
+// La clave anónima va en el navegador: una política `USING (true)` deja hablar
+// con la tabla directamente, saltándose el RBAC de la API. Toda la app entra
+// con service_role desde el servidor, así que ninguna tabla con datos o
+// historial necesita política para `authenticated`.
+//
+// Excepciones deliberadas: `zones` y `regulation_rules` son datos de
+// referencia sin nada personal, y `app_sync_state` es lo único que el
+// navegador consulta (poll de versión para el refresco en vivo).
+const RLS_TABLAS_ABIERTAS_OK = new Set(["zones", "regulation_rules", "app_sync_state"]);
+
+const migrationsDir = "supabase/migrations";
+const migrationFiles = readdirSync(migrationsDir)
+  .filter((f) => f.endsWith(".sql"))
+  .sort();
+const sqlPorFichero = migrationFiles.map((f) => readFileSync(join(migrationsDir, f), "utf8"));
+const sqlTodo = sqlPorFichero.join("\n");
+
+const politicasPermisivas = [];
+for (const sql of sqlPorFichero) {
+  const sinComentarios = sql
+    .split(/\r?\n/)
+    .filter((line) => !line.trim().startsWith("--"))
+    .join("\n");
+  const re = /CREATE\s+POLICY\s+"?([A-Za-z0-9_]+)"?\s+ON\s+(?:public\.)?([A-Za-z0-9_]+)([\s\S]*?);/gi;
+  let m;
+  while ((m = re.exec(sinComentarios)) !== null) {
+    const [, nombre, tabla, cuerpo] = m;
+    if (!/TO\s+authenticated/i.test(cuerpo)) continue;
+    if (!/USING\s*\(\s*true\s*\)/i.test(cuerpo)) continue;
+    politicasPermisivas.push({ nombre, tabla });
+  }
+}
+
+for (const { nombre, tabla } of politicasPermisivas) {
+  if (RLS_TABLAS_ABIERTAS_OK.has(tabla)) continue;
+  const dropped = new RegExp(
+    `DROP\\s+POLICY\\s+(?:IF\\s+EXISTS\\s+)?"?${nombre}"?\\s+ON`,
+    "i",
+  ).test(sqlTodo);
+  if (!dropped) {
+    fail("RLS-01", `${tabla}: política permisiva «${nombre}» para authenticated sin retirar`);
+  }
 }
 
 if (failures.length) {
