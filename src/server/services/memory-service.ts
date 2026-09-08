@@ -53,6 +53,7 @@ export const memoryDataService = {
   unlockRosterImprevisto: competitions.unlockImprevisto,
   saveDraft: competitions.saveDraft,
   getApprovals: competitions.getApprovals,
+  getLatestApproval: competitions.getLatestApproval,
   reviewApproval: competitions.reviewApproval,
   getRosterHistory: competitions.getRosterHistory,
   exportRoster: competitions.exportRoster,

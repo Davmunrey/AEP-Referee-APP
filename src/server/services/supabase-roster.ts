@@ -27,6 +27,7 @@ import { assignmentsFromJsonb, mapApproval, mapHistory } from "@/server/db/mappe
 import {
   db,
   getCompetitionTemplate,
+  fetchAllPagesOf,
   hasApprovalCompetitionColumns,
   hasApprovalSubmitterColumns,
   loadAssignments,
@@ -671,14 +672,42 @@ export const rosterService = {
     });
   },
 
-  getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
+  /**
+   * Última propuesta de una competición, para poder enseñar en la tarima el
+   * motivo del rechazo: el revisor está obligado a escribirlo, pero no llegaba
+   * a la pantalla de quien tiene que corregir la tarima.
+   */
+  getLatestApproval: async (competitionId: string): Promise<ApprovalProposal | undefined> => {
     const supabase = db();
+    const column = (await hasApprovalCompetitionColumns()) ? "competition_id" : "event_id";
     const { data, error } = await supabase
       .from("approval_proposals")
       .select("*")
-      .order("submitted_at", { ascending: false });
+      .eq(column, competitionId)
+      .order("submitted_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1);
     if (error) throw new Error(`approval_proposals: ${error.message}`);
-    const list = (data ?? []).map((r) => mapApproval(r as Record<string, unknown>));
+    const row = (data ?? [])[0];
+    return row ? mapApproval(row as Record<string, unknown>) : undefined;
+  },
+
+  getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
+    const supabase = db();
+    // Paginado: el filtro por zona no puede ir en SQL (columna de texto libre),
+    // así que sin paginar el corte en 1000 filas escondía propuestas pendientes
+    // de la bandeja.
+    const data = await fetchAllPagesOf<Record<string, unknown>>(
+      "approval_proposals",
+      (from, to) =>
+        supabase
+          .from("approval_proposals")
+          .select("*")
+          .order("submitted_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(from, to),
+    );
+    const list = data.map((r) => mapApproval(r));
     // `zona` es texto libre y las propuestas anteriores a la migración 013
     // guardan códigos legados ("MAD", "Centro"): el `.eq` crudo las ocultaba al
     // delegado, que veía su bandeja vacía con propuestas pendientes de su zona.

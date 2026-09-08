@@ -610,6 +610,16 @@ export async function saveDraft(competitionId: string, actor: string) {
   });
 }
 
+/** Última propuesta de una competición (mismo criterio que el twin de Supabase). */
+export async function getLatestApproval(
+  competitionId: string,
+): Promise<ApprovalProposal | undefined> {
+  const store = getStore();
+  return store.approvals
+    .filter((a) => a.competitionId === competitionId)
+    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt) || b.id.localeCompare(a.id))[0];
+}
+
 export async function getApprovals(user?: SessionUser): Promise<ApprovalProposal[]> {
   // Copia y zona canonicalizada, como el twin de Supabase: devolver el array
   // vivo del store dejaba que un llamante lo mutara, y comparar `zona` en

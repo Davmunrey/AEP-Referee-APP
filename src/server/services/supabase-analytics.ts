@@ -24,6 +24,8 @@ import {
   applyHealthHistory,
   cachedLoadAllAssignments,
   db,
+  fetchAllPagesOf,
+  fetchAllRowsIn,
   getZones,
   yearFromIso,
 } from "./supabase-helpers";
@@ -46,15 +48,34 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
     ({ referees, competitions, approvals, openSlotsByCompetition } = input);
   } else {
     const supabase = db();
+    // Paginado y con el error a la vista: unos KPI a cero son una afirmación
+    // («no hay jueces, no hay campeonatos, nada pendiente»), no una pantalla
+    // vacía, y con más de 1000 filas se calculaban sobre un trozo del censo.
     const [refRes, compRes, apprRes, assignmentsByComp] = await Promise.all([
-      supabase.from("referees").select("estado"),
-      supabase.from("competitions").select("id, estado, template, tipo"),
-      supabase.from("approval_proposals").select("status"),
+      fetchAllPagesOf<{ estado: string }>("referees", (from, to) =>
+        supabase.from("referees").select("estado").order("id", { ascending: true }).range(from, to),
+      ),
+      fetchAllPagesOf<{ id: string; estado: string; template?: unknown; tipo?: string }>(
+        "competitions",
+        (from, to) =>
+          supabase
+            .from("competitions")
+            .select("id, estado, template, tipo")
+            .order("id", { ascending: true })
+            .range(from, to),
+      ),
+      fetchAllPagesOf<{ status: string }>("approval_proposals", (from, to) =>
+        supabase
+          .from("approval_proposals")
+          .select("status")
+          .order("id", { ascending: true })
+          .range(from, to),
+      ),
       cachedLoadAllAssignments(),
     ]);
-    referees = refRes.data ?? [];
-    competitions = compRes.data ?? [];
-    approvals = apprRes.data ?? [];
+    referees = refRes;
+    competitions = compRes;
+    approvals = apprRes;
     openSlotsByCompetition = new Map(
       competitions.map((c) => {
         const tpl = normalizeCompetitionTemplate(
@@ -127,21 +148,34 @@ export const analyticsService = {
       refereeQuery = refereeQuery.eq("zona", userZone);
     }
 
+    // Todas paginadas y con el error a la vista: el panel es la portada, y una
+    // pantalla de ceros —«sin campeonatos», «cobertura 0 %», «nada pendiente»—
+    // es una afirmación sobre la temporada, no un hueco. El registro de
+    // actividad sí lleva su propio `limit(20)` y no necesita paginarse.
     const [
-      { data: competitionRows },
-      { data: activity },
-      { data: referees },
-      { data: approvals },
-      { data: promotions },
+      competitionRows,
+      { data: activity, error: activityError },
+      referees,
+      approvals,
+      promotions,
       assignmentsByComp,
     ] = await Promise.all([
-      competitionQuery,
+      fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
+        competitionQuery.range(from, to),
+      ),
       supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(20),
-      refereeQuery,
-      approvalQuery,
-      promotionQuery,
+      fetchAllPagesOf<{ estado: string; disp?: boolean; zona?: unknown }>("referees", (from, to) =>
+        refereeQuery.range(from, to),
+      ),
+      fetchAllPagesOf<{ status: string; zona?: unknown }>("approval_proposals", (from, to) =>
+        approvalQuery.range(from, to),
+      ),
+      fetchAllPagesOf<{ status: string; zona?: unknown }>("promotion_requests", (from, to) =>
+        promotionQuery.range(from, to),
+      ),
       cachedLoadAllAssignments(),
     ]);
+    if (activityError) throw new Error(`activity_log: ${activityError.message}`);
 
     const competitions = (competitionRows ?? []).map((r) =>
       mapCompetition(r as Record<string, unknown>),
@@ -241,22 +275,42 @@ export const analyticsService = {
     const supabase = db();
     // Lecturas independientes en paralelo (antes eran ~6 awaits en serie en la
     // página más pesada). El cruce cross-zona depende del año y va después.
+    // Paginadas y sin tragarse el error, igual que el panel: la analítica se usa
+    // para decidir, y una serie histórica incompleta miente igual que una vacía.
     const [
       competitions,
       assignmentsByComp,
-      { data: compTemplates },
-      { data: referees },
+      compTemplates,
+      referees,
       zones,
-      { data: approvals },
+      approvals,
     ] = await Promise.all([
       competitionService.getCompetitions(user),
       cachedLoadAllAssignments(),
-      supabase.from("competitions").select("id, template, tipo"),
-      supabase.from("referees").select("id, nombre, nivel, zona, estado"),
+      fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
+        supabase
+          .from("competitions")
+          .select("id, template, tipo")
+          .order("id", { ascending: true })
+          .range(from, to),
+      ),
+      fetchAllPagesOf<Record<string, unknown>>("referees", (from, to) =>
+        supabase
+          .from("referees")
+          .select("id, nombre, nivel, zona, estado")
+          .order("id", { ascending: true })
+          .range(from, to),
+      ),
       getZones(),
       // Sin `.eq("zona")`: la columna es texto libre con códigos anteriores a la
       // migración 013, que no normalizó esta tabla. Se filtra abajo en memoria.
-      supabase.from("approval_proposals").select("status, submitted_at, zona"),
+      fetchAllPagesOf<Record<string, unknown>>("approval_proposals", (from, to) =>
+        supabase
+          .from("approval_proposals")
+          .select("status, submitted_at, zona")
+          .order("id", { ascending: true })
+          .range(from, to),
+      ),
     ]);
     const templateById = new Map(
       (compTemplates ?? []).map((row) => {
@@ -346,11 +400,18 @@ export const analyticsService = {
     const yearlyHistory = [...yearAgg.entries()].sort((a, b) => a[0] - b[0]).map(([year, agg]) => ({ year, competitions: agg.competitions, criticalCompetitions: agg.criticalCompetitions, requiredSlots: agg.requiredSlots, filledSlots: agg.filledSlots, uniqueAssignedReferees: agg.refereeIds.size }));
     const selectedYearAgg = yearAgg.get(selectedYear);
     const selectedYearCompetitionIds = competitions.filter((c) => yearFromIso(c.fecha) === selectedYear).map((c) => c.id);
-    const { data: crossZoneRows } = selectedYearCompetitionIds.length > 0
-      ? await supabase.from("roster_assignments").select("competition_id").eq("cross_zone", true).in("competition_id", selectedYearCompetitionIds)
-      : { data: [] };
+    // Troceado y paginado: el cruce cross-zona se leía con un `.in()` suelto, así
+    // que un año con muchos campeonatos perdía asignaciones y el mapa de cruces
+    // salía corto.
+    const crossZoneRows = await fetchAllRowsIn(
+      "roster_assignments",
+      "competition_id",
+      selectedYearCompetitionIds,
+      "slot_key",
+      "competition_id, cross_zone",
+    );
     const crossZoneByComp = new Map<string, number>();
-    for (const row of crossZoneRows ?? []) {
+    for (const row of crossZoneRows.filter((r) => r.cross_zone === true)) {
       const id = String(row.competition_id);
       crossZoneByComp.set(id, (crossZoneByComp.get(id) ?? 0) + 1);
     }

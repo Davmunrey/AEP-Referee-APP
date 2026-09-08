@@ -6,12 +6,29 @@ import {
   isRosterImprevistoMode,
   isRosterLockedByApproval,
   isRosterPendingApproval,
+  isRosterRejected,
 } from "@/lib/roster-coverage";
+
+/** Fecha corta y legible; si no es una fecha utilizable, se devuelve tal cual. */
+function formatReviewDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Resolución de la última propuesta, para poder explicar un rechazo. */
+export interface RosterLastReview {
+  status: string;
+  comment?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}
 
 interface RosterImprevistoBannerProps {
   aprobacion: string;
   canEdit: boolean;
   pending: boolean;
+  lastReview?: RosterLastReview;
   onUnlock: () => void;
 }
 
@@ -19,8 +36,36 @@ export function RosterImprevistoBanner({
   aprobacion,
   canEdit,
   pending,
+  lastReview,
   onUnlock,
 }: RosterImprevistoBannerProps) {
+  // El rechazo obliga al revisor a escribir un motivo, pero ese motivo se
+  // quedaba en la bandeja de aprobaciones: en la tarima solo aparecía la
+  // palabra «Rechazado», sin decir qué había que corregir.
+  if (isRosterRejected(aprobacion) && lastReview?.status === "rechazado") {
+    return (
+      <div className="border-b border-destructive-border bg-destructive-muted px-4 py-2.5">
+        <p className="flex items-start gap-2 text-xs text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Propuesta <strong>rechazada</strong>
+            {lastReview.reviewedBy ? ` por ${lastReview.reviewedBy}` : ""}
+            {lastReview.reviewedAt ? ` · ${formatReviewDate(lastReview.reviewedAt)}` : ""}
+            {lastReview.comment ? (
+              <>
+                {": "}
+                <span className="font-medium">{lastReview.comment}</span>
+              </>
+            ) : (
+              " (sin comentario)"
+            )}
+            . Corrige la tarima y vuelve a enviarla a aprobación.
+          </span>
+        </p>
+      </div>
+    );
+  }
+
   if (isRosterLockedByApproval(aprobacion) && canEdit) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-warning-border bg-warning-subtle px-4 py-2.5">
