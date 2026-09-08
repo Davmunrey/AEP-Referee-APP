@@ -337,7 +337,7 @@ export async function syncCompetitionCoverage(competitionId: string) {
   const fallbackRequeridos = row?.requeridos != null ? Number(row.requeridos) : 0;
   const coverage = computeRosterCoverage(template, assignments, fallbackRequeridos);
   const estado = deriveCompetitionEstado(coverage);
-  await supabase
+  const { error } = await supabase
     .from("competitions")
     .update({
       confirmados: coverage.confirmados,
@@ -345,17 +345,32 @@ export async function syncCompetitionCoverage(competitionId: string) {
       estado,
     })
     .eq("id", competitionId);
+  // No se lanza: la designación que trae aquí YA está guardada, y hacerla
+  // fracasar por la cobertura sería mentir al revés. Pero tampoco se calla:
+  // hasta la siguiente mutación, el listado y el panel enseñan una cobertura
+  // y un estado viejos —«Incompleto» sobre una tarima llena— y sin esta
+  // línea no había forma de saber por qué.
+  if (error) {
+    console.error("[roster.syncCompetitionCoverage]", competitionId, error.message);
+  }
 }
 
+/**
+ * El registro de actividad y el historial no bloquean la operación que los
+ * genera: perder una línea de bitácora es peor que perder la designación, pero
+ * hacer fracasar la designación por la bitácora es peor todavía. Lo que no
+ * puede pasar es que el hueco no conste en ninguna parte.
+ */
 export async function pushActivity(item: Omit<import("@/lib/types").ActivityItem, never>) {
   const supabase = db();
-  await supabase.from("activity_log").insert({
+  const { error } = await supabase.from("activity_log").insert({
     tipo: item.tipo,
     actor: item.actor,
     accion: item.accion,
     evento: item.evento,
     hace: item.hace,
   });
+  if (error) console.error("[activity_log]", item.tipo, item.evento, error.message);
 }
 
 export async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
@@ -365,7 +380,7 @@ export async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
     : "event_id";
   // randomUUID en vez de Date.now(): dos mutaciones en el mismo milisegundo
   // colisionaban en PK y el insert fallaba en silencio (historial perdido).
-  await supabase.from("roster_history").insert({
+  const { error } = await supabase.from("roster_history").insert({
     id: `hist-${crypto.randomUUID()}`,
     [competitionColumn]: entry.competitionId,
     at: entry.at,
@@ -373,6 +388,11 @@ export async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
     action: entry.action,
     detail: entry.detail ?? null,
   });
+  // El historial de la tarima es el acta: un hueco silencioso ahí es una
+  // acción que oficialmente no ocurrió.
+  if (error) {
+    console.error("[roster_history]", entry.competitionId, entry.action, error.message);
+  }
 }
 
 /**
