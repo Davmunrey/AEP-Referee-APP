@@ -169,10 +169,13 @@ export const ticketService = {
     const ids = tickets.map((t) => String(t.id));
 
     // commentCount agregado en una sola consulta (evita N+1).
-    const { data: commentRows } = await supabase
+    const { data: commentRows, error: commentsError } = await supabase
       .from("support_ticket_comments")
       .select("ticket_id")
       .in("ticket_id", ids);
+    // El contador se pinta siempre, así que un fallo de lectura ponía un «0»
+    // en cada ticket: «nadie te ha contestado» dicho por un corte de red.
+    if (commentsError) throw commentsError;
     const counts = new Map<string, number>();
     for (const row of commentRows ?? []) {
       const key = String(row.ticket_id);
@@ -180,11 +183,12 @@ export const ticketService = {
     }
 
     // Adjuntos a nivel de ticket (comment_id NULL) en una sola consulta.
-    const { data: attachmentRows } = await supabase
+    const { data: attachmentRows, error: attachmentsError } = await supabase
       .from("support_ticket_attachments")
       .select("*")
       .in("ticket_id", ids)
       .is("comment_id", null);
+    if (attachmentsError) throw attachmentsError;
     const signed = await signAttachments(attachmentRows ?? []);
     const byTicket = new Map<string, SupportTicketAttachment[]>();
     for (const att of signed) {
@@ -220,7 +224,10 @@ export const ticketService = {
     if (!row) return undefined;
     if (!canView(user, (row.created_by_id as string | null) ?? null)) return undefined;
 
-    const [{ data: commentRows }, { data: attachmentRows }] = await Promise.all([
+    const [
+      { data: commentRows, error: commentsError },
+      { data: attachmentRows, error: attachmentsError },
+    ] = await Promise.all([
       supabase
         .from("support_ticket_comments")
         .select("*")
@@ -228,6 +235,11 @@ export const ticketService = {
         .order("created_at", { ascending: true }),
       supabase.from("support_ticket_attachments").select("*").eq("ticket_id", id),
     ]);
+    // El hilo entero es lo que se viene a leer: presentarlo vacío porque la
+    // lectura falló hace que el usuario crea que su comentario se perdió y que
+    // quien atiende conteste sin haber visto lo que ya se había dicho.
+    if (commentsError) throw commentsError;
+    if (attachmentsError) throw attachmentsError;
 
     const signed = await signAttachments(attachmentRows ?? []);
     const ticketAttachments = signed.filter((a) => a.commentId === null);
@@ -350,7 +362,10 @@ export const ticketService = {
     if (status === "resuelto") {
       patch.resolved_by = user.nombre;
       patch.resolved_at = now;
-      if (resolutionNote !== undefined) patch.resolution_note = resolutionNote;
+      // Siempre explícita: si el ticket se reabrió y se vuelve a resolver sin
+      // nota, dejarla sin tocar resucitaba la nota de la resolución anterior
+      // como si fuera la de ahora.
+      patch.resolution_note = resolutionNote ?? null;
     }
     // Guard condicional: acota por id para no pisar otras filas.
     const { error: updateError } = await supabase
