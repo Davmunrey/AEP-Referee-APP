@@ -1,3 +1,4 @@
+import { canImportCalendar } from "@/lib/permissions";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { parseAepCalendarCsv, parseAepCalendarText } from "@/lib/calendar-parser";
@@ -47,7 +48,9 @@ function calendarEntryKey(entry: {
 export async function POST(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role !== "super_admin" && user.role !== "delegado_jueces") {
+  // El mismo predicado que esconde el botón en `/competitions`: la pantalla y
+  // la API preguntaban lo mismo por dos caminos distintos.
+  if (!canImportCalendar(user.role)) {
     return jsonError("Solo Super Admin o Delegado de Jueces pueden importar el calendario", 403);
   }
 

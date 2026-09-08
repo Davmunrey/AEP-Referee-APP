@@ -8,6 +8,16 @@ export function canCreateCompetition(role: SessionUser["role"]): boolean {
   );
 }
 
+/**
+ * Limpiar campeonatos duplicados del calendario.
+ *
+ * Borra filas, así que se queda en el ámbito nacional. Estaba escrito a mano
+ * dentro de la ruta como `role !== "super_admin" && role !== "delegado_jueces"`.
+ */
+export function canDedupeCompetitions(role: SessionUser["role"]): boolean {
+  return role === "super_admin" || role === "delegado_jueces";
+}
+
 /** Importar calendario PDF AEP. */
 export function canImportCalendar(role: SessionUser["role"]): boolean {
   return role === "super_admin" || role === "delegado_jueces";

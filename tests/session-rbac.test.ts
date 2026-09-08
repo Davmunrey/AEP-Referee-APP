@@ -7,7 +7,7 @@ import {
   canManageJudges,
   canManageUsers,
 } from "@/lib/auth/session";
-import { canCreateCompetition } from "@/lib/permissions";
+import { canCreateCompetition, canDedupeCompetitions, canImportCalendar, canImportJudgesRegistry } from "@/lib/permissions";
 import { USER_ROLES, type SessionUser, type UserRole } from "@/lib/types";
 
 /**
@@ -132,5 +132,34 @@ describe("USER_ROLES", () => {
         "super_admin",
       ].sort(),
     );
+  });
+});
+
+// ── Los permisos de importación y limpieza, con nombre ──────────────────────
+describe("administración nacional: importar y limpiar", () => {
+  const roles = [
+    "super_admin",
+    "delegado_jueces",
+    "delegado_zona",
+    "responsable_financiero_jueces",
+    "solo_ver",
+  ] as const;
+
+  it("solo super admin y delegado de jueces importan o limpian", () => {
+    for (const role of roles) {
+      const esperado = role === "super_admin" || role === "delegado_jueces";
+      expect(canImportCalendar(role)).toBe(esperado);
+      expect(canImportJudgesRegistry(role)).toBe(esperado);
+      expect(canDedupeCompetitions(role)).toBe(esperado);
+    }
+  });
+
+  it("el delegado de zona sí crea campeonatos, pero no importa el calendario", () => {
+    // Importar el calendario reescribe campeonatos de TODAS las zonas, y
+    // reimportar el censo con «reemplazar» borra jueces: no es lo mismo que
+    // dar de alta un campeonato propio.
+    expect(canCreateCompetition("delegado_zona")).toBe(true);
+    expect(canImportCalendar("delegado_zona")).toBe(false);
+    expect(canImportJudgesRegistry("delegado_zona")).toBe(false);
   });
 });

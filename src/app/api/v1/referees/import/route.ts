@@ -1,3 +1,4 @@
+import { canImportJudgesRegistry } from "@/lib/permissions";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import {
@@ -14,7 +15,8 @@ const MAX_BYTES = 8 * 1024 * 1024;
 export async function POST(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role !== "super_admin" && user.role !== "delegado_jueces") {
+  // El mismo predicado que esconde el botón en `/referees`.
+  if (!canImportJudgesRegistry(user.role)) {
     return jsonError("Solo Super Admin o Delegado de Jueces pueden importar el registro", 403);
   }
 

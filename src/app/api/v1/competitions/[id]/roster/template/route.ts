@@ -1,7 +1,7 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { RosterPaidClaimError } from "@/lib/competitions/service-types";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { getPresetForEventType } from "@/lib/roster-template";
 import { rosterTemplateSchema } from "@/lib/validations";
 import type { RosterSession } from "@/lib/types";
@@ -34,7 +34,7 @@ export async function POST(_request: Request, context: RouteContext) {
     return jsonOk(result);
   } catch (err) {
     if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
-    throw err;
+    return jsonRouteError("roster.template.POST", err, "No se pudo generar la plantilla");
   }
 }
 
@@ -73,7 +73,7 @@ export async function PUT(request: Request, context: RouteContext) {
     // 423, igual que vaciar la tarima: el cambio es legítimo pero hay dinero
     // pagado que lo bloquea hasta revertirlo.
     if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
-    throw err;
+    return jsonRouteError("roster.template.PUT", err, "No se pudo guardar la plantilla");
   }
 }
 
@@ -93,6 +93,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return jsonOk(result);
   } catch (err) {
     if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
-    throw err;
+    return jsonRouteError("roster.template.DELETE", err, "No se pudo borrar la plantilla");
   }
 }
