@@ -24,6 +24,7 @@ import {
 } from "@/lib/competitions/service-types";
 import {
   db,
+  fetchAllPagesOf,
   fetchAllRows,
   fetchAllRowsIn,
   isMissingTableError,
@@ -79,7 +80,10 @@ export const refereeService = {
   }): Promise<Referee[]> => {
     await expireStaleSanctions();
     const supabase = db();
-    let query = supabase.from("referees").select("*").order("nombre");
+    // El segundo criterio no es decorativo: sin un desempate estable, dos
+    // jueces con el mismo nombre pueden salir en distinto orden entre páginas
+    // y la paginación duplicaría uno y se saltaría otro.
+    let query = supabase.from("referees").select("*").order("nombre").order("id");
 
     const userZone =
       params?.user?.role === "delegado_zona" && params.user.zona
@@ -106,12 +110,16 @@ export const refereeService = {
       }
     }
 
-    const { data, error } = await query;
     // Un censo vacío por un fallo de lectura no es «no hay jueces»: dejaba el
     // directorio en blanco, el panel de la tarima sin nadie a quien asignar y
-    // la bandeja de aprobación mostrando identificadores en crudo.
-    if (error) throw new Error(`referees: ${error.message}`);
-    return (data ?? []).map((r) => mapReferee(r as Record<string, unknown>));
+    // la bandeja de aprobación mostrando identificadores en crudo. Y uno
+    // truncado tampoco: PostgREST corta en 1000 filas y el juez 1001 no
+    // aparecía ni en el directorio ni en el desplegable de designación, sin
+    // que nada lo dijera.
+    const data = await fetchAllPagesOf<Record<string, unknown>>("referees", (from, to) =>
+      query.range(from, to),
+    );
+    return data.map((r) => mapReferee(r));
   },
 
   getReferee: async (id: string): Promise<Referee | undefined> => {
