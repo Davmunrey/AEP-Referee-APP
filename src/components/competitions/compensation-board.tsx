@@ -22,7 +22,13 @@ import {
 } from "@/lib/judge-compensation/breakdown";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim, CompensationClubContact, CompetitionCompensationSummary } from "@/lib/judge-compensation/types";
-import { allClubEmailsFromCompetition, assessCompensationReadiness, competitionClubContacts } from "@/lib/judge-compensation/readiness";
+import {
+  allClubEmailsFromCompetition,
+  assessCompensationReadiness,
+  competitionClubContacts,
+  provisionalTotalLabel,
+  RECEIPT_INCOMPLETE_HINT,
+} from "@/lib/judge-compensation/readiness";
 import { applyCompensationClaimPatch } from "@/lib/judge-compensation/claim-patch";
 import type { CompensationClaimPatch } from "@/lib/api/client-compensation";
 import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
@@ -345,7 +351,8 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           </p>
           {!readiness?.readyForExport && (summary?.provisionalTotal ?? 0) > 0 && (
             <p className="text-xs tabular-nums text-muted-foreground">
-              Provisional (sin km): {formatReceiptAmountEur(summary?.provisionalTotal ?? 0)}
+              {provisionalTotalLabel(readiness?.pendingTravelReferees.length ?? 0)}:{" "}
+              {formatReceiptAmountEur(summary?.provisionalTotal ?? 0)}
             </p>
           )}
         </div>
@@ -548,6 +555,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           variant="outline"
                           className="h-8 gap-1 text-xs"
                           disabled={!claim.financialComplete}
+                          title={claim.financialComplete ? undefined : RECEIPT_INCOMPLETE_HINT}
                           onClick={() => setExportTarget(claim)}
                         >
                           <FileDown className="h-3.5 w-3.5" />
