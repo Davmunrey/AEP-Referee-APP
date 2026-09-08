@@ -142,12 +142,13 @@ describe("buildCompensationReceiptText", () => {
         payer: "none",
         title: "simple",
         laborAsJudge: false,
-        competitionArticle: "la",
       },
     });
     expect(text).toContain("colaborador deportivo voluntario");
     expect(text).toContain("he recibido la cantidad de 185€");
-    expect(text).toContain("por la labor prestada en la III Campeonato");
+    // Antes este fixture forzaba `competitionArticle: "la"` y el test daba por
+    // buena una falta: «la III Campeonato». Ahora concuerda con el sustantivo.
+    expect(text).toContain("por la labor prestada en el III Campeonato");
     expect(text).toContain("celebrado en Las Torres de Cotillas, Murcia, los días");
   });
 
