@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeRosterCoverage, coveragePct, countRequiredSlots } from "@/lib/roster-coverage";
 import { enumerateSlotKeys, normalizeCompetitionTemplate } from "@/lib/roster-template";
+import { mapApproval } from "@/server/db/mappers";
 import type { RosterSession } from "@/lib/types";
 
 // `competitions.template` es JSONB: la base de datos no garantiza su forma.
@@ -113,5 +114,41 @@ describe("cobertura con números imposibles", () => {
     expect(cobertura.requeridos).toBe(4);
     expect(cobertura.confirmados).toBe(1);
     expect(cobertura.pct).toBe(25);
+  });
+});
+
+describe("snapshot de propuesta con forma inesperada", () => {
+  function propuesta(assignments: unknown) {
+    return mapApproval({
+      id: "ap-1",
+      competition_id: "evt-1",
+      competition_name: "Copa",
+      zona: "CENTRO",
+      submitted_by: "Ana",
+      submitted_at: "2026-01-01",
+      status: "pendiente",
+      assignments,
+    });
+  }
+
+  it("una cadena o un array dejan de pasar como mapa de asignaciones", () => {
+    // `Object.entries("roto")` daba pares ["0","r"], ["1","o"]…: el panel de
+    // aprobaciones pintaba filas inventadas y la revisión intentaba insertar
+    // asignaciones con claves numéricas.
+    expect(propuesta("roto").assignments).toEqual({});
+    expect(propuesta([1, 2]).assignments).toEqual({});
+    expect(propuesta(null).assignments).toEqual({});
+  });
+
+  it("descarta los valores que no son un id de juez", () => {
+    expect(propuesta({ S1_central_0: "r1", S1_lateral_0: null, S1_mesa_0: 7, S1_jurado_0: "" })
+      .assignments).toEqual({ S1_central_0: "r1" });
+  });
+
+  it("un snapshot sano no se toca", () => {
+    expect(propuesta({ S1_central_0: "r1", S1_lateral_0: "r2" }).assignments).toEqual({
+      S1_central_0: "r1",
+      S1_lateral_0: "r2",
+    });
   });
 });

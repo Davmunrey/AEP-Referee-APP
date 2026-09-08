@@ -173,6 +173,16 @@ function parseCompensationClubs(raw: unknown): import("@/lib/judge-compensation/
   return clubs.length > 0 ? clubs : undefined;
 }
 
+/** `assignments` es JSONB: solo un objeto plano es utilizable como mapa. */
+function assignmentsFromJsonb(raw: unknown): AssignmentsMap {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const out: AssignmentsMap = {};
+  for (const [slotKey, refereeId] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof refereeId === "string" && refereeId) out[slotKey] = refereeId;
+  }
+  return out;
+}
+
 export function mapApproval(row: Record<string, unknown>): ApprovalProposal {
   return {
     id: String(row.id),
@@ -183,7 +193,11 @@ export function mapApproval(row: Record<string, unknown>): ApprovalProposal {
     submittedById: row.submitted_by_id ? String(row.submitted_by_id) : undefined,
     submittedAt: String(row.submitted_at),
     status: row.status as ApprovalProposal["status"],
-    assignments: (row.assignments ?? {}) as AssignmentsMap,
+    // El JSONB solo se guardaba contra el nulo. Una cadena o un array pasaban
+    // tal cual, y `Object.entries` sobre ellos daba pares basura: el panel de
+    // aprobaciones pintaba filas inventadas y la revisión intentaba insertar
+    // asignaciones con claves numéricas.
+    assignments: assignmentsFromJsonb(row.assignments),
     comment: row.comment ? String(row.comment) : undefined,
     reviewedBy: row.reviewed_by ? String(row.reviewed_by) : undefined,
     reviewedById: row.reviewed_by_id ? String(row.reviewed_by_id) : undefined,
