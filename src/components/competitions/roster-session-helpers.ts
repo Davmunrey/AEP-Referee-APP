@@ -1,6 +1,6 @@
 import type { AssignmentsMap, RosterSession, Zone } from "@/lib/types";
 import { zoneUiName } from "@/lib/aep-zones";
-import { parseSlotKey } from "@/lib/roster-template";
+import { enumerateSlotKeys, parseSlotKey } from "@/lib/roster-template";
 
 export function zoneName(zones: Zone[], code: string) {
   return zoneUiName(zones.find((z) => z.code === code)?.code ?? code);
@@ -55,14 +55,12 @@ export function assignedRefereeIdsInSession(
 }
 
 export function sessionProgress(session: RosterSession, assignments: AssignmentsMap) {
-  const allRoles = slotRoleEntries(session);
-  const slots = allRoles.reduce((a, r) => a + r.slots, 0);
-  let filled = 0;
-  for (const role of allRoles) {
-    for (let i = 0; i < role.slots; i++) {
-      if (assignments[`${session.sesion}_${role.key}_${i}`]) filled++;
-    }
-  }
+  // Huecos reales de la sesión, no la suma de `slots`: dos filas con el mismo
+  // rol comparten clave, y contarlas dos veces dejaba la barra de progreso
+  // atascada por debajo del 100 % con la sesión entera cubierta.
+  const slotKeys = enumerateSlotKeys([session]);
+  const filled = slotKeys.filter((slotKey) => assignments[slotKey]).length;
+  const slots = slotKeys.length;
   const pct = slots > 0 ? Math.round((filled / slots) * 100) : 0;
   return { filled, slots, pct };
 }
@@ -72,9 +70,7 @@ export function findNextOpenSlot(
   assignments: AssignmentsMap,
   afterSlotKey?: string,
 ) {
-  const orderedSlots = slotRoleEntries(session).flatMap((role) =>
-    Array.from({ length: role.slots }, (_, idx) => `${session.sesion}_${role.key}_${idx}`),
-  );
+  const orderedSlots = enumerateSlotKeys([session]);
 
   if (orderedSlots.length === 0) return null;
   const startIndex = afterSlotKey ? orderedSlots.indexOf(afterSlotKey) : -1;
@@ -100,23 +96,22 @@ export function describeSlot(session: RosterSession, slotKey: string) {
 }
 
 export function collectOpenSlots(session: RosterSession, assignments: AssignmentsMap) {
-  return slotRoleEntries(session).flatMap((role) =>
-    Array.from({ length: role.slots }, (_, idx) => {
-      const slotKey = `${session.sesion}_${role.key}_${idx}`;
-      if (assignments[slotKey]) return null;
-      return {
-        slotKey,
-        sessionLabel: session.sesion,
-        roleLabel: role.rol,
-        slotNumber: idx + 1,
-      };
-    }).filter(Boolean) as Array<{
-      slotKey: string;
-      sessionLabel: string;
-      roleLabel: string;
-      slotNumber: number;
-    }>,
-  );
+  // Recorre las claves reales de la sesión: construirlas por rol repetía el
+  // mismo hueco cuando dos filas compartían rol, y salía dos veces en la lista
+  // de huecos libres.
+  const open: Array<{
+    slotKey: string;
+    sessionLabel: string;
+    roleLabel: string;
+    slotNumber: number;
+  }> = [];
+  for (const slotKey of enumerateSlotKeys([session])) {
+    if (assignments[slotKey]) continue;
+    const described = describeSlot(session, slotKey);
+    if (!described) continue;
+    open.push(described);
+  }
+  return open;
 }
 
 /** Reordena el conjunto de sesiones colapsadas (guardado por posición) cuando

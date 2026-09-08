@@ -116,13 +116,65 @@ export function parseSlotKey(
   return { session, roleKey, index };
 }
 
-/** Todas las claves de slot válidas para un template. */
+/** Roles de una sesión, competición y pesaje juntos. */
+export function sessionRoleEntries(session: {
+  roles?: RosterRole[];
+  pesajeRoles?: RosterRole[];
+}): RosterRole[] {
+  return [
+    ...(Array.isArray(session.roles) ? session.roles : []),
+    ...(Array.isArray(session.pesajeRoles) ? session.pesajeRoles : []),
+  ];
+}
+
+/**
+ * Roles repetidos dentro de una sesión (entre competición y pesaje incluidos).
+ *
+ * Cada rol debe ir en una sola fila con su número de plazas: dos filas del
+ * mismo rol comparten las claves de hueco `${sesion}_${rol}_${indice}`, así que
+ * la segunda no aporta huecos asignables.
+ */
+export function duplicateRoleKeys(session: {
+  roles?: RosterRole[];
+  pesajeRoles?: RosterRole[];
+}): RoleKey[] {
+  const seen = new Set<RoleKey>();
+  const repeated = new Set<RoleKey>();
+  for (const role of sessionRoleEntries(session)) {
+    if (seen.has(role.key)) repeated.add(role.key);
+    else seen.add(role.key);
+  }
+  return [...repeated];
+}
+
+/**
+ * Claves de hueco existentes en la plantilla, **sin repetir**.
+ *
+ * La clave es `${sesion}_${rol}_${indice}`, así que dos filas con el mismo rol
+ * dentro de una sesión —dos «Juez Central», o un rol repetido entre el bloque
+ * de competición y el de pesaje— generan la misma clave. Devolverla dos veces
+ * hacía que el recuento de plazas (que sumaba `slots`) fuese mayor que el
+ * número de huecos realmente asignables: con la tarima entera cubierta
+ * quedaba un hueco libre imposible de llenar, la cobertura se estancaba por
+ * debajo del 100 % y el campeonato no llegaba nunca a «Completo».
+ */
 export function enumerateSlotKeys(template: RosterSession[]): string[] {
   const keys: string[] = [];
+  const seen = new Set<string>();
   for (const session of template) {
-    for (const role of [...session.roles, ...(session.pesajeRoles ?? [])]) {
-      for (let i = 0; i < role.slots; i++) {
-        keys.push(`${session.sesion}_${role.key}_${i}`);
+    if (!session || typeof session !== "object") continue;
+    const roles = [
+      ...(Array.isArray(session.roles) ? session.roles : []),
+      ...(Array.isArray(session.pesajeRoles) ? session.pesajeRoles : []),
+    ];
+    for (const role of roles) {
+      const slots = Math.floor(Number(role?.slots));
+      if (!Number.isFinite(slots)) continue;
+      for (let i = 0; i < slots; i++) {
+        const key = `${session.sesion}_${role.key}_${i}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        keys.push(key);
       }
     }
   }
