@@ -1,6 +1,6 @@
 import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -15,7 +15,11 @@ export async function POST(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   // Paridad con /compensation y /recalculate: un campeonato inexistente es un
   // 404, no un resumen vacío con 200.
-  const comp = await dataService.getCompetition(id);
-  if (!comp) return jsonError("Competición no encontrada", 404);
-  return jsonOk(await dataService.calculateAllCompensationDistances(id));
+  try {
+    const comp = await dataService.getCompetition(id);
+    if (!comp) return jsonError("Competición no encontrada", 404);
+    return jsonOk(await dataService.calculateAllCompensationDistances(id));
+  } catch (err) {
+    return jsonRouteError("compensation.distances", err, "No se pudieron calcular las distancias");
+  }
 }

@@ -1,5 +1,5 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonOk } from "@/lib/api/route-utils";
+import { jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 export async function GET(request: Request) {
@@ -10,5 +10,9 @@ export async function GET(request: Request) {
   const yearParam = new URL(request.url).searchParams.get("year");
   const parsedYear = yearParam ? Number(yearParam) : NaN;
   const requestedYear = Number.isInteger(parsedYear) ? parsedYear : undefined;
-  return jsonOk(await dataService.getAnalytics(user, requestedYear));
+  try {
+    return jsonOk(await dataService.getAnalytics(user, requestedYear));
+  } catch (err) {
+    return jsonRouteError("analytics.GET", err, "No se pudieron cargar las estadísticas");
+  }
 }

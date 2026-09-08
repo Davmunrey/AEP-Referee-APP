@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { computeRosterCoverage } from "@/lib/roster-coverage";
 import { dataService } from "@/server/services";
 
@@ -29,7 +29,12 @@ export async function POST(_request: Request, context: RouteContext) {
     return jsonError(`Completa todos los huecos antes de enviar (${coverage.openSlots} pendientes)`, 400);
   }
 
-  const proposal = await dataService.submitRoster(id, user.nombre, user.id);
+  let proposal;
+  try {
+    proposal = await dataService.submitRoster(id, user.nombre, user.id);
+  } catch (err) {
+    return jsonRouteError("roster.submit", err, "No se pudo enviar la propuesta");
+  }
   if (!proposal) return jsonError("No se pudo enviar la propuesta", 500);
   return jsonOk({
     message: "Propuesta enviada a aprobación nacional",

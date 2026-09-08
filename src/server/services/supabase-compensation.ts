@@ -16,7 +16,10 @@ import type {
   CompensationTravelMode,
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
-import { CompensationClaimConflictError } from "@/lib/competitions/service-types";
+import {
+  CompensationClaimConflictError,
+  CompensationSyncError,
+} from "@/lib/competitions/service-types";
 import { discardableOrphanClaimIds } from "@/lib/judge-compensation/orphans";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type { Competition, Referee, RosterSession, SessionUser } from "@/lib/types";
@@ -199,14 +202,18 @@ async function persistClaim(
     .eq("claim_id", claim.id);
   if (previasError) {
     console.error("[compensation.dutyLines.read]", claim.id, previasError.message);
-    throw new Error("No se pudieron leer los conceptos de la liquidación. Vuelve a intentarlo.");
+    throw new CompensationSyncError(
+      "No se pudieron leer los conceptos de la liquidación. Vuelve a intentarlo.",
+    );
   }
 
   if (lines.length > 0) {
     const { error: lineError } = await supabase.from("judge_compensation_duty_lines").upsert(lines);
     if (lineError) {
       console.error("[compensation.dutyLines.upsert]", claim.id, lineError.message);
-      throw new Error("No se pudieron guardar los conceptos de la liquidación. Vuelve a intentarlo.");
+      throw new CompensationSyncError(
+        "No se pudieron guardar los conceptos de la liquidación. Vuelve a intentarlo.",
+      );
     }
   }
 
@@ -221,7 +228,7 @@ async function persistClaim(
       .in("id", sobrantes);
     if (purgeError) {
       console.error("[compensation.dutyLines.purge]", claim.id, purgeError.message);
-      throw new Error(
+      throw new CompensationSyncError(
         "La liquidación se guardó, pero conceptos que ya no le corresponden siguen en la base. Revísala antes de aprobarla.",
       );
     }
