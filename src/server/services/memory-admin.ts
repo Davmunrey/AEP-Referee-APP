@@ -14,6 +14,7 @@ import type {
   SessionUser,
 } from "@/lib/types";
 import { REGULATION_RULES, getStore, nextSeqId, pushActivity } from "@/server/store";
+import { PromotionReviewError } from "@/lib/competitions/service-types";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") throw new Error("Nuevo juez solo puede registrar nivel objetivo Regional");
@@ -39,13 +40,21 @@ export async function reviewPromotion(
   const store = getStore();
   const req = store.promotions.find((p) => p.id === id);
   if (!req || req.status !== "pendiente") return undefined;
+  // El corte va ANTES de tocar la solicitud, y con el mismo mensaje que el
+  // backend de producción: allí un juez borrado del censo aborta la revisión,
+  // y aquí la dejaba aprobada sin ascender a nadie.
+  const ref = approve ? store.referees.find((r) => r.id === req.refereeId) : undefined;
+  if (approve && !ref) {
+    throw new PromotionReviewError(
+      "No se puede aprobar: el juez de la solicitud ya no existe en el censo.",
+    );
+  }
   req.status = approve ? "aprobado" : "rechazado";
   if (comment) req.reviewComment = comment;
-  if (approve) {
-    const ref = store.referees.find((r) => r.id === req.refereeId);
+  if (ref) {
     // Solo sube el nivel si sigue siendo un ascenso frente al nivel ACTUAL.
     const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-    if (ref && LEVEL_ORDER.indexOf(req.toLevel) > LEVEL_ORDER.indexOf(ref.nivel)) {
+    if (LEVEL_ORDER.indexOf(req.toLevel) > LEVEL_ORDER.indexOf(ref.nivel)) {
       ref.nivel = req.toLevel;
     }
   }

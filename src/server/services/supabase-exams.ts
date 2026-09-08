@@ -14,6 +14,7 @@ import type {
 } from "@/lib/types";
 import { mapExam, mapPromotion, mapReport } from "@/server/db/mappers";
 import { db, fetchAllPagesOf, pushActivity } from "./supabase-helpers";
+import { PromotionReviewError } from "@/lib/competitions/service-types";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") {
@@ -70,13 +71,13 @@ export const examsService = {
         .maybeSingle();
       if (refError) throw new Error(`referees: ${refError.message}`);
       if (!ref) {
-        throw new Error(
+        throw new PromotionReviewError(
           "No se puede aprobar: el juez de la solicitud ya no existe en el censo.",
         );
       }
       currentNivel = String(ref.nivel);
       if (LEVEL_ORDER.indexOf(currentNivel) < 0) {
-        throw new Error(
+        throw new PromotionReviewError(
           `No se puede aprobar: el nivel actual del juez (${currentNivel}) no es reconocible.`,
         );
       }
@@ -84,23 +85,48 @@ export const examsService = {
 
     const status = approve ? "aprobado" : "rechazado";
     // Guard contra doble revisión concurrente: solo gana el primer revisor.
-    const { data: claimed } = await supabase
+    const { data: claimed, error: claimError } = await supabase
       .from("promotion_requests")
       .update({ status, review_comment: comment ?? null })
       .eq("id", id)
       .eq("status", "pendiente")
       .select("id");
+    // Un fallo de escritura también deja `claimed` vacío, y salía por la misma
+    // puerta que la carrera perdida: al revisor se le decía «ya la revisó otro»
+    // sobre una solicitud que sigue pendiente, así que ni la reintentaba.
+    if (claimError) {
+      console.error("[exams.reviewPromotion.claim]", id, claimError.message);
+      throw new PromotionReviewError(
+        "No se pudo registrar la revisión. La solicitud sigue pendiente; vuelve a intentarlo.",
+      );
+    }
     if (!claimed || claimed.length === 0) return undefined;
     if (approve && currentNivel) {
       const toIdx = LEVEL_ORDER.indexOf(req.to_level as string);
       if (toIdx > LEVEL_ORDER.indexOf(currentNivel)) {
         // Compare-and-set sobre el nivel leído: si otro proceso lo cambió entre
         // medias, la escritura no toca nada en vez de pisar el nivel nuevo.
-        await supabase
+        // Pero eso hay que CONTARLO: la solicitud ya está en «aprobado» y no
+        // vuelve a pendiente, así que un ascenso que no llegó a aplicarse se
+        // quedaba aprobado sobre el papel y el juez con su nivel de siempre,
+        // sin que nadie lo supiera.
+        const { data: ascendido, error: nivelError } = await supabase
           .from("referees")
           .update({ nivel: req.to_level })
           .eq("id", req.referee_id)
-          .eq("nivel", currentNivel);
+          .eq("nivel", currentNivel)
+          .select("id");
+        if (nivelError) {
+          console.error("[exams.reviewPromotion.nivel]", req.referee_id, nivelError.message);
+          throw new PromotionReviewError(
+            `El ascenso queda aprobado, pero el nivel del juez no llegó a cambiar a ${req.to_level}. Corrígelo en su ficha.`,
+          );
+        }
+        if (!ascendido || ascendido.length === 0) {
+          throw new PromotionReviewError(
+            `El ascenso queda aprobado, pero el nivel del juez cambió mientras se revisaba y se ha dejado como está. Comprueba su ficha antes de darlo por hecho.`,
+          );
+        }
       }
     }
     await pushActivity({
@@ -118,8 +144,9 @@ export const examsService = {
     // La revisión ya está aplicada: devolver `undefined` la presentaba como
     // fallida y el revisor volvía a intentarlo.
     if (rereadError) {
-      throw new Error(
-        `La revisión se guardó, pero no se pudo releer (${rereadError.message}). Recarga la pantalla.`,
+      console.error("[exams.reviewPromotion.reread]", id, rereadError.message);
+      throw new PromotionReviewError(
+        "La revisión se guardó, pero no se pudo releer. Recarga la pantalla.",
       );
     }
     return data ? mapPromotion(data as Record<string, unknown>) : undefined;
