@@ -68,6 +68,24 @@ export class ApprovalReviewError extends Error {
 }
 
 /**
+ * La revisión de un ascenso no se pudo completar, y el motivo es para el
+ * revisor.
+ *
+ * La ruta de revisión no tenía `try/catch`: los mensajes que el servicio se
+ * molestaba en escribir —el juez desaparecido del censo, el nivel que no llegó
+ * a cambiar— morían en un 500 sin texto, y el revisor solo veía «error». Con
+ * este tipo la ruta sabe cuál de las dos cosas tiene delante: lo que explica
+ * algo al revisor, o un fallo de infraestructura que se registra y sale
+ * genérico.
+ */
+export class PromotionReviewError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PromotionReviewError";
+  }
+}
+
+/**
  * El juez sigue designado en alguna tarima.
  *
  * `roster_assignments.referee_id` referencia a `referees(id)` sin ON DELETE

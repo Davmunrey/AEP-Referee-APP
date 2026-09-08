@@ -1,6 +1,7 @@
 import { canReviewPromotions } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { PromotionReviewError } from "@/lib/competitions/service-types";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -14,7 +15,9 @@ export async function POST(request: Request, context: RouteContext) {
 
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
-  const approve = Boolean(body?.approve);
+  // `Boolean("false")` es true: solo el booleano literal aprueba, igual que en
+  // la revisión de tarima.
+  const approve = body?.approve === true;
   const comment =
     typeof body?.comment === "string" ? body.comment.trim() : undefined;
 
@@ -31,7 +34,16 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonError("La solicitud ya fue revisada", 409);
   }
 
-  const result = await dataService.reviewPromotion(id, approve, user.nombre, comment);
+  // Sin `try/catch` cualquier excepción salía como un 500 sin texto: los
+  // motivos que el servicio se molesta en escribir —el juez desaparecido del
+  // censo, el nivel que no llegó a cambiar— no llegaban nunca al revisor.
+  let result;
+  try {
+    result = await dataService.reviewPromotion(id, approve, user.nombre, comment);
+  } catch (err) {
+    if (err instanceof PromotionReviewError) return jsonError(err.message, 409);
+    return jsonServerError("promotions.review", err, "No se pudo revisar la solicitud");
+  }
   if (!result) return jsonError("La solicitud ya fue revisada por otro usuario", 409);
   return jsonOk(result);
 }
