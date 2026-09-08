@@ -29,3 +29,10 @@ export function paidClaimClearAllMessage(count: number): string {
     ? "Hay una liquidación pagada en esta tarima: no se puede vaciar. Revierte antes el pago en Compensación."
     : `Hay ${count} liquidaciones pagadas en esta tarima: no se puede vaciar. Revierte antes los pagos en Compensación.`;
 }
+
+/** Igual, cuando el cambio de plantilla borraría los huecos de jueces pagados. */
+export function paidClaimTemplateMessage(count: number): string {
+  return count === 1
+    ? "El cambio de plantilla dejaría fuera a un juez con la liquidación pagada. Revierte antes el pago en Compensación o conserva esa sesión."
+    : `El cambio de plantilla dejaría fuera a ${count} jueces con la liquidación pagada. Revierte antes los pagos en Compensación o conserva esas sesiones.`;
+}
