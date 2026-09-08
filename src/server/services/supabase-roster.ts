@@ -29,6 +29,7 @@ import {
 import {
   paidClaimClearAllMessage,
   paidClaimRemovalMessage,
+  paidClaimTemplateMessage,
 } from "@/lib/roster-paid-claims";
 import { assignmentsFromJsonb, mapApproval, mapHistory } from "@/server/db/mappers";
 import {
@@ -103,23 +104,40 @@ export const rosterService = {
   > => {
     const comp = await getCompetitionFn(competitionId);
     if (!comp) return undefined;
-    await persistCompetitionTemplate(competitionId, template);
     const supabase = db();
     const validKeys = new Set(enumerateSlotKeys(template));
     const { data: existingRows, error: existingError } = await supabase
       .from("roster_assignments")
-      .select("slot_key")
+      .select("slot_key, referee_id")
       .eq("competition_id", competitionId);
     // Tragarse este error dejaba las filas huérfanas en la base de datos: al
     // volver a crear más adelante una sesión con el mismo código, el juez que
     // ocupaba aquel hueco reaparecía asignado sin que nadie lo pusiera.
     if (existingError) throw new Error(`roster_assignments: ${existingError.message}`);
+    const stale = (existingRows ?? []).filter(
+      (row) => !validKeys.has(String(row.slot_key)),
+    );
+    // Quitar una sesión de la plantilla borra los huecos de esa sesión, y por
+    // ahí se colaba lo que `clearSlot` y `clearRosterAssignments` sí impiden:
+    // dejar sin puesto a un juez con la liquidación ya pagada. La comprobación
+    // va ANTES de guardar la plantilla; si no, el corte dejaba la plantilla
+    // cambiada y las asignaciones intactas.
+    if (stale.length > 0) {
+      const paid = await loadPaidClaimRefereeIds(competitionId);
+      if (paid.size > 0) {
+        const afectados = new Set(
+          stale.map((row) => String(row.referee_id)).filter((id) => paid.has(id)),
+        );
+        if (afectados.size > 0) {
+          throw new RosterPaidClaimError(paidClaimTemplateMessage(afectados.size));
+        }
+      }
+    }
+    await persistCompetitionTemplate(competitionId, template);
     // Un único DELETE ... IN para las filas huérfanas (antes: un round-trip por
     // slot). Las filas restantes ya tienen sus flags correctos, así que no hace
     // falta reescribirlos uno a uno.
-    const staleKeys = (existingRows ?? [])
-      .map((row) => String(row.slot_key))
-      .filter((key) => !validKeys.has(key));
+    const staleKeys = stale.map((row) => String(row.slot_key));
     if (staleKeys.length > 0) {
       const { error: deleteError } = await supabase
         .from("roster_assignments")
