@@ -425,7 +425,16 @@ export const compensationService = {
     // Antes se borraba toda liquidación huérfana sin mirar el estado, incluida
     // la pagada o aprobada de un juez sustituido. Ver `discardableOrphanClaimIds`.
     for (const claimRowId of discardableOrphanClaimIds(stored, activeIds)) {
-      await supabase.from("judge_compensation_claims").delete().eq("id", claimRowId);
+      const { error: huerfanaError } = await supabase
+        .from("judge_compensation_claims")
+        .delete()
+        .eq("id", claimRowId);
+      // No aborta el recálculo —lo que queda es un borrador de un juez que ya
+      // no está, no una cifra mal—, pero se registra: si el borrado falla
+      // siempre, el hub acumula liquidaciones fantasma sin que nadie lo vea.
+      if (huerfanaError) {
+        console.error("[compensation.huerfana]", claimRowId, huerfanaError.message);
+      }
     }
 
     return summarizeCompensation(competition, claims, refereesById);

@@ -235,7 +235,10 @@ export async function importJudgesRegistryToSupabase(
       const { error } = await supabase.from("referees").insert(item.row);
       if (error) {
         refereesSkipped++;
-        warnings.push(`${item.nombre}: ${error.message}`);
+        // Igual que con los campeonatos: al que importa se le dice qué juez no
+        // entró; el detalle de Postgres se queda en el log.
+        console.error("[censo.crear]", item.nombre, error.message);
+        warnings.push(`${item.nombre}: no se pudo dar de alta.`);
       } else {
         refereesCreated++;
       }
@@ -269,7 +272,7 @@ export async function importJudgesRegistryToSupabase(
     const key = `${c.nombre.toLowerCase().trim()}__${c.fecha}`;
     const existingId = existingIdByKey.get(key);
     if (existingId) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("competitions")
         .update({
           tipo: c.tipo,
@@ -278,6 +281,15 @@ export async function importJudgesRegistryToSupabase(
           zona: c.zona,
         })
         .eq("id", existingId);
+      // La importación contaba el campeonato como «actualizado» sin mirar si
+      // la escritura había ido bien: el resumen decía que la sede o la zona
+      // estaban al día cuando seguían como antes.
+      if (updateError) {
+        console.error("[calendario.actualizar]", existingId, updateError.message);
+        warnings.push(`Campeonato ${c.nombre}: no se pudo actualizar; queda como estaba.`);
+        competitionsSkipped++;
+        continue;
+      }
       competitionsSkipped++;
       continue;
     }
@@ -300,7 +312,10 @@ export async function importJudgesRegistryToSupabase(
       template,
     });
     if (error) {
-      warnings.push(`Campeonato ${c.nombre}: ${error.message}`);
+      // El aviso lo lee quien importa, no quien administra la base: el detalle
+      // de Postgres —nombres de tabla y de restricción— se queda en el log.
+      console.error("[calendario.crear]", c.nombre, error.message);
+      warnings.push(`Campeonato ${c.nombre}: no se pudo crear.`);
       competitionsSkipped++;
     } else {
       competitionsCreated++;
