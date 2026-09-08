@@ -406,7 +406,21 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         />
                       </button>
                     </td>
-                    <td className="px-3 py-2 font-medium">{claim.refereeName}</td>
+                    <td className="px-3 py-2 font-medium">
+                      {claim.refereeName}
+                      {/* La liquidación existe pero el juez ya no está en la
+                          tarima (una sustitución posterior). Antes la fila
+                          simplemente no se pintaba y su importe desaparecía
+                          del total sin dejar rastro. */}
+                      {claim.offRoster && (
+                        <span
+                          className="ml-2 rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 text-[10px] font-semibold text-warning"
+                          title="Este juez ya no ocupa ningún puesto en la tarima; su liquidación sigue registrada."
+                        >
+                          fuera de tarima
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-2 font-mono text-xs text-foreground-secondary">
                       {formatDutySessionsSummary(claim)}
                     </td>

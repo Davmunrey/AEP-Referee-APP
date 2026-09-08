@@ -96,6 +96,16 @@ async function buildSummary(competitionId: string): Promise<CompetitionCompensat
     claims.push(claim);
   }
 
+  // Mismo criterio que el twin de Supabase: las liquidaciones de jueces que ya
+  // no están en la tarima se muestran marcadas en vez de desaparecer con su
+  // importe.
+  const enRoster = new Set(refereeIds);
+  for (const [storeKey, stored] of store) {
+    if (!storeKey.startsWith(`${competitionId}::`)) continue;
+    if (enRoster.has(stored.refereeId)) continue;
+    claims.push({ ...stored, offRoster: true });
+  }
+
   return summarizeCompensation(competition, claims, refereesById);
 }
 

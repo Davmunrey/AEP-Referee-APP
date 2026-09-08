@@ -109,9 +109,12 @@ export function summarizeCompensation(
   const provisionalTotal = claims.reduce((sum, c) => sum + c.totalAmount, 0);
   const organizerIsClub = (competition.compensationOrganizer ?? "club") === "club";
 
+  // La preparación para exportar mira solo la tarima vigente: una liquidación
+  // huérfana con km pendientes no debe bloquear el envío de los recibos de
+  // quienes sí están en la tarima, pero su importe sí cuenta en los totales.
   const readiness = assessCompensationReadiness({
     competition,
-    claims,
+    claims: claims.filter((c) => !c.offRoster),
     refereesById,
     organizerIsClub,
     clubEmails: allClubEmailsFromCompetition(competition),
