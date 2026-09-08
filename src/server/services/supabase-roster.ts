@@ -23,6 +23,7 @@ import type {
   SlotFlags,
 } from "@/lib/types";
 import {
+  ApprovalReviewError,
   RosterPaidClaimError,
   RosterSlotConflictError,
 } from "@/lib/competitions/service-types";
@@ -94,8 +95,11 @@ async function markCompetitionReviewed(
     const { error } = await supabase.from("competitions").update(patch).eq("id", competitionId);
     if (!error) return;
     if (attempt === 1) {
-      throw new Error(
-        `La revisión se guardó y el acta también, pero el campeonato no llegó a marcarse (${error.message}). Su estado en el listado no refleja la revisión.`,
+      // El detalle de Postgres se queda en el log del servidor: al revisor se
+      // le dice qué quedó a medias, no el nombre de la tabla que falló.
+      console.error("[roster.markCompetitionReviewed]", competitionId, error.message);
+      throw new ApprovalReviewError(
+        "La revisión se guardó y el acta también, pero el campeonato no llegó a marcarse. Su estado en el listado no refleja la revisión; avisa antes de volver a tocarlo.",
       );
     }
   }
@@ -859,11 +863,13 @@ export const rosterService = {
           .from("referees")
           .select("id")
           .in("id", refereeIds);
-        if (refErr) throw new Error("No se pudo validar el censo; inténtalo de nuevo.");
+        if (refErr) {
+          throw new ApprovalReviewError("No se pudo validar el censo; inténtalo de nuevo.");
+        }
         const existingIds = new Set((existingRefs ?? []).map((r) => String(r.id)));
         const missing = refereeIds.filter((rid) => !existingIds.has(rid));
         if (missing.length) {
-          throw new Error(
+          throw new ApprovalReviewError(
             `No se puede aprobar: ${missing.length} juez(ces) de la propuesta ya no existe(n) en el censo. Revisa la tarima y reenvíala.`,
           );
         }
@@ -956,7 +962,7 @@ export const rosterService = {
             if (resetError) {
               problemas.push("la propuesta se ha quedado marcada como aprobada");
             }
-            throw new Error(
+            throw new ApprovalReviewError(
               problemas.length === 0
                 ? "No se pudo guardar el acta aprobada; la propuesta sigue pendiente y la tarima se ha dejado como estaba. Inténtalo de nuevo."
                 : `No se pudo guardar el acta aprobada y ${problemas.join(", y ")}. Revisa la tarima antes de volver a enviarla.`,
