@@ -128,3 +128,76 @@ describe("las liquidaciones guardadas no se dan por inexistentes", () => {
     );
   });
 });
+
+describe("revisar un ascenso ya no puede degradar a un juez", () => {
+  const solicitud = {
+    id: "pr1",
+    status: "pendiente",
+    referee_id: "j1",
+    to_level: "Nacional",
+    zona: "CENTRO",
+  };
+
+  it("si no se puede leer el nivel actual, la solicitud sigue pendiente", async () => {
+    const writes: string[] = [];
+    respond = ({ table, op }) => {
+      if (op !== "select") {
+        writes.push(`${table}.${op}`);
+        return { data: [{ id: "pr1" }], error: null };
+      }
+      if (table === "promotion_requests") return { data: solicitud, error: null };
+      return boom; // la lectura del juez falla
+    };
+    await expect(examsService.reviewPromotion("pr1", true, "Nacional")).rejects.toThrow(
+      /referees/,
+    );
+    // Nada se marcó ni se escribió: se puede reintentar.
+    expect(writes).toEqual([]);
+  });
+
+  it("si el juez ya no está en el censo, tampoco se aprueba", async () => {
+    const writes: string[] = [];
+    respond = ({ table, op }) => {
+      if (op !== "select") {
+        writes.push(`${table}.${op}`);
+        return { data: [{ id: "pr1" }], error: null };
+      }
+      if (table === "promotion_requests") return { data: solicitud, error: null };
+      return { data: null, error: null };
+    };
+    await expect(examsService.reviewPromotion("pr1", true, "Nacional")).rejects.toThrow(
+      /ya no existe en el censo/,
+    );
+    expect(writes).toEqual([]);
+  });
+
+  it("un ascenso que ya no es subida no toca el nivel del juez", async () => {
+    const writes: string[] = [];
+    respond = ({ table, op }) => {
+      if (op !== "select") {
+        writes.push(`${table}.${op}`);
+        return { data: [{ id: "pr1" }], error: null };
+      }
+      if (table === "promotion_requests") return { data: { ...solicitud, status: "pendiente" }, error: null };
+      // El juez ya es IPF Cat. 1: aprobar «Nacional» ahora sería degradarlo.
+      return { data: { nivel: "IPF Cat. 1" }, error: null };
+    };
+    await examsService.reviewPromotion("pr1", true, "Nacional");
+    expect(writes).toContain("promotion_requests.update");
+    expect(writes).not.toContain("referees.update");
+  });
+
+  it("un ascenso legítimo sí actualiza el nivel", async () => {
+    const writes: string[] = [];
+    respond = ({ table, op }) => {
+      if (op !== "select") {
+        writes.push(`${table}.${op}`);
+        return { data: [{ id: "pr1" }], error: null };
+      }
+      if (table === "promotion_requests") return { data: solicitud, error: null };
+      return { data: { nivel: "Regional" }, error: null };
+    };
+    await examsService.reviewPromotion("pr1", true, "Nacional");
+    expect(writes).toContain("referees.update");
+  });
+});

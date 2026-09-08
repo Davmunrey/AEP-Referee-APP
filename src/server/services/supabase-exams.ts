@@ -47,6 +47,35 @@ export const examsService = {
     const supabase = db();
     const { data: req } = await supabase.from("promotion_requests").select("*").eq("id", id).single();
     if (!req || req.status !== "pendiente") return undefined;
+
+    const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
+    // El nivel actual se lee ANTES de marcar la solicitud: si no se puede leer,
+    // la solicitud sigue pendiente y se puede reintentar. Antes se leía después
+    // y el error se traducía en `currentIdx = -1`, con lo que la comprobación
+    // «solo si sigue siendo una subida» daba siempre verdadero: un ascenso a
+    // Nacional aprobado tarde DEGRADABA a un juez que ya era IPF Cat. 1 — justo
+    // lo que la comprobación existía para evitar.
+    let currentNivel: string | null = null;
+    if (approve) {
+      const { data: ref, error: refError } = await supabase
+        .from("referees")
+        .select("nivel")
+        .eq("id", req.referee_id)
+        .maybeSingle();
+      if (refError) throw new Error(`referees: ${refError.message}`);
+      if (!ref) {
+        throw new Error(
+          "No se puede aprobar: el juez de la solicitud ya no existe en el censo.",
+        );
+      }
+      currentNivel = String(ref.nivel);
+      if (LEVEL_ORDER.indexOf(currentNivel) < 0) {
+        throw new Error(
+          `No se puede aprobar: el nivel actual del juez (${currentNivel}) no es reconocible.`,
+        );
+      }
+    }
+
     const status = approve ? "aprobado" : "rechazado";
     // Guard contra doble revisión concurrente: solo gana el primer revisor.
     const { data: claimed } = await supabase
@@ -56,19 +85,16 @@ export const examsService = {
       .eq("status", "pendiente")
       .select("id");
     if (!claimed || claimed.length === 0) return undefined;
-    if (approve) {
-      // Solo aplica el ascenso si sigue siendo una subida frente al nivel ACTUAL
-      // del juez (evita degradar si su nivel cambió tras crear la solicitud).
-      const { data: ref } = await supabase
-        .from("referees")
-        .select("nivel")
-        .eq("id", req.referee_id)
-        .single();
-      const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-      const currentIdx = ref ? LEVEL_ORDER.indexOf(ref.nivel as string) : -1;
+    if (approve && currentNivel) {
       const toIdx = LEVEL_ORDER.indexOf(req.to_level as string);
-      if (toIdx > currentIdx) {
-        await supabase.from("referees").update({ nivel: req.to_level }).eq("id", req.referee_id);
+      if (toIdx > LEVEL_ORDER.indexOf(currentNivel)) {
+        // Compare-and-set sobre el nivel leído: si otro proceso lo cambió entre
+        // medias, la escritura no toca nada en vez de pisar el nivel nuevo.
+        await supabase
+          .from("referees")
+          .update({ nivel: req.to_level })
+          .eq("id", req.referee_id)
+          .eq("nivel", currentNivel);
       }
     }
     await pushActivity({
@@ -78,7 +104,18 @@ export const examsService = {
       evento: req.to_level,
       hace: "ahora",
     });
-    const { data } = await supabase.from("promotion_requests").select("*").eq("id", id).single();
+    const { data, error: rereadError } = await supabase
+      .from("promotion_requests")
+      .select("*")
+      .eq("id", id)
+      .single();
+    // La revisión ya está aplicada: devolver `undefined` la presentaba como
+    // fallida y el revisor volvía a intentarlo.
+    if (rereadError) {
+      throw new Error(
+        `La revisión se guardó, pero no se pudo releer (${rereadError.message}). Recarga la pantalla.`,
+      );
+    }
     return data ? mapPromotion(data as Record<string, unknown>) : undefined;
   },
 

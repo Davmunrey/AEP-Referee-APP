@@ -19,7 +19,7 @@ import {
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
 import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
-import { db, pushActivity } from "./supabase-helpers";
+import { db, fetchAllRows, pushActivity } from "./supabase-helpers";
 
 async function loadRefereeCompetitionHistory(
   refereeId: string,
@@ -132,9 +132,14 @@ export const refereeService = {
     // max(jN)+1 en vez de count(): tras un borrado, count+1 colisiona con una
     // PK existente y el alta de jueces queda rota para siempre. Mismo criterio
     // que el backend en memoria. El reintento cubre altas concurrentes.
-    const { data: idRows } = await supabase.from("referees").select("id");
+    //
+    // Paginado y con el error a la vista: PostgREST corta en 1000 filas, así que
+    // con un censo mayor el máximo se calculaba sobre un trozo arbitrario y el
+    // alta chocaba con identificadores ya usados; y si la lectura fallaba,
+    // `maxSeq` se quedaba en 0 y se intentaba dar de alta j001 otra vez.
+    const idRows = await fetchAllRows("referees", "id", "id");
     let maxSeq = 0;
-    for (const r of idRows ?? []) {
+    for (const r of idRows) {
       const m = /^j(\d+)$/.exec(String(r.id));
       if (m) maxSeq = Math.max(maxSeq, Number(m[1]));
     }
