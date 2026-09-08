@@ -1,5 +1,5 @@
 import { compareSessions } from "@/lib/session-order";
-import { parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
+import { enumerateSlotKeys, parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
 import type { AssignmentsMap, RoleKey, RosterSession } from "@/lib/types";
 import type { CompensationDutyLine, CompensationDutyType } from "./types";
 import { unitRateForDuty } from "./rates";
@@ -25,8 +25,18 @@ export function classifyCompensationDuties(input: {
     { dutyType: CompensationDutyType; session: string; roleKey: RoleKey; roleLabel: string; slotKeys: string[] }
   >();
 
+  // El dinero se calcula sobre los huecos que existen en la plantilla, los
+  // mismos que imprime el cuadrante. `template` llegaba aquí y no se miraba:
+  // una asignación cuyo hueco ya no está —una fila huérfana que sobrevivió a
+  // un cambio de plantilla, un lote importado a medias— seguía generando su
+  // línea y su importe. La cobertura sí filtra por la plantilla
+  // (`computeRosterCoverage`), así que el juez no salía en el cuadrante y
+  // cobraba igual.
+  const huecosValidos = new Set(enumerateSlotKeys(input.template));
+
   for (const [slotKey, assignedId] of Object.entries(input.assignments)) {
     if (assignedId !== input.refereeId) continue;
+    if (!huecosValidos.has(slotKey)) continue;
     const parsed = parseSlotKey(slotKey);
     if (!parsed) continue;
     const dutyType = dutyTypeForRole(parsed.roleKey);
