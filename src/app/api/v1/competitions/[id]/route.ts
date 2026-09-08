@@ -3,7 +3,7 @@ import { resolveZoneCode } from "@/lib/aep-zones";
 import { canManageCompensation, canManageCompetitions } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { validateCompetitionFields } from "@/app/api/_lib/validation";
 import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import type { CompensationClubContact } from "@/lib/judge-compensation/types";
@@ -178,7 +178,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   } catch (err) {
     // 409: no es un fallo del servidor, es que hay dinero liquidado colgando.
     if (err instanceof CompetitionHasClaimsError) return jsonError(err.message, 409);
-    throw err;
+    return jsonRouteError("competitions.DELETE", err, "No se pudo eliminar el campeonato");
   }
   if (!ok) return jsonError("No se pudo eliminar el campeonato en la base de datos", 500);
   revalidatePath("/competitions");

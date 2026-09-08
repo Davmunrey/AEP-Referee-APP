@@ -33,6 +33,30 @@ describe("ninguna ruta deja escapar una excepción", () => {
     });
     expect(sinCatch.map((p) => p.replace(process.cwd() + "/", ""))).toEqual([]);
   });
+
+  it("y ningún `catch` vuelve a soltar la excepción por la puerta de atrás", () => {
+    // Tener `catch` no basta: varios atrapaban solo sus errores de negocio y
+    // remataban con `throw err`, que sale igual de Next como un 500 sin cuerpo.
+    const conRelanzamiento = routeFiles(API).filter((path) =>
+      /\bthrow\s+(err|error|e)\b\s*;/.test(readFileSync(path, "utf8")),
+    );
+    expect(conRelanzamiento.map((p) => p.replace(process.cwd() + "/", ""))).toEqual([]);
+  });
+});
+
+describe("un permiso, un sitio donde cambiarlo", () => {
+  // La pantalla escondía el botón con `canImportCalendar` y la ruta lo
+  // comprobaba a mano con `role !== "super_admin" && role !== "delegado_jueces"`.
+  // Mientras coincidan no pasa nada; el día que uno cambie, la interfaz y la
+  // API dejarán de decir lo mismo sobre quién puede importar.
+  it("ninguna ruta reimplementa el predicado «administración nacional»", () => {
+    const aMano = routeFiles(API).filter((path) =>
+      /role\s*!==\s*"super_admin"\s*&&[\s\S]{0,40}role\s*!==\s*"delegado_jueces"/.test(
+        readFileSync(path, "utf8"),
+      ),
+    );
+    expect(aMano.map((p) => p.replace(process.cwd() + "/", ""))).toEqual([]);
+  });
 });
 
 describe("jsonRouteError separa el motivo del usuario del fallo de infraestructura", () => {

@@ -1,9 +1,9 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { RefereeAssignedError, RefereeHasClaimsError } from "@/lib/competitions/service-types";
-import { canManageJudges } from "@/lib/auth/session";
+import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertRefereeInUserZone, stripRefereePII } from "@/lib/api/referee-scope";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import {
   REFEREE_LEVELS,
   REFEREE_STATUSES,
@@ -146,8 +146,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  if (user.role !== "super_admin" && user.role !== "delegado_jueces")
-    return jsonError("Sin permiso", 403);
+  // `canAdminJudges` es exactamente este predicado, y su documentación dice
+  // «Eliminar jueces, exámenes o informes»: reescribirlo a mano deja dos
+  // sitios donde cambiar el mismo permiso.
+  if (!canAdminJudges(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
   let ok: boolean;
@@ -156,7 +158,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   } catch (err) {
     if (err instanceof RefereeHasClaimsError) return jsonError(err.message, 409);
     if (err instanceof RefereeAssignedError) return jsonError(err.message, 409);
-    throw err;
+    // `throw err` volvía a dejar escapar la excepción: el `catch` existía, pero
+    // solo para los dos casos de negocio, y lo demás salía como un 500 sin
+    // cuerpo JSON —«Server error (500)» en el navegador—.
+    return jsonRouteError("referees.DELETE", err, "No se pudo eliminar el juez");
   }
   if (!ok) return jsonError("Juez no encontrado", 404);
   return jsonOk({ deleted: true });

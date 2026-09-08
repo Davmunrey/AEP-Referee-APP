@@ -1,3 +1,4 @@
+import { canDedupeCompetitions } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
@@ -34,7 +35,7 @@ export async function POST() {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   if (user.role === "solo_ver") return jsonError("Sin permiso", 403);
-  if (user.role !== "super_admin" && user.role !== "delegado_jueces") {
+  if (!canDedupeCompetitions(user.role)) {
     return jsonError("Solo Super Admin o Delegado de Jueces pueden limpiar duplicados", 403);
   }
   let result;
