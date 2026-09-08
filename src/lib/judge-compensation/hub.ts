@@ -21,6 +21,7 @@ export function buildHubItem(
     readyForExport: readiness.readyForExport,
     pendingKmCount,
     grandTotal: summary.grandTotal,
+    provisionalTotal: summary.provisionalTotal,
     issueCount: readiness.issues.length,
   };
 }
@@ -40,7 +41,16 @@ export function buildHubSummary(
 
   const withJudges = items.filter((i) => i.judgeCount > 0);
   const totalPendingKm = withJudges.reduce((sum, i) => sum + i.pendingKmCount, 0);
-  const readyCount = withJudges.filter((i) => i.readyForExport).length;
+  const ready = withJudges.filter((i) => i.readyForExport);
+  // Redondeo al céntimo al agregar: sumar decimales binarios producía colas de
+  // céntimo en el total de la cabecera.
+  const round = (n: number) => Math.round(n * 100) / 100;
 
-  return { items: withJudges, totalPendingKm, readyCount };
+  return {
+    items: withJudges,
+    totalPendingKm,
+    readyCount: ready.length,
+    confirmedTotal: round(ready.reduce((sum, i) => sum + i.grandTotal, 0)),
+    provisionalTotal: round(withJudges.reduce((sum, i) => sum + i.provisionalTotal, 0)),
+  };
 }
