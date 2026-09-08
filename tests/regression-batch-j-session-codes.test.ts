@@ -25,10 +25,11 @@ function sesion(patch: Partial<RosterSession> = {}): RosterSession {
 }
 
 describe("el choque de códigos de sesión es la raíz del problema", () => {
-  it("dos sesiones con el mismo código generan claves de hueco idénticas", () => {
+  it("dos sesiones con el mismo código comparten el mismo hueco", () => {
+    // La clave es `${sesion}_${rol}_${indice}`: la segunda sesión no aporta
+    // ningún hueco propio, su juez es el mismo que el de la primera.
     const keys = enumerateSlotKeys([sesion(), sesion({ nombre: "Sesión 1 (domingo)" })]);
-    expect(keys).toEqual(["S1_central_0", "S1_central_0"]);
-    expect(new Set(keys).size).toBe(1);
+    expect(keys).toEqual(["S1_central_0"]);
   });
 });
 

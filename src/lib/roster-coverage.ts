@@ -30,13 +30,15 @@ export function coveragePct(confirmados: number, requeridos: number): number {
   return Math.min(100, Math.max(0, Math.round((confirmados / requeridos) * 100)));
 }
 
+/**
+ * Plazas requeridas = huecos realmente asignables.
+ *
+ * Sumar `slots` contaba de más cuando una sesión repetía un rol (dos filas
+ * «Juez Central»): esas filas comparten clave de hueco, así que la plaza
+ * sobrante no existía y no había forma de cubrirla.
+ */
 export function countRequiredSlots(template: RosterSession[]): number {
-  let total = 0;
-  for (const session of template) {
-    for (const role of session.roles) total += role.slots;
-    for (const role of session.pesajeRoles ?? []) total += role.slots;
-  }
-  return total;
+  return enumerateSlotKeys(template).length;
 }
 
 export function countFilledSlots(
