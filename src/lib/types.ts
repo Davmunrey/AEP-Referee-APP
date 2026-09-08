@@ -568,6 +568,13 @@ export interface SupportTicket {
   createdAt: string;
   updatedAt: string;
   attachments: SupportTicketAttachment[];
+  /**
+   * Ficheros que el usuario adjuntó y no llegaron a guardarse. Solo viaja en
+   * la respuesta de crear ticket o comentar: antes esos fallos se resolvían
+   * con un `console.warn` en el servidor y quien había adjuntado la captura se
+   * quedaba creyendo que su prueba estaba ahí.
+   */
+  attachmentWarnings?: string[];
   /** Solo en el detalle; en listados va vacío. */
   comments: SupportTicketComment[];
   commentCount: number;

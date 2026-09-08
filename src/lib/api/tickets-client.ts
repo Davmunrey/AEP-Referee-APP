@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "@/lib/api/config";
-import type { SupportTicket, SupportTicketComment, TicketStatus } from "@/lib/types";
+import type { SupportTicket, TicketStatus } from "@/lib/types";
 
 // Cliente REST de tickets. Usa `fetch` directo con getApiBaseUrl() (igual que
 // /sign-in) porque los envíos con adjuntos son multipart/form-data y no encajan
@@ -64,16 +64,21 @@ export async function createTicket(form: FormData): Promise<SupportTicket> {
 }
 
 /** POST multipart → añade un comentario (con adjuntos opcionales) a un ticket. */
+/**
+ * La ruta devuelve el TICKET entero con el comentario ya dentro, no el
+ * comentario suelto: el tipo declaraba `SupportTicketComment` y describía algo
+ * que nunca llega.
+ */
 export async function addTicketComment(
   ticketId: string,
   form: FormData,
-): Promise<SupportTicketComment> {
+): Promise<SupportTicket> {
   const res = await fetch(`${getApiBaseUrl()}/tickets/${ticketId}/comments`, {
     method: "POST",
     credentials: "include",
     body: form,
   });
-  return unwrap<SupportTicketComment>(res);
+  return unwrap<SupportTicket>(res);
 }
 
 /** PATCH JSON → cambia estado y/o nota de resolución de un ticket. */
