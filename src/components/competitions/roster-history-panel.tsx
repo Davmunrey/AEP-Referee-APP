@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import type { RosterHistoryEntry } from "@/lib/types";
 import { History, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { rosterHistoryView } from "@/lib/roster-history-view";
+import { formatApiError } from "@/lib/api/error-message";
 
 function relativeTime(isoString: string): string {
   const then = new Date(isoString).getTime();
@@ -52,6 +54,27 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<RosterHistoryEntry[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Se recarga cada vez que se abre: el historial es justo lo que cambia
+  // mientras se trabaja en la tarima, y la copia cacheada se quedaba en el
+  // estado de la primera apertura. Las entradas ya cargadas se mantienen a la
+  // vista mientras llega la respuesta, para no parpadear.
+  const cargar = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setEntries(await api.getRosterHistory(competitionId));
+    } catch (err) {
+      // Un fallo de lectura NO es «sin cambios registrados»: eso es una
+      // afirmación sobre el acta. Y dejar `entries` a `[]` cacheaba la mentira,
+      // porque al reabrir ya no se volvía a pedir. Lo que dijo el servidor va
+      // con el aviso, que para eso lo dice.
+      setError(formatApiError(err, "No se pudo cargar el historial."));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggle = async () => {
     if (open) {
@@ -59,17 +82,10 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
       return;
     }
     setOpen(true);
-    if (entries !== null) return;
-    setLoading(true);
-    try {
-      const data = await api.getRosterHistory(competitionId);
-      setEntries(data);
-    } catch {
-      setEntries([]);
-    } finally {
-      setLoading(false);
-    }
+    await cargar();
   };
+
+  const vista = rosterHistoryView({ loading, error: error !== null, entries });
 
   return (
     <div className="relative">
@@ -101,15 +117,28 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
           </div>
 
           <div className="max-h-80 overflow-y-auto">
-            {loading && (
+            {vista === "cargando" && (
               <p className="px-4 py-8 text-center text-xs text-subtle-muted">Cargando…</p>
             )}
-            {!loading && entries?.length === 0 && (
+            {vista === "error" && (
+              <div className="px-4 py-8 text-center">
+                <p className="text-xs text-warning">{error}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => void cargar()}
+                >
+                  Reintentar
+                </Button>
+              </div>
+            )}
+            {vista === "vacio" && (
               <p className="px-4 py-8 text-center text-xs text-subtle-muted">
                 Sin cambios registrados.
               </p>
             )}
-            {!loading && entries && entries.length > 0 && (
+            {vista === "lista" && entries && (
               <div className="relative py-2">
                 {/* Timeline connector line */}
                 <div className="absolute left-[27px] top-0 h-full w-px bg-border-muted" />
