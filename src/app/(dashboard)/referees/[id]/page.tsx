@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
 import { displayUltimo } from "@/lib/utils";
 import { canManageJudges, getSession } from "@/lib/auth/session";
+import { stripRefereePII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -36,7 +37,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   if (!profile) notFound();
 
   const {
-    referee,
+    referee: rawReferee,
     exams,
     reports,
     sanctions,
@@ -46,6 +47,9 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
     examsTotal,
     avgScore,
   } = profile;
+  // La ficha pintaba teléfono, email y notas: la misma PII que la ruta API
+  // recorta para `solo_ver`.
+  const referee = stripRefereePII(rawReferee, user);
   if (user.role === "delegado_zona" && user.zona) {
     const userZone = resolveZoneCode(user.zona) ?? user.zona;
     const refZone = resolveZoneCode(referee.zona) ?? referee.zona;
