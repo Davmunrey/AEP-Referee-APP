@@ -28,11 +28,21 @@ export async function GET(_request: Request, context: RouteContext) {
   const refMap = new Map<string, { id: string; nombre: string; nivel: string }>();
   if (assignedIds.length > 0) {
     const supabase = createAdminClient();
-    const { data: referees } = await supabase
+    const { data: referees, error } = await supabase
       .from("referees")
       .select("id, nombre, nivel")
       .in("id", assignedIds)
       .returns<Array<{ id: string; nombre: string; nivel: string }>>();
+    // Sin nombres no hay cuadrante: las filas de rol se omiten cuando todas sus
+    // celdas quedan vacías, así que un fallo de lectura devolvía un documento
+    // con los días y las sesiones pero sin un solo juez —con aspecto de válido,
+    // y camino de la impresora y de la sede.
+    if (error) {
+      return jsonError(
+        "No se pudieron leer los jueces designados. Vuelve a intentarlo antes de imprimir el cuadrante.",
+        503,
+      );
+    }
     for (const r of referees ?? []) refMap.set(r.id, r);
   }
 

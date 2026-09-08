@@ -54,11 +54,11 @@ import type { SessionUser } from "@/lib/types";
 
 const ACTOR: SessionUser = {
   id: "u1",
-  nombre: "Ana Comité",
+  nombre: "Ana Delegada",
   iniciales: "AC",
   email: "ana@aep.test",
-  rol: "Comité",
-  role: "comite_nacional",
+  rol: "Delegado de Jueces",
+  role: "delegado_jueces",
   zona: "CENTRO",
 };
 
@@ -71,7 +71,7 @@ const SANCTION_ROW = {
   fecha_inicio: "2026-01-01",
   fecha_fin: "2036-01-01",
   status: "activa",
-  impuesta_por_nombre: "Ana Comité",
+  impuesta_por_nombre: "Ana Delegada",
   delegate_notify: { delegates: [], mailtoUrl: "" },
 };
 
