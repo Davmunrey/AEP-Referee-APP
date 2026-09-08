@@ -73,23 +73,8 @@ vi.mock("@/server/services", () => ({
   dataService: {
     getRoster: vi.fn(),
     getCompetition: vi.fn(),
+    getRefereesByIds: vi.fn(),
   },
-}));
-
-let refereesResult: { data: unknown; error: { message: string } | null };
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({
-    from: () => {
-      const q = {
-        select: () => q,
-        in: () => q,
-        returns: () => q,
-        then: (resolve: (r: unknown) => unknown) =>
-          Promise.resolve(refereesResult).then(resolve),
-      };
-      return q;
-    },
-  }),
 }));
 
 import { dataService } from "@/server/services";
@@ -99,6 +84,7 @@ import { GET as quadrantXlsxGet } from "@/app/api/v1/competitions/[id]/roster/qu
 type Mock = ReturnType<typeof vi.fn>;
 const getRoster = dataService.getRoster as unknown as Mock;
 const getCompetition = dataService.getCompetition as unknown as Mock;
+const getRefereesByIds = dataService.getRefereesByIds as unknown as Mock;
 
 const context = { params: Promise.resolve({ id: "c1" }) };
 const req = () => new Request("http://localhost/x");
@@ -107,6 +93,7 @@ beforeEach(() => {
   requireApiUser.mockReset();
   getRoster.mockReset();
   getCompetition.mockReset();
+  getRefereesByIds.mockReset();
   requireApiUser.mockResolvedValue({
     id: "u1",
     nombre: "Admin",
@@ -123,23 +110,22 @@ beforeEach(() => {
 
 describe("exportar el cuadrante sin poder leer los nombres", () => {
   it("HTML: falla en alto en vez de devolver un cuadrante sin un solo juez", async () => {
-    refereesResult = { data: null, error: { message: "connection reset" } };
+    getRefereesByIds.mockRejectedValue(new Error("referees: connection reset"));
     const res = await quadrantHtmlGet(req(), context);
     expect(res.status).toBe(503);
     expect(await res.text()).toContain("jueces designados");
   });
 
   it("Excel: mismo corte", async () => {
-    refereesResult = { data: null, error: { message: "connection reset" } };
+    getRefereesByIds.mockRejectedValue(new Error("referees: connection reset"));
     const res = await quadrantXlsxGet(req(), context);
     expect(res.status).toBe(503);
   });
 
   it("con la lectura correcta sigue generando el documento", async () => {
-    refereesResult = {
-      data: [{ id: "r1", nombre: "Ana Vázquez", nivel: "IPF Cat. 1" }],
-      error: null,
-    };
+    getRefereesByIds.mockResolvedValue(
+      new Map([["r1", { id: "r1", nombre: "Ana Vázquez", nivel: "IPF Cat. 1" }]]),
+    );
     const res = await quadrantHtmlGet(req(), context);
     expect(res.status).toBe(200);
     expect(await res.text()).toContain("Ana Vázquez");

@@ -59,6 +59,17 @@ export async function getReferee(id: string) {
   return getStore().referees.find((r) => r.id === id);
 }
 
+/** Paridad con el twin de Supabase: fichas por lote, indexadas por id. */
+export async function getRefereesByIds(ids: string[]): Promise<Map<string, Referee>> {
+  const wanted = new Set(ids.filter(Boolean));
+  const map = new Map<string, Referee>();
+  if (wanted.size === 0) return map;
+  for (const referee of getStore().referees) {
+    if (wanted.has(referee.id)) map.set(referee.id, referee);
+  }
+  return map;
+}
+
 export async function createReferee(input: Omit<Referee, "id" | "iniciales">): Promise<Referee> {
   const store = getStore();
   // ID por máximo existente, no por longitud del array: tras borrar un juez
