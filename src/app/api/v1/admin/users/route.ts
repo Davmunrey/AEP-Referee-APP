@@ -1,11 +1,12 @@
 import { normalizeZoneInput } from "@/lib/aep-zones";
-import { canManageUsers } from "@/lib/auth/session";
+import { canAssignRole, canManageUsers, restrictedRoleMessage } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { listAdminUsers } from "@/server/services/admin-users";
-import { USER_ROLES, type UserRole } from "@/lib/types";
+import { recordAccessChange } from "@/server/services/admin-audit";
+import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/types";
 
 export async function GET() {
   const user = await requireApiUser();
@@ -45,8 +46,9 @@ export async function POST(request: Request) {
   if (!USER_ROLES.includes(role)) {
     return jsonError("Rol no válido", 400);
   }
-  if (role === "super_admin" && user.role !== "super_admin") {
-    return jsonError("Solo Super Admin puede crear otro Super Admin", 403);
+  // Camino 1: crear la cuenta directamente con el rol y la contraseña elegidas.
+  if (!canAssignRole(user, role)) {
+    return jsonError(restrictedRoleMessage(role), 403);
   }
   if (role === "delegado_zona" && !zona) {
     return jsonError("Los delegados de zona requieren zona", 400);
@@ -92,6 +94,16 @@ export async function POST(request: Request) {
     await admin.auth.admin.deleteUser(userId).catch(() => null);
     return jsonServerError("admin.users.POST", profileError, "No se pudo crear el perfil del usuario");
   }
+
+  // Las altas de cuenta no dejaban ningún rastro: quién creó qué acceso, y con
+  // qué rol, no constaba en ninguna parte.
+  await recordAccessChange({
+    tipo: "cambio",
+    actor: user.nombre,
+    accion: "creó la cuenta de",
+    evento: `${nombre} (${ROLE_LABELS[role]})`,
+    hace: "ahora",
+  });
 
   // Devuelve la zona realmente guardada (solo delegado_zona la conserva).
   return jsonOk({
