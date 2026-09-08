@@ -10,6 +10,7 @@ export const memoryDataService = {
   getDashboard: competitions.getDashboard,
   getReferees: referees.getReferees,
   getReferee: referees.getReferee,
+  getRefereesByIds: referees.getRefereesByIds,
   createReferee: referees.createReferee,
   updateReferee: referees.updateReferee,
   deleteReferee: referees.deleteReferee,

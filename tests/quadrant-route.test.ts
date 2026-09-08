@@ -9,25 +9,20 @@ vi.mock("@/lib/api/auth", () => ({
 vi.mock("@/lib/api/referee-scope", () => ({
   assertCompetitionInUserZone: vi.fn(async () => null),
 }));
+// La ruta pide los nombres al dataService (no al cliente de Supabase a pelo:
+// así también funciona con el backend en memoria).
+const CENSO = [
+  { id: "r1", nombre: "Ana Vázquez", nivel: "IPF Cat. 1" },
+  { id: "r2", nombre: "Isa García", nivel: "Nacional" },
+];
 vi.mock("@/server/services", () => ({
-  dataService: { getRoster: vi.fn(), getCompetition: vi.fn() },
-}));
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({
-    from: () => ({
-      select: () => ({
-        // La ruta filtra por los jueces asignados (.in("id", …)) antes de .returns().
-        in: (_col: string, ids: string[]) => ({
-          returns: async () => ({
-            data: [
-              { id: "r1", nombre: "Ana Vázquez", nivel: "IPF Cat. 1" },
-              { id: "r2", nombre: "Isa García", nivel: "Nacional" },
-            ].filter((r) => ids.includes(r.id)),
-          }),
-        }),
-      }),
-    }),
-  }),
+  dataService: {
+    getRoster: vi.fn(),
+    getCompetition: vi.fn(),
+    getRefereesByIds: vi.fn(async (ids: string[]) =>
+      new Map(CENSO.filter((r) => ids.includes(r.id)).map((r) => [r.id, r])),
+    ),
+  },
 }));
 
 import { dataService } from "@/server/services";
