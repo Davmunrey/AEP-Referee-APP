@@ -1,5 +1,5 @@
 import type { Competition } from "@/lib/types";
-import { isRosterLockedByApproval } from "@/lib/roster-coverage";
+import { rosterMutationBlockedMessage } from "@/lib/roster-coverage";
 
 export type RosterRouteGuardFailure = {
   ok: false;
@@ -25,13 +25,9 @@ export function checkRosterMutationAllowed(
   if (!userCanEdit) {
     return { ok: false, status: 403, error: "Sin permiso en esta zona" };
   }
-  if (isRosterLockedByApproval(comp.aprobacion)) {
-    return {
-      ok: false,
-      status: 423,
-      error:
-        "La tarima está aprobada. Usa «Registrar imprevisto» en la cabecera para permitir cambios.",
-    };
+  const frozen = rosterMutationBlockedMessage(comp.aprobacion ?? "");
+  if (frozen) {
+    return { ok: false, status: 423, error: frozen };
   }
   return { ok: true };
 }

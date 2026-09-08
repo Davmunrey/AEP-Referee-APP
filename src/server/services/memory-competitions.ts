@@ -4,6 +4,7 @@ import { competitionDedupKey } from "@/lib/competition-dedup";
 import {
   applyCoverageToCompetition,
   isRosterLockedByApproval,
+  isRosterPendingApproval,
   rosterMutationBlockedMessage,
   ROSTER_IMPREVISTO_STATE,
   rosterAnalyticsStats,
@@ -700,24 +701,43 @@ export async function unlockImprevisto(
   const store = getStore();
   const comp = store.competitions.find((c) => c.id === competitionId);
   if (!comp) return { error: "Competición no encontrada" };
-  if (!isRosterLockedByApproval(comp.aprobacion)) {
-    return { error: "Solo se puede registrar imprevisto en tarimas ya aprobadas" };
+  const pending = isRosterPendingApproval(comp.aprobacion);
+  if (!isRosterLockedByApproval(comp.aprobacion) && !pending) {
+    return { error: "La tarima ya se puede editar" };
+  }
+  // Mismo criterio que el twin de Supabase: retirar la propuesta es la salida a
+  // la congelación, y borrarla mantiene la garantía de que una propuesta
+  // pendiente y la tarima nunca divergen.
+  if (pending) {
+    for (let i = store.approvals.length - 1; i >= 0; i--) {
+      const a = store.approvals[i]!;
+      if (a.competitionId === competitionId && a.status === "pendiente") {
+        store.approvals.splice(i, 1);
+      }
+    }
   }
   comp.aprobacion = ROSTER_IMPREVISTO_STATE;
   pushHistory({
     competitionId,
     at: new Date().toISOString(),
     actor,
-    action: "Imprevisto registrado",
-    detail: "Tarima desbloqueada para cambios; reenviar a aprobación tras ajustar",
+    action: pending ? "Propuesta retirada" : "Imprevisto registrado",
+    detail: pending
+      ? "Propuesta retirada de la bandeja de aprobación; tarima editable de nuevo"
+      : "Tarima desbloqueada para cambios; reenviar a aprobación tras ajustar",
   });
   pushActivity({
     tipo: "cambio",
     actor,
-    accion: "registró imprevisto en tarima de",
+    accion: pending ? "retiró la propuesta de tarima de" : "registró imprevisto en tarima de",
     evento: comp.nombre,
     hace: "ahora",
   });
-  return { message: "Tarima desbloqueada para cambios por imprevisto", aprobacion: ROSTER_IMPREVISTO_STATE };
+  return {
+    message: pending
+      ? "Propuesta retirada; ya puedes editar la tarima"
+      : "Tarima desbloqueada para cambios por imprevisto",
+    aprobacion: ROSTER_IMPREVISTO_STATE,
+  };
 }
 
