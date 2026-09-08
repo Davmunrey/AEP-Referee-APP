@@ -1,6 +1,7 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import {
   isRosterLockedByApproval,
+  isRosterPendingApproval,
   rosterMutationBlockedMessage,
   ROSTER_IMPREVISTO_STATE,
 } from "@/lib/roster-coverage";
@@ -898,28 +899,51 @@ export const rosterService = {
   ): Promise<{ message: string; aprobacion: string } | { error: string }> => {
     const comp = await getCompetitionFn(competitionId);
     if (!comp) return { error: "Competición no encontrada" };
-    if (!isRosterLockedByApproval(comp.aprobacion)) {
-      return { error: "Solo se puede registrar imprevisto en tarimas ya aprobadas" };
+    const pending = isRosterPendingApproval(comp.aprobacion);
+    if (!isRosterLockedByApproval(comp.aprobacion) && !pending) {
+      return { error: "La tarima ya se puede editar" };
     }
     const supabase = db();
-    await supabase
+    // Congelar la tarima con propuesta pendiente sería una trampa sin salida:
+    // solo un delegado nacional puede aprobar o rechazar, y la zona se quedaría
+    // sin poder ni corregir una baja de última hora. Retirar la propuesta es
+    // esa salida, y borrarla es lo que mantiene la garantía: mientras haya una
+    // propuesta pendiente, su snapshot y la tarima son lo mismo.
+    if (pending) {
+      const hasCompetitionColumns = await hasApprovalCompetitionColumns();
+      const { error: withdrawError } = await supabase
+        .from("approval_proposals")
+        .delete()
+        .eq(hasCompetitionColumns ? "competition_id" : "event_id", competitionId)
+        .eq("status", "pendiente");
+      if (withdrawError) throw new Error(`approval_proposals: ${withdrawError.message}`);
+    }
+    const { error: stateError } = await supabase
       .from("competitions")
       .update({ aprobacion: ROSTER_IMPREVISTO_STATE })
       .eq("id", competitionId);
+    if (stateError) throw new Error(`competitions.aprobacion: ${stateError.message}`);
     await pushHistory({
       competitionId,
       at: new Date().toISOString(),
       actor,
-      action: "Imprevisto registrado",
-      detail: "Tarima desbloqueada para cambios; reenviar a aprobación tras ajustar",
+      action: pending ? "Propuesta retirada" : "Imprevisto registrado",
+      detail: pending
+        ? "Propuesta retirada de la bandeja de aprobación; tarima editable de nuevo"
+        : "Tarima desbloqueada para cambios; reenviar a aprobación tras ajustar",
     });
     await pushActivity({
       tipo: "cambio",
       actor,
-      accion: "registró imprevisto en tarima de",
+      accion: pending ? "retiró la propuesta de tarima de" : "registró imprevisto en tarima de",
       evento: comp.nombre,
       hace: "ahora",
     });
-    return { message: "Tarima desbloqueada para cambios por imprevisto", aprobacion: ROSTER_IMPREVISTO_STATE };
+    return {
+      message: pending
+        ? "Propuesta retirada; ya puedes editar la tarima"
+        : "Tarima desbloqueada para cambios por imprevisto",
+      aprobacion: ROSTER_IMPREVISTO_STATE,
+    };
   },
 };

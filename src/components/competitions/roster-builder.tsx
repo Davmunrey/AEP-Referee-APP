@@ -8,7 +8,9 @@ import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
 import {
   computeRosterCoverage,
+  isRosterFrozen,
   isRosterLockedByApproval,
+  isRosterPendingApproval,
 } from "@/lib/roster-coverage";
 import { RosterHelpPanel } from "@/components/competitions/roster-help-panel";
 import { RosterRevisionPanel } from "@/components/competitions/roster-revision-panel";
@@ -118,7 +120,9 @@ export function RosterBuilder({
   const readOnly = !canEdit;
   const [aprobacion, setAprobacion] = useState(competition.aprobacion);
   const approvalLocked = isRosterLockedByApproval(aprobacion);
-  const rosterReadOnly = readOnly || approvalLocked;
+  // Con propuesta pendiente la tarima también es de solo lectura: lo que se
+  // apruebe tiene que ser exactamente lo que se envió.
+  const rosterReadOnly = readOnly || isRosterFrozen(aprobacion);
   const [template, setTemplate] = useState(initialTemplate);
   const [assignments, setAssignments] = useState(initialAssignments);
   const [flags, setFlags] = useState<FlagsMap>(initialFlags);
@@ -207,12 +211,11 @@ export function RosterBuilder({
   ]);
 
   const handleUnlockImprevisto = () => {
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(
-        "¿Registrar un imprevisto y desbloquear la tarima para cambios?\n\nDeberás volver a enviar la propuesta a aprobación cuando termines.",
-      )
-    ) {
+    const pendingApproval = isRosterPendingApproval(aprobacion);
+    const question = pendingApproval
+      ? "¿Retirar la propuesta y volver a editar la tarima?\n\nSaldrá de la bandeja de aprobación y tendrás que enviarla de nuevo cuando termines."
+      : "¿Registrar un imprevisto y desbloquear la tarima para cambios?\n\nDeberás volver a enviar la propuesta a aprobación cuando termines.";
+    if (typeof window !== "undefined" && !window.confirm(question)) {
       return;
     }
     startTransition(async () => {
@@ -223,7 +226,12 @@ export function RosterBuilder({
         setStatusIsError(false);
         refreshCompetitionList();
       } catch (err) {
-        setStatusMsg(formatApiError(err, "No se pudo registrar el imprevisto"));
+        setStatusMsg(
+          formatApiError(
+            err,
+            pendingApproval ? "No se pudo retirar la propuesta" : "No se pudo registrar el imprevisto",
+          ),
+        );
         setStatusIsError(true);
       }
     });
