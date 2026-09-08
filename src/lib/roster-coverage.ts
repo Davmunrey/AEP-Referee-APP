@@ -24,7 +24,9 @@ export type RosterCoverage = {
  * panel y al 0 % en la tabla de campeonatos.
  */
 export function coveragePct(confirmados: number, requeridos: number): number {
-  if (!(requeridos > 0)) return 0;
+  // `!(x > 0)` cubre también NaN, que llegaba de columnas numéricas nulas o de
+  // plantillas con `slots` en texto y se pintaba como «NaN%».
+  if (!(requeridos > 0) || !Number.isFinite(confirmados)) return 0;
   return Math.min(100, Math.max(0, Math.round((confirmados / requeridos) * 100)));
 }
 

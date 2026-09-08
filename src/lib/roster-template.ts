@@ -28,12 +28,58 @@ export function isPresetTemplate(
   return JSON.stringify(template) === JSON.stringify(getPresetForEventType(tipo));
 }
 
+/**
+ * `competitions.template` es JSONB: la base de datos no garantiza su forma.
+ *
+ * Filas escritas por versiones anteriores, importaciones a medias o ediciones
+ * manuales pueden traer una sesión sin `roles`, o un `slots` en texto. Lo
+ * primero hacía reventar `cloneTemplate` con «session.roles is not iterable»,
+ * y como esto se ejecuta al mapear CADA campeonato, **una sola fila mala
+ * tumbaba la lista de campeonatos, el panel y la analítica enteros**. Lo
+ * segundo era peor por silencioso: `total += role.slots` concatenaba en vez de
+ * sumar, así que dos roles de "3" y "2" plazas daban 32 requeridos, que además
+ * se persistían.
+ *
+ * Se sanea en la única puerta por la que el JSONB entra al dominio.
+ */
+function sanitizeTemplate(template: unknown): RosterSession[] {
+  if (!Array.isArray(template)) return [];
+  const toSlots = (value: unknown): number => {
+    const n = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  };
+  const toRoles = (value: unknown): RosterRole[] =>
+    Array.isArray(value)
+      ? value
+          .filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
+          .map((r) => ({
+            key: r.key as RoleKey,
+            rol: typeof r.rol === "string" ? r.rol : String(r.rol ?? ""),
+            slots: toSlots(r.slots),
+          }))
+      : [];
+
+  return template
+    .filter((s): s is Record<string, unknown> => !!s && typeof s === "object")
+    .map((s) => ({
+      ...(s as unknown as RosterSession),
+      sesion: typeof s.sesion === "string" ? s.sesion : String(s.sesion ?? ""),
+      nombre: typeof s.nombre === "string" ? s.nombre : String(s.nombre ?? ""),
+      dia: typeof s.dia === "string" ? s.dia : String(s.dia ?? ""),
+      categorias: Array.isArray(s.categorias) ? s.categorias : [],
+      roles: toRoles(s.roles),
+      pesajeRoles: toRoles(s.pesajeRoles),
+    })) as RosterSession[];
+}
+
 export function normalizeCompetitionTemplate(
   template: RosterSession[] | null | undefined,
   tipo: EventType,
 ): RosterSession[] {
-  if (!template || template.length === 0) return [];
-  return isPresetTemplate(template, tipo) ? [] : cloneTemplate(template);
+  if (!template || !Array.isArray(template) || template.length === 0) return [];
+  const safe = sanitizeTemplate(template);
+  if (safe.length === 0) return [];
+  return isPresetTemplate(safe, tipo) ? [] : cloneTemplate(safe);
 }
 
 export function cloneTemplate(sessions: RosterSession[]): RosterSession[] {
