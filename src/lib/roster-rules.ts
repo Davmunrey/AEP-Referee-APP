@@ -10,13 +10,6 @@ import type {
   RosterSession,
 } from "./types";
 
-const LEVEL_RANK: Record<RefereeLevel, number> = {
-  Regional: 1,
-  Nacional: 2,
-  "IPF Cat. 2": 3,
-  "IPF Cat. 1": 4,
-};
-
 const MIN_LEVEL_BY_ROLE: Partial<Record<RoleKey, RefereeLevel>> = {
   central: "Nacional",
   lateral: "Nacional",
@@ -51,14 +44,6 @@ export function validateAssignment(
     return { ok: false, error: "El juez no está disponible" };
   }
   return { ok: true };
-}
-
-export function isBelowRecommendedLevel(
-  refereeLevel: RefereeLevel,
-  roleKey: RoleKey,
-): boolean {
-  if (roleKey !== "jurado") return false;
-  return LEVEL_RANK[refereeLevel] < LEVEL_RANK["IPF Cat. 2"];
 }
 
 function sessionIndex(template: RosterSession[], session: string): number {

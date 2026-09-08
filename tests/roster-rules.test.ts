@@ -25,6 +25,9 @@ function referee(over: Partial<Referee> = {}): Referee {
   };
 }
 
+// `minLevelForRole` ya no es una tabla decorativa: es el mínimo por defecto
+// que `getRecommendationWarning` aplica cuando la normativa no dice nada de
+// ese rol o no se pudo leer. Ver `regression-batch-be-normativa-ignorada`.
 describe("minLevelForRole", () => {
   it("does not require category level for central/lateral", () => {
     expect(minLevelForRole("central", "AEP-2")).toBe("Nacional");

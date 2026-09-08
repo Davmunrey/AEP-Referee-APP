@@ -1,9 +1,10 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import {
-  isBelowRecommendedLevel,
+  minLevelForRole,
   validateAssignment,
   validateRosterOperation,
 } from "@/lib/roster-rules";
+import { ROLE_LABELS } from "@/lib/roster-template";
 import type {
   AssignmentsMap,
   EventType,
@@ -21,19 +22,36 @@ function meetsMinLevel(actual: RefereeLevel, min: RefereeLevel): boolean {
   return LEVEL_ORDER.indexOf(actual) >= LEVEL_ORDER.indexOf(min);
 }
 
+/**
+ * La regla de normativa que incumple esta designación, si hay alguna.
+ *
+ * Estaba cortada en seco con `if (roleKey !== "jurado") return undefined`, así
+ * que de toda la tabla de normativa —la que la aplicación enseña en
+ * `/regulations` como la norma de la federación— solo se consultaba una fila.
+ * Las demás estaban escritas, sembradas y a la vista, y no producían ningún
+ * aviso: un juez Regional de Juez Central en un AEP-1 pasaba sin que nadie
+ * dijera nada, con «mínimo Nacional» escrito en la propia pantalla de
+ * normativa.
+ */
 export function findRegulationViolation(
   roleKey: RoleKey,
   eventType: EventType,
   nivel: RefereeLevel,
   regulations: RegulationRule[],
 ): RegulationRule | undefined {
-  if (roleKey !== "jurado") return undefined;
-  return regulations.find(
-    (r) =>
-      r.roleKey === roleKey &&
-      r.eventTypes.includes(eventType) &&
-      !meetsMinLevel(nivel, r.minLevel),
-  );
+  // De las reglas que este juez incumple se avisa de la MÁS exigente, no de la
+  // primera de la lista. Con `.find()` bastaba con que hubiera dos filas para
+  // el mismo rol y tipo —algo que la pantalla de normativa no impide— para que
+  // el aviso dependiera del orden de los identificadores y acabara enseñando
+  // el mínimo más flojo de los dos.
+  let peor: RegulationRule | undefined;
+  for (const r of regulations) {
+    if (r.roleKey !== roleKey) continue;
+    if (!r.eventTypes.includes(eventType)) continue;
+    if (meetsMinLevel(nivel, r.minLevel)) continue;
+    if (!peor || !meetsMinLevel(peor.minLevel, r.minLevel)) peor = r;
+  }
+  return peor;
 }
 
 /** Motivo por el que un juez no puede ocupar un rol; `null` = asignable. */
@@ -57,7 +75,14 @@ export function getRecommendationWarning(
 ): string | null {
   const reg = findRegulationViolation(roleKey, eventType, referee.nivel, regulations);
   if (reg) return `Recomendado ${reg.minLevel} para ${reg.rol}`;
-  if (isBelowRecommendedLevel(referee.nivel, roleKey)) return "Recomendado IPF Cat. para jurado";
+  // Red de seguridad para cuando la normativa no dice nada de este rol, o no
+  // se pudo leer y llega vacía: el mínimo por defecto que la aplicación lleva
+  // dentro. Antes esta rama solo cubría «jurado», de modo que sin tabla no
+  // quedaba ni un aviso en toda la tarima.
+  const minimo = minLevelForRole(roleKey, eventType);
+  if (!meetsMinLevel(referee.nivel, minimo)) {
+    return `Recomendado ${minimo} para ${ROLE_LABELS[roleKey] ?? roleKey}`;
+  }
   return null;
 }
 
