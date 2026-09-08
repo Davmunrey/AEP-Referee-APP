@@ -3,6 +3,7 @@ import { zonesMatch } from "@/lib/aep-zones";
 import { RosterBuilder } from "@/components/competitions/roster-builder";
 import { canEditRoster, canManageCompensation, getSession } from "@/lib/auth/session";
 import { isCompetitionPast } from "@/lib/competition-status";
+import { stripRefereeListPII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 
 interface CompetitionPageProps {
@@ -54,7 +55,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       canEdit={canEdit}
       canManageCompensation={canManageCompensation(user)}
       isPast={isPast}
-      referees={referees}
+      referees={stripRefereeListPII(referees, user)}
       zones={meta.zones}
       levels={meta.levels}
       regulations={regulations}

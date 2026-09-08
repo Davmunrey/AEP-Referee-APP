@@ -1,5 +1,6 @@
 import { PromotionsBoard } from "@/components/promotions/promotions-board";
 import { canManageJudges, canReviewPromotions, getSession } from "@/lib/auth/session";
+import { stripRefereeListPII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
 
@@ -19,7 +20,7 @@ export default async function PromotionsPage() {
       // La API exige `canManageJudges` para crear la solicitud: con
       // `role !== "solo_ver"` el botón salía a roles que recibían un 403.
       canCreate={canManageJudges(user)}
-      referees={referees}
+      referees={stripRefereeListPII(referees, user)}
     />
   );
 }
