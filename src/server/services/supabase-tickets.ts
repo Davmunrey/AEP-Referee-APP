@@ -14,7 +14,7 @@ import {
   TicketsNotMigratedError,
   type UpdateTicketStatusInput,
 } from "@/lib/tickets/service-types";
-import { db } from "./supabase-helpers";
+import { db, warnMissingMigration } from "./supabase-helpers";
 
 const BUCKET = "ticket-attachments";
 const SIGNED_URL_TTL = 3600;
@@ -25,11 +25,14 @@ const SIGNED_URL_TTL = 3600;
 // lecturas lo tratamos como lista vacía; en escrituras, error legible.
 function isMissingTable(error: PostgrestError | null): boolean {
   if (!error) return false;
-  return (
+  const falta =
     error.code === "42P01" ||
     error.code === "PGRST205" ||
-    /does not exist|could not find the table/i.test(error.message ?? "")
-  );
+    /does not exist|could not find the table/i.test(error.message ?? "");
+  // Degradar en silencio dejaba invisible que la 035 no se había aplicado: la
+  // zona de soporte se veía vacía y en paz. Un aviso por proceso en el log.
+  if (falta) warnMissingMigration("support_tickets (migración 035)");
+  return falta;
 }
 
 // ── Filas crudas ────────────────────────────────────────────────────────────

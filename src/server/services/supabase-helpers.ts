@@ -32,6 +32,26 @@ let compensationOverrideColumnPromise: Promise<boolean> | null = null;
 let refereeDomicilioGeoColumnPromise: Promise<boolean> | null = null;
 
 /**
+ * Deja constancia en el log de que una migración no está aplicada.
+ *
+ * La aplicación degrada a propósito cuando falta una columna o una tabla: sigue
+ * funcionando con el esquema viejo en vez de reventar. El problema es que lo
+ * hacía en absoluto silencio, así que una migración que nunca llegó a la base
+ * —el workflow que las aplica puede fallar sin que nadie mire— podía pasar
+ * meses sin que nada lo dijera. Un aviso por proceso y por hueco: suficiente
+ * para verlo en los logs, sin ruido en cada petición.
+ */
+const migracionesAvisadas = new Set<string>();
+
+export function warnMissingMigration(que: string): void {
+  if (migracionesAvisadas.has(que)) return;
+  migracionesAvisadas.add(que);
+  console.warn(
+    `[migraciones] ${que} no existe en la base de datos: hay migraciones sin aplicar. La aplicación sigue en modo degradado; revisa supabase/migrations y el workflow «Migraciones Supabase».`,
+  );
+}
+
+/**
  * Sonda de columna con caché a nivel de módulo. Solo se cachea un veredicto
  * fiable: "existe" (sin error) o "no existe" (42703 / undefined column). Un
  * error transitorio (red, timeout, caída de Supabase) NO debe cachearse como
@@ -54,6 +74,7 @@ function probeColumns(
       setCached(null); // transitorio: no cachear, reintentar la próxima vez
       return true;
     }
+    warnMissingMigration(`${table}.${columns}`);
     return false;
   });
   setCached(probe);
@@ -278,9 +299,16 @@ export function isMissingTableError(error: { code?: string; message?: string } |
   if (!error) return false;
   // 42P01 = undefined_table en Postgres; PGRST205 = la tabla no está en la
   // caché de esquema de PostgREST.
-  if (error.code === "42P01" || error.code === "PGRST205") return true;
   const message = String(error.message ?? "").toLowerCase();
-  return message.includes("does not exist") || message.includes("schema cache");
+  const falta =
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    message.includes("does not exist") ||
+    message.includes("schema cache");
+  // Las guardas de borrado dan por bueno seguir adelante cuando la tabla no
+  // existe. Que la tabla no exista es, en sí, una migración sin aplicar.
+  if (falta) warnMissingMigration("una tabla que la aplicación esperaba");
+  return falta;
 }
 
 export async function loadPaidClaimRefereeIds(competitionId: string): Promise<Set<string>> {
