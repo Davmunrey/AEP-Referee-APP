@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   duplicateRoleKeys,
   enumerateSlotKeys,
+  getPresetForEventType,
+  normalizeCompetitionTemplate,
   sessionRoleEntries,
 } from "@/lib/roster-template";
 import { computeRosterCoverage, countRequiredSlots, deriveCompetitionEstado } from "@/lib/roster-coverage";
@@ -88,5 +90,25 @@ describe("roles repetidos dentro de una sesión", () => {
     const degradada = [{ sesion: "S1" }, sesion([CENTRAL])] as unknown as RosterSession[];
     expect(enumerateSlotKeys(degradada)).toEqual(["S1_central_0"]);
     expect(countRequiredSlots(degradada)).toBe(1);
+  });
+});
+
+describe("la plantilla igual al preset ya no se lee como «sin plantilla»", () => {
+  it("«Generar plantilla estándar» sobrevive a la relectura", () => {
+    const preset = getPresetForEventType("AEP-1");
+    // Como la guarda la ruta POST /roster/template y como vuelve de JSONB.
+    const almacenada = JSON.parse(JSON.stringify(preset)) as RosterSession[];
+    const leida = normalizeCompetitionTemplate(almacenada, "AEP-1");
+    // Antes: [] — la tarima se quedaba sin sesiones y no se podía asignar a
+    // nadie, porque al leer nadie repone el preset.
+    expect(leida).toHaveLength(preset.length);
+    expect(enumerateSlotKeys(leida)).toEqual(enumerateSlotKeys(preset));
+    expect(countRequiredSlots(leida)).toBeGreaterThan(0);
+  });
+
+  it("sigue devolviendo vacío cuando de verdad no hay plantilla", () => {
+    expect(normalizeCompetitionTemplate(null, "AEP-1")).toEqual([]);
+    expect(normalizeCompetitionTemplate([], "AEP-1")).toEqual([]);
+    expect(normalizeCompetitionTemplate("no es una plantilla" as never, "AEP-1")).toEqual([]);
   });
 });

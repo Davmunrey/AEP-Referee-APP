@@ -20,14 +20,6 @@ export function getPresetForEventType(tipo: EventType): RosterSession[] {
   }
 }
 
-export function isPresetTemplate(
-  template: RosterSession[] | null | undefined,
-  tipo: EventType,
-): boolean {
-  if (!template || template.length === 0) return false;
-  return JSON.stringify(template) === JSON.stringify(getPresetForEventType(tipo));
-}
-
 /**
  * `competitions.template` es JSONB: la base de datos no garantiza su forma.
  *
@@ -72,14 +64,25 @@ function sanitizeTemplate(template: unknown): RosterSession[] {
     })) as RosterSession[];
 }
 
+/**
+ * La plantilla guardada, saneada. Devuelve `[]` solo cuando no hay plantilla.
+ *
+ * Antes se comparaba con el preset del tipo y, si coincidía, se devolvía `[]`
+ * como si el campeonato no tuviera plantilla. Nadie repone el preset al leer:
+ * la tarima se quedaba sin sesiones, no se podía asignar a nadie («El hueco no
+ * existe en la plantilla del campeonato»), la cobertura caía a cero y las
+ * liquidaciones salían sin servicios. En Supabase la comparación casi nunca
+ * acertaba —JSONB reordena las claves del objeto, así que el `JSON.stringify`
+ * no coincidía— y por eso «Generar plantilla estándar» funcionaba: una mina
+ * que estallaba en cuanto cambiase el orden de las claves.
+ */
 export function normalizeCompetitionTemplate(
   template: RosterSession[] | null | undefined,
-  tipo: EventType,
+  // Se conserva en la firma por compatibilidad con las llamadas existentes.
+  _tipo: EventType,
 ): RosterSession[] {
   if (!template || !Array.isArray(template) || template.length === 0) return [];
-  const safe = sanitizeTemplate(template);
-  if (safe.length === 0) return [];
-  return isPresetTemplate(safe, tipo) ? [] : cloneTemplate(safe);
+  return cloneTemplate(sanitizeTemplate(template));
 }
 
 export function cloneTemplate(sessions: RosterSession[]): RosterSession[] {
