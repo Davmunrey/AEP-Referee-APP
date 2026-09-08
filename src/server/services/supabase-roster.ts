@@ -23,7 +23,7 @@ import type {
   SlotFlags,
 } from "@/lib/types";
 import { RosterSlotConflictError } from "@/lib/competitions/service-types";
-import { mapApproval, mapHistory } from "@/server/db/mappers";
+import { assignmentsFromJsonb, mapApproval, mapHistory } from "@/server/db/mappers";
 import {
   db,
   getCompetitionTemplate,
@@ -700,7 +700,11 @@ export const rosterService = {
     const proposalCompetitionId = String(proposal.competition_id ?? proposal.event_id);
     const proposalCompetitionName = String(proposal.competition_name ?? proposal.event_name);
     const comp = await getCompetitionFn(proposalCompetitionId);
-    const assignments = proposal.assignments as AssignmentsMap;
+    // Saneado aquí también, no solo en `mapApproval`: este es el camino que
+    // ESCRIBE. Un snapshot con forma inesperada llegaba entero al borrado y
+    // reinserción del acta, y `Object.entries` sobre una cadena producía
+    // asignaciones con claves numéricas.
+    const assignments = assignmentsFromJsonb(proposal.assignments);
 
     // Pre-check ANTES de tocar nada: si un juez de la propuesta se borró del censo,
     // el insert final fallaría por FK dejando el roster vacío y la competición
