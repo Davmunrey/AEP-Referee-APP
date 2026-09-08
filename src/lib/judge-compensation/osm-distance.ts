@@ -11,6 +11,24 @@ export function osmThrottle(ms = 1100): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Tope de espera para los servicios externos de OpenStreetMap.
+ *
+ * `fetch` no tiene timeout por defecto: un upstream lento dejaba la petición
+ * colgada hasta que la plataforma mataba la función, y el usuario veía el
+ * spinner y luego un fallo sin explicación. Con el corte, el error llega a
+ * tiempo y dice qué pasó.
+ */
+const OSM_TIMEOUT_MS = 8000;
+
+function osmTimeoutSignal(): AbortSignal {
+  return AbortSignal.timeout(OSM_TIMEOUT_MS);
+}
+
+function isTimeout(err: unknown): boolean {
+  return err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
+}
+
 export interface DistanceMatrixResult {
   distanceKmOneWay: number;
   /** Ida+vuelta redondeado UNA sola vez desde los metros reales (base de facturación). */
@@ -33,10 +51,21 @@ export async function geocodeAddress(address: string): Promise<CompensationLocat
     addressdetails: "0",
   });
 
-  const res = await fetch(`${NOMINATIM_URL}/search?${params.toString()}`, {
-    headers: { "User-Agent": APP_USER_AGENT, Accept: "application/json" },
-    next: { revalidate: 0 },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${NOMINATIM_URL}/search?${params.toString()}`, {
+      headers: { "User-Agent": APP_USER_AGENT, Accept: "application/json" },
+      next: { revalidate: 0 },
+      signal: osmTimeoutSignal(),
+    });
+  } catch (err) {
+    if (isTimeout(err)) {
+      throw new Error(
+        "El buscador de direcciones (OpenStreetMap) no respondió a tiempo. Inténtalo de nuevo.",
+      );
+    }
+    throw err;
+  }
 
   if (!res.ok) throw new Error(`Nominatim HTTP ${res.status}`);
 
@@ -68,10 +97,21 @@ export async function fetchDrivingDistanceKm(
   const coords = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
   const url = `${OSRM_URL}/route/v1/driving/${coords}?overview=false&alternatives=false`;
 
-  const res = await fetch(url, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 0 },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 0 },
+      signal: osmTimeoutSignal(),
+    });
+  } catch (err) {
+    if (isTimeout(err)) {
+      throw new Error(
+        "El cálculo de ruta (OpenStreetMap) no respondió a tiempo. Inténtalo de nuevo o introduce los km a mano.",
+      );
+    }
+    throw err;
+  }
 
   if (!res.ok) throw new Error(`OSRM HTTP ${res.status}`);
 
