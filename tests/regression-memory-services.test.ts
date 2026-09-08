@@ -11,6 +11,7 @@ import {
   deleteCompetition,
 } from "@/server/services/memory-competitions";
 import { createExam, getExams } from "@/server/services/memory-admin";
+import { deleteReferee } from "@/server/services/memory-referees";
 
 function resetStore() {
   const s = getStore();
@@ -79,5 +80,34 @@ describe("getExams — filtro de zona canonicaliza etiquetas sin normalizar", ()
     // Antes: "2- CENTRO" === "CENTRO" era false → examen oculto al delegado.
     expect(exams).toHaveLength(1);
     expect(exams[0]?.refereeId).toBe("j001");
+  });
+});
+
+describe("deleteReferee — paridad con la clave ajena de la tarima", () => {
+  const referee: Referee = {
+    id: "j001",
+    nombre: "Juez Central",
+    zona: "CENTRO",
+    nivel: "Nacional",
+    estado: "Activo",
+    eventos: 0,
+    ultimo: "—",
+    disp: true,
+    iniciales: "JC",
+  };
+
+  it("no borra a un juez designado: en producción la FK lo rechaza", async () => {
+    getStore().referees.push({ ...referee });
+    getStore().assignments.set("c1", { S1_central_0: "j001" });
+    // Antes el hueco se quedaba huérfano y el campeonato perdía cobertura en
+    // silencio, justo lo que la base impide en producción.
+    await expect(deleteReferee("j001")).rejects.toThrow(/designado en 1 campeonato/);
+    expect(getStore().referees).toHaveLength(1);
+  });
+
+  it("sin designaciones se borra", async () => {
+    getStore().referees.push({ ...referee });
+    await expect(deleteReferee("j001")).resolves.toBe(true);
+    expect(getStore().referees).toHaveLength(0);
   });
 });

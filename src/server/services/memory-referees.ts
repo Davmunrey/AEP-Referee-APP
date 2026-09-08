@@ -12,7 +12,10 @@ import {
   getZones,
   pushActivity,
 } from "@/server/store";
-import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
+import {
+  RefereeAssignedError,
+  RefereeHasClaimsError,
+} from "@/lib/competitions/service-types";
 import { buildMemoryCompetitionHistory } from "./memory-helpers";
 
 export async function getMeta(user: SessionUser): Promise<AppMeta> {
@@ -128,6 +131,14 @@ export async function deleteReferee(id: string): Promise<boolean> {
     for (const claim of claimsStore.values()) if (claim.refereeId === id) claims += 1;
     if (claims > 0) throw new RefereeHasClaimsError(claims);
   }
+  // Ídem con la tarima: en producción la clave ajena de `roster_assignments`
+  // no tiene ON DELETE, así que borrar a un juez designado se rechaza. Aquí se
+  // quedaba huérfano el hueco y el campeonato perdía cobertura en silencio.
+  const assigned = new Set<string>();
+  for (const [competitionId, map] of store.assignments) {
+    if (Object.values(map).some((refId) => refId === id)) assigned.add(competitionId);
+  }
+  if (assigned.size > 0) throw new RefereeAssignedError(assigned.size);
   store.referees.splice(idx, 1);
   return true;
 }

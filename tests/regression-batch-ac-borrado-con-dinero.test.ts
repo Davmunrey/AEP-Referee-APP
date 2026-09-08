@@ -71,10 +71,15 @@ describe("borrar un juez cuando no se puede comprobar su dinero", () => {
   });
 
   it("con la tabla aún sin crear (024 sin aplicar) sí se borra", async () => {
-    respond = ({ table }) =>
-      table === "judge_compensation_claims"
-        ? { data: null, error: { code: "42P01", message: "relation does not exist" } }
-        : { data: [{ id: "j1" }], error: null };
+    respond = ({ table }) => {
+      if (table === "judge_compensation_claims") {
+        return { data: null, error: { code: "42P01", message: "relation does not exist" } };
+      }
+      // Sin designaciones en ninguna tarima: ese corte lo cubre
+      // regression-batch-ai.
+      if (table === "roster_assignments") return { data: [], error: null };
+      return { data: [{ id: "j1" }], error: null };
+    };
     await expect(refereeService.deleteReferee("j1")).resolves.toBe(true);
     expect(writes).toContain("referees.delete");
   });

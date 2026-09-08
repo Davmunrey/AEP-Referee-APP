@@ -50,6 +50,28 @@ export class RefereeHasClaimsError extends Error {
 }
 
 /**
+ * El juez sigue designado en alguna tarima.
+ *
+ * `roster_assignments.referee_id` referencia a `referees(id)` sin ON DELETE
+ * (001:81), así que la base rechaza el borrado con un 23503. Sin este corte el
+ * servicio devolvía `false` y la ruta contestaba «Juez no encontrado» sobre un
+ * juez que está a la vista en el directorio.
+ */
+export class RefereeAssignedError extends Error {
+  readonly competitions: number;
+
+  constructor(competitions: number) {
+    super(
+      competitions === 1
+        ? "El juez está designado en 1 campeonato. Quítalo de esa tarima antes de eliminarlo."
+        : `El juez está designado en ${competitions} campeonatos. Quítalo de esas tarimas antes de eliminarlo.`,
+    );
+    this.name = "RefereeAssignedError";
+    this.competitions = competitions;
+  }
+}
+
+/**
  * Otro usuario cambió el hueco mientras este lo editaba.
  *
  * La tarima es el recurso más disputado de la aplicación: dos delegados
