@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { zonesMatch } from "@/lib/aep-zones";
+import type { SessionUser } from "@/lib/types";
 
 describe("zonesMatch", () => {
   it("reconoce alias y códigos anteriores a la migración 013", () => {
@@ -66,7 +67,15 @@ vi.mock("@/lib/supabase/admin", () => ({
 import { examsService } from "@/server/services/supabase-exams";
 import { competitionService } from "@/server/services/supabase-competitions";
 
-const delegado = { id: "u1", nombre: "D", role: "delegado_zona", zona: "CENTRO" } as const;
+const delegado: SessionUser = {
+  id: "u1",
+  nombre: "Delegado",
+  rol: "Delegado de zona",
+  iniciales: "DZ",
+  email: "delegado@example.org",
+  role: "delegado_zona",
+  zona: "CENTRO",
+};
 
 beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
@@ -94,10 +103,10 @@ describe("informes: la zona es texto libre, no se puede comparar en crudo", () =
   it("un rol nacional los sigue viendo todos", async () => {
     respond = () => ({ data: informes, error: null });
     const list = await examsService.getReports(undefined, {
+      ...delegado,
       id: "u2",
-      nombre: "N",
       role: "super_admin",
-    } as never);
+    });
     expect(list).toHaveLength(3);
   });
 });
@@ -124,5 +133,66 @@ describe("la lista de campeonatos no se queda vacía en silencio", () => {
         ? { data: null, error: { message: "connection reset" } }
         : { data: [], error: null };
     await expect(competitionService.getCompetitions()).rejects.toThrow(/competitions/);
+  });
+});
+
+// ── Hub de compensación ─────────────────────────────────────────────────────
+import { buildHubSummary } from "@/lib/judge-compensation/hub";
+import type { CompetitionCompensationSummary } from "@/lib/judge-compensation/types";
+import type { Competition } from "@/lib/types";
+
+const comp = (id: string, fecha: string): Competition =>
+  ({
+    id,
+    nombre: `Evento ${id}`,
+    fecha,
+    fechaFin: fecha,
+    sede: "Madrid",
+    estado: "Completo",
+    tipo: "AEP-1",
+    zona: "CENTRO",
+  }) as Competition;
+
+const summary = (
+  over: Partial<CompetitionCompensationSummary> & { ready?: boolean } = {},
+): CompetitionCompensationSummary => ({
+  competitionId: "c1",
+  claims: [{ refereeId: "r1" } as CompetitionCompensationSummary["claims"][0]],
+  grandTotal: over.grandTotal ?? 0,
+  provisionalTotal: over.provisionalTotal ?? 0,
+  readiness: {
+    venueReady: true,
+    allTravelResolved: true,
+    pendingTravelReferees: [],
+    missingDomicilioReferees: [],
+    issues: [],
+    readyForExport: over.ready ?? false,
+  },
+});
+
+describe("el hub deja de esconder el dinero ya calculado", () => {
+  it("agrega lo confirmado y lo provisional por separado", () => {
+    const summaries = new Map<string, CompetitionCompensationSummary>([
+      ["c1", summary({ ready: true, grandTotal: 300, provisionalTotal: 300 })],
+      // Este espera km: su importe está calculado pero no es exportable.
+      ["c2", summary({ ready: false, grandTotal: 0, provisionalTotal: 185.5 })],
+    ]);
+    const hub = buildHubSummary([comp("c1", "2026-03-01"), comp("c2", "2026-02-01")], summaries);
+
+    expect(hub.confirmedTotal).toBe(300);
+    expect(hub.provisionalTotal).toBe(485.5);
+    expect(hub.readyCount).toBe(1);
+    // La fila del que espera km ya no llega con el importe perdido: antes la
+    // tabla pintaba «—» aunque el importe estuviera calculado.
+    expect(hub.items.find((i) => i.competitionId === "c2")?.provisionalTotal).toBe(185.5);
+  });
+
+  it("no arrastra colas de céntimo al sumar", () => {
+    const summaries = new Map<string, CompetitionCompensationSummary>([
+      ["c1", summary({ ready: true, grandTotal: 0.1, provisionalTotal: 0.1 })],
+      ["c2", summary({ ready: true, grandTotal: 0.2, provisionalTotal: 0.2 })],
+    ]);
+    const hub = buildHubSummary([comp("c1", "2026-03-01"), comp("c2", "2026-02-01")], summaries);
+    expect(hub.confirmedTotal).toBe(0.3);
   });
 });
