@@ -1,25 +1,7 @@
-import {
-  COMPETICION_ROLES_AEP1,
-  COMPETICION_ROLES_AEP2,
-  COMPETICION_ROLES_AEP2_LIFT,
-  PESAJE_ROLES,
-  cloneRosterRoles,
-} from "@/lib/mock-data";
-import type { EventType, RosterRole, RosterSession } from "@/lib/types";
+import { PESAJE_ROLES, cloneRosterRoles } from "@/lib/mock-data";
+import { defaultCompetitionRoles } from "@/lib/roster-template";
+import type { EventType, RosterSession } from "@/lib/types";
 import type { ParsedHorario, ParsedSession } from "./types";
-
-function rolesForType(tipo: EventType): RosterRole[] {
-  switch (tipo) {
-    case "AEP-1":
-      return cloneRosterRoles(COMPETICION_ROLES_AEP1);
-    case "AEP-2":
-      return cloneRosterRoles(COMPETICION_ROLES_AEP2_LIFT);
-    case "AEP-3":
-      return cloneRosterRoles(COMPETICION_ROLES_AEP2);
-    default:
-      return cloneRosterRoles(COMPETICION_ROLES_AEP1);
-  }
-}
 
 function sessionToRoster(
   parsed: ParsedSession,
@@ -34,7 +16,14 @@ function sessionToRoster(
       : [{ genero: "Hombres", pesos: parsed.rawCategoria ?? "" }],
     horarioCompeticion: parsed.horarioCompeticion ?? "",
     horarioPesaje: parsed.horarioPesaje ?? "",
-    roles: rolesForType(tipo),
+    // Los mismos roles que da «Generar plantilla» para este tipo. Aquí había
+    // una segunda tabla, `COMPETICION_ROLES_*`, que no coincidía con la del
+    // generador: importar el horario de un AEP-2 montaba 6 puestos por sesión
+    // con Liftingcast y Mesa, y generarla a mano montaba 7 con Ordenador y
+    // Speaker. Mismo campeonato, dos tarimas distintas según el botón que se
+    // pulsara, con distinta cobertura objetivo, distinto cuadrante impreso y
+    // distintos conceptos en la liquidación.
+    roles: defaultCompetitionRoles(tipo),
     pesajeRoles: cloneRosterRoles(PESAJE_ROLES),
     grupos:
       parsed.grupos.length > 0
