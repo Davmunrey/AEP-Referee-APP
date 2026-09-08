@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { canManageCompensation } from "@/lib/auth/session";
+import { CompensationClaimConflictError } from "@/lib/competitions/service-types";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
@@ -46,6 +47,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!updated) return jsonError("Claim no encontrado para este juez", 404);
     return jsonOk(updated);
   } catch (err) {
+    // 409, no 500: la petición era válida; lo que cambió fue la fila por
+    // debajo. El cliente distingue así «dato mal enviado» de «llegas tarde».
+    if (err instanceof CompensationClaimConflictError) return jsonError(err.message, 409);
     return jsonServerError("compensation.PATCH", err, "No se pudo guardar la compensación");
   }
 }
