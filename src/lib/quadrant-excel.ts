@@ -20,7 +20,10 @@ function refName(
   const refId = assignments[slotKey];
   if (!refId) return "";
   const ref = refLookup(refId);
-  if (!ref) return "";
+  // Un hueco asignado a un juez que ya no está en el censo salía en blanco:
+  // indistinguible de un hueco sin cubrir. El cuadrante se imprime y se lleva
+  // a la sede, así que la falta se marca en vez de callarse.
+  if (!ref) return `${refId} (sin ficha)`;
   const f = flags[slotKey];
   const sfx: string[] = [];
   if (f?.compartido) sfx.push("*");
