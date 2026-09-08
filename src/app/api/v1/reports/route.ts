@@ -1,4 +1,5 @@
 import { zonesMatch } from "@/lib/aep-zones";
+import { isSafeExternalUrlOrEmpty } from "@/lib/safe-url";
 import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
@@ -67,6 +68,11 @@ export async function POST(request: Request) {
     (body.adjuntoUrl !== undefined && typeof body.adjuntoUrl !== "string")
   ) {
     return jsonError("Campos de texto no válidos", 400);
+  }
+  // El adjunto acaba en un `href`: un `javascript:…` guardado aquí se ejecuta
+  // en el origen de la aplicación cuando alguien abre el informe.
+  if (!isSafeExternalUrlOrEmpty(body.adjuntoUrl)) {
+    return jsonError("El enlace adjunto debe ser una URL http(s) válida", 400);
   }
   let zona: string | undefined;
   if (body.subjectType === "juez") {
