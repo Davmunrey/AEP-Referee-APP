@@ -25,6 +25,9 @@ interface Candidate {
   importable: boolean;
   selected: boolean;
   reason: string;
+  /** El juez es de otra zona que la del campeonato. */
+  crossZone?: boolean;
+  refereeZona?: string;
 }
 
 interface Preview {
@@ -256,6 +259,15 @@ export function QuadrantImportDialog({
                       {candidate.matchedName ? (
                         <span className="ml-1 text-[10px] text-subtle-muted">
                           ({candidate.matchedName})
+                        </span>
+                      ) : null}
+                      {/* El cruce de zona se importa, pero se ve antes de aplicar. */}
+                      {candidate.crossZone ? (
+                        <span
+                          className="ml-1 rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
+                          title={`Juez de otra zona (${candidate.refereeZona ?? "—"})`}
+                        >
+                          ⟳ {candidate.refereeZona ?? "otra zona"}
                         </span>
                       ) : null}
                     </td>

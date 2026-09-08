@@ -7,7 +7,7 @@ import {
   extractPdfLayoutText,
   validatePdfMime,
 } from "@/lib/schedule-parser";
-import { parseQuadrantAssignments } from "@/lib/quadrant-parser";
+import { markCrossZoneCandidates, parseQuadrantAssignments } from "@/lib/quadrant-parser";
 import { looksLikeLayout, parseQuadrantLayout } from "@/lib/quadrant-layout-parser";
 import { dataService } from "@/server/services";
 
@@ -82,7 +82,11 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonError("La competición no tiene plantilla. Importa o crea plantilla primero.", 422);
   }
 
-  const referees = await dataService.getReferees({ user });
+  // Sin recortar por zona: la tarima ya permite asignar a mano a un juez de
+  // otra zona —con su marca de cruce—, así que emparejar solo con los de la
+  // propia zona dejaba el cuadrante importado a medias, con filas «juez no
+  // encontrado» que sí estaban en el censo. Los dos caminos coinciden ahora.
+  const referees = await dataService.getReferees();
   // Parser por geometría de columnas si el texto conserva la rejilla (-layout);
   // si no detecta candidatos, cae al parser plano heurístico.
   let parsed =
@@ -92,6 +96,14 @@ export async function POST(request: Request, context: RouteContext) {
   if (parsed.candidates.length === 0) {
     parsed = parseQuadrantAssignments(text, referees, roster.template);
   }
+  // Se importa, pero quien revisa la vista previa tiene que ver el cruce de
+  // zona antes de aplicarlo.
+  markCrossZoneCandidates(
+    parsed.candidates,
+    new Map(referees.map((r) => [r.id, r.zona])),
+    comp.zona,
+  );
+
   const defaultSelected = new Set(
     parsed.candidates.filter((c) => c.importable).map((c) => c.key),
   );
@@ -125,6 +137,9 @@ export async function POST(request: Request, context: RouteContext) {
       slotKey: candidate.slotKey!,
       refereeId: candidate.refereeId!,
       flags: candidate.flags,
+      // El motivo del cruce se pide a mano al asignar; en lote no hay quien lo
+      // escriba, así que se deja constancia de su origen en vez de un nulo.
+      crossZoneReason: candidate.crossZone ? `Importado del cuadrante (${filename})` : undefined,
     })),
     user.nombre,
   );
