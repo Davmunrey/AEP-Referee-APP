@@ -35,6 +35,7 @@ export const memoryDataService = {
   updateCompetition: competitions.updateCompetition,
   deleteCompetition: competitions.deleteCompetition,
   getCompetitionAvailability: admin.getCompetitionAvailability,
+  getRefereeBusyMap: competitions.getRefereeBusyMap,
   addCompetitionAvailability: admin.addCompetitionAvailability,
   removeCompetitionAvailability: admin.removeCompetitionAvailability,
   findCompetitionDuplicates: competitions.findCompetitionDuplicates,
