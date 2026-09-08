@@ -5,6 +5,44 @@
  */
 
 /**
+ * Un fallo cuyo motivo está escrito para quien está usando la aplicación.
+ *
+ * La distinción que hace falta en cada `catch` de las rutas es siempre la
+ * misma: o el error explica algo que el usuario puede entender y usar —un juez
+ * borrado del censo, un acta que no se guardó, unos conceptos que quedaron a
+ * medias—, y entonces su mensaje viaja tal cual; o es un fallo de
+ * infraestructura, y entonces lleva dentro el texto de Postgres (nombres de
+ * tabla y de restricción, CWE-209) y solo puede salir registrado en el
+ * servidor y genérico hacia fuera.
+ *
+ * `status` es el código con el que sale: 409 por defecto —el estado de la
+ * base no es el que la petición daba por hecho—, 503 cuando lo sensato es
+ * reintentar.
+ */
+export class UserFacingServiceError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status = 409) {
+    super(message);
+    this.name = "UserFacingServiceError";
+    this.status = status;
+  }
+}
+
+/**
+ * Recalcular una liquidación dejó sus conceptos a medias.
+ *
+ * No es un conflicto de estado sino un fallo de escritura, pero el motivo
+ * importa a quien está revisando el dinero: dice qué quedó guardado y qué no.
+ */
+export class CompensationSyncError extends UserFacingServiceError {
+  constructor(message: string) {
+    super(message, 503);
+    this.name = "CompensationSyncError";
+  }
+}
+
+/**
  * Se ha intentado eliminar un campeonato que tiene liquidaciones de dietas.
  *
  * La clave ajena `judge_compensation_claims.competition_id` nació con
@@ -60,7 +98,7 @@ export class RefereeHasClaimsError extends Error {
  * revisor viaja tal cual; lo demás se registra en el servidor y sale como un
  * 500 genérico, igual que en el resto de rutas.
  */
-export class ApprovalReviewError extends Error {
+export class ApprovalReviewError extends UserFacingServiceError {
   constructor(message: string) {
     super(message);
     this.name = "ApprovalReviewError";
@@ -78,7 +116,7 @@ export class ApprovalReviewError extends Error {
  * algo al revisor, o un fallo de infraestructura que se registra y sale
  * genérico.
  */
-export class PromotionReviewError extends Error {
+export class PromotionReviewError extends UserFacingServiceError {
   constructor(message: string) {
     super(message);
     this.name = "PromotionReviewError";

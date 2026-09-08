@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -13,7 +13,11 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const scopeErr = await assertCompetitionInUserZone(user, id);
   if (scopeErr) return scopeErr;
-  const roster = await dataService.getRoster(id);
-  if (!roster) return jsonError("Competición no encontrada", 404);
-  return jsonOk(roster);
+  try {
+    const roster = await dataService.getRoster(id);
+    if (!roster) return jsonError("Competición no encontrada", 404);
+    return jsonOk(roster);
+  } catch (err) {
+    return jsonRouteError("roster.GET", err, "No se pudo cargar la tarima");
+  }
 }

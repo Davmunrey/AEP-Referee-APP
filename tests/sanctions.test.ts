@@ -63,3 +63,33 @@ describe("sanctions", () => {
     expect(url).toContain("Juan");
   });
 });
+
+describe("los destinatarios del aviso son direcciones, no trozos de URL", () => {
+  const sancion = {
+    refereeName: "Ana Ruiz",
+    motivo: "Conducta antideportiva",
+    fechaInicio: "2026-05-01",
+    fechaFin: "2026-08-01",
+    zona: "CENTRO",
+    impuestaPorNombre: "Comité",
+  };
+
+  it("un correo con parámetros pegados no reescribe el mailto", () => {
+    // El asunto y el cuerpo iban codificados, pero los destinatarios se
+    // pegaban en crudo: `?bcc=…` guardado en el perfil de un delegado
+    // añadía una copia oculta al aviso que abre quien pulsa «Avisar».
+    const href = buildSanctionMailto(
+      [
+        { email: "delegado@aep.es" } as never,
+        { email: "malo@aep.es?bcc=fuera@example.com" } as never,
+      ],
+      sancion as never,
+    );
+    expect(href).not.toMatch(/bcc/i);
+    expect(href.startsWith("mailto:delegado@aep.es?subject=")).toBe(true);
+  });
+
+  it("sin ninguna dirección utilizable no se ofrece enlace", () => {
+    expect(buildSanctionMailto([{ email: "no es un correo" } as never], sancion as never)).toBe("");
+  });
+});

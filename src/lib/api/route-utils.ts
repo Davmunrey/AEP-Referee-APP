@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { UserFacingServiceError } from "@/lib/competitions/service-types";
 import type { ApiError, ApiSuccess } from "./types";
 
 export const API_NO_STORE_HEADERS = {
@@ -39,4 +40,18 @@ export function jsonServerError(
 ) {
   console.error(`[${scope}]`, err instanceof Error ? (err.stack ?? err.message) : err);
   return jsonError(clientMessage, status);
+}
+
+/**
+ * El `catch` de una ruta, en una línea.
+ *
+ * Sin `try/catch`, una excepción del servicio sale de Next como un 500 sin
+ * cuerpo JSON, y el cliente —que espera el sobre `{ data }` / `{ error }`—
+ * acaba enseñando «Server error (500)» en una aplicación en castellano. Con
+ * esto, el motivo escrito para el usuario sale con su texto y su código, y
+ * cualquier otra cosa se registra bajo `scope` y sale genérica.
+ */
+export function jsonRouteError(scope: string, err: unknown, clientMessage: string) {
+  if (err instanceof UserFacingServiceError) return jsonError(err.message, err.status);
+  return jsonServerError(scope, err, clientMessage);
 }

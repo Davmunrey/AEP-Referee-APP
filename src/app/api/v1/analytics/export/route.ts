@@ -1,3 +1,4 @@
+import { jsonRouteError } from "@/lib/api/route-utils";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { coveragePct } from "@/lib/roster-coverage";
 import { dataService } from "@/server/services";
@@ -15,10 +16,18 @@ export async function GET(request: Request) {
   // completa que necesita la sección CAMPEONATOS_AÑO_ACTIVO), así que hay que
   // pedirlas otra vez. Evitarlo requeriría ampliar AnalyticsPayload en
   // src/server/services.
-  const [analytics, competitions] = await Promise.all([
-    dataService.getAnalytics(user, requestedYear),
-    dataService.getCompetitions(user),
-  ]);
+  let analytics;
+  let competitions;
+  try {
+    [analytics, competitions] = await Promise.all([
+      dataService.getAnalytics(user, requestedYear),
+      dataService.getCompetitions(user),
+    ]);
+  } catch (err) {
+    // Un CSV a medias es peor que un error: la exportación es lo que alguien
+    // se lleva a una reunión como si fuera la temporada entera.
+    return jsonRouteError("analytics.export", err, "No se pudieron exportar las estadísticas");
+  }
   const competitionsInSelectedYear = competitions.filter((c) =>
     c.fecha.startsWith(String(analytics.selectedYear)),
   );

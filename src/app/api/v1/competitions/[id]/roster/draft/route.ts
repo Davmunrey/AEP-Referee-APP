@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -17,6 +17,10 @@ export async function POST(_request: Request, context: RouteContext) {
   if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
 
-  await dataService.saveDraft(id, user.nombre);
+  try {
+    await dataService.saveDraft(id, user.nombre);
+  } catch (err) {
+    return jsonRouteError("roster.draft", err, "No se pudo guardar el borrador");
+  }
   return jsonOk({ message: "Borrador guardado" });
 }

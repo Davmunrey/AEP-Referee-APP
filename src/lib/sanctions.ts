@@ -79,7 +79,13 @@ export function buildSanctionMailto(
     "refereeName" | "motivo" | "fechaInicio" | "fechaFin" | "zona" | "impuestaPorNombre"
   >,
 ): string {
-  const emails = delegates.map((d) => d.email).filter(Boolean);
+  // Solo direcciones con forma de dirección: el asunto y el cuerpo van
+  // codificados, pero los destinatarios se pegaban en crudo, así que un correo
+  // con `?bcc=…` guardado en el perfil de un delegado reescribía el mailto que
+  // abre quien pulsa «Avisar».
+  const emails = delegates
+    .map((d) => d.email?.trim() ?? "")
+    .filter((email) => /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/.test(email));
   if (emails.length === 0) return "";
   const zonaLabel = macroZoneName(resolveZoneCode(sanction.zona) ?? sanction.zona);
   const subject = encodeURIComponent(
