@@ -39,12 +39,19 @@ export function findRegulationViolation(
   nivel: RefereeLevel,
   regulations: RegulationRule[],
 ): RegulationRule | undefined {
-  return regulations.find(
-    (r) =>
-      r.roleKey === roleKey &&
-      r.eventTypes.includes(eventType) &&
-      !meetsMinLevel(nivel, r.minLevel),
-  );
+  // De las reglas que este juez incumple se avisa de la MÁS exigente, no de la
+  // primera de la lista. Con `.find()` bastaba con que hubiera dos filas para
+  // el mismo rol y tipo —algo que la pantalla de normativa no impide— para que
+  // el aviso dependiera del orden de los identificadores y acabara enseñando
+  // el mínimo más flojo de los dos.
+  let peor: RegulationRule | undefined;
+  for (const r of regulations) {
+    if (r.roleKey !== roleKey) continue;
+    if (!r.eventTypes.includes(eventType)) continue;
+    if (meetsMinLevel(nivel, r.minLevel)) continue;
+    if (!peor || !meetsMinLevel(peor.minLevel, r.minLevel)) peor = r;
+  }
+  return peor;
 }
 
 /** Motivo por el que un juez no puede ocupar un rol; `null` = asignable. */

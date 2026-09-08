@@ -49,6 +49,37 @@ describe("la normativa que la aplicación enseña es la que aplica", () => {
     expect(regla).toBeUndefined();
   });
 
+  it("con dos reglas para el mismo rol se avisa de la más exigente", () => {
+    // La pantalla de normativa no impide dos filas para el mismo rol y tipo.
+    // Con `.find()`, el aviso dependía del orden de los identificadores y podía
+    // acabar enseñando el mínimo más flojo de los dos.
+    const dos: RegulationRule[] = [
+      {
+        id: "reg-a",
+        rol: "Juez Central",
+        roleKey: "central",
+        minLevel: "Nacional",
+        eventTypes: ["AEP-1"],
+        note: "",
+      },
+      {
+        id: "reg-b",
+        rol: "Juez Central",
+        roleKey: "central",
+        minLevel: "IPF Cat. 2",
+        eventTypes: ["AEP-1"],
+        note: "",
+      },
+    ];
+    expect(findRegulationViolation("central", "AEP-1", "Regional", dos)?.minLevel).toBe(
+      "IPF Cat. 2",
+    );
+    // Y en el orden contrario da lo mismo.
+    expect(
+      findRegulationViolation("central", "AEP-1", "Regional", [...dos].reverse())?.minLevel,
+    ).toBe("IPF Cat. 2");
+  });
+
   it("sin normativa legible queda el mínimo por defecto, no el silencio", () => {
     // Antes, con la tabla vacía —degradado, error de lectura— no quedaba ni un
     // aviso en toda la tarima salvo para «jurado».
