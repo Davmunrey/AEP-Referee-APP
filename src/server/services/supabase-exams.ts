@@ -13,7 +13,7 @@ import type {
   SessionUser,
 } from "@/lib/types";
 import { mapExam, mapPromotion, mapReport } from "@/server/db/mappers";
-import { db, pushActivity } from "./supabase-helpers";
+import { db, fetchAllPagesOf, pushActivity } from "./supabase-helpers";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") {
@@ -30,9 +30,15 @@ function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelAct
 export const examsService = {
   getPromotions: async (user?: SessionUser): Promise<PromotionRequest[]> => {
     const supabase = db();
-    const { data, error } = await supabase.from("promotion_requests").select("*");
-    if (error) throw new Error(`promotion_requests: ${error.message}`);
-    const list = (data ?? []).map((r) => mapPromotion(r as Record<string, unknown>));
+    // Paginado: la zona es texto libre y hay que canonicalizarla en memoria, así
+    // que el corte de PostgREST en 1000 filas descartaría solicitudes antiguas
+    // sin decir nada.
+    const data = await fetchAllPagesOf<Record<string, unknown>>(
+      "promotion_requests",
+      (from, to) =>
+        supabase.from("promotion_requests").select("*").order("id", { ascending: true }).range(from, to),
+    );
+    const list = data.map((r) => mapPromotion(r));
     // `zona` es texto libre (códigos legados pre-013 como "MAD"/"Centro"): un
     // `.eq` crudo ocultaba esas solicitudes al delegado; se canonicaliza como
     // en el twin en memoria.
@@ -244,11 +250,19 @@ export const examsService = {
 
   getReports: async (refereeId?: string, user?: SessionUser): Promise<RefereeReport[]> => {
     const supabase = db();
-    let query = supabase.from("referee_reports").select("*").order("created_at", { ascending: false });
-    if (refereeId) query = query.eq("referee_id", refereeId);
-    const { data, error } = await query;
-    if (error) throw new Error(`referee_reports: ${error.message}`);
-    const list = (data ?? []).map((r) => mapReport(r as Record<string, unknown>));
+    // Ídem que en ascensos: el filtro por zona no puede ir en SQL, así que la
+    // lectura se pagina para no perder informes por el corte de 1000 filas.
+    const data = await fetchAllPagesOf<Record<string, unknown>>("referee_reports", (from, to) => {
+      let query = supabase
+        .from("referee_reports")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to);
+      if (refereeId) query = query.eq("referee_id", refereeId);
+      return query;
+    });
+    const list = data.map((r) => mapReport(r));
     // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
     // tabla, así que un `.eq` crudo escondía al delegado los informes guardados
     // con códigos anteriores («MAD», «Centro»). Mismo criterio que en ascensos,

@@ -56,7 +56,10 @@ vi.mock("@/lib/supabase/admin", () => ({
         order: () => q,
         single: async () => finish(),
         maybeSingle: async () => finish(),
-        range: async () => finish(),
+        range: async (from: number, to: number) => {
+          state.filters.push(["__range", `${from}-${to}`]);
+          return finish();
+        },
         then: (resolve: (r: QueryResult) => unknown) => Promise.resolve(finish()).then(resolve),
       };
       return q;
@@ -194,5 +197,30 @@ describe("el hub deja de esconder el dinero ya calculado", () => {
     ]);
     const hub = buildHubSummary([comp("c1", "2026-03-01"), comp("c2", "2026-02-01")], summaries);
     expect(hub.confirmedTotal).toBe(0.3);
+  });
+});
+
+describe("los informes no se cortan en la fila 1000", () => {
+  it("pagina hasta agotar las filas", async () => {
+    // El filtro por zona no puede ir en SQL (columna de texto libre), así que
+    // sin paginar el corte de PostgREST descartaba en silencio lo que viniera
+    // después de la primera página.
+    const page = (n: number, offset: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `r${offset + i}`,
+        subject_type: "juez",
+        zona: "CENTRO",
+        titulo: "T",
+        tipo: "Juez",
+        contenido: "x",
+        autor: "y",
+      }));
+    let call = 0;
+    respond = () => ({ data: call++ === 0 ? page(1000, 0) : page(7, 1000), error: null });
+
+    const list = await examsService.getReports(undefined, delegado);
+    expect(list).toHaveLength(1007);
+    const ranges = calls.flatMap((c) => c.filters).filter(([col]) => col === "__range");
+    expect(ranges.map(([, v]) => v)).toEqual(["0-999", "1000-1999"]);
   });
 });
