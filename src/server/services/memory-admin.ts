@@ -161,7 +161,11 @@ export async function createReport(input: {
   if (input.subjectType === "competicion" && !competition) throw new Error("Competición no encontrada");
   const report: RefereeReport = {
     id: nextSeqId("rep"), subjectType: input.subjectType,
-    zona: referee?.zona ?? competition?.zona ?? input.zona,
+    // Canónica, como en el twin de Supabase: si no hay zona en el juez ni en la
+    // competición, `input.zona` podía llegar como alias y la fila nacía
+    // ilegible para el filtro por zona.
+    zona: normalizeZoneInput(referee?.zona ?? competition?.zona ?? input.zona)
+      ?? (referee?.zona ?? competition?.zona ?? input.zona),
     refereeId: referee?.id, refereeName: referee?.nombre,
     competitionId: competition?.id, competitionName: competition?.nombre,
     titulo: input.titulo, tipo: input.tipo, evento: input.evento,
