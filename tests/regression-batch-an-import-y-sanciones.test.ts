@@ -101,7 +101,7 @@ describe("reimportar el censo no puede levantar una sanción", () => {
     expect(update?.payload).not.toHaveProperty("disp");
     // Lo demás sí se actualiza.
     expect(update?.payload).toMatchObject({ nombre: "Luis Juez", nivel: "Nacional" });
-    expect(result.warnings.some((w) => /conservan su estado/.test(w))).toBe(true);
+    expect((result.warnings ?? []).some((w) => /conservan su estado/.test(w))).toBe(true);
   });
 
   it("sin sanción viva, el estado del Excel se aplica", async () => {
@@ -138,7 +138,7 @@ describe("reimportar el censo no puede levantar una sanción", () => {
     const result = await importJudgesRegistryToSupabase(registro(), { replace: true });
     const del = calls.find((c) => c.table === "referees" && c.op === "delete");
     expect(del).toBeUndefined();
-    expect(result.warnings.some((w) => /historial disciplinario/.test(w))).toBe(true);
+    expect((result.warnings ?? []).some((w) => /historial disciplinario/.test(w))).toBe(true);
   });
 
   it("si no se puede comprobar quién está sancionado, no se toca el censo", async () => {
