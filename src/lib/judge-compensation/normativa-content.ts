@@ -1,9 +1,11 @@
 import {
+  competitionManagerRate,
   COMPENSATION_RATES_REVISION,
   KM_RATE_EUR,
   LODGING_MIN_ROUND_TRIP_KM,
   LODGING_PER_DAY_EUR,
   MIN_FUNCTIONS_FOR_LODGING,
+  unitRateForDuty,
 } from "./rates";
 
 export const COMPENSATION_NORMATIVA_META = {
@@ -14,13 +16,37 @@ export const COMPENSATION_NORMATIVA_META = {
     "https://powerliftingspain.es/wp-content/uploads/2025/10/20251031_Criterios-Compensacion-Gastos-Jueces.pdf",
 } as const;
 
+// Las cifras salen del mismo baremo que hace las cuentas (`rates.ts`) en vez
+// de escribirse a mano: la tabla que se le enseña al juez no puede decir una
+// cosa y la liquidación pagar otra cuando el baremo se actualice.
+const eur = (amount: number) => `${amount} €`;
+
 export const COMPENSATION_RATE_TABLE = [
-  { concept: "Pesaje", aep3: "15 €", aep2: "15 €", aep1: "20 €", intl: "20 €" },
-  { concept: "Sesión (tarima)", aep3: "30 €", aep2: "30 €", aep1: "40 €", intl: "40 €" },
+  {
+    concept: "Pesaje",
+    aep3: eur(unitRateForDuty("pesaje", "AEP-3", "nacional")),
+    aep2: eur(unitRateForDuty("pesaje", "AEP-2", "nacional")),
+    aep1: eur(unitRateForDuty("pesaje", "AEP-1", "nacional")),
+    intl: eur(unitRateForDuty("pesaje", "AEP-1", "ipf")),
+  },
+  {
+    concept: "Sesión (tarima)",
+    aep3: eur(unitRateForDuty("session", "AEP-3", "nacional")),
+    aep2: eur(unitRateForDuty("session", "AEP-2", "nacional")),
+    aep1: eur(unitRateForDuty("session", "AEP-1", "nacional")),
+    intl: eur(unitRateForDuty("session", "AEP-1", "ipf")),
+  },
   { concept: "Montaje sistema", aep3: "Manual", aep2: "Manual", aep1: "Manual", intl: "Manual" },
   { concept: "Km ida+vuelta", aep3: `${KM_RATE_EUR} €/km`, aep2: "—", aep1: "—", intl: "—" },
   { concept: "Alojamiento / día", aep3: `${LODGING_PER_DAY_EUR} €`, aep2: "—", aep1: "—", intl: "—" },
-  { concept: "Responsable competición", aep3: "20 €", aep2: "20 €", aep1: "20 €*", intl: "0 €" },
+  {
+    concept: "Responsable competición",
+    aep3: eur(competitionManagerRate("AEP-3", "nacional", false, 1)),
+    aep2: eur(competitionManagerRate("AEP-2", "nacional", false, 1)),
+    // El asterisco remite a la nota: en AEP-1 puede ser por día o dos responsables.
+    aep1: `${eur(competitionManagerRate("AEP-1", "nacional", false, 1))}*`,
+    intl: eur(competitionManagerRate("AEP-1", "ipf", false, 1)),
+  },
 ] as const;
 
 export const COMPENSATION_NORMATIVA_SECTIONS = [
