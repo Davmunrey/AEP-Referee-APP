@@ -63,6 +63,11 @@ export interface CompensationClaimInput {
   lodgingDaysOverride?: number;
   lodgingEligibleOverride?: boolean;
   status: CompensationClaimStatus;
+  /**
+   * El juez ya no ocupa ningún puesto en la tarima, pero su liquidación sigue
+   * guardada. Derivado, no persistido: se recalcula en cada resumen.
+   */
+  offRoster?: boolean;
   reviewComment?: string;
 }
 

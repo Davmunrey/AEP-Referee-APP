@@ -232,7 +232,6 @@ function buildSummaryInMemory(
   refereesById: Map<string, Referee>,
 ): CompetitionCompensationSummary {
   const refereeIds = assignedRefereeIds(assignments);
-  if (refereeIds.length === 0) return emptySummary(competition.id);
 
   const claims: CompensationClaim[] = [];
   for (const refereeId of refereeIds) {
@@ -248,6 +247,18 @@ function buildSummaryInMemory(
       }),
     );
   }
+
+  // Liquidaciones de jueces que ya no están en la tarima. El resumen solo
+  // recorría los asignados, así que una sustitución posterior a guardar la
+  // liquidación la hacía desaparecer de la pantalla y del total — incluido el
+  // dinero ya marcado como pagado. Se muestran al final y marcadas: esconder
+  // un importe registrado es peor que enseñarlo fuera de sitio.
+  const enRoster = new Set(refereeIds);
+  for (const [refereeId, claim] of stored) {
+    if (!enRoster.has(refereeId)) claims.push({ ...claim, offRoster: true });
+  }
+
+  if (claims.length === 0) return emptySummary(competition.id);
   return summarizeCompensation(competition, claims, refereesById);
 }
 
@@ -261,8 +272,8 @@ async function buildSummary(competitionId: string): Promise<CompetitionCompensat
   ]);
   const tpl = template ?? [];
   const refereeIds = assignedRefereeIds(assignments);
-  if (refereeIds.length === 0) return emptySummary(competitionId);
-
+  // Sin el corte previo por tarima vacía: si se vació la tarima después de
+  // guardar liquidaciones, seguían existiendo y había que enseñarlas.
   const [stored, refereesById] = await Promise.all([
     loadStoredClaims(competitionId, competition),
     refereeService.getRefereesByIds(refereeIds),
