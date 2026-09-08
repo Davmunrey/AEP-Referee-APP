@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types";
 import { REGULATION_RULES, getStore, nextSeqId, pushActivity } from "@/server/store";
 import { PromotionReviewError } from "@/lib/competitions/service-types";
+import { isRefereeLevelUpgrade, refereeLevelRank } from "@/lib/referee-levels";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") throw new Error("Nuevo juez solo puede registrar nivel objetivo Regional");
@@ -53,8 +54,7 @@ export async function reviewPromotion(
   if (comment) req.reviewComment = comment;
   if (ref) {
     // Solo sube el nivel si sigue siendo un ascenso frente al nivel ACTUAL.
-    const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-    if (LEVEL_ORDER.indexOf(req.toLevel) > LEVEL_ORDER.indexOf(ref.nivel)) {
+    if (isRefereeLevelUpgrade(ref.nivel, req.toLevel)) {
       ref.nivel = req.toLevel;
     }
   }
@@ -71,8 +71,17 @@ export async function createPromotion(input: {
   const store = getStore();
   const referee = store.referees.find((r) => r.id === input.refereeId);
   if (!referee) throw new Error("Juez no encontrado");
-  const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-  if (LEVEL_ORDER.indexOf(input.toLevel) <= LEVEL_ORDER.indexOf(referee.nivel)) throw new Error(`El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`);
+  // Con `indexOf` sobre una copia local, un nivel actual ilegible daba -1 y
+  // cualquier destino contaba como ascenso. El escalafón compartido no acepta
+  // niveles que no reconoce.
+  if (refereeLevelRank(referee.nivel) < 0) {
+    throw new Error(`El nivel actual del juez (${referee.nivel}) no es reconocible.`);
+  }
+  if (!isRefereeLevelUpgrade(referee.nivel, input.toLevel)) {
+    throw new Error(
+      `El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`,
+    );
+  }
   const req: PromotionRequest = {
     id: nextSeqId("pro"), refereeId: input.refereeId, refereeName: referee.nombre,
     fromLevel: referee.nivel, toLevel: input.toLevel,

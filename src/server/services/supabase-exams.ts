@@ -15,6 +15,7 @@ import type {
 import { mapExam, mapPromotion, mapReport } from "@/server/db/mappers";
 import { db, fetchAllPagesOf, pushActivity } from "./supabase-helpers";
 import { PromotionReviewError } from "@/lib/competitions/service-types";
+import { isRefereeLevelUpgrade, refereeLevelRank } from "@/lib/referee-levels";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") {
@@ -55,7 +56,6 @@ export const examsService = {
     const { data: req } = await supabase.from("promotion_requests").select("*").eq("id", id).single();
     if (!req || req.status !== "pendiente") return undefined;
 
-    const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
     // El nivel actual se lee ANTES de marcar la solicitud: si no se puede leer,
     // la solicitud sigue pendiente y se puede reintentar. Antes se leía después
     // y el error se traducía en `currentIdx = -1`, con lo que la comprobación
@@ -76,7 +76,7 @@ export const examsService = {
         );
       }
       currentNivel = String(ref.nivel);
-      if (LEVEL_ORDER.indexOf(currentNivel) < 0) {
+      if (refereeLevelRank(currentNivel) < 0) {
         throw new PromotionReviewError(
           `No se puede aprobar: el nivel actual del juez (${currentNivel}) no es reconocible.`,
         );
@@ -102,8 +102,7 @@ export const examsService = {
     }
     if (!claimed || claimed.length === 0) return undefined;
     if (approve && currentNivel) {
-      const toIdx = LEVEL_ORDER.indexOf(req.to_level as string);
-      if (toIdx > LEVEL_ORDER.indexOf(currentNivel)) {
+      if (isRefereeLevelUpgrade(currentNivel, req.to_level as string)) {
         // Compare-and-set sobre el nivel leído: si otro proceso lo cambió entre
         // medias, la escritura no toca nada en vez de pisar el nivel nuevo.
         // Pero eso hay que CONTARLO: la solicitud ya está en «aprobado» y no
@@ -165,10 +164,16 @@ export const examsService = {
       .eq("id", input.refereeId)
       .single();
     if (!referee) throw new Error("Juez no encontrado");
-    const LEVEL_ORDER = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-    const fromIdx = LEVEL_ORDER.indexOf(referee.nivel as string);
-    const toIdx = LEVEL_ORDER.indexOf(input.toLevel);
-    if (toIdx <= fromIdx) throw new Error(`El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`);
+    // `indexOf` sobre una copia local daba -1 para un nivel ilegible, y con
+    // -1 cualquier destino contaba como ascenso.
+    if (refereeLevelRank(referee.nivel as string) < 0) {
+      throw new Error(`El nivel actual del juez (${referee.nivel}) no es reconocible.`);
+    }
+    if (!isRefereeLevelUpgrade(referee.nivel as string, input.toLevel)) {
+      throw new Error(
+        `El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`,
+      );
+    }
     const id = `pro-${crypto.randomUUID()}`;
     const row = {
       id,
