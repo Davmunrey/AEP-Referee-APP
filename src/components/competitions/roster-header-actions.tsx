@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api/client";
+import { formatApiError } from "@/lib/api/error-message";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, Download, FileSpreadsheet, FileText, Loader2, Send, Share2 } from "lucide-react";
@@ -119,8 +120,8 @@ export function RosterHeaderActions({
               try {
                 const res = await api.saveDraft(competitionId);
                 onStatus(res.message, false);
-              } catch {
-                onStatus("Error al guardar el borrador", true);
+              } catch (err) {
+                onStatus(formatApiError(err, "Error al guardar el borrador"), true);
               }
             });
           }}
@@ -198,8 +199,11 @@ export function RosterHeaderActions({
               try {
                 const res = await api.submitRoster(competitionId);
                 onStatus(res.message, false);
-              } catch {
-                onStatus("Error al enviar la propuesta", true);
+              } catch (err) {
+                // El servidor dice qué falta —plantilla sin definir, tarima sin
+                // jueces, «quedan 3 huecos», tarima bloqueada—; aquí se tiraba
+                // el mensaje y solo quedaba un callejón sin salida.
+                onStatus(formatApiError(err, "Error al enviar la propuesta"), true);
               }
             });
           }}
