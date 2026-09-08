@@ -77,3 +77,19 @@ export class RosterPaidClaimError extends Error {
     this.name = "RosterPaidClaimError";
   }
 }
+
+/**
+ * Otra persona guardó la misma liquidación mientras esta se editaba.
+ *
+ * La edición es lectura-modificación-escritura de la fila entera: sin este
+ * corte, quien guardaba segundo reescribía el estado que había leído al abrir
+ * la pantalla. El caso feo es silencioso y con dinero: A marca «pagado», B
+ * —que tenía la pantalla abierta desde antes— ajusta los kilómetros, y su
+ * guardado devuelve la liquidación a «aprobado» sin que nadie se entere.
+ */
+export class CompensationClaimConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CompensationClaimConflictError";
+  }
+}
