@@ -322,7 +322,9 @@ export const examsService = {
     if (patch.tipo !== undefined) dbPatch.tipo = patch.tipo;
     if (patch.evento !== undefined) dbPatch.evento = patch.evento;
     if (patch.contenido !== undefined) dbPatch.contenido = patch.contenido;
-    if (patch.adjuntoUrl !== undefined) dbPatch.adjunto_url = patch.adjuntoUrl;
+    // Cadena vacía = quitar el enlace: se guarda NULL en vez de "" para que la
+    // columna no tenga dos formas de decir «sin adjunto».
+    if (patch.adjuntoUrl !== undefined) dbPatch.adjunto_url = patch.adjuntoUrl || null;
     const { data, error } = await supabase.from("referee_reports").update(dbPatch).eq("id", id).select().single();
     if (error || !data) return undefined;
     return mapReport(data as Record<string, unknown>);

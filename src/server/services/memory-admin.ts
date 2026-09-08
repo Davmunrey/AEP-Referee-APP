@@ -183,6 +183,8 @@ export async function updateReport(
   const report = getStore().reports.find((r) => r.id === id);
   if (!report) return undefined;
   Object.assign(report, patch);
+  // Cadena vacía = quitar el enlace, igual que en el twin de Supabase.
+  if (patch.adjuntoUrl !== undefined && !patch.adjuntoUrl) report.adjuntoUrl = undefined;
   return report;
 }
 

@@ -111,7 +111,10 @@ export function ReportsManager({
       const updated = await api.updateReport(reportId, {
         titulo: editTitulo.trim(), tipo: editTipo,
         evento: reports.find((r) => r.id === reportId)?.subjectType === "juez" ? editEvento.trim() || undefined : undefined,
-        contenido: editContenido.trim(), adjuntoUrl: editAdjuntoUrl.trim() || undefined,
+        // Cadena vacía, no `undefined`: con `undefined` la clave desaparecía
+        // del JSON, el PATCH no tocaba el campo y no había forma de QUITAR un
+        // enlace adjunto una vez puesto.
+        contenido: editContenido.trim(), adjuntoUrl: editAdjuntoUrl.trim(),
       });
       setReports((prev) => prev.map((r) => (r.id === reportId ? updated : r)));
       setEditingId(null); router.refresh();
