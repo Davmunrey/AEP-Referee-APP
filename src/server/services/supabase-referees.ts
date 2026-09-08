@@ -19,7 +19,7 @@ import {
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
 import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
-import { db, fetchAllRows, pushActivity } from "./supabase-helpers";
+import { db, fetchAllRows, fetchAllRowsIn, pushActivity } from "./supabase-helpers";
 
 async function loadRefereeCompetitionHistory(
   refereeId: string,
@@ -115,12 +115,11 @@ export const refereeService = {
     const unique = [...new Set(ids.filter(Boolean))];
     const map = new Map<string, Referee>();
     if (unique.length === 0) return map;
-    const supabase = db();
-    const { data, error } = await supabase.from("referees").select("*").in("id", unique);
     // Quien no aparece en el mapa se descarta silenciosamente aguas abajo: un
-    // fallo aquí borraba liquidaciones enteras del resumen de compensación.
-    if (error) throw new Error(`referees: ${error.message}`);
-    for (const row of data ?? []) {
+    // fallo, un `.in()` demasiado largo o el corte de PostgREST en 1000 filas
+    // borraban liquidaciones enteras del resumen de compensación.
+    const data = await fetchAllRowsIn("referees", "id", unique);
+    for (const row of data) {
       const referee = mapReferee(row as Record<string, unknown>);
       map.set(referee.id, referee);
     }

@@ -1,3 +1,5 @@
+import { zonesMatch } from "@/lib/aep-zones";
+import { isSafeExternalUrlOrEmpty } from "@/lib/safe-url";
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -40,11 +42,20 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (typeof raw.evento === "string") patch.evento = raw.evento;
   if (typeof raw.contenido === "string") patch.contenido = raw.contenido;
-  if (typeof raw.adjuntoUrl === "string") patch.adjuntoUrl = raw.adjuntoUrl;
+  if (typeof raw.adjuntoUrl === "string") {
+    // Mismo criterio que el alta: el adjunto termina en un `href`.
+    if (!isSafeExternalUrlOrEmpty(raw.adjuntoUrl)) {
+      return jsonError("El enlace adjunto debe ser una URL http(s) válida", 400);
+    }
+    patch.adjuntoUrl = raw.adjuntoUrl;
+  }
 
   const existing = await dataService.getReport(id);
   if (!existing) return jsonError("Informe no encontrado", 404);
-  if (user.role === "delegado_zona" && user.zona && existing.zona !== user.zona) {
+  // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
+  // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en
+  // crudo su propio delegado no podía tocarlo.
+  if (user.role === "delegado_zona" && user.zona && !zonesMatch(existing.zona, user.zona)) {
     return jsonError("Fuera de tu zona", 403);
   }
 
@@ -62,7 +73,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const existing = await dataService.getReport(id);
   if (!existing) return jsonError("Informe no encontrado", 404);
-  if (user.role === "delegado_zona" && user.zona && existing.zona !== user.zona) {
+  // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
+  // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en
+  // crudo su propio delegado no podía tocarlo.
+  if (user.role === "delegado_zona" && user.zona && !zonesMatch(existing.zona, user.zona)) {
     return jsonError("Fuera de tu zona", 403);
   }
 

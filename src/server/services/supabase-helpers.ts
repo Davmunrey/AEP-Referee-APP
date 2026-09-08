@@ -357,6 +357,33 @@ export function chunkList<T>(items: T[], size: number): T[][] {
 /** Lee todas las filas de `table` cuyo `column` esté en `ids`, paginando y
  * troceando el filtro. Propaga el error en vez de devolver filas de menos. */
 /**
+ * Pagina una consulta cualquiera. Igual que `fetchAllRows`, pero para lecturas
+ * que llevan filtros u orden propios: se recibe el constructor de la consulta y
+ * se le pide un rango cada vez.
+ *
+ * Hace falta cuando el filtrado NO puede hacerse en SQL —las columnas `zona` de
+ * texto libre hay que canonicalizarlas en memoria— y, sin paginar, el corte de
+ * PostgREST en 1000 filas descartaría en silencio lo que viniera después.
+ */
+export async function fetchAllPagesOf<T>(
+  table: string,
+  makeQuery: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += POSTGREST_PAGE_SIZE) {
+    const { data, error } = await makeQuery(from, from + POSTGREST_PAGE_SIZE - 1);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    const page = data ?? [];
+    rows.push(...page);
+    if (page.length < POSTGREST_PAGE_SIZE) break;
+  }
+  return rows;
+}
+
+/**
  * Todas las filas de una tabla, paginando. PostgREST corta en 1000 filas y una
  * lectura truncada se veía como «esto es todo lo que hay».
  */
@@ -386,6 +413,7 @@ export async function fetchAllRowsIn(
   column: string,
   ids: string[],
   orderColumn = "id",
+  columns = "*",
 ): Promise<Record<string, unknown>[]> {
   if (ids.length === 0) return [];
   const supabase = db();
@@ -394,12 +422,12 @@ export async function fetchAllRowsIn(
     for (let from = 0; ; from += POSTGREST_PAGE_SIZE) {
       const { data, error } = await supabase
         .from(table)
-        .select("*")
+        .select(columns)
         .in(column, idsChunk)
         .order(orderColumn, { ascending: true })
         .range(from, from + POSTGREST_PAGE_SIZE - 1);
       if (error) throw new Error(`${table}: ${error.message}`);
-      const page = (data ?? []) as Record<string, unknown>[];
+      const page = (data ?? []) as unknown as Record<string, unknown>[];
       rows.push(...page);
       if (page.length < POSTGREST_PAGE_SIZE) break;
     }

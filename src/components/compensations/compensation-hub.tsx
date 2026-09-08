@@ -55,7 +55,9 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
     setHub(initialHub);
   }, [initialHub]);
 
-  const { items, totalPendingKm, readyCount } = hub;
+  const { items, totalPendingKm, readyCount, confirmedTotal, provisionalTotal } = hub;
+  // Lo confirmado es lo exportable; el resto está devengado pero espera km.
+  const pendingAmount = Math.round((provisionalTotal - confirmedTotal) * 100) / 100;
 
   return (
     <PageShell>
@@ -83,11 +85,24 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Campeonatos con jueces</CardDescription>
             <CardTitle className="font-mono text-2xl">{items.length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Total confirmado</CardDescription>
+            <CardTitle className="font-mono text-2xl">
+              {formatReceiptAmountEur(confirmedTotal)}
+            </CardTitle>
+            {pendingAmount > 0 && (
+              <p className="text-xs tabular-nums text-muted-foreground">
+                + {formatReceiptAmountEur(pendingAmount)} pendiente de km
+              </p>
+            )}
           </CardHeader>
         </Card>
         <Card>
@@ -178,7 +193,19 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
                     </div>
                   </DataTableCell>
                   <DataTableCell className="text-right font-mono text-sm font-medium">
-                    {item.readyForExport ? formatReceiptAmountEur(item.grandTotal) : "—"}
+                    {/* Antes: un guion mientras faltaran km, aunque el importe
+                        estuviera calculado. La pantalla del campeonato ya
+                        enseñaba el provisional; aquí se ocultaba. */}
+                    {item.readyForExport ? (
+                      formatReceiptAmountEur(item.grandTotal)
+                    ) : item.provisionalTotal > 0 ? (
+                      <span className="font-normal text-muted-foreground">
+                        {formatReceiptAmountEur(item.provisionalTotal)}
+                        <span className="ml-1 text-[10px] uppercase tracking-wide">prov.</span>
+                      </span>
+                    ) : (
+                      "—"
+                    )}
                   </DataTableCell>
                   <DataTableCell className="text-right">
                     <Button size="sm" variant="outline" asChild>

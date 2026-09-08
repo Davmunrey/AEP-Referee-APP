@@ -195,6 +195,23 @@ export function zoneUiName(code: string | null | undefined): string {
   return raw.replace(/^\d+\-\s*/, "").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * ¿Son la misma zona? Compara códigos canónicos.
+ *
+ * Los alias y los códigos anteriores a la migración 013 («MAD», «Centro»,
+ * «2- CENTRO») siguen vivos en las columnas `zona` de texto libre —informes,
+ * propuestas y solicitudes no se normalizaron— y también los envían los
+ * clientes. Comparado en crudo, un delegado no reconocía como suya una fila de
+ * su propia zona.
+ */
+export function zonesMatch(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  if (!a || !b) return false;
+  return (resolveZoneCode(a) ?? a) === (resolveZoneCode(b) ?? b);
+}
+
 export function normalizeZoneInput(zona?: string | null): string | null {
   return resolveZoneCode(zona) ?? null;
 }

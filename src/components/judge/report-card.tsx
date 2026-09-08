@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
+import { safeExternalUrl } from "@/lib/safe-url";
 import type { RefereeReport, ReportSubjectType, ReportType } from "@/lib/types";
 import { ChevronDown, ChevronRight, ExternalLink, Pencil, Trash2 } from "lucide-react";
 
@@ -52,6 +53,11 @@ export function ReportCard({
   editingId, editTitulo, editTipo, editEvento, editContenido, editAdjuntoUrl, editError,
   competitions, onToggle, onStartEdit, onCancelEdit, onSaveEdit, onRemove, onEditField,
 }: ReportCardProps) {
+  // El enlace adjunto es texto libre: solo se pinta como `href` si es un
+  // enlace navegable (http/https/mailto). Un `javascript:` guardado antes
+  // queda neutralizado sin tocar la fila.
+  const safeAdjunto = safeExternalUrl(report.adjuntoUrl);
+
   return (
     <div className="px-4 py-3">
       <button
@@ -68,7 +74,7 @@ export function ReportCard({
           <span className="flex flex-wrap items-center gap-2">
             <span className="text-[13px] font-semibold text-foreground">{report.titulo}</span>
             {typeBadge(report.tipo, report.subjectType)}
-            {report.adjuntoUrl && (
+            {safeAdjunto && (
               <span className="text-primary" aria-label="Tiene documento adjunto" title="Documento adjunto disponible">
                 <ExternalLink className="h-3 w-3" />
               </span>
@@ -134,8 +140,8 @@ export function ReportCard({
           ) : (
             <>
               <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-foreground-secondary">{report.contenido}</p>
-              {report.adjuntoUrl && (
-                <a href={report.adjuntoUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11.5px] font-medium text-primary hover:bg-surface-hover">
+              {safeAdjunto && (
+                <a href={safeAdjunto} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11.5px] font-medium text-primary hover:bg-surface-hover">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Ver documento adjunto
                 </a>

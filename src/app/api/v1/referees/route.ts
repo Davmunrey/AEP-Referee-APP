@@ -1,3 +1,4 @@
+import { zonesMatch } from "@/lib/aep-zones";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { stripRefereeListPII } from "@/lib/api/referee-scope";
@@ -52,7 +53,9 @@ export async function POST(request: Request) {
   // delegado_zona solo puede crear jueces en su propia zona
   if (user.role === "delegado_zona") {
     if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
-    if (body.zona !== user.zona) {
+    // Códigos canónicos: un alias válido de su propia zona («2- CENTRO») se
+    // rechazaba como si fuera otra.
+    if (!zonesMatch(body.zona, user.zona)) {
       return jsonError("Solo puedes crear jueces en tu zona", 403);
     }
   }

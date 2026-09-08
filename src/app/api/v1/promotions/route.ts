@@ -1,3 +1,4 @@
+import { zonesMatch } from "@/lib/aep-zones";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   const zona = referee.zona;
 
   // Un delegado de zona solo solicita ascensos de jueces de SU zona.
-  if (user.role === "delegado_zona" && zona !== user.zona) {
+  if (user.role === "delegado_zona" && !zonesMatch(zona, user.zona)) {
     return jsonError("No puedes solicitar ascensos fuera de tu zona", 403);
   }
 
