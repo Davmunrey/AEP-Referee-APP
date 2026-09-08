@@ -2,7 +2,11 @@
 
 import { AlertTriangle, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { isRosterImprevistoMode, isRosterLockedByApproval } from "@/lib/roster-coverage";
+import {
+  isRosterImprevistoMode,
+  isRosterLockedByApproval,
+  isRosterPendingApproval,
+} from "@/lib/roster-coverage";
 
 interface RosterImprevistoBannerProps {
   aprobacion: string;
@@ -37,6 +41,34 @@ export function RosterImprevistoBanner({
         >
           <Unlock className="h-3.5 w-3.5" />
           Registrar imprevisto
+        </Button>
+      </div>
+    );
+  }
+
+  // Con propuesta pendiente la tarima queda congelada para que el snapshot que
+  // se aprobará no pueda divergir. Retirar la propuesta es la salida: sin ella,
+  // la zona quedaría bloqueada hasta que un delegado nacional decidiera.
+  if (isRosterPendingApproval(aprobacion) && canEdit) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-warning-border bg-warning-subtle px-4 py-2.5">
+        <p className="flex items-start gap-2 text-xs text-warning">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Esta tarima está <strong>pendiente de aprobación</strong> y no se puede modificar: lo que
+            se apruebe será exactamente lo que enviaste. Si necesitas cambiarla, retira la propuesta.
+          </span>
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 shrink-0 gap-1.5 border-warning-border text-xs"
+          disabled={pending}
+          onClick={onUnlock}
+        >
+          <Unlock className="h-3.5 w-3.5" />
+          Retirar propuesta
         </Button>
       </div>
     );

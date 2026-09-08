@@ -3,6 +3,8 @@ import { enumerateSlotKeys } from "@/lib/roster-template";
 import type { AssignmentsMap, Competition, EventStatus, RosterSession } from "@/lib/types";
 
 export const ROSTER_APPROVAL_LOCKED = "Aprobado";
+/** Propuesta enviada y esperando decisión nacional. */
+export const ROSTER_PENDING_APPROVAL = "Propuesta enviada";
 export const ROSTER_IMPREVISTO_STATE = "Cambio por imprevisto";
 
 export type RosterCoverage = {
@@ -128,11 +130,34 @@ export function isRosterImprevistoMode(aprobacion: string): boolean {
   return aprobacion === ROSTER_IMPREVISTO_STATE;
 }
 
+/**
+ * Con propuesta pendiente la tarima queda congelada.
+ *
+ * La propuesta guarda un *snapshot* de las asignaciones y la aprobación lo
+ * reinserta borrando lo que haya. Mientras se pudo editar en esa ventana, todo
+ * cambio hecho entre el envío y la aprobación se perdía en silencio: ni quien
+ * lo hizo ni quien aprobaba se enteraban. Congelando, el snapshot y la tarima
+ * no pueden divergir.
+ */
+export function isRosterPendingApproval(aprobacion: string | undefined): boolean {
+  return aprobacion === ROSTER_PENDING_APPROVAL;
+}
+
+/** Cualquiera de los dos estados que impiden tocar la tarima. */
+export function isRosterFrozen(aprobacion: string | undefined): boolean {
+  return isRosterLockedByApproval(aprobacion) || isRosterPendingApproval(aprobacion);
+}
+
 export function rosterCoverageLabel(coverage: Pick<RosterCoverage, "confirmados" | "requeridos" | "pct">): string {
   return `${coverage.confirmados}/${coverage.requeridos} · ${coverage.pct}%`;
 }
 
 export function rosterMutationBlockedMessage(aprobacion: string): string | null {
-  if (!isRosterLockedByApproval(aprobacion)) return null;
-  return "La tarima está aprobada. Usa «Registrar imprevisto» en la cabecera para permitir cambios.";
+  if (isRosterLockedByApproval(aprobacion)) {
+    return "La tarima está aprobada. Usa «Registrar imprevisto» en la cabecera para permitir cambios.";
+  }
+  if (isRosterPendingApproval(aprobacion)) {
+    return "La tarima está pendiente de aprobación. Usa «Retirar propuesta» en la cabecera para volver a editarla.";
+  }
+  return null;
 }
