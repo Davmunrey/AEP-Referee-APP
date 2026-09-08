@@ -1,3 +1,4 @@
+import { zonesMatch } from "@/lib/aep-zones";
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -44,7 +45,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const existing = await dataService.getReport(id);
   if (!existing) return jsonError("Informe no encontrado", 404);
-  if (user.role === "delegado_zona" && user.zona && existing.zona !== user.zona) {
+  // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
+  // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en
+  // crudo su propio delegado no podía tocarlo.
+  if (user.role === "delegado_zona" && user.zona && !zonesMatch(existing.zona, user.zona)) {
     return jsonError("Fuera de tu zona", 403);
   }
 
@@ -62,7 +66,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const existing = await dataService.getReport(id);
   if (!existing) return jsonError("Informe no encontrado", 404);
-  if (user.role === "delegado_zona" && user.zona && existing.zona !== user.zona) {
+  // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
+  // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en
+  // crudo su propio delegado no podía tocarlo.
+  if (user.role === "delegado_zona" && user.zona && !zonesMatch(existing.zona, user.zona)) {
     return jsonError("Fuera de tu zona", 403);
   }
 

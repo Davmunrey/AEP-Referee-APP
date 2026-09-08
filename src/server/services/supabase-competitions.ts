@@ -42,10 +42,14 @@ function enrichCompetitionRows(
 export const competitionService = {
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const supabase = db();
-    const [{ data }, assignmentsByComp] = await Promise.all([
+    const [{ data, error }, assignmentsByComp] = await Promise.all([
       supabase.from("competitions").select("*").order("fecha"),
       cachedLoadAllAssignments(),
     ]);
+    // Esta lista alimenta el listado, el calendario, la analítica y el hub de
+    // compensación: tragarse el error dejaba «no hay campeonatos» en las cuatro
+    // pantallas y, en el hub, un total de 0 € presentado como cifra buena.
+    if (error) throw new Error(`competitions: ${error.message}`);
     const list = enrichCompetitionRows(
       (data ?? []) as Record<string, unknown>[],
       assignmentsByComp,

@@ -386,6 +386,7 @@ export async function fetchAllRowsIn(
   column: string,
   ids: string[],
   orderColumn = "id",
+  columns = "*",
 ): Promise<Record<string, unknown>[]> {
   if (ids.length === 0) return [];
   const supabase = db();
@@ -394,12 +395,12 @@ export async function fetchAllRowsIn(
     for (let from = 0; ; from += POSTGREST_PAGE_SIZE) {
       const { data, error } = await supabase
         .from(table)
-        .select("*")
+        .select(columns)
         .in(column, idsChunk)
         .order(orderColumn, { ascending: true })
         .range(from, from + POSTGREST_PAGE_SIZE - 1);
       if (error) throw new Error(`${table}: ${error.message}`);
-      const page = (data ?? []) as Record<string, unknown>[];
+      const page = (data ?? []) as unknown as Record<string, unknown>[];
       rows.push(...page);
       if (page.length < POSTGREST_PAGE_SIZE) break;
     }

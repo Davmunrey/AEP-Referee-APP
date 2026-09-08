@@ -1,12 +1,7 @@
-import { resolveZoneCode } from "@/lib/aep-zones";
+import { zonesMatch } from "@/lib/aep-zones";
 import { jsonError } from "@/lib/api/route-utils";
 import type { Referee, SessionUser } from "@/lib/types";
 import { dataService } from "@/server/services";
-
-function zonesMatch(a: string | undefined, b: string | undefined): boolean {
-  if (!a || !b) return false;
-  return (resolveZoneCode(a) ?? a) === (resolveZoneCode(b) ?? b);
-}
 
 /**
  * Recorta los datos de contacto/domicilio de un juez para el rol `solo_ver`,

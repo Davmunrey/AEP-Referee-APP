@@ -217,15 +217,11 @@ async function loadTemplatesBatch(compIds: string[]): Promise<Map<string, Roster
   const map = new Map<string, RosterSession[]>();
   if (compIds.length === 0) return map;
 
-  const supabase = db();
-  const { data, error } = await supabase
-    .from("competitions")
-    .select("id, template, tipo")
-    .in("id", compIds);
-  // Sin plantilla no hay líneas de servicio: el hub mostraba 0 € en todos los
-  // campeonatos como si nadie hubiera arbitrado.
-  if (error) throw new Error(`competitions.template: ${error.message}`);
-  for (const row of data ?? []) {
+  // Paginado y troceado: sin plantilla no hay líneas de servicio, y con más de
+  // 1000 campeonatos en el histórico PostgREST cortaba la lectura y el hub
+  // mostraba 0 € en los que se quedaban fuera, como si nadie hubiera arbitrado.
+  const data = await fetchAllRowsIn("competitions", "id", compIds, "id", "id, template, tipo");
+  for (const row of data) {
     const r = row as { id: string; template: RosterSession[] | null; tipo: string };
     map.set(
       r.id,

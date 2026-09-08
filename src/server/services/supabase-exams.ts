@@ -1,4 +1,4 @@
-import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import { normalizeZoneInput, resolveZoneCode, zonesMatch } from "@/lib/aep-zones";
 import { importJudgesRegistryToSupabase } from "@/server/services/import-judges-registry";
 import type { ParsedJudgesRegistry } from "@/lib/judges-registry";
 import type {
@@ -159,10 +159,13 @@ export const examsService = {
     let query = supabase.from("referee_exams").select("*").order("fecha", { ascending: false });
     if (refereeId) query = query.eq("referee_id", refereeId);
     if (user && user.role === "delegado_zona" && user.zona) {
+      // La zona del perfil se canonicaliza: `referees.zona` guarda el código
+      // canónico desde la 013, así que un perfil con un alias no casaba con
+      // ningún juez y el delegado veía «no hay exámenes».
       const { data: zoneRefs, error: zoneError } = await supabase
         .from("referees")
         .select("id")
-        .eq("zona", user.zona);
+        .eq("zona", resolveZoneCode(user.zona) ?? user.zona);
       // Sin esto, un fallo de lectura dejaba la zona sin jueces y el delegado
       // veía «no hay exámenes» en vez de un error.
       if (zoneError) throw new Error(`referees: ${zoneError.message}`);
@@ -243,10 +246,17 @@ export const examsService = {
     const supabase = db();
     let query = supabase.from("referee_reports").select("*").order("created_at", { ascending: false });
     if (refereeId) query = query.eq("referee_id", refereeId);
-    if (user && user.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
     const { data, error } = await query;
     if (error) throw new Error(`referee_reports: ${error.message}`);
-    return (data ?? []).map((r) => mapReport(r as Record<string, unknown>));
+    const list = (data ?? []).map((r) => mapReport(r as Record<string, unknown>));
+    // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
+    // tabla, así que un `.eq` crudo escondía al delegado los informes guardados
+    // con códigos anteriores («MAD», «Centro»). Mismo criterio que en ascensos,
+    // propuestas y el twin en memoria.
+    if (user?.role === "delegado_zona" && user.zona) {
+      return list.filter((r) => zonesMatch(r.zona, user.zona));
+    }
+    return list;
   },
 
   createReport: async (input: {
@@ -281,7 +291,10 @@ export const examsService = {
     const row = {
       id: `rep-${crypto.randomUUID()}`,
       subject_type: input.subjectType,
-      zona,
+      // Se guarda canónica: si el juez o la competición no tenían zona, se
+      // caía en `input.zona` sin normalizar y la fila nacía ya ilegible para
+      // el filtro por zona.
+      zona: normalizeZoneInput(zona) ?? zona,
       referee_id: input.refereeId ?? null,
       referee_name: refereeName,
       competition_id: input.competitionId ?? null,

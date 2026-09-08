@@ -1,3 +1,4 @@
+import { zonesMatch } from "@/lib/aep-zones";
 import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
     }
     const competition = await dataService.getCompetition(body.competitionId);
     if (!competition) return jsonError("Competición no encontrada", 404);
-    if (user.role === "delegado_zona" && user.zona && competition.zona !== user.zona) {
+    if (user.role === "delegado_zona" && user.zona && !zonesMatch(competition.zona, user.zona)) {
       return jsonError("Fuera de tu zona", 403);
     }
     zona = competition.zona;
