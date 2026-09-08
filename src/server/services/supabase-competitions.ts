@@ -63,10 +63,11 @@ export const competitionService = {
     user?: SessionUser,
   ): Promise<{ id: string; nombre: string }[]> => {
     const supabase = db();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("competitions")
       .select("id, nombre, zona")
       .order("fecha");
+    if (error) throw new Error(`competitions: ${error.message}`);
     let list = (data ?? []) as { id: string; nombre: string; zona: string }[];
     if (user?.role === "delegado_zona" && user.zona) {
       const userZone = resolveZoneCode(user.zona);
@@ -353,10 +354,13 @@ export const competitionService = {
 
   getCompetitionAvailability: async (competitionId: string): Promise<string[]> => {
     const supabase = db();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("competition_availability")
       .select("referee_id")
       .eq("competition_id", competitionId);
+    // «Nadie ha confirmado» y «no he podido leerlo» llevan a decisiones
+    // distintas al montar la tarima.
+    if (error) throw new Error(`competition_availability: ${error.message}`);
     return (data ?? []).map((row) => String(row.referee_id));
   },
 

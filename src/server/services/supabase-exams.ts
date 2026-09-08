@@ -122,12 +122,19 @@ export const examsService = {
     let query = supabase.from("referee_exams").select("*").order("fecha", { ascending: false });
     if (refereeId) query = query.eq("referee_id", refereeId);
     if (user && user.role === "delegado_zona" && user.zona) {
-      const { data: zoneRefs } = await supabase.from("referees").select("id").eq("zona", user.zona);
+      const { data: zoneRefs, error: zoneError } = await supabase
+        .from("referees")
+        .select("id")
+        .eq("zona", user.zona);
+      // Sin esto, un fallo de lectura dejaba la zona sin jueces y el delegado
+      // veía «no hay exámenes» en vez de un error.
+      if (zoneError) throw new Error(`referees: ${zoneError.message}`);
       const ids = (zoneRefs ?? []).map((r) => (r as { id: string }).id);
       if (ids.length === 0) return [];
       query = query.in("referee_id", ids);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) throw new Error(`referee_exams: ${error.message}`);
     return (data ?? []).map((r) => mapExam(r as Record<string, unknown>));
   },
 
@@ -200,7 +207,8 @@ export const examsService = {
     let query = supabase.from("referee_reports").select("*").order("created_at", { ascending: false });
     if (refereeId) query = query.eq("referee_id", refereeId);
     if (user && user.role === "delegado_zona" && user.zona) query = query.eq("zona", user.zona);
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) throw new Error(`referee_reports: ${error.message}`);
     return (data ?? []).map((r) => mapReport(r as Record<string, unknown>));
   },
 

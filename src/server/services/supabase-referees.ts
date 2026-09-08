@@ -97,7 +97,11 @@ export const refereeService = {
       }
     }
 
-    const { data } = await query;
+    const { data, error } = await query;
+    // Un censo vacío por un fallo de lectura no es «no hay jueces»: dejaba el
+    // directorio en blanco, el panel de la tarima sin nadie a quien asignar y
+    // la bandeja de aprobación mostrando identificadores en crudo.
+    if (error) throw new Error(`referees: ${error.message}`);
     return (data ?? []).map((r) => mapReferee(r as Record<string, unknown>));
   },
 
@@ -112,7 +116,10 @@ export const refereeService = {
     const map = new Map<string, Referee>();
     if (unique.length === 0) return map;
     const supabase = db();
-    const { data } = await supabase.from("referees").select("*").in("id", unique);
+    const { data, error } = await supabase.from("referees").select("*").in("id", unique);
+    // Quien no aparece en el mapa se descarta silenciosamente aguas abajo: un
+    // fallo aquí borraba liquidaciones enteras del resumen de compensación.
+    if (error) throw new Error(`referees: ${error.message}`);
     for (const row of data ?? []) {
       const referee = mapReferee(row as Record<string, unknown>);
       map.set(referee.id, referee);
