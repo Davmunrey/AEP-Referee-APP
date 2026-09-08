@@ -1,4 +1,5 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { RosterPaidClaimError } from "@/lib/competitions/service-types";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { getPresetForEventType } from "@/lib/roster-template";
@@ -27,9 +28,14 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!comp) return jsonError("Competición no encontrada", 404);
 
   const preset = getPresetForEventType(comp.tipo);
-  const result = await dataService.saveCompetitionTemplate(competitionId, preset, user.nombre);
-  if (!result) return jsonError("No se pudo generar la plantilla", 500);
-  return jsonOk(result);
+  try {
+    const result = await dataService.saveCompetitionTemplate(competitionId, preset, user.nombre);
+    if (!result) return jsonError("No se pudo generar la plantilla", 500);
+    return jsonOk(result);
+  } catch (err) {
+    if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
+    throw err;
+  }
 }
 
 export async function PUT(request: Request, context: RouteContext) {
@@ -55,13 +61,20 @@ export async function PUT(request: Request, context: RouteContext) {
   }
   const template = parsed.data as RosterSession[];
 
-  const result = await dataService.saveCompetitionTemplate(
-    competitionId,
-    template,
-    user.nombre,
-  );
-  if (!result) return jsonError("No se pudo guardar la plantilla", 500);
-  return jsonOk(result);
+  try {
+    const result = await dataService.saveCompetitionTemplate(
+      competitionId,
+      template,
+      user.nombre,
+    );
+    if (!result) return jsonError("No se pudo guardar la plantilla", 500);
+    return jsonOk(result);
+  } catch (err) {
+    // 423, igual que vaciar la tarima: el cambio es legítimo pero hay dinero
+    // pagado que lo bloquea hasta revertirlo.
+    if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
+    throw err;
+  }
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -74,7 +87,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (blocked) return blocked;
   if (!comp) return jsonError("Competición no encontrada", 404);
 
-  const result = await dataService.saveCompetitionTemplate(competitionId, [], user.nombre);
-  if (!result) return jsonError("No se pudo borrar la plantilla", 500);
-  return jsonOk(result);
+  try {
+    const result = await dataService.saveCompetitionTemplate(competitionId, [], user.nombre);
+    if (!result) return jsonError("No se pudo borrar la plantilla", 500);
+    return jsonOk(result);
+  } catch (err) {
+    if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
+    throw err;
+  }
 }

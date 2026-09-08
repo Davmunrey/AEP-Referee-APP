@@ -22,6 +22,7 @@ import {
 import {
   paidClaimClearAllMessage,
   paidClaimRemovalMessage,
+  paidClaimTemplateMessage,
 } from "@/lib/roster-paid-claims";
 import { paidClaimRefereeIds } from "./memory-compensation-store";
 import type {
@@ -277,10 +278,24 @@ export async function saveCompetitionTemplate(
   const comp = await getCompetition(competitionId);
   if (!comp) return undefined;
   const store = getStore();
-  setCompetitionTemplate(competitionId, template);
   const assignments = store.assignments.get(competitionId) ?? {};
   const flags = store.slotFlags.get(competitionId) ?? {};
   const pruned = pruneAssignments(template, assignments, flags);
+  // Mismo corte que en producción: quitar una sesión borra sus huecos, y por
+  // ahí se colaba lo que vaciar la tarima sí impide —dejar sin puesto a un
+  // juez ya pagado—. Se comprueba antes de tocar la plantilla.
+  const paid = paidClaimRefereeIds(competitionId);
+  if (paid.size > 0) {
+    const desasignados = new Set<string>();
+    for (const [slotKey, refereeId] of Object.entries(assignments)) {
+      if (!refereeId || pruned.assignments[slotKey] === refereeId) continue;
+      if (paid.has(refereeId)) desasignados.add(refereeId);
+    }
+    if (desasignados.size > 0) {
+      throw new RosterPaidClaimError(paidClaimTemplateMessage(desasignados.size));
+    }
+  }
+  setCompetitionTemplate(competitionId, template);
   store.assignments.set(competitionId, pruned.assignments);
   store.slotFlags.set(competitionId, pruned.flags);
   const idx = store.competitions.findIndex((c) => c.id === competitionId);
