@@ -1,5 +1,5 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
-import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
+import { RefereeAssignedError, RefereeHasClaimsError } from "@/lib/competitions/service-types";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertRefereeInUserZone, stripRefereePII } from "@/lib/api/referee-scope";
@@ -155,6 +155,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     ok = await dataService.deleteReferee(id);
   } catch (err) {
     if (err instanceof RefereeHasClaimsError) return jsonError(err.message, 409);
+    if (err instanceof RefereeAssignedError) return jsonError(err.message, 409);
     throw err;
   }
   if (!ok) return jsonError("Juez no encontrado", 404);

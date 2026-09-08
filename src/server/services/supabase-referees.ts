@@ -18,7 +18,10 @@ import {
   markSanctionDelegateNotified,
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
-import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
+import {
+  RefereeAssignedError,
+  RefereeHasClaimsError,
+} from "@/lib/competitions/service-types";
 import {
   db,
   fetchAllRows,
@@ -225,9 +228,33 @@ export const refereeService = {
     if (!claimsError && (claims ?? 0) > 0) {
       throw new RefereeHasClaimsError(claims ?? 0);
     }
+    // `roster_assignments.referee_id` referencia a `referees(id)` sin ON DELETE
+    // (001:81): la base rechazaba el borrado con un 23503, el servicio devolvía
+    // `false` y la ruta contestaba «Juez no encontrado» sobre un juez que está a
+    // la vista en el directorio. Se cuenta antes para poder decir en qué está
+    // metido.
+    const { data: assignedRows, error: assignedError } = await supabase
+      .from("roster_assignments")
+      .select("competition_id")
+      .eq("referee_id", id);
+    if (assignedError) {
+      throw new Error(
+        `No se pudo comprobar si el juez está designado en alguna tarima (${assignedError.message}). No se ha borrado nada.`,
+      );
+    }
+    const assignedCompetitions = new Set(
+      (assignedRows ?? []).map((row) => String(row.competition_id)),
+    );
+    if (assignedCompetitions.size > 0) {
+      throw new RefereeAssignedError(assignedCompetitions.size);
+    }
+
     // select("id") devuelve las filas borradas: sin él, borrar un id
     // inexistente respondía {deleted:true} en vez de 404.
     const { data, error } = await supabase.from("referees").delete().eq("id", id).select("id");
+    // 23503 = foreign_key_violation: le asignaron un hueco entre la comprobación
+    // y el borrado. Mismo mensaje que el corte de arriba, no un 404 falso.
+    if (error?.code === "23503") throw new RefereeAssignedError(1);
     return !error && (data ?? []).length > 0;
   },
 
