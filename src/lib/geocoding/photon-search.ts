@@ -48,9 +48,13 @@ export async function searchPhotonAddresses(
     bbox: SPAIN_BBOX,
   });
 
+  // `fetch` no tiene timeout por defecto: el autocompletado del domicilio se
+  // quedaba colgado hasta que la plataforma mataba la función. Aquí el tope es
+  // más corto que en el resto porque esto se teclea en vivo.
   const res = await fetch(`https://photon.komoot.io/api/?${params.toString()}`, {
     headers: { Accept: "application/json" },
     next: { revalidate: 0 },
+    signal: AbortSignal.timeout(5000),
   });
 
   if (!res.ok) throw new Error(`Photon HTTP ${res.status}`);
