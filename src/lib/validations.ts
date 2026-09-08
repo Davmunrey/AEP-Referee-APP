@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { duplicateRoleKeys } from "@/lib/roster-template";
 
 export const assignRefereeSchema = z.object({
   competitionId: z.string().min(1),
@@ -56,17 +57,35 @@ const rosterGrupoSchema = z.object({
   levantadores: z.number().int().min(0).optional(),
 });
 
-export const rosterSessionSchema = z.object({
-  sesion: z.string().min(1),
-  nombre: z.string().min(1),
-  dia: z.string().min(1),
-  categorias: z.array(rosterCategoriaSchema),
-  horarioCompeticion: z.string(),
-  horarioPesaje: z.string(),
-  roles: z.array(rosterRoleSchema).min(1),
-  pesajeRoles: z.array(rosterRoleSchema),
-  grupos: z.array(rosterGrupoSchema).optional(),
-});
+/**
+ * Dentro de una sesión cada rol va en UNA fila con su número de plazas.
+ *
+ * La clave de cada hueco es `${sesion}_${rol}_${indice}`, así que dos filas
+ * «Juez Central» en la misma sesión —o un rol repetido entre el bloque de
+ * competición y el de pesaje— generan claves idénticas: la segunda fila no
+ * añade huecos asignables, pero sí sumaba plazas requeridas. Con la tarima
+ * entera cubierta quedaba un hueco libre imposible de ocupar y el campeonato
+ * no llegaba nunca a «Completo».
+ */
+export const rosterSessionSchema = z
+  .object({
+    sesion: z.string().min(1),
+    nombre: z.string().min(1),
+    dia: z.string().min(1),
+    categorias: z.array(rosterCategoriaSchema),
+    horarioCompeticion: z.string(),
+    horarioPesaje: z.string(),
+    roles: z.array(rosterRoleSchema).min(1),
+    pesajeRoles: z.array(rosterRoleSchema),
+    grupos: z.array(rosterGrupoSchema).optional(),
+  })
+  .refine(
+    (session) => duplicateRoleKeys(session).length === 0,
+    {
+      message:
+        "Una sesión repite un rol; usa una sola fila por rol con el número de plazas.",
+    },
+  );
 
 /**
  * Los códigos de sesión tienen que ser únicos: la clave de cada hueco es

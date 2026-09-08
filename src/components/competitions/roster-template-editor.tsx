@@ -7,7 +7,12 @@ import { selectFieldClass } from "@/lib/design-tokens";
 import { swapCollapsedIndexes } from "./roster-session-helpers";
 import { formatTimeRange, parseTimeRange } from "@/lib/time-range";
 import { cn } from "@/lib/utils";
-import { ROLE_LABELS, cloneTemplate } from "@/lib/roster-template";
+import {
+  ROLE_LABELS,
+  cloneTemplate,
+  duplicateRoleKeys,
+  sessionRoleEntries,
+} from "@/lib/roster-template";
 import type { RoleKey, RosterCategoria, RosterGrupo, RosterRole, RosterSession } from "@/lib/types";
 import { ChevronDown, ChevronUp, FileUp, Plus, Trash2 } from "lucide-react";
 import { ScheduleImportDialog } from "@/components/competitions/schedule-import-dialog";
@@ -88,6 +93,17 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
     return repeated;
   }, [sessions]);
 
+  // Mismo problema que los códigos de sesión repetidos, pero dentro de una
+  // sesión: dos filas del mismo rol comparten claves de hueco. El servidor lo
+  // rechaza; aquí se avisa antes de intentar guardar.
+  const duplicateRoleSessions = useMemo(
+    () =>
+      sessions
+        .map((s) => ({ sesion: s.sesion, repeated: duplicateRoleKeys(s) }))
+        .filter((entry) => entry.repeated.length > 0),
+    [sessions],
+  );
+
   const handleCancel = () => {
     if (isDirty) {
       const ok = typeof window !== "undefined" && window.confirm("Tienes cambios sin guardar en la plantilla. ¿Descartar y volver a la tarima?");
@@ -121,7 +137,13 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
     }));
 
   const addRole = (si: number, block: "roles" | "pesajeRoles") => {
-    const key: RoleKey = block === "pesajeRoles" ? "pesaje" : "central";
+    // Añadir siempre "central" (o "pesaje") repetía el rol si la sesión ya lo
+    // tenía, y dos filas del mismo rol comparten huecos: la segunda no añade
+    // plazas asignables pero sí requeridas. Se propone el primer rol libre.
+    const allowed = block === "pesajeRoles" ? PESAJE_ROLE_KEYS : COMPETITION_ROLE_KEYS;
+    const session = sessions[si];
+    const used = new Set(session ? sessionRoleEntries(session).map((r) => r.key) : []);
+    const key: RoleKey = allowed.find((k) => !used.has(k)) ?? allowed[0]!;
     const row: RosterRole = { rol: ROLE_LABELS[key], slots: 1, key };
     setSessions((prev) => prev.map((s, i) => i === si ? (block === "roles" ? { ...s, roles: [...s.roles, row] } : { ...s, pesajeRoles: [...s.pesajeRoles, row] }) : s));
   };
@@ -211,7 +233,7 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
             type="button"
             size="sm"
             onClick={() => onSave(sessions)}
-            disabled={saving || duplicateSessionCodes.size > 0}
+            disabled={saving || duplicateSessionCodes.size > 0 || duplicateRoleSessions.length > 0}
           >
             {saving ? "Guardando…" : "Guardar plantilla"}
           </Button>
@@ -222,6 +244,22 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
         <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           Hay sesiones que repiten código ({[...duplicateSessionCodes].join(", ").toUpperCase()}).
           Cada sesión necesita uno distinto: si no, comparten los huecos de la tarima.
+        </p>
+      )}
+
+      {duplicateRoleSessions.length > 0 && (
+        <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {duplicateRoleSessions
+            .map(
+              (entry) =>
+                `${entry.sesion || "(sin código)"}: ${entry.repeated
+                  .map((key) => ROLE_LABELS[key])
+                  .join(", ")}`,
+            )
+            .join(" · ")}
+          {" "}
+          — cada rol va en una sola fila con su número de plazas; repetido, la
+          segunda fila no añade huecos que se puedan cubrir.
         </p>
       )}
 

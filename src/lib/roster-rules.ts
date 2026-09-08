@@ -182,16 +182,14 @@ export function countOpenSlots(
   }[],
   assignments: Record<string, string>,
 ): number {
+  // El total sale de las claves de hueco, no de sumar `slots`: un rol repetido
+  // en la misma sesión comparte clave, así que sumar dejaba un hueco libre
+  // fantasma que nadie podía ocupar.
   const validKeys = new Set(enumerateSlotKeys(template as RosterSession[]));
-  let total = 0;
-  for (const session of template) {
-    for (const role of session.roles) total += role.slots;
-    for (const role of session.pesajeRoles ?? []) total += role.slots;
-  }
   const filled = Object.entries(assignments).filter(
     ([key, refereeId]) => Boolean(refereeId) && validKeys.has(key),
   ).length;
-  return Math.max(0, total - filled);
+  return Math.max(0, validKeys.size - filled);
 }
 
 export function isSlotKeyInTemplate(template: RosterSession[], slotKey: string): boolean {
