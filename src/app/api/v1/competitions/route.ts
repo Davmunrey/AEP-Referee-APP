@@ -41,10 +41,14 @@ export async function POST(request: Request) {
   // Solo el super_admin puede asignar una zona arbitraria.
   let zona: string;
   if (user.role === "delegado_zona") {
-    if (body.zona && body.zona !== user.zona) {
+    // Se comparan códigos canónicos: los alias de zona («Centro», «MAD») son
+    // válidos en el resto de la aplicación, y comparados en crudo rechazaban
+    // como «fuera de tu zona» una competición de la zona propia.
+    const userZone = resolveZoneCode(user.zona ?? "") ?? user.zona ?? "";
+    if (body.zona && resolveZoneCode(String(body.zona)) !== userZone) {
       return jsonError("No puedes crear competiciones fuera de tu zona", 403);
     }
-    zona = user.zona ?? "";
+    zona = userZone;
     if (!zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
   } else {
     // Una zona no reconocida se normalizaba a null en el servicio: la

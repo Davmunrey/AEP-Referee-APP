@@ -636,12 +636,20 @@ export const rosterService = {
       evento: comp.nombre,
       hace: "ahora",
     });
-    const { data } = await supabase
+    const { data, error: readError } = await supabase
       .from("approval_proposals")
       .select("*")
       .eq(competitionIdColumn, competitionId)
       .eq("status", "pendiente")
       .single();
+    // La propuesta YA está creada y la competición marcada. Devolver `undefined`
+    // hacía que la ruta contestara «No se pudo enviar la propuesta»: quien
+    // enviaba la tarima creía que no había pasado nada.
+    if (readError && (readError as { code?: string }).code !== "PGRST116") {
+      throw new Error(
+        `La propuesta se envió, pero no se pudo releer (${readError.message}). Recarga la pantalla.`,
+      );
+    }
     return data ? mapApproval(data as Record<string, unknown>) : undefined;
   },
 

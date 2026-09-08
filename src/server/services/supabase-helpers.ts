@@ -356,6 +356,31 @@ export function chunkList<T>(items: T[], size: number): T[][] {
 
 /** Lee todas las filas de `table` cuyo `column` esté en `ids`, paginando y
  * troceando el filtro. Propaga el error en vez de devolver filas de menos. */
+/**
+ * Todas las filas de una tabla, paginando. PostgREST corta en 1000 filas y una
+ * lectura truncada se veía como «esto es todo lo que hay».
+ */
+export async function fetchAllRows(
+  table: string,
+  columns = "*",
+  orderColumn = "id",
+): Promise<Record<string, unknown>[]> {
+  const supabase = db();
+  const rows: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += POSTGREST_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from(table)
+      .select(columns)
+      .order(orderColumn, { ascending: true })
+      .range(from, from + POSTGREST_PAGE_SIZE - 1);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    const page = (data ?? []) as unknown as Record<string, unknown>[];
+    rows.push(...page);
+    if (page.length < POSTGREST_PAGE_SIZE) break;
+  }
+  return rows;
+}
+
 export async function fetchAllRowsIn(
   table: string,
   column: string,

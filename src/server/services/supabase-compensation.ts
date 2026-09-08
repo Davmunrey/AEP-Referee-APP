@@ -69,10 +69,15 @@ async function loadStoredClaims(
   competition: Competition,
 ): Promise<Map<string, CompensationClaim>> {
   const supabase = db();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("judge_compensation_claims")
     .select("*")
     .eq("competition_id", competitionId);
+  // Tragarse el error era pérdida de dinero, no una pantalla vacía: el resumen
+  // se reconstruía desde la tarima como si nunca se hubiera guardado nada, y
+  // `recalculate` escribía encima esas liquidaciones recién nacidas —borrador,
+  // sin km, sin overrides— sobre las reales, incluidas las ya pagadas.
+  if (error) throw new Error(`judge_compensation_claims: ${error.message}`);
   const rows = data ?? [];
   const dutyMap = await loadDutyLinesByClaim(rows.map((r) => String((r as Record<string, unknown>).id)));
   const result = new Map<string, CompensationClaim>();
@@ -213,7 +218,13 @@ async function loadTemplatesBatch(compIds: string[]): Promise<Map<string, Roster
   if (compIds.length === 0) return map;
 
   const supabase = db();
-  const { data } = await supabase.from("competitions").select("id, template, tipo").in("id", compIds);
+  const { data, error } = await supabase
+    .from("competitions")
+    .select("id, template, tipo")
+    .in("id", compIds);
+  // Sin plantilla no hay líneas de servicio: el hub mostraba 0 € en todos los
+  // campeonatos como si nadie hubiera arbitrado.
+  if (error) throw new Error(`competitions.template: ${error.message}`);
   for (const row of data ?? []) {
     const r = row as { id: string; template: RosterSession[] | null; tipo: string };
     map.set(

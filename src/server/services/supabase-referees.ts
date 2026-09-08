@@ -19,7 +19,7 @@ import {
   revokeRefereeSanction,
 } from "@/server/services/referee-sanctions";
 import { RefereeHasClaimsError } from "@/lib/competitions/service-types";
-import { db, pushActivity } from "./supabase-helpers";
+import { db, fetchAllRows, pushActivity } from "./supabase-helpers";
 
 async function loadRefereeCompetitionHistory(
   refereeId: string,
@@ -97,7 +97,11 @@ export const refereeService = {
       }
     }
 
-    const { data } = await query;
+    const { data, error } = await query;
+    // Un censo vacío por un fallo de lectura no es «no hay jueces»: dejaba el
+    // directorio en blanco, el panel de la tarima sin nadie a quien asignar y
+    // la bandeja de aprobación mostrando identificadores en crudo.
+    if (error) throw new Error(`referees: ${error.message}`);
     return (data ?? []).map((r) => mapReferee(r as Record<string, unknown>));
   },
 
@@ -112,7 +116,10 @@ export const refereeService = {
     const map = new Map<string, Referee>();
     if (unique.length === 0) return map;
     const supabase = db();
-    const { data } = await supabase.from("referees").select("*").in("id", unique);
+    const { data, error } = await supabase.from("referees").select("*").in("id", unique);
+    // Quien no aparece en el mapa se descarta silenciosamente aguas abajo: un
+    // fallo aquí borraba liquidaciones enteras del resumen de compensación.
+    if (error) throw new Error(`referees: ${error.message}`);
     for (const row of data ?? []) {
       const referee = mapReferee(row as Record<string, unknown>);
       map.set(referee.id, referee);
@@ -125,9 +132,14 @@ export const refereeService = {
     // max(jN)+1 en vez de count(): tras un borrado, count+1 colisiona con una
     // PK existente y el alta de jueces queda rota para siempre. Mismo criterio
     // que el backend en memoria. El reintento cubre altas concurrentes.
-    const { data: idRows } = await supabase.from("referees").select("id");
+    //
+    // Paginado y con el error a la vista: PostgREST corta en 1000 filas, así que
+    // con un censo mayor el máximo se calculaba sobre un trozo arbitrario y el
+    // alta chocaba con identificadores ya usados; y si la lectura fallaba,
+    // `maxSeq` se quedaba en 0 y se intentaba dar de alta j001 otra vez.
+    const idRows = await fetchAllRows("referees", "id", "id");
     let maxSeq = 0;
-    for (const r of idRows ?? []) {
+    for (const r of idRows) {
       const m = /^j(\d+)$/.exec(String(r.id));
       if (m) maxSeq = Math.max(maxSeq, Number(m[1]));
     }

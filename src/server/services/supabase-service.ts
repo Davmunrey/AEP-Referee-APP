@@ -40,6 +40,7 @@ export const supabaseDataService = {
   updateCompetition: competitionService.updateCompetition,
   deleteCompetition: competitionService.deleteCompetition,
   getCompetitionAvailability: competitionService.getCompetitionAvailability,
+  getRefereeBusyMap: competitionService.getRefereeBusyMap,
   addCompetitionAvailability: competitionService.addCompetitionAvailability,
   removeCompetitionAvailability: competitionService.removeCompetitionAvailability,
   findCompetitionDuplicates: (user?: SessionUser) =>

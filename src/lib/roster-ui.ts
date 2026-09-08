@@ -134,6 +134,8 @@ export interface SlotSuggestionContext {
   confirmedIds?: Set<string>;
   /** Jueces ya asignados en la competición (para des-priorizarlos). */
   assignedIds?: Set<string>;
+  /** Jueces ya asignados en OTRO campeonato que solapa fechas con este. */
+  busyElsewhereIds?: Set<string>;
 }
 
 function zonesMatch(a: string | undefined, b: string | undefined): boolean {
@@ -172,6 +174,9 @@ export function scoreRefereeForSlot(referee: Referee, ctx: SlotSuggestionContext
   if (getRecommendationWarning(referee, ctx.roleKey, ctx.eventType, ctx.regulations)) score -= 20;
   if (ctx.competitionZona && zonesMatch(referee.zona, ctx.competitionZona)) score += 15; // misma zona
   if (ctx.assignedIds?.has(referee.id)) score -= 12; // ya ocupado en la competición
+  // Ya está en otro campeonato de estas fechas: no se bloquea (la decisión es
+  // de quien monta la tarima), pero deja de proponerse el primero.
+  if (ctx.busyElsewhereIds?.has(referee.id)) score -= 60;
   return score;
 }
 
