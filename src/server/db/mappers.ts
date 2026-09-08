@@ -174,7 +174,7 @@ function parseCompensationClubs(raw: unknown): import("@/lib/judge-compensation/
 }
 
 /** `assignments` es JSONB: solo un objeto plano es utilizable como mapa. */
-function assignmentsFromJsonb(raw: unknown): AssignmentsMap {
+export function assignmentsFromJsonb(raw: unknown): AssignmentsMap {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const out: AssignmentsMap = {};
   for (const [slotKey, refereeId] of Object.entries(raw as Record<string, unknown>)) {
