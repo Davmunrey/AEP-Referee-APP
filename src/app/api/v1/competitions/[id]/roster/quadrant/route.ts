@@ -2,7 +2,6 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { jsonError } from "@/lib/api/route-utils";
 import { generateQuadrantHtml } from "@/lib/quadrant-html";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -29,25 +28,21 @@ export async function GET(request: Request, context: RouteContext) {
 
   // Solo hacen falta los jueces asignados a la tarima, no el censo completo.
   const assignedIds = [...new Set(Object.values(roster.assignments ?? {}).filter(Boolean))];
-  const refMap = new Map<string, { id: string; nombre: string; nivel: string }>();
-  if (assignedIds.length > 0) {
-    const supabase = createAdminClient();
-    const { data: referees, error } = await supabase
-      .from("referees")
-      .select("id, nombre, nivel")
-      .in("id", assignedIds)
-      .returns<Array<{ id: string; nombre: string; nivel: string }>>();
+  // Vía dataService y no con el cliente de Supabase a pelo: la ruta reventaba
+  // con un 500 en el backend en memoria (sin SUPABASE_SERVICE_ROLE_KEY), que es
+  // el modo de desarrollo y el de las capturas del manual.
+  let refMap: Map<string, { nombre: string; nivel: string }>;
+  try {
+    refMap = await dataService.getRefereesByIds(assignedIds);
+  } catch {
     // Sin nombres no hay cuadrante: las filas de rol se omiten cuando todas sus
     // celdas quedan vacías, así que un fallo de lectura devolvía un documento
     // con los días y las sesiones pero sin un solo juez —con aspecto de válido,
     // y camino de la impresora y de la sede.
-    if (error) {
-      return jsonError(
-        "No se pudieron leer los jueces designados. Vuelve a intentarlo antes de imprimir el cuadrante.",
-        503,
-      );
-    }
-    for (const r of referees ?? []) refMap.set(r.id, r);
+    return jsonError(
+      "No se pudieron leer los jueces designados. Vuelve a intentarlo antes de imprimir el cuadrante.",
+      503,
+    );
   }
 
   const html = generateQuadrantHtml(

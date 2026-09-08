@@ -17,6 +17,7 @@ export const supabaseDataService = {
   // ── Referees ──────────────────────────────────────────────────────────────
   getReferees: refereeService.getReferees,
   getReferee: refereeService.getReferee,
+  getRefereesByIds: refereeService.getRefereesByIds,
   createReferee: refereeService.createReferee,
   updateReferee: refereeService.updateReferee,
   deleteReferee: refereeService.deleteReferee,
