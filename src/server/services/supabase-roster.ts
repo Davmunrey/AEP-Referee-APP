@@ -76,6 +76,31 @@ function validateAssignWithData(
   return validateAssignment(referee, parsed.roleKey as RoleKey, comp.tipo);
 }
 
+/**
+ * Marca el resultado de la revisión en el campeonato.
+ *
+ * El error de este UPDATE se descartaba: la propuesta quedaba aprobada y el
+ * acta guardada, pero el campeonato seguía en «Propuesta enviada» e
+ * «Incompleto» sin que nadie se enterara — y reintentar la revisión ya no
+ * sirve, porque la propuesta ha dejado de estar pendiente. Un reintento cubre
+ * el fallo pasajero; si tampoco sale, se dice exactamente qué quedó a medias.
+ */
+async function markCompetitionReviewed(
+  competitionId: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const supabase = db();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { error } = await supabase.from("competitions").update(patch).eq("id", competitionId);
+    if (!error) return;
+    if (attempt === 1) {
+      throw new Error(
+        `La revisión se guardó y el acta también, pero el campeonato no llegó a marcarse (${error.message}). Su estado en el listado no refleja la revisión.`,
+      );
+    }
+  }
+}
+
 export const rosterService = {
   getRoster: async (
     competitionId: string,
@@ -367,21 +392,27 @@ export const rosterService = {
       // colisión entre dos asignaciones simultáneas dejaba el puesto vacío en
       // vez de conservar al que ya estaba. Se restaura la fila anterior.
       const previousRefereeId = assignments[slotKey];
-      if (previousRefereeId) {
-        await supabase.from("roster_assignments").upsert({
-          competition_id: competitionId,
-          slot_key: slotKey,
-          referee_id: previousRefereeId,
-          flags: existingFlags[slotKey] ?? {},
-          cross_zone: Boolean(existingCrossZone[slotKey]),
-          cross_zone_reason: crossZoneReasons[slotKey] ?? null,
-        });
-      } else {
-        await supabase
-          .from("roster_assignments")
-          .delete()
-          .eq("competition_id", competitionId)
-          .eq("slot_key", slotKey);
+      const undo = previousRefereeId
+        ? await supabase.from("roster_assignments").upsert({
+            competition_id: competitionId,
+            slot_key: slotKey,
+            referee_id: previousRefereeId,
+            flags: existingFlags[slotKey] ?? {},
+            cross_zone: Boolean(existingCrossZone[slotKey]),
+            cross_zone_reason: crossZoneReasons[slotKey] ?? null,
+          })
+        : await supabase
+            .from("roster_assignments")
+            .delete()
+            .eq("competition_id", competitionId)
+            .eq("slot_key", slotKey);
+      // Si deshacer falla, la asignación se ha quedado puesta: decir solo
+      // «no se pudo, hay un conflicto» dejaba al usuario creyendo que la
+      // tarima seguía como antes cuando el juez sí había entrado.
+      if (undo.error) {
+        return {
+          error: `${recheck.error} Además, no se pudo deshacer el cambio, así que la asignación puede haber quedado aplicada: recarga la tarima antes de seguir.`,
+        };
       }
       return { error: recheck.error };
     }
@@ -894,8 +925,12 @@ export const rosterService = {
             // El delete ya vació las filas: restauramos exactamente lo que había
             // y revertimos la propuesta a "pendiente" para no dejar un acta vacía
             // marcada como aprobada. No marcamos la competición como Aprobado.
+            // El «rollback» también puede fallar, y hasta ahora se daba por
+            // hecho que salía bien: el mensaje prometía una tarima intacta y
+            // una propuesta pendiente sin comprobar ni una cosa ni la otra.
+            const problemas: string[] = [];
             if (liveRows && liveRows.length) {
-              await supabase.from("roster_assignments").insert(
+              const { error: restoreError } = await supabase.from("roster_assignments").insert(
                 liveRows.map((r) => ({
                   competition_id: proposalCompetitionId,
                   slot_key: r.slot_key,
@@ -905,32 +940,36 @@ export const rosterService = {
                   cross_zone_reason: r.cross_zone_reason ?? null,
                 })),
               );
+              if (restoreError) {
+                problemas.push(
+                  "tampoco se pudieron restaurar las asignaciones anteriores, así que la tarima ha quedado vacía",
+                );
+              }
             }
             const resetReviewer = Object.fromEntries(
               Object.keys(reviewerIdCol).map((k) => [k, null]),
             );
-            await supabase
+            const { error: resetError } = await supabase
               .from("approval_proposals")
               .update({ status: "pendiente", reviewed_by: null, reviewed_at: null, comment: null, ...resetReviewer })
               .eq("id", id);
+            if (resetError) {
+              problemas.push("la propuesta se ha quedado marcada como aprobada");
+            }
             throw new Error(
-              "No se pudo guardar el acta aprobada; la propuesta sigue pendiente. Inténtalo de nuevo.",
+              problemas.length === 0
+                ? "No se pudo guardar el acta aprobada; la propuesta sigue pendiente y la tarima se ha dejado como estaba. Inténtalo de nuevo."
+                : `No se pudo guardar el acta aprobada y ${problemas.join(", y ")}. Revisa la tarima antes de volver a enviarla.`,
             );
           }
         }
-        await supabase
-          .from("competitions")
-          .update({
-            aprobacion: "Aprobado",
-            estado: "Completo",
-            confirmados: Object.values(assignments).filter(Boolean).length,
-          })
-          .eq("id", proposalCompetitionId);
+        await markCompetitionReviewed(proposalCompetitionId, {
+          aprobacion: "Aprobado",
+          estado: "Completo",
+          confirmados: Object.values(assignments).filter(Boolean).length,
+        });
       } else {
-        await supabase
-          .from("competitions")
-          .update({ aprobacion: "Rechazado" })
-          .eq("id", proposalCompetitionId);
+        await markCompetitionReviewed(proposalCompetitionId, { aprobacion: "Rechazado" });
       }
     }
     await pushActivity({
