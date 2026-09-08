@@ -41,6 +41,20 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 /** Conjunto canónico de roles asignables. Fuente única para validar en la API. */
 export const USER_ROLES = Object.keys(ROLE_LABELS) as UserRole[];
 
+/**
+ * Roles cuyas cuentas solo puede gestionar un super admin.
+ *
+ * `super_admin` porque lo puede todo, y el responsable financiero porque ve y
+ * exporta el dinero: gestionar cuentas no debería incluir, de propina, el
+ * acceso a la caja. Vive aquí —y no en `auth/session`— porque la pantalla de
+ * administración es un componente de cliente y ese módulo arrastra código de
+ * servidor.
+ */
+export const SUPER_ADMIN_ONLY_ROLES: readonly UserRole[] = [
+  "super_admin",
+  "responsable_financiero_jueces",
+];
+
 /** Organizador del campeonato para el recibo de compensación. */
 export type CompensationOrganizerType = "club" | "aep" | "custom";
 export type ApprovalStatus = "pendiente" | "aprobado" | "rechazado";
