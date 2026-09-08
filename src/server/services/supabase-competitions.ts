@@ -19,6 +19,7 @@ import {
   cachedLoadAllAssignments,
   db,
   fetchAllRowsIn,
+  isMissingTableError,
   hasApprovalCompetitionColumns,
   hasHistoryCompetitionColumn,
   loadAssignments,
@@ -231,7 +232,14 @@ export const competitionService = {
       .from("judge_compensation_claims")
       .select("id", { count: "exact", head: true })
       .eq("competition_id", id);
-    // Si la tabla aún no existe (024 sin aplicar) no hay nada que proteger.
+    // Solo la tabla ausente (024 sin aplicar) significa «no hay nada que
+    // proteger». Cualquier otro error dejaba pasar el borrado sin saber si
+    // había dinero detrás, y la cascada se lo llevaba.
+    if (claimsError && !isMissingTableError(claimsError)) {
+      throw new Error(
+        `No se pudo comprobar si el campeonato tiene liquidaciones (${claimsError.message}). No se ha borrado nada.`,
+      );
+    }
     if (!claimsError && (claims ?? 0) > 0) {
       throw new CompetitionHasClaimsError(claims ?? 0);
     }
