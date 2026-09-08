@@ -103,6 +103,7 @@ export const supabaseDataService = {
     rosterService.unlockImprevisto(competitionId, actor, competitionService.getCompetition),
   getApprovals: rosterService.getApprovals,
   getLatestApproval: rosterService.getLatestApproval,
+  getPaidClaimRefereeIds: rosterService.getPaidClaimRefereeIds,
   reviewApproval: (id: string, approve: boolean, reviewer: string, reviewerId?: string, comment?: string) =>
     rosterService.reviewApproval(id, approve, reviewer, reviewerId, competitionService.getCompetition, comment),
   getRosterHistory: rosterService.getRosterHistory,

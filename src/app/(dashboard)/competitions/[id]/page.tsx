@@ -23,6 +23,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
     confirmedRefereeIds,
     refereeBusyMap,
     lastApproval,
+    paidRefereeIds,
   ] =
     await Promise.all([
       dataService.getCompetition(id),
@@ -33,6 +34,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       dataService.getCompetitionAvailability(id),
       dataService.getRefereeBusyMap(id),
       dataService.getLatestApproval(id),
+      dataService.getPaidClaimRefereeIds(id),
     ]);
   if (!competition || !roster) notFound();
   // Mismo criterio canónico que `assertCompetitionInUserZone` en la API: sin
@@ -58,6 +60,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       regulations={regulations}
       initialConfirmedIds={confirmedRefereeIds}
       refereeBusyMap={refereeBusyMap}
+      paidRefereeIds={paidRefereeIds}
       lastReview={
         lastApproval && {
           status: lastApproval.status,

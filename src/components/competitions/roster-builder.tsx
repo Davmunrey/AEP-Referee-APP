@@ -83,6 +83,7 @@ const EMPTY_CROSS_ZONE_MAP: CrossZoneMap = {};
 const EMPTY_REGULATIONS: RegulationRule[] = [];
 const EMPTY_CONFIRMED_IDS: string[] = [];
 const EMPTY_BUSY_MAP: RefereeBusyMap = {};
+const EMPTY_PAID_REFEREE_IDS: string[] = [];
 
 interface RosterBuilderProps {
   competition: Competition;
@@ -103,6 +104,8 @@ interface RosterBuilderProps {
   refereeBusyMap?: RefereeBusyMap;
   /** Resolución de la última propuesta, para explicar un rechazo. */
   lastReview?: RosterLastReview;
+  /** Jueces con la liquidación pagada: su puesto no se puede sustituir. */
+  paidRefereeIds?: string[];
   defaultZonaFilter?: string;
 }
 
@@ -122,6 +125,7 @@ export function RosterBuilder({
   initialConfirmedIds = EMPTY_CONFIRMED_IDS,
   refereeBusyMap = EMPTY_BUSY_MAP,
   lastReview,
+  paidRefereeIds = EMPTY_PAID_REFEREE_IDS,
   defaultZonaFilter = "TODAS",
 }: RosterBuilderProps) {
   const router = useRouter();
@@ -135,6 +139,7 @@ export function RosterBuilder({
   const [assignments, setAssignments] = useState(initialAssignments);
   const [flags, setFlags] = useState<FlagsMap>(initialFlags);
   const [crossZoneMap, setCrossZoneMap] = useState<CrossZoneMap>(initialCrossZoneMap);
+  const paidRefereeIdSet = useMemo(() => new Set(paidRefereeIds), [paidRefereeIds]);
   const [isEditing, setIsEditing] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -627,6 +632,7 @@ export function RosterBuilder({
                           <SessionBlock
                             key={activeSession.sesion} session={activeSession}
                             assignments={assignments} flags={flags} crossZoneMap={crossZoneMap}
+                            paidRefereeIds={paidRefereeIdSet}
                             getReferee={getReferee} selectedSlot={selectedSlot}
                             onSelectSlot={setSelectedSlot} onDrop={onDrop} onClear={persistClear}
                             onToggleFlag={toggleFlag} checkViolation={checkViolation}
