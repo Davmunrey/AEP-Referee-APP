@@ -13,9 +13,52 @@ import {
   POSTGREST_PAGE_SIZE,
 } from "./supabase-helpers";
 import { getStore } from "@/server/store";
+import { todayIso } from "@/lib/business-date";
 
 function db() {
   return createAdminClient();
+}
+
+/**
+ * Sanciones por juez, distinguiendo las vivas de las que ya son historial.
+ *
+ * El Excel del censo no sabe nada de sanciones: la columna «activo» vuelve a
+ * poner `estado: Activo` y `disp: true` encima de un juez sancionado, y la
+ * ficha quedaba designable con la sanción todavía viva debajo —la misma
+ * puerta trasera que el PATCH de la ficha sí cierra—. Y en «reemplazar el
+ * censo», borrar al juez se lleva sus sanciones por la cascada de la clave
+ * ajena (014:7): el historial disciplinario desaparecía en una reimportación
+ * de rutina.
+ *
+ * La tabla ausente (014 sin aplicar) es el único error tolerable: con
+ * cualquier otro no se sabe a quién se está protegiendo y se aborta.
+ */
+async function loadSanctionedRefereeIds(): Promise<{
+  withHistory: Set<string>;
+  withActive: Set<string>;
+}> {
+  const supabase = db();
+  const withHistory = new Set<string>();
+  const withActive = new Set<string>();
+  const { data, error } = await supabase
+    .from("referee_sanctions")
+    .select("referee_id, status, fecha_fin");
+  if (error) {
+    if (isMissingTableError(error)) return { withHistory, withActive };
+    throw new Error(
+      `No se pudo comprobar qué jueces tienen sanciones (${error.message}). No se ha tocado el censo.`,
+    );
+  }
+  const hoy = todayIso();
+  for (const row of data ?? []) {
+    const refereeId = String((row as { referee_id: unknown }).referee_id);
+    withHistory.add(refereeId);
+    const r = row as { status?: unknown; fecha_fin?: unknown };
+    if (String(r.status) === "activa" && String(r.fecha_fin ?? "").slice(0, 10) >= hoy) {
+      withActive.add(refereeId);
+    }
+  }
+  return { withHistory, withActive };
 }
 
 export async function importJudgesRegistryToSupabase(
@@ -24,6 +67,7 @@ export async function importJudgesRegistryToSupabase(
 ): Promise<JudgesRegistryImportApplyResult> {
   const supabase = db();
   const warnings = [...parsed.warnings];
+  const sanctioned = await loadSanctionedRefereeIds();
   let refereesCreated = 0;
   let refereesUpdated = 0;
   let refereesSkipped = 0;
@@ -78,7 +122,9 @@ export async function importJudgesRegistryToSupabase(
     const allRefs = await fetchAllRows("referees", "id", "id");
     const deletable = allRefs
       .map((r) => String(r.id))
-      .filter((id) => !assignedIds.has(id) && !claimedIds.has(id));
+      .filter(
+        (id) => !assignedIds.has(id) && !claimedIds.has(id) && !sanctioned.withHistory.has(id),
+      );
     if (deletable.length) {
       const { error } = await supabase.from("referees").delete().in("id", deletable);
       if (error) warnings.push(`No se pudieron eliminar jueces previos: ${error.message}`);
@@ -92,6 +138,14 @@ export async function importJudgesRegistryToSupabase(
     if (claimedOnly.length) {
       warnings.push(
         `${claimedOnly.length} juez(ces) con liquidaciones registradas no se eliminaron (protección de compensaciones); se actualizan con el Excel.`,
+      );
+    }
+    const sanctionedOnly = [...sanctioned.withHistory].filter(
+      (id) => !assignedIds.has(id) && !claimedIds.has(id),
+    );
+    if (sanctionedOnly.length) {
+      warnings.push(
+        `${sanctionedOnly.length} juez(ces) con sanciones registradas no se eliminaron (borrarlos se llevaría su historial disciplinario); se actualizan con el Excel.`,
       );
     }
   }
@@ -112,6 +166,7 @@ export async function importJudgesRegistryToSupabase(
     if (ref.excel_id != null) idByExcelId.set(Number(ref.excel_id), String(ref.id));
   }
 
+  let sanctionKept = 0;
   const toInsert: { row: Record<string, unknown>; nombre: string }[] = [];
   for (const r of parsed.referees) {
     const row = {
@@ -140,7 +195,19 @@ export async function importJudgesRegistryToSupabase(
 
     const targetId = idByExcelId.get(r.excelId) ?? (existingIds.has(r.id) ? r.id : undefined);
     if (targetId) {
-      const { error } = await supabase.from("referees").update(row).eq("id", targetId);
+      // `id` fuera del payload: la fila se localiza por `targetId`, así que
+      // incluirlo solo puede reescribir la clave primaria de un juez existente
+      // y dejar colgadas las referencias que no son clave ajena (las
+      // asignaciones guardadas dentro de una propuesta de aprobación).
+      //
+      // Y el Excel no sabe de sanciones: su columna «activo» devolvía a Activo
+      // y disponible a un juez sancionado, con la sanción todavía viva debajo.
+      // El resto de sus datos sí se actualiza.
+      const { id: _id, estado, disp, ...resto } = row;
+      const conSancionViva = sanctioned.withActive.has(targetId);
+      if (conSancionViva) sanctionKept++;
+      const updatePayload = conSancionViva ? resto : { ...resto, estado, disp };
+      const { error } = await supabase.from("referees").update(updatePayload).eq("id", targetId);
       if (error) {
         refereesSkipped++;
         warnings.push(`${r.nombre}: ${error.message}`);
@@ -173,6 +240,12 @@ export async function importJudgesRegistryToSupabase(
         refereesCreated++;
       }
     }
+  }
+
+  if (sanctionKept > 0) {
+    warnings.push(
+      `${sanctionKept} juez(ces) con sanción activa conservan su estado «Sancionado» (el Excel no conoce las sanciones); el resto de sus datos sí se ha actualizado.`,
+    );
   }
 
   // id incluido en la misma consulta: evita el SELECT extra por duplicado
