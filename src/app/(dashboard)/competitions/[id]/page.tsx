@@ -14,7 +14,16 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
   if (!user) redirect("/sign-in");
 
   const { id } = await params;
-  const [competition, roster, meta, regulations, referees, confirmedRefereeIds, refereeBusyMap] =
+  const [
+    competition,
+    roster,
+    meta,
+    regulations,
+    referees,
+    confirmedRefereeIds,
+    refereeBusyMap,
+    lastApproval,
+  ] =
     await Promise.all([
       dataService.getCompetition(id),
       dataService.getRoster(id),
@@ -23,6 +32,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       dataService.getReferees(),
       dataService.getCompetitionAvailability(id),
       dataService.getRefereeBusyMap(id),
+      dataService.getLatestApproval(id),
     ]);
   if (!competition || !roster) notFound();
   // Mismo criterio canónico que `assertCompetitionInUserZone` en la API: sin
@@ -48,6 +58,14 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       regulations={regulations}
       initialConfirmedIds={confirmedRefereeIds}
       refereeBusyMap={refereeBusyMap}
+      lastReview={
+        lastApproval && {
+          status: lastApproval.status,
+          comment: lastApproval.comment,
+          reviewedBy: lastApproval.reviewedBy,
+          reviewedAt: lastApproval.reviewedAt,
+        }
+      }
       defaultZonaFilter={
         user.role === "delegado_zona" && competition.zona
           ? competition.zona

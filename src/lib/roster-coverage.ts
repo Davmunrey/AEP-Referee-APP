@@ -6,6 +6,8 @@ export const ROSTER_APPROVAL_LOCKED = "Aprobado";
 /** Propuesta enviada y esperando decisión nacional. */
 export const ROSTER_PENDING_APPROVAL = "Propuesta enviada";
 export const ROSTER_IMPREVISTO_STATE = "Cambio por imprevisto";
+/** Propuesta revisada y devuelta a la zona. */
+export const ROSTER_REJECTED = "Rechazado";
 
 export type RosterCoverage = {
   requeridos: number;
@@ -145,6 +147,11 @@ export function isRosterImprevistoMode(aprobacion: string): boolean {
  */
 export function isRosterPendingApproval(aprobacion: string | undefined): boolean {
   return aprobacion === ROSTER_PENDING_APPROVAL;
+}
+
+/** La última revisión devolvió la tarima a la zona. */
+export function isRosterRejected(aprobacion: string | null | undefined): boolean {
+  return (aprobacion ?? "").trim().toLowerCase() === ROSTER_REJECTED.toLowerCase();
 }
 
 /** Cualquiera de los dos estados que impiden tocar la tarima. */
