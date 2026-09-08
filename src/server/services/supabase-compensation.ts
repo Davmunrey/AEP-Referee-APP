@@ -17,6 +17,7 @@ import type {
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
 import { CompensationClaimConflictError } from "@/lib/competitions/service-types";
+import { discardableOrphanClaimIds } from "@/lib/judge-compensation/orphans";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type { Competition, Referee, RosterSession, SessionUser } from "@/lib/types";
 import {
@@ -371,6 +372,9 @@ export const compensationService = {
         referee,
         template: roster.template,
         assignments: roster.assignments,
+        // Recalcular cambia los importes, así que una aprobación anterior ya no
+        // cubre la cifra nueva y la liquidación vuelve a borrador. Lo pagado no:
+        // ese dinero ya salió.
         existing: existing
           ? { ...existing, status: existing.status === "pagado" ? "pagado" : "borrador" }
           : undefined,
@@ -381,10 +385,10 @@ export const compensationService = {
 
     const activeIds = new Set(claims.map((c) => c.refereeId));
     const supabase = db();
-    for (const [refereeId, storedClaim] of stored) {
-      if (!activeIds.has(refereeId)) {
-        await supabase.from("judge_compensation_claims").delete().eq("id", storedClaim.id);
-      }
+    // Antes se borraba toda liquidación huérfana sin mirar el estado, incluida
+    // la pagada o aprobada de un juez sustituido. Ver `discardableOrphanClaimIds`.
+    for (const claimRowId of discardableOrphanClaimIds(stored, activeIds)) {
+      await supabase.from("judge_compensation_claims").delete().eq("id", claimRowId);
     }
 
     return summarizeCompensation(competition, claims, refereesById);
@@ -410,6 +414,9 @@ export const compensationService = {
       status: CompensationClaimStatus;
       reviewComment: string | null;
     }>,
+    // Quién mueve la liquidación: se sella en reviewed_by/reviewed_at al
+    // aprobar, rechazar o pagar. Sin él la columna se quedaba vacía.
+    actor?: string,
   ): Promise<CompensationClaim | undefined> => {
     // La marca de la fila ANTES de recalcular: es el testigo del
     // compare-and-set. `null` = todavía no existe fila guardada.
@@ -424,7 +431,7 @@ export const compensationService = {
     const existing = await loadMergedClaimForReferee(competitionId, refereeId);
     if (!existing) return undefined;
 
-    const claim = applyCompensationClaimPatch(existing, patch);
+    const claim = applyCompensationClaimPatch(existing, patch, { actor });
     await persistClaim(claim, {
       syncDutyLines: false,
       expectedUpdatedAt: stored ? String(stored.updated_at) : null,

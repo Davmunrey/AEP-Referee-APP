@@ -49,9 +49,49 @@ export function normalizeCompensationClaimPatch(patch: CompensationClaimPatch): 
   return normalized;
 }
 
+type ClaimAuditMeta = Pick<CompensationClaim, "submittedAt" | "reviewedAt" | "reviewedBy">;
+
+/**
+ * Sella quién movió la liquidación y cuándo.
+ *
+ * Las columnas existen desde 024 y el mapper las escribe, pero nadie las
+ * rellenaba nunca: una liquidación de varios cientos de euros llegaba a
+ * «pagado» sin el nombre de nadie ni una fecha detrás.
+ *
+ * Al volver a «enviado» o a «borrador» se limpia la revisión anterior: una
+ * liquidación reabierta arrastraba el «aprobada por X» de la vuelta pasada
+ * como si valiera para la nueva.
+ */
+export function claimAuditMeta(
+  existing: CompensationClaim,
+  nextStatus: CompensationClaimStatus | undefined,
+  options?: { actor?: string; now?: string },
+): ClaimAuditMeta {
+  const current: ClaimAuditMeta = {
+    submittedAt: existing.submittedAt,
+    reviewedAt: existing.reviewedAt,
+    reviewedBy: existing.reviewedBy,
+  };
+  if (!nextStatus || nextStatus === existing.status) return current;
+  const now = options?.now ?? new Date().toISOString();
+
+  if (nextStatus === "borrador") {
+    return { submittedAt: current.submittedAt, reviewedAt: undefined, reviewedBy: undefined };
+  }
+  if (nextStatus === "enviado") {
+    return { submittedAt: now, reviewedAt: undefined, reviewedBy: undefined };
+  }
+  return {
+    submittedAt: current.submittedAt,
+    reviewedAt: now,
+    reviewedBy: options?.actor?.trim() || current.reviewedBy,
+  };
+}
+
 export function applyCompensationClaimPatch(
   existing: CompensationClaim,
   patch: CompensationClaimPatch,
+  options?: { actor?: string; now?: string },
 ): CompensationClaim {
   const normalized = normalizeCompensationClaimPatch(patch);
   const input: CompensationClaimInput = {
@@ -108,9 +148,9 @@ export function applyCompensationClaimPatch(
         ? (normalized.travelAmountOverride ?? undefined)
         : existing.travelAmountOverride,
   };
-  return buildCompensationClaim(existing.id, input, {
-    submittedAt: existing.submittedAt,
-    reviewedAt: existing.reviewedAt,
-    reviewedBy: existing.reviewedBy,
-  });
+  return buildCompensationClaim(
+    existing.id,
+    input,
+    claimAuditMeta(existing, normalized.status, options),
+  );
 }
