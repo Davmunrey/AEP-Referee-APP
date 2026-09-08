@@ -22,6 +22,8 @@ interface EditUserDialogProps {
   error: string | null;
   saving: boolean;
   zones: { code: string; name: string }[];
+  /** Solo un super admin puede ascender a super admin o a financiero. */
+  canManageRestrictedRoles?: boolean;
   onFormChange: (patch: Partial<EditFormState>) => void;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
@@ -33,6 +35,7 @@ export function EditUserDialog({
   error,
   saving,
   zones,
+  canManageRestrictedRoles = false,
   onFormChange,
   onSubmit,
   onClose,
@@ -70,12 +73,18 @@ export function EditUserDialog({
             aria-label="Rol"
             onChange={(e) => onFormChange({ role: e.target.value as UserRole })}
           >
-            <option value="super_admin">{ROLE_LABELS.super_admin}</option>
+            {/* Ascender a super admin o a responsable financiero es cosa de un
+                super admin: la API lo rechaza, así que no se ofrece. */}
+            {(canManageRestrictedRoles || form.role === "super_admin") && (
+              <option value="super_admin">{ROLE_LABELS.super_admin}</option>
+            )}
             <option value="delegado_jueces">{ROLE_LABELS.delegado_jueces}</option>
             <option value="delegado_zona">{ROLE_LABELS.delegado_zona}</option>
-            <option value="responsable_financiero_jueces">
-              {ROLE_LABELS.responsable_financiero_jueces}
-            </option>
+            {(canManageRestrictedRoles || form.role === "responsable_financiero_jueces") && (
+              <option value="responsable_financiero_jueces">
+                {ROLE_LABELS.responsable_financiero_jueces}
+              </option>
+            )}
             <option value="solo_ver">{ROLE_LABELS.solo_ver}</option>
           </select>
           {form.role === "delegado_zona" && (

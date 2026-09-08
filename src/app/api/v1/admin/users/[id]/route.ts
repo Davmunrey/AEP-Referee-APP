@@ -1,10 +1,21 @@
 import { normalizeZoneInput } from "@/lib/aep-zones";
-import { canManageUsers } from "@/lib/auth/session";
+import {
+  canAdministerUserWithRole,
+  canAssignRole,
+  canManageUsers,
+  restrictedRoleMessage,
+} from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
-import { USER_ROLES, type UserRole } from "@/lib/types";
+import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/types";
+import { recordAccessChange } from "@/server/services/admin-audit";
+
+/** Etiqueta legible del rol para el registro de actividad. */
+function roleLabel(role: string): string {
+  return ROLE_LABELS[role as UserRole] ?? role;
+}
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -29,8 +40,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     .maybeSingle();
   if (!target) return jsonError("Usuario no encontrado", 404);
   const targetRole = String(target.role ?? "");
-  if (targetRole === "super_admin" && user.role !== "super_admin") {
-    return jsonError("Solo Super Admin puede modificar a otro Super Admin", 403);
+  // Camino 3: tomar una cuenta que YA tiene el rol (cambiarle la zona, el
+  // nombre o desactivarla) sin ser super admin.
+  if (!canAdministerUserWithRole(user, targetRole)) {
+    return jsonError(restrictedRoleMessage(targetRole), 403);
   }
 
   const patch: Record<string, unknown> = {};
@@ -49,8 +62,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (id === user.id && body.role !== "super_admin") {
       return jsonError("No puedes cambiar tu propio rol", 400);
     }
-    if (body.role === "super_admin" && user.role !== "super_admin") {
-      return jsonError("Solo Super Admin puede asignar rol Super Admin", 403);
+    // Camino 2: ascender a financiera (o a super admin) una cuenta existente.
+    if (!canAssignRole(user, body.role as UserRole)) {
+      return jsonError(restrictedRoleMessage(body.role as UserRole), 403);
     }
     patch.role = body.role;
   }
@@ -93,6 +107,26 @@ export async function PATCH(request: Request, context: RouteContext) {
     return jsonServerError("admin.users.PATCH", error, "No se pudo actualizar el usuario");
   }
   if (!data) return jsonError("Usuario no encontrado", 404);
+
+  // Un cambio de rol o una desactivación son cambios de acceso: constan.
+  if (patch.role !== undefined && patch.role !== targetRole) {
+    await recordAccessChange({
+      tipo: "cambio",
+      actor: user.nombre,
+      accion: "cambió el rol de",
+      evento: `${String(data.nombre ?? id)}: ${roleLabel(targetRole)} → ${roleLabel(String(patch.role))}`,
+      hace: "ahora",
+    });
+  }
+  if (patch.activo === false) {
+    await recordAccessChange({
+      tipo: "cambio",
+      actor: user.nombre,
+      accion: "desactivó la cuenta de",
+      evento: String(data.nombre ?? id),
+      hace: "ahora",
+    });
+  }
   return jsonOk(data);
 }
 
@@ -109,12 +143,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const admin = createAdminClient();
   const { data: target } = await admin
     .from("profiles")
-    .select("id, role")
+    .select("id, role, nombre")
     .eq("id", id)
     .maybeSingle();
   if (!target) return jsonError("Usuario no encontrado", 404);
-  if (String(target.role ?? "") === "super_admin" && user.role !== "super_admin") {
-    return jsonError("Solo Super Admin puede eliminar a otro Super Admin", 403);
+  if (!canAdministerUserWithRole(user, target.role as string)) {
+    return jsonError(restrictedRoleMessage(String(target.role ?? "")), 403);
   }
 
   // Borra el usuario de auth y verifica el resultado.
@@ -133,5 +167,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
     );
   }
 
+  await recordAccessChange({
+    tipo: "cambio",
+    actor: user.nombre,
+    accion: "eliminó la cuenta de",
+    evento: `${String(target.nombre ?? id)} (${roleLabel(String(target.role ?? ""))})`,
+    hace: "ahora",
+  });
   return jsonOk({ deleted: true });
 }

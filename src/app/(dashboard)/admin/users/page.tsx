@@ -22,5 +22,11 @@ export default async function AdminUsersPage() {
     initialUsers = undefined;
   }
 
-  return <UsersAdmin zones={meta.zones} initialUsers={initialUsers} />;
+  return (
+    <UsersAdmin
+      zones={meta.zones}
+      initialUsers={initialUsers}
+      canManageRestrictedRoles={user.role === "super_admin"}
+    />
+  );
 }

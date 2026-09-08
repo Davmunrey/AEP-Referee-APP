@@ -7,7 +7,12 @@ import { profileToSessionUser, type ProfileRow } from "@/lib/auth/profile";
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { DOCS_CAPTURE_SESSION, isDocsCaptureMode } from "@/lib/auth/docs-capture";
 import { ensureDocsCaptureSeed } from "@/server/services/docs-capture-seed";
-import type { SessionUser } from "@/lib/types";
+import {
+  ROLE_LABELS,
+  SUPER_ADMIN_ONLY_ROLES,
+  type SessionUser,
+  type UserRole,
+} from "@/lib/types";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -126,6 +131,42 @@ export const canManageCompetitions = canEditRoster;
 /** Aprobar propuestas de tarima. */
 export function canApprove(user: SessionUser): boolean {
   return user.role === "super_admin" || user.role === "delegado_jueces";
+}
+
+/**
+ * Roles cuyas cuentas solo puede tocar un super admin.
+ *
+ * `super_admin` ya lo estaba: es quien lo puede todo. Se le suma el
+ * responsable financiero, que es quien ve y exporta el dinero —importes,
+ * recibos y los datos que los sostienen—. Sin esto, cualquiera con gestión de
+ * cuentas podía apropiarse de ese rol por tres caminos distintos: crear una
+ * cuenta financiera con la contraseña que quisiera, ascender a financiera una
+ * cuenta existente, o resetear la contraseña de la persona que ya lo era y
+ * entrar como ella. El de en medio ni siquiera cambiaba el número de cuentas
+ * financieras.
+ *
+ * No es desconfianza hacia el delegado de jueces: es que el permiso de
+ * gestionar cuentas no debería incluir, de propina, el acceso al dinero.
+ */
+/** ¿Puede este usuario asignar ese rol a alguien? */
+export function canAssignRole(user: SessionUser, role: UserRole): boolean {
+  if (!canManageUsers(user)) return false;
+  return SUPER_ADMIN_ONLY_ROLES.includes(role) ? user.role === "super_admin" : true;
+}
+
+/** ¿Puede este usuario administrar (editar, borrar, resetear) esa cuenta? */
+export function canAdministerUserWithRole(
+  user: SessionUser,
+  targetRole: UserRole | string | null | undefined,
+): boolean {
+  if (!canManageUsers(user)) return false;
+  const role = String(targetRole ?? "") as UserRole;
+  return SUPER_ADMIN_ONLY_ROLES.includes(role) ? user.role === "super_admin" : true;
+}
+
+/** Mensaje único para los tres caminos. */
+export function restrictedRoleMessage(role: UserRole | string): string {
+  return `Solo Super Admin puede gestionar cuentas con el rol ${ROLE_LABELS[role as UserRole] ?? role}.`;
 }
 
 /** Gestión de cuentas de usuario. */

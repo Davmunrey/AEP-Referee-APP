@@ -19,7 +19,7 @@ import { selectFieldClass, selectFieldClassSm } from "@/lib/design-tokens";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { api } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
-import { ROLE_LABELS } from "@/lib/types";
+import { ROLE_LABELS, SUPER_ADMIN_ONLY_ROLES } from "@/lib/types";
 import type { UserRole } from "@/lib/types";
 import { KeyRound, Loader2, Pencil, Trash2, Users } from "lucide-react";
 import { EditUserDialog } from "./edit-user-dialog";
@@ -38,6 +38,17 @@ interface UsersAdminProps {
   zones: { code: string; name: string }[];
   /** Usuarios precargados desde el servidor; si vienen, no se fetchea en el mount. */
   initialUsers?: ProfileRow[];
+  /**
+   * Quien no es super admin no puede tocar las cuentas de super admin ni las
+   * del responsable financiero —ni crearlas, ni ascender a ellas, ni resetear
+   * su contraseña—. La API lo rechaza; aquí se evita ofrecerlo.
+   */
+  canManageRestrictedRoles?: boolean;
+}
+
+/** Cuentas que solo un super admin puede gestionar. */
+function isRestrictedAccount(role: UserRole): boolean {
+  return SUPER_ADMIN_ONLY_ROLES.includes(role);
 }
 
 const ROLE_BADGE_VARIANT: Record<UserRole, "nacional" | "regional" | "ipf2" | "muted"> = {
@@ -84,7 +95,11 @@ function formatAbsolute(dateStr: string): string {
   });
 }
 
-export function UsersAdmin({ zones, initialUsers }: UsersAdminProps) {
+export function UsersAdmin({
+  zones,
+  initialUsers,
+  canManageRestrictedRoles = false,
+}: UsersAdminProps) {
   const [users, setUsers] = useState<ProfileRow[]>(initialUsers ?? []);
   const [loading, setLoading] = useState(!initialUsers);
   const [saving, setSaving] = useState(false);
@@ -312,10 +327,12 @@ export function UsersAdmin({ zones, initialUsers }: UsersAdminProps) {
         <Input placeholder="Nombre completo" aria-label="Nombre completo" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
         <Input placeholder="Etiqueta de rol (ej. Resp. Cataluña)" aria-label="Etiqueta de rol" value={form.rolLabel} onChange={(e) => setForm((f) => ({ ...f, rolLabel: e.target.value }))} required />
         <select className={selectFieldClass} value={form.role} aria-label="Rol del usuario" onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
-          <option value="super_admin">Super Admin</option>
+          {canManageRestrictedRoles && <option value="super_admin">Super Admin</option>}
           <option value="delegado_jueces">Delegado de Jueces</option>
           <option value="delegado_zona">Delegado de Zona</option>
-          <option value="responsable_financiero_jueces">Responsable Financiero Jueces</option>
+          {canManageRestrictedRoles && (
+            <option value="responsable_financiero_jueces">Responsable Financiero Jueces</option>
+          )}
           <option value="solo_ver">Solo Ver</option>
         </select>
         {form.role === "delegado_zona" && (
@@ -459,6 +476,14 @@ export function UsersAdmin({ zones, initialUsers }: UsersAdminProps) {
                     )}
                   </DataTableCell>
                   <DataTableCell>
+                    {isRestrictedAccount(u.role) && !canManageRestrictedRoles ? (
+                      <span
+                        className="text-[11px] text-subtle-muted"
+                        title="Solo un Super Admin puede gestionar esta cuenta"
+                      >
+                        Solo Super Admin
+                      </span>
+                    ) : (
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" disabled={actionId === u.id} onClick={() => void toggleActive(u.id, u.activo)}>
                         {actionId === u.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : u.activo ? "Desactivar" : "Activar"}
@@ -473,6 +498,7 @@ export function UsersAdmin({ zones, initialUsers }: UsersAdminProps) {
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
+                    )}
                   </DataTableCell>
                 </DataTableRow>
               );
@@ -483,6 +509,7 @@ export function UsersAdmin({ zones, initialUsers }: UsersAdminProps) {
 
       {editUser && (
         <EditUserDialog
+          canManageRestrictedRoles={canManageRestrictedRoles}
           email={editUser.email}
           form={editForm}
           error={editError}
