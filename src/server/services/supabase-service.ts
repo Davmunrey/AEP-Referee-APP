@@ -138,7 +138,8 @@ export const supabaseDataService = {
     competitionId: string,
     refereeId: string,
     patch: Parameters<typeof compensationService.updateClaim>[2],
-  ) => compensationService.updateClaim(competitionId, refereeId, patch),
+    actor?: string,
+  ) => compensationService.updateClaim(competitionId, refereeId, patch, actor),
   calculateCompensationDistance: (competitionId: string, refereeId: string) =>
     compensationService.calculateDistance(competitionId, refereeId),
   calculateAllCompensationDistances: (competitionId: string) =>
