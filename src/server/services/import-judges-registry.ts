@@ -6,7 +6,12 @@ import { inicialesFromNombre } from "@/lib/judges-registry/maps";
 import { getPresetForEventType } from "@/lib/roster-template";
 import type { JudgesRegistryImportApplyResult, Referee } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { loadAllAssignments, POSTGREST_PAGE_SIZE } from "./supabase-helpers";
+import {
+  fetchAllRows,
+  isMissingTableError,
+  loadAllAssignments,
+  POSTGREST_PAGE_SIZE,
+} from "./supabase-helpers";
 import { getStore } from "@/server/store";
 
 function db() {
@@ -53,18 +58,25 @@ export async function importJudgesRegistryToSupabase(
         .select("referee_id")
         .order("id", { ascending: true })
         .range(from, from + POSTGREST_PAGE_SIZE - 1);
-      // Si la tabla aún no existe (024 sin aplicar) no hay nada que proteger.
-      if (error) break;
+      // Solo la tabla ausente (024 sin aplicar) vale como «no hay nada que
+      // proteger». Con cualquier otro error, la lista de protegidos quedaría
+      // corta y el borrado en bloque se llevaría por delante liquidaciones
+      // pagadas por la cascada: se aborta el reemplazo del censo.
+      if (error) {
+        if (isMissingTableError(error)) break;
+        throw new Error(
+          `No se pudo comprobar qué jueces tienen liquidaciones (${error.message}). No se ha tocado el censo.`,
+        );
+      }
       const page = data ?? [];
       for (const row of page) claimedIds.add(String(row.referee_id));
       if (page.length < POSTGREST_PAGE_SIZE) break;
     }
 
-    const { data: allRefs, error: allRefsError } = await supabase
-      .from("referees")
-      .select("id");
-    if (allRefsError) throw new Error(`referees: ${allRefsError.message}`);
-    const deletable = (allRefs ?? [])
+    // Paginado: con el censo por encima de 1000 fichas, el corte de PostgREST
+    // dejaba fuera a las últimas y el «reemplazar censo» solo borraba parte.
+    const allRefs = await fetchAllRows("referees", "id", "id");
+    const deletable = allRefs
       .map((r) => String(r.id))
       .filter((id) => !assignedIds.has(id) && !claimedIds.has(id));
     if (deletable.length) {
@@ -87,10 +99,15 @@ export async function importJudgesRegistryToSupabase(
   // Una sola carga de ids/excel_ids existentes (antes: 2 SELECT por juez,
   // ~600 round-trips para 300 jueces). Con los mapas en memoria, cada juez
   // necesita como mucho 1 escritura, y las altas van en lotes.
-  const { data: existingRefs } = await supabase.from("referees").select("id, excel_id");
+  // Este mapa decide si cada fila del Excel ACTUALIZA a un juez existente o
+  // crea uno nuevo. Tragarse el error o quedarse con las primeras 1000 filas lo
+  // dejaba vacío o corto, y los jueces que no aparecían se daban de alta otra
+  // vez: dos fichas de la misma persona, la vieja con sus asignaciones y sus
+  // liquidaciones, la nueva sin nada.
+  const existingRefs = await fetchAllRows("referees", "id, excel_id", "id");
   const idByExcelId = new Map<number, string>();
   const existingIds = new Set<string>();
-  for (const ref of existingRefs ?? []) {
+  for (const ref of existingRefs) {
     existingIds.add(String(ref.id));
     if (ref.excel_id != null) idByExcelId.set(Number(ref.excel_id), String(ref.id));
   }
@@ -160,10 +177,13 @@ export async function importJudgesRegistryToSupabase(
 
   // id incluido en la misma consulta: evita el SELECT extra por duplicado
   // dentro del bucle de campeonatos.
-  const { data: existingComps } = await supabase.from("competitions").select("id, nombre, fecha");
+  // Mismo riesgo que con los jueces: sin esta lista completa, los campeonatos
+  // del Excel se crean duplicados y `nextNum` arranca por debajo del máximo
+  // real, así que los identificadores `evt-N` chocan con los que ya existen.
+  const existingComps = await fetchAllRows("competitions", "id, nombre, fecha", "id");
   const existingIdByKey = new Map<string, string>();
   let nextNum = 1;
-  for (const c of existingComps ?? []) {
+  for (const c of existingComps) {
     existingIdByKey.set(
       `${String(c.nombre).toLowerCase().trim()}__${String(c.fecha)}`,
       String(c.id),

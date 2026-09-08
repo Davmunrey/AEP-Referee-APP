@@ -263,6 +263,26 @@ export const cachedLoadAllAssignments = cache(loadAllAssignments);
  * El puesto de un juez pagado queda congelado en la tarima: el importe ya
  * salió y corresponde a los servicios de esos huecos.
  */
+/**
+ * ¿El error dice que la tabla no existe todavía?
+ *
+ * Las protecciones de borrado consultan `judge_compensation_claims`, que llegó
+ * en la migración 024: en un despliegue sin esa migración la consulta falla y
+ * no hay nada que proteger. El problema era tratar CUALQUIER error como ese
+ * caso —«no hay liquidaciones»— y seguir adelante con el borrado: un fallo de
+ * red o de permisos bastaba para arrasar con las liquidaciones del juez o del
+ * campeonato por la cascada, incluidas las ya pagadas. Se distingue la tabla
+ * ausente de todo lo demás; ante cualquier otra duda, no se borra.
+ */
+export function isMissingTableError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  // 42P01 = undefined_table en Postgres; PGRST205 = la tabla no está en la
+  // caché de esquema de PostgREST.
+  if (error.code === "42P01" || error.code === "PGRST205") return true;
+  const message = String(error.message ?? "").toLowerCase();
+  return message.includes("does not exist") || message.includes("schema cache");
+}
+
 export async function loadPaidClaimRefereeIds(competitionId: string): Promise<Set<string>> {
   const supabase = db();
   const { data, error } = await supabase
