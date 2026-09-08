@@ -16,6 +16,7 @@ import type {
   CompensationTravelMode,
   CompetitionCompensationSummary,
 } from "@/lib/judge-compensation/types";
+import { CompensationClaimConflictError } from "@/lib/competitions/service-types";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
 import type { Competition, Referee, RosterSession, SessionUser } from "@/lib/types";
 import {
@@ -39,6 +40,9 @@ import {
   hasRefereeDomicilioGeoColumns,
   loadRosterAssignmentData,
 } from "./supabase-helpers";
+
+const CLAIM_CONFLICT =
+  "Otra persona guardó esta liquidación mientras la editabas. Actualiza la pantalla para no pisar su cambio.";
 
 function claimId(competitionId: string, refereeId: string): string {
   return `cmp-${competitionId}-${refereeId}`;
@@ -116,7 +120,18 @@ function mergeClaimFromRoster(input: {
   });
 }
 
-async function persistClaim(claim: CompensationClaim, options?: { syncDutyLines?: boolean }): Promise<void> {
+async function persistClaim(
+  claim: CompensationClaim,
+  options?: {
+    syncDutyLines?: boolean;
+    /**
+     * Compare-and-set sobre `updated_at`: la escritura solo gana si la fila
+     * sigue como se leyó. `null` significa «no había fila»: entonces la
+     * escritura tiene que ser un alta, y que ya exista es también un conflicto.
+     */
+    expectedUpdatedAt?: string | null;
+  },
+): Promise<void> {
   const supabase = db();
   const row = claimToDbRow(claim);
   // claimToDbRow es síncrona y no puede sondar el esquema; la columna de override
@@ -125,8 +140,34 @@ async function persistClaim(claim: CompensationClaim, options?: { syncDutyLines?
   if (await hasCompensationOverrideColumn()) {
     row.travel_amount_override = claim.travelAmountOverride ?? null;
   }
-  const { error } = await supabase.from("judge_compensation_claims").upsert(row);
-  if (error) throw new Error(error.message);
+
+  if (options?.expectedUpdatedAt !== undefined) {
+    if (options.expectedUpdatedAt === null) {
+      // No había fila: un alta. Si alguien la creó entre medias, el UNIQUE
+      // (competition_id, referee_id) la rechaza y eso es el conflicto.
+      const { error: insertError } = await supabase
+        .from("judge_compensation_claims")
+        .insert(row);
+      if (insertError) {
+        if (insertError.code === "23505") throw new CompensationClaimConflictError(CLAIM_CONFLICT);
+        throw new Error(insertError.message);
+      }
+    } else {
+      const { data: claimed, error: updateError } = await supabase
+        .from("judge_compensation_claims")
+        .update(row)
+        .eq("id", claim.id)
+        .eq("updated_at", options.expectedUpdatedAt)
+        .select("id");
+      if (updateError) throw new Error(updateError.message);
+      if (!claimed || claimed.length === 0) {
+        throw new CompensationClaimConflictError(CLAIM_CONFLICT);
+      }
+    }
+  } else {
+    const { error } = await supabase.from("judge_compensation_claims").upsert(row);
+    if (error) throw new Error(error.message);
+  }
 
   if (options?.syncDutyLines === false) return;
 
@@ -370,11 +411,24 @@ export const compensationService = {
       reviewComment: string | null;
     }>,
   ): Promise<CompensationClaim | undefined> => {
+    // La marca de la fila ANTES de recalcular: es el testigo del
+    // compare-and-set. `null` = todavía no existe fila guardada.
+    const supabase = db();
+    const { data: stored, error: storedError } = await supabase
+      .from("judge_compensation_claims")
+      .select("updated_at")
+      .eq("id", claimId(competitionId, refereeId))
+      .maybeSingle();
+    if (storedError) throw new Error(`judge_compensation_claims: ${storedError.message}`);
+
     const existing = await loadMergedClaimForReferee(competitionId, refereeId);
     if (!existing) return undefined;
 
     const claim = applyCompensationClaimPatch(existing, patch);
-    await persistClaim(claim, { syncDutyLines: false });
+    await persistClaim(claim, {
+      syncDutyLines: false,
+      expectedUpdatedAt: stored ? String(stored.updated_at) : null,
+    });
     return claim;
   },
 
