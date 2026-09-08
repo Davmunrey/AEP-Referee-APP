@@ -14,7 +14,16 @@ import { formatRosterExport } from "@/lib/roster-export";
 import { pruneAssignments } from "@/lib/roster-template";
 import { buildRefereeBusyMap, type RefereeBusyMap } from "@/lib/roster-conflicts";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
-import { CompetitionHasClaimsError, RosterSlotConflictError } from "@/lib/competitions/service-types";
+import {
+  CompetitionHasClaimsError,
+  RosterPaidClaimError,
+  RosterSlotConflictError,
+} from "@/lib/competitions/service-types";
+import {
+  paidClaimClearAllMessage,
+  paidClaimRemovalMessage,
+} from "@/lib/roster-paid-claims";
+import { paidClaimRefereeIds } from "./memory-compensation-store";
 import type {
   ApprovalProposal,
   AssignmentsMap,
@@ -418,6 +427,14 @@ export async function assignReferee(
     }
   }
   const replacedRefereeId = assignments[slotKey];
+  // Mismo criterio que el twin de Supabase: un juez con la liquidación pagada
+  // no se puede sustituir.
+  if (replacedRefereeId && replacedRefereeId !== refereeId) {
+    if (paidClaimRefereeIds(competitionId).has(replacedRefereeId)) {
+      const replaced = store.referees.find((r) => r.id === replacedRefereeId);
+      return { error: paidClaimRemovalMessage(replaced?.nombre) };
+    }
+  }
   assignments[slotKey] = refereeId;
   store.assignments.set(competitionId, assignments);
   const flagMap = { ...(store.slotFlags.get(competitionId) ?? {}) };
@@ -514,6 +531,11 @@ export async function clearSlot(
       );
     }
   }
+  const occupant = assignments[slotKey];
+  if (occupant && paidClaimRefereeIds(competitionId).has(occupant)) {
+    const referee = store.referees.find((r) => r.id === occupant);
+    throw new RosterPaidClaimError(paidClaimRemovalMessage(referee?.nombre));
+  }
   delete assignments[slotKey];
   store.assignments.set(competitionId, assignments);
   const flagMap = { ...(store.slotFlags.get(competitionId) ?? {}) };
@@ -537,6 +559,13 @@ export async function clearRosterAssignments(
   const comp = await getCompetition(competitionId);
   if (!comp) return undefined;
   const store = getStore();
+  const paid = paidClaimRefereeIds(competitionId);
+  if (paid.size > 0) {
+    const assigned = new Set(
+      Object.values(store.assignments.get(competitionId) ?? {}).filter((id) => id && paid.has(id)),
+    );
+    if (assigned.size > 0) throw new RosterPaidClaimError(paidClaimClearAllMessage(assigned.size));
+  }
   store.assignments.set(competitionId, {});
   store.slotFlags.set(competitionId, {});
   syncCompetitionCoverage(competitionId);
@@ -615,6 +644,11 @@ export async function saveDraft(competitionId: string, actor: string) {
     actor,
     action: "Guardó borrador",
   });
+}
+
+/** Jueces con la liquidación pagada (mismo criterio que el twin de Supabase). */
+export async function getPaidClaimRefereeIds(competitionId: string): Promise<string[]> {
+  return [...paidClaimRefereeIds(competitionId)];
 }
 
 /** Última propuesta de una competición (mismo criterio que el twin de Supabase). */

@@ -22,13 +22,21 @@ import type {
   SessionUser,
   SlotFlags,
 } from "@/lib/types";
-import { RosterSlotConflictError } from "@/lib/competitions/service-types";
+import {
+  RosterPaidClaimError,
+  RosterSlotConflictError,
+} from "@/lib/competitions/service-types";
+import {
+  paidClaimClearAllMessage,
+  paidClaimRemovalMessage,
+} from "@/lib/roster-paid-claims";
 import { assignmentsFromJsonb, mapApproval, mapHistory } from "@/server/db/mappers";
 import {
   db,
   getCompetitionTemplate,
   fetchAllPagesOf,
   hasApprovalCompetitionColumns,
+  loadPaidClaimRefereeIds,
   hasApprovalSubmitterColumns,
   loadAssignments,
   loadRosterAssignmentData,
@@ -295,6 +303,15 @@ export const rosterService = {
         : existingFlags[slotKey] ?? {};
 
     const replacedRefereeId = assignments[slotKey];
+    // Sustituir a un juez con la liquidación pagada dejaría el pago sin nada
+    // que lo respalde: el importe corresponde a los servicios de estos huecos.
+    if (replacedRefereeId && replacedRefereeId !== refereeId) {
+      const paid = await loadPaidClaimRefereeIds(competitionId);
+      if (paid.has(replacedRefereeId)) {
+        const replaced = await getRefereeFn(replacedRefereeId);
+        return { error: paidClaimRemovalMessage(replaced?.nombre) };
+      }
+    }
     const isCrossZone =
       !!comp?.zona &&
       !!referee?.zona &&
@@ -392,11 +409,12 @@ export const rosterService = {
     flags: FlagsMap;
     crossZoneMap: import("@/lib/types").CrossZoneMap;
   }> => {
-    const [comp, templateRaw, current, refMap] = await Promise.all([
+    const [comp, templateRaw, current, refMap, paidRefereeIds] = await Promise.all([
       getCompetitionFn(competitionId),
       getCompetitionTemplate(competitionId),
       loadRosterAssignmentData(competitionId),
       getRefereesByIdsFn(entries.map((e) => e.refereeId)),
+      loadPaidClaimRefereeIds(competitionId),
     ]);
     const template = templateRaw ?? [];
     const blocked = comp ? rosterMutationBlockedMessage(comp.aprobacion) : undefined;
@@ -434,6 +452,14 @@ export const rosterService = {
       }
       if (blocked) {
         results.push({ ok: false, error: blocked });
+        continue;
+      }
+
+      // Importar un cuadrante tampoco puede desplazar a un juez ya pagado: es
+      // la misma sustitución, en lote.
+      const occupant = workingAssignments[entry.slotKey];
+      if (occupant && occupant !== entry.refereeId && paidRefereeIds.has(occupant)) {
+        results.push({ ok: false, error: paidClaimRemovalMessage(refMap.get(occupant)?.nombre) });
         continue;
       }
 
@@ -530,6 +556,11 @@ export const rosterService = {
         );
       }
     }
+    // Liberar el hueco de un juez pagado es la misma pérdida que sustituirlo.
+    const occupant = (await loadRosterAssignmentData(competitionId)).assignments[slotKey];
+    if (occupant && (await loadPaidClaimRefereeIds(competitionId)).has(occupant)) {
+      throw new RosterPaidClaimError(paidClaimRemovalMessage());
+    }
     const supabase = db();
     const { error } = await supabase
       .from("roster_assignments")
@@ -559,6 +590,17 @@ export const rosterService = {
   ): Promise<{ assignments: AssignmentsMap; flags: FlagsMap } | undefined> => {
     const comp = await getCompetitionFn(competitionId);
     if (!comp) return undefined;
+    // Vaciar la tarima se llevaría por delante a los jueces ya pagados.
+    const paid = await loadPaidClaimRefereeIds(competitionId);
+    if (paid.size > 0) {
+      const { assignments } = await loadRosterAssignmentData(competitionId);
+      const assignedPaid = new Set(
+        Object.values(assignments).filter((id) => id && paid.has(id)),
+      );
+      if (assignedPaid.size > 0) {
+        throw new RosterPaidClaimError(paidClaimClearAllMessage(assignedPaid.size));
+      }
+    }
     const supabase = db();
     const { error } = await supabase
       .from("roster_assignments")
@@ -687,6 +729,11 @@ export const rosterService = {
    * motivo del rechazo: el revisor está obligado a escribirlo, pero no llegaba
    * a la pantalla de quien tiene que corregir la tarima.
    */
+  /** Jueces con la liquidación pagada, para congelar su puesto también en la UI. */
+  getPaidClaimRefereeIds: async (competitionId: string): Promise<string[]> => [
+    ...(await loadPaidClaimRefereeIds(competitionId)),
+  ],
+
   getLatestApproval: async (competitionId: string): Promise<ApprovalProposal | undefined> => {
     const supabase = db();
     const column = (await hasApprovalCompetitionColumns()) ? "competition_id" : "event_id";

@@ -1,4 +1,7 @@
-import { RosterSlotConflictError } from "@/lib/competitions/service-types";
+import {
+  RosterPaidClaimError,
+  RosterSlotConflictError,
+} from "@/lib/competitions/service-types";
 import { clearSlotSchema } from "@/lib/validations";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
@@ -42,6 +45,9 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonOk({ assignments });
   } catch (err) {
     if (err instanceof RosterSlotConflictError) return jsonError(err.message, 409);
+    // 423 (Locked), como la tarima congelada por aprobación: la petición es
+    // válida, lo que lo impide es el estado del recurso.
+    if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
     return jsonServerError("roster/clear", err, "No se pudo liberar el hueco");
   }
 }
@@ -61,6 +67,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (!result) return jsonError("No se pudieron borrar las asignaciones", 400);
     return jsonOk(result);
   } catch (err) {
+    if (err instanceof RosterPaidClaimError) return jsonError(err.message, 423);
     return jsonServerError("roster/clear-all", err, "No se pudieron borrar las asignaciones");
   }
 }

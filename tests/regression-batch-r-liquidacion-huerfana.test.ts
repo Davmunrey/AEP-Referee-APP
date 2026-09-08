@@ -13,12 +13,21 @@ import {
 } from "@/server/services/memory-competitions";
 import { createReferee } from "@/server/services/memory-referees";
 import { memoryCompensationService } from "@/server/services/memory-compensation";
+import {
+  compensationClaimKey,
+  compensationStore,
+} from "@/server/services/memory-compensation-store";
 import type { RosterSession } from "@/lib/types";
 
 // Traspaso tarima → compensación. El resumen recorría SOLO los jueces
 // asignados en ese momento, así que una liquidación guardada cuyo juez salía
 // de la tarima después —una sustitución— desaparecía de la pantalla y del
-// total, incluido el dinero ya marcado como pagado.
+// total.
+//
+// El escenario usa una liquidación «aprobada»: desde que el pago congela el
+// puesto, un juez con la liquidación PAGADA ya no se puede quitar de la tarima
+// (ver `regression-batch-z-liquidacion-pagada`). Las pagadas huérfanas siguen
+// existiendo en filas anteriores a esa regla, y el último caso las cubre.
 
 const SLOT = "S1_central_0";
 
@@ -44,6 +53,10 @@ async function escenario() {
   store.assignments.clear();
   store.slotFlags.clear();
   store.history.length = 0;
+  // El almacén de liquidaciones cuelga de globalThis y sobrevive entre tests:
+  // sin limpiarlo, los ids de competición se repiten y arrastran las claims
+  // del caso anterior.
+  compensationStore.clear();
 
   const comp = await createCompetition({
     nombre: "Copa de sustituciones",
@@ -65,7 +78,7 @@ async function escenario() {
   // Guardar la liquidación es lo que persiste la fila.
   await memoryCompensationService.updateClaim(comp.id, juez.id, {
     distanceKmRoundTrip: 200,
-    status: "pagado",
+    status: "aprobado",
   });
   return { comp, juez };
 }
@@ -87,7 +100,7 @@ describe("liquidación de un juez que sale de la tarima", () => {
     const despues = await memoryCompensationService.getSummary(ctx.comp.id);
     expect(despues.claims).toHaveLength(1);
     expect(despues.claims[0]?.offRoster).toBe(true);
-    expect(despues.claims[0]?.status).toBe("pagado");
+    expect(despues.claims[0]?.status).toBe("aprobado");
   });
 
   it("su importe no se cae del total", async () => {
@@ -131,5 +144,23 @@ describe("liquidación de un juez que sale de la tarima", () => {
     const resumen = await memoryCompensationService.getSummary(ctx.comp.id);
     expect(resumen.claims.some((c) => c.offRoster)).toBe(true);
     expect(resumen.readiness.pendingTravelReferees).toEqual([]);
+  });
+});
+
+describe("una liquidación pagada huérfana de antes de la regla", () => {
+  it("se sigue viendo, marcada y con su importe", async () => {
+    // Filas escritas antes de que el pago congelara el puesto: el juez ya no
+    // está en la tarima y su liquidación está pagada.
+    await memoryCompensationService.updateClaim(ctx.comp.id, ctx.juez.id, {
+      status: "pagado",
+    });
+    const pagada = compensationStore.get(compensationClaimKey(ctx.comp.id, ctx.juez.id))!;
+    getStore().assignments.set(ctx.comp.id, {});
+
+    const resumen = await memoryCompensationService.getSummary(ctx.comp.id);
+    expect(resumen.claims).toHaveLength(1);
+    expect(resumen.claims[0]?.offRoster).toBe(true);
+    expect(resumen.claims[0]?.status).toBe("pagado");
+    expect(resumen.grandTotal).toBe(pagada.totalAmount);
   });
 });

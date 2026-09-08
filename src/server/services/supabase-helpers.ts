@@ -257,6 +257,25 @@ export async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>>
 /** Dedup por petición SSR (layout + página comparten la misma carga). */
 export const cachedLoadAllAssignments = cache(loadAllAssignments);
 
+/**
+ * Jueces de una competición con la liquidación ya pagada.
+ *
+ * El puesto de un juez pagado queda congelado en la tarima: el importe ya
+ * salió y corresponde a los servicios de esos huecos.
+ */
+export async function loadPaidClaimRefereeIds(competitionId: string): Promise<Set<string>> {
+  const supabase = db();
+  const { data, error } = await supabase
+    .from("judge_compensation_claims")
+    .select("referee_id, status")
+    .eq("competition_id", competitionId)
+    .eq("status", "pagado");
+  // Tragarse el error dejaría pasar la sustitución justo cuando no se sabe si
+  // hay un pago detrás: aquí la duda tiene que parar la operación.
+  if (error) throw new Error(`judge_compensation_claims: ${error.message}`);
+  return new Set((data ?? []).map((row) => String(row.referee_id)));
+}
+
 export async function syncCompetitionCoverage(competitionId: string) {
   const supabase = db();
   // Las tres lecturas son independientes: en paralelo ahorran dos round-trips

@@ -63,3 +63,17 @@ export class RosterSlotConflictError extends Error {
     this.name = "RosterSlotConflictError";
   }
 }
+
+/**
+ * El juez que saldría de la tarima tiene la liquidación pagada.
+ *
+ * El importe ya salió de la cuenta y corresponde a los servicios de esos
+ * huecos: quitarlo deja un pago sin nada que lo respalde y un acta que no
+ * cuadra con lo cobrado. Se para la operación y se pide revertir antes el pago.
+ */
+export class RosterPaidClaimError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RosterPaidClaimError";
+  }
+}

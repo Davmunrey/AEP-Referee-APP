@@ -14,6 +14,7 @@ import {
   summarizeCompensation,
 } from "./compensation-helpers";
 import type { Referee } from "@/lib/types";
+import { compensationClaimKey, compensationStore } from "./memory-compensation-store";
 import * as competitions from "./memory-competitions";
 import * as referees from "./memory-referees";
 
@@ -29,24 +30,15 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-// Colgado de globalThis como el store principal (store.ts): en dev con HMR y
-// bundles por ruta cada instancia del módulo tendría su propio Map y las
-// claims guardadas desde una ruta no se verían desde otra.
-const globalForCompensation = globalThis as unknown as {
-  __aepCompensationStore?: Map<string, CompensationClaim>;
-};
-const store = (globalForCompensation.__aepCompensationStore ??= new Map<
-  string,
-  CompensationClaim
->());
+// El Map vive en `memory-compensation-store` para que la tarima pueda
+// consultarlo sin cerrar un ciclo de imports con este módulo.
+const store = compensationStore;
 
 function claimId(competitionId: string, refereeId: string): string {
   return `cmp-${competitionId}-${refereeId}`;
 }
 
-function key(competitionId: string, refereeId: string): string {
-  return `${competitionId}::${refereeId}`;
-}
+const key = compensationClaimKey;
 
 const emptySummary = (competitionId: string): CompetitionCompensationSummary => ({
   competitionId,
