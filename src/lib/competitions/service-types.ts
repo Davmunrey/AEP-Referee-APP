@@ -50,6 +50,24 @@ export class RefereeHasClaimsError extends Error {
 }
 
 /**
+ * La revisión de una propuesta no se pudo completar, y el motivo es para el
+ * usuario.
+ *
+ * La ruta devolvía al cliente el mensaje de CUALQUIER excepción con un 409,
+ * incluidos los errores de infraestructura —que llevan dentro el texto de
+ * Postgres con nombres de tabla y de restricción (CWE-209)— y encima
+ * disfrazados de conflicto. Con este tipo se distingue: lo que explica algo al
+ * revisor viaja tal cual; lo demás se registra en el servidor y sale como un
+ * 500 genérico, igual que en el resto de rutas.
+ */
+export class ApprovalReviewError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ApprovalReviewError";
+  }
+}
+
+/**
  * El juez sigue designado en alguna tarima.
  *
  * `roster_assignments.referee_id` referencia a `referees(id)` sin ON DELETE
