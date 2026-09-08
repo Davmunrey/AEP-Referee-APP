@@ -1,3 +1,4 @@
+import { zonesMatch } from "@/lib/aep-zones";
 import { ROLE_LABELS } from "@/lib/roster-template";
 import type { Referee, RoleKey, RosterSession, SlotFlags } from "@/lib/types";
 
@@ -14,6 +15,35 @@ export interface QuadrantAssignmentCandidate {
   importable: boolean;
   reason: string;
   flags?: SlotFlags;
+  /** El juez es de otra zona que la del campeonato (se marca, no bloquea). */
+  crossZone?: boolean;
+  /** Zona del juez, para poder explicarlo en la vista previa. */
+  refereeZona?: string;
+}
+
+/**
+ * Marca los candidatos cuyo juez es de otra zona que la del campeonato.
+ *
+ * La importación empareja contra el censo entero, igual que la asignación
+ * manual: recortarlo por zona dejaba el cuadrante a medias, con filas «juez no
+ * encontrado» de gente que sí estaba en el censo. El cruce no bloquea —es una
+ * función real de la aplicación—, pero tiene que verse antes de aplicarlo.
+ */
+export function markCrossZoneCandidates(
+  candidates: QuadrantAssignmentCandidate[],
+  zonaByReferee: Map<string, string | undefined>,
+  competitionZona: string | null | undefined,
+): QuadrantAssignmentCandidate[] {
+  for (const candidate of candidates) {
+    if (!candidate.refereeId) continue;
+    const refereeZona = zonaByReferee.get(candidate.refereeId);
+    candidate.refereeZona = refereeZona;
+    // Sin zona en un lado no se afirma el cruce: marcarlo sería un aviso
+    // inventado sobre datos que no tenemos.
+    candidate.crossZone =
+      !!competitionZona && !!refereeZona && !zonesMatch(refereeZona, competitionZona);
+  }
+  return candidates;
 }
 
 export interface ParsedQuadrant {
