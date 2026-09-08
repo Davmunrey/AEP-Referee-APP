@@ -94,22 +94,27 @@ const COMPETITION: Competition = {
   compensationClubs: [{ name: "Cantabria Powerlifting Club", emails: ["cantabriaplc@gmail.com"] }],
 };
 
+// Las claves de hueco son `${sesion}_${rol}_${índice}` con el índice desde 0
+// (ver `enumerateSlotKeys`). La semilla usaba `S1:central:1`, que no casa con
+// ninguna: la tarima de demostración salía vacía —0 de 45— en las capturas del
+// manual y en el arranque local sin Supabase, con las 15 asignaciones ahí
+// guardadas sin que nada pudiera leerlas.
 const ASSIGNMENTS: AssignmentsMap = {
-  "S1:central:1": "j002",
-  "S1:lateral:1": "j003",
-  "S1:lateral:2": "j004",
-  "S1:ordenador:1": "j001",
-  "S1:speaker:1": "j005",
-  "S1:control:1": "j003",
-  "S1:pesaje:1": "j004",
-  "S1:equipamiento:1": "j001",
-  "S2:central:1": "j001",
-  "S2:lateral:1": "j002",
-  "S2:lateral:2": "j005",
-  "S2:ordenador:1": "j003",
-  "S2:speaker:1": "j004",
-  "S2:control:1": "j002",
-  "S2:pesaje:1": "j001",
+  S1_central_0: "j002",
+  S1_lateral_0: "j003",
+  S1_lateral_1: "j004",
+  S1_ordenador_0: "j001",
+  S1_speaker_0: "j005",
+  S1_control_0: "j003",
+  S1_pesaje_0: "j004",
+  S1_equipamiento_0: "j001",
+  S2_central_0: "j001",
+  S2_lateral_0: "j002",
+  S2_lateral_1: "j005",
+  S2_ordenador_0: "j003",
+  S2_speaker_0: "j004",
+  S2_control_0: "j002",
+  S2_pesaje_0: "j001",
 };
 
 /** Datos mínimos para capturas del manual (solo modo AEP_DOCS_CAPTURE). */
