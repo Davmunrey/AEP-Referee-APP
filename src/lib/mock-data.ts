@@ -1,15 +1,12 @@
 import { AEP_ZONES } from "@/lib/aep-zones";
+import { REFEREE_LEVEL_ORDER } from "@/lib/referee-levels";
 import type { RefereeLevel, RosterSession } from "./types";
 
 /** Zonas geográficas oficiales AEP 2026 (§4.1 Guía). */
 export const ZONES = AEP_ZONES;
 
-export const LEVELS: RefereeLevel[] = [
-  "Regional",
-  "Nacional",
-  "IPF Cat. 2",
-  "IPF Cat. 1",
-];
+/** Los niveles, en orden de escalafón. La fuente está en `referee-levels`. */
+export const LEVELS: RefereeLevel[] = [...REFEREE_LEVEL_ORDER];
 
 export function cloneRosterRoles(roles: RosterSession["roles"]): RosterSession["roles"] {
   return roles.map((r) => ({ ...r }));
