@@ -45,7 +45,20 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const { error } = await admin.auth.admin.updateUserById(id, { password });
-  if (error) return jsonError(`No se pudo actualizar la contraseña: ${error.message}`, 500);
+  if (error) {
+    // El mensaje de Supabase salía tal cual al navegador: detalle interno del
+    // proveedor de identidad para quien pida un reseteo (CWE-209), y siempre
+    // como 500 aunque la contraseña simplemente no cumpliera la política. El
+    // detalle se queda en el log; fuera va lo que el administrador puede hacer.
+    console.error("[admin.users.password]", id, error.message);
+    const debil = error.status === 422 || error.code === "weak_password";
+    return jsonError(
+      debil
+        ? "La contraseña no cumple la política de seguridad. Prueba con una más larga o menos común."
+        : "No se pudo actualizar la contraseña. Vuelve a intentarlo.",
+      debil ? 400 : 500,
+    );
+  }
 
   // Cambiar la contraseña de otra persona es tomar su acceso: consta.
   await recordAccessChange({

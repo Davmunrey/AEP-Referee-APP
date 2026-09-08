@@ -59,4 +59,35 @@ describe("POST /admin/users/:id/password (reset admin)", () => {
     expect(res.status).toBe(200);
     expect(updateUserById).toHaveBeenCalledWith("t1", { password: "nuevapass8" });
   });
+
+  it("un fallo del proveedor no viaja con su texto al navegador", async () => {
+    // Antes: `No se pudo actualizar la contraseña: ${error.message}`, es decir
+    // el detalle interno del proveedor de identidad en la respuesta (CWE-209).
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    requireApiUser.mockResolvedValue({ id: "u1", role: "super_admin", nombre: "A" });
+    updateUserById.mockResolvedValue({
+      error: { status: 500, message: "GoTrue: connection to db-abc123.internal refused" },
+    });
+    const res = await POST(body("nuevapass8"), ctx);
+    expect(res.status).toBe(500);
+    const json = await res.json();
+    expect(json.error).toBe("No se pudo actualizar la contraseña. Vuelve a intentarlo.");
+    expect(JSON.stringify(json)).not.toMatch(/GoTrue|internal/);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("una contraseña que no cumple la política es 400, no 500", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    requireApiUser.mockResolvedValue({ id: "u1", role: "super_admin", nombre: "A" });
+    updateUserById.mockResolvedValue({
+      error: { status: 422, code: "weak_password", message: "Password is known to be weak" },
+    });
+    const res = await POST(body("password123"), ctx);
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: expect.stringContaining("política de seguridad"),
+    });
+    spy.mockRestore();
+  });
 });

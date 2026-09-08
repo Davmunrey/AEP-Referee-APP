@@ -172,22 +172,59 @@ async function persistClaim(
 
   if (options?.syncDutyLines === false) return;
 
-  await supabase.from("judge_compensation_duty_lines").delete().eq("claim_id", claim.id);
-  if (claim.dutyLines.length > 0) {
-    const lines = claim.dutyLines.map((line, index) => ({
-      id: dutyLineId(claim.id, index),
-      claim_id: claim.id,
-      duty_type: line.dutyType,
-      session_label: line.session,
-      role_key: line.roleKey ?? null,
-      role_label: line.roleLabel ?? null,
-      unit_amount: line.unitAmount,
-      quantity: line.quantity,
-      amount: line.amount,
-      slot_keys: line.slotKeys,
-    }));
-    const { error: lineError } = await supabase.from("judge_compensation_duty_lines").insert(lines);
-    if (lineError) throw new Error(lineError.message);
+  // Los conceptos se reescriben encima de los que había, y solo al final se
+  // retira lo que sobra. Antes se borraba la tabla entera del juez SIN mirar
+  // el resultado y luego se insertaba: si el borrado fallaba —y `supabase-js`
+  // no lanza, devuelve `error`— las líneas viejas sobrevivían con la cabecera
+  // ya guardada. O el insert chocaba contra su propia clave primaria (los ids
+  // son deterministas) y la liquidación se quedaba a medias, o, cuando el
+  // recálculo dejaba al juez sin conceptos, no se insertaba nada y el recibo
+  // seguía enseñando importes que la cabecera ya no cuenta.
+  const lines = claim.dutyLines.map((line, index) => ({
+    id: dutyLineId(claim.id, index),
+    claim_id: claim.id,
+    duty_type: line.dutyType,
+    session_label: line.session,
+    role_key: line.roleKey ?? null,
+    role_label: line.roleLabel ?? null,
+    unit_amount: line.unitAmount,
+    quantity: line.quantity,
+    amount: line.amount,
+    slot_keys: line.slotKeys,
+  }));
+
+  const { data: previas, error: previasError } = await supabase
+    .from("judge_compensation_duty_lines")
+    .select("id")
+    .eq("claim_id", claim.id);
+  if (previasError) {
+    console.error("[compensation.dutyLines.read]", claim.id, previasError.message);
+    throw new Error("No se pudieron leer los conceptos de la liquidación. Vuelve a intentarlo.");
+  }
+
+  if (lines.length > 0) {
+    const { error: lineError } = await supabase.from("judge_compensation_duty_lines").upsert(lines);
+    if (lineError) {
+      console.error("[compensation.dutyLines.upsert]", claim.id, lineError.message);
+      throw new Error("No se pudieron guardar los conceptos de la liquidación. Vuelve a intentarlo.");
+    }
+  }
+
+  const vigentes = new Set(lines.map((l) => l.id));
+  const sobrantes = (previas ?? [])
+    .map((r) => String((r as { id: unknown }).id))
+    .filter((id) => !vigentes.has(id));
+  if (sobrantes.length > 0) {
+    const { error: purgeError } = await supabase
+      .from("judge_compensation_duty_lines")
+      .delete()
+      .in("id", sobrantes);
+    if (purgeError) {
+      console.error("[compensation.dutyLines.purge]", claim.id, purgeError.message);
+      throw new Error(
+        "La liquidación se guardó, pero conceptos que ya no le corresponden siguen en la base. Revísala antes de aprobarla.",
+      );
+    }
   }
 }
 
