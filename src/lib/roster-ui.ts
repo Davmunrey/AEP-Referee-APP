@@ -5,6 +5,7 @@ import {
   validateRosterOperation,
 } from "@/lib/roster-rules";
 import { ROLE_LABELS } from "@/lib/roster-template";
+import { meetsRefereeLevel } from "@/lib/referee-levels";
 import type {
   AssignmentsMap,
   EventType,
@@ -16,11 +17,7 @@ import type {
   RosterSession,
 } from "@/lib/types";
 
-const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-
-function meetsMinLevel(actual: RefereeLevel, min: RefereeLevel): boolean {
-  return LEVEL_ORDER.indexOf(actual) >= LEVEL_ORDER.indexOf(min);
-}
+const meetsMinLevel = meetsRefereeLevel;
 
 /**
  * La regla de normativa que incumple esta designación, si hay alguna.

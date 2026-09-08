@@ -23,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import { DocsChangelog } from "@/components/docs/docs-changelog";
+import { REFEREE_LEVEL_ORDER } from "@/lib/referee-levels";
 
 export const metadata: Metadata = {
   title: "Documentación y privacidad · AEP Tarima",
@@ -333,7 +334,7 @@ export default async function DocsPage() {
 
           <Section id="niveles" icon={Award} title="Niveles arbitrales">
             <div className="flex flex-wrap gap-2">
-              {["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"].map((n) => (
+              {REFEREE_LEVEL_ORDER.map((n) => (
                 <span
                   key={n}
                   className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground"

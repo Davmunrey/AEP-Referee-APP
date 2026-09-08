@@ -22,18 +22,14 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { REFEREE_LEVEL_ORDER } from "@/lib/referee-levels";
 
 const EXAM_TYPES: ExamType[] = [
   "Nuevo juez",
   "Ascenso IPF",
   "Recertificación",
 ];
-const LEVELS: RefereeLevel[] = [
-  "Regional",
-  "Nacional",
-  "IPF Cat. 2",
-  "IPF Cat. 1",
-];
+const LEVELS: RefereeLevel[] = [...REFEREE_LEVEL_ORDER];
 const RESULTS: ExamResult[] = ["Aprobado", "Suspenso", "Pendiente"];
 
 function resultBadge(r: ExamResult) {

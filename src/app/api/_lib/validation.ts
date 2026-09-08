@@ -1,4 +1,5 @@
 import type { EventType, RefereeLevel, RefereeStatus } from "@/lib/types";
+import { REFEREE_LEVEL_ORDER } from "@/lib/referee-levels";
 
 /**
  * Whitelists de enums para validar payloads de la API.
@@ -10,12 +11,13 @@ import type { EventType, RefereeLevel, RefereeStatus } from "@/lib/types";
  */
 export const EVENT_TYPES = ["AEP-1", "AEP-2", "AEP-3"] as const satisfies readonly EventType[];
 
-export const REFEREE_LEVELS = [
-  "Regional",
-  "Nacional",
-  "IPF Cat. 1",
-  "IPF Cat. 2",
-] as const satisfies readonly RefereeLevel[];
+/**
+ * Los cuatro niveles, para validar entrada. Sale del escalafón para que no
+ * puedan divergir en miembros —y para que su orden deje de ser una trampa:
+ * tenía «IPF Cat. 1» antes que «IPF Cat. 2», así que quien la reutilizara para
+ * ordenar invertía la cima del escalafón sin que ningún tipo se quejara.
+ */
+export const REFEREE_LEVELS: readonly RefereeLevel[] = REFEREE_LEVEL_ORDER;
 
 export const REFEREE_STATUSES = [
   "Activo",

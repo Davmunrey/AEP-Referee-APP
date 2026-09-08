@@ -3,16 +3,12 @@ import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
+import { REFEREE_LEVELS } from "@/app/api/_lib/validation";
 import type { ExamResult, ExamType, RefereeLevel } from "@/lib/types";
 
 const EXAM_TYPES: ReadonlyArray<ExamType> = ["Nuevo juez", "Ascenso IPF", "Recertificación"];
 const EXAM_RESULTS: ReadonlyArray<ExamResult> = ["Aprobado", "Suspenso", "Pendiente"];
-const REFEREE_LEVELS: ReadonlyArray<RefereeLevel> = [
-  "Regional",
-  "Nacional",
-  "IPF Cat. 1",
-  "IPF Cat. 2",
-];
+
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request) {

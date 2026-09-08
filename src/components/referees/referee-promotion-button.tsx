@@ -7,10 +7,10 @@ import { LevelBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
+import { higherRefereeLevels } from "@/lib/referee-levels";
 import type { RefereeLevel } from "@/lib/types";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 
-const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
 const MOTIVO_MAX = 300;
 
 interface RefereePromotionButtonProps {
@@ -19,8 +19,7 @@ interface RefereePromotionButtonProps {
 }
 
 export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromotionButtonProps) {
-  const idx = LEVEL_ORDER.indexOf(currentLevel);
-  const higherLevels = idx >= 0 ? LEVEL_ORDER.slice(idx + 1) : [];
+  const higherLevels = higherRefereeLevels(currentLevel);
   const [open, setOpen] = useState(false);
   const [toLevel, setToLevel] = useState<RefereeLevel>(higherLevels[0] ?? "Nacional");
   const [motivo, setMotivo] = useState("");

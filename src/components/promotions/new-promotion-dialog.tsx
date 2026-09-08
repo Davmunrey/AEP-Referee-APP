@@ -10,13 +10,9 @@ import type { Referee, RefereeLevel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ArrowRight, TrendingUp, X } from "lucide-react";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { higherRefereeLevels } from "@/lib/referee-levels";
 
-const LEVEL_ORDER: RefereeLevel[] = ["Regional", "Nacional", "IPF Cat. 2", "IPF Cat. 1"];
-
-function higherLevels(current: RefereeLevel): RefereeLevel[] {
-  const idx = LEVEL_ORDER.indexOf(current);
-  return idx >= 0 ? LEVEL_ORDER.slice(idx + 1) : [];
-}
+const higherLevels = higherRefereeLevels;
 
 interface FormState {
   refereeId: string;
