@@ -18,6 +18,7 @@ import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import {
   cachedLoadAllAssignments,
   db,
+  fetchAllPagesOf,
   fetchAllRowsIn,
   isMissingTableError,
   hasApprovalCompetitionColumns,
@@ -43,18 +44,21 @@ function enrichCompetitionRows(
 export const competitionService = {
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const supabase = db();
-    const [{ data, error }, assignmentsByComp] = await Promise.all([
-      supabase.from("competitions").select("*").order("fecha"),
-      cachedLoadAllAssignments(),
-    ]);
     // Esta lista alimenta el listado, el calendario, la analítica y el hub de
     // compensación: tragarse el error dejaba «no hay campeonatos» en las cuatro
-    // pantallas y, en el hub, un total de 0 € presentado como cifra buena.
-    if (error) throw new Error(`competitions: ${error.message}`);
-    const list = enrichCompetitionRows(
-      (data ?? []) as Record<string, unknown>[],
-      assignmentsByComp,
-    );
+    // pantallas y, en el hub, un total de 0 € presentado como cifra buena. Y
+    // leerla sin paginar la cortaba en 1000 filas —varias temporadas de
+    // calendario— haciendo desaparecer los campeonatos más recientes de las
+    // mismas cuatro pantallas. El desempate por `id` mantiene el orden estable
+    // entre páginas cuando varios comparten fecha.
+    const compQuery = supabase.from("competitions").select("*").order("fecha").order("id");
+    const [data, assignmentsByComp] = await Promise.all([
+      fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
+        compQuery.range(from, to),
+      ),
+      cachedLoadAllAssignments(),
+    ]);
+    const list = enrichCompetitionRows(data, assignmentsByComp);
     if (user?.role === "delegado_zona" && user.zona) {
       const userZone = resolveZoneCode(user.zona);
       return list.filter((c) => resolveZoneCode(c.zona) === userZone);

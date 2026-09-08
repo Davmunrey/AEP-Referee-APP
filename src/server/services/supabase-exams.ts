@@ -189,7 +189,11 @@ export const examsService = {
 
   getExams: async (refereeId?: string, user?: SessionUser): Promise<RefereeExam[]> => {
     const supabase = db();
-    let query = supabase.from("referee_exams").select("*").order("fecha", { ascending: false });
+    let query = supabase
+      .from("referee_exams")
+      .select("*")
+      .order("fecha", { ascending: false })
+      .order("id");
     if (refereeId) query = query.eq("referee_id", refereeId);
     if (user && user.role === "delegado_zona" && user.zona) {
       // La zona del perfil se canonicaliza: `referees.zona` guarda el código
@@ -206,9 +210,12 @@ export const examsService = {
       if (ids.length === 0) return [];
       query = query.in("referee_id", ids);
     }
-    const { data, error } = await query;
-    if (error) throw new Error(`referee_exams: ${error.message}`);
-    return (data ?? []).map((r) => mapExam(r as Record<string, unknown>));
+    // El historial de exámenes solo crece: sin paginar, PostgREST lo cortaba
+    // en 1000 filas y los más antiguos desaparecían del expediente sin aviso.
+    const data = await fetchAllPagesOf<Record<string, unknown>>("referee_exams", (from, to) =>
+      query.range(from, to),
+    );
+    return data.map((r) => mapExam(r));
   },
 
   createExam: async (input: {
