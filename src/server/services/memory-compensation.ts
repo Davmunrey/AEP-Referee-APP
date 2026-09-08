@@ -132,12 +132,13 @@ export const memoryCompensationService = {
       status: CompensationClaimStatus;
       reviewComment: string | null;
     }>,
+    actor?: string,
   ): Promise<CompensationClaim | undefined> => {
     const summary = await buildSummary(competitionId);
     const existing = summary.claims.find((c) => c.refereeId === refereeId);
     if (!existing) return undefined;
 
-    const claim = applyCompensationClaimPatch(existing, patch);
+    const claim = applyCompensationClaimPatch(existing, patch, { actor });
     store.set(key(competitionId, refereeId), claim);
     return claim;
   },

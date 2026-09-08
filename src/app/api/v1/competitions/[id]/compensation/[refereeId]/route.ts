@@ -43,7 +43,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!parsed.success) return jsonError("Datos de compensación inválidos", 400);
 
   try {
-    const updated = await dataService.updateCompensationClaim(id, refereeId, parsed.data);
+    const updated = await dataService.updateCompensationClaim(
+      id,
+      refereeId,
+      parsed.data,
+      user.nombre,
+    );
     if (!updated) return jsonError("Claim no encontrado para este juez", 404);
     return jsonOk(updated);
   } catch (err) {
