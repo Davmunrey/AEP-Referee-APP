@@ -27,6 +27,7 @@ import { assignmentsFromJsonb, mapApproval, mapHistory } from "@/server/db/mappe
 import {
   db,
   getCompetitionTemplate,
+  fetchAllPagesOf,
   hasApprovalCompetitionColumns,
   hasApprovalSubmitterColumns,
   loadAssignments,
@@ -636,6 +637,16 @@ export const rosterService = {
       evento: comp.nombre,
       hace: "ahora",
     });
+    // El historial de la tarima registraba cada asignación suelta pero ninguno
+    // de los tres hitos del ciclo de aprobación: quien lo abría veía el trabajo
+    // y no la decisión.
+    await pushHistory({
+      competitionId,
+      at: now,
+      actor,
+      action: "Propuesta enviada a aprobación",
+      detail: `${Object.values(assignments).filter(Boolean).length} asignaciones`,
+    });
     const { data, error: readError } = await supabase
       .from("approval_proposals")
       .select("*")
@@ -671,14 +682,42 @@ export const rosterService = {
     });
   },
 
-  getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
+  /**
+   * Última propuesta de una competición, para poder enseñar en la tarima el
+   * motivo del rechazo: el revisor está obligado a escribirlo, pero no llegaba
+   * a la pantalla de quien tiene que corregir la tarima.
+   */
+  getLatestApproval: async (competitionId: string): Promise<ApprovalProposal | undefined> => {
     const supabase = db();
+    const column = (await hasApprovalCompetitionColumns()) ? "competition_id" : "event_id";
     const { data, error } = await supabase
       .from("approval_proposals")
       .select("*")
-      .order("submitted_at", { ascending: false });
+      .eq(column, competitionId)
+      .order("submitted_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1);
     if (error) throw new Error(`approval_proposals: ${error.message}`);
-    const list = (data ?? []).map((r) => mapApproval(r as Record<string, unknown>));
+    const row = (data ?? [])[0];
+    return row ? mapApproval(row as Record<string, unknown>) : undefined;
+  },
+
+  getApprovals: async (user?: SessionUser): Promise<ApprovalProposal[]> => {
+    const supabase = db();
+    // Paginado: el filtro por zona no puede ir en SQL (columna de texto libre),
+    // así que sin paginar el corte en 1000 filas escondía propuestas pendientes
+    // de la bandeja.
+    const data = await fetchAllPagesOf<Record<string, unknown>>(
+      "approval_proposals",
+      (from, to) =>
+        supabase
+          .from("approval_proposals")
+          .select("*")
+          .order("submitted_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(from, to),
+    );
+    const list = data.map((r) => mapApproval(r));
     // `zona` es texto libre y las propuestas anteriores a la migración 013
     // guardan códigos legados ("MAD", "Centro"): el `.eq` crudo las ocultaba al
     // delegado, que veía su bandeja vacía con propuestas pendientes de su zona.
@@ -835,6 +874,15 @@ export const rosterService = {
       accion: approve ? "aprobó roster para" : "rechazó propuesta para",
       evento: proposalCompetitionName,
       hace: "ahora",
+    });
+    // El motivo del rechazo queda también en el historial de la competición,
+    // que es donde lo busca quien tiene que corregirla.
+    await pushHistory({
+      competitionId: proposalCompetitionId,
+      at: now,
+      actor: reviewer,
+      action: approve ? "Propuesta aprobada" : "Propuesta rechazada",
+      detail: comment?.trim() || undefined,
     });
     const { data } = await supabase.from("approval_proposals").select("*").eq("id", id).single();
     return data ? mapApproval(data as Record<string, unknown>) : undefined;

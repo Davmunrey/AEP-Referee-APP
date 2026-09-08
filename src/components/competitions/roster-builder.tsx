@@ -64,7 +64,7 @@ const EditCompetitionDialog = dynamic(
   { ssr: false },
 );
 import { RosterCompetitionHeader } from "./roster-competition-header";
-import { RosterImprevistoBanner } from "./roster-imprevisto-banner";
+import { RosterImprevistoBanner, type RosterLastReview } from "./roster-imprevisto-banner";
 import { RosterRefereePanelLeft } from "./roster-referee-panel";
 import { SessionBlock, SessionTab } from "./roster-session-block";
 import {
@@ -101,6 +101,8 @@ interface RosterBuilderProps {
   initialConfirmedIds?: string[];
   /** Jueces ya asignados en otro campeonato que solapa fechas con este. */
   refereeBusyMap?: RefereeBusyMap;
+  /** Resolución de la última propuesta, para explicar un rechazo. */
+  lastReview?: RosterLastReview;
   defaultZonaFilter?: string;
 }
 
@@ -119,6 +121,7 @@ export function RosterBuilder({
   regulations = EMPTY_REGULATIONS,
   initialConfirmedIds = EMPTY_CONFIRMED_IDS,
   refereeBusyMap = EMPTY_BUSY_MAP,
+  lastReview,
   defaultZonaFilter = "TODAS",
 }: RosterBuilderProps) {
   const router = useRouter();
@@ -492,6 +495,7 @@ export function RosterBuilder({
           aprobacion={aprobacion}
           canEdit={canEdit}
           pending={pending}
+          lastReview={lastReview}
           onUnlock={handleUnlockImprevisto}
         />
         {!readOnly && (
