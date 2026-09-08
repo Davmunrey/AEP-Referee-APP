@@ -113,14 +113,17 @@ async function signAttachments(rows: TicketRow[]): Promise<SupportTicketAttachme
 /**
  * Sube los ficheros al bucket e inserta las filas de adjunto. Se llama DESPUÉS
  * de insertar el ticket/comentario para no dejar ficheros huérfanos. Si una
- * subida falla, registra un warning y continúa con las demás.
+ * subida falla, sigue con las demás y devuelve el nombre de la que se quedó
+ * fuera: un fallo aquí no debe tumbar el ticket, pero tampoco puede acabar
+ * solo en el log del servidor mientras el usuario cree que adjuntó su prueba.
  */
 async function uploadAttachments(
   ticketId: string,
   commentId: string | null,
   files: TicketFileInput[],
-): Promise<void> {
-  if (files.length === 0) return;
+): Promise<string[]> {
+  const fallidos: string[] = [];
+  if (files.length === 0) return fallidos;
   const supabase = db();
   for (const file of files) {
     const path = `tickets/${ticketId}/${crypto.randomUUID()}-${sanitizeFileName(file.fileName)}`;
@@ -129,6 +132,7 @@ async function uploadAttachments(
       .upload(path, file.bytes, { contentType: file.contentType, upsert: false });
     if (uploadError) {
       console.warn(`[tickets] adjunto no subido (${file.fileName}):`, uploadError.message);
+      fallidos.push(file.fileName);
       continue;
     }
     const { error: insertError } = await supabase.from("support_ticket_attachments").insert({
@@ -142,10 +146,12 @@ async function uploadAttachments(
     });
     if (insertError) {
       console.warn(`[tickets] fila de adjunto no insertada (${file.fileName}):`, insertError.message);
+      fallidos.push(file.fileName);
       // Limpia el fichero huérfano: no hay fila que lo referencie.
       await supabase.storage.from(BUCKET).remove([path]);
     }
   }
+  return fallidos;
 }
 
 /** ¿Puede el usuario ver este ticket? Autor o admin. */
@@ -289,10 +295,10 @@ export const ticketService = {
     }
     // Los ficheros se suben DESPUÉS del insert: si el insert fallara no dejaríamos
     // ficheros huérfanos en el bucket.
-    await uploadAttachments(id, null, files);
+    const fallidos = await uploadAttachments(id, null, files);
     const ticket = await ticketService.getTicket(id, user);
     if (!ticket) throw new Error("No se pudo leer el ticket recién creado");
-    return ticket;
+    return fallidos.length ? { ...ticket, attachmentWarnings: fallidos } : ticket;
   },
 
   addComment: async ({
@@ -326,10 +332,14 @@ export const ticketService = {
     });
     if (insertError) throw insertError;
 
-    await uploadAttachments(ticketId, commentId, files);
+    const fallidos = await uploadAttachments(ticketId, commentId, files);
     // Un comentario nuevo mueve el ticket al principio de la lista.
     await supabase.from("support_tickets").update({ updated_at: now }).eq("id", ticketId);
-    return ticketService.getTicket(ticketId, user);
+    const actualizado = await ticketService.getTicket(ticketId, user);
+    if (actualizado && fallidos.length) {
+      return { ...actualizado, attachmentWarnings: fallidos };
+    }
+    return actualizado;
   },
 
   updateTicketStatus: async ({
