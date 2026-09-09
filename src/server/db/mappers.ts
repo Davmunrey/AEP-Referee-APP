@@ -15,6 +15,55 @@ import type {
 import { isClaimTravelResolved } from "@/lib/judge-compensation/readiness";
 import { championshipDayCount } from "@/lib/judge-compensation/rates";
 
+/**
+ * Texto de una columna que el tipo declara obligatoria.
+ *
+ * `String(null)` produce el literal «null», y eso acaba impreso como si fuera
+ * un dato: un juez llamado «null» en el cuadrante, un campeonato con sede
+ * «null». Un hueco se enseña como hueco.
+ */
+function texto(raw: unknown, fallback = ""): string {
+  if (raw == null) return fallback;
+  const value = String(raw);
+  return value === "null" || value === "undefined" ? fallback : value;
+}
+
+/**
+ * Número de una columna que el tipo declara obligatoria.
+ *
+ * `Number(raw ?? 0)` solo cubre el nulo: una cadena no numérica —«120,50» con
+ * coma decimal, un campo editado a mano, un resto de una versión anterior—
+ * devuelve NaN, y NaN no se queda quieto. Contamina toda suma en la que entre
+ * (los totales del hub, la analítica) y, lo que es peor, se cuela por los
+ * guardas: `NaN <= 0` es `false`, así que un importe ilegible pasaba por
+ * «importe positivo» y salía impreso en un recibo como «NaN€».
+ */
+function numero(raw: unknown, fallback = 0): number {
+  const value = aNumeroFinito(raw);
+  return value ?? fallback;
+}
+
+/** Como `numero`, pero para campos opcionales: un valor ilegible es ausencia. */
+function numeroOpcional(raw: unknown): number | undefined {
+  return aNumeroFinito(raw);
+}
+
+/**
+ * `undefined` si el valor no es un número utilizable.
+ *
+ * La cadena vacía cuenta como ausencia, no como cero: `Number("")` es 0, y en
+ * los km eso no es lo mismo —cero km es «sin desplazamiento facturable», un
+ * dato resuelto que da la liquidación por completa.
+ */
+function aNumeroFinito(raw: unknown): number | undefined {
+  if (raw == null) return undefined;
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : undefined;
+  const text = String(raw).trim();
+  if (!text) return undefined;
+  const value = Number(text);
+  return Number.isFinite(value) ? value : undefined;
+}
+
 function mapArbitrajeStats(raw: unknown): RefereeArbitrajeStats | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const o = raw as Record<string, unknown>;
@@ -86,26 +135,28 @@ export function refereeToDbRow(
 
 export function mapReferee(row: Record<string, unknown>): Referee {
   return {
-    id: String(row.id),
-    nombre: String(row.nombre),
-    zona: String(row.zona),
-    nivel: String(row.nivel) as Referee["nivel"],
+    id: texto(row.id),
+    nombre: texto(row.nombre),
+    zona: texto(row.zona),
+    nivel: texto(row.nivel) as Referee["nivel"],
     estado: row.estado as Referee["estado"],
-    eventos: Number(row.eventos),
-    ultimo: String(row.ultimo),
+    eventos: numero(row.eventos),
+    ultimo: texto(row.ultimo, "—"),
     disp: Boolean(row.disp),
-    iniciales: String(row.iniciales),
+    iniciales: texto(row.iniciales),
     userId: row.user_id ? String(row.user_id) : undefined,
     email: row.email ? String(row.email) : undefined,
     licencia: row.licencia ? String(row.licencia) : undefined,
     localidad: row.localidad ? String(row.localidad) : undefined,
     domicilio: row.domicilio ? String(row.domicilio) : undefined,
-    domicilioLat: row.domicilio_lat != null ? Number(row.domicilio_lat) : undefined,
-    domicilioLng: row.domicilio_lng != null ? Number(row.domicilio_lng) : undefined,
+    // Unas coordenadas ilegibles son ausencia de coordenadas: con NaN, el
+    // domicilio parecía geocodificado y la ruta a la sede salía sin sentido.
+    domicilioLat: numeroOpcional(row.domicilio_lat),
+    domicilioLng: numeroOpcional(row.domicilio_lng),
     telefono: row.telefono ? String(row.telefono) : undefined,
     genero: row.genero ? String(row.genero) : undefined,
     antiguedad: row.antiguedad ? String(row.antiguedad).slice(0, 10) : undefined,
-    excelId: row.excel_id != null ? Number(row.excel_id) : undefined,
+    excelId: numeroOpcional(row.excel_id),
     notas: row.notas ? String(row.notas) : undefined,
     ultimoFecha: row.ultimo_fecha
       ? String(row.ultimo_fecha).slice(0, 10)
@@ -120,25 +171,25 @@ export function mapReferee(row: Record<string, unknown>): Referee {
 
 export function mapCompetition(row: Record<string, unknown>): Competition {
   return {
-    id: String(row.id),
-    nombre: String(row.nombre),
+    id: texto(row.id),
+    nombre: texto(row.nombre),
     tipo: row.tipo as Competition["tipo"],
-    fecha: String(row.fecha),
+    fecha: texto(row.fecha),
     // Guardas de nulos: String(null) produciría el literal "null". El tipo
     // declara ambos campos como string obligatorio, así que se usa el valor
     // neutro del dominio: sin fecha_fin ⇒ campeonato de un día (fecha) y sin
     // aprobacion ⇒ "Sin propuesta" (el valor por defecto en la creación).
-    fechaFin: row.fecha_fin != null ? String(row.fecha_fin) : String(row.fecha),
-    sede: String(row.sede),
-    sesiones: Number(row.sesiones),
-    requeridos: Number(row.requeridos),
-    confirmados: Number(row.confirmados),
+    fechaFin: row.fecha_fin != null ? texto(row.fecha_fin) : texto(row.fecha),
+    sede: texto(row.sede),
+    sesiones: numero(row.sesiones),
+    requeridos: numero(row.requeridos),
+    confirmados: numero(row.confirmados),
     estado: row.estado as Competition["estado"],
     aprobacion: row.aprobacion != null ? String(row.aprobacion) : "Sin propuesta",
     zona: row.zona ? String(row.zona) : undefined,
     sedeDireccion: row.sede_direccion ? String(row.sede_direccion) : undefined,
-    sedeLat: row.sede_lat != null ? Number(row.sede_lat) : undefined,
-    sedeLng: row.sede_lng != null ? Number(row.sede_lng) : undefined,
+    sedeLat: numeroOpcional(row.sede_lat),
+    sedeLng: numeroOpcional(row.sede_lng),
     ambito: row.ambito ? (String(row.ambito) as Competition["ambito"]) : undefined,
     compensationOrganizer: row.compensation_organizer
       ? (String(row.compensation_organizer) as Competition["compensationOrganizer"])
@@ -185,13 +236,13 @@ export function assignmentsFromJsonb(raw: unknown): AssignmentsMap {
 
 export function mapApproval(row: Record<string, unknown>): ApprovalProposal {
   return {
-    id: String(row.id),
-    competitionId: String(row.competition_id ?? row.event_id),
-    competitionName: String(row.competition_name ?? row.event_name),
-    zona: String(row.zona),
-    submittedBy: String(row.submitted_by),
+    id: texto(row.id),
+    competitionId: texto(row.competition_id ?? row.event_id),
+    competitionName: texto(row.competition_name ?? row.event_name),
+    zona: texto(row.zona),
+    submittedBy: texto(row.submitted_by),
     submittedById: row.submitted_by_id ? String(row.submitted_by_id) : undefined,
-    submittedAt: String(row.submitted_at),
+    submittedAt: texto(row.submitted_at),
     status: row.status as ApprovalProposal["status"],
     // El JSONB solo se guardaba contra el nulo. Una cadena o un array pasaban
     // tal cual, y `Object.entries` sobre ellos daba pares basura: el panel de
@@ -207,15 +258,15 @@ export function mapApproval(row: Record<string, unknown>): ApprovalProposal {
 
 export function mapPromotion(row: Record<string, unknown>): PromotionRequest {
   return {
-    id: String(row.id),
-    refereeId: String(row.referee_id),
-    refereeName: String(row.referee_name),
-    fromLevel: String(row.from_level) as PromotionRequest["fromLevel"],
-    toLevel: String(row.to_level) as PromotionRequest["toLevel"],
-    zona: String(row.zona),
+    id: texto(row.id),
+    refereeId: texto(row.referee_id),
+    refereeName: texto(row.referee_name),
+    fromLevel: texto(row.from_level) as PromotionRequest["fromLevel"],
+    toLevel: texto(row.to_level) as PromotionRequest["toLevel"],
+    zona: texto(row.zona),
     status: row.status as PromotionRequest["status"],
-    submittedAt: String(row.submitted_at),
-    eventosCompletados: Number(row.eventos_completados),
+    submittedAt: texto(row.submitted_at),
+    eventosCompletados: numero(row.eventos_completados),
     motivo: row.motivo ? String(row.motivo) : undefined,
     reviewComment: row.review_comment ? String(row.review_comment) : undefined,
   };
@@ -235,30 +286,30 @@ export function mapActivity(row: Record<string, unknown>): ActivityItem {
   }
   return {
     tipo: row.tipo as ActivityItem["tipo"],
-    actor: String(row.actor),
-    accion: String(row.accion),
-    evento: String(row.evento),
+    actor: texto(row.actor),
+    accion: texto(row.accion),
+    evento: texto(row.evento),
     hace,
   };
 }
 
 export function mapHistory(row: Record<string, unknown>): RosterHistoryEntry {
   return {
-    id: String(row.id),
-    competitionId: String(row.competition_id ?? row.event_id),
-    at: String(row.at),
-    actor: String(row.actor),
-    action: String(row.action),
+    id: texto(row.id),
+    competitionId: texto(row.competition_id ?? row.event_id),
+    at: texto(row.at),
+    actor: texto(row.actor),
+    action: texto(row.action),
     detail: row.detail ? String(row.detail) : undefined,
   };
 }
 
 export function mapRegulation(row: Record<string, unknown>): RegulationRule {
   return {
-    id: String(row.id),
-    rol: String(row.rol),
+    id: texto(row.id),
+    rol: texto(row.rol),
     roleKey: row.role_key as RegulationRule["roleKey"],
-    minLevel: String(row.min_level) as RegulationRule["minLevel"],
+    minLevel: texto(row.min_level) as RegulationRule["minLevel"],
     eventTypes: (row.event_types as string[]) as RegulationRule["eventTypes"],
     note: String(row.note ?? ""),
   };
@@ -266,15 +317,15 @@ export function mapRegulation(row: Record<string, unknown>): RegulationRule {
 
 export function mapExam(row: Record<string, unknown>): RefereeExam {
   return {
-    id: String(row.id),
-    refereeId: String(row.referee_id),
-    refereeName: String(row.referee_name),
+    id: texto(row.id),
+    refereeId: texto(row.referee_id),
+    refereeName: texto(row.referee_name),
     tipo: row.tipo as RefereeExam["tipo"],
-    nivelObjetivo: String(row.nivel_objetivo) as RefereeExam["nivelObjetivo"],
-    fecha: String(row.fecha),
-    examinador: String(row.examinador),
-    puntuacion: row.puntuacion != null ? Number(row.puntuacion) : undefined,
-    puntuacionMaxima: Number(row.puntuacion_maxima ?? 100),
+    nivelObjetivo: texto(row.nivel_objetivo) as RefereeExam["nivelObjetivo"],
+    fecha: texto(row.fecha),
+    examinador: texto(row.examinador),
+    puntuacion: numeroOpcional(row.puntuacion),
+    puntuacionMaxima: numero(row.puntuacion_maxima, 100),
     resultado: row.resultado as RefereeExam["resultado"],
     notas: row.notas ? String(row.notas) : undefined,
     createdAt: row.created_at ? String(row.created_at) : undefined,
@@ -283,19 +334,19 @@ export function mapExam(row: Record<string, unknown>): RefereeExam {
 
 export function mapReport(row: Record<string, unknown>): RefereeReport {
   return {
-    id: String(row.id),
+    id: texto(row.id),
     subjectType: (row.subject_type as RefereeReport["subjectType"]) ?? "juez",
     zona: row.zona ? String(row.zona) : undefined,
     refereeId: row.referee_id ? String(row.referee_id) : undefined,
     refereeName: row.referee_name ? String(row.referee_name) : undefined,
     competitionId: row.competition_id ? String(row.competition_id) : undefined,
     competitionName: row.competition_name ? String(row.competition_name) : undefined,
-    titulo: String(row.titulo),
+    titulo: texto(row.titulo),
     tipo: row.tipo as RefereeReport["tipo"],
     evento: row.evento ? String(row.evento) : undefined,
-    contenido: String(row.contenido),
+    contenido: texto(row.contenido),
     adjuntoUrl: row.adjunto_url ? String(row.adjunto_url) : undefined,
-    autor: String(row.autor),
+    autor: texto(row.autor),
     createdAt: row.created_at ? String(row.created_at) : undefined,
   };
 }
@@ -329,12 +380,12 @@ export function mapCompensationDutyLine(
 ): import("@/lib/judge-compensation/types").CompensationDutyLine {
   return {
     dutyType: row.duty_type as import("@/lib/judge-compensation/types").CompensationDutyType,
-    session: String(row.session_label),
+    session: texto(row.session_label),
     roleKey: row.role_key ? (String(row.role_key) as import("@/lib/types").RoleKey) : undefined,
     roleLabel: row.role_label ? String(row.role_label) : undefined,
-    unitAmount: Number(row.unit_amount ?? 0),
-    quantity: Number(row.quantity ?? 1),
-    amount: Number(row.amount ?? 0),
+    unitAmount: numero(row.unit_amount),
+    quantity: numero(row.quantity, 1),
+    amount: numero(row.amount),
     slotKeys: Array.isArray(row.slot_keys) ? (row.slot_keys as string[]) : [],
   };
 }
@@ -345,10 +396,10 @@ export function mapCompensationClaimRow(
   competition?: import("@/lib/types").Competition,
 ): import("@/lib/judge-compensation/types").CompensationClaim {
   const base = {
-    id: String(row.id),
-    competitionId: String(row.competition_id),
-    refereeId: String(row.referee_id),
-    refereeName: String(row.referee_name),
+    id: texto(row.id),
+    competitionId: texto(row.competition_id),
+    refereeId: texto(row.referee_id),
+    refereeName: texto(row.referee_name),
     tipo: (competition?.tipo ?? "AEP-3") as import("@/lib/types").EventType,
     ambito: (competition?.ambito === "epf" || competition?.ambito === "ipf"
       ? competition.ambito
@@ -362,19 +413,18 @@ export function mapCompensationClaimRow(
       const m = row.travel_mode;
       return m === "shared_vehicle_passenger" || m === "none" ? m : "km_rate";
     })(),
-    distanceKmOneWay: row.distance_km_one_way != null ? Number(row.distance_km_one_way) : undefined,
-    distanceKmRoundTrip:
-      row.distance_km_round_trip != null ? Number(row.distance_km_round_trip) : undefined,
+    // Unos km ilegibles son km sin resolver, no «cero km»: con NaN, la
+    // liquidación se daba por completa y el importe de viaje se contaminaba.
+    distanceKmOneWay: numeroOpcional(row.distance_km_one_way),
+    distanceKmRoundTrip: numeroOpcional(row.distance_km_round_trip),
     distanceSource: row.distance_source as "osm" | "google_maps" | "manual" | undefined,
-    travelAmountOverride:
-      row.travel_amount_override != null ? Number(row.travel_amount_override) : undefined,
+    travelAmountOverride: numeroOpcional(row.travel_amount_override),
     travelApproved: Boolean(row.travel_approved),
     travelNotes: row.travel_notes ? String(row.travel_notes) : undefined,
     isCompetitionManager: Boolean(row.is_competition_manager),
     competitionManagerPerDay: Boolean(row.competition_manager_per_day),
     isComputerSetup: Boolean(row.is_computer_setup),
-    lodgingDaysOverride:
-      row.lodging_days_override != null ? Number(row.lodging_days_override) : undefined,
+    lodgingDaysOverride: numeroOpcional(row.lodging_days_override),
     lodgingEligibleOverride:
       row.lodging_eligible_override != null ? Boolean(row.lodging_eligible_override) : undefined,
     status: row.status as import("@/lib/judge-compensation/types").CompensationClaimStatus,
@@ -384,22 +434,22 @@ export function mapCompensationClaimRow(
     reviewedBy: row.reviewed_by ? String(row.reviewed_by) : undefined,
   };
   const totals = {
-    dutiesAmount: Number(row.duties_amount ?? 0),
-    travelAmount: Number(row.travel_amount ?? 0),
-    lodgingAmount: Number(row.lodging_amount ?? 0),
-    competitionManagerAmount: Number(row.competition_manager_amount ?? 0),
-    computerSetupAmount: Number(row.computer_setup_amount ?? 0),
-    totalAmount: Number(row.total_amount ?? 0),
-    sessionCount: Number(row.session_count ?? 0),
-    pesajeCount: Number(row.pesaje_count ?? 0),
-    functionCount: Number(row.session_count ?? 0) + Number(row.pesaje_count ?? 0),
+    dutiesAmount: numero(row.duties_amount),
+    travelAmount: numero(row.travel_amount),
+    lodgingAmount: numero(row.lodging_amount),
+    competitionManagerAmount: numero(row.competition_manager_amount),
+    computerSetupAmount: numero(row.computer_setup_amount),
+    totalAmount: numero(row.total_amount),
+    sessionCount: numero(row.session_count),
+    pesajeCount: numero(row.pesaje_count),
+    functionCount: numero(row.session_count) + numero(row.pesaje_count),
     // Recalculado desde las fechas del campeonato: el "1" fijo anterior
     // etiquetaba mal los claims multi-día recién cargados de BD.
     championshipDays: competition
       ? championshipDayCount(competition.fecha, competition.fechaFin)
       : 1,
     lodgingEligible: Boolean(row.lodging_eligible),
-    lodgingDays: Number(row.lodging_days ?? 0),
+    lodgingDays: numero(row.lodging_days),
     financialComplete: isClaimTravelResolved({
       travelMode: base.travelMode,
       distanceKmRoundTrip: base.distanceKmRoundTrip,

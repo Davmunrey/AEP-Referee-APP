@@ -30,6 +30,7 @@ import {
   yearFromIso,
 } from "./supabase-helpers";
 import { competitionService } from "./supabase-competitions";
+import { zoneScopeOf, zoneVisibilityFilter } from "@/lib/zone-scope";
 
 type KpiInput = {
   referees: { estado: string }[];
@@ -133,6 +134,10 @@ export const analyticsService = {
     const supabase = db();
     const isZoneScoped = user.role === "delegado_zona" && !!user.zona;
     const userZone = isZoneScoped ? resolveZoneCode(user.zona) : undefined;
+    // Un delegado de zona cuya zona NO se reconoce no es «sin restricción»:
+    // con `!userZone` caía en el mismo saco que un super admin y veía el panel
+    // entero. `zoneVisibilityFilter` separa los tres casos.
+    const visibleEnZona = zoneVisibilityFilter(user);
 
     let competitionQuery = supabase.from("competitions").select("*").order("fecha", { ascending: true });
     let refereeQuery = supabase.from("referees").select("estado, disp, zona");
@@ -204,10 +209,9 @@ export const analyticsService = {
     });
     const activityItems = (activity ?? [])
       .map((r) => mapActivity(r as Record<string, unknown>))
-      .filter((item) => !userZone || competitionNames.has(item.evento));
+      .filter((item) => zoneScopeOf(user).kind === "all" || competitionNames.has(item.evento));
     const scopedReferees = (referees ?? []) as { estado: string; disp?: boolean }[];
-    const inUserZone = (r: { zona?: unknown }) =>
-      !userZone || resolveZoneCode(String(r.zona ?? "")) === userZone;
+    const inUserZone = (r: { zona?: unknown }) => visibleEnZona(String(r.zona ?? ""));
     const scopedApprovals = ((approvals ?? []) as { status: string; zona?: unknown }[]).filter(
       inUserZone,
     );
@@ -272,6 +276,8 @@ export const analyticsService = {
   getAnalytics: async (user?: SessionUser, requestedYear?: number): Promise<AnalyticsPayload> => {
     const userZone =
       user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
+    // Ver `zone-scope`: una zona ilegible no es «sin restricción».
+    const visibleEnZonaExport = zoneVisibilityFilter(user);
     const supabase = db();
     // Lecturas independientes en paralelo (antes eran ~6 awaits en serie en la
     // página más pesada). El cruce cross-zona depende del año y va después.
@@ -372,8 +378,8 @@ export const analyticsService = {
       zona: String((r as Record<string, unknown>).zona),
       estado: String((r as Record<string, unknown>).estado),
     }));
-    const scopedReferees = userZone
-      ? mappedReferees.filter((r) => resolveZoneCode(r.zona) === userZone)
+    const scopedReferees = userZone || zoneScopeOf(user).kind === "unresolved"
+      ? mappedReferees.filter((r) => visibleEnZonaExport(r.zona))
       : mappedReferees;
     const activityByZone = zones.map((z) => {
       const agg = zoneAgg.get(z.code);
@@ -392,7 +398,7 @@ export const analyticsService = {
       .sort((a, b) => (b!.assignedCompetitions - a!.assignedCompetitions) || (b!.assignedSlots - a!.assignedSlots) || a!.nombre.localeCompare(b!.nombre, "es"))
       .slice(0, 5) as AnalyticsPayload["topReferees"];
     const approvalsForYear = ((approvals ?? []) as { status: string; submitted_at?: unknown; zona?: unknown }[])
-      .filter((a) => !userZone || (resolveZoneCode(String(a.zona ?? "")) ?? a.zona) === userZone)
+      .filter((a) => visibleEnZonaExport(String(a.zona ?? "")))
       .filter((a) => yearFromIso(String(a.submitted_at ?? "")) === selectedYear);
     const reviewed = approvalsForYear.filter((a) => a.status !== "pendiente").length;
     const rejected = approvalsForYear.filter((a) => a.status === "rechazado").length;

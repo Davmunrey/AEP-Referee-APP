@@ -2,9 +2,24 @@ import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// Avisos que NO bloquean la auditoría, cada uno con su motivo. Se revisan
+// cuando cambie alguna de las condiciones que los justifican.
+//
+//  - Los dos primeros son de `xlsx`, que solo se usa para leer el Excel del
+//    censo en el servidor, con autenticación, tope de tamaño, tope de entradas
+//    del ZIP y tope de filas.
+//  - El de vitest es de `@vitest/mocker` (path traversal al redirigir un
+//    mock): solo afectan a la ejecución de tests, no se despliega nada de eso,
+//    y explotarlo exige control sobre el propio fichero de test. La subida a
+//    4.1.11 está bloqueada por un fallo de npm 10.9.7 al resolver los peers de
+//    esa versión («Cannot read properties of null (reading 'edgesOut')»);
+//    forzarla con --legacy-peer-deps deja el árbol sin `webpack` y rompe el
+//    build. Se retiran en cuanto npm resuelva 4.1.11 o salga un parche en la
+//    línea 4.1.x que sí instale.
 const allowedAdvisories = new Set([
   "GHSA-4r6h-8v6p-xvw6",
   "GHSA-5pgg-2g8v-p4x9",
+  "GHSA-82fw-gwwq-j7x9",
 ]);
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));

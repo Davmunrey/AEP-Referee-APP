@@ -36,7 +36,12 @@ export function canManageSanctions(
   if (user.role === "solo_ver") return false;
   if (user.role === "super_admin" || user.role === "delegado_jueces") return true;
   if (user.role === "delegado_zona" && user.zona && refereeZona) {
-    return resolveZoneCode(user.zona) === resolveZoneCode(refereeZona);
+    // `undefined === undefined` es `true`: con la zona del delegado y la del
+    // juez ilegibles —dos zonas distintas y ajenas—, esto daba permiso. Y
+    // sancionar deja al juez no disponible para designaciones. Su hermana
+    // `canEditRoster` ya cortaba con este mismo `!!`; esta no.
+    const userZone = resolveZoneCode(user.zona);
+    return !!userZone && userZone === resolveZoneCode(refereeZona);
   }
   return false;
 }

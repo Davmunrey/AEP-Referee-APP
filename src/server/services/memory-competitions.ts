@@ -49,24 +49,21 @@ import {
 } from "@/server/store";
 import { buildKpis, healthHistory, parseSlotKey, syncCompetitionCoverage } from "./memory-helpers";
 import { getReferee } from "./memory-referees";
+import { zoneVisibilityFilter } from "@/lib/zone-scope";
 
 export async function getDashboard(user: SessionUser): Promise<DashboardPayload> {
   const store = getStore();
   const userZone =
     user.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
+  // Ver `zone-scope`: una zona ilegible no es «sin restricción».
+  const visibleEnZona = zoneVisibilityFilter(user);
   const competitions = [...store.competitions]
-    .filter((c) => !userZone || resolveZoneCode(c.zona) === userZone)
+    .filter((c) => visibleEnZona(c.zona))
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
   const competitionNames = new Set(competitions.map((c) => c.nombre));
-  const scopedReferees = userZone
-    ? store.referees.filter((r) => resolveZoneCode(r.zona) === userZone)
-    : store.referees;
-  const scopedApprovals = userZone
-    ? store.approvals.filter((a) => resolveZoneCode(a.zona) === userZone)
-    : store.approvals;
-  const scopedPromotions = userZone
-    ? store.promotions.filter((p) => resolveZoneCode(p.zona) === userZone)
-    : store.promotions;
+  const scopedReferees = store.referees.filter((r) => visibleEnZona(r.zona));
+  const scopedApprovals = store.approvals.filter((a) => visibleEnZona(a.zona));
+  const scopedPromotions = store.promotions.filter((p) => visibleEnZona(p.zona));
   const activity = userZone
     ? store.activity.filter((item) => competitionNames.has(item.evento))
     : store.activity;

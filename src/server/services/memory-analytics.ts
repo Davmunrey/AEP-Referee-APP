@@ -1,3 +1,4 @@
+import { zoneVisibilityFilter } from "@/lib/zone-scope";
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { rosterAnalyticsStats } from "@/lib/roster-coverage";
 import { enumerateSlotKeys } from "@/lib/roster-template";
@@ -25,9 +26,9 @@ export async function getAnalytics(
   const competitions = await getCompetitions(user);
   const userZone =
     user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
-  const scopedReferees = userZone
-    ? store.referees.filter((r) => resolveZoneCode(r.zona) === userZone)
-    : store.referees;
+  // Ver `zone-scope`: una zona ilegible no es «sin restricción».
+  const visibleEnZona = zoneVisibilityFilter(user);
+  const scopedReferees = store.referees.filter((r) => visibleEnZona(r.zona));
   const years = Array.from(
     new Set(competitions.map((c) => yearFromIso(c.fecha)).filter((y): y is number => y != null)),
   ).sort((a, b) => a - b);

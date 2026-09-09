@@ -96,13 +96,42 @@ interface ParsedIsoDate {
   day: number;
 }
 
-function parseIsoDate(iso: string): ParsedIsoDate {
-  const [y, m, d] = iso.split("-").map(Number);
-  return { year: y, month: m - 1, day: d };
+const ISO_DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * `null` si la cadena no es una fecha ISO utilizable.
+ *
+ * Antes partía por guiones sin mirar nada: una fecha vacía daba «el día
+ * undefined de undefined de 0», una ilegible «el día NaN de undefined de
+ * NaN», y un mes 13 se quedaba sin nombre de mes. Todo eso se imprimía en el
+ * recibo, que es un documento que va al juez y al club.
+ */
+function parseIsoDate(iso: string): ParsedIsoDate | null {
+  const match = ISO_DAY_RE.exec(String(iso ?? "").trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  // Rechaza los días que ese mes no tiene (un 31 de abril, un 29 de febrero
+  // fuera de bisiesto): `Date` los desborda al mes siguiente en silencio.
+  const probe = new Date(Date.UTC(year, month - 1, day));
+  if (probe.getUTCMonth() !== month - 1 || probe.getUTCDate() !== day) return null;
+  return { year, month: month - 1, day };
 }
 
-/** Importe en euros con coma decimal, como en los recibos AEP. */
+/** Lo que se imprime cuando el campeonato no tiene fechas utilizables. */
+export const RECEIPT_DATE_UNKNOWN = "en fecha sin registrar";
+
+/**
+ * Importe en euros con coma decimal, como en los recibos AEP.
+ *
+ * Última red antes del papel: un importe ilegible daba «NaN€» impreso en un
+ * documento que va al juez y al club. Un importe que no es un número se
+ * enseña como lo que es —un hueco—, no como una cifra rara.
+ */
 export function formatReceiptAmountEur(amount: number): string {
+  if (!Number.isFinite(amount)) return "—";
   const rounded = Math.round(amount * 100) / 100;
   if (Number.isInteger(rounded)) return `${rounded}€`;
   return `${rounded.toFixed(2).replace(".", ",")}€`;
@@ -111,11 +140,14 @@ export function formatReceiptAmountEur(amount: number): string {
 /** Frase de fecha del campeonato («el día…» / «los días…»). */
 export function formatCompetitionDatePhrase(fecha: string, fechaFin: string): string {
   const start = parseIsoDate(fecha);
-  const end = parseIsoDate(fechaFin);
+  // Sin fecha de fin utilizable se asume campeonato de un día, igual que en el
+  // resto del dominio; sin fecha de inicio no hay nada que afirmar.
+  const end = parseIsoDate(fechaFin) ?? start;
+  if (!start || !end) return RECEIPT_DATE_UNKNOWN;
   const startMonth = MONTHS_ES[start.month];
   const endMonth = MONTHS_ES[end.month];
 
-  if (fecha === fechaFin) {
+  if (start.year === end.year && start.month === end.month && start.day === end.day) {
     return `el día ${start.day} de ${startMonth} de ${start.year}`;
   }
 

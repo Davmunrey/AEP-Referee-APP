@@ -208,10 +208,8 @@ export async function loadRosterAssignmentData(competitionId: string): Promise<{
   };
 }
 
-export function yearFromIso(date: string): number | null {
-  const year = Number(String(date).slice(0, 4));
-  return Number.isFinite(year) ? year : null;
-}
+/** Reexportado: la fuente está en `@/lib/season`. */
+export { yearFromIso } from "@/lib/season";
 
 export async function loadFlags(competitionId: string): Promise<FlagsMap> {
   const { flags } = await loadRosterAssignmentData(competitionId);
