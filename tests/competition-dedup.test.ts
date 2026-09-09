@@ -49,3 +49,70 @@ describe("competition-dedup", () => {
     expect(competitionsToRemoveInGroup(group).map((c) => c.id)).toEqual(["evt-001"]);
   });
 });
+
+describe("qué copia sobrevive cuando una está aprobada", () => {
+  /**
+   * La limpieza de duplicados se dispara sola al APLICAR la importación del
+   * calendario, antes de que nadie vea qué se va a borrar. El criterio miraba
+   * solo la tarima (`confirmados`, `Completo`), así que podía tirar justamente
+   * la copia aprobada —la que alguien firmó— para quedarse con un borrador que
+   * tenía un juez más.
+   */
+  const aprobada = comp({
+    id: "evt-900",
+    nombre: "Open Madrid",
+    fecha: "2026-05-01",
+    confirmados: 6,
+    aprobacion: "Aprobado",
+  });
+  const borrador = comp({
+    id: "evt-001",
+    nombre: "Open Madrid",
+    fecha: "2026-05-01",
+    confirmados: 9,
+    estado: "Completo",
+  });
+
+  it("gana la aprobada aunque tenga menos jueces confirmados", () => {
+    expect(pickCompetitionToKeep([borrador, aprobada]).id).toBe("evt-900");
+    expect(competitionsToRemoveInGroup([borrador, aprobada]).map((c) => c.id)).toEqual(["evt-001"]);
+  });
+
+  it("una propuesta enviada también pesa más que un borrador", () => {
+    const pendiente = comp({
+      id: "evt-901",
+      nombre: "Open Madrid",
+      fecha: "2026-05-01",
+      confirmados: 1,
+      aprobacion: "Propuesta enviada",
+    });
+    expect(pickCompetitionToKeep([borrador, pendiente]).id).toBe("evt-901");
+  });
+
+  it("una tarima aprobada pesa más que una propuesta enviada", () => {
+    const pendiente = comp({
+      id: "evt-000",
+      nombre: "Open Madrid",
+      fecha: "2026-05-01",
+      confirmados: 9,
+      aprobacion: "Propuesta enviada",
+    });
+    expect(pickCompetitionToKeep([pendiente, aprobada]).id).toBe("evt-900");
+  });
+
+  it("un estado con espacios de más sigue contando como aprobado", () => {
+    const sucia = comp({
+      id: "evt-902",
+      nombre: "Open Madrid",
+      fecha: "2026-05-01",
+      confirmados: 0,
+      aprobacion: "  aprobado  ",
+    });
+    expect(pickCompetitionToKeep([borrador, sucia]).id).toBe("evt-902");
+  });
+
+  it("sin ninguna aprobada, sigue mandando la tarima con más confirmados", () => {
+    const pocos = comp({ id: "evt-002", nombre: "Open Madrid", fecha: "2026-05-01", confirmados: 2 });
+    expect(pickCompetitionToKeep([pocos, borrador]).id).toBe("evt-001");
+  });
+});

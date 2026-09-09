@@ -1,6 +1,6 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError, jsonServerError } from "@/lib/api/route-utils";
 import { canManageSanctions } from "@/lib/permissions";
 import { SANCTION_DURATION_PRESETS } from "@/lib/sanctions";
 import { ISO_DATE_RE } from "@/app/api/_lib/validation";
@@ -23,8 +23,14 @@ export async function GET(_request: Request, context: RouteContext) {
     const rz = resolveZoneCode(referee.zona);
     if (uz !== rz) return jsonError("Sin permiso", 403);
   }
-  const sanctions = await dataService.listRefereeSanctions(id);
-  return jsonOk(sanctions);
+  // `listRefereeSanctions` lanza a propósito cuando la lectura falla: una
+  // lista vacía presenta como limpio a un juez sancionado. Pero sin `try` eso
+  // salía como un 500 sin cuerpo JSON.
+  try {
+    return jsonOk(await dataService.listRefereeSanctions(id));
+  } catch (err) {
+    return jsonRouteError("sanctions.GET", err, "No se pudieron cargar las sanciones");
+  }
 }
 
 export async function POST(request: Request, context: RouteContext) {

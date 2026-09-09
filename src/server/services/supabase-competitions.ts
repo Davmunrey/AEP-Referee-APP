@@ -13,7 +13,7 @@ import {
   type RefereeBusyMap,
 } from "@/lib/roster-conflicts";
 import type { Competition, RosterSession, SessionUser } from "@/lib/types";
-import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
+import { CompetitionHasClaimsError, UserFacingServiceError } from "@/lib/competitions/service-types";
 import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import { zoneVisibilityFilter } from "@/lib/zone-scope";
 import {
@@ -257,12 +257,35 @@ export const competitionService = {
     ]);
     const approvalCompetitionColumn = hasApprovalCols ? "competition_id" : "event_id";
     const historyCompetitionColumn = hasHistoryCol ? "competition_id" : "event_id";
-    // Los tres borrados hijos son independientes entre sí.
-    await Promise.all([
+    // Los tres borrados hijos son independientes entre sí, pero su resultado no
+    // se miraba. `supabase-js` no lanza: devuelve `{ error }`. Si uno fallaba
+    // —RLS, un corte, la tabla ocupada— el campeonato se borraba igual y sus
+    // filas se quedaban apuntando a un id que ya no existe.
+    //
+    // Y ese id vuelve: `createCompetition` numera con `max(evt-NNN) + 1`, así
+    // que borrar el último campeonato y crear otro reutiliza su identificador.
+    // La tarima huérfana se convertía entonces en la tarima del campeonato
+    // nuevo, sin que nadie la hubiera asignado.
+    //
+    // No hay transacción disponible desde aquí, así que la regla es: si algún
+    // hijo no se ha podido borrar, el campeonato NO se borra y se dice por qué.
+    const hijos = await Promise.all([
       supabase.from("roster_assignments").delete().eq("competition_id", id),
       supabase.from("approval_proposals").delete().eq(approvalCompetitionColumn, id),
       supabase.from("roster_history").delete().eq(historyCompetitionColumn, id),
     ]);
+    const nombresHijos = ["la tarima", "las propuestas de aprobación", "la bitácora"];
+    const fallo = hijos.findIndex(
+      (r) => r.error != null && !isMissingTableError(r.error),
+    );
+    if (fallo >= 0) {
+      const err = hijos[fallo]!.error!;
+      console.error("[deleteCompetition.hijos]", id, nombresHijos[fallo], err.message);
+      throw new UserFacingServiceError(
+        `No se pudo borrar ${nombresHijos[fallo]} del campeonato. No se ha borrado el campeonato; vuelve a intentarlo.`,
+        409,
+      );
+    }
     const { data, error } = await supabase
       .from("competitions")
       .delete()

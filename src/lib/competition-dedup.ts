@@ -1,3 +1,4 @@
+import { isRosterLockedByApproval, isRosterPendingApproval } from "@/lib/roster-coverage";
 import type { Competition } from "@/lib/types";
 
 /** Normaliza nombre para comparar duplicados (acentos, espacios, mayúsculas). */
@@ -45,9 +46,27 @@ export function groupCompetitionDuplicates(
     }));
 }
 
-/** Conserva el que más datos de tarima tiene; empate → id menor. */
+/**
+ * Peso del estado de aprobación al decidir qué copia sobrevive.
+ *
+ * Una tarima aprobada es la versión que alguien firmó, y una propuesta enviada
+ * está esperando esa firma. Las dos pesan por encima de cualquier recuento.
+ */
+function pesoAprobacion(c: Competition): number {
+  if (isRosterLockedByApproval(c.aprobacion)) return 2;
+  if (isRosterPendingApproval(c.aprobacion)) return 1;
+  return 0;
+}
+
+/** Conserva la copia aprobada; si ninguna lo está, la que más tarima tiene. */
 export function pickCompetitionToKeep(group: Competition[]): Competition {
   return [...group].sort((a, b) => {
+    // Antes esto empezaba por `confirmados`, así que la limpieza de duplicados
+    // podía borrar justamente la copia APROBADA para quedarse con un borrador
+    // que tenía un juez más. Y esa limpieza se dispara sola al aplicar la
+    // importación del calendario, antes de que nadie vea qué se va a borrar.
+    const aprobacion = pesoAprobacion(b) - pesoAprobacion(a);
+    if (aprobacion !== 0) return aprobacion;
     if (b.confirmados !== a.confirmados) return b.confirmados - a.confirmados;
     if (a.estado === "Completo" && b.estado !== "Completo") return -1;
     if (b.estado === "Completo" && a.estado !== "Completo") return 1;
