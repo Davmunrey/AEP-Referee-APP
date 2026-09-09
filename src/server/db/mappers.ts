@@ -1,3 +1,4 @@
+import { arbitrajeStatsTotal } from "@/lib/judges-registry/arbitraje-stats";
 import type {
   ActivityItem,
   ApprovalProposal,
@@ -64,16 +65,40 @@ function aNumeroFinito(raw: unknown): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
+/** Recuentos por rol de un nivel, quedándose solo con números utilizables. */
+function mapRoleCounts(raw: unknown): Record<string, number> {
+  if (!raw || typeof raw !== "object") return {};
+  const out: Record<string, number> = {};
+  for (const [rol, valor] of Object.entries(raw as Record<string, unknown>)) {
+    const n = numero(valor, 0);
+    if (n > 0) out[rol] = n;
+  }
+  return out;
+}
+
+/**
+ * El total NO se lee de la columna: se recalcula.
+ *
+ * `total` es la suma de los recuentos por rol, así que es un dato derivado
+ * guardado junto a los datos de los que deriva. En cuanto los dos discrepan
+ * —un JSONB de una importación antigua, una corrección a mano— gana el que se
+ * mira, y aquí se mira el total: `arbitrajeYears` esconde el año entero si el
+ * total está a cero, y `eventCountFromStats` alimenta el recuento de eventos
+ * que sostiene un ascenso. Un juez podía quedarse sin años y sin arbitrajes con
+ * sus recuentos intactos en la misma fila.
+ */
 function mapArbitrajeStats(raw: unknown): RefereeArbitrajeStats | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const o = raw as Record<string, unknown>;
-  return {
-    aep1: (o.aep1 as Record<string, number>) ?? {},
-    aep2: (o.aep2 as Record<string, number>) ?? {},
-    aep3: (o.aep3 as Record<string, number>) ?? {},
-    ipf: Number(o.ipf ?? 0),
-    total: Number(o.total ?? 0),
+  const stats: RefereeArbitrajeStats = {
+    aep1: mapRoleCounts(o.aep1),
+    aep2: mapRoleCounts(o.aep2),
+    aep3: mapRoleCounts(o.aep3),
+    ipf: numero(o.ipf, 0),
+    total: 0,
   };
+  stats.total = arbitrajeStatsTotal(stats);
+  return stats;
 }
 
 function mapArbitrajeStatsByYear(
