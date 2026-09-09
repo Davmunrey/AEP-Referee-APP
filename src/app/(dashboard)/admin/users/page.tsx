@@ -1,12 +1,13 @@
 import { UsersAdmin } from "@/components/admin/users-admin";
 import { canManageUsers, getSession } from "@/lib/auth/session";
+import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { dataService } from "@/server/services";
 import { listAdminUsers, type AdminUserRow } from "@/server/services/admin-users";
 import { redirect } from "next/navigation";
 
 export default async function AdminUsersPage() {
   const user = await getSession();
-  if (!user) redirect("/sign-in");
+  if (!user) redirect(SIGN_IN_SIN_ACCESO);
   if (!canManageUsers(user)) redirect("/");
 
   const meta = await dataService.getMeta(user);

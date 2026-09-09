@@ -6,6 +6,7 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { SIN_ACCESO_PARAM, SIN_ACCESO_VALUE } from "@/lib/auth/sign-in-redirect";
 
 // Mismo foco que el resto de la app: el anillo usa el token --ring (no el
 // primario a pelo) y se separa 1px del borde, igual que <Input>.
@@ -26,6 +27,14 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(searchParams.get("error"));
   const [info, setInfo] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  // Llega aquí quien tiene sesión de auth válida pero ningún perfil activo en
+  // la aplicación: una cuenta creada por su cuenta (que nace inactiva) o una
+  // desactivada después. Antes esto era un bucle de redirecciones sin texto.
+  // No se cierra aquí esa sesión de auth: sería un logout por navegación GET,
+  // que es justo lo que se quitó de /auth/signout. Tampoco hace falta —con la
+  // excepción del middleware cada intento acaba en esta pantalla, no en un
+  // bucle— y la cookie caduca sola.
+  const sinAcceso = searchParams.get(SIN_ACCESO_PARAM) === SIN_ACCESO_VALUE;
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
 
@@ -124,6 +133,19 @@ export default function SignInPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               Acceso restringido a cuentas autorizadas por el Comité de Jueces.
             </p>
+
+            {sinAcceso && (
+              <div
+                role="status"
+                className="rise-in mt-4 flex items-start gap-2.5 rounded-xl border border-warning/20 bg-warning-muted px-3.5 py-2.5"
+              >
+                <AlertCircle className="mt-px h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                <p className="text-xs leading-snug text-warning">
+                  Tu cuenta existe pero todavía no tiene acceso al panel. Pide al Comité de Jueces
+                  que la active.
+                </p>
+              </div>
+            )}
 
             <form onSubmit={(e) => void submit(e)} className="mt-5 space-y-3">
               <div>
