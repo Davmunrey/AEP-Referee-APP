@@ -2,7 +2,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { parseSelectedImportKeys } from "@/lib/import-security";
-import { mergeRosterTemplateSessions } from "@/lib/roster-template";
+import { duplicateSessionCodes, mergeRosterTemplateSessions } from "@/lib/roster-template";
 import {
   MAX_PDF_BYTES,
   extractPdfText,
@@ -127,6 +127,20 @@ export async function POST(request: Request, context: RouteContext) {
   if (selectedKeys) {
     const existing = (await dataService.getRoster(competitionId))?.template ?? [];
     templateToSave = mergeRosterTemplateSessions(existing, selectedTemplate, selectedKeys);
+  }
+
+  // Guardar la plantilla a mano pasa por `rosterTemplateSchema`, que impide dos
+  // sesiones con el mismo código; esta ruta no pasaba por ahí. Un PDF con la
+  // sesión repetida —o una fusión que la duplicara— dejaba la plantilla en el
+  // estado que esa regla existe para evitar: el juez asignado a una sesión
+  // aparece en la otra y los huecos de la segunda no existen.
+  const repetidas = duplicateSessionCodes(templateToSave);
+  if (repetidas.length > 0) {
+    return jsonError(
+      `El cuadrante trae dos sesiones con el mismo código (${repetidas.join(", ")}). Corrígelo en el PDF o importa las sesiones por separado.`,
+      422,
+      { preview },
+    );
   }
 
   const saved = await dataService.saveCompetitionTemplate(

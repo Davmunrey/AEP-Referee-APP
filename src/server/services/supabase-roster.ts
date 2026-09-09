@@ -909,12 +909,22 @@ export const rosterService = {
     // Guard condicional contra doble revisión concurrente: el UPDATE solo gana
     // si la propuesta sigue "pendiente"; si otro revisor llegó antes, no se
     // reescribe el roster ni se duplica la actividad.
-    const { data: claimed } = await supabase
+    const { data: claimed, error: claimError } = await supabase
       .from("approval_proposals")
       .update({ status, reviewed_by: reviewer, reviewed_at: now, comment: comment ?? null, ...reviewerIdCol })
       .eq("id", id)
       .eq("status", "pendiente")
       .select("id");
+    // Cero filas aquí sí significa «otro revisor llegó antes». Un error, no: la
+    // ruta lo contaba igual, y el revisor se quedaba creyendo que alguien se le
+    // había adelantado cuando lo que había pasado es que no se escribió nada.
+    if (claimError) {
+      console.error("[roster.reviewApproval.reclamar]", id, claimError.message);
+      throw new UserFacingServiceError(
+        "No se pudo registrar la revisión. No se ha cambiado nada; vuelve a intentarlo.",
+        409,
+      );
+    }
     if (!claimed || claimed.length === 0) return undefined;
 
     if (comp) {

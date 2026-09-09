@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { duplicateRoleKeys } from "@/lib/roster-template";
+import { duplicateRoleKeys, duplicateSessionCodes } from "@/lib/roster-template";
 
 export const assignRefereeSchema = z.object({
   competitionId: z.string().min(1),
@@ -98,10 +98,7 @@ export const rosterTemplateSchema = z
   .array(rosterSessionSchema)
   .min(1)
   .refine(
-    (sessions) => {
-      const codes = sessions.map((s) => s.sesion.trim().toLowerCase());
-      return new Set(codes).size === codes.length;
-    },
+    (sessions) => duplicateSessionCodes(sessions).length === 0,
     { message: "Hay dos sesiones con el mismo código; cada sesión necesita uno distinto." },
   );
 
