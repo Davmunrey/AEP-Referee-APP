@@ -64,8 +64,15 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  if (claim.totalAmount <= 0) {
-    return jsonError("El importe calculado es cero; revisa la tarima y los datos de compensación", 422);
+  // `NaN <= 0` es `false`: un importe ilegible se colaba por el guarda de
+  // «importe positivo» y salía impreso en el recibo como «NaN€», en un PDF que
+  // va al juez y al club. Se exige un número finito, no solo uno que no sea
+  // menor o igual que cero.
+  if (!Number.isFinite(claim.totalAmount) || claim.totalAmount <= 0) {
+    return jsonError(
+      "El importe calculado no es un número válido o es cero; revisa la tarima y los datos de compensación",
+      422,
+    );
   }
 
   const pdf = await renderCompensationReceiptPdf({

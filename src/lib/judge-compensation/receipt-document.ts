@@ -101,8 +101,15 @@ function parseIsoDate(iso: string): ParsedIsoDate {
   return { year: y, month: m - 1, day: d };
 }
 
-/** Importe en euros con coma decimal, como en los recibos AEP. */
+/**
+ * Importe en euros con coma decimal, como en los recibos AEP.
+ *
+ * Última red antes del papel: un importe ilegible daba «NaN€» impreso en un
+ * documento que va al juez y al club. Un importe que no es un número se
+ * enseña como lo que es —un hueco—, no como una cifra rara.
+ */
 export function formatReceiptAmountEur(amount: number): string {
+  if (!Number.isFinite(amount)) return "—";
   const rounded = Math.round(amount * 100) / 100;
   if (Number.isInteger(rounded)) return `${rounded}€`;
   return `${rounded.toFixed(2).replace(".", ",")}€`;
