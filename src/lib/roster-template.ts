@@ -151,6 +151,28 @@ export function duplicateRoleKeys(session: {
 }
 
 /**
+ * Códigos de sesión repetidos en una plantilla, normalizando espacios y
+ * mayúsculas.
+ *
+ * La clave de cada hueco es `${sesion}_${rol}_${indice}`, así que dos sesiones
+ * con el mismo código generan claves idénticas: el juez asignado a una aparece
+ * también en la otra, y los huecos de la segunda no existen. La regla ya la
+ * aplicaba el esquema de validación de la plantilla; vive aquí para que la
+ * importación pueda aplicar exactamente la misma.
+ */
+export function duplicateSessionCodes(sessions: { sesion: string }[]): string[] {
+  const vistos = new Set<string>();
+  const repetidos = new Set<string>();
+  for (const session of sessions) {
+    const code = String(session?.sesion ?? "").trim().toLowerCase();
+    if (!code) continue;
+    if (vistos.has(code)) repetidos.add(code);
+    else vistos.add(code);
+  }
+  return [...repetidos];
+}
+
+/**
  * Claves de hueco existentes en la plantilla, **sin repetir**.
  *
  * La clave es `${sesion}_${rol}_${indice}`, así que dos filas con el mismo rol
@@ -210,10 +232,15 @@ export function mergeRosterTemplateSessions(
     merged.push(cloneTemplate([session])[0]!);
   }
 
+  // `añadidas` faltaba: si el import traía DOS sesiones con el mismo código, la
+  // primera no marcaba nada y la segunda volvía a entrar. La plantilla acababa
+  // con el código repetido, que es justo lo que el esquema de validación
+  // impide al guardarla a mano.
+  const añadidas = new Set(merged.map((s) => s.sesion));
   for (const session of incoming) {
-    if (!replaced.has(session.sesion) && !existing.some((e) => e.sesion === session.sesion)) {
-      merged.push(cloneTemplate([session])[0]!);
-    }
+    if (replaced.has(session.sesion) || añadidas.has(session.sesion)) continue;
+    merged.push(cloneTemplate([session])[0]!);
+    añadidas.add(session.sesion);
   }
 
   return merged;
