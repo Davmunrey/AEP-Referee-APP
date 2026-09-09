@@ -4,7 +4,7 @@ import {
 } from "@/lib/competitions/service-types";
 import { clearSlotSchema } from "@/lib/validations";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
+import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
@@ -17,10 +17,8 @@ export async function POST(request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id: competitionId } = await context.params;
-  const comp = await dataService.getCompetition(competitionId);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
-  if (!comp) return jsonError("Competición no encontrada", 404);
+  const comp = await loadCompetitionForRosterWrite(competitionId, user, "roster.clear");
+  if (comp instanceof Response) return comp;
 
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
@@ -57,10 +55,8 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id: competitionId } = await context.params;
-  const comp = await dataService.getCompetition(competitionId);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
-  if (!comp) return jsonError("Competición no encontrada", 404);
+  const comp = await loadCompetitionForRosterWrite(competitionId, user, "roster.clear");
+  if (comp instanceof Response) return comp;
 
   try {
     const result = await dataService.clearRosterAssignments(competitionId, user.nombre);

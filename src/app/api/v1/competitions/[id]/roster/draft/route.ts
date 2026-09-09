@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
-import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
+import { jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -12,10 +12,8 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id } = await context.params;
-  const comp = await dataService.getCompetition(id);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
-  if (!comp) return jsonError("Competición no encontrada", 404);
+  const comp = await loadCompetitionForRosterWrite(id, user, "roster.draft");
+  if (comp instanceof Response) return comp;
 
   try {
     await dataService.saveDraft(id, user.nombre);

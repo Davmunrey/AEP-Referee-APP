@@ -1,6 +1,6 @@
 import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { jsonError, readOrError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -12,7 +12,10 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id: competitionId } = await context.params;
-  const comp = await dataService.getCompetition(competitionId);
+  const comp = await readOrError("roster.imprevisto", "No se pudo cargar el campeonato", () =>
+    dataService.getCompetition(competitionId),
+  );
+  if (comp instanceof Response) return comp;
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 
