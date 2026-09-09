@@ -4,7 +4,7 @@ import {
   validateAssignment,
   validateRosterOperation,
 } from "@/lib/roster-rules";
-import { ROLE_LABELS } from "@/lib/roster-template";
+import { enumerateSlotKeys, parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
 import { meetsRefereeLevel } from "@/lib/referee-levels";
 import type {
   AssignmentsMap,
@@ -105,20 +105,32 @@ export function getOperationalBlock(input: {
   };
 }
 
+/**
+ * Huecos de la plantilla. Misma cuenta que `countRequiredSlots`: la lista
+ * canónica, no la suma de `slots`, que cuenta de más en cuanto una sesión
+ * repite un rol.
+ */
 export function countRosterSlots(template: RosterSession[]): number {
-  return template.reduce(
-    (acc, s) =>
-      acc +
-      s.roles.reduce((a, r) => a + r.slots, 0) +
-      (s.pesajeRoles ?? []).reduce((a, r) => a + r.slots, 0),
-    0,
-  );
+  return enumerateSlotKeys(template).length;
 }
 
 export function countFilledAssignments(assignments: AssignmentsMap): number {
   return Object.values(assignments).filter(Boolean).length;
 }
 
+/**
+ * Cuántas designaciones incumplen la normativa.
+ *
+ * Enumeraba los huecos por su cuenta —recorriendo `slots` sesión a sesión— en
+ * vez de pedirle la lista a `enumerateSlotKeys`, que es quien la define para
+ * el resto de la aplicación. Y esa lista quita repetidos: dos filas del mismo
+ * rol en una sesión, o dos sesiones con el mismo código, comparten clave de
+ * hueco. Aquí no se quitaban, así que la MISMA designación se contaba dos
+ * veces y el aviso decía «2 avisos de normativa» donde había uno.
+ *
+ * Es el número que mira quien monta la tarima para saber si puede enviarla:
+ * inflarlo manda a buscar un problema que no existe.
+ */
 export function countRegulationViolations(
   template: RosterSession[],
   assignments: AssignmentsMap,
@@ -127,17 +139,13 @@ export function countRegulationViolations(
   regulations: RegulationRule[],
 ): number {
   let count = 0;
-  for (const session of template) {
-    const allRoles = [...session.roles, ...(session.pesajeRoles ?? [])];
-    for (const role of allRoles) {
-      for (let i = 0; i < role.slots; i++) {
-        const key = `${session.sesion}_${role.key}_${i}`;
-        const refId = assignments[key];
-        if (!refId) continue;
-        const nivel = getNivel(refId) ?? "Regional";
-        if (findRegulationViolation(role.key, eventType, nivel, regulations)) count++;
-      }
-    }
+  for (const key of enumerateSlotKeys(template)) {
+    const refId = assignments[key];
+    if (!refId) continue;
+    const parsed = parseSlotKey(key);
+    if (!parsed) continue;
+    const nivel = getNivel(refId) ?? "Regional";
+    if (findRegulationViolation(parsed.roleKey, eventType, nivel, regulations)) count++;
   }
   return count;
 }
