@@ -1,4 +1,5 @@
 import { calendarYearWarning, detectCalendarYear } from "./detect-year";
+import { fechaPendienteWarning, zonaNoDeducidaWarning } from "./entry-warnings";
 import type { EventType } from "@/lib/types";
 import { normalizeAepCalendarPdfText } from "./normalize-calendar-pdf-text";
 import type { ParsedCalendar, ParsedCalendarEntry } from "./types";
@@ -265,6 +266,16 @@ export function parseAepCalendarText(input: string): ParsedCalendar {
       tipo !== null &&
       !looksForeign(localidad) &&
       !looksForeign(organizador);
+
+    // Mismos avisos que el lector de CSV: sin zona el campeonato nace con
+    // `zona` nula y no lo ve ningún delegado de zona. Aquí no se avisaba de
+    // nada, y el PDF es el camino habitual.
+    if (esEspaña && !zona) {
+      warnings.push(zonaNoDeducidaWarning(nombre.trim(), localidad.trim()));
+    }
+    if (esEspaña && !dates.start) {
+      warnings.push(fechaPendienteWarning(nombre.trim(), block));
+    }
 
     entries.push({
       rawDate: block,
