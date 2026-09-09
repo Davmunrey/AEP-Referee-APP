@@ -14,8 +14,12 @@ import type {
 } from "@/lib/types";
 import { mapExam, mapPromotion, mapReport } from "@/server/db/mappers";
 import { db, fetchAllPagesOf, pushActivity } from "./supabase-helpers";
-import { PromotionReviewError } from "@/lib/competitions/service-types";
-import { isRefereeLevelUpgrade, refereeLevelRank } from "@/lib/referee-levels";
+import { PromotionReviewError, UserFacingServiceError } from "@/lib/competitions/service-types";
+import {
+  isRefereeLevelUpgrade,
+  PROMOCION_YA_PENDIENTE,
+  refereeLevelRank,
+} from "@/lib/referee-levels";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") {
@@ -38,6 +42,7 @@ function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelAct
 function esFalloDeLectura(error: { code?: string } | null): boolean {
   return error != null && error.code !== "PGRST116";
 }
+
 
 export const examsService = {
   getPromotions: async (user?: SessionUser): Promise<PromotionRequest[]> => {
@@ -197,6 +202,20 @@ export const examsService = {
         `El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`,
       );
     }
+    // Una solicitud pendiente por juez. Nada lo impedía: la ficha no enseña
+    // que ya hay una en cola, así que la segunda petición —del mismo usuario
+    // al día siguiente, o del delegado de zona y el de jueces cada uno por su
+    // lado— entraba tal cual. Aprobada la primera, la segunda se aprobaba
+    // también sin tocar el nivel y con su propio «aprobó ascenso» en el
+    // registro: dos ascensos sobre el papel para uno de verdad.
+    const { data: pendientes, error: pendientesError } = await supabase
+      .from("promotion_requests")
+      .select("id")
+      .eq("referee_id", input.refereeId)
+      .eq("status", "pendiente")
+      .limit(1);
+    if (pendientesError) throw new Error(`promotion_requests: ${pendientesError.message}`);
+    if ((pendientes?.length ?? 0) > 0) throw new UserFacingServiceError(PROMOCION_YA_PENDIENTE);
     const id = `pro-${crypto.randomUUID()}`;
     const row = {
       id,
