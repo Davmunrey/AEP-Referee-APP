@@ -48,7 +48,10 @@ export async function POST(request: Request) {
     // El servicio lanza errores de validación de negocio con mensaje legible
     // (p. ej. "El nivel destino (…) debe ser superior al actual (…)").
     const msg = e instanceof Error ? e.message : "";
-    if (msg.startsWith("El nivel destino") || msg === "Juez no encontrado") {
+    // «El nivel actual del juez (…) no es reconocible» también lo escribe el
+    // servicio para quien pide el ascenso —hay que arreglar el nivel en el
+    // censo—, y con el prefijo estrecho moría en un 500 genérico.
+    if (msg.startsWith("El nivel") || msg === "Juez no encontrado") {
       return jsonError(msg, 400);
     }
     return jsonServerError("promotions.POST", e, "No se pudo crear la solicitud de ascenso");
