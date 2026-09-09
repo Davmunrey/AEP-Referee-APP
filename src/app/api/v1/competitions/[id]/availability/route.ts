@@ -1,7 +1,7 @@
 import { canEditRoster } from "@/lib/auth/session";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, readOrError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import { z } from "zod";
 
@@ -33,7 +33,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!body.success) return jsonError("Cuerpo de solicitud inválido", 400);
 
   // Un juez inexistente violaba la FK en la BD y salía como 500 genérico.
-  const referee = await dataService.getReferee(body.data.refereeId);
+  const referee = await readOrError("availability.POST", "No se pudo cargar el juez", () =>
+    dataService.getReferee(body.data.refereeId),
+  );
+  if (referee instanceof Response) return referee;
   if (!referee) return jsonError("Juez no encontrado", 404);
 
   try {

@@ -55,3 +55,27 @@ export function jsonRouteError(scope: string, err: unknown, clientMessage: strin
   if (err instanceof UserFacingServiceError) return jsonError(err.message, err.status);
   return jsonServerError(scope, err, clientMessage);
 }
+
+/**
+ * Una lectura de servicio que puede fallar, en la forma que ya usan las rutas
+ * para la sesión (`requireApiUser` + `isSessionUser`).
+ *
+ * Devuelve el valor leído, o la `Response` de error ya construida. La lectura
+ * suele estar antes del `try` de la ruta —es lo que decide el 404 y el 403—,
+ * así que un fallo suyo salía de Next como un 500 sin cuerpo JSON.
+ *
+ *   const leido = await readOrError("referees.GET", "No se pudo cargar el juez",
+ *     () => dataService.getReferee(id));
+ *   if (leido instanceof Response) return leido;
+ */
+export async function readOrError<T>(
+  scope: string,
+  clientMessage: string,
+  read: () => Promise<T>,
+): Promise<T | Response> {
+  try {
+    return await read();
+  } catch (err) {
+    return jsonRouteError(scope, err, clientMessage);
+  }
+}

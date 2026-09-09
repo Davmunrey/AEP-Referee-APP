@@ -1,5 +1,5 @@
 import { zonesMatch } from "@/lib/aep-zones";
-import { jsonError } from "@/lib/api/route-utils";
+import { jsonError, jsonRouteError } from "@/lib/api/route-utils";
 import type { SessionUser } from "@/lib/types";
 import { dataService } from "@/server/services";
 
@@ -15,7 +15,14 @@ export async function assertRefereeInUserZone(
   if (user.role !== "delegado_zona") return null;
   // Fail-closed: un delegado de zona sin zona asignada no puede actuar.
   if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
-  const referee = await dataService.getReferee(refereeId);
+  // Esta lectura decide un 403, así que un fallo suyo no puede pasar por «no
+  // existe»: se dice, con cuerpo JSON, en vez de salir como un 500 pelado.
+  let referee;
+  try {
+    referee = await dataService.getReferee(refereeId);
+  } catch (err) {
+    return jsonRouteError("referee-scope.juez", err, "No se pudo comprobar la zona del juez");
+  }
   if (!referee || !zonesMatch(referee.zona, user.zona)) {
     return jsonError("Sin permiso para este juez", 403);
   }
@@ -29,7 +36,16 @@ export async function assertCompetitionInUserZone(
 ): Promise<Response | null> {
   if (user.role !== "delegado_zona") return null;
   if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
-  const competition = await dataService.getCompetition(competitionId);
+  let competition;
+  try {
+    competition = await dataService.getCompetition(competitionId);
+  } catch (err) {
+    return jsonRouteError(
+      "referee-scope.competicion",
+      err,
+      "No se pudo comprobar la zona del campeonato",
+    );
+  }
   if (!competition || !zonesMatch(competition.zona, user.zona)) {
     return jsonError("Sin permiso para esta competición", 403);
   }
