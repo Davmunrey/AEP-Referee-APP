@@ -26,6 +26,7 @@ import {
   shortDateTime,
   STATUS_LABELS,
   TicketStatusPill,
+  AttachmentUnavailable,
 } from "@/components/tickets/ticket-shared";
 import { cn } from "@/lib/utils";
 import type {
@@ -43,25 +44,30 @@ function AttachmentGallery({
 }: {
   attachments: SupportTicketAttachment[];
 }) {
-  const photos = attachments.filter((a) => a.signedUrl);
-  if (photos.length === 0) return null;
+  // Todos, también los que no se han podido firmar: esos se enseñan con su
+  // nombre en vez de desaparecer.
+  if (attachments.length === 0) return null;
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-      {photos.map((a) => (
-        <a
-          key={a.id}
-          href={a.signedUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={`Abrir ${a.fileName}`}
-          className="group block overflow-hidden rounded-xl border border-border focus-ring"
-        >
-          <AttachmentImage
-            attachment={a}
-            className="aspect-square w-full object-cover transition-transform duration-150 group-hover:scale-[1.03]"
-          />
-        </a>
-      ))}
+      {attachments.map((a) =>
+        a.signedUrl ? (
+          <a
+            key={a.id}
+            href={a.signedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Abrir ${a.fileName}`}
+            className="group block overflow-hidden rounded-xl border border-border focus-ring"
+          >
+            <AttachmentImage
+              attachment={a}
+              className="aspect-square w-full object-cover transition-transform duration-150 group-hover:scale-[1.03]"
+            />
+          </a>
+        ) : (
+          <AttachmentUnavailable key={a.id} attachment={a} className="aspect-square" />
+        ),
+      )}
     </div>
   );
 }
@@ -174,7 +180,7 @@ export function TicketDetail({
           ) : (
             <ul className="space-y-4">
               {ticket.comments.map((c) => {
-                const photos = c.attachments.filter((a) => a.signedUrl);
+                const photos = c.attachments;
                 return (
                   <li
                     key={c.id}
@@ -193,18 +199,22 @@ export function TicketDetail({
                     </p>
                     {photos.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {photos.map((a) => (
-                          <a
-                            key={a.id}
-                            href={a.signedUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Abrir ${a.fileName}`}
-                            className="block rounded focus-ring"
-                          >
-                            <AttachmentThumb attachment={a} />
-                          </a>
-                        ))}
+                        {photos.map((a) =>
+                          a.signedUrl ? (
+                            <a
+                              key={a.id}
+                              href={a.signedUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Abrir ${a.fileName}`}
+                              className="block rounded focus-ring"
+                            >
+                              <AttachmentThumb attachment={a} />
+                            </a>
+                          ) : (
+                            <AttachmentUnavailable key={a.id} attachment={a} className="h-10 max-w-48" />
+                          ),
+                        )}
                       </div>
                     )}
                   </li>

@@ -112,9 +112,16 @@ async function signAttachments(rows: TicketRow[]): Promise<SupportTicketAttachme
   const supabase = db();
   return Promise.all(
     rows.map(async (row) => {
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from(BUCKET)
         .createSignedUrl(String(row.storage_path), SIGNED_URL_TTL);
+      // Sin URL firmada el adjunto sigue existiendo: se devuelve con su nombre
+      // y sin enlace, y la pantalla lo dice. Antes el error se tiraba y, como
+      // la pantalla filtraba los adjuntos sin URL, la captura de un fallo
+      // desaparecía del ticket sin dejar rastro.
+      if (error) {
+        console.error("[tickets.firmar]", String(row.storage_path), error.message);
+      }
       return mapAttachment(row, data?.signedUrl);
     }),
   );
