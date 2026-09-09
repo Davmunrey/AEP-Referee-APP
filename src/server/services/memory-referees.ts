@@ -14,6 +14,7 @@ import {
 } from "@/server/store";
 import {
   RefereeAssignedError,
+  RefereePromotionsError,
   RefereeHasClaimsError,
 } from "@/lib/competitions/service-types";
 import { buildMemoryCompetitionHistory } from "./memory-helpers";
@@ -150,6 +151,11 @@ export async function deleteReferee(id: string): Promise<boolean> {
     if (Object.values(map).some((refId) => refId === id)) assigned.add(competitionId);
   }
   if (assigned.size > 0) throw new RefereeAssignedError(assigned.size);
+  // Mismo corte que el twin: `promotion_requests.referee_id` no lleva
+  // `ON DELETE`, así que en producción el borrado se rechaza. Aquí la
+  // solicitud se quedaba apuntando a un juez que ya no existe.
+  const promotions = store.promotions.filter((p) => p.refereeId === id).length;
+  if (promotions > 0) throw new RefereePromotionsError(promotions);
   store.referees.splice(idx, 1);
   return true;
 }
