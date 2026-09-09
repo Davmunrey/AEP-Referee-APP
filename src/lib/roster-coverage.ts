@@ -128,10 +128,32 @@ export function applyCoverageToCompetition(
   };
 }
 
-export function isRosterLockedByApproval(aprobacion: string | undefined): boolean {
-  return aprobacion === ROSTER_APPROVAL_LOCKED;
+/**
+ * Compara un estado de aprobación con su valor canónico.
+ *
+ * `aprobacion` es TEXT y lo escriben varios caminos: la app, la importación de
+ * calendario y, alguna vez, una mano en el editor de Supabase. Comparar con
+ * `===` exacto hacía que «Aprobado » con un espacio de más, o «aprobado» en
+ * minúscula, no fuera reconocido — y como de ese reconocimiento depende
+ * CONGELAR la tarima, un estado con un espacio la dejaba editable: se podía
+ * tocar una tarima ya aprobada y el acta dejaba de coincidir con lo aprobado,
+ * que es justo lo que la congelación existe para impedir.
+ *
+ * `isRosterRejected` ya normalizaba; los que cierran la puerta, no.
+ */
+function mismoEstado(aprobacion: string | null | undefined, canonico: string): boolean {
+  return (aprobacion ?? "").trim().toLowerCase().replace(/\s+/g, " ") === canonico.toLowerCase();
 }
 
+export function isRosterLockedByApproval(aprobacion: string | undefined): boolean {
+  return mismoEstado(aprobacion, ROSTER_APPROVAL_LOCKED);
+}
+
+/**
+ * Este se queda con la comparación exacta a propósito: el modo imprevisto
+ * ABRE la tarima, así que aflojar el reconocimiento sería aflojar el cierre.
+ * Lo escribe siempre la propia aplicación, con el valor canónico.
+ */
 export function isRosterImprevistoMode(aprobacion: string): boolean {
   return aprobacion === ROSTER_IMPREVISTO_STATE;
 }
@@ -146,12 +168,12 @@ export function isRosterImprevistoMode(aprobacion: string): boolean {
  * no pueden divergir.
  */
 export function isRosterPendingApproval(aprobacion: string | undefined): boolean {
-  return aprobacion === ROSTER_PENDING_APPROVAL;
+  return mismoEstado(aprobacion, ROSTER_PENDING_APPROVAL);
 }
 
 /** La última revisión devolvió la tarima a la zona. */
 export function isRosterRejected(aprobacion: string | null | undefined): boolean {
-  return (aprobacion ?? "").trim().toLowerCase() === ROSTER_REJECTED.toLowerCase();
+  return mismoEstado(aprobacion, ROSTER_REJECTED);
 }
 
 /** Cualquiera de los dos estados que impiden tocar la tarima. */
