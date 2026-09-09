@@ -2,7 +2,7 @@ import { zonesMatch } from "@/lib/aep-zones";
 import { isSafeExternalUrlOrEmpty } from "@/lib/safe-url";
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import type { RefereeReport, ReportType } from "@/lib/types";
 import { dataService } from "@/server/services";
 
@@ -59,10 +59,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     return jsonError("Fuera de tu zona", 403);
   }
 
-  const updated = await dataService.updateReport(id, patch);
-  // Ya comprobamos que existe: un `undefined` aquí es un fallo de escritura.
-  if (!updated) return jsonError("No se pudo actualizar el informe", 500);
-  return jsonOk(updated);
+  try {
+    const updated = await dataService.updateReport(id, patch);
+    // Ya comprobamos que existe: si ahora no está, lo borraron entre medias.
+    if (!updated) return jsonError("Informe no encontrado", 404);
+    return jsonOk(updated);
+  } catch (err) {
+    return jsonServerError("reports.PATCH", err, "No se pudo actualizar el informe");
+  }
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -80,7 +84,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return jsonError("Fuera de tu zona", 403);
   }
 
-  const ok = await dataService.deleteReport(id);
-  if (!ok) return jsonError("Informe no encontrado", 404);
-  return jsonOk({ deleted: true });
+  try {
+    const ok = await dataService.deleteReport(id);
+    if (!ok) return jsonError("Informe no encontrado", 404);
+    return jsonOk({ deleted: true });
+  } catch (err) {
+    // Un borrado que falla no es «ya no estaba»: seguía ahí.
+    return jsonServerError("reports.DELETE", err, "No se pudo eliminar el informe");
+  }
 }

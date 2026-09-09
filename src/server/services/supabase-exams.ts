@@ -297,7 +297,10 @@ export const examsService = {
     if (patch.fecha !== undefined) dbPatch.fecha = patch.fecha;
     if (patch.examinador !== undefined) dbPatch.examinador = patch.examinador;
     const { data, error } = await supabase.from("referee_exams").update(dbPatch).eq("id", id).select().single();
-    if (error || !data) return undefined;
+    // Sin fila que actualizar es «no existe»; cualquier otro error es que no
+    // se ha podido guardar. Devolver `undefined` en los dos casos los mezclaba.
+    if (esFalloDeLectura(error)) throw new Error(`referee_exams: ${error!.message}`);
+    if (!data) return undefined;
     return mapExam(data as Record<string, unknown>);
   },
 
@@ -306,7 +309,11 @@ export const examsService = {
     // `.select("id")`: un DELETE que no casa filas no es error, así que se
     // devolvía true para un id inexistente (el twin en memoria devuelve false).
     const { data, error } = await supabase.from("referee_exams").delete().eq("id", id).select("id");
-    return !error && (data?.length ?? 0) > 0;
+    // `false` es «no había nada que borrar». Un error de borrado devuelto como
+    // `false` salía por la ruta como «Examen no encontrado»: el examen seguía
+    // ahí y quien lo borró se quedaba creyendo que ya no.
+    if (error) throw new Error(`referee_exams: ${error.message}`);
+    return (data?.length ?? 0) > 0;
   },
 
   getReport: async (id: string): Promise<RefereeReport | undefined> => {
@@ -422,14 +429,16 @@ export const examsService = {
     // columna no tenga dos formas de decir «sin adjunto».
     if (patch.adjuntoUrl !== undefined) dbPatch.adjunto_url = patch.adjuntoUrl || null;
     const { data, error } = await supabase.from("referee_reports").update(dbPatch).eq("id", id).select().single();
-    if (error || !data) return undefined;
+    if (esFalloDeLectura(error)) throw new Error(`referee_reports: ${error!.message}`);
+    if (!data) return undefined;
     return mapReport(data as Record<string, unknown>);
   },
 
   deleteReport: async (id: string): Promise<boolean> => {
     const supabase = db();
     const { data, error } = await supabase.from("referee_reports").delete().eq("id", id).select("id");
-    return !error && (data?.length ?? 0) > 0;
+    if (error) throw new Error(`referee_reports: ${error.message}`);
+    return (data?.length ?? 0) > 0;
   },
 
   importJudgesRegistry: async (
