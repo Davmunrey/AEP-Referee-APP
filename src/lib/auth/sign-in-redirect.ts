@@ -26,3 +26,28 @@ export const SIGN_IN_SIN_ACCESO = `/sign-in?${SIN_ACCESO_PARAM}=${SIN_ACCESO_VAL
 export function esRetornoSinAcceso(params: URLSearchParams): boolean {
   return params.get(SIN_ACCESO_PARAM) === SIN_ACCESO_VALUE;
 }
+
+/**
+ * Los avisos que la pantalla de acceso sabe mostrar, por código.
+ *
+ * Antes el texto viajaba en la URL y se pintaba tal cual: `?error=…` lo pone
+ * cualquiera, y `/auth/callback` reenviaba ahí el `error_description` del
+ * proveedor de identidad, que también llega por la URL. React escapa el HTML,
+ * así que no había ejecución de código; pero sí un cartel con el aspecto de un
+ * mensaje oficial de la aplicación, en su dominio y bajo su logotipo, con el
+ * texto que eligiera quien mandara el enlace («tu cuenta está bloqueada,
+ * escribe a…»). Eso es el material del que se hace una suplantación.
+ *
+ * Ahora por la URL solo viaja un código de esta tabla; el texto lo pone la
+ * aplicación.
+ */
+export const MENSAJES_ACCESO: Record<string, string> = {
+  "enlace-invalido": "El enlace no es válido o ha caducado. Pide uno nuevo.",
+  "sesion-fallida": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+};
+
+/** Texto para un código de `?error=`, o `null` si no viene ninguno. */
+export function mensajeDeAcceso(codigo: string | null): string | null {
+  if (!codigo) return null;
+  return MENSAJES_ACCESO[codigo] ?? "No se pudo iniciar sesión. Inténtalo de nuevo.";
+}

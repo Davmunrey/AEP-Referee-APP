@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   esRetornoSinAcceso,
+  mensajeDeAcceso,
   SIGN_IN_SIN_ACCESO,
   SIN_ACCESO_PARAM,
   SIN_ACCESO_VALUE,
@@ -73,5 +74,33 @@ describe("las dos puntas de la redirección siguen atadas", () => {
     const page = leer("src/app/sign-in/[[...sign-in]]/page.tsx");
     expect(page).toContain("SIN_ACCESO_PARAM");
     expect(page).toMatch(/todavía no tiene acceso al panel/);
+  });
+});
+
+describe("el aviso de la pantalla de acceso lo escribe la aplicación", () => {
+  it("un código desconocido cae en el mensaje genérico, no en su propio texto", () => {
+    // `?error=…` lo pone cualquiera. El texto se pintaba tal cual bajo el
+    // logotipo de la AEP: un cartel con aspecto oficial escrito por quien
+    // mandara el enlace.
+    const inventado = "Tu cuenta ha sido bloqueada. Escribe a soporte@atacante.example";
+    expect(mensajeDeAcceso(inventado)).toBe("No se pudo iniciar sesión. Inténtalo de nuevo.");
+    expect(mensajeDeAcceso(inventado)).not.toContain("atacante");
+  });
+
+  it("sin código no hay aviso", () => {
+    expect(mensajeDeAcceso(null)).toBeNull();
+    expect(mensajeDeAcceso("")).toBeNull();
+  });
+
+  it("los códigos que emite /auth/callback tienen texto propio", () => {
+    expect(mensajeDeAcceso("enlace-invalido")).toMatch(/caducado/);
+    expect(mensajeDeAcceso("sesion-fallida")).toMatch(/No se pudo iniciar sesión/);
+  });
+
+  it("/auth/callback ya no reenvía el texto del proveedor", () => {
+    const src = leer("src/app/auth/callback/route.ts");
+    expect(src).not.toMatch(/encodeURIComponent\(errorDescription\)/);
+    expect(src).toContain("error=enlace-invalido");
+    expect(src).toContain("error=sesion-fallida");
   });
 });

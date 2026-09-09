@@ -6,7 +6,7 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { SIN_ACCESO_PARAM, SIN_ACCESO_VALUE } from "@/lib/auth/sign-in-redirect";
+import { mensajeDeAcceso, SIN_ACCESO_PARAM, SIN_ACCESO_VALUE } from "@/lib/auth/sign-in-redirect";
 
 // Mismo foco que el resto de la app: el anillo usa el token --ring (no el
 // primario a pelo) y se separa 1px del borde, igual que <Input>.
@@ -24,7 +24,9 @@ export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(searchParams.get("error"));
+  // Solo un código conocido, nunca el texto que venga en la URL: ver
+  // `MENSAJES_ACCESO`.
+  const [error, setError] = useState<string | null>(mensajeDeAcceso(searchParams.get("error")));
   const [info, setInfo] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   // Llega aquí quien tiene sesión de auth válida pero ningún perfil activo en
