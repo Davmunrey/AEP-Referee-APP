@@ -55,8 +55,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
   // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en
   // crudo su propio delegado no podía tocarlo.
-  if (user.role === "delegado_zona" && user.zona && !zonesMatch(existing.zona, user.zona)) {
-    return jsonError("Fuera de tu zona", 403);
+  // Fail-closed: un delegado de zona sin zona asignada no puede actuar. Con
+  // `&& user.zona` la comprobación se saltaba entera y podía tocar cualquier
+  // informe del país.
+  if (user.role === "delegado_zona") {
+    if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
+    if (!zonesMatch(existing.zona, user.zona)) return jsonError("Fuera de tu zona", 403);
   }
 
   try {
@@ -80,8 +84,13 @@ export async function DELETE(_request: Request, context: RouteContext) {
   // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
   // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en
   // crudo su propio delegado no podía tocarlo.
-  if (user.role === "delegado_zona" && user.zona && !zonesMatch(existing.zona, user.zona)) {
-    return jsonError("Fuera de tu zona", 403);
+  //
+  // Aquí `canAdminJudges` ya deja fuera a los delegados de zona, así que esta
+  // guarda no llega a decidir nada; se escribe igual que sus hermanas para que
+  // las tres digan lo mismo si algún día ese permiso cambia.
+  if (user.role === "delegado_zona") {
+    if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
+    if (!zonesMatch(existing.zona, user.zona)) return jsonError("Fuera de tu zona", 403);
   }
 
   try {
