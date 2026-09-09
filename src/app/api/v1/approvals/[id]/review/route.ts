@@ -1,7 +1,7 @@
 import { canApprove } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { ApprovalReviewError } from "@/lib/competitions/service-types";
-import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError, readOrError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -25,8 +25,14 @@ export async function POST(request: Request, context: RouteContext) {
     typeof body.comment === "string" ? body.comment.trim().slice(0, 500) || undefined : undefined;
 
   // El servicio devuelve undefined tanto si la propuesta no existe como si ya
-  // fue revisada (o si otro revisor ganó la carrera): distingue 404 de 409.
-  const existing = (await dataService.getApprovals(user)).find((a) => a.id === id);
+  // fue revisada (o si otro revisor ganó la carrera): distingue 404 de 409. Y
+  // por eso va antes del `try`, así que sin cubrirla un fallo de lectura salía
+  // de Next como un 500 sin cuerpo JSON.
+  const bandeja = await readOrError("approvals.review.bandeja", "No se pudo cargar la propuesta", () =>
+    dataService.getApprovals(user),
+  );
+  if (bandeja instanceof Response) return bandeja;
+  const existing = bandeja.find((a) => a.id === id);
   if (!existing) return jsonError("Propuesta no encontrada", 404);
   if (existing.status !== "pendiente") {
     return jsonError("La propuesta ya fue revisada", 409);
