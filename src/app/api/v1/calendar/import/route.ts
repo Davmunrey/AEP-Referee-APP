@@ -1,6 +1,6 @@
 import { canImportCalendar } from "@/lib/permissions";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { parseAepCalendarCsv, parseAepCalendarText } from "@/lib/calendar-parser";
 import { competitionDedupKey } from "@/lib/competition-dedup";
 import { parseSelectedImportKeys } from "@/lib/import-security";
@@ -115,8 +115,19 @@ export async function POST(request: Request) {
 
   let dedupeRemoved = 0;
   if (apply) {
-    const dedupe = await dataService.removeDuplicateCompetitions(user);
-    dedupeRemoved = dedupe.removed.length;
+    // Este borrado puede negarse (un duplicado con liquidaciones, o un hijo que
+    // no se ha podido borrar). Sin `try` salía como un 500 sin cuerpo, y quien
+    // importaba el calendario no sabía si se había creado algo o no.
+    try {
+      const dedupe = await dataService.removeDuplicateCompetitions(user);
+      dedupeRemoved = dedupe.removed.length;
+    } catch (err) {
+      return jsonRouteError(
+        "calendar.import.dedupe",
+        err,
+        "No se pudieron limpiar los duplicados previos. No se ha importado nada.",
+      );
+    }
   }
 
   const existing = await dataService.getCompetitions(user);
