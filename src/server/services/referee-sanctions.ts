@@ -17,6 +17,11 @@ import type {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSanction, sanctionToDbRow } from "@/server/db/sanction-mappers";
 import { nextSeqId } from "@/server/store";
+// La bitácora tiene un único punto de escritura, que además registra el fallo
+// cuando el insert no entra. Estas dos líneas lo hacían a mano y en silencio:
+// una sanción impuesta o revocada podía no dejar rastro sin que nadie se
+// enterase, que es exactamente lo contrario de lo que sirve un registro.
+import { pushActivity } from "@/server/services/supabase-helpers";
 
 function db() {
   return createAdminClient();
@@ -276,7 +281,7 @@ export async function createRefereeSanction(input: {
     );
   }
 
-  await supabase.from("activity_log").insert({
+  await pushActivity({
     tipo: "cambio",
     actor: input.impuestaPor.nombre,
     accion: `sancionó a ${input.refereeName} hasta ${fechaFin}`,
@@ -327,7 +332,7 @@ export async function revokeRefereeSanction(
 
   await syncRefereeAfterSanctionChange(String(existing.referee_id));
 
-  await supabase.from("activity_log").insert({
+  await pushActivity({
     tipo: "cambio",
     actor: actor.nombre,
     accion: `revocó sanción de ${existing.referee_name}`,

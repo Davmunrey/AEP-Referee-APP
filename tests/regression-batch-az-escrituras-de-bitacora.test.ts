@@ -152,3 +152,19 @@ describe("importar el calendario sobre campeonatos que ya existen", () => {
     expect(result.competitionsSkipped).toBe(1);
   });
 });
+
+describe("un solo punto de escritura para el registro de actividad", () => {
+  it("nadie inserta en activity_log por su cuenta", async () => {
+    // `pushActivity` existe precisamente para que un insert fallido deje
+    // rastro en el log del servidor. Las sanciones lo hacían a mano y en
+    // silencio: imponer o revocar una sanción podía no constar en ninguna
+    // parte, que es justo lo contrario de para lo que sirve un registro.
+    const { readdirSync, readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const dir = join(process.cwd(), "src/server/services");
+    const culpables = readdirSync(dir)
+      .filter((f) => f.endsWith(".ts") && f !== "supabase-helpers.ts")
+      .filter((f) => /from\("activity_log"\)\s*\.insert/.test(readFileSync(join(dir, f), "utf8")));
+    expect(culpables).toEqual([]);
+  });
+});
