@@ -1,6 +1,6 @@
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { ExamResult, RefereeExam } from "@/lib/types";
 
@@ -66,10 +66,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (Object.keys(patch).length === 0) return jsonError("Nada que actualizar", 400);
 
-  const updated = await dataService.updateExam(id, patch);
-  // Ya comprobamos que existe: un `undefined` aquí es un fallo de escritura.
-  if (!updated) return jsonError("No se pudo actualizar el examen", 500);
-  return jsonOk(updated);
+  try {
+    const updated = await dataService.updateExam(id, patch);
+    // Ya comprobamos que existe: si ahora no está, lo borraron entre medias.
+    if (!updated) return jsonError("Examen no encontrado", 404);
+    return jsonOk(updated);
+  } catch (err) {
+    return jsonServerError("exams.PATCH", err, "No se pudo actualizar el examen");
+  }
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -83,7 +87,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const visibleExam = (await dataService.getExams(undefined, user)).find((exam) => exam.id === id);
   if (!visibleExam) return jsonError("Examen no encontrado", 404);
-  const ok = await dataService.deleteExam(id);
-  if (!ok) return jsonError("Examen no encontrado", 404);
-  return jsonOk({ deleted: true });
+  try {
+    const ok = await dataService.deleteExam(id);
+    if (!ok) return jsonError("Examen no encontrado", 404);
+    return jsonOk({ deleted: true });
+  } catch (err) {
+    // Un borrado que falla no es «ya no estaba»: seguía ahí.
+    return jsonServerError("exams.DELETE", err, "No se pudo eliminar el examen");
+  }
 }

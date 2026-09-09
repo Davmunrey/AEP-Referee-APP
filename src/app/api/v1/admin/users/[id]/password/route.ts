@@ -6,7 +6,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { recordAccessChange } from "@/server/services/admin-audit";
 
 interface RouteContext {
@@ -29,11 +29,15 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const admin = createAdminClient();
-  const { data: target } = await admin
+  const { data: target, error: targetError } = await admin
     .from("profiles")
     .select("id, role, nombre")
     .eq("id", id)
     .maybeSingle();
+  // Mismo criterio que sus hermanas: un fallo de lectura no es «no existe».
+  if (targetError) {
+    return jsonServerError("admin.users.password.leer", targetError, "No se pudo cargar el usuario");
+  }
   if (!target) return jsonError("Usuario no encontrado", 404);
 
   // El reseteo es el camino más silencioso de los tres: se apropia de una

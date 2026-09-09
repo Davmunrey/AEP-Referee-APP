@@ -33,11 +33,18 @@ export async function PATCH(request: Request, context: RouteContext) {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
   const admin = createAdminClient();
-  const { data: target } = await admin
+  const { data: target, error: targetError } = await admin
     .from("profiles")
     .select("id, role, zona")
     .eq("id", id)
     .maybeSingle();
+  // «No se pudo leer» no es «no existe». Con el error tirado, un corte de
+  // lectura respondía «Usuario no encontrado» a quien acababa de pedir
+  // desactivar o borrar una cuenta, que es justo lo que uno entiende como «ya
+  // no está». La cuenta seguía entera, con su acceso.
+  if (targetError) {
+    return jsonServerError("admin.users.PATCH.leer", targetError, "No se pudo cargar el usuario");
+  }
   if (!target) return jsonError("Usuario no encontrado", 404);
   const targetRole = String(target.role ?? "");
   // Camino 3: tomar una cuenta que YA tiene el rol (cambiarle la zona, el
@@ -141,11 +148,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return jsonError("No puedes eliminar tu propia cuenta", 400);
   }
   const admin = createAdminClient();
-  const { data: target } = await admin
+  const { data: target, error: targetError } = await admin
     .from("profiles")
     .select("id, role, nombre")
     .eq("id", id)
     .maybeSingle();
+  if (targetError) {
+    return jsonServerError("admin.users.DELETE.leer", targetError, "No se pudo cargar el usuario");
+  }
   if (!target) return jsonError("Usuario no encontrado", 404);
   if (!canAdministerUserWithRole(user, target.role as string)) {
     return jsonError(restrictedRoleMessage(String(target.role ?? "")), 403);

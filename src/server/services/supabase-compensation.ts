@@ -554,11 +554,15 @@ export const compensationService = {
 
     const result = await fetchDrivingDistanceKm(origin, destination);
 
+    // Solo la distancia. Ponía además `travelMode: "km_rate"`, así que calcular
+    // la ruta de un juez que comparte vehículo lo pasaba a cobrar el
+    // kilometraje: un cambio de dinero como efecto secundario de una consulta.
+    // El cálculo en lote se salta a esos jueces a propósito, y el gemelo en
+    // memoria tampoco toca el modo.
     return compensationService.updateClaim(competitionId, refereeId, {
       distanceKmOneWay: result.distanceKmOneWay,
       distanceKmRoundTrip: result.distanceKmRoundTrip,
       distanceSource: "osm",
-      travelMode: "km_rate",
     });
   },
 
