@@ -2,7 +2,9 @@ import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError } from "@/lib/api/route-utils";
 import {
+  RECEIPT_DATE_UNKNOWN,
   compensationReceiptFilename,
+  formatCompetitionDatePhrase,
   isValidSpanishIban,
   renderCompensationReceiptPdf,
 } from "@/lib/judge-compensation";
@@ -68,6 +70,16 @@ export async function POST(request: Request, context: RouteContext) {
   // «importe positivo» y salía impreso en el recibo como «NaN€», en un PDF que
   // va al juez y al club. Se exige un número finito, no solo uno que no sea
   // menor o igual que cero.
+  // Un recibo sin fecha de campeonato imprimía «el día undefined de undefined
+  // de 0». Es un documento que va al juez y al club: si la fecha no está, se
+  // dice aquí en vez de imprimir un hueco con forma de dato.
+  if (formatCompetitionDatePhrase(competition.fecha, competition.fechaFin) === RECEIPT_DATE_UNKNOWN) {
+    return jsonError(
+      "El campeonato no tiene una fecha válida; corrígela antes de exportar el recibo",
+      422,
+    );
+  }
+
   if (!Number.isFinite(claim.totalAmount) || claim.totalAmount <= 0) {
     return jsonError(
       "El importe calculado no es un número válido o es cero; revisa la tarima y los datos de compensación",

@@ -5,7 +5,11 @@ import {
   mapCompetition,
   mapReferee,
 } from "@/server/db/mappers";
-import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
+import {
+  formatCompetitionDatePhrase,
+  formatReceiptAmountEur,
+  RECEIPT_DATE_UNKNOWN,
+} from "@/lib/judge-compensation/receipt-document";
 
 /**
  * Segunda ronda de datos degradados. La primera (`regression-batch-p`) cubrió
@@ -113,5 +117,45 @@ describe("el recibo no se imprime con «NaN€»", () => {
   it("y un importe de verdad se sigue formateando igual", () => {
     expect(formatReceiptAmountEur(120.5)).toBe("120,50€");
     expect(formatReceiptAmountEur(90)).toBe("90€");
+  });
+});
+
+// ── Fechas ilegibles en el recibo ───────────────────────────────────────────
+describe("el recibo no se imprime con «el día undefined»", () => {
+  it("sin fecha, o con una que no se puede leer, se dice", () => {
+    // `parseIsoDate` partía por guiones sin mirar nada: una fecha vacía daba
+    // «el día undefined de undefined de 0» y una ilegible «el día NaN de
+    // undefined de NaN», impreso en el PDF que va al juez y al club.
+    expect(formatCompetitionDatePhrase("", "")).toBe(RECEIPT_DATE_UNKNOWN);
+    expect(formatCompetitionDatePhrase("no-es-fecha", "no-es-fecha")).toBe(RECEIPT_DATE_UNKNOWN);
+    expect(formatCompetitionDatePhrase("01/05/2026", "01/05/2026")).toBe(RECEIPT_DATE_UNKNOWN);
+  });
+
+  it("un mes o un día imposibles tampoco pasan", () => {
+    // El mes 13 se quedaba sin nombre: «el día 45 de undefined de 2026».
+    expect(formatCompetitionDatePhrase("2026-13-45", "2026-13-45")).toBe(RECEIPT_DATE_UNKNOWN);
+    // Y un 31 de abril, que `Date` desborda en silencio al 1 de mayo.
+    expect(formatCompetitionDatePhrase("2026-04-31", "2026-04-31")).toBe(RECEIPT_DATE_UNKNOWN);
+    expect(formatCompetitionDatePhrase("2025-02-29", "2025-02-29")).toBe(RECEIPT_DATE_UNKNOWN);
+  });
+
+  it("sin fecha de fin se asume campeonato de un día", () => {
+    // Antes: «del 1 de mayo de 2026 al undefined de undefined de 0».
+    expect(formatCompetitionDatePhrase("2026-05-01", "")).toBe("el día 1 de mayo de 2026");
+  });
+
+  it("y las fechas de verdad se siguen redactando igual", () => {
+    expect(formatCompetitionDatePhrase("2026-05-01", "2026-05-01")).toBe(
+      "el día 1 de mayo de 2026",
+    );
+    expect(formatCompetitionDatePhrase("2026-05-01", "2026-05-02")).toBe(
+      "los días 1 y 2 de mayo de 2026",
+    );
+    expect(formatCompetitionDatePhrase("2026-04-30", "2026-05-01")).toBe(
+      "los días 30 de abril y 1 de mayo de 2026",
+    );
+    expect(formatCompetitionDatePhrase("2026-12-30", "2027-01-02")).toBe(
+      "del 30 de diciembre de 2026 al 2 de enero de 2027",
+    );
   });
 });
