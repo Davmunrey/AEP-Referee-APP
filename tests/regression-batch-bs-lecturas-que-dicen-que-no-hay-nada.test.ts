@@ -46,6 +46,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 const { refereeService } = await import("@/server/services/supabase-referees");
 const { rosterService } = await import("@/server/services/supabase-roster");
+const { examsService } = await import("@/server/services/supabase-exams");
 
 beforeEach(() => {
   for (const k of Object.keys(fallos)) delete fallos[k];
@@ -88,5 +89,33 @@ describe("revisar una propuesta", () => {
     await expect(
       rosterService.reviewApproval("apr-1", true, "Revisor", "u1", async () => undefined),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("revisar una solicitud de ascenso", () => {
+  it("una lectura fallida no se disfraza de «ya la revisó otro»", async () => {
+    fallos.promotion_requests = { message: "statement timeout" };
+    await expect(examsService.reviewPromotion("pro-1", true, "Revisor")).rejects.toThrow(
+      /No se pudo leer la solicitud/,
+    );
+  });
+
+  it("una solicitud que de verdad no está sigue devolviendo «no hay»", async () => {
+    fallos.promotion_requests = { message: "no rows", code: "PGRST116" };
+    await expect(examsService.reviewPromotion("pro-1", true, "Revisor")).resolves.toBeUndefined();
+  });
+
+  it("crear un informe sobre un juez ilegible no dice «juez no encontrado»", async () => {
+    fallos.referees = { message: "permission denied for table referees" };
+    await expect(
+      examsService.createReport({
+        subjectType: "juez",
+        refereeId: "ref-1",
+        zona: "CENTRO",
+        tipo: "seguimiento",
+        fecha: "2026-05-01",
+        autorNombre: "Autor",
+      } as Parameters<typeof examsService.createReport>[0]),
+    ).rejects.toThrow(/referees: permission denied/);
   });
 });
