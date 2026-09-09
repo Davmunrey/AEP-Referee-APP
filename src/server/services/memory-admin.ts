@@ -29,7 +29,8 @@ function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelAct
 
 export async function getPromotions(user?: SessionUser): Promise<PromotionRequest[]> {
   const list = getStore().promotions;
-  if (user?.role === "delegado_zona" && user.zona) {
+  if (user?.role === "delegado_zona") {
+    if (!user.zona) return [];
     const userZone = resolveZoneCode(user.zona) ?? user.zona;
     return list.filter((p) => (resolveZoneCode(p.zona) ?? p.zona) === userZone);
   }
@@ -112,7 +113,8 @@ export async function removeCompetitionAvailability(_competitionId: string, _ref
 export async function getExams(refereeId?: string, user?: SessionUser): Promise<RefereeExam[]> {
   const store = getStore();
   let exams = store.exams.slice();
-  if (user?.role === "delegado_zona" && user.zona) {
+  if (user?.role === "delegado_zona") {
+    if (!user.zona) return [];
     const userZone = resolveZoneCode(user.zona) ?? user.zona;
     const zoneRefs = new Set(
       store.referees.filter((r) => (resolveZoneCode(r.zona) ?? r.zona) === userZone).map((r) => r.id),
@@ -167,7 +169,8 @@ export async function getReport(id: string): Promise<RefereeReport | undefined> 
 export async function getReports(refereeId?: string, user?: SessionUser): Promise<RefereeReport[]> {
   const store = getStore();
   let reports = store.reports.slice();
-  if (user?.role === "delegado_zona" && user.zona) {
+  if (user?.role === "delegado_zona") {
+    if (!user.zona) return [];
     const userZone = resolveZoneCode(user.zona) ?? user.zona;
     reports = reports.filter((r) => (resolveZoneCode(r.zona) ?? r.zona) === userZone);
   }

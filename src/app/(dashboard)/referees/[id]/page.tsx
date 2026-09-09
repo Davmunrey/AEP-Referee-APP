@@ -51,7 +51,12 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   // La ficha pintaba teléfono, email y notas: la misma PII que la ruta API
   // recorta para `solo_ver`.
   const referee = stripRefereePII(rawReferee, user);
-  if (user.role === "delegado_zona" && user.zona) {
+  // Fail-closed, igual que la ruta API equivalente: sin zona en el perfil el
+  // `&& user.zona` se saltaba la comprobación entera y la ficha completa de
+  // cualquier juez —exámenes, informes y sanciones incluidos— se pintaba
+  // entera en el servidor.
+  if (user.role === "delegado_zona") {
+    if (!user.zona) notFound();
     const userZone = resolveZoneCode(user.zona) ?? user.zona;
     const refZone = resolveZoneCode(referee.zona) ?? referee.zona;
     if (refZone !== userZone) notFound();

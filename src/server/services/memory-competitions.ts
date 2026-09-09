@@ -138,8 +138,9 @@ export async function getCompetitions(user?: SessionUser): Promise<Competition[]
     const assignments = store.assignments.get(comp.id) ?? {};
     return applyCoverageToCompetition(comp, template, assignments);
   });
-  if (user?.role === "delegado_zona" && user.zona) {
+  if (user?.role === "delegado_zona") {
     const userZone = resolveZoneCode(user.zona);
+    if (!userZone) return [];
     return list.filter((c) => resolveZoneCode(c.zona) === userZone);
   }
   return list;
@@ -149,9 +150,9 @@ export async function getCompetitionOptions(
   user?: SessionUser,
 ): Promise<{ id: string; nombre: string }[]> {
   let list = getStore().competitions;
-  if (user?.role === "delegado_zona" && user.zona) {
+  if (user?.role === "delegado_zona") {
     const userZone = resolveZoneCode(user.zona);
-    list = list.filter((c) => resolveZoneCode(c.zona) === userZone);
+    list = userZone ? list.filter((c) => resolveZoneCode(c.zona) === userZone) : [];
   }
   return list.map((c) => ({ id: c.id, nombre: c.nombre }));
 }
@@ -678,7 +679,8 @@ export async function getApprovals(user?: SessionUser): Promise<ApprovalProposal
   // vivo del store dejaba que un llamante lo mutara, y comparar `zona` en
   // crudo ocultaba las propuestas con códigos legados al delegado.
   const list = [...getStore().approvals];
-  if (user?.role === "delegado_zona" && user.zona) {
+  if (user?.role === "delegado_zona") {
+    if (!user.zona) return [];
     const userZone = resolveZoneCode(user.zona) ?? user.zona;
     return list.filter((a) => (resolveZoneCode(a.zona) ?? a.zona) === userZone);
   }

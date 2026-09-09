@@ -60,8 +60,11 @@ export const competitionService = {
       cachedLoadAllAssignments(),
     ]);
     const list = enrichCompetitionRows(data, assignmentsByComp);
-    if (user?.role === "delegado_zona" && user.zona) {
+    // Fail-closed: sin zona en el perfil, `&& user.zona` se saltaba el filtro
+    // entero y el delegado veía los campeonatos de toda España.
+    if (user?.role === "delegado_zona") {
       const userZone = resolveZoneCode(user.zona);
+      if (!userZone) return [];
       return list.filter((c) => resolveZoneCode(c.zona) === userZone);
     }
     return list;
@@ -79,9 +82,11 @@ export const competitionService = {
       .order("fecha");
     if (error) throw new Error(`competitions: ${error.message}`);
     let list = (data ?? []) as { id: string; nombre: string; zona: string }[];
-    if (user?.role === "delegado_zona" && user.zona) {
+    if (user?.role === "delegado_zona") {
       const userZone = resolveZoneCode(user.zona);
-      list = list.filter((c) => resolveZoneCode(String(c.zona)) === userZone);
+      list = userZone
+        ? list.filter((c) => resolveZoneCode(String(c.zona)) === userZone)
+        : [];
     }
     return list.map((c) => ({ id: String(c.id), nombre: String(c.nombre) }));
   },

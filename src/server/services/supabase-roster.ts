@@ -845,7 +845,8 @@ export const rosterService = {
     // `zona` es texto libre y las propuestas anteriores a la migración 013
     // guardan códigos legados ("MAD", "Centro"): el `.eq` crudo las ocultaba al
     // delegado, que veía su bandeja vacía con propuestas pendientes de su zona.
-    if (user?.role === "delegado_zona" && user.zona) {
+    if (user?.role === "delegado_zona") {
+      if (!user.zona) return [];
       const userZone = resolveZoneCode(user.zona) ?? user.zona;
       return list.filter((p) => (resolveZoneCode(p.zona) ?? p.zona) === userZone);
     }
