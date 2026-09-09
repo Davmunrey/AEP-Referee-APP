@@ -1,6 +1,7 @@
 import { normalizeZoneInput } from "@/lib/aep-zones";
 import { canAssignRole, canManageUsers, restrictedRoleMessage } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MAX_LOGIN_PASSWORD_LENGTH } from "@/lib/api/login-rate-limit";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
@@ -56,6 +57,12 @@ export async function POST(request: Request) {
   if (password.length < 8) {
     return jsonError("La contraseña debe tener al menos 8 caracteres", 400);
   }
+  // El mismo tope que `/auth/login` y `/auth/change-password`: bcrypt solo usa
+  // los primeros 72 bytes y sin cota se puede hacer hashear megabytes por
+  // petición. Aquí faltaba.
+  if (password.length > MAX_LOGIN_PASSWORD_LENGTH) {
+    return jsonError("Contraseña no válida", 400);
+  }
 
   const iniciales = nombre
     .split(" ")
@@ -77,7 +84,16 @@ export async function POST(request: Request) {
   });
 
   if (authError || !authData.user) {
-    return jsonError(authError?.message ?? "No se pudo crear el usuario", 400);
+    // El único motivo que quien da de alta puede arreglar es que el e-mail ya
+    // tenga cuenta: ese se dice, y como 409. El resto del texto del proveedor
+    // de identidad se queda en el log (CWE-209), como ya hacían el reseteo y
+    // el borrado de esta misma carpeta; aquí salía tal cual, y con un 400 que
+    // culpaba a la petición de un fallo del proveedor.
+    const codigo = (authError as { code?: string } | null)?.code ?? "";
+    const yaExiste =
+      codigo === "email_exists" || /already (been )?registered|already exists/i.test(authError?.message ?? "");
+    if (yaExiste) return jsonError("Ya existe una cuenta con ese e-mail", 409);
+    return jsonServerError("admin.users.POST.auth", authError, "No se pudo crear el usuario");
   }
 
   const userId = authData.user.id;

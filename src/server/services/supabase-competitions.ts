@@ -231,7 +231,9 @@ export const competitionService = {
       .eq("id", id)
       .select()
       .single();
-    if (error || !data) return undefined;
+    // Ídem que en jueces: un error al guardar no es «Competición no encontrada».
+    if (error && error.code !== "PGRST116") throw new Error(`competitions: ${error.message}`);
+    if (!data) return undefined;
     return mapCompetition(data as Record<string, unknown>);
   },
 
