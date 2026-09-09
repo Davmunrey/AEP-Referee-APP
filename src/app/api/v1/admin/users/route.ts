@@ -70,7 +70,10 @@ export async function POST(request: Request) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: nombre, invited: true },
+    // Sin `invited`: `user_metadata` lo escribe el propio usuario, así que no
+    // puede sostener nada de autorización. Y no hacía falta — el perfil se crea
+    // aquí mismo con `activo: true`, tres líneas más abajo.
+    user_metadata: { full_name: nombre },
   });
 
   if (authError || !authData.user) {

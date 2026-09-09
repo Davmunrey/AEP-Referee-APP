@@ -154,7 +154,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   // Borra el usuario de auth y verifica el resultado.
   const { error: authError } = await admin.auth.admin.deleteUser(id);
   if (authError) {
-    return jsonError(`No se pudo eliminar el usuario: ${authError.message}`, 500);
+    // Tres líneas más abajo, el borrado del perfil ya usaba `jsonServerError`.
+    // Este interpolaba el mensaje del proveedor de identidad en la respuesta
+    // (CWE-209), igual que hacía el reseteo de contraseña antes de corregirlo.
+    return jsonServerError("admin.users.DELETE.auth", authError, "No se pudo eliminar el usuario");
   }
   // Elimina el perfil explícitamente (no se asume FK ON DELETE CASCADE) y
   // comprueba el resultado: un perfil huérfano seguía apareciendo en el listado.

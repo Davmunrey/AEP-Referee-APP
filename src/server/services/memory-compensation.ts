@@ -149,8 +149,18 @@ export const memoryCompensationService = {
   ): Promise<CompensationClaim | undefined> => {
     const competition = await competitions.getCompetition(competitionId);
     const referee = await referees.getReferee(refereeId);
-    if (!competition || !referee?.domicilioLat || !referee.domicilioLng) return undefined;
-    if (!competition.sedeLat || !competition.sedeLng) return undefined;
+    // `!lng` daba «falta la coordenada» también para 0, y la longitud 0 —el
+    // meridiano de Greenwich— cruza España por Castellón, Valencia y Alicante.
+    // El gemelo de Supabase compara con `null`; este se había quedado atrás.
+    if (
+      !competition ||
+      referee?.domicilioLat == null ||
+      referee.domicilioLng == null ||
+      competition.sedeLat == null ||
+      competition.sedeLng == null
+    ) {
+      return undefined;
+    }
     // Distancia real (haversine) desde las coordenadas ya validadas, no un 50 km
     // fijo que facturaba lo mismo a todos los jueces en el backend dev/local.
     const oneWay = Math.max(

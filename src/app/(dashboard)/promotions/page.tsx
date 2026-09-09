@@ -1,12 +1,13 @@
 import { PromotionsBoard } from "@/components/promotions/promotions-board";
 import { canManageJudges, canReviewPromotions, getSession } from "@/lib/auth/session";
+import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { stripRefereeListPII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
 
 export default async function PromotionsPage() {
   const user = await getSession();
-  if (!user) redirect("/sign-in");
+  if (!user) redirect(SIGN_IN_SIN_ACCESO);
 
   const [promotions, referees] = await Promise.all([
     dataService.getPromotions(user),

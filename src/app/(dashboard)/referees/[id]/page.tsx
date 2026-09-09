@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
 import { displayUltimo } from "@/lib/utils";
 import { canManageJudges, getSession } from "@/lib/auth/session";
+import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { stripRefereePII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -26,7 +27,7 @@ interface RefereePageProps {
 
 export default async function RefereeDetailPage({ params }: RefereePageProps) {
   const user = await getSession();
-  if (!user) redirect("/sign-in");
+  if (!user) redirect(SIGN_IN_SIN_ACCESO);
 
   const { id } = await params;
   const [profile, meta, competitions] = await Promise.all([

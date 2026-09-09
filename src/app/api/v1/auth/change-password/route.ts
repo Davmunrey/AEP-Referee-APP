@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import {
   canAttemptLogin,
   clearLoginAttempts,
+  MAX_LOGIN_PASSWORD_LENGTH,
   recordFailedLogin,
   requestIp,
 } from "@/lib/api/login-rate-limit";
@@ -31,6 +33,15 @@ export async function POST(request: Request) {
 
   if (newPassword.length < 8) {
     return jsonError("La nueva contraseña debe tener al menos 8 caracteres", 400);
+  }
+  // El mismo tope que `/auth/login`, que lo lleva porque bcrypt solo usa los
+  // primeros 72 bytes y sin cota se puede hacer hashear megabytes por petición.
+  // Aquí faltaba, y son DOS contraseñas las que salen hacia el proveedor.
+  if (
+    newPassword.length > MAX_LOGIN_PASSWORD_LENGTH ||
+    currentPassword.length > MAX_LOGIN_PASSWORD_LENGTH
+  ) {
+    return jsonError("Contraseña no válida", 400);
   }
   if (newPassword === currentPassword) {
     return jsonError("La nueva contraseña debe ser distinta de la actual", 400);
@@ -65,7 +76,39 @@ export async function POST(request: Request) {
   const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
     password: newPassword,
   });
-  if (updateError) return jsonError(`No se pudo actualizar: ${updateError.message}`, 500);
+  if (updateError) {
+    // El detalle del proveedor de identidad se queda en el log; y una
+    // contraseña rechazada por la política no es un error del servidor.
+    console.error("[auth.change-password]", user.id, updateError.message);
+    const debil = updateError.status === 422 || updateError.code === "weak_password";
+    return jsonError(
+      debil
+        ? "La contraseña no cumple la política de seguridad. Prueba con una más larga o menos común."
+        : "No se pudo actualizar la contraseña. Vuelve a intentarlo.",
+      debil ? 400 : 500,
+    );
+  }
 
-  return jsonOk({ updated: true });
+  // Cambiar la contraseña tiene que echar a quien esté dentro con la anterior.
+  // Sin esto, una sesión robada —un portátil compartido, un token filtrado—
+  // seguía viva después del cambio: el usuario cree que ha cerrado la puerta y
+  // la puerta sigue abierta hasta que caduque el refresh token.
+  // `scope: "others"` conserva la sesión desde la que se hace el cambio.
+  let otrasSesionesCerradas = true;
+  try {
+    const sesion = await createServerClient();
+    const { error: signOutError } = await sesion.auth.signOut({ scope: "others" });
+    if (signOutError) {
+      otrasSesionesCerradas = false;
+      console.error("[auth.change-password.signOut]", user.id, signOutError.message);
+    }
+  } catch (err) {
+    otrasSesionesCerradas = false;
+    console.error("[auth.change-password.signOut]", user.id, err);
+  }
+
+  // La contraseña YA está cambiada: fallar aquí sería mentir al revés. Se
+  // devuelve el dato para que la pantalla pueda avisar de que conviene cerrar
+  // sesión en el resto de dispositivos a mano.
+  return jsonOk({ updated: true, otrasSesionesCerradas });
 }

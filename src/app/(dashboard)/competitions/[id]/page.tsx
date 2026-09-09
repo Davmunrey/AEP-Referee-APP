@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { zonesMatch } from "@/lib/aep-zones";
 import { RosterBuilder } from "@/components/competitions/roster-builder";
 import { canEditRoster, canManageCompensation, getSession } from "@/lib/auth/session";
+import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { isCompetitionPast } from "@/lib/competition-status";
 import { stripRefereeListPII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
@@ -12,7 +13,7 @@ interface CompetitionPageProps {
 
 export default async function CompetitionPage({ params }: CompetitionPageProps) {
   const user = await getSession();
-  if (!user) redirect("/sign-in");
+  if (!user) redirect(SIGN_IN_SIN_ACCESO);
 
   const { id } = await params;
   const [

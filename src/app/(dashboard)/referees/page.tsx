@@ -2,13 +2,14 @@ import { RefereesDirectory } from "@/components/referees/referees-directory";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { canImportJudgesRegistry } from "@/lib/permissions";
 import { canManageJudges, getSession } from "@/lib/auth/session";
+import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { stripRefereeListPII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
 
 export default async function RefereesPage() {
   const user = await getSession();
-  if (!user) redirect("/sign-in");
+  if (!user) redirect(SIGN_IN_SIN_ACCESO);
 
   const meta = await dataService.getMeta(user);
   // El recorte de PII lo hacía solo la ruta API, y la página es justo la que

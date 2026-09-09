@@ -2,6 +2,7 @@ import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { ReportsManager } from "@/components/judge/reports-manager";
 import { Card, CardContent } from "@/components/ui/card";
 import { canAdminJudges, canManageJudges, getSession } from "@/lib/auth/session";
+import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { dataService } from "@/server/services";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -10,7 +11,7 @@ import type { LucideIcon } from "lucide-react";
 
 export default async function ReportsPage() {
   const user = await getSession();
-  if (!user) redirect("/sign-in");
+  if (!user) redirect(SIGN_IN_SIN_ACCESO);
 
   const [reports, referees, competitions] = await Promise.all([
     dataService.getReports(undefined, user),

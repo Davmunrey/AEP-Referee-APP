@@ -38,6 +38,27 @@ export interface DistanceMatrixResult {
   source: "osm";
 }
 
+/**
+ * Una coordenada que llega de fuera y no es un número finito no es «cero»: es
+ * que no la hay. `Number("")` da 0 y `Number("sin dato")` da NaN, y ninguno de
+ * los dos se puede distinguir después de un punto del mapa legítimo.
+ */
+function coordenadaFinita(raw: unknown, tope: number): number | null {
+  let n: number;
+  if (typeof raw === "number") {
+    n = raw;
+  } else {
+    // El texto vacío es ausencia, no el meridiano de Greenwich: `Number("")`
+    // da 0, y un 0 de longitud sí es una coordenada legítima, así que hay que
+    // distinguirlos antes de convertir.
+    const texto = String(raw ?? "").trim();
+    if (texto === "") return null;
+    n = Number(texto);
+  }
+  if (!Number.isFinite(n) || Math.abs(n) > tope) return null;
+  return n;
+}
+
 /** Geocodifica una dirección con Nominatim (OpenStreetMap, gratuito). */
 export async function geocodeAddress(address: string): Promise<CompensationLocation> {
   const trimmed = address.trim();
@@ -73,10 +94,21 @@ export async function geocodeAddress(address: string): Promise<CompensationLocat
   const hit = data[0];
   if (!hit) throw new Error("No se encontró la dirección en OpenStreetMap");
 
+  // Nominatim devuelve las coordenadas como texto. `Number("")` da 0 —el golfo
+  // de Guinea— y `Number(undefined)` da NaN, y NaN pasaba entero: el guardián
+  // de `fetchDrivingDistanceKm` comparaba con `null`, y `NaN == null` es falso.
+  // Acababa en una URL «NaN,NaN» hacia OSRM y en un error sin sentido, después
+  // de haber intentado guardar esa coordenada en la ficha del juez.
+  const lat = coordenadaFinita(hit.lat, 90);
+  const lng = coordenadaFinita(hit.lon, 180);
+  if (lat === null || lng === null) {
+    throw new Error("OpenStreetMap devolvió coordenadas ilegibles para esa dirección");
+  }
+
   return {
     address: hit.display_name ?? trimmed,
-    lat: Number(hit.lat),
-    lng: Number(hit.lon),
+    lat,
+    lng,
   };
 }
 
@@ -85,16 +117,17 @@ export async function fetchDrivingDistanceKm(
   origin: CompensationLocation,
   destination: CompensationLocation,
 ): Promise<DistanceMatrixResult> {
-  if (
-    origin.lat == null ||
-    origin.lng == null ||
-    destination.lat == null ||
-    destination.lng == null
-  ) {
-    throw new Error("Origen y destino requieren coordenadas (lat/lng)");
+  // `== null` dejaba pasar NaN e Infinity, que es justo lo que llega cuando la
+  // coordenada guardada en la ficha está corrupta.
+  const oLat = coordenadaFinita(origin.lat, 90);
+  const oLng = coordenadaFinita(origin.lng, 180);
+  const dLat = coordenadaFinita(destination.lat, 90);
+  const dLng = coordenadaFinita(destination.lng, 180);
+  if (oLat === null || oLng === null || dLat === null || dLng === null) {
+    throw new Error("Origen y destino requieren coordenadas (lat/lng) válidas");
   }
 
-  const coords = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
+  const coords = `${oLng},${oLat};${dLng},${dLat}`;
   const url = `${OSRM_URL}/route/v1/driving/${coords}?overview=false&alternatives=false`;
 
   let res: Response;
@@ -125,7 +158,13 @@ export async function fetchDrivingDistanceKm(
     throw new Error(data.message ?? "No se pudo calcular la ruta entre domicilio y sede");
   }
 
+  // Una ruta sin distancia no son cero kilómetros. `null / 1000` da 0, y ese 0
+  // se guardaba como distancia resuelta: el juez cobraba el viaje a cero euros
+  // y nada en la pantalla decía que el cálculo no había llegado a hacerse.
   const distanceMeters = data.routes[0].distance;
+  if (!Number.isFinite(distanceMeters) || distanceMeters < 0) {
+    throw new Error("El cálculo de ruta devolvió una distancia ilegible. Introduce los km a mano.");
+  }
   // El i+v se redondea directamente sobre los metros reales (×2) para no arrastrar
   // el error de redondear la ida a km enteros y luego duplicar. La ida se mantiene
   // redondeada solo para mostrarla.

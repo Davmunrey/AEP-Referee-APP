@@ -27,11 +27,18 @@ function initialsFrom(name: string, email: string): string {
 }
 
 /** Crea el perfil de la app para un usuario auth recién registrado. */
+/**
+ * Da de alta el perfil de un usuario de auth que todavía no lo tiene.
+ *
+ * Solo llega aquí quien se ha autenticado SIN que un administrador le haya
+ * creado la cuenta: el alta desde «Gestión de cuentas» crea el usuario de auth
+ * y su perfil `activo` en la misma petición (y borra el usuario si el perfil
+ * falla), así que en el camino legítimo el perfil ya existe.
+ */
 async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow | null> {
   const meta = user.user_metadata ?? {};
   const email = user.email ?? "";
   const nombre = String(meta.full_name ?? meta.name ?? email.split("@")[0] ?? "Usuario");
-  const invited = meta.invited === true;
 
   const { count, error: countError } = await admin
     .from("profiles")
@@ -43,7 +50,22 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
   // perfil; el usuario reintenta y entra por el camino normal.
   if (countError || count == null) return null;
   const isFirst = count === 0;
-  const activo = isFirst || invited;
+  // Solo el primer perfil de la instalación nace activo.
+  //
+  // Antes esto era `isFirst || meta.invited === true`, y ese `invited` sale de
+  // `user_metadata`, que en Supabase lo escribe EL PROPIO USUARIO: se puede
+  // fijar al registrarse (`signUp` con `options.data`) o después con
+  // `updateUser({ data })`, contra la API pública y con la clave anónima, que
+  // viaja en el navegador. Es decir, la bandera que decidía si una cuenta nueva
+  // entra activa la controlaba quien se daba de alta, no quien invita.
+  //
+  // Y no hacía falta para nada: el alta desde «Gestión de cuentas» ya crea el
+  // perfil con `activo: true`, así que esta rama nunca la recorre un usuario
+  // invitado de verdad. Solo servía de puerta.
+  //
+  // Si alguna vez hace falta marcar una invitación, el sitio es `app_metadata`,
+  // que solo se escribe con la clave de servicio.
+  const activo = isFirst;
 
   await admin
     .from("profiles")

@@ -73,5 +73,17 @@ export async function searchPhotonAddresses(
         lat,
         lng,
       };
-    });
+    })
+    // Una sugerencia sin coordenadas utilizables no es una sugerencia: al
+    // elegirla se guardaban `null`/`NaN` en el domicilio del juez, y el fallo
+    // no aparecía hasta el cálculo de la distancia, semanas después y en otra
+    // pantalla. Mejor no ofrecerla.
+    .filter(
+      (s) =>
+        Number.isFinite(s.lat) &&
+        Number.isFinite(s.lng) &&
+        Math.abs(s.lat) <= 90 &&
+        Math.abs(s.lng) <= 180 &&
+        s.address.trim() !== "",
+    );
 }
