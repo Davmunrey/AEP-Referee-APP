@@ -54,6 +54,14 @@ interface CompensationBoardProps {
  */
 type ClubDraft = CompensationClubContact & { draftId: string };
 
+/** ¿Son la misma lista de direcciones, sin importar el orden? */
+function mismaListaDeEmails(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const orden = (xs: readonly string[]) => [...xs].map((x) => x.toLowerCase()).sort();
+  const [x, y] = [orden(a), orden(b)];
+  return x.every((v, i) => v === y[i]);
+}
+
 function newDraftId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -261,8 +269,19 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                               prev.map((c) => {
                                 if (c.draftId !== club.draftId) return c;
                                 const suggested = suggestedEmailsForClubName(name);
+                                // Se rellena si el campo está vacío o si lo que
+                                // hay es exactamente lo que sugerimos para el
+                                // nombre anterior: entonces lo pusimos nosotros
+                                // y podemos corregirlo. Cambiar de club dejaba
+                                // el e-mail del club anterior puesto, y ese es
+                                // el destinatario del recibo.
+                                const anteriores = suggestedEmailsForClubName(c.name);
+                                const eraNuestro =
+                                  anteriores.length > 0 && mismaListaDeEmails(c.emails, anteriores);
                                 const emails =
-                                  suggested.length > 0 && c.emails.length === 0 ? suggested : c.emails;
+                                  suggested.length > 0 && (c.emails.length === 0 || eraNuestro)
+                                    ? suggested
+                                    : c.emails;
                                 return { ...c, name, emails };
                               }),
                             );
