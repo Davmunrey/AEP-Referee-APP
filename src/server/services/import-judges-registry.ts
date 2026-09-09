@@ -421,7 +421,14 @@ export function importJudgesRegistryToMemory(
       (x) => x.excelId === r.excelId || x.id === r.id,
     );
     if (idx >= 0) {
-      store.referees[idx] = referee;
+      // Mismo criterio que en Supabase: para un juez que ya existe solo se
+      // escribe lo que el Excel trae. Sustituir el objeto entero borraba la
+      // licencia, el domicilio y sus coordenadas, que el Excel no conoce.
+      const existente = store.referees[idx]!;
+      const traido = Object.fromEntries(
+        Object.entries(referee).filter(([, v]) => v !== undefined && v !== null),
+      ) as Partial<Referee>;
+      store.referees[idx] = { ...existente, ...traido, id: existente.id };
       refereesUpdated++;
     } else {
       store.referees.push(referee);
