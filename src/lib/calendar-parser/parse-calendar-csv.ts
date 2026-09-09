@@ -1,4 +1,5 @@
 import { calendarYearWarning, detectCalendarYear } from "./detect-year";
+import { fechaPendienteWarning, zonaNoDeducidaWarning } from "./entry-warnings";
 import { deduceMacroZone, resolveZoneCode } from "@/lib/aep-zones";
 import type { EventType } from "@/lib/types";
 import type { ParsedCalendar, ParsedCalendarEntry } from "./types";
@@ -229,10 +230,10 @@ export function parseAepCalendarCsv(text: string): ParsedCalendar {
     const esEspaña = tipo !== null && !looksForeign(localidad, organizador);
 
     if (esEspaña && !zona) {
-      warnings.push(`Zona no deducida: ${nombre} (${localidad || "sede pendiente"})`);
+      warnings.push(zonaNoDeducidaWarning(nombre, localidad));
     }
     if (esEspaña && !dates.start) {
-      warnings.push(`Fecha pendiente/no exacta: ${nombre} (${rawDate})`);
+      warnings.push(fechaPendienteWarning(nombre, rawDate));
     }
 
     entries.push({
