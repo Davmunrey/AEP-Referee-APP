@@ -31,6 +31,9 @@ vi.mock("@/lib/supabase/admin", () => ({
         in: () => q,
         is: () => q,
         order: () => q,
+        // `range` cierra la consulta: la bandeja y sus lecturas por lote se
+        // paginan, porque PostgREST corta en 1000 filas por su cuenta.
+        range: async () => finish(),
         maybeSingle: async () => finish(),
         single: async () => finish(),
         then: (resolve: (r: QueryResult) => unknown) => Promise.resolve(finish()).then(resolve),
