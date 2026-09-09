@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
-import { jsonError, jsonOk } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import type { SlotFlags } from "@/lib/types";
 import { dataService } from "@/server/services";
 
@@ -25,7 +25,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     intercambio: Boolean(body?.flags?.intercambio),
   };
 
-  const result = await dataService.setSlotFlags(competitionId, slotKey, flags, user.nombre);
-  if ("error" in result && result.error) return jsonError(result.error, 400);
-  return jsonOk(result);
+  // Ídem que `roster/assign`: las lecturas de debajo lanzan y aquí no había
+  // dónde caer.
+  try {
+    const result = await dataService.setSlotFlags(competitionId, slotKey, flags, user.nombre);
+    if ("error" in result && result.error) return jsonError(result.error, 400);
+    return jsonOk(result);
+  } catch (err) {
+    return jsonServerError("roster.flags", err, "No se pudo guardar la marca del hueco");
+  }
 }
