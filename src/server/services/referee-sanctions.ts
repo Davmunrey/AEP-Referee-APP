@@ -22,6 +22,7 @@ import { nextSeqId } from "@/server/store";
 // una sanción impuesta o revocada podía no dejar rastro sin que nadie se
 // enterase, que es exactamente lo contrario de lo que sirve un registro.
 import { pushActivity } from "@/server/services/supabase-helpers";
+import { zoneVisibilityFilter } from "@/lib/zone-scope";
 
 function db() {
   return createAdminClient();
@@ -422,16 +423,21 @@ export async function getSanctionAlerts(
   // cualquiera.
   if (error) throw new Error(`referee_sanctions: ${error.message}`);
 
-  const userZone =
-    user?.role === "delegado_zona" && user.zona
-      ? resolveZoneCode(user.zona)
-      : undefined;
+  // Ver `zone-scope`: `resolveZoneCode` devuelve `undefined` tanto para «este
+  // usuario no tiene restricción» como para «es delegado de zona y su zona NO
+  // se reconoce», y con `if (userZone && …)` los dos casos se saltaban el
+  // filtro. Un delegado con la zona mal escrita en su perfil veía en su panel
+  // las sanciones disciplinarias de TODAS las zonas —nombre del juez, zona y
+  // fecha de fin—, y no tenía por qué notarlo: el censo y el listado de
+  // campeonatos sí fallan cerrados, así que su panel salía vacío salvo por
+  // esto. Es el dato más sensible que guarda la aplicación.
+  const visibleEnZona = zoneVisibilityFilter(user);
 
   const alerts: SanctionAlert[] = [];
   for (const row of data ?? []) {
     const s = mapSanction(row as Record<string, unknown>);
     const z = resolveZoneCode(s.zona);
-    if (userZone && z !== userZone) continue;
+    if (!visibleEnZona(s.zona)) continue;
 
     const daysLeft = daysUntil(s.fechaFin);
     alerts.push({

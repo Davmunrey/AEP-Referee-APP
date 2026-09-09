@@ -114,7 +114,7 @@ export const competitionService = {
     // Ver `zone-scope`: una zona ilegible no es «sin restricción».
     const visibleEnZona = zoneVisibilityFilter(user);
 
-    let compQuery = supabase.from("competitions").select("id, fecha, estado").order("fecha");
+    let compQuery = supabase.from("competitions").select("id, fecha, estado, zona").order("fecha");
     // `competitions.zona` es FK canónica, pero `approval_proposals.zona` es
     // texto libre con códigos anteriores a la 013: con `.eq` el delegado veía un
     // contador de aprobaciones más bajo que su propia bandeja. Se traen las
@@ -140,11 +140,19 @@ export const competitionService = {
     const apprCount = (apprRows ?? []).filter(
       (row) => visibleEnZona(String(row.zona ?? "")),
     ).length;
-    const navComps = (comps ?? []).map((r) => ({
-      id: String(r.id),
-      fecha: String(r.fecha),
-      estado: String(r.estado) as Competition["estado"],
-    }));
+    // El `.eq` de arriba solo se aplica cuando la zona del perfil se reconoce.
+    // Un delegado de zona con la zona mal escrita se quedaba sin filtro y
+    // contaba los campeonatos de toda España, mientras la mitad de las
+    // aprobaciones —dos líneas más arriba— ya usaba `zoneVisibilityFilter` y
+    // fallaba cerrada. Las dos mitades del mismo contador, con criterios
+    // distintos.
+    const navComps = (comps ?? [])
+      .filter((r) => visibleEnZona(String(r.zona ?? "")))
+      .map((r) => ({
+        id: String(r.id),
+        fecha: String(r.fecha),
+        estado: String(r.estado) as Competition["estado"],
+      }));
 
     return {
       competitions: navComps.length,
