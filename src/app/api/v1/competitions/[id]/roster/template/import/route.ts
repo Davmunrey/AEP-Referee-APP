@@ -2,7 +2,11 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 import { parseSelectedImportKeys } from "@/lib/import-security";
-import { duplicateSessionCodes, mergeRosterTemplateSessions } from "@/lib/roster-template";
+import {
+  duplicateRoleKeys,
+  duplicateSessionCodes,
+  mergeRosterTemplateSessions,
+} from "@/lib/roster-template";
 import {
   MAX_PDF_BYTES,
   extractPdfText,
@@ -136,6 +140,27 @@ export async function POST(request: Request, context: RouteContext) {
   if (repetidas.length > 0) {
     return jsonError(
       `El cuadrante trae dos sesiones con el mismo código (${repetidas.join(", ")}). Corrígelo en el PDF o importa las sesiones por separado.`,
+      422,
+      { preview },
+    );
+  }
+
+  // La otra mitad de la misma regla, que se había quedado fuera: dentro de una
+  // sesión cada rol va en UNA fila con su número de plazas. Dos filas «Juez
+  // Central» comparten las claves `${sesion}_${rol}_${indice}`, así que la
+  // segunda no aporta huecos. `rosterTemplateSchema` lo rechaza al guardar a
+  // mano y el editor deshabilita el botón; por aquí entraba, y quien lo
+  // importaba se encontraba una plantilla que el editor ya no le dejaba
+  // guardar hasta quitar la fila de más.
+  const rolesRepetidos = templateToSave
+    .map((sesion) => ({ sesion: sesion.sesion, repetidos: duplicateRoleKeys(sesion) }))
+    .filter((entry) => entry.repetidos.length > 0);
+  if (rolesRepetidos.length > 0) {
+    const detalle = rolesRepetidos
+      .map((entry) => `${entry.sesion} (${entry.repetidos.join(", ")})`)
+      .join("; ")
+    return jsonError(
+      `El cuadrante repite un rol dentro de la misma sesión: ${detalle}. Cada rol va en una sola fila con su número de plazas.`,
       422,
       { preview },
     );
