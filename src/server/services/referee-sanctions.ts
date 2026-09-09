@@ -127,11 +127,31 @@ async function syncRefereeAfterSanctionChange(
 // irrelevante para sanciones cuya granularidad es de días.
 const EXPIRE_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 let lastExpireSweepAt = 0;
+/**
+ * Jueces cuya sanción ya se marcó «cumplida» pero cuya ficha no se pudo
+ * sincronizar. Soltar la marca de barrido no bastaba: el siguiente barrido
+ * solo busca sanciones «activa», y esa ya no lo es, así que a ese juez no lo
+ * volvía a tocar nadie. Se quedaba «Sancionado» para siempre, sin sanción
+ * viva debajo, y por tanto fuera de cualquier tarima.
+ */
+const pendingRefereeSync = new Set<string>();
+
+async function resyncPendingReferees(): Promise<void> {
+  if (pendingRefereeSync.size === 0) return;
+  const ids = [...pendingRefereeSync];
+  const results = await Promise.allSettled(ids.map((rid) => syncRefereeAfterSanctionChange(rid)));
+  results.forEach((r, i) => {
+    if (r.status === "fulfilled") pendingRefereeSync.delete(ids[i]!);
+  });
+}
 
 export async function expireStaleSanctions(options?: { force?: boolean }): Promise<number> {
   const now = Date.now();
   if (!options?.force && now - lastExpireSweepAt < EXPIRE_SWEEP_INTERVAL_MS) return 0;
   lastExpireSweepAt = now;
+
+  // Primero lo que quedó a medias la vez anterior.
+  await resyncPendingReferees();
 
   const supabase = db();
   const today = todayIso();
@@ -173,7 +193,10 @@ export async function expireStaleSanctions(options?: { force?: boolean }): Promi
   const synced = await Promise.allSettled(
     refereeIds.map((rid) => syncRefereeAfterSanctionChange(rid)),
   );
-  if (synced.some((r) => r.status === "rejected")) {
+  synced.forEach((r, i) => {
+    if (r.status === "rejected") pendingRefereeSync.add(refereeIds[i]!);
+  });
+  if (pendingRefereeSync.size > 0) {
     lastExpireSweepAt = 0;
   }
   return expired.length;
