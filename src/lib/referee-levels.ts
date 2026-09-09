@@ -49,3 +49,12 @@ export function higherRefereeLevels(actual: string): RefereeLevel[] {
   const idx = refereeLevelRank(actual);
   return idx >= 0 ? REFEREE_LEVEL_ORDER.slice(idx + 1) : [];
 }
+
+/**
+ * Una solicitud de ascenso pendiente por juez.
+ *
+ * Vive aquí y no en un servicio porque la comparten los dos gemelos —el de
+ * Supabase y el de memoria—, y el de memoria no puede importar del otro.
+ */
+export const PROMOCION_YA_PENDIENTE =
+  "Este juez ya tiene una solicitud de ascenso pendiente. Resuélvela antes de abrir otra.";

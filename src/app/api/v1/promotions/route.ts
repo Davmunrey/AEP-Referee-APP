@@ -1,7 +1,7 @@
 import { zonesMatch } from "@/lib/aep-zones";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, readOrError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, readOrError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { RefereeLevel } from "@/lib/types";
 
@@ -54,6 +54,8 @@ export async function POST(request: Request) {
     if (msg.startsWith("El nivel") || msg === "Juez no encontrado") {
       return jsonError(msg, 400);
     }
-    return jsonServerError("promotions.POST", e, "No se pudo crear la solicitud de ascenso");
+    // «Ya tiene una solicitud pendiente» llega como error con estado propio
+    // (409): con `jsonServerError` moría en el genérico.
+    return jsonRouteError("promotions.POST", e, "No se pudo crear la solicitud de ascenso");
   }
 }

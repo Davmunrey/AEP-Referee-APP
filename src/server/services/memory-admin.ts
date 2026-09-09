@@ -14,8 +14,12 @@ import type {
   SessionUser,
 } from "@/lib/types";
 import { REGULATION_RULES, getStore, nextSeqId, pushActivity } from "@/server/store";
-import { PromotionReviewError } from "@/lib/competitions/service-types";
-import { isRefereeLevelUpgrade, refereeLevelRank } from "@/lib/referee-levels";
+import { PromotionReviewError, UserFacingServiceError } from "@/lib/competitions/service-types";
+import {
+  isRefereeLevelUpgrade,
+  PROMOCION_YA_PENDIENTE,
+  refereeLevelRank,
+} from "@/lib/referee-levels";
 
 function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelActual: RefereeLevel) {
   if (tipo === "Nuevo juez" && nivelObjetivo !== "Regional") throw new Error("Nuevo juez solo puede registrar nivel objetivo Regional");
@@ -81,6 +85,10 @@ export async function createPromotion(input: {
     throw new Error(
       `El nivel destino (${input.toLevel}) debe ser superior al actual (${referee.nivel})`,
     );
+  }
+  // Mismo criterio que el gemelo de Supabase: una solicitud pendiente por juez.
+  if (store.promotions.some((p) => p.refereeId === input.refereeId && p.status === "pendiente")) {
+    throw new UserFacingServiceError(PROMOCION_YA_PENDIENTE);
   }
   const req: PromotionRequest = {
     id: nextSeqId("pro"), refereeId: input.refereeId, refereeName: referee.nombre,
