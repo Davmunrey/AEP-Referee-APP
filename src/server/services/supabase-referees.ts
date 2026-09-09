@@ -225,7 +225,12 @@ export const refereeService = {
       .eq("id", id)
       .select()
       .single();
-    if (error || !data) return undefined;
+    // Una escritura fallida se devolvía como «no encontrado»: la ruta acababa
+    // diciendo «Juez no encontrado» de un juez que había cargado dos líneas
+    // antes, y quien editaba la ficha se quedaba sin saber si se guardó.
+    // PGRST116 sí es «ninguna fila».
+    if (error && error.code !== "PGRST116") throw new Error(`referees: ${error.message}`);
+    if (!data) return undefined;
     return mapReferee(data as Record<string, unknown>);
   },
 
@@ -275,7 +280,10 @@ export const refereeService = {
     // 23503 = foreign_key_violation: le asignaron un hueco entre la comprobación
     // y el borrado. Mismo mensaje que el corte de arriba, no un 404 falso.
     if (error?.code === "23503") throw new RefereeAssignedError(1);
-    return !error && (data ?? []).length > 0;
+    // Cualquier otro error del borrado se decía como «Juez no encontrado»,
+    // de un juez que sigue a la vista en el directorio. La ruta tiene `catch`.
+    if (error) throw new Error(`referees: ${error.message}`);
+    return (data ?? []).length > 0;
   },
 
   getJudgeProfile: async (

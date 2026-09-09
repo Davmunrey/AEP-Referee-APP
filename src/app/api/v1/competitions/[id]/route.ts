@@ -168,7 +168,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
   }
 
-  const updated = await dataService.updateCompetition(id, patch);
+  // Ídem: la competición se cargó al principio; aquí un vacío es un fallo al
+  // guardar, no una ausencia.
+  const updated = await readOrError("competitions.PATCH.guardar", "No se pudo guardar el campeonato", () =>
+    dataService.updateCompetition(id, patch),
+  );
+  if (updated instanceof Response) return updated;
   if (!updated) return jsonError("Competición no encontrada", 404);
   return jsonOk(updated);
 }

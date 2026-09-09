@@ -63,6 +63,29 @@ async function loadSanctionedRefereeIds(): Promise<{
   return { withHistory, withActive };
 }
 
+/**
+ * Para un juez que YA existe, solo se escribe lo que el Excel trae de verdad.
+ *
+ * La fila se montaba entera y se mandaba tal cual al UPDATE, con `null` en
+ * cada columna que el Excel no tiene o trae en blanco. Así que «reemplazar
+ * censo» borraba en cada importación datos escritos a mano en la ficha:
+ * la licencia, siempre —no hay columna de licencia en el Excel, iba fijada a
+ * `null`—; y el e-mail, el teléfono, la localidad, el género, la antigüedad o
+ * las notas, cada vez que la celda estuviera vacía. Nadie lo veía: la fila
+ * seguía ahí, solo más vacía.
+ *
+ * Un alta nueva sí puede llevar los nulos: no hay nada que pisar.
+ */
+function soloLoQueTraeElExcel(payload: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [columna, valor] of Object.entries(payload)) {
+    if (columna === "licencia") continue; // el Excel no la conoce
+    if (valor === null || valor === undefined) continue;
+    out[columna] = valor;
+  }
+  return out;
+}
+
 export async function importJudgesRegistryToSupabase(
   parsed: ParsedJudgesRegistry,
   options?: { replace?: boolean },
@@ -223,11 +246,13 @@ export async function importJudgesRegistryToSupabase(
       const { id: _id, estado, disp, ...resto } = row;
       const conSancionViva = sanctioned.withActive.has(targetId);
       if (conSancionViva) sanctionKept++;
-      const updatePayload = conSancionViva ? resto : { ...resto, estado, disp };
+      const updatePayload = soloLoQueTraeElExcel(conSancionViva ? resto : { ...resto, estado, disp });
       const { error } = await supabase.from("referees").update(updatePayload).eq("id", targetId);
       if (error) {
         refereesSkipped++;
-        warnings.push(`${r.nombre}: ${error.message}`);
+        // Igual que en las altas, más abajo: el detalle de Postgres al log.
+        console.error("[censo.actualizar]", r.nombre, error.message);
+        warnings.push(`${r.nombre}: no se pudo actualizar.`);
       } else {
         refereesUpdated++;
       }
