@@ -205,11 +205,14 @@ export async function getRefereeSanction(
   sanctionId: string,
 ): Promise<RefereeSanction | undefined> {
   const supabase = db();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("referee_sanctions")
     .select("*")
     .eq("id", sanctionId)
     .maybeSingle();
+  // Un fallo de lectura no es «esa sanción no existe». Se contestaba 404, y
+  // quien había impuesto la sanción se encontraba con que había desaparecido.
+  if (error) throw new Error(`referee_sanctions: ${error.message}`);
   return data ? mapSanction(data as Record<string, unknown>) : undefined;
 }
 
@@ -298,11 +301,12 @@ export async function revokeRefereeSanction(
   motivoRevocacion?: string,
 ): Promise<RefereeSanction | undefined> {
   const supabase = db();
-  const { data: existing } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from("referee_sanctions")
     .select("*")
     .eq("id", sanctionId)
     .maybeSingle();
+  if (readError) throw new Error(`referee_sanctions: ${readError.message}`);
   if (!existing) return undefined;
 
   // Revocar dos veces no vuelve a apilar la nota de revocación: el reintento
@@ -328,7 +332,10 @@ export async function revokeRefereeSanction(
     .eq("id", sanctionId)
     .select()
     .single();
-  if (error || !data) return undefined;
+  // Una escritura fallida se devolvía como «no encontrada», y la sanción
+  // seguía activa mientras la pantalla decía que ya no estaba.
+  if (error) throw new Error(`referee_sanctions: ${error.message}`);
+  if (!data) return undefined;
 
   await syncRefereeAfterSanctionChange(String(existing.referee_id));
 
@@ -347,11 +354,12 @@ export async function markSanctionDelegateNotified(
   sanctionId: string,
 ): Promise<RefereeSanction | undefined> {
   const supabase = db();
-  const { data: existing } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from("referee_sanctions")
     .select("*")
     .eq("id", sanctionId)
     .maybeSingle();
+  if (readError) throw new Error(`referee_sanctions: ${readError.message}`);
   if (!existing) return undefined;
 
   const current = mapSanction(existing as Record<string, unknown>);
@@ -366,7 +374,10 @@ export async function markSanctionDelegateNotified(
     .eq("id", sanctionId)
     .select()
     .single();
-  if (error || !data) return undefined;
+  // Ídem: si el aviso no se ha podido marcar, decirlo. Darlo por «no
+  // encontrada» hacía que el delegado avisara dos veces o ninguna.
+  if (error) throw new Error(`referee_sanctions: ${error.message}`);
+  if (!data) return undefined;
   return mapSanction(data as Record<string, unknown>);
 }
 
