@@ -21,10 +21,15 @@ export async function GET(_request: Request, context: RouteContext) {
   );
   if (referee instanceof Response) return referee;
   if (!referee) return jsonError("Juez no encontrado", 404);
-  if (user.role === "delegado_zona" && user.zona) {
+  // Fail-closed, igual que `assertRefereeInUserZone` y que `canManageSanctions`
+  // en el POST de aquí al lado: un delegado de zona SIN zona asignada no puede
+  // actuar. Con `&& user.zona`, ese caso se saltaba la comprobación entera y
+  // le dejaba leer el historial disciplinario de cualquier juez del país.
+  if (user.role === "delegado_zona") {
+    if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
     const uz = resolveZoneCode(user.zona);
     const rz = resolveZoneCode(referee.zona);
-    if (uz !== rz) return jsonError("Sin permiso", 403);
+    if (!uz || uz !== rz) return jsonError("Sin permiso", 403);
   }
   // `listRefereeSanctions` lanza a propósito cuando la lectura falla: una
   // lista vacía presenta como limpio a un juez sancionado. Pero sin `try` eso
