@@ -1,5 +1,9 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
-import { RefereeAssignedError, RefereeHasClaimsError } from "@/lib/competitions/service-types";
+import {
+  RefereeAssignedError,
+  RefereeHasClaimsError,
+  RefereePromotionsError,
+} from "@/lib/competitions/service-types";
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertRefereeInUserZone, stripRefereePII } from "@/lib/api/referee-scope";
@@ -169,6 +173,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   } catch (err) {
     if (err instanceof RefereeHasClaimsError) return jsonError(err.message, 409);
     if (err instanceof RefereeAssignedError) return jsonError(err.message, 409);
+    if (err instanceof RefereePromotionsError) return jsonError(err.message, 409);
     // `throw err` volvía a dejar escapar la excepción: el `catch` existía, pero
     // solo para los dos casos de negocio, y lo demás salía como un 500 sin
     // cuerpo JSON —«Server error (500)» en el navegador—.

@@ -131,6 +131,31 @@ export class PromotionReviewError extends UserFacingServiceError {
  * servicio devolvía `false` y la ruta contestaba «Juez no encontrado» sobre un
  * juez que está a la vista en el directorio.
  */
+/**
+ * El juez tiene solicitudes de ascenso guardadas.
+ *
+ * `promotion_requests.referee_id` referencia a `referees(id)` SIN `ON DELETE`
+ * (001:105), igual que `roster_assignments`. Pero solo se comprobaba la
+ * tarima: con una solicitud de ascenso —pendiente, aprobada o rechazada, la
+ * fila no se borra nunca— el DELETE volvía con un 23503 y se traducía a
+ * `RefereeAssignedError`, que dice «está designado en 1 campeonato. Quítalo de
+ * esa tarima». La tarima ya se había comprobado y estaba vacía, así que quien
+ * leía eso se ponía a buscar en tarimas donde el juez no está.
+ */
+export class RefereePromotionsError extends Error {
+  readonly promotions: number;
+
+  constructor(promotions: number) {
+    super(
+      promotions === 1
+        ? "El juez tiene 1 solicitud de ascenso registrada. Bórrala antes de eliminarlo."
+        : `El juez tiene ${promotions} solicitudes de ascenso registradas. Bórralas antes de eliminarlo.`,
+    );
+    this.name = "RefereePromotionsError";
+    this.promotions = promotions;
+  }
+}
+
 export class RefereeAssignedError extends Error {
   readonly competitions: number;
 

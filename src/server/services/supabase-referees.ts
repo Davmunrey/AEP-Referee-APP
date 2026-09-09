@@ -21,6 +21,8 @@ import {
 import {
   RefereeAssignedError,
   RefereeHasClaimsError,
+  RefereePromotionsError,
+  UserFacingServiceError,
 } from "@/lib/competitions/service-types";
 import {
   db,
@@ -274,12 +276,37 @@ export const refereeService = {
       throw new RefereeAssignedError(assignedCompetitions.size);
     }
 
+    // `promotion_requests.referee_id` tampoco lleva `ON DELETE` (001:105), y
+    // esas filas no se borran nunca: cualquier juez al que se le haya pedido
+    // un ascenso alguna vez tiene una. Sin esta comprobación, el DELETE volvía
+    // con 23503 y se explicaba como «está designado en 1 campeonato», con la
+    // tarima ya comprobada y vacía.
+    const { count: promotions, error: promotionsError } = await supabase
+      .from("promotion_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("referee_id", id);
+    if (promotionsError && !isMissingTableError(promotionsError)) {
+      throw new Error(
+        `No se pudo comprobar si el juez tiene solicitudes de ascenso (${promotionsError.message}). No se ha borrado nada.`,
+      );
+    }
+    if (!promotionsError && (promotions ?? 0) > 0) {
+      throw new RefereePromotionsError(promotions ?? 0);
+    }
+
     // select("id") devuelve las filas borradas: sin él, borrar un id
     // inexistente respondía {deleted:true} en vez de 404.
     const { data, error } = await supabase.from("referees").delete().eq("id", id).select("id");
-    // 23503 = foreign_key_violation: le asignaron un hueco entre la comprobación
-    // y el borrado. Mismo mensaje que el corte de arriba, no un 404 falso.
-    if (error?.code === "23503") throw new RefereeAssignedError(1);
+    // 23503 = foreign_key_violation entre la comprobación y el borrado. No se
+    // puede afirmar cuál de las dos referencias lo bloquea —la tarima o una
+    // solicitud de ascenso—, así que no se elige una: decir «está designado en
+    // 1 campeonato» cuando lo que hay es un ascenso manda a buscar donde no
+    // está.
+    if (error?.code === "23503") {
+      throw new UserFacingServiceError(
+        "Algo que depende de este juez se creó mientras se borraba (una designación o una solicitud de ascenso). Recarga y vuelve a intentarlo.",
+      );
+    }
     // Cualquier otro error del borrado se decía como «Juez no encontrado»,
     // de un juez que sigue a la vista en el directorio. La ruta tiene `catch`.
     if (error) throw new Error(`referees: ${error.message}`);
