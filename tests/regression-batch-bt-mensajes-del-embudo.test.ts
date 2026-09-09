@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { parseApiResponse } from "@/lib/api/http";
 import { isApiError } from "@/lib/api/types";
 
@@ -74,5 +74,35 @@ describe("lo que lee el usuario cuando la respuesta no es la esperada", () => {
     );
     expect(isApiError(out)).toBe(false);
     expect((out as { data: { id: string } }).data).toEqual({ id: "evt-1" });
+  });
+});
+
+describe("cuando la petición no llega a salir", () => {
+  const fetchOriginal = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = fetchOriginal;
+  });
+
+  it("el usuario no lee «Failed to fetch»", async () => {
+    // El texto lo escribe el navegador, y es distinto en cada uno. Ninguno
+    // dice lo único que importa: que no ha llegado a salir.
+    globalThis.fetch = (async () => {
+      throw new TypeError("Failed to fetch");
+    }) as unknown as typeof globalThis.fetch;
+    const { request, ApiRequestError } = await import("@/lib/api/request");
+    await expect(request("/competitions")).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(request("/competitions")).rejects.toThrow(/comprueba tu conexión/i);
+  });
+
+  it("una petición cancelada a propósito se deja pasar tal cual", async () => {
+    // Quien la cancela tiene que poder reconocerla; convertirla en un aviso
+    // sería contarle al usuario algo que ha hecho la propia pantalla.
+    const abortado = new Error("The user aborted a request.");
+    abortado.name = "AbortError";
+    globalThis.fetch = (async () => {
+      throw abortado;
+    }) as unknown as typeof globalThis.fetch;
+    const { request } = await import("@/lib/api/request");
+    await expect(request("/competitions")).rejects.toBe(abortado);
   });
 });

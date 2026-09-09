@@ -25,7 +25,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
 
   // Delegados de zona solo pueden gestionar disponibilidad en su propia zona
-  const comp = await dataService.getCompetition(id);
+  const comp = await readOrError("availability.POST.comp", "No se pudo cargar el campeonato", () =>
+    dataService.getCompetition(id),
+  );
+  if (comp instanceof Response) return comp;
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 

@@ -3,7 +3,7 @@ import { resolveZoneCode } from "@/lib/aep-zones";
 import { canManageCompensation, canManageCompetitions } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
-import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { jsonError, readOrError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { validateCompetitionFields } from "@/app/api/_lib/validation";
 import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import type { CompensationClubContact } from "@/lib/judge-compensation/types";
@@ -11,6 +11,13 @@ import { normalizeClubEmails } from "@/lib/organizer-clubs";
 import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
 import { dataService } from "@/server/services";
 import type { Competition, EventType } from "@/lib/types";
+
+/**
+ * `getCompetition` ya no se traga el error de lectura: es la lectura más usada
+ * de la aplicación y devolver «no encontrada» ante un corte hacía que el
+ * campeonato dejara de existir para todo el mundo a la vez.
+ */
+const MSG_CARGA = "No se pudo cargar el campeonato";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -22,7 +29,10 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const scopeError = await assertCompetitionInUserZone(user, id);
   if (scopeError) return scopeError;
-  const competition = await dataService.getCompetition(id);
+  const competition = await readOrError("competitions.GET", MSG_CARGA, () =>
+    dataService.getCompetition(id),
+  );
+  if (competition instanceof Response) return competition;
   if (!competition) return jsonError("Competición no encontrada", 404);
   return jsonOk(competition);
 }
@@ -37,7 +47,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
 
-  const competition = await dataService.getCompetition(id);
+  const competition = await readOrError("competitions.PATCH", MSG_CARGA, () =>
+    dataService.getCompetition(id),
+  );
+  if (competition instanceof Response) return competition;
   if (!competition) return jsonError("Competición no encontrada", 404);
 
   // Dos permisos distintos sobre el mismo recurso:
@@ -165,7 +178,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id } = await context.params;
-  const competition = await dataService.getCompetition(id);
+  const competition = await readOrError("competitions.DELETE", MSG_CARGA, () =>
+    dataService.getCompetition(id),
+  );
+  if (competition instanceof Response) return competition;
   if (!competition) return jsonError("Competición no encontrada", 404);
   // Solo quien puede gestionar la tarima de esa zona puede eliminarla; excluye
   // a `responsable_financiero_jueces` y normaliza la zona para delegado_zona.

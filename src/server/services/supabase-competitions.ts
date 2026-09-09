@@ -90,10 +90,17 @@ export const competitionService = {
     const supabase = db();
     // Fila y asignaciones en paralelo (antes eran secuenciales). Es una función
     // muy frecuente: detalle, compensación y cada mutación de roster.
-    const [{ data }, assignments] = await Promise.all([
+    const [{ data, error }, assignments] = await Promise.all([
       supabase.from("competitions").select("*").eq("id", id).single(),
       loadAssignments(id),
     ]);
+    // Es la lectura más usada de la aplicación: el detalle, la compensación y
+    // CADA mutación de tarima empiezan por aquí, y todas contestan «Competición
+    // no encontrada» cuando devuelve `undefined`. Con el error descartado, un
+    // corte de un segundo hacía que el campeonato dejara de existir para todo
+    // el mundo a la vez, en mitad de una competición. PGRST116 sí es «no hay
+    // ninguna fila».
+    if (error && error.code !== "PGRST116") throw new Error(`competitions: ${error.message}`);
     if (!data) return undefined;
     const assignmentsByComp = new Map([[id, assignments]]);
     return enrichCompetitionRows([data as Record<string, unknown>], assignmentsByComp)[0];

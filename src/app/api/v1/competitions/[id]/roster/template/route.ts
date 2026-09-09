@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { RosterPaidClaimError } from "@/lib/competitions/service-types";
-import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
+import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { getPresetForEventType } from "@/lib/roster-template";
 import { rosterTemplateSchema } from "@/lib/validations";
@@ -22,10 +22,8 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id: competitionId } = await context.params;
-  const comp = await dataService.getCompetition(competitionId);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
-  if (!comp) return jsonError("Competición no encontrada", 404);
+  const comp = await loadCompetitionForRosterWrite(competitionId, user, "roster.template");
+  if (comp instanceof Response) return comp;
 
   const preset = getPresetForEventType(comp.tipo);
   try {
@@ -43,10 +41,8 @@ export async function PUT(request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id: competitionId } = await context.params;
-  const comp = await dataService.getCompetition(competitionId);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
-  if (!comp) return jsonError("Competición no encontrada", 404);
+  const comp = await loadCompetitionForRosterWrite(competitionId, user, "roster.template");
+  if (comp instanceof Response) return comp;
 
   const body = await request.json().catch(() => null);
   // Validación estructural completa: `slots` entero acotado (1–8), claves de rol
@@ -82,10 +78,8 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id: competitionId } = await context.params;
-  const comp = await dataService.getCompetition(competitionId);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
-  if (!comp) return jsonError("Competición no encontrada", 404);
+  const comp = await loadCompetitionForRosterWrite(competitionId, user, "roster.template");
+  if (comp instanceof Response) return comp;
 
   try {
     const result = await dataService.saveCompetitionTemplate(competitionId, [], user.nombre);
