@@ -1,7 +1,7 @@
 import { canApprove } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { ApprovalReviewError } from "@/lib/competitions/service-types";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -41,7 +41,10 @@ export async function POST(request: Request, context: RouteContext) {
     // excepción —incluido el texto de Postgres, con nombres de tabla y de
     // restricción— y encima disfrazado de conflicto.
     if (err instanceof ApprovalReviewError) return jsonError(err.message, 409);
-    return jsonServerError("approvals.review", err, "No se pudo revisar la propuesta");
+    // `jsonRouteError` deja pasar además los motivos escritos para el revisor
+    // desde el servicio (la revisión se guardó pero no se pudo releer, la
+    // propuesta no se pudo leer). Antes morían en un 500 genérico.
+    return jsonRouteError("approvals.review", err, "No se pudo revisar la propuesta");
   }
   if (!result) return jsonError("La propuesta ya fue revisada por otro usuario", 409);
   return jsonOk(result);

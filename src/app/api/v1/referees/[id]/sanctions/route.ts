@@ -1,6 +1,6 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonRouteError, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError, readOrError, jsonServerError } from "@/lib/api/route-utils";
 import { canManageSanctions } from "@/lib/permissions";
 import { SANCTION_DURATION_PRESETS } from "@/lib/sanctions";
 import { ISO_DATE_RE } from "@/app/api/_lib/validation";
@@ -16,7 +16,10 @@ export async function GET(_request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { id } = await context.params;
-  const referee = await dataService.getReferee(id);
+  const referee = await readOrError("sanctions.GET.juez", "No se pudo cargar el juez", () =>
+    dataService.getReferee(id),
+  );
+  if (referee instanceof Response) return referee;
   if (!referee) return jsonError("Juez no encontrado", 404);
   if (user.role === "delegado_zona" && user.zona) {
     const uz = resolveZoneCode(user.zona);
@@ -37,7 +40,10 @@ export async function POST(request: Request, context: RouteContext) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { id } = await context.params;
-  const referee = await dataService.getReferee(id);
+  const referee = await readOrError("sanctions.POST.juez", "No se pudo cargar el juez", () =>
+    dataService.getReferee(id),
+  );
+  if (referee instanceof Response) return referee;
   if (!referee) return jsonError("Juez no encontrado", 404);
   if (!canManageSanctions(user, referee.zona)) {
     return jsonError("Sin permiso para sancionar en esta zona", 403);

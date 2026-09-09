@@ -3,7 +3,7 @@ import { RefereeAssignedError, RefereeHasClaimsError } from "@/lib/competitions/
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertRefereeInUserZone, stripRefereePII } from "@/lib/api/referee-scope";
-import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError, readOrError } from "@/lib/api/route-utils";
 import {
   REFEREE_LEVELS,
   REFEREE_STATUSES,
@@ -24,7 +24,10 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const scopeErr = await assertRefereeInUserZone(user, id);
   if (scopeErr) return scopeErr;
-  const referee = await dataService.getReferee(id);
+  const referee = await readOrError("referees.GET", "No se pudo cargar el juez", () =>
+    dataService.getReferee(id),
+  );
+  if (referee instanceof Response) return referee;
   if (!referee) return jsonError("Juez no encontrado", 404);
   return jsonOk(stripRefereePII(referee, user));
 }
@@ -37,7 +40,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!canManageJudges(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const existing = await dataService.getReferee(id);
+  const existing = await readOrError("referees.PATCH", "No se pudo cargar el juez", () =>
+    dataService.getReferee(id),
+  );
+  if (existing instanceof Response) return existing;
   if (!existing) return jsonError("Juez no encontrado", 404);
 
   // delegado_zona: solo puede editar jueces de su propia zona y no puede

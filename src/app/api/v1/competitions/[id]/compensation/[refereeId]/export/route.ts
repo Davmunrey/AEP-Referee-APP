@@ -1,6 +1,6 @@
 import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError } from "@/lib/api/route-utils";
+import { jsonError, readOrError } from "@/lib/api/route-utils";
 import {
   RECEIPT_DATE_UNKNOWN,
   compensationReceiptFilename,
@@ -32,11 +32,18 @@ export async function POST(request: Request, context: RouteContext) {
   if (!iban) return jsonError("Indica el IBAN para generar el recibo", 400);
   if (!isValidSpanishIban(iban)) return jsonError("IBAN español no válido", 400);
 
-  const [competition, roster, referee] = await Promise.all([
-    dataService.getCompetition(id),
-    dataService.getRoster(id),
-    dataService.getReferee(refereeId),
-  ]);
+  const leido = await readOrError(
+    "compensation.export.lectura",
+    "No se pudieron cargar los datos del recibo",
+    () =>
+      Promise.all([
+        dataService.getCompetition(id),
+        dataService.getRoster(id),
+        dataService.getReferee(refereeId),
+      ]),
+  );
+  if (leido instanceof Response) return leido;
+  const [competition, roster, referee] = leido;
 
   if (!competition || !roster || !referee) {
     return jsonError("Campeonato, tarima o juez no encontrado", 404);

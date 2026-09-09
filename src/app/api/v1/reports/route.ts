@@ -3,7 +3,7 @@ import { isSafeExternalUrlOrEmpty } from "@/lib/safe-url";
 import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, readOrError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { ReportSubjectType, ReportType } from "@/lib/types";
 
@@ -80,7 +80,10 @@ export async function POST(request: Request) {
       return jsonError("Juez obligatorio", 400);
     }
     // Juez inexistente: 404 explícito (el servicio lo lanzaba como 500).
-    const referee = await dataService.getReferee(body.refereeId);
+    const referee = await readOrError("reports.POST", "No se pudo cargar el juez", () =>
+      dataService.getReferee(body.refereeId as string),
+    );
+    if (referee instanceof Response) return referee;
     if (!referee) return jsonError("Juez no encontrado", 404);
     const scopeErr = await assertRefereeInUserZone(user, body.refereeId);
     if (scopeErr) return scopeErr;
@@ -88,7 +91,12 @@ export async function POST(request: Request) {
     if (typeof body.competitionId !== "string" || !body.competitionId) {
       return jsonError("Competición obligatoria", 400);
     }
-    const competition = await dataService.getCompetition(body.competitionId);
+    const competition = await readOrError(
+      "reports.POST.competicion",
+      "No se pudo cargar el campeonato",
+      () => dataService.getCompetition(body.competitionId as string),
+    );
+    if (competition instanceof Response) return competition;
     if (!competition) return jsonError("Competición no encontrada", 404);
     if (user.role === "delegado_zona" && user.zona && !zonesMatch(competition.zona, user.zona)) {
       return jsonError("Fuera de tu zona", 403);

@@ -35,10 +35,15 @@ async function loadRefereeCompetitionHistory(
   refereeId: string,
 ): Promise<RefereeCompetitionHistoryItem[]> {
   const supabase = db();
-  const { data: assignmentRows } = await supabase
+  const { data: assignmentRows, error: assignmentsError } = await supabase
     .from("roster_assignments")
     .select("competition_id, slot_key, flags")
     .eq("referee_id", refereeId);
+  // Una lista vacía por fallo de lectura dice «este juez no ha arbitrado
+  // nunca», y este historial es lo que se mira para decidir un ascenso. Las
+  // sanciones del mismo perfil ya lanzaban por esta razón; esto se había
+  // quedado atrás.
+  if (assignmentsError) throw new Error(`roster_assignments: ${assignmentsError.message}`);
 
   const assignments = (assignmentRows ?? []).map((row) => ({
     competitionId: String(row.competition_id),
@@ -48,10 +53,13 @@ async function loadRefereeCompetitionHistory(
   const ids = [...new Set(assignments.map((row) => row.competitionId))];
   if (ids.length === 0) return [];
 
-  const { data: competitionRows } = await supabase
+  const { data: competitionRows, error: competitionsError } = await supabase
     .from("competitions")
     .select("id, nombre, tipo, fecha, fecha_fin, sede, estado, aprobacion")
     .in("id", ids);
+  // Ídem: aquí las designaciones ya constan, así que perder los campeonatos
+  // deja un historial recortado, que engaña más que uno vacío.
+  if (competitionsError) throw new Error(`competitions: ${competitionsError.message}`);
 
   const competitions = (competitionRows ?? []).map((row) => ({
     id: String(row.id),
@@ -124,7 +132,11 @@ export const refereeService = {
 
   getReferee: async (id: string): Promise<Referee | undefined> => {
     const supabase = db();
-    const { data } = await supabase.from("referees").select("*").eq("id", id).single();
+    const { data, error } = await supabase.from("referees").select("*").eq("id", id).single();
+    // PGRST116 es «ninguna fila», que sí es una respuesta. Cualquier otro error
+    // se devolvía como «Juez no encontrado», y desde ahí se decide si se puede
+    // sancionar, designar o liquidar a esa persona.
+    if (error && error.code !== "PGRST116") throw new Error(`referees: ${error.message}`);
     return data ? mapReferee(data as Record<string, unknown>) : undefined;
   },
 
@@ -272,7 +284,12 @@ export const refereeService = {
     getReportsFn: (id: string) => Promise<import("@/lib/types").RefereeReport[]>,
   ): Promise<JudgeProfile | undefined> => {
     const supabase = db();
-    const { data } = await supabase.from("referees").select("*").eq("id", refereeId).single();
+    const { data, error } = await supabase
+      .from("referees")
+      .select("*")
+      .eq("id", refereeId)
+      .single();
+    if (error && error.code !== "PGRST116") throw new Error(`referees: ${error.message}`);
     const referee = data ? mapReferee(data as Record<string, unknown>) : undefined;
     if (!referee) return undefined;
     const [exams, reports, sanctions, competitionHistory] = await Promise.all([
