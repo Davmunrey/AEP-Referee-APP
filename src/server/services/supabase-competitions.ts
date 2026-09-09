@@ -128,7 +128,15 @@ export const competitionService = {
       compQuery = compQuery.eq("zona", userZone);
     }
 
-    const [{ data: comps }, { data: apprRows }] = await Promise.all([compQuery, apprQuery]);
+    const [{ data: comps, error: compsError }, { data: apprRows, error: apprError }] =
+      await Promise.all([compQuery, apprQuery]);
+    // No se lanza: estos contadores los pide el layout del panel, así que un
+    // corte de lectura tumbaría TODAS las pantallas a la vez. La barra lateral
+    // ya oculta el distintivo cuando el número es 0, así que degradar no dice
+    // ninguna mentira — pero callarse el motivo dejaba el atajo «tarima activa»
+    // y la bandeja de aprobaciones sin distintivo y sin forma de saber por qué.
+    if (compsError) console.error("[nav.competitions]", compsError.message);
+    if (apprError) console.error("[nav.approvals]", apprError.message);
     const apprCount = (apprRows ?? []).filter(
       (row) => visibleEnZona(String(row.zona ?? "")),
     ).length;
