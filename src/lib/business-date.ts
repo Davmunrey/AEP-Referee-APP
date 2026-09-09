@@ -9,9 +9,24 @@
  */
 export const BUSINESS_TZ = "Europe/Madrid";
 
+/** Día natural español (AAAA-MM-DD) del instante dado. */
+export function businessDayIso(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: BUSINESS_TZ }).format(now);
+}
+
 /** Hoy (AAAA-MM-DD) en la zona horaria de negocio. */
 export function todayIso(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: BUSINESS_TZ }).format(new Date());
+  return businessDayIso();
+}
+
+/** Año natural español del instante dado. */
+export function businessYear(now = new Date()): number {
+  return Number(businessDayIso(now).slice(0, 4));
+}
+
+/** Mes natural español (0-11) del instante dado. */
+export function businessMonthIndex(now = new Date()): number {
+  return Number(businessDayIso(now).slice(5, 7)) - 1;
 }
 
 /**
