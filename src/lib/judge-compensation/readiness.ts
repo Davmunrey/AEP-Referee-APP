@@ -19,9 +19,15 @@ export interface CompensationReadiness {
  * El botón se deshabilitaba sin decir nada: quien lo miraba no tenía forma de
  * saber que lo único que falta son los km. Mismo motivo que devuelve la ruta
  * de exportación con un 422.
+ *
+ * Decía «(o marca que comparte vehículo)», y eso no desbloquea nada: marcar
+ * esa casilla exime del COBRO del kilometraje, no de anotarlo, porque el
+ * alojamiento se decide por la distancia —lo dice el propio título de la
+ * casilla, dos columnas a la derecha—. Quien seguía el consejo marcaba la
+ * casilla y se encontraba el botón apagado con el mismo mensaje.
  */
 export const RECEIPT_INCOMPLETE_HINT =
-  "Faltan los km de desplazamiento de este juez: introdúcelos (o marca que comparte vehículo) para poder exportar su recibo.";
+  "Faltan los km de desplazamiento de este juez: introdúcelos para poder exportar su recibo. Marcar «comparte vehículo» exime del cobro del kilometraje, pero los km siguen haciendo falta para calcular el alojamiento.";
 
 /**
  * Etiqueta del total provisional.

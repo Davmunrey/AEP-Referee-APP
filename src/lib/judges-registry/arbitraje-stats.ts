@@ -63,11 +63,21 @@ export function aggregateArbitrajeYears(
   return agg;
 }
 
-/** Años naturales con al menos un arbitraje, ordenados desc (el más reciente primero). */
+/**
+ * Años naturales con al menos un arbitraje, ordenados desc (el más reciente
+ * primero).
+ *
+ * El corte se hace sobre la suma de los recuentos, no sobre el campo `total`
+ * guardado: es un dato derivado, y si discrepa de los recuentos, este filtro
+ * hacía desaparecer el año entero con sus arbitrajes intactos al lado.
+ */
 export function arbitrajeYears(byYear: RefereeArbitrajeStatsByYear): number[] {
   return Object.keys(byYear)
     .map((y) => Number(y))
-    .filter((y) => Number.isFinite(y) && (byYear[String(y)]?.total ?? 0) > 0)
+    .filter((y) => {
+      const stats = byYear[String(y)];
+      return Number.isFinite(y) && !!stats && arbitrajeStatsTotal(stats) > 0;
+    })
     .sort((a, b) => b - a);
 }
 

@@ -1,3 +1,4 @@
+import { calendarYearWarning, detectCalendarYear } from "./detect-year";
 import { deduceMacroZone, resolveZoneCode } from "@/lib/aep-zones";
 import type { EventType } from "@/lib/types";
 import type { ParsedCalendar, ParsedCalendarEntry } from "./types";
@@ -72,13 +73,6 @@ function parseCsvRows(text: string): string[][] {
   row.push(normalizeText(cell));
   if (row.some(Boolean)) rows.push(row);
   return rows;
-}
-
-function detectYear(text: string): number {
-  const header = text.match(/CALENDARIO\s+de\s+COMPETICIONES\s+(\d{4})/i);
-  if (header) return Number(header[1]);
-  const any = text.match(/\b(20\d{2})\b/);
-  return any ? Number(any[1]) : new Date().getFullYear();
 }
 
 function nivelToTipo(nivel: string): EventType | null {
@@ -211,8 +205,13 @@ function isCalendarDataRow(row: string[]): boolean {
 }
 
 export function parseAepCalendarCsv(text: string): ParsedCalendar {
-  const year = detectYear(text);
+  const detectado = detectCalendarYear(text);
+  const year = detectado.year;
   const warnings: string[] = [];
+  // Primero, porque condiciona todo lo que venga detrás: el año fecha la
+  // temporada entera.
+  const avisoAno = calendarYearWarning(detectado);
+  if (avisoAno) warnings.push(avisoAno);
   const entries: ParsedCalendarEntry[] = [];
 
   for (const row of parseCsvRows(text)) {

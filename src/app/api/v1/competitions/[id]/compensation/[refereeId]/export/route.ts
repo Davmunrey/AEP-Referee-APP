@@ -72,8 +72,11 @@ export async function POST(request: Request, context: RouteContext) {
   if (!claim) return jsonError("Claim no encontrado", 404);
 
   if (!claim.financialComplete) {
+    // Sin «(o marca comparte vehículo)»: esa casilla exime del COBRO del
+    // kilometraje, no de anotarlo, porque el alojamiento se decide por la
+    // distancia. Quien seguía ese consejo la marcaba y volvía a leer lo mismo.
     return jsonError(
-      "Completa los km de desplazamiento (o marca comparte vehículo) antes de exportar el recibo",
+      "Completa los km de desplazamiento de este juez antes de exportar el recibo. Marcar «comparte vehículo» exime del cobro del kilometraje, pero los km siguen haciendo falta para calcular el alojamiento.",
       422,
     );
   }

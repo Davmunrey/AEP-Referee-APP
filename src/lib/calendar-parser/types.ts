@@ -37,3 +37,11 @@ export interface ParsedCalendar {
   entries: ParsedCalendarEntry[];
   warnings: string[];
 }
+
+/** De dónde salió el año del calendario. */
+export type CalendarYearSource = "cabecera" | "suelto" | "reloj";
+
+export interface DetectedCalendarYear {
+  year: number;
+  source: CalendarYearSource;
+}
