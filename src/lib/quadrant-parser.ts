@@ -233,6 +233,14 @@ function assignSlot(
   return slot ?? null;
 }
 
+/** Plazas de competición de una sesión (los `slots` de todos sus roles). */
+function contarPuestos(roles: RosterSession["roles"]): number {
+  return roles.reduce((total, role) => {
+    const slots = Math.floor(Number(role?.slots));
+    return total + (Number.isFinite(slots) && slots > 0 ? slots : 0);
+  }, 0);
+}
+
 function roleOrderForTemplate(template: RosterSession[]): RoleKey[] {
   const hasJury = template.some((s) => s.roles.some((r) => r.key === "jurado"));
   return hasJury ? COMP_ROLE_ORDER_AEP1 : COMP_ROLE_ORDER_AEP2;
@@ -361,6 +369,24 @@ export function parseQuadrantAssignments(
     const effectiveCompOrder = shouldUseMixedOrder
       ? mixedRoleOrderForTemplate(template)
       : compOrder;
+
+    // El mapeo posición → rol es una tabla fija, calibrada con los cuadrantes
+    // oficiales. Si el documento trae más nombres por sesión que puestos de
+    // competición tiene la plantilla, la tabla se queda corta y a partir de ahí
+    // TODO se desplaza: el último juez acaba en el rol del siguiente, o cae
+    // fuera de la tabla y se va al bloque de pesaje. Y salía con confianza
+    // «alta» y «Lista para asignar», sin un solo aviso.
+    const puestosCompeticion = template
+      .filter((sesion) => sessions.some((s) => s.toLowerCase() === sesion.sesion.toLowerCase()))
+      .reduce((total, sesion) => total + contarPuestos(sesion.roles), 0);
+    if (puestosCompeticion > 0 && compHits.length !== puestosCompeticion) {
+      warnings.push(
+        `El documento trae ${compHits.length} nombre(s) de competición para ` +
+          `${sessions.join(", ")} y la plantilla tiene ${puestosCompeticion} puesto(s). ` +
+          "Revisa uno a uno el rol de cada juez antes de aplicar: el reparto por " +
+          "posición puede haberse desplazado.",
+      );
+    }
 
     compHits.forEach((hit, idx) => {
       const row = Math.floor(idx / colCount);
