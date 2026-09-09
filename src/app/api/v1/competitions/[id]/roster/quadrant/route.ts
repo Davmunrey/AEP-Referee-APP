@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
-import { jsonError } from "@/lib/api/route-utils";
+import { jsonError, readOrError } from "@/lib/api/route-utils";
 import { generateQuadrantHtml } from "@/lib/quadrant-html";
 import { dataService } from "@/server/services";
 
@@ -19,10 +19,15 @@ export async function GET(request: Request, context: RouteContext) {
   const scopeErr = await assertCompetitionInUserZone(user, id);
   if (scopeErr) return scopeErr;
 
-  const [roster, comp] = await Promise.all([
-    dataService.getRoster(id),
-    dataService.getCompetition(id),
-  ]);
+  // Estas dos lecturas lanzan cuando la base no responde, y estaban fuera de
+  // todo `try`: el fallo salía de Next como un 500 sin cuerpo, y quien había
+  // pulsado «imprimir cuadrante» veía «Server error (500)». Sus hermanas
+  // `roster/export` y `roster/history` ya usan el idioma común.
+  const leido = await readOrError("roster.quadrant", "No se pudo cargar el cuadrante", () =>
+    Promise.all([dataService.getRoster(id), dataService.getCompetition(id)]),
+  );
+  if (leido instanceof Response) return leido;
+  const [roster, comp] = leido;
 
   if (!roster || !comp) return jsonError("Competición no encontrada", 404);
 

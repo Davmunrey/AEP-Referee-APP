@@ -39,7 +39,8 @@ export async function POST(request: Request) {
   const nombre = String(body.nombre ?? "").trim();
   const rolLabel = String(body.rolLabel ?? "").trim();
   const role = body.role as UserRole;
-  const zona = body.zona ? normalizeZoneInput(String(body.zona)) : null;
+  const zonaPedida = body.zona ? String(body.zona).trim() : "";
+  const zona = zonaPedida ? normalizeZoneInput(zonaPedida) : null;
 
   if (!email || !password || !nombre || !rolLabel || !role) {
     return jsonError("Email, contraseña, nombre, rol y etiqueta son obligatorios", 400);
@@ -50,6 +51,13 @@ export async function POST(request: Request) {
   // Camino 1: crear la cuenta directamente con el rol y la contraseña elegidas.
   if (!canAssignRole(user, role)) {
     return jsonError(restrictedRoleMessage(role), 403);
+  }
+  // Una zona escrita pero no reconocida no es «falta la zona»: el PATCH de
+  // esta misma carpeta ya lo distingue con «Zona no válida», y aquí el
+  // administrador leía «Los delegados de zona requieren zona» con el campo
+  // relleno delante, sin nada que le dijera qué corregir.
+  if (zonaPedida && !zona) {
+    return jsonError("Zona no válida", 400);
   }
   if (role === "delegado_zona" && !zona) {
     return jsonError("Los delegados de zona requieren zona", 400);
