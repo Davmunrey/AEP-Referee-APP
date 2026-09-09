@@ -15,6 +15,7 @@ import {
 import type { Competition, RosterSession, SessionUser } from "@/lib/types";
 import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
 import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
+import { zoneVisibilityFilter } from "@/lib/zone-scope";
 import {
   cachedLoadAllAssignments,
   db,
@@ -103,6 +104,8 @@ export const competitionService = {
     const supabase = db();
     const userZone =
       user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
+    // Ver `zone-scope`: una zona ilegible no es «sin restricción».
+    const visibleEnZona = zoneVisibilityFilter(user);
 
     let compQuery = supabase.from("competitions").select("id, fecha, estado").order("fecha");
     // `competitions.zona` es FK canónica, pero `approval_proposals.zona` es
@@ -120,7 +123,7 @@ export const competitionService = {
 
     const [{ data: comps }, { data: apprRows }] = await Promise.all([compQuery, apprQuery]);
     const apprCount = (apprRows ?? []).filter(
-      (row) => !userZone || (resolveZoneCode(String(row.zona ?? "")) ?? row.zona) === userZone,
+      (row) => visibleEnZona(String(row.zona ?? "")),
     ).length;
     const navComps = (comps ?? []).map((r) => ({
       id: String(r.id),

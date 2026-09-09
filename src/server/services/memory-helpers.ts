@@ -1,3 +1,4 @@
+import { zoneVisibilityFilter } from "@/lib/zone-scope";
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { seasonLabel } from "@/lib/season";
 import { countOpenSlots } from "@/lib/roster-rules";
@@ -61,15 +62,11 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
   const userZone =
     user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
   const isZoneScoped = Boolean(userZone);
-  const referees = userZone
-    ? store.referees.filter((r) => resolveZoneCode(r.zona) === userZone)
-    : store.referees;
-  const competitions = userZone
-    ? store.competitions.filter((c) => resolveZoneCode(c.zona) === userZone)
-    : store.competitions;
-  const approvals = userZone
-    ? store.approvals.filter((a) => resolveZoneCode(a.zona) === userZone)
-    : store.approvals;
+  // Ver `zone-scope`: una zona ilegible no es «sin restricción».
+  const visibleEnZona = zoneVisibilityFilter(user);
+  const referees = store.referees.filter((r) => visibleEnZona(r.zona));
+  const competitions = store.competitions.filter((c) => visibleEnZona(c.zona));
+  const approvals = store.approvals.filter((a) => visibleEnZona(a.zona));
 
   const active = referees.filter((r) => r.estado === "Activo").length;
   const pending = approvals.filter((a) => a.status === "pendiente").length;
