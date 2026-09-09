@@ -233,12 +233,24 @@ function assignSlot(
   return slot ?? null;
 }
 
-/** Plazas de competición de una sesión (los `slots` de todos sus roles). */
+/**
+ * Plazas de competición de una sesión: huecos asignables, no la suma de
+ * `slots`.
+ *
+ * Este número se compara con cuántos nombres trae el PDF para avisar de que el
+ * reparto por posición puede haberse desplazado. Sumando `slots`, una sesión
+ * que repite un rol contaba una plaza que no existe —las dos filas comparten
+ * la clave `${sesion}_${rol}_${indice}`— y el aviso saltaba con el cuadrante
+ * bien leído: una alarma falsa en la pantalla que pide revisarlo todo a mano.
+ */
 function contarPuestos(roles: RosterSession["roles"]): number {
-  return roles.reduce((total, role) => {
+  const claves = new Set<string>();
+  for (const role of roles) {
     const slots = Math.floor(Number(role?.slots));
-    return total + (Number.isFinite(slots) && slots > 0 ? slots : 0);
-  }, 0);
+    if (!Number.isFinite(slots) || slots <= 0) continue;
+    for (let i = 0; i < slots; i++) claves.add(`${role.key}_${i}`);
+  }
+  return claves.size;
 }
 
 function roleOrderForTemplate(template: RosterSession[]): RoleKey[] {
