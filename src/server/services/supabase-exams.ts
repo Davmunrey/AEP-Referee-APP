@@ -59,7 +59,10 @@ export const examsService = {
     // `zona` es texto libre (códigos legados pre-013 como "MAD"/"Centro"): un
     // `.eq` crudo ocultaba esas solicitudes al delegado; se canonicaliza como
     // en el twin en memoria.
-    if (user?.role === "delegado_zona" && user.zona) {
+    // Fail-closed sin zona; con zona se conserva la comparación permisiva, que
+    // es la que reconoce los códigos legados de esta columna de texto libre.
+    if (user?.role === "delegado_zona") {
+      if (!user.zona) return [];
       const userZone = resolveZoneCode(user.zona) ?? user.zona;
       return list.filter((p) => (resolveZoneCode(p.zona) ?? p.zona) === userZone);
     }
@@ -242,7 +245,8 @@ export const examsService = {
       .order("fecha", { ascending: false })
       .order("id");
     if (refereeId) query = query.eq("referee_id", refereeId);
-    if (user && user.role === "delegado_zona" && user.zona) {
+    if (user && user.role === "delegado_zona") {
+      if (!user.zona) return [];
       // La zona del perfil se canonicaliza: `referees.zona` guarda el código
       // canónico desde la 013, así que un perfil con un alias no casaba con
       // ningún juez y el delegado veía «no hay exámenes».
@@ -365,7 +369,8 @@ export const examsService = {
     // tabla, así que un `.eq` crudo escondía al delegado los informes guardados
     // con códigos anteriores («MAD», «Centro»). Mismo criterio que en ascensos,
     // propuestas y el twin en memoria.
-    if (user?.role === "delegado_zona" && user.zona) {
+    if (user?.role === "delegado_zona") {
+      if (!user.zona) return [];
       return list.filter((r) => zonesMatch(r.zona, user.zona));
     }
     return list;
