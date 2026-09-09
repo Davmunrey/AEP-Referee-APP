@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { RefereeAssignedError } from "@/lib/competitions/service-types";
 
 type QueryResult = { data: unknown; error: { code?: string; message: string } | null; count?: number };
 type Call = { table: string; op: string };
@@ -80,23 +79,33 @@ describe("borrar un juez que sigue en una tarima", () => {
     expect(writes).toEqual([]);
   });
 
-  it("si le asignan un hueco entre la comprobación y el borrado, tampoco es un 404", async () => {
+  // Antes este caso lanzaba `RefereeAssignedError`, es decir, afirmaba que el
+  // juez «está designado en 1 campeonato». Pero al juez le apuntan DOS claves
+  // ajenas sin `ON DELETE` —`roster_assignments` y `promotion_requests`—, así
+  // que un 23503 en la carrera no dice cuál de las dos es, y elegir una manda
+  // a buscar donde no está. Sigue sin ser un 404, que es lo que este caso
+  // vigila, pero ahora el mensaje no afirma de más.
+  it("si algo le apunta entre la comprobación y el borrado, tampoco es un 404", async () => {
     respond = ({ table, op }) => {
       if (table === "judge_compensation_claims") return { data: null, error: null, count: 0 };
       if (table === "roster_assignments") return { data: [], error: null };
+      if (table === "promotion_requests") return { data: null, error: null, count: 0 };
       if (table === "referees" && op === "delete") {
         return { data: null, error: { code: "23503", message: "violates foreign key constraint" } };
       }
       return { data: [], error: null };
     };
 
-    await expect(refereeService.deleteReferee("j001")).rejects.toBeInstanceOf(RefereeAssignedError);
+    await expect(refereeService.deleteReferee("j001")).rejects.toThrow(
+      /una designación o una solicitud de ascenso/,
+    );
   });
 
   it("sin designaciones ni liquidaciones sí se borra", async () => {
     respond = ({ table }) => {
       if (table === "judge_compensation_claims") return { data: null, error: null, count: 0 };
       if (table === "roster_assignments") return { data: [], error: null };
+      if (table === "promotion_requests") return { data: null, error: null, count: 0 };
       return { data: [{ id: "j001" }], error: null };
     };
 
