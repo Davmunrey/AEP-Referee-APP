@@ -1,7 +1,7 @@
 import { canReviewPromotions } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { PromotionReviewError } from "@/lib/competitions/service-types";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -27,8 +27,14 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   // El servicio devuelve undefined tanto si la solicitud no existe como si ya
-  // fue revisada: distingue 404 de 409 antes de escribir.
-  const existing = (await dataService.getPromotions(user)).find((p) => p.id === id);
+  // fue revisada: distingue 404 de 409 antes de escribir. Y por eso va antes
+  // del `try`, así que sin cubrirla un fallo de lectura salía de Next como un
+  // 500 sin cuerpo JSON.
+  const bandeja = await readOrError("promotions.review.bandeja", "No se pudo cargar la solicitud", () =>
+    dataService.getPromotions(user),
+  );
+  if (bandeja instanceof Response) return bandeja;
+  const existing = bandeja.find((p) => p.id === id);
   if (!existing) return jsonError("Solicitud no encontrada", 404);
   if (existing.status !== "pendiente") {
     return jsonError("La solicitud ya fue revisada", 409);

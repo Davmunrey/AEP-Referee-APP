@@ -1,6 +1,6 @@
 import { canEditRoster } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, readOrError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 export async function DELETE(
@@ -14,7 +14,10 @@ export async function DELETE(
   const { id, refereeId } = await params;
 
   // Delegados de zona solo pueden gestionar disponibilidad en su propia zona
-  const comp = await dataService.getCompetition(id);
+  const comp = await readOrError("availability.DELETE.comp", "No se pudo cargar el campeonato", () =>
+    dataService.getCompetition(id),
+  );
+  if (comp instanceof Response) return comp;
   if (!comp) return jsonError("Competición no encontrada", 404);
   if (!canEditRoster(user, comp.zona)) return jsonError("Sin permiso en esta zona", 403);
 

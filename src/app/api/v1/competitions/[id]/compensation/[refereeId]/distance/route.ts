@@ -1,6 +1,6 @@
 import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -25,6 +25,8 @@ export async function POST(_request: Request, context: RouteContext) {
     if (/dirección|OpenStreetMap|coordenadas|ruta|Nominatim|OSRM/i.test(msg)) {
       return jsonError(msg, 422);
     }
-    return jsonServerError("compensation.distance", err, "No se pudo calcular la ruta");
+    // Ídem: el cálculo guarda la distancia en la liquidación, así que también
+    // puede volver con uno de esos tres motivos.
+    return jsonRouteError("compensation.distance", err, "No se pudo calcular la ruta");
   }
 }

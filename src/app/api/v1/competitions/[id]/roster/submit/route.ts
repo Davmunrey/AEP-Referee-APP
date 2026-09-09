@@ -1,5 +1,5 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { guardRosterWrite } from "@/lib/api/roster-mutation-guard";
+import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { computeRosterCoverage } from "@/lib/roster-coverage";
 import { dataService } from "@/server/services";
@@ -13,10 +13,8 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!isSessionUser(user)) return user;
 
   const { id } = await context.params;
-  const comp = await dataService.getCompetition(id);
-  const blocked = guardRosterWrite(comp, user);
-  if (blocked) return blocked;
-  if (!comp) return jsonError("Competición no encontrada", 404);
+  const comp = await loadCompetitionForRosterWrite(id, user, "roster.submit");
+  if (comp instanceof Response) return comp;
   const roster = await dataService.getRoster(id);
   if (!roster || roster.template.length === 0) {
     return jsonError("Define una plantilla antes de enviar a aprobación", 400);

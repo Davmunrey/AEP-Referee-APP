@@ -63,7 +63,12 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const claim = await dataService.getCompensationClaimForExport(id, refereeId);
+  const claim = await readOrError(
+    "compensation.export.claim",
+    "No se pudo cargar la liquidación del juez",
+    () => dataService.getCompensationClaimForExport(id, refereeId),
+  );
+  if (claim instanceof Response) return claim;
   if (!claim) return jsonError("Claim no encontrado", 404);
 
   if (!claim.financialComplete) {
@@ -94,16 +99,25 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const pdf = await renderCompensationReceiptPdf({
-    refereeName: referee.nombre,
-    amountEur: claim.totalAmount,
-    competitionName: competition.nombre,
-    sede: competition.sede,
-    fecha: competition.fecha,
-    fechaFin: competition.fechaFin,
-    iban,
-    organizer,
-  });
+  // Dibujar el PDF puede fallar por su cuenta (una fuente que no carga, un
+  // texto que no cabe). Sin `catch`, eso salía de Next como un 500 sin cuerpo
+  // JSON, y el cliente enseñaba un error genérico donde esperaba un recibo.
+  const pdf = await readOrError(
+    "compensation.export.pdf",
+    "No se pudo generar el recibo en PDF. Vuelve a intentarlo.",
+    () =>
+      renderCompensationReceiptPdf({
+        refereeName: referee.nombre,
+        amountEur: claim.totalAmount,
+        competitionName: competition.nombre,
+        sede: competition.sede,
+        fecha: competition.fecha,
+        fechaFin: competition.fechaFin,
+        iban,
+        organizer,
+      }),
+  );
+  if (pdf instanceof Response) return pdf;
 
   const filename = compensationReceiptFilename(referee.nombre, competition.nombre);
   return new Response(new Uint8Array(pdf), {
