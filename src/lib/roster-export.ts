@@ -14,16 +14,23 @@ interface ExportRef {
 }
 
 /**
- * Formatea el acta de plantilla de jueces en texto, replicando la estructura
- * oficial AEP: agrupado por día, cada sesión con sus categorías, horarios y
- * los bloques de competición y de pesaje.
+ * Lo que se imprime cuando el puesto SÍ está asignado pero el juez no aparece
+ * en el censo: alguien lo borró después de designarlo.
+ *
+ * No es «VACÍO». En el acta oficial esa palabra dice que el puesto está por
+ * cubrir, y aquí lo que pasa es lo contrario: está cubierto por alguien que ya
+ * no consta.
  */
+export const EXPORT_REF_NOT_FOUND = "— JUEZ NO ENCONTRADO EN EL CENSO";
+export const EXPORT_SLOT_EMPTY = "— VACÍO";
+
 function formatRefName(
   ref: ExportRef | undefined,
   slotKey: string,
   flags: FlagsMap,
+  assigned = false,
 ): string {
-  if (!ref) return "— VACÍO";
+  if (!ref) return assigned ? EXPORT_REF_NOT_FOUND : EXPORT_SLOT_EMPTY;
   const suffix: string[] = [];
   const f = flags[slotKey];
   if (f?.compartido) suffix.push("*");
@@ -32,6 +39,11 @@ function formatRefName(
   return `${ref.nombre} (${ref.nivel})${flagStr}`;
 }
 
+/**
+ * Formatea el acta de plantilla de jueces en texto, replicando la estructura
+ * oficial AEP: agrupado por día, cada sesión con sus categorías, horarios y
+ * los bloques de competición y de pesaje.
+ */
 export function formatRosterExport(
   comp: ExportComp,
   template: RosterSession[],
@@ -59,7 +71,7 @@ export function formatRosterExport(
         const slotKey = `${sesion}_${role.key}_${i}`;
         const ref = refId ? refLookup(refId) : undefined;
         const label = role.slots > 1 ? `${role.rol} ${i + 1}` : role.rol;
-        lines.push(`   - ${label}: ${formatRefName(ref, slotKey, flags)}`);
+        lines.push(`   - ${label}: ${formatRefName(ref, slotKey, flags, Boolean(refId))}`);
       }
     }
   };

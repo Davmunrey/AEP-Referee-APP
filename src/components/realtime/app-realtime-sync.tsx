@@ -55,6 +55,11 @@ export function AppRealtimeSync() {
         .maybeSingle();
       if (error || !data) return;
       const next = Number(data.version);
+      // Un valor ilegible da NaN, y `NaN !== NaN` es SIEMPRE verdadero: la
+      // versión nunca coincidiría consigo misma y cada tick del poll dispararía
+      // un `router.refresh()`. Serían todas las pantallas de todos los abiertos
+      // recargándose cada 30 segundos, sin fin y sin que nada lo explique.
+      if (!Number.isFinite(next)) return;
       if (versionRef.current === null) {
         versionRef.current = next;
         return;

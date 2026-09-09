@@ -1085,9 +1085,13 @@ export const rosterService = {
     const supabase = db();
     // Solo los jueces asignados a la tarima, no el censo completo.
     const assignedIds = [...new Set(Object.values(roster.assignments).filter(Boolean))];
-    const { data: referees } = assignedIds.length
+    const { data: referees, error: refereesError } = assignedIds.length
       ? await supabase.from("referees").select("id, nombre, nivel").in("id", assignedIds)
-      : { data: [] };
+      : { data: [], error: null };
+    // Sin esto, un fallo de lectura dejaba el mapa vacío y el acta salía con
+    // TODOS los puestos como «VACÍO»: el documento oficial de la designación
+    // afirmando que no hay nadie designado. La ruta ya tiene `catch`.
+    if (refereesError) throw new Error(`referees: ${refereesError.message}`);
     const refMap = new Map((referees ?? []).map((r) => [r.id, r]));
     return formatRosterExport(
       comp,
