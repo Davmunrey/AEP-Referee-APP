@@ -144,7 +144,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
   }
 
-  const updated = await dataService.updateReferee(id, patch);
+  // El juez se cargó al principio de la ruta: si esto no devuelve nada, lo que
+  // ha pasado es que no se pudo guardar, no que haya desaparecido.
+  const updated = await readOrError("referees.PATCH.guardar", "No se pudo guardar la ficha del juez", () =>
+    dataService.updateReferee(id, patch),
+  );
+  if (updated instanceof Response) return updated;
   if (!updated) return jsonError("Juez no encontrado", 404);
   return jsonOk(updated);
 }
