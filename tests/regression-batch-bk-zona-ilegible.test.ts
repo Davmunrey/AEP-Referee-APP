@@ -3,6 +3,9 @@ import { zoneScopeOf, zoneVisibilityFilter } from "@/lib/zone-scope";
 import { canManageSanctions } from "@/lib/permissions";
 import { canEditRoster } from "@/lib/auth/session";
 import type { SessionUser } from "@/lib/types";
+import { yearFromIso } from "@/lib/season";
+import { yearFromIso as yearFromMemory } from "@/server/services/memory-helpers";
+import { yearFromIso as yearFromSupabase } from "@/server/services/supabase-helpers";
 
 const usuario = (role: SessionUser["role"], zona?: string): SessionUser =>
   ({ id: "u1", nombre: "D", role, zona }) as SessionUser;
@@ -90,5 +93,36 @@ describe("sancionar con la zona ilegible", () => {
     // `!!` y la otra sin él.
     expect(canEditRoster(usuario("delegado_zona", "Zona Rara"), "Otra Cosa")).toBe(false);
     expect(canEditRoster(usuario("delegado_zona", "CENTRO"), "CENTRO")).toBe(true);
+  });
+});
+
+// ── El año de una fecha ilegible ────────────────────────────────────────────
+describe("una fecha sin leer no puede inventarse un año", () => {
+  it("la cadena vacía no es el año 0", () => {
+    // `Number("")` es 0 y `Number.isFinite(0)` es true, así que un campeonato
+    // sin fecha aparecía como «año 0» en el selector de la analítica, con su
+    // propio grupo de campeonatos debajo.
+    expect(yearFromIso("")).toBeNull();
+    expect(yearFromIso(null)).toBeNull();
+    expect(yearFromIso(undefined)).toBeNull();
+    expect(yearFromIso("0000-01-01")).toBeNull();
+  });
+
+  it("ni «  20» es el año 20", () => {
+    expect(yearFromIso("  20")).toBeNull();
+    expect(yearFromIso("26-05-01")).toBeNull();
+    expect(yearFromIso("no-es-fecha")).toBeNull();
+  });
+
+  it("y un año de verdad se lee igual que antes", () => {
+    expect(yearFromIso("2026-05-01")).toBe(2026);
+    expect(yearFromIso("2026")).toBe(2026);
+    expect(yearFromIso("2026-05-01T10:00:00.000Z")).toBe(2026);
+  });
+
+  it("las dos copias del servicio apuntan a la misma función", () => {
+    // Estaban duplicadas byte a byte en memory-helpers y supabase-helpers.
+    expect(yearFromMemory).toBe(yearFromIso);
+    expect(yearFromSupabase).toBe(yearFromIso);
   });
 });

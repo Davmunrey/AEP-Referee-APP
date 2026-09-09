@@ -30,3 +30,20 @@ export function operationalQuarterLabel(now = new Date()): string {
 export function formatMonthYear(date = new Date(), locale = "es-ES"): string {
   return date.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
+
+/**
+ * Año de una fecha ISO, o `null` si no se puede leer.
+ *
+ * Estaba duplicada, byte a byte, en `memory-helpers` y `supabase-helpers`, y
+ * las dos hacían `Number(String(date).slice(0, 4))`. Eso deja pasar lo que
+ * `Number` acepta de más: la cadena vacía es 0, así que un campeonato sin
+ * fecha aparecía como «año 0» en el selector de la analítica, con su propio
+ * grupo de campeonatos; y «  20» daba el año 20. Se exigen cuatro dígitos y
+ * un año que pueda ser de verdad.
+ */
+export function yearFromIso(date: string | null | undefined): number | null {
+  const match = /^(\d{4})(?:-|$)/.exec(String(date ?? "").trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  return year >= 1900 && year <= 2200 ? year : null;
+}

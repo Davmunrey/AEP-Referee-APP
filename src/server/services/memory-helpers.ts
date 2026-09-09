@@ -39,10 +39,8 @@ export function syncCompetitionCoverage(competitionId: string) {
   comp.estado = deriveCompetitionEstado(coverage);
 }
 
-export function yearFromIso(date: string): number | null {
-  const year = Number(String(date).slice(0, 4));
-  return Number.isFinite(year) ? year : null;
-}
+/** Reexportado: la fuente está en `@/lib/season`. */
+export { yearFromIso } from "@/lib/season";
 
 export function buildMemoryCompetitionHistory(refereeId: string): RefereeCompetitionHistoryItem[] {
   const store = getStore();
