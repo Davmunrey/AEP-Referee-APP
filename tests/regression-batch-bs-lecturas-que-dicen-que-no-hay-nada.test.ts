@@ -112,9 +112,10 @@ describe("revisar una solicitud de ascenso", () => {
         subjectType: "juez",
         refereeId: "ref-1",
         zona: "CENTRO",
-        tipo: "seguimiento",
-        fecha: "2026-05-01",
-        autorNombre: "Autor",
+        titulo: "Seguimiento",
+        tipo: "Juez",
+        contenido: "Texto del informe",
+        autor: "Autor",
       } as Parameters<typeof examsService.createReport>[0]),
     ).rejects.toThrow(/referees: permission denied/);
   });
