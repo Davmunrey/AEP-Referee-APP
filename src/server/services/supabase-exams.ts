@@ -29,6 +29,16 @@ function validateExamLevel(tipo: ExamType, nivelObjetivo: RefereeLevel, nivelAct
   }
 }
 
+/**
+ * `.single()` devuelve PGRST116 cuando no hay ninguna fila, y eso sí es una
+ * respuesta. Cualquier otro error significa que no se ha podido leer, y hasta
+ * ahora los dos acababan igual: «Juez no encontrado», «Solicitud no
+ * encontrada», o una solicitud que parecía revisada por otro.
+ */
+function esFalloDeLectura(error: { code?: string } | null): boolean {
+  return error != null && error.code !== "PGRST116";
+}
+
 export const examsService = {
   getPromotions: async (user?: SessionUser): Promise<PromotionRequest[]> => {
     const supabase = db();
@@ -53,7 +63,19 @@ export const examsService = {
 
   reviewPromotion: async (id: string, approve: boolean, reviewer: string, comment?: string) => {
     const supabase = db();
-    const { data: req } = await supabase.from("promotion_requests").select("*").eq("id", id).single();
+    const { data: req, error: reqError } = await supabase
+      .from("promotion_requests")
+      .select("*")
+      .eq("id", id)
+      .single();
+    // `undefined` lo lee la ruta como «ya la revisó otro»: un fallo de lectura
+    // acababa diciéndole al revisor que llegaba tarde.
+    if (esFalloDeLectura(reqError)) {
+      console.error("[exams.reviewPromotion.leer]", id, reqError!.message);
+      throw new PromotionReviewError(
+        "No se pudo leer la solicitud. No se ha revisado nada; vuelve a intentarlo.",
+      );
+    }
     if (!req || req.status !== "pendiente") return undefined;
 
     // El nivel actual se lee ANTES de marcar la solicitud: si no se puede leer,
@@ -158,11 +180,12 @@ export const examsService = {
     motivo?: string;
   }): Promise<PromotionRequest> => {
     const supabase = db();
-    const { data: referee } = await supabase
+    const { data: referee, error: refereeError } = await supabase
       .from("referees")
       .select("nombre, nivel, eventos")
       .eq("id", input.refereeId)
       .single();
+    if (esFalloDeLectura(refereeError)) throw new Error(`referees: ${refereeError!.message}`);
     if (!referee) throw new Error("Juez no encontrado");
     // `indexOf` sobre una copia local daba -1 para un nivel ilegible, y con
     // -1 cualquier destino contaba como ascenso.
@@ -235,7 +258,12 @@ export const examsService = {
     notas?: string;
   }): Promise<RefereeExam> => {
     const supabase = db();
-    const { data: ref } = await supabase.from("referees").select("nombre, nivel").eq("id", input.refereeId).single();
+    const { data: ref, error: refError } = await supabase
+      .from("referees")
+      .select("nombre, nivel")
+      .eq("id", input.refereeId)
+      .single();
+    if (esFalloDeLectura(refError)) throw new Error(`referees: ${refError!.message}`);
     if (!ref) throw new Error("Juez no encontrado");
     validateExamLevel(input.tipo, input.nivelObjetivo, ref.nivel as RefereeLevel);
     const row = {
@@ -283,7 +311,12 @@ export const examsService = {
 
   getReport: async (id: string): Promise<RefereeReport | undefined> => {
     const supabase = db();
-    const { data } = await supabase.from("referee_reports").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await supabase
+      .from("referee_reports")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (esFalloDeLectura(error)) throw new Error(`referee_reports: ${error!.message}`);
     return data ? mapReport(data as Record<string, unknown>) : undefined;
   },
 
@@ -330,13 +363,23 @@ export const examsService = {
     let zona = input.zona;
     if (input.subjectType === "juez") {
       if (!input.refereeId) throw new Error("Juez obligatorio");
-      const { data: ref } = await supabase.from("referees").select("nombre, zona").eq("id", input.refereeId).single();
+      const { data: ref, error: refError } = await supabase
+        .from("referees")
+        .select("nombre, zona")
+        .eq("id", input.refereeId)
+        .single();
+      if (esFalloDeLectura(refError)) throw new Error(`referees: ${refError!.message}`);
       if (!ref) throw new Error("Juez no encontrado");
       refereeName = String(ref.nombre);
       zona = String(ref.zona ?? zona);
     } else {
       if (!input.competitionId) throw new Error("Competición obligatoria");
-      const { data: comp } = await supabase.from("competitions").select("nombre, zona").eq("id", input.competitionId).single();
+      const { data: comp, error: compError } = await supabase
+        .from("competitions")
+        .select("nombre, zona")
+        .eq("id", input.competitionId)
+        .single();
+      if (esFalloDeLectura(compError)) throw new Error(`competitions: ${compError!.message}`);
       if (!comp) throw new Error("Competición no encontrada");
       competitionName = String(comp.nombre);
       zona = String(comp.zona ?? zona);

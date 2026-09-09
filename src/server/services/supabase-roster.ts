@@ -26,6 +26,7 @@ import {
   ApprovalReviewError,
   RosterPaidClaimError,
   RosterSlotConflictError,
+  UserFacingServiceError,
 } from "@/lib/competitions/service-types";
 import {
   paidClaimClearAllMessage,
@@ -686,12 +687,22 @@ export const rosterService = {
     const competitionIdColumn = hasCompetitionColumns ? "competition_id" : "event_id";
     const competitionNameColumn = hasCompetitionColumns ? "competition_name" : "event_name";
     const submitterId = hasSubmitterColumns ? { submitted_by_id: userId ?? null } : {};
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("approval_proposals")
       .select("*")
       .eq(competitionIdColumn, competitionId)
       .eq("status", "pendiente")
       .maybeSingle();
+    // Esta lectura decide entre actualizar la propuesta pendiente o crear una
+    // nueva. Si falla y se lee como «no hay ninguna», se inserta una SEGUNDA
+    // propuesta pendiente del mismo campeonato: el revisor decide sobre una y
+    // la otra se queda ahí, viva.
+    if (existingError) {
+      throw new UserFacingServiceError(
+        "No se pudo comprobar si ya había una propuesta pendiente. No se ha enviado nada; vuelve a intentarlo.",
+        409,
+      );
+    }
 
     const now = new Date().toISOString();
     if (existing) {
@@ -752,8 +763,13 @@ export const rosterService = {
     // hacía que la ruta contestara «No se pudo enviar la propuesta»: quien
     // enviaba la tarima creía que no había pasado nada.
     if (readError && (readError as { code?: string }).code !== "PGRST116") {
-      throw new Error(
-        `La propuesta se envió, pero no se pudo releer (${readError.message}). Recarga la pantalla.`,
+      // El motivo escrito para quien envía la tarima tiene que llegarle: como
+      // `Error` a secas salía como un 500 genérico y este texto moría en el
+      // log. Y el mensaje de Postgres se queda ahí, no viaja al navegador.
+      console.error("[roster.submitProposal.releer]", competitionId, readError.message);
+      throw new UserFacingServiceError(
+        "La propuesta se envió, pero no se pudo releer. Recarga la pantalla.",
+        409,
       );
     }
     return data ? mapApproval(data as Record<string, unknown>) : undefined;
@@ -837,11 +853,20 @@ export const rosterService = {
     comment?: string,
   ): Promise<ApprovalProposal | undefined> => {
     const supabase = db();
-    const { data: proposal } = await supabase
+    const { data: proposal, error: proposalError } = await supabase
       .from("approval_proposals")
       .select("*")
       .eq("id", id)
       .single();
+    // `undefined` aquí lo lee la ruta como «ya la revisó otro»: un fallo de
+    // lectura acababa diciéndole al revisor que llegaba tarde.
+    if (proposalError && proposalError.code !== "PGRST116") {
+      console.error("[roster.reviewApproval.leer]", id, proposalError.message);
+      throw new UserFacingServiceError(
+        "No se pudo leer la propuesta. No se ha revisado nada; vuelve a intentarlo.",
+        409,
+      );
+    }
     if (!proposal || proposal.status !== "pendiente") return undefined;
 
     const proposalCompetitionId = String(proposal.competition_id ?? proposal.event_id);
@@ -994,7 +1019,21 @@ export const rosterService = {
       action: approve ? "Propuesta aprobada" : "Propuesta rechazada",
       detail: comment?.trim() || undefined,
     });
-    const { data } = await supabase.from("approval_proposals").select("*").eq("id", id).single();
+    const { data, error: releerError } = await supabase
+      .from("approval_proposals")
+      .select("*")
+      .eq("id", id)
+      .single();
+    // La revisión YA está hecha y la tarima reescrita. Devolver `undefined`
+    // hacía que la ruta contestara «la propuesta ya fue revisada por otro
+    // usuario», que es exactamente lo que no ha pasado.
+    if (releerError && releerError.code !== "PGRST116") {
+      console.error("[roster.reviewApproval.releer]", id, releerError.message);
+      throw new UserFacingServiceError(
+        "La revisión se guardó, pero no se pudo releer. Recarga la pantalla.",
+        409,
+      );
+    }
     return data ? mapApproval(data as Record<string, unknown>) : undefined;
   },
 
@@ -1005,7 +1044,7 @@ export const rosterService = {
     ))
       ? "competition_id"
       : "event_id";
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("roster_history")
       .select("*")
       .eq(competitionColumn, competitionId)
@@ -1013,6 +1052,10 @@ export const rosterService = {
       // Cota superior: el historial crece sin límite y la UI solo muestra los
       // movimientos recientes; sin esto la respuesta crecía sin tope.
       .limit(200);
+    // Un historial vacío por fallo de lectura dice «aquí no ha pasado nada», y
+    // es justo el sitio donde se mira quién tocó qué. La ruta ya tiene `catch`
+    // y la pantalla, su estado de error con reintento.
+    if (error) throw new Error(`roster_history: ${error.message}`);
     return (data ?? []).map((r) => mapHistory(r as Record<string, unknown>));
   },
 

@@ -1,7 +1,7 @@
 import { zonesMatch } from "@/lib/aep-zones";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, readOrError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { RefereeLevel } from "@/lib/types";
 
@@ -29,7 +29,10 @@ export async function POST(request: Request) {
   }
 
   // La zona se deriva SIEMPRE del juez, nunca del body (anti-IDOR).
-  const referee = await dataService.getReferee(refereeId);
+  const referee = await readOrError("promotions.POST", "No se pudo cargar el juez", () =>
+    dataService.getReferee(refereeId),
+  );
+  if (referee instanceof Response) return referee;
   if (!referee) return jsonError("Juez no encontrado", 404);
   const zona = referee.zona;
 
