@@ -783,7 +783,15 @@ export const rosterService = {
     const comp = await getCompetitionFn(competitionId);
     if (comp?.estado === "Borrador") {
       const supabase = db();
-      await supabase.from("competitions").update({ estado: "Incompleto" }).eq("id", competitionId);
+      const { error } = await supabase
+        .from("competitions")
+        .update({ estado: "Incompleto" })
+        .eq("id", competitionId);
+      // No se lanza —guardar el borrador es dejar constancia, y la tarima ya
+      // está guardada por otro camino—, pero tampoco se calla: el listado
+      // seguiría diciendo «Borrador» de una tarima con gente dentro y no había
+      // forma de saber por qué. Mismo criterio que syncCompetitionCoverage.
+      if (error) console.error("[roster.saveDraft.estado]", competitionId, error.message);
     }
     await pushHistory({
       competitionId,

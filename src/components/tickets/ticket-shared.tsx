@@ -162,6 +162,37 @@ export function AttachmentImage({
   );
 }
 
+/**
+ * Un adjunto que existe pero no se ha podido firmar ahora mismo (el
+ * almacenamiento no respondió, la política del bucket, la clave caducada).
+ *
+ * Antes las pantallas filtraban los adjuntos sin URL, así que la captura de un
+ * fallo desaparecía del ticket sin dejar rastro: quien lo abrió veía menos
+ * adjuntos de los que subió, y nada explicaba por qué. Ahora se enseña el
+ * nombre y se dice que no está disponible en este momento.
+ */
+export function AttachmentUnavailable({
+  attachment,
+  className,
+}: {
+  attachment: SupportTicketAttachment;
+  className?: string;
+}) {
+  return (
+    <div
+      role="note"
+      title={`${attachment.fileName}: no disponible ahora mismo`}
+      className={cn(
+        "flex flex-col justify-center gap-0.5 rounded-xl border border-dashed border-border-muted bg-surface/40 p-2 text-[11px] text-muted-foreground",
+        className,
+      )}
+    >
+      <span className="truncate font-medium text-foreground-secondary">{attachment.fileName}</span>
+      <span>Adjunto no disponible ahora mismo. Recarga más tarde.</span>
+    </div>
+  );
+}
+
 /** Miniatura cuadrada (10×10) de un adjunto. */
 export function AttachmentThumb({
   attachment,
