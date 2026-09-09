@@ -7,7 +7,9 @@ import { getPresetForEventType } from "@/lib/roster-template";
 import type { JudgesRegistryImportApplyResult, Referee } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  chunkList,
   fetchAllRows,
+  IN_FILTER_CHUNK,
   isMissingTableError,
   loadAllAssignments,
   POSTGREST_PAGE_SIZE,
@@ -126,8 +128,23 @@ export async function importJudgesRegistryToSupabase(
         (id) => !assignedIds.has(id) && !claimedIds.has(id) && !sanctioned.withHistory.has(id),
       );
     if (deletable.length) {
-      const { error } = await supabase.from("referees").delete().in("id", deletable);
-      if (error) warnings.push(`No se pudieron eliminar jueces previos: ${error.message}`);
+      // Troceado, como las lecturas: el filtro `in` viaja en la URL, y el censo
+      // entero de golpe la pasa de largo. La petición volvía con un error, el
+      // borrado no se hacía en absoluto y solo quedaba un aviso: el censo se
+      // reemplazaba a medias y nadie lo veía.
+      let fallidos = 0;
+      for (const trozo of chunkList(deletable, IN_FILTER_CHUNK)) {
+        const { error } = await supabase.from("referees").delete().in("id", trozo);
+        if (error) {
+          fallidos += trozo.length;
+          console.error("[import-judges.borrar]", trozo.length, error.message);
+        }
+      }
+      if (fallidos > 0) {
+        warnings.push(
+          `No se pudieron eliminar ${fallidos} de los ${deletable.length} jueces previos: siguen en el censo. Vuelve a ejecutar el reemplazo o bórralos a mano.`,
+        );
+      }
     }
     if (assignedIds.size) {
       warnings.push(

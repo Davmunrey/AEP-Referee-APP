@@ -14,7 +14,17 @@ import {
   TicketsNotMigratedError,
   type UpdateTicketStatusInput,
 } from "@/lib/tickets/service-types";
-import { db, warnMissingMigration } from "./supabase-helpers";
+import {
+  chunkList,
+  db,
+  fetchAllPagesOf,
+  IN_FILTER_CHUNK,
+  POSTGREST_PAGE_SIZE,
+  warnMissingMigration,
+} from "./supabase-helpers";
+
+/** El corte que aplica PostgREST por su cuenta a cualquier lectura. */
+const TICKETS_PAGE_SIZE = POSTGREST_PAGE_SIZE;
 
 const BUCKET = "ticket-attachments";
 const SIGNED_URL_TTL = 3600;
@@ -162,43 +172,75 @@ function canView(user: CreateTicketInput["user"], createdById: string | null): b
 export const ticketService = {
   getTickets: async ({ user, status }: GetTicketsInput): Promise<SupportTicket[]> => {
     const supabase = db();
-    let query = supabase
-      .from("support_tickets")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    if (!canAdminTickets(user)) query = query.eq("created_by_id", user.id);
-    if (status) query = query.eq("status", status);
-    const { data, error } = await query;
-    if (error) {
-      if (isMissingTable(error)) return []; // feature no migrada
-      throw error;
+    const baseQuery = () => {
+      let query = supabase
+        .from("support_tickets")
+        .select("*")
+        .order("updated_at", { ascending: false });
+      if (!canAdminTickets(user)) query = query.eq("created_by_id", user.id);
+      if (status) query = query.eq("status", status);
+      return query;
+    };
+    // La bandeja solo crece, y para un admin son TODOS los tickets. Sin
+    // paginar, PostgREST cortaba en 1000 y los más antiguos desaparecían de la
+    // lista sin decir nada.
+    // Paginado a mano, y no con `fetchAllPagesOf`, porque aquí hay que seguir
+    // distinguiendo «la tabla no existe» (migración sin aplicar → bandeja
+    // vacía) de cualquier otro fallo, y para eso hace falta el error tal cual.
+    const tickets: Record<string, unknown>[] = [];
+    for (let from = 0; ; from += TICKETS_PAGE_SIZE) {
+      const { data, error } = await baseQuery().range(from, from + TICKETS_PAGE_SIZE - 1);
+      if (error) {
+        if (isMissingTable(error)) return []; // feature no migrada
+        throw error;
+      }
+      const page = data ?? [];
+      tickets.push(...page);
+      if (page.length < TICKETS_PAGE_SIZE) break;
     }
-    const tickets = data ?? [];
     if (tickets.length === 0) return [];
     const ids = tickets.map((t) => String(t.id));
 
-    // commentCount agregado en una sola consulta (evita N+1).
-    const { data: commentRows, error: commentsError } = await supabase
-      .from("support_ticket_comments")
-      .select("ticket_id")
-      .in("ticket_id", ids);
-    // El contador se pinta siempre, así que un fallo de lectura ponía un «0»
-    // en cada ticket: «nadie te ha contestado» dicho por un corte de red.
-    if (commentsError) throw commentsError;
+    // commentCount agregado, sin una consulta por ticket. Troceado y paginado:
+    // el filtro `in` viaja en la URL, y mil identificadores de golpe la pasan
+    // de largo — la página entera se caía con la bandeja llena.
     const counts = new Map<string, number>();
-    for (const row of commentRows ?? []) {
-      const key = String(row.ticket_id);
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+    for (const trozo of chunkList(ids, IN_FILTER_CHUNK)) {
+      // El contador se pinta siempre, así que un fallo de lectura ponía un «0»
+      // en cada ticket: «nadie te ha contestado» dicho por un corte de red.
+      const commentRows = await fetchAllPagesOf<{ ticket_id: string }>(
+        "support_ticket_comments",
+        (from, to) =>
+          supabase
+            .from("support_ticket_comments")
+            .select("ticket_id")
+            .in("ticket_id", trozo)
+            .order("id", { ascending: true })
+            .range(from, to),
+      );
+      for (const row of commentRows) {
+        const key = String(row.ticket_id);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
     }
 
-    // Adjuntos a nivel de ticket (comment_id NULL) en una sola consulta.
-    const { data: attachmentRows, error: attachmentsError } = await supabase
-      .from("support_ticket_attachments")
-      .select("*")
-      .in("ticket_id", ids)
-      .is("comment_id", null);
-    if (attachmentsError) throw attachmentsError;
-    const signed = await signAttachments(attachmentRows ?? []);
+    // Adjuntos a nivel de ticket (comment_id NULL), igual de troceados.
+    const attachmentRows: Record<string, unknown>[] = [];
+    for (const trozo of chunkList(ids, IN_FILTER_CHUNK)) {
+      const page = await fetchAllPagesOf<Record<string, unknown>>(
+        "support_ticket_attachments",
+        (from, to) =>
+          supabase
+            .from("support_ticket_attachments")
+            .select("*")
+            .in("ticket_id", trozo)
+            .is("comment_id", null)
+            .order("id", { ascending: true })
+            .range(from, to),
+      );
+      attachmentRows.push(...page);
+    }
+    const signed = await signAttachments(attachmentRows);
     const byTicket = new Map<string, SupportTicketAttachment[]>();
     for (const att of signed) {
       const bucket = byTicket.get(att.ticketId);
