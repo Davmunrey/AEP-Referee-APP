@@ -98,8 +98,12 @@ export async function POST(request: Request) {
     );
     if (competition instanceof Response) return competition;
     if (!competition) return jsonError("Competición no encontrada", 404);
-    if (user.role === "delegado_zona" && user.zona && !zonesMatch(competition.zona, user.zona)) {
-      return jsonError("Fuera de tu zona", 403);
+    // Fail-closed, como en el resto de la aplicación.
+    if (user.role === "delegado_zona") {
+      if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
+      if (!zonesMatch(competition.zona, user.zona)) {
+        return jsonError("Fuera de tu zona", 403);
+      }
     }
     zona = competition.zona;
   }
