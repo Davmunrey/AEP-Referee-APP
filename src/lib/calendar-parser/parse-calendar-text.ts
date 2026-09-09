@@ -1,3 +1,4 @@
+import { calendarYearWarning, detectCalendarYear } from "./detect-year";
 import type { EventType } from "@/lib/types";
 import { normalizeAepCalendarPdfText } from "./normalize-calendar-pdf-text";
 import type { ParsedCalendar, ParsedCalendarEntry } from "./types";
@@ -179,13 +180,6 @@ function looksForeign(localidad: string): boolean {
   );
 }
 
-function detectYear(text: string): number {
-  const m = text.match(/CALENDARIO\s+de\s+COMPETICIONES\s+(\d{4})/i);
-  if (m) return Number(m[1]);
-  const fallback = text.match(/\b(20\d{2})\b/);
-  return fallback ? Number(fallback[1]) : new Date().getFullYear();
-}
-
 /**
  * Convierte el texto del PDF de calendario AEP en una lista de entradas.
  * Solo marca `esEspaña === true` si nivel es AEP1/AEP2/AEP3 (no EPF/IPF) y la localidad
@@ -193,8 +187,13 @@ function detectYear(text: string): number {
  */
 export function parseAepCalendarText(input: string): ParsedCalendar {
   const normalized = normalizeAepCalendarPdfText(input);
-  const year = detectYear(normalized);
+  const detectado = detectCalendarYear(normalized);
+  const year = detectado.year;
   const warnings: string[] = [];
+  // Primero, porque condiciona todo lo que venga detrás: el año fecha la
+  // temporada entera.
+  const avisoAno = calendarYearWarning(detectado);
+  if (avisoAno) warnings.push(avisoAno);
 
   // Limpia headers tabla y agrupa líneas en bloques separados por líneas vacías.
   const rawLines = normalized.split(/\r?\n/).map((l) => l.trim());
