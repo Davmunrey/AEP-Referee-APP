@@ -144,7 +144,22 @@ function parseDatos(
 
     const excelMacroZone = asString(row[4]);
     const localidad = asString(row[5]);
-    let zona = mapExcelZone(excelMacroZone);
+    // Con la localidad, como la hoja de campeonatos de aquí abajo. `mapExcelZone`
+    // acepta los tres argumentos y solo deduce por localidad cuando la celda
+    // «Zona» está VACÍA —una zona escrita pero no reconocida sigue mandando y no
+    // se deduce nada—, así que la regla «el Excel manda» no cambia.
+    //
+    // Llamándola sin localidad, un juez con la celda «Zona» en blanco se
+    // descartaba del censo aunque su localidad estuviera al lado; el propio
+    // aviso la imprimía, como si se hubiera mirado. Y en «reemplazar el censo»
+    // eso no es solo no importarlo: al no estar en la lista, el juez entra en
+    // la lista de borrables.
+    // La hoja de jueces no tiene columna «Provincia»: cuando la trae, va entre
+    // paréntesis dentro de la localidad («Arganda del Rey (Madrid)»), y
+    // `deduceMacroZone` las descarta antes de buscar. Se extrae aquí, igual
+    // que hace el lector del calendario con su columna de localidad.
+    const provincia = localidad?.match(/\(([^)]+)\)/)?.[1]?.trim();
+    let zona = mapExcelZone(excelMacroZone, localidad, provincia);
     if (!zona) {
       if (/^ERA\s/i.test(nombre)) {
         zona = "CENTRO";
@@ -153,7 +168,7 @@ function parseDatos(
         );
       } else {
         warnings.push(
-          `Juez ${excelId} (${nombre}): zona no reconocida «${excelMacroZone ?? "—"}» / ${localidad ?? "—"}`,
+          `Juez ${excelId} (${nombre}): zona no reconocida «${excelMacroZone ?? "—"}» y no deducible de «${localidad ?? "—"}». No se importa; si reemplazas el censo, quedará fuera.`,
         );
         continue;
       }
