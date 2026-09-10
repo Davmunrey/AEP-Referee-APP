@@ -1,7 +1,9 @@
 -- Periods when a referee is NOT available (holiday, injury, personal, etc.)
 CREATE TABLE IF NOT EXISTS referee_availability (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  referee_id  UUID NOT NULL REFERENCES referees(id) ON DELETE CASCADE,
+  -- `referees.id` es TEXT desde la 001; declarar esto UUID hace que la clave
+  -- ajena no pueda construirse y la migración falle al reproducirla desde cero.
+  referee_id  TEXT NOT NULL REFERENCES referees(id) ON DELETE CASCADE,
   fecha_inicio DATE NOT NULL,
   fecha_fin    DATE NOT NULL,
   notas        TEXT,

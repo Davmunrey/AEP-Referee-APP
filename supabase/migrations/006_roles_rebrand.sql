@@ -8,9 +8,28 @@
 --   lectura  -> solo_ver
 --   (nuevo)  -> delegado_jueces
 
-ALTER TYPE user_role RENAME VALUE 'nacional' TO 'super_admin';
-ALTER TYPE user_role RENAME VALUE 'regional' TO 'delegado_zona';
-ALTER TYPE user_role RENAME VALUE 'lectura'  TO 'solo_ver';
+-- Solo se renombra lo que siga con el nombre viejo: repetir un RENAME ya hecho
+-- es un error («is not an existing enum label») y estas migraciones se aplican
+-- a mano más a menudo que por el workflow.
+DO $roles006$
+DECLARE
+  cambio TEXT[];
+BEGIN
+  FOREACH cambio SLICE 1 IN ARRAY ARRAY[
+    ['nacional', 'super_admin'],
+    ['regional', 'delegado_zona'],
+    ['lectura',  'solo_ver']
+  ] LOOP
+    IF EXISTS (
+      SELECT 1 FROM pg_enum e
+      JOIN pg_type t ON t.oid = e.enumtypid
+      WHERE t.typname = 'user_role' AND e.enumlabel = cambio[1]
+    ) THEN
+      EXECUTE format('ALTER TYPE user_role RENAME VALUE %L TO %L', cambio[1], cambio[2]);
+    END IF;
+  END LOOP;
+END $roles006$;
+
 ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'delegado_jueces';
 
 -- Trigger de creación de perfil: usa los nuevos valores de enum.
