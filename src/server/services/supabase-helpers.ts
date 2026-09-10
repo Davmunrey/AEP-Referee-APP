@@ -25,11 +25,37 @@ export function db() {
   return createAdminClient();
 }
 
-let approvalCompetitionColumnPromise: Promise<boolean> | null = null;
-let approvalSubmitterColumnPromise: Promise<boolean> | null = null;
-let historyCompetitionColumnPromise: Promise<boolean> | null = null;
-let compensationOverrideColumnPromise: Promise<boolean> | null = null;
-let refereeDomicilioGeoColumnPromise: Promise<boolean> | null = null;
+/**
+ * Estado de una sonda de columna.
+ *
+ * `reintentarEn` es la parte que importa: un «existe» no caduca nunca —una
+ * columna no desaparece—, pero un «no existe» sí. Antes se cacheaba para toda
+ * la vida del proceso, y eso significa que aplicar la migración NO enciende la
+ * función: las instancias que ya estaban vivas siguen creyendo que la columna
+ * falta hasta que algo ajeno las recicle.
+ *
+ * No es hipotético. El 2026-09-10 la 034 creó
+ * `judge_compensation_claims.travel_amount_override` en producción desde el
+ * workflow, sin redespliegue. Cualquier instancia caliente de antes seguiría
+ * descartando en silencio el importe manual de desplazamiento —dinero— sin más
+ * rastro que un aviso suelto en el log.
+ */
+interface SondaColumna {
+  valor: Promise<boolean> | null;
+  /** Instante en que deja de valer un «no existe»; `null` si no caduca. */
+  reintentarEn: number | null;
+}
+
+/** Cada cuánto se vuelve a mirar si una migración ya está aplicada. */
+const REINTENTO_MIGRACION_MS = 5 * 60 * 1000;
+
+const nuevaSonda = (): SondaColumna => ({ valor: null, reintentarEn: null });
+
+const sondaApprovalCompetition = nuevaSonda();
+const sondaApprovalSubmitter = nuevaSonda();
+const sondaHistoryCompetition = nuevaSonda();
+const sondaCompensationOverride = nuevaSonda();
+const sondaRefereeDomicilioGeo = nuevaSonda();
 
 /**
  * Deja constancia en el log de que una migración no está aplicada.
@@ -52,32 +78,43 @@ export function warnMissingMigration(que: string): void {
 }
 
 /**
- * Sonda de columna con caché a nivel de módulo. Solo se cachea un veredicto
- * fiable: "existe" (sin error) o "no existe" (42703 / undefined column). Un
- * error transitorio (red, timeout, caída de Supabase) NO debe cachearse como
- * "columna ausente" para toda la vida de la instancia — en ese caso se asume
- * el esquema moderno y se reintenta la sonda en la siguiente llamada.
+ * Sonda de columna con caché a nivel de módulo. Tres veredictos, tres vidas:
+ *
+ *   · "existe"      → para siempre. Una columna no desaparece.
+ *   · "no existe"   → durante REINTENTO_MIGRACION_MS. Es lo que permite que
+ *                     aplicar la migración encienda la función sin esperar a
+ *                     que se recicle el proceso.
+ *   · error transitorio (red, timeout, Supabase caído) → no se cachea, y se
+ *                     asume el esquema moderno: dar por ausente una columna
+ *                     por un corte de red la desactivaría de por vida.
  */
 function probeColumns(
   table: string,
   columns: string,
-  getCached: () => Promise<boolean> | null,
-  setCached: (p: Promise<boolean> | null) => void,
+  sonda: SondaColumna,
 ): Promise<boolean> {
-  const cached = getCached();
-  if (cached) return cached;
+  if (sonda.valor && (sonda.reintentarEn === null || Date.now() < sonda.reintentarEn)) {
+    return sonda.valor;
+  }
   const probe = Promise.resolve(db().from(table).select(columns).limit(1)).then(({ error }) => {
-    if (!error) return true;
+    if (!error) {
+      sonda.reintentarEn = null; // "existe" no caduca
+      return true;
+    }
     const isMissingColumn =
       error.code === "42703" || /column|columna/i.test(error.message ?? "");
     if (!isMissingColumn) {
-      setCached(null); // transitorio: no cachear, reintentar la próxima vez
+      sonda.valor = null; // transitorio: no cachear, reintentar la próxima vez
       return true;
     }
     warnMissingMigration(`${table}.${columns}`);
+    sonda.reintentarEn = Date.now() + REINTENTO_MIGRACION_MS;
     return false;
   });
-  setCached(probe);
+  // Mientras la sonda está en vuelo no caduca: las llamadas concurrentes
+  // comparten esta promesa en vez de disparar una consulta cada una.
+  sonda.valor = probe;
+  sonda.reintentarEn = null;
   return probe;
 }
 
@@ -85,8 +122,7 @@ export async function hasApprovalCompetitionColumns(): Promise<boolean> {
   return probeColumns(
     "approval_proposals",
     "competition_id, competition_name",
-    () => approvalCompetitionColumnPromise,
-    (p) => { approvalCompetitionColumnPromise = p; },
+    sondaApprovalCompetition,
   );
 }
 
@@ -95,8 +131,7 @@ export async function hasApprovalSubmitterColumns(): Promise<boolean> {
   return probeColumns(
     "approval_proposals",
     "submitted_by_id, reviewed_by_id",
-    () => approvalSubmitterColumnPromise,
-    (p) => { approvalSubmitterColumnPromise = p; },
+    sondaApprovalSubmitter,
   );
 }
 
@@ -104,8 +139,7 @@ export async function hasHistoryCompetitionColumn(): Promise<boolean> {
   return probeColumns(
     "roster_history",
     "competition_id",
-    () => historyCompetitionColumnPromise,
-    (p) => { historyCompetitionColumnPromise = p; },
+    sondaHistoryCompetition,
   );
 }
 
@@ -114,8 +148,7 @@ export async function hasCompensationOverrideColumn(): Promise<boolean> {
   return probeColumns(
     "judge_compensation_claims",
     "travel_amount_override",
-    () => compensationOverrideColumnPromise,
-    (p) => { compensationOverrideColumnPromise = p; },
+    sondaCompensationOverride,
   );
 }
 
@@ -124,8 +157,7 @@ export async function hasRefereeDomicilioGeoColumns(): Promise<boolean> {
   return probeColumns(
     "referees",
     "domicilio_lat, domicilio_lng",
-    () => refereeDomicilioGeoColumnPromise,
-    (p) => { refereeDomicilioGeoColumnPromise = p; },
+    sondaRefereeDomicilioGeo,
   );
 }
 
