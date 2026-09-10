@@ -59,8 +59,20 @@ describe("daysUntil", () => {
   });
 
   it("ignores time-of-day, comparing calendar days only", () => {
-    const now = new Date(2026, 4, 17, 23, 59);
+    // 14:00 en España, mismo día natural en cualquier huso razonable.
+    const now = new Date("2026-05-17T12:00:00Z");
     expect(daysUntil("2026-05-18", now)).toBe(1);
+    expect(daysUntil("2026-05-17", now)).toBe(0);
+  });
+
+  // «Hoy» es el día natural español, no el del huso del proceso. Este caso
+  // afirmaba lo contrario: a las 23:59 UTC del 17 de mayo ya son las 01:59 del
+  // 18 en España, así que el campeonato del 18 no está «a un día», es hoy.
+  // Ver `regression-batch-dc-el-panel-cuenta-los-dias`.
+  it("counts from the Spanish calendar day, not the process timezone", () => {
+    const now = new Date("2026-05-17T23:59:00Z");
+    expect(daysUntil("2026-05-18", now)).toBe(0);
+    expect(daysUntil("2026-05-19", now)).toBe(1);
   });
 });
 

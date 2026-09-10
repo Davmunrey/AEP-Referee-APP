@@ -5,6 +5,7 @@
  * y deriva por sí mismo un índice de salud y recomendaciones priorizadas.
  * No requiere entrada manual: el panel se alimenta de sus propios datos.
  */
+import { businessDayIso } from "@/lib/business-date";
 import type {
   ActivityItem,
   Competition,
@@ -37,17 +38,30 @@ const SEVERITY_RANK: Record<InsightSeverity, number> = {
   ok: 3,
 };
 
-/** Días desde hoy hasta una fecha ISO; null si la fecha no es válida. */
+/**
+ * Días desde hoy hasta una fecha ISO; null si la fecha no es válida.
+ *
+ * «Hoy» es el día natural ESPAÑOL, no la medianoche del huso del proceso.
+ * Estas cuentas las hace el panel, que se renderiza en el servidor y va en
+ * UTC: entre la medianoche española y las 01:00–02:00 UTC, un campeonato que
+ * es HOY salía como «Mañana», y el que terminó ayer seguía pasando el filtro
+ * de «próximos» (`d >= 0`) y encabezaba la previsión.
+ *
+ * Y es que el propio panel ya usa el día español por otro lado:
+ * `isCompetitionPast` descarta los campeonatos pasados con `todayIso()`. En
+ * esa franja los dos filtros decían cosas distintas del mismo campeonato.
+ *
+ * Las dos fechas se comparan en UTC —el día ISO de cada una, a mediodía
+ * imaginario— para que el cambio de hora no meta días de 23 o 25 horas.
+ */
 export function daysUntil(iso: string, now = new Date()): number | null {
-  // Parseo por componentes (no `new Date(iso)`): una fecha solo-día se
-  // interpretaría como UTC y, leída en local, se desplaza un día en husos
-  // negativos (el cliente puede estar fuera de España).
   const [y, mo, d] = String(iso).split(/[-T]/).map(Number);
   if (!y || !mo || !d) return null;
-  const day = new Date(y, mo - 1, d);
-  if (Number.isNaN(day.getTime()) || day.getMonth() !== mo - 1) return null;
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((day.getTime() - today.getTime()) / 86_400_000);
+  const day = Date.UTC(y, mo - 1, d);
+  if (Number.isNaN(day) || new Date(day).getUTCMonth() !== mo - 1) return null;
+  const [ty, tmo, td] = businessDayIso(now).split("-").map(Number);
+  const today = Date.UTC(ty!, tmo! - 1, td!);
+  return Math.round((day - today) / 86_400_000);
 }
 
 function clampScore(n: number): number {

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CalendarDayEvent, EventStatus } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { businessDayIso } from "@/lib/business-date";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
@@ -75,9 +76,16 @@ export function OperationalCalendar({
 }: {
   calendar: Record<string, CalendarDayEvent[]>;
 }) {
-  const today = new Date();
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  // Día natural español, no el del navegador ni el del servidor. Este
+  // componente se pinta en el servidor —que va en UTC— y se hidrata en el
+  // cliente: con `new Date().getMonth()` los dos podían no coincidir (entre la
+  // medianoche española y las 01:00–02:00 UTC del día 1, y siempre para quien
+  // abra el panel desde otro huso), así que el calendario se servía abierto por
+  // un mes y el navegador lo reescribía al otro, con el aviso de hidratación
+  // correspondiente. Es el mismo motivo por el que existe `business-date`.
+  const [todayYear, todayMonth, todayDay] = businessDayIso().split("-").map(Number);
+  const [viewYear, setViewYear] = useState(todayYear!);
+  const [viewMonth, setViewMonth] = useState(todayMonth! - 1);
 
   const goBack = () => {
     if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
@@ -89,7 +97,7 @@ export function OperationalCalendar({
   };
 
   const weeks = buildWeeks(viewYear, viewMonth);
-  const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayKey = dateKey(todayYear!, todayMonth! - 1, todayDay!);
 
   return (
     <Card className="overflow-hidden p-0">
