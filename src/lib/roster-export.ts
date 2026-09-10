@@ -1,3 +1,4 @@
+import { enumerateSlotKeys } from "@/lib/roster-template";
 import type { AssignmentsMap, FlagsMap, RosterSession } from "@/lib/types";
 
 interface ExportComp {
@@ -61,14 +62,30 @@ export function formatRosterExport(
     `Sede:   ${comp.sede}`,
   ];
 
+  // Los puestos del acta son los huecos canónicos, los mismos que enumera
+  // `enumerateSlotKeys` para la cobertura, el dinero y el cuadrante. El acta se
+  // los construía por su cuenta recorriendo `slots`, y esa cuenta no quita
+  // repetidos: dos filas del mismo rol en una sesión —o dos sesiones con el
+  // mismo código— comparten las claves `${sesion}_${rol}_${índice}`, así que el
+  // acta imprimía el puesto DOS VECES, con el mismo juez en las dos líneas,
+  // mientras el cuadrante en Excel y en HTML lo imprimían una. Dos documentos
+  // oficiales del mismo campeonato, cada uno con un número de puestos.
+  //
+  // El editor y la importación ya rechazan esas plantillas, pero nadie
+  // normalizó las que se guardaron antes: siguen en `competitions.template`.
+  const huecosValidos = new Set(enumerateSlotKeys(template));
+  const yaImpresos = new Set<string>();
+
   const renderRoles = (
     sesion: string,
     roles: RosterSession["roles"],
   ): void => {
     for (const role of roles) {
       for (let i = 0; i < role.slots; i++) {
-        const refId = assignments[`${sesion}_${role.key}_${i}`];
         const slotKey = `${sesion}_${role.key}_${i}`;
+        if (!huecosValidos.has(slotKey) || yaImpresos.has(slotKey)) continue;
+        yaImpresos.add(slotKey);
+        const refId = assignments[slotKey];
         const ref = refId ? refLookup(refId) : undefined;
         const label = role.slots > 1 ? `${role.rol} ${i + 1}` : role.rol;
         lines.push(`   - ${label}: ${formatRefName(ref, slotKey, flags, Boolean(refId))}`);
