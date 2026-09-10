@@ -46,6 +46,24 @@ export function markCrossZoneCandidates(
   return candidates;
 }
 
+/**
+ * Un solo aviso por las sesiones que el cuadrante trae y la plantilla no.
+ *
+ * Los dos lectores daban dos respuestas distintas a la misma situación —que es
+ * normal: el cuadrante suele llegar antes que el horario—. El de geometría
+ * empujaba la frase DENTRO del bucle de celdas, así que la vista previa
+ * repetía la misma línea una vez por cada fila de rol (veinte veces en el
+ * cuadrante Junior real); el plano se limitaba a descartar esas sesiones sin
+ * decir nada, y quien importaba veía menos candidatos de los que esperaba sin
+ * saber por qué.
+ */
+export function sesionesFueraDePlantillaWarning(sesiones: string[]): string {
+  return (
+    `Sesiones del cuadrante que no están en la plantilla: ${sesiones.join(", ")}. ` +
+    "Sus asignaciones se omiten; importa el horario o añade esas sesiones antes de aplicar."
+  );
+}
+
 export interface ParsedQuadrant {
   candidates: QuadrantAssignmentCandidate[];
   warnings: string[];
@@ -352,10 +370,18 @@ export function parseQuadrantAssignments(
   const blocks = splitBlocks(text);
   const compOrder = roleOrderForTemplate(template);
 
+  // Las sesiones que el cuadrante trae y la plantilla no se descartaban en
+  // silencio. Se recogen para avisar UNA vez al final, con sus códigos.
+  const fueraDePlantilla = new Set<string>();
+
   for (const block of blocks) {
-    const sessions = uniqueSessions(block).filter((s) =>
+    const todas = uniqueSessions(block);
+    const sessions = todas.filter((s) =>
       template.some((t) => t.sesion.toLowerCase() === s.toLowerCase()),
     );
+    for (const s of todas) {
+      if (!sessions.includes(s)) fueraDePlantilla.add(s);
+    }
     if (sessions.length === 0) continue;
 
     const anchor = findRoleAnchor(block);
@@ -418,6 +444,10 @@ export function parseQuadrantAssignments(
       const slotKey = assignSlot(template, usedSlots, session, roleKey);
       candidates.push(makeCandidate({ hit, session, roleKey, slotKey, index: idx, kind: "pesaje" }));
     });
+  }
+
+  if (fueraDePlantilla.size > 0) {
+    warnings.push(sesionesFueraDePlantillaWarning([...fueraDePlantilla]));
   }
 
   if (candidates.length === 0) {
