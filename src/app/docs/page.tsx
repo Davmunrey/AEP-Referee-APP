@@ -127,7 +127,11 @@ function FlowStep({ icon: IconCmp, label }: { icon: Icon; label: string }) {
 }
 
 export default async function DocsPage() {
-  const user = await getSession();
+  // Esta página es pública y la sesión solo decide si se enseñan además las
+  // secciones internas. Un fallo al leer el perfil se degrada a «anónimo», que
+  // es el lado seguro: la documentación pública no se cae por eso, y las
+  // secciones internas se quedan fuera hasta que la lectura vuelva.
+  const user = await getSession().catch(() => null);
   const isAuthenticated = Boolean(user);
   const toc = tocSections.filter((s) => isAuthenticated || !s.internal);
   const backHref = isAuthenticated ? "/" : "/sign-in";
