@@ -1,4 +1,5 @@
 import { calendarYearWarning, detectCalendarYear } from "./detect-year";
+import { resolveCalendarRange } from "./date-range";
 import { fechaPendienteWarning, zonaNoDeducidaWarning } from "./entry-warnings";
 import type { EventType } from "@/lib/types";
 import { normalizeAepCalendarPdfText } from "./normalize-calendar-pdf-text";
@@ -106,11 +107,8 @@ function parseDate(
     const endDay = Number(sameMonth[2]);
     const month = monthNum(sameMonth[3]);
     if (!month) return { start: null, end: null, pendiente: false };
-    return {
-      start: `${year}-${pad2(month)}-${pad2(startDay)}`,
-      end: `${year}-${pad2(month)}-${pad2(endDay)}`,
-      pendiente: false,
-    };
+    const rango = resolveCalendarRange(year, month, startDay, month, endDay);
+    return { start: rango.start, end: rango.end, pendiente: false };
   }
 
   const cross = trimmed.match(DATE_RANGE_CROSS_RE);
@@ -121,11 +119,8 @@ function parseDate(
     const endMonth = monthNum(cross[4]);
     if (!startMonth || !endMonth)
       return { start: null, end: null, pendiente: false };
-    return {
-      start: `${year}-${pad2(startMonth)}-${pad2(startDay)}`,
-      end: `${year}-${pad2(endMonth)}-${pad2(endDay)}`,
-      pendiente: false,
-    };
+    const rango = resolveCalendarRange(year, startMonth, startDay, endMonth, endDay);
+    return { start: rango.start, end: rango.end, pendiente: false };
   }
 
   const spacedCross = trimmed.match(DATE_RANGE_SPACED_CROSS_RE);
@@ -136,11 +131,8 @@ function parseDate(
     const endMonth = monthNum(spacedCross[4]);
     if (!startMonth || !endMonth)
       return { start: null, end: null, pendiente: false };
-    return {
-      start: `${year}-${pad2(startMonth)}-${pad2(startDay)}`,
-      end: `${year}-${pad2(endMonth)}-${pad2(endDay)}`,
-      pendiente: false,
-    };
+    const rango = resolveCalendarRange(year, startMonth, startDay, endMonth, endDay);
+    return { start: rango.start, end: rango.end, pendiente: false };
   }
 
   const monthRange = trimmed.replace(/\*\*/g, "").trim().match(DATE_MONTH_RANGE_RE);
@@ -149,12 +141,8 @@ function parseDate(
     const endMonth = monthNum(monthRange[2]);
     if (!startMonth || !endMonth)
       return { start: null, end: null, pendiente: true };
-    const endDay = new Date(year, endMonth, 0).getDate();
-    return {
-      start: `${year}-${pad2(startMonth)}-01`,
-      end: `${year}-${pad2(endMonth)}-${pad2(endDay)}`,
-      pendiente: true,
-    };
+    const rango = resolveCalendarRange(year, startMonth, 1, endMonth);
+    return { start: rango.start, end: rango.end, pendiente: true };
   }
 
   return { start: null, end: null, pendiente: false };
