@@ -1,4 +1,5 @@
 import { calendarYearWarning, detectCalendarYear } from "./detect-year";
+import { resolveCalendarRange } from "./date-range";
 import { fechaPendienteWarning, zonaNoDeducidaWarning } from "./entry-warnings";
 import { deduceMacroZone, resolveZoneCode } from "@/lib/aep-zones";
 import type { EventType } from "@/lib/types";
@@ -93,10 +94,6 @@ function month(raw: string): number | undefined {
   return MONTHS_ES[key] ?? MONTHS_ES[key.slice(0, 3)];
 }
 
-function lastDayOfMonth(year: number, monthNumber: number): number {
-  return new Date(year, monthNumber, 0).getDate();
-}
-
 function iso(year: number, monthNumber: number, day: number): string {
   return `${year}-${pad2(monthNumber)}-${pad2(day)}`;
 }
@@ -121,11 +118,8 @@ function parseDate(raw: string, year: number) {
   if (sameMonth) {
     const m = month(sameMonth[3]!);
     if (!m) return { start: null, end: null, pendiente: false };
-    return {
-      start: iso(year, m, Number(sameMonth[1])),
-      end: iso(year, m, Number(sameMonth[2])),
-      pendiente: false,
-    };
+    const rango = resolveCalendarRange(year, m, Number(sameMonth[1]), m, Number(sameMonth[2]));
+    return { start: rango.start, end: rango.end, pendiente: false };
   }
 
   const crossCompact = text.match(/^(\d{1,2})-(\d{1,2})\s+([a-záéíóú]{3,10})-([a-záéíóú]{3,10})$/i);
@@ -133,11 +127,14 @@ function parseDate(raw: string, year: number) {
     const startMonth = month(crossCompact[3]!);
     const endMonth = month(crossCompact[4]!);
     if (!startMonth || !endMonth) return { start: null, end: null, pendiente: false };
-    return {
-      start: iso(year, startMonth, Number(crossCompact[1])),
-      end: iso(year, endMonth, Number(crossCompact[2])),
-      pendiente: false,
-    };
+    const rango = resolveCalendarRange(
+      year,
+      startMonth,
+      Number(crossCompact[1]),
+      endMonth,
+      Number(crossCompact[2]),
+    );
+    return { start: rango.start, end: rango.end, pendiente: false };
   }
 
   const crossSpaced = text.match(/^(\d{1,2})\s+([a-záéíóú]{3,10})\s*-\s*(\d{1,2})\s+([a-záéíóú]{3,10})$/i);
@@ -145,11 +142,14 @@ function parseDate(raw: string, year: number) {
     const startMonth = month(crossSpaced[2]!);
     const endMonth = month(crossSpaced[4]!);
     if (!startMonth || !endMonth) return { start: null, end: null, pendiente: false };
-    return {
-      start: iso(year, startMonth, Number(crossSpaced[1])),
-      end: iso(year, endMonth, Number(crossSpaced[3])),
-      pendiente: false,
-    };
+    const rango = resolveCalendarRange(
+      year,
+      startMonth,
+      Number(crossSpaced[1]),
+      endMonth,
+      Number(crossSpaced[3]),
+    );
+    return { start: rango.start, end: rango.end, pendiente: false };
   }
 
   const monthRange = lower.match(/^([a-záéíóú]{3,10})\s*-\s*([a-záéíóú]{3,10})$/i);
@@ -157,11 +157,8 @@ function parseDate(raw: string, year: number) {
     const startMonth = month(monthRange[1]!);
     const endMonth = month(monthRange[2]!);
     if (!startMonth || !endMonth) return { start: null, end: null, pendiente: true };
-    return {
-      start: iso(year, startMonth, 1),
-      end: iso(year, endMonth, lastDayOfMonth(year, endMonth)),
-      pendiente: true,
-    };
+    const rango = resolveCalendarRange(year, startMonth, 1, endMonth);
+    return { start: rango.start, end: rango.end, pendiente: true };
   }
 
   return { start: null, end: null, pendiente: true };
