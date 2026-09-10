@@ -1,7 +1,7 @@
 import { assertRefereeInUserZone } from "@/lib/api/referee-scope";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import { REFEREE_LEVELS } from "@/app/api/_lib/validation";
 import type { ExamResult, ExamType, RefereeLevel } from "@/lib/types";
@@ -15,12 +15,13 @@ export async function GET(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { searchParams } = new URL(request.url);
-  return jsonOk(
-    await dataService.getExams(
-      searchParams.get("refereeId") ?? undefined,
-      user,
-    ),
+  // Ver `competitions.GET`: sin esto el fallo de lectura salía como un 500 sin
+  // sobre y sin nombre en el log.
+  const leido = await readOrError("exams.GET", "No se pudieron cargar los exámenes", () =>
+    dataService.getExams(searchParams.get("refereeId") ?? undefined, user),
   );
+  if (leido instanceof Response) return leido;
+  return jsonOk(leido);
 }
 
 export async function POST(request: Request) {

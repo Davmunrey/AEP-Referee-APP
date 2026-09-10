@@ -2,7 +2,7 @@ import { zonesMatch } from "@/lib/aep-zones";
 import { isSafeExternalUrlOrEmpty } from "@/lib/safe-url";
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import type { RefereeReport, ReportType } from "@/lib/types";
 import { dataService } from "@/server/services";
 
@@ -50,7 +50,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     patch.adjuntoUrl = raw.adjuntoUrl;
   }
 
-  const existing = await dataService.getReport(id);
+  // Ídem que en exámenes: la lectura que decide el 404 y la zona no puede
+  // caerse en silencio.
+  const existing = await readOrError("reports.detail", "No se pudo cargar el informe", () =>
+    dataService.getReport(id),
+  );
+  if (existing instanceof Response) return existing;
   if (!existing) return jsonError("Informe no encontrado", 404);
   // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
   // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en
@@ -79,7 +84,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!canAdminJudges(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const existing = await dataService.getReport(id);
+  // Ídem que en exámenes: la lectura que decide el 404 y la zona no puede
+  // caerse en silencio.
+  const existing = await readOrError("reports.detail", "No se pudo cargar el informe", () =>
+    dataService.getReport(id),
+  );
+  if (existing instanceof Response) return existing;
   if (!existing) return jsonError("Informe no encontrado", 404);
   // `referee_reports.zona` es texto libre: la migración 013 no normalizó esta
   // tabla, así que un informe anterior guarda «MAD» o «Centro» y comparado en

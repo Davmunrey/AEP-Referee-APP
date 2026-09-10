@@ -1,6 +1,6 @@
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
-import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError, readOrError } from "@/lib/api/route-utils";
 import { computeRosterCoverage } from "@/lib/roster-coverage";
 import { dataService } from "@/server/services";
 
@@ -15,7 +15,12 @@ export async function POST(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const comp = await loadCompetitionForRosterWrite(id, user, "roster.submit");
   if (comp instanceof Response) return comp;
-  const roster = await dataService.getRoster(id);
+  // «Sin plantilla» y «no se pudo leer la tarima» llevan a acciones distintas:
+  // la primera se arregla definiéndola, la segunda reintentando.
+  const roster = await readOrError("roster.submit.read", "No se pudo cargar la tarima", () =>
+    dataService.getRoster(id),
+  );
+  if (roster instanceof Response) return roster;
   if (!roster || roster.template.length === 0) {
     return jsonError("Define una plantilla antes de enviar a aprobación", 400);
   }

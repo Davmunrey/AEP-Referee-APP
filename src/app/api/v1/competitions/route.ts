@@ -1,7 +1,7 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { canCreateCompetition } from "@/lib/permissions";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { validateCompetitionFields } from "@/app/api/_lib/validation";
 import { dataService } from "@/server/services";
 import type { Competition } from "@/lib/types";
@@ -9,7 +9,16 @@ import type { Competition } from "@/lib/types";
 export async function GET() {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  return jsonOk(await dataService.getCompetitions(user));
+  // Sin `catch`, un fallo de lectura salía de Next como un 500 sin sobre
+  // `{ data } / { error }`: el cliente enseñaba el texto genérico por código
+  // de estado y en el servidor no quedaba ni una línea diciendo QUÉ lectura se
+  // había caído. Las listas de esta misma API que sí lo tienen —aprobaciones,
+  // tickets— son las que se pueden diagnosticar.
+  const leido = await readOrError("competitions.GET", "No se pudo cargar el calendario", () =>
+    dataService.getCompetitions(user),
+  );
+  if (leido instanceof Response) return leido;
+  return jsonOk(leido);
 }
 
 export async function POST(request: Request) {
