@@ -170,7 +170,7 @@ Estado en producción: migraciones hasta `033` aplicadas en el proyecto Supabase
 El despliegue es automático en Vercel. Para validar cambios antes de merge:
 
 ```bash
-npm run verify    # audit + lint + test + build
+npm run verify    # audit + lint + typecheck + test + build
 ```
 
 Detalle de variables, Supabase y checklist de release: [docs/DEPLOY.md](./docs/DEPLOY.md).
