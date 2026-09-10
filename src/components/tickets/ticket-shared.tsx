@@ -4,6 +4,7 @@ import type {
   TicketStatus,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { formatBusinessDate, formatBusinessDateTime } from "@/lib/business-date";
 
 // ── Etiquetas legibles ──────────────────────────────────────────────────────
 
@@ -41,18 +42,14 @@ export const TICKET_CATEGORIES: TicketCategory[] = [
 export function shortDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatBusinessDate(iso);
 }
 
 /** Fecha corta con hora — para el hilo de comentarios. */
 export function shortDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("es-ES", {
+  return formatBusinessDateTime(iso, {
     day: "numeric",
     month: "short",
     hour: "2-digit",

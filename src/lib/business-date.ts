@@ -59,3 +59,57 @@ export function businessHour(now = new Date()): number {
   }).format(now);
   return Number(hour);
 }
+
+const SOLO_DIA = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * El instante que hay que formatear para una fecha de la aplicación.
+ *
+ * Una fecha solo-día no tiene hora: `new Date("2026-03-14")` la lee como
+ * medianoche UTC, y leída en cualquier huso al oeste cae en el día anterior.
+ * Se ancla al mediodía UTC, que es lo que ya hacía `formatSanctionPeriod`, para
+ * que en hora española sea siempre ese mismo día natural.
+ *
+ * `null` si la cadena no es una fecha utilizable; quien llama decide qué
+ * enseñar en su lugar.
+ */
+function instanteDeNegocio(iso: string | null | undefined): Date | null {
+  const texto = String(iso ?? "").trim();
+  if (!texto) return null;
+  const date = new Date(SOLO_DIA.test(texto) ? `${texto}T12:00:00Z` : texto);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Fecha formateada en hora ESPAÑOLA.
+ *
+ * Sin `timeZone`, `toLocaleDateString` usa el huso de quien renderiza: el
+ * servidor va en UTC y el navegador en la hora del usuario, así que un
+ * componente cliente —que se pinta en los dos sitios— podía servir un día y
+ * reescribirlo a otro al hidratar. Es el mismo motivo por el que
+ * `formatSanctionPeriod` y el cuadrante en HTML ya la pasaban.
+ */
+export function formatBusinessDate(
+  iso: string | null | undefined,
+  opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" },
+): string {
+  const date = instanteDeNegocio(iso);
+  if (!date) return String(iso ?? "");
+  return date.toLocaleDateString("es-ES", { timeZone: BUSINESS_TZ, ...opts });
+}
+
+/** Ídem con la hora, para los sellos de tiempo (comentarios, avisos, accesos). */
+export function formatBusinessDateTime(
+  iso: string | null | undefined,
+  opts: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  },
+): string {
+  const date = instanteDeNegocio(iso);
+  if (!date) return String(iso ?? "");
+  return date.toLocaleString("es-ES", { timeZone: BUSINESS_TZ, ...opts });
+}

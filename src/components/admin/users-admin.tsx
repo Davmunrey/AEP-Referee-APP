@@ -28,6 +28,7 @@ import type { EditFormState } from "./edit-user-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { CredentialsBanner } from "./credentials-banner";
 import type { AdminUserRow } from "@/server/services/admin-users";
+import { formatBusinessDateTime } from "@/lib/business-date";
 
 // El shape de fila vive en la capa de servidor (`listAdminUsers`) para poder
 // reutilizarlo en la carga inicial del Server Component. Import de solo tipo:
@@ -86,13 +87,7 @@ function formatRelativeTime(dateStr: string): string {
 
 /** Fecha y hora absoluta para el tooltip (title) de las celdas de tiempo. */
 function formatAbsolute(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatBusinessDateTime(dateStr);
 }
 
 export function UsersAdmin({

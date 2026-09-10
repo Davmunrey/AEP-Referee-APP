@@ -6,6 +6,7 @@ import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 import { safeExternalUrl } from "@/lib/safe-url";
 import type { RefereeReport, ReportSubjectType, ReportType } from "@/lib/types";
 import { ChevronDown, ChevronRight, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { formatBusinessDate } from "@/lib/business-date";
 
 const REPORT_TYPES: ReportType[] = ["General", "Incidencia", "Evaluación"];
 
@@ -20,8 +21,7 @@ export function typeBadge(t: ReportType, subjectType: ReportSubjectType) {
 
 export function fmtDate(iso?: string) {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("es-ES");
+  return formatBusinessDate(iso, { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 interface ReportCardProps {

@@ -8,12 +8,11 @@ import {
   isRosterPendingApproval,
   isRosterRejected,
 } from "@/lib/roster-coverage";
+import { formatBusinessDate } from "@/lib/business-date";
 
 /** Fecha corta y legible; si no es una fecha utilizable, se devuelve tal cual. */
 function formatReviewDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+  return formatBusinessDate(iso);
 }
 
 /** Resolución de la última propuesta, para poder explicar un rechazo. */
