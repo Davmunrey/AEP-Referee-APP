@@ -1,4 +1,5 @@
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import { zoneVisibilityFilter } from "@/lib/zone-scope";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import type {
   AppMeta,
@@ -37,17 +38,17 @@ export async function getReferees(params?: {
   const store = getStore();
   // Normaliza las zonas igual que el backend de Supabase (resolveZoneCode), para
   // que el filtro por zona se comporte idéntico en dev y en producción.
-  const userZone =
-    params?.user?.role === "delegado_zona" && params.user.zona
-      ? (resolveZoneCode(params.user.zona) ?? params.user.zona)
-      : undefined;
+  // Mismo corte que el twin de Supabase: `undefined` mezclaba «sin restricción»
+  // con «delegado de zona cuya zona no se reconoce», y el segundo se quedaba sin
+  // filtro y leía el censo entero.
+  const visibleEnZona = zoneVisibilityFilter(params?.user);
   const filterZone =
     params?.zona && params.zona !== "TODAS"
       ? (resolveZoneCode(params.zona) ?? params.zona)
       : undefined;
   return store.referees.filter((r) => {
     const rZone = resolveZoneCode(r.zona) ?? r.zona;
-    if (userZone && rZone !== userZone) return false;
+    if (!visibleEnZona(r.zona)) return false;
     if (filterZone && rZone !== filterZone) return false;
     if (params?.nivel && params.nivel !== "TODOS" && r.nivel !== params.nivel) return false;
     if (params?.estado && params.estado !== "TODOS" && r.estado !== params.estado) return false;
