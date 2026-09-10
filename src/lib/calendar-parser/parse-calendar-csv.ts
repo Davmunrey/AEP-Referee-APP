@@ -229,8 +229,16 @@ export function parseAepCalendarCsv(text: string): ParsedCalendar {
     if (esEspaña && !zona) {
       warnings.push(zonaNoDeducidaWarning(nombre, localidad));
     }
-    if (esEspaña && !dates.start) {
-      warnings.push(fechaPendienteWarning(nombre, rawDate));
+    // Ver el lector de PDF: `pendiente` dice que la fecha no es exacta, y un
+    // rango de mes a mes trae fechas inventadas de dos meses.
+    if (esEspaña && (dates.pendiente || !dates.start)) {
+      warnings.push(
+        fechaPendienteWarning(
+          nombre,
+          rawDate,
+          dates.start && dates.end ? { inicio: dates.start, fin: dates.end } : undefined,
+        ),
+      );
     }
 
     entries.push({

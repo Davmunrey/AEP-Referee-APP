@@ -18,6 +18,20 @@ export function zonaNoDeducidaWarning(nombre: string, localidad: string): string
   return `Zona no deducida: ${nombre} (${localidad || "sede pendiente"}). Se creará sin zona y no lo verá ningún delegado de zona; asígnasela a mano después de importar.`;
 }
 
-export function fechaPendienteWarning(nombre: string, rawDate: string): string {
-  return `Fecha pendiente/no exacta: ${nombre} (${rawDate})`;
+/**
+ * `rango` es la fecha que el lector se ha inventado para poder importar la
+ * fila. Un rango de mes a mes —«oct-nov» en el calendario— se resuelve al día
+ * 1 del primero y al último del segundo, y eso NO es la fecha del campeonato:
+ * es un hueco de dos meses. Se dice, porque un campeonato de 61 días solapa
+ * con todos los de esos dos meses y el mapa de choques marcaría a casi
+ * cualquier juez como «ya asignado» contra él.
+ */
+export function fechaPendienteWarning(
+  nombre: string,
+  rawDate: string,
+  rango?: { inicio: string; fin: string },
+): string {
+  const base = `Fecha pendiente/no exacta: ${nombre} (${rawDate})`;
+  if (!rango) return base;
+  return `${base}. Se importará del ${rango.inicio} al ${rango.fin}; corrígela cuando la AEP confirme el día.`;
 }
