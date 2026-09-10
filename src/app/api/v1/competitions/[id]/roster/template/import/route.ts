@@ -92,6 +92,18 @@ export async function POST(request: Request, context: RouteContext) {
   const fileMeta = parseScheduleFilename(filename);
   const parsed = parseAepHorarioText(text);
   const tipo: EventType = parsed.header.tipo ?? fileMeta.tipo ?? comp.tipo;
+  // El tipo decide QUÉ ROLES monta la plantilla, y el PDF gana sobre lo que
+  // dice el campeonato. Si discrepan —el PDF equivocado, o una cabecera mal
+  // leída— la tarima se rehacía con los puestos de otro nivel sin que nada lo
+  // dijera: el tipo salía como un dato más entre cinco números de la vista
+  // previa. Y el dinero no lo sigue: los conceptos de la liquidación se
+  // calculan con `competition.tipo`, no con este.
+  const avisos = [...parsed.warnings];
+  if (tipo !== comp.tipo) {
+    avisos.unshift(
+      `El horario es de un ${tipo} y este campeonato está registrado como ${comp.tipo}. La plantilla se montará con los puestos de ${tipo}, pero las dietas se calculan con ${comp.tipo}. Comprueba que es el PDF correcto antes de aplicar.`,
+    );
+  }
   const template = parsedToRosterTemplate(parsed, tipo);
   const selectedTemplate = selectedKeys
     ? template.filter((session) => selectedKeys.has(session.sesion))
@@ -99,7 +111,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   if (template.length === 0) {
     return jsonError("El PDF no contenía sesiones reconocibles", 422, {
-      warnings: parsed.warnings,
+      warnings: avisos,
       pages,
     });
   }
@@ -111,7 +123,7 @@ export async function POST(request: Request, context: RouteContext) {
     header: parsed.header,
     days: parsed.days,
     sessions: parsed.sessions,
-    warnings: parsed.warnings,
+    warnings: avisos,
     tipoDetected: tipo,
     sessionCount: template.length,
     selectedCount: selectedTemplate.length,
