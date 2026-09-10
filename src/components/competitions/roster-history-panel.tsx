@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatBusinessDate } from "@/lib/business-date";
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import type { RosterHistoryEntry } from "@/lib/types";
@@ -21,7 +22,7 @@ function relativeTime(isoString: string): string {
   if (min < 60) return `hace ${min} min`;
   if (hr < 24) return `hace ${hr} h`;
   if (day < 7) return `hace ${day} d`;
-  return new Date(isoString).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  return formatBusinessDate(isoString, { day: "numeric", month: "short" });
 }
 
 function actionDotClass(action: string): string {
