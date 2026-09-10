@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { profileToSessionUser, type ProfileRow } from "@/lib/auth/profile";
+import { SessionProfileReadError } from "@/lib/auth/session-errors";
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { DOCS_CAPTURE_SESSION, isDocsCaptureMode } from "@/lib/auth/docs-capture";
 import { ensureDocsCaptureSeed } from "@/server/services/docs-capture-seed";
@@ -97,11 +98,21 @@ async function ensureProfile(admin: AdminClient, user: User): Promise<ProfileRow
  * Exportada para poder probar el alta de perfil sin montar toda la sesión SSR.
  */
 export async function resolveSessionUser(admin: AdminClient, user: User): Promise<SessionUser | null> {
+  // `supabase-js` no lanza: devuelve `{ data, error }`, y `maybeSingle()` da
+  // `data: null, error: null` cuando no hay fila. El error se descartaba, así
+  // que un corte de lectura entraba por la misma puerta que «este usuario no
+  // tiene perfil»: se intentaba crearle uno y, si eso también fallaba, la
+  // aplicación le decía que su cuenta no tiene acceso. No es verdad, y manda a
+  // alguien con acceso a pedirle permisos a quien ya se los dio.
   let { data: profile } = await admin
     .from("profiles")
     .select("id, email, nombre, rol_label, iniciales, role, zona, activo")
     .eq("id", user.id)
-    .maybeSingle();
+    .maybeSingle()
+    .then((res) => {
+      if (res.error) throw new SessionProfileReadError(res.error.message);
+      return res;
+    });
 
   if (!profile) {
     profile = await ensureProfile(admin, user);
