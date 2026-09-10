@@ -102,11 +102,23 @@ export function assessCompensationReadiness(input: {
   const issues: string[] = [];
   const pendingTravelReferees: string[] = [];
 
+  // La preparación para exportar mira solo la tarima vigente: una liquidación
+  // huérfana —de un juez al que ya sustituyeron— no debe bloquear el envío de
+  // los recibos de quienes sí están en la tarima. Su importe sigue contando en
+  // los totales, que es otra cuenta.
+  //
+  // El filtro vivía en `summarizeCompensation`, o sea en el servidor. La
+  // pantalla de liquidación recalcula esto por su cuenta al editar una fila, y
+  // lo hacía con la lista entera: en cuanto se tocaba cualquier casilla, el
+  // juez fuera de tarima aparecía en «km pendientes» y el botón de exportar se
+  // apagaba, hasta recargar la página. El mismo tablero se contradecía.
+  const claims = input.claims.filter((claim) => !claim.offRoster);
+
   if (input.organizerIsClub && input.clubEmails.length === 0) {
     issues.push("Configura al menos un e-mail del club organizador.");
   }
 
-  for (const claim of input.claims) {
+  for (const claim of claims) {
     if (!isClaimTravelResolved(claim)) {
       pendingTravelReferees.push(claim.refereeName);
     }
@@ -121,8 +133,8 @@ export function assessCompensationReadiness(input: {
   const allTravelResolved = pendingTravelReferees.length === 0;
   const readyForExport =
     allTravelResolved &&
-    input.claims.length > 0 &&
-    input.claims.every((c) => c.financialComplete && c.totalAmount > 0) &&
+    claims.length > 0 &&
+    claims.every((c) => c.financialComplete && c.totalAmount > 0) &&
     (!input.organizerIsClub || input.clubEmails.length > 0);
 
   return {
