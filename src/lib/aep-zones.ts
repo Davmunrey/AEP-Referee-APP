@@ -33,8 +33,33 @@ const MACRO_NAME_BY_ID = Object.fromEntries(
   AEP_MACRO_ZONES.map((z) => [z.id, z.name]),
 ) as Record<AepMacroZoneId, string>;
 
+/**
+ * Clave de zona, sin acentos.
+ *
+ * Sin quitarlos, las DOS zonas cuyo nombre lleva tilde en español —Andalucía
+ * y Mediterráneo— no se reconocían escritas como se escriben: ni el mapa de
+ * alias casaba, ni el `includes("ANDALUCIA")` de más abajo, porque la Í no es
+ * una I.
+ *
+ * Y `zona` es texto libre en informes, propuestas y solicitudes de ascenso
+ * —la migración 013 no normalizó esas tablas—, así que una fila escrita a
+ * mano como «Andalucía» no la reconocía como suya su propio delegado. Es
+ * exactamente lo que `zonesMatch` existe para evitar.
+ *
+ * Peor en un perfil: `profileToSessionUser` guarda `resolveZoneCode(zona)`,
+ * así que un delegado con «Andalucía» en su ficha se queda sin zona
+ * resoluble y, con el filtro cerrado, sin ver nada.
+ *
+ * `normalizeProvinceKey` ya los quitaba para las provincias; esta se había
+ * quedado atrás.
+ */
 function normalizeZoneKey(raw: string): string {
-  return raw.trim().replace(/\s+/g, " ").toUpperCase();
+  return raw
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toUpperCase();
 }
 
 /** Etiquetas Excel y códigos históricos → id macro canónico. */
