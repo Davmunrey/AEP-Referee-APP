@@ -34,10 +34,19 @@ COMMENT ON COLUMN referees.domicilio_lat IS 'Latitud geocodificada del domicilio
 COMMENT ON COLUMN referees.domicilio_lng IS 'Longitud geocodificada del domicilio (caché de Nominatim).';
 
 -- (3) Índice único parcial: como MÁXIMO una propuesta pendiente por campeonato.
--- La columna se llama competition_id porque así nace en 001:88; el RENAME de la
--- 016 va guardado por un IF EXISTS sobre 'event_id' que en este repo nunca se
--- cumple, así que aquella migración solo tocó índices. El estado 'pendiente' es
--- el valor del enum approval_status (001).
+--
+-- La columna se llama competition_id O event_id según la base, y hay que
+-- averiguarlo en tiempo de ejecución. Esta migración daba por hecho lo primero
+-- —«así nace en 001:88»— y la primera ejecución del workflow contra producción
+-- murió con «column a.competition_id does not exist»: aquella base se creó con
+-- una versión anterior de la 001, la que usaba event_id, y el RENAME de la 016
+-- nunca llegó a correr allí. Por eso existe la 016, y por eso la aplicación
+-- sondea el nombre en caliente (hasApprovalCompetitionColumn, en
+-- supabase-helpers.ts): las dos formas están vivas.
+--
+-- Así que aquí se hace lo mismo: se mira el catálogo y se compone el SQL con el
+-- nombre que realmente exista, prefiriendo competition_id si están los dos. El
+-- estado 'pendiente' es el valor del enum approval_status (001).
 --
 -- Antes de crear el índice hay que resolver duplicados PREEXISTENTES: si hubiera
 -- dos o más propuestas pendientes para el mismo campeonato, CREATE UNIQUE INDEX
@@ -64,21 +73,49 @@ COMMENT ON TABLE approval_proposals_duplicadas_034 IS
 ALTER TABLE approval_proposals_duplicadas_034 ENABLE ROW LEVEL SECURITY;
 
 -- Idempotente: tras la primera pasada no quedan duplicados, así que el DELETE no
--- afecta a ninguna fila y no se archiva nada nuevo.
-WITH descartadas AS (
-  DELETE FROM approval_proposals a
-  USING approval_proposals b
-  WHERE a.status = 'pendiente'
-    AND b.status = 'pendiente'
-    AND a.competition_id = b.competition_id
-    AND (
-      a.submitted_at < b.submitted_at
-      OR (a.submitted_at = b.submitted_at AND a.id < b.id)
+-- afecta a ninguna fila y no se archiva nada nuevo. El índice, por el IF NOT
+-- EXISTS, tampoco se recrea.
+DO $migracion034$
+DECLARE
+  columna_campeonato TEXT;
+BEGIN
+  SELECT column_name INTO columna_campeonato
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'approval_proposals'
+    AND column_name IN ('competition_id', 'event_id')
+  ORDER BY (column_name = 'competition_id') DESC
+  LIMIT 1;
+
+  IF columna_campeonato IS NULL THEN
+    RAISE EXCEPTION
+      'approval_proposals no tiene ni competition_id ni event_id: el esquema no es el que esperan ni la 001 ni la 016.';
+  END IF;
+
+  EXECUTE format($plantilla$
+    WITH descartadas AS (
+      DELETE FROM approval_proposals a
+      USING approval_proposals b
+      WHERE a.status = 'pendiente'
+        AND b.status = 'pendiente'
+        AND a.%1$I = b.%1$I
+        AND (
+          a.submitted_at < b.submitted_at
+          OR (a.submitted_at = b.submitted_at AND a.id < b.id)
+        )
+      RETURNING a.*
     )
-  RETURNING a.*
-)
-INSERT INTO approval_proposals_duplicadas_034 (fila)
-SELECT to_jsonb(descartadas) FROM descartadas;
+    INSERT INTO approval_proposals_duplicadas_034 (fila)
+    SELECT to_jsonb(descartadas) FROM descartadas
+  $plantilla$, columna_campeonato);
+
+  EXECUTE format(
+    $plantilla$
+      CREATE UNIQUE INDEX IF NOT EXISTS approval_proposals_one_pending
+        ON approval_proposals (%1$I)
+        WHERE status = 'pendiente'
+    $plantilla$, columna_campeonato);
+END $migracion034$;
 
 -- Deja constancia en el log del workflow de cuántas se apartaron.
 DO $$
@@ -89,7 +126,3 @@ BEGIN
     RAISE NOTICE 'Migración 034: % propuestas pendientes duplicadas archivadas en approval_proposals_duplicadas_034 (revisar antes de vaciar).', n;
   END IF;
 END $$;
-
-CREATE UNIQUE INDEX IF NOT EXISTS approval_proposals_one_pending
-  ON approval_proposals (competition_id)
-  WHERE status = 'pendiente';

@@ -101,12 +101,15 @@ const migrationFiles = readdirSync(migrationsDir)
 const sqlPorFichero = migrationFiles.map((f) => readFileSync(join(migrationsDir, f), "utf8"));
 const sqlTodo = sqlPorFichero.join("\n");
 
-const politicasPermisivas = [];
-for (const sql of sqlPorFichero) {
-  const sinComentarios = sql
+const sinComentariosSql = (sql) =>
+  sql
     .split(/\r?\n/)
     .filter((line) => !line.trim().startsWith("--"))
     .join("\n");
+
+const politicasPermisivas = [];
+for (const sql of sqlPorFichero) {
+  const sinComentarios = sinComentariosSql(sql);
   const re = /CREATE\s+POLICY\s+"?([A-Za-z0-9_]+)"?\s+ON\s+(?:public\.)?([A-Za-z0-9_]+)([\s\S]*?);/gi;
   let m;
   while ((m = re.exec(sinComentarios)) !== null) {
@@ -117,8 +120,30 @@ for (const sql of sqlPorFichero) {
   }
 }
 
+// Una migración puede retirar las políticas de una tabla SIN nombrarlas, con un
+// barrido sobre pg_policies. Es la forma fuerte: la 037 pasó a ella justamente
+// porque producción tiene nombres que no son los del repositorio, y un DROP por
+// nombre que no encuentra nada deja la tabla abierta informando de éxito.
+//
+// Se reconoce el barrido por su SQL, no por un comentario: hace falta el DROP
+// dinámico Y la lista de tablas del FOREACH. Si falta cualquiera de los dos no
+// se da por retirada ninguna política, que es como debe fallar esto.
+const tablasBarridas = new Set();
+for (const sql of sqlPorFichero) {
+  const sinComentarios = sinComentariosSql(sql);
+  if (!/EXECUTE\s+format\(\s*'DROP\s+POLICY\s+%I\s+ON\s+public\.%I'/i.test(sinComentarios)) {
+    continue;
+  }
+  const lista = sinComentarios.match(/FOREACH\s+\w+\s+IN\s+ARRAY\s+ARRAY\[([\s\S]*?)\]/i);
+  if (!lista) continue;
+  for (const [, tabla] of lista[1].matchAll(/'([A-Za-z0-9_]+)'/g)) {
+    tablasBarridas.add(tabla);
+  }
+}
+
 for (const { nombre, tabla } of politicasPermisivas) {
   if (RLS_TABLAS_ABIERTAS_OK.has(tabla)) continue;
+  if (tablasBarridas.has(tabla)) continue;
   const dropped = new RegExp(
     `DROP\\s+POLICY\\s+(?:IF\\s+EXISTS\\s+)?"?${nombre}"?\\s+ON`,
     "i",
