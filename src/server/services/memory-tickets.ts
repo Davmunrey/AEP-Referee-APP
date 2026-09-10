@@ -235,7 +235,12 @@ export const ticketService = {
     if (status === "resuelto") {
       ticket.resolvedBy = user.nombre;
       ticket.resolvedAt = now;
-      if (resolutionNote !== undefined) ticket.resolutionNote = resolutionNote;
+      // Siempre explícita, igual que el twin de Supabase: resolver sin nota
+      // BORRA la anterior. Dejarla intacta resucitaba la nota de una
+      // resolución previa —el ticket se reabrió y se vuelve a resolver, o
+      // quien resuelve vacía a propósito el recuadro, que la pantalla trae
+      // relleno con la nota anterior— como si fuera la de ahora.
+      ticket.resolutionNote = resolutionNote;
     }
     return mapTicket(ticket, { withComments: true });
   },
