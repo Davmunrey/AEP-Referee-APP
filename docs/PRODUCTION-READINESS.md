@@ -15,7 +15,8 @@ Incluye:
 - `audit:prod`
 - `audit:security`
 - lint
-- tests (354; 355 con 1 skip)
+- typecheck (`tsc --noEmit`, tests incluidos)
+- tests
 - build
 
 ## Gate browser
