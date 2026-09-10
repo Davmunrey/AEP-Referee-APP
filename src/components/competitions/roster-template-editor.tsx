@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { selectFieldClass } from "@/lib/design-tokens";
-import { swapCollapsedIndexes } from "./roster-session-helpers";
+import { nextSessionId, swapCollapsedIndexes } from "./roster-session-helpers";
 import { formatTimeRange, parseTimeRange } from "@/lib/time-range";
 import { cn } from "@/lib/utils";
 import {
@@ -27,11 +27,6 @@ export interface RosterTemplateEditorProps {
   onSave: (template: RosterSession[]) => void;
   onCancel: () => void;
   saving?: boolean;
-}
-
-function nextSessionId(sessions: RosterSession[]): string {
-  const nums = sessions.map((s) => parseInt(s.sesion.replace(/\D/g, ""), 10)).filter((n) => !Number.isNaN(n));
-  return `S${nums.length ? Math.max(...nums) + 1 : 1}`;
 }
 
 // Lunes a domingo (las competiciones suelen ser viernes-domingo, pero dejamos todos).
