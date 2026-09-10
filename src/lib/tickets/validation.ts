@@ -36,6 +36,41 @@ export const ALLOWED_CONTENT_TYPES: readonly string[] = [
   "image/gif",
 ];
 
+/**
+ * El tipo REAL de una imagen, leído de sus primeros bytes, o `null` si no es
+ * ninguno de los cuatro permitidos.
+ *
+ * `File.type` lo pone el navegador —casi siempre a partir de la extensión— y
+ * viaja en la petición, así que quien sube el fichero elige lo que dice ser.
+ * Confiar en él significa que el bucket acepta cualquier contenido con solo
+ * llamarlo `.png`, y que ese contenido se guarda y se sirve declarado como
+ * imagen. El repositorio ya no se fiaba de eso para los PDF de importación
+ * (`hasPdfSignature`, en `import-security.ts`); esta ruta se había quedado
+ * atrás.
+ *
+ * Se devuelve el tipo detectado en vez de un sí/no para poder GUARDAR ese, no
+ * el declarado: así el `Content-Type` con el que se sirve el fichero dice la
+ * verdad, y una foto real con la extensión cambiada —que pasa más de lo que
+ * parece— sigue subiéndose en vez de rechazarse.
+ */
+export function detectImageType(bytes: ArrayBuffer | Uint8Array): string | null {
+  const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const empieza = (...esperados: number[]) =>
+    b.length >= esperados.length && esperados.every((v, i) => b[i] === v);
+  const texto = (desde: number, valor: string) =>
+    b.length >= desde + valor.length &&
+    [...valor].every((c, i) => b[desde + i] === c.charCodeAt(0));
+
+  // JPEG: FF D8 FF. PNG: la firma de 8 bytes completa.
+  if (empieza(0xff, 0xd8, 0xff)) return "image/jpeg";
+  if (empieza(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return "image/png";
+  // GIF87a / GIF89a.
+  if (texto(0, "GIF87a") || texto(0, "GIF89a")) return "image/gif";
+  // WEBP es un contenedor RIFF: "RIFF" ...tamaño... "WEBP".
+  if (texto(0, "RIFF") && texto(8, "WEBP")) return "image/webp";
+  return null;
+}
+
 export function isTicketCategory(value: unknown): value is TicketCategory {
   return typeof value === "string" && TICKET_CATEGORIES.includes(value as TicketCategory);
 }

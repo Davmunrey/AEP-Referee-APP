@@ -1,6 +1,6 @@
 // Extrae y valida los ficheros adjuntos de un multipart/form-data de tickets.
 // Se valida ANTES de leer los bytes/subir nada (tipo, tamaño y número máximo).
-import { type FileMeta, validateFiles } from "./validation";
+import { detectImageType, type FileMeta, validateFiles } from "./validation";
 import type { TicketFileInput } from "./service-types";
 
 export async function extractTicketFiles(
@@ -19,13 +19,25 @@ export async function extractTicketFiles(
   const error = validateFiles(metas);
   if (error) return { files: [], error };
 
+  // Segunda vuelta, ya con los bytes: el tipo que declara el navegador no
+  // prueba nada —lo elige quien sube el fichero—, así que se mira la firma y se
+  // guarda el tipo DETECTADO. Va después de `validateFiles` a propósito: el
+  // tamaño y el número se rechazan sin llegar a leer un solo byte.
   const files: TicketFileInput[] = [];
   for (const file of raw) {
+    const bytes = await file.arrayBuffer();
+    const tipoReal = detectImageType(bytes);
+    if (!tipoReal) {
+      return {
+        files: [],
+        error: `«${file.name}» no es una imagen JPG, PNG, WEBP o GIF, diga lo que diga su extensión.`,
+      };
+    }
     files.push({
       fileName: file.name,
-      contentType: file.type,
+      contentType: tipoReal,
       size: file.size,
-      bytes: await file.arrayBuffer(),
+      bytes,
     });
   }
   return { files, error: null };
