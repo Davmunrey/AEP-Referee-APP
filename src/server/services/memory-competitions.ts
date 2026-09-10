@@ -49,12 +49,10 @@ import {
 } from "@/server/store";
 import { buildKpis, healthHistory, parseSlotKey, syncCompetitionCoverage } from "./memory-helpers";
 import { getReferee } from "./memory-referees";
-import { zoneVisibilityFilter } from "@/lib/zone-scope";
+import { zoneScopeOf, zoneVisibilityFilter } from "@/lib/zone-scope";
 
 export async function getDashboard(user: SessionUser): Promise<DashboardPayload> {
   const store = getStore();
-  const userZone =
-    user.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
   // Ver `zone-scope`: una zona ilegible no es «sin restricción».
   const visibleEnZona = zoneVisibilityFilter(user);
   const competitions = [...store.competitions]
@@ -64,9 +62,13 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
   const scopedReferees = store.referees.filter((r) => visibleEnZona(r.zona));
   const scopedApprovals = store.approvals.filter((a) => visibleEnZona(a.zona));
   const scopedPromotions = store.promotions.filter((p) => visibleEnZona(p.zona));
-  const activity = userZone
-    ? store.activity.filter((item) => competitionNames.has(item.evento))
-    : store.activity;
+  // Ídem que el twin de Supabase, que usa `zoneScopeOf(user).kind === "all"`:
+  // con `userZone` una zona ilegible pasaba por «sin restricción» y el registro
+  // de actividad enseñaba los movimientos de todas las zonas.
+  const activity =
+    zoneScopeOf(user).kind === "all"
+      ? store.activity
+      : store.activity.filter((item) => competitionNames.has(item.evento));
   // Solo campeonatos no celebrados: los pasados inflaban KPIs, salud e
   // "insights" indefinidamente. Misma fórmula de cobertura que la analítica.
   const dashboardCompetitions = competitions.filter((c) => !isCompetitionPast(c));
