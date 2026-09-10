@@ -1,6 +1,9 @@
 -- Sanciones disciplinarias a jueces (duración, historial, aviso delegado zona).
 
-CREATE TYPE sanction_status AS ENUM ('activa', 'cumplida', 'revocada');
+DO $enum014$
+BEGIN
+  CREATE TYPE sanction_status AS ENUM ('activa', 'cumplida', 'revocada');
+EXCEPTION WHEN duplicate_object THEN NULL; END $enum014$;
 
 CREATE TABLE IF NOT EXISTS referee_sanctions (
   id TEXT PRIMARY KEY,

@@ -32,10 +32,29 @@ UPDATE competitions SET zona = 'N1' WHERE zona IN ('GAL', 'AST', 'CYL');
 UPDATE competitions SET zona = 'N2' WHERE zona IN ('PVA', 'ARA');
 
 -- Aprobaciones y ascensos (texto libre con FK implícita vía app)
-UPDATE approval_requests SET zona = 'SUR' WHERE zona IN ('AND');
-UPDATE approval_requests SET zona = 'LEV' WHERE zona IN ('VAL');
-UPDATE approval_requests SET zona = 'N1' WHERE zona IN ('GAL', 'AST', 'CYL');
-UPDATE approval_requests SET zona = 'N2' WHERE zona IN ('PVA', 'ARA');
+--
+-- La tabla de aprobaciones se llamó `approval_requests` en la base sobre la que
+-- corrió esta migración, y `approval_proposals` en la 001 tal y como está hoy
+-- en el repositorio. Escrito a pelo, este bloque hace que reproducir las
+-- migraciones desde cero muera aquí, que es justo la comprobación que habría
+-- cazado el fallo de la 034 antes de llegar a producción. Se usa el nombre que
+-- exista y, si no existe ninguno, no se toca nada.
+DO $migracion009$
+DECLARE
+  tabla TEXT := COALESCE(
+    to_regclass('public.approval_requests')::TEXT,
+    to_regclass('public.approval_proposals')::TEXT
+  );
+BEGIN
+  IF tabla IS NULL THEN
+    RAISE NOTICE 'Migración 009: no hay tabla de aprobaciones que remapear.';
+    RETURN;
+  END IF;
+  EXECUTE format('UPDATE %s SET zona = ''SUR'' WHERE zona IN (''AND'')', tabla);
+  EXECUTE format('UPDATE %s SET zona = ''LEV'' WHERE zona IN (''VAL'')', tabla);
+  EXECUTE format('UPDATE %s SET zona = ''N1'' WHERE zona IN (''GAL'', ''AST'', ''CYL'')', tabla);
+  EXECUTE format('UPDATE %s SET zona = ''N2'' WHERE zona IN (''PVA'', ''ARA'')', tabla);
+END $migracion009$;
 
 UPDATE promotion_requests SET zona = 'SUR' WHERE zona IN ('AND');
 UPDATE promotion_requests SET zona = 'LEV' WHERE zona IN ('VAL');
