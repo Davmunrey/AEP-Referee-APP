@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SessionUser } from "@/lib/types";
+import type { Referee, RefereeLevel, RefereeStatus, SessionUser } from "@/lib/types";
 
 /**
  * El censo de un delegado cuya zona no se reconoce.
@@ -18,7 +18,14 @@ import type { SessionUser } from "@/lib/types";
  * «la alternativa era enseñarle el censo y el calendario de todas las zonas».
  */
 
-const filas = [
+const filas: {
+  id: string;
+  nombre: string;
+  zona: string;
+  nivel: RefereeLevel;
+  estado: RefereeStatus;
+  disp: boolean;
+}[] = [
   { id: "j-1", nombre: "Ana Ruiz", zona: "CENTRO", nivel: "Nacional", estado: "Activo", disp: true },
   { id: "j-2", nombre: "Luis Soto", zona: "ANDALUCIA", nivel: "Regional", estado: "Activo", disp: true },
   { id: "j-3", nombre: "Eva Pons", zona: "MEDITERRANEO", nivel: "Regional", estado: "Activo", disp: true },
@@ -125,12 +132,14 @@ describe("el backend en memoria dice lo mismo", () => {
     const store = getStore();
     store.referees.length = 0;
     store.referees.push(
-      ...filas.map((f) => ({
-        ...f,
-        eventos: 0,
-        ultimo: "",
-        iniciales: "XX",
-      })),
+      ...filas.map(
+        (f): Referee => ({
+          ...f,
+          eventos: 0,
+          ultimo: "",
+          iniciales: "XX",
+        }),
+      ),
     );
   });
 
