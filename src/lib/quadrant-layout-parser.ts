@@ -1,6 +1,7 @@
 import { ROLE_LABELS } from "@/lib/roster-template";
 import { compareSessions } from "@/lib/session-order";
 import type { Referee, RoleKey, RosterSession, SlotFlags } from "@/lib/types";
+import { sesionesFueraDePlantillaWarning } from "@/lib/quadrant-parser";
 import type { ParsedQuadrant, QuadrantAssignmentCandidate } from "@/lib/quadrant-parser";
 
 /**
@@ -229,6 +230,7 @@ export function parseQuadrantLayout(
   const usedSlots = new Set<string>();
 
   const templateBySession = new Map(template.map((s) => [s.sesion.toUpperCase(), s]));
+  const fueraDePlantilla = new Set<string>();
 
   // Separa páginas por form-feed (pdftotext) o cae a una sola.
   const pages = text.includes("\f") ? text.split("\f") : [text];
@@ -323,7 +325,10 @@ export function parseQuadrantLayout(
         const sessionKey = sessionLabel.toUpperCase();
         const tpl = templateBySession.get(sessionKey);
         if (!tpl) {
-          warnings.push(`Sesión ${sessionLabel} no existe en la plantilla; se omite.`);
+          // Una vez por sesión, no por celda: esto vive dentro del bucle de
+          // columnas de CADA fila de rol, así que la vista previa repetía la
+          // misma frase una vez por fila (veinte, en el cuadrante Junior real).
+          fueraDePlantilla.add(sessionLabel);
           continue;
         }
         const roleSeq = expandRoles(mode === "pesaje" ? tpl.pesajeRoles ?? [] : tpl.roles);
@@ -363,6 +368,10 @@ export function parseQuadrantLayout(
         roleIndex++;
       }
     }
+  }
+
+  if (fueraDePlantilla.size > 0) {
+    warnings.push(sesionesFueraDePlantillaWarning([...fueraDePlantilla]));
   }
 
   if (!emittedAny) {
