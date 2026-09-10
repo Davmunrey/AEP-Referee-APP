@@ -1,4 +1,8 @@
 import { ROLE_LABELS, parseSlotKey } from "@/lib/roster-template";
+// El número de la sesión se lee en un solo sitio: `sessionOrder` toma el PRIMER
+// grupo de dígitos. Aquí había una copia que concatenaba todos, así que «Sesión
+// 2 grupo 3» valía 23 y el historial del juez ponía esa sesión detrás de la 10.
+import { sessionOrder } from "@/lib/session-order";
 import type {
   Competition,
   RefereeCompetitionHistoryItem,
@@ -26,11 +30,6 @@ const ROLE_ORDER: RoleKey[] = [
   "mesa",
   "liftingcast",
 ];
-
-function sessionOrder(session: string): number {
-  const number = Number(session.replace(/\D/g, ""));
-  return Number.isFinite(number) && number > 0 ? number : Number.MAX_SAFE_INTEGER;
-}
 
 function roleOrder(roleKey: RoleKey): number {
   const index = ROLE_ORDER.indexOf(roleKey);

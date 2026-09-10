@@ -1,6 +1,7 @@
 import type { AssignmentsMap, RosterSession, Zone } from "@/lib/types";
 import { zoneUiName } from "@/lib/aep-zones";
 import { enumerateSlotKeys, parseSlotKey } from "@/lib/roster-template";
+import { sessionOrder } from "@/lib/session-order";
 
 export function zoneName(zones: Zone[], code: string) {
   return zoneUiName(zones.find((z) => z.code === code)?.code ?? code);
@@ -126,4 +127,21 @@ export function swapCollapsedIndexes(collapsed: Set<number>, a: number, b: numbe
   if (aCollapsed) next.add(b);
   if (bCollapsed) next.add(a);
   return next;
+}
+
+/**
+ * Siguiente código de sesión libre.
+ *
+ * El número lo lee `sessionOrder`, que toma el PRIMER grupo de dígitos, igual
+ * que el cuadrante en Excel y en HTML. El editor lo hacía con
+ * `parseInt(sesion.replace(/\D/g, ""))`, que los concatena: junto a una sesión
+ * escrita a mano como «S1 - grupo 2» —el campo es texto libre— la siguiente
+ * salía «S13» en vez de «S2», y a partir de ahí el número inventado decidía
+ * también el orden de las sesiones en el cuadrante.
+ */
+export function nextSessionId(sessions: RosterSession[]): string {
+  const nums = sessions
+    .map((s) => sessionOrder(s.sesion))
+    .filter((n) => n < Number.MAX_SAFE_INTEGER);
+  return `S${nums.length ? Math.max(...nums) + 1 : 1}`;
 }

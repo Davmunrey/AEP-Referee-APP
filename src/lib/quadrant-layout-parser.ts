@@ -1,4 +1,5 @@
 import { ROLE_LABELS } from "@/lib/roster-template";
+import { compareSessions } from "@/lib/session-order";
 import type { Referee, RoleKey, RosterSession, SlotFlags } from "@/lib/types";
 import type { ParsedQuadrant, QuadrantAssignmentCandidate } from "@/lib/quadrant-parser";
 
@@ -369,11 +370,15 @@ export function parseQuadrantLayout(
   }
 
   // Orden estable: por sesión y rol para una preview legible.
-  candidates.sort((a, b) => {
-    const sa = Number(a.session.replace(/\D/g, "")) || 0;
-    const sb = Number(b.session.replace(/\D/g, "")) || 0;
-    return sa - sb || a.slotKey?.localeCompare(b.slotKey ?? "") || 0;
-  });
+  //
+  // Con `Number(session.replace(/\D/g, ""))` esto leía «Sesión 2 grupo 3» como
+  // 23 —detrás de la sesión 10— y ponía las sesiones sin número las PRIMERAS,
+  // por el `|| 0`. `compareSessions` es la misma regla que usan el cuadrante en
+  // Excel y en HTML: primer grupo de dígitos, y sin número al final.
+  candidates.sort(
+    (a, b) =>
+      compareSessions(a.session, b.session) || (a.slotKey?.localeCompare(b.slotKey ?? "") ?? 0),
+  );
 
   return { candidates, warnings };
 }
