@@ -1,6 +1,6 @@
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { ExamResult, RefereeExam } from "@/lib/types";
 
@@ -17,7 +17,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!canManageJudges(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const visibleExam = (await dataService.getExams(undefined, user)).find((exam) => exam.id === id);
+  // La lectura que decide el 404 iba suelta: si se caía, salía de Next como un
+  // 500 sin sobre `{ error }` y sin una línea en el log que dijera cuál era.
+  const visibles = await readOrError("exams.detail", "No se pudieron cargar los exámenes", () =>
+    dataService.getExams(undefined, user),
+  );
+  if (visibles instanceof Response) return visibles;
+  const visibleExam = visibles.find((exam) => exam.id === id);
   if (!visibleExam) return jsonError("Examen no encontrado", 404);
   const body = (await request.json().catch(() => null)) as {
     resultado?: ExamResult;
@@ -85,7 +91,13 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!canAdminJudges(user)) return jsonError("Sin permiso", 403);
 
   const { id } = await context.params;
-  const visibleExam = (await dataService.getExams(undefined, user)).find((exam) => exam.id === id);
+  // La lectura que decide el 404 iba suelta: si se caía, salía de Next como un
+  // 500 sin sobre `{ error }` y sin una línea en el log que dijera cuál era.
+  const visibles = await readOrError("exams.detail", "No se pudieron cargar los exámenes", () =>
+    dataService.getExams(undefined, user),
+  );
+  if (visibles instanceof Response) return visibles;
+  const visibleExam = visibles.find((exam) => exam.id === id);
   if (!visibleExam) return jsonError("Examen no encontrado", 404);
   try {
     const ok = await dataService.deleteExam(id);

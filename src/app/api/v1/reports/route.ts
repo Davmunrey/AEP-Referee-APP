@@ -20,12 +20,13 @@ export async function GET(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { searchParams } = new URL(request.url);
-  return jsonOk(
-    await dataService.getReports(
-      searchParams.get("refereeId") ?? undefined,
-      user,
-    ),
+  // Ver `competitions.GET`: sin esto el fallo de lectura salía como un 500 sin
+  // sobre y sin nombre en el log.
+  const leido = await readOrError("reports.GET", "No se pudieron cargar los informes", () =>
+    dataService.getReports(searchParams.get("refereeId") ?? undefined, user),
   );
+  if (leido instanceof Response) return leido;
+  return jsonOk(leido);
 }
 
 export async function POST(request: Request) {

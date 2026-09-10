@@ -8,7 +8,13 @@ import type { RefereeLevel } from "@/lib/types";
 export async function GET() {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
-  return jsonOk(await dataService.getPromotions(user));
+  // Ver `competitions.GET`: sin esto el fallo de lectura salía como un 500 sin
+  // sobre y sin nombre en el log.
+  const leido = await readOrError("promotions.GET", "No se pudieron cargar los ascensos", () =>
+    dataService.getPromotions(user),
+  );
+  if (leido instanceof Response) return leido;
+  return jsonOk(leido);
 }
 
 export async function POST(request: Request) {
