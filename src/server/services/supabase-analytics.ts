@@ -139,10 +139,41 @@ export const analyticsService = {
     // entero. `zoneVisibilityFilter` separa los tres casos.
     const visibleEnZona = zoneVisibilityFilter(user);
 
-    let competitionQuery = supabase.from("competitions").select("*").order("fecha", { ascending: true });
-    let refereeQuery = supabase.from("referees").select("estado, disp, zona");
-    const approvalQuery = supabase.from("approval_proposals").select("status, zona");
-    const promotionQuery = supabase.from("promotion_requests").select("status, zona");
+    // El `.order("id")` de cada una no es cosmético: es el desempate que hace
+    // determinista el paginado de más abajo. `OFFSET`/`LIMIT` sobre una lectura
+    // sin orden total no garantiza nada entre página y página —Postgres puede
+    // devolver las filas como le convenga—, así que una escritura concurrente,
+    // o simplemente un plan distinto, hace que una fila salga dos veces y otra
+    // no salga ninguna. Comprobado contra un PostgreSQL de verdad: 2500 filas
+    // paginadas de mil en mil con una escritura en medio devolvieron 300
+    // repetidas y se dejaron 300 sin devolver.
+    //
+    // Y esto es la portada: de aquí salen «jueces activos», «pendientes de
+    // aprobación» y la cobertura de la temporada. Un número mal no se ve como
+    // un error, se ve como un dato.
+    //
+    // Las demás lecturas paginadas de la aplicación ya lo llevan
+    // (competitions por fecha+id, referee_reports por created_at+id,
+    // approval_proposals por submitted_at+id); estas cuatro se habían quedado
+    // atrás, y `referees`, `approval_proposals` y `promotion_requests` ni
+    // siquiera pedían un orden.
+    let competitionQuery = supabase
+      .from("competitions")
+      .select("*")
+      .order("fecha", { ascending: true })
+      .order("id", { ascending: true });
+    let refereeQuery = supabase
+      .from("referees")
+      .select("estado, disp, zona")
+      .order("id", { ascending: true });
+    const approvalQuery = supabase
+      .from("approval_proposals")
+      .select("status, zona")
+      .order("id", { ascending: true });
+    const promotionQuery = supabase
+      .from("promotion_requests")
+      .select("status, zona")
+      .order("id", { ascending: true });
 
     if (userZone) {
       // competitions.zona y referees.zona son FK a códigos canónicos: `.eq` es
