@@ -710,7 +710,16 @@ export const rosterService = {
         .from("approval_proposals")
         .update({ assignments, submitted_at: now, submitted_by: actor, ...submitterId })
         .eq("id", existing.id);
-      if (updateError) return undefined;
+      // `return undefined` acababa en «No se pudo enviar la propuesta» con un
+      // 500 y sin una línea en el log: ni quien envía sabe qué pasó ni queda
+      // rastro para averiguarlo. La lectura de aquí al lado ya lo hacía bien.
+      if (updateError) {
+        console.error("[roster.submit.actualizar]", competitionId, updateError.message);
+        throw new UserFacingServiceError(
+          "No se pudo actualizar la propuesta pendiente. No se ha enviado nada; vuelve a intentarlo.",
+          409,
+        );
+      }
     } else {
       const { error: insertError } = await supabase.from("approval_proposals").insert({
         // randomUUID: dos submits en el mismo milisegundo colisionaban en PK.
@@ -725,8 +734,25 @@ export const rosterService = {
         assignments,
       });
       // Si el insert falla no marcamos la competición como "Propuesta enviada":
-      // dejaríamos un estado enviado sin propuesta real que aprobar.
-      if (insertError) return undefined;
+      // dejaríamos un estado enviado sin propuesta real que aprobar. Pero el
+      // motivo no puede perderse por el camino, y uno de ellos tiene nombre: la
+      // migración 034 creó `approval_proposals_one_pending`, un índice único
+      // parcial sobre `competition_id WHERE status = 'pendiente'`. Dos envíos a
+      // la vez —dos delegados, o un doble clic— chocan ahí con 23505, y eso no
+      // es «no se pudo»: es que la propuesta ya está enviada.
+      if (insertError) {
+        if (insertError.code === "23505") {
+          throw new UserFacingServiceError(
+            "Otro usuario acaba de enviar la propuesta de este campeonato. Recarga la tarima para verla.",
+            409,
+          );
+        }
+        console.error("[roster.submit.crear]", competitionId, insertError.message);
+        throw new UserFacingServiceError(
+          "No se pudo crear la propuesta. No se ha enviado nada; vuelve a intentarlo.",
+          409,
+        );
+      }
     }
     const { error: stateError } = await supabase
       .from("competitions")
