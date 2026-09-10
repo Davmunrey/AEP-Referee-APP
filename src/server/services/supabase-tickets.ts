@@ -180,10 +180,17 @@ export const ticketService = {
   getTickets: async ({ user, status }: GetTicketsInput): Promise<SupportTicket[]> => {
     const supabase = db();
     const baseQuery = () => {
+      // `updated_at` no desempata, y aquí es además la peor clave posible para
+      // paginar a secas: comentar un ticket la reescribe a `now()` justamente
+      // para subirlo al principio de la lista. Es decir, la propia bandeja
+      // mueve filas entre páginas mientras se pagina, y sin orden total eso
+      // devuelve tickets repetidos y se deja otros fuera sin decir nada.
+      // El `id` es la clave primaria: fija el orden dentro de un mismo minuto.
       let query = supabase
         .from("support_tickets")
         .select("*")
-        .order("updated_at", { ascending: false });
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false });
       if (!canAdminTickets(user)) query = query.eq("created_by_id", user.id);
       if (status) query = query.eq("status", status);
       return query;
