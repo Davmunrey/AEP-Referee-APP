@@ -1,4 +1,5 @@
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
+import { zoneScopeOf } from "@/lib/zone-scope";
 import { computeJudgeProfile } from "@/lib/judge-stats";
 import { buildRefereeCompetitionHistory } from "@/lib/referee-competition-history";
 import type {
@@ -95,12 +96,17 @@ export const refereeService = {
     // y la paginación duplicaría uno y se saltaría otro.
     let query = supabase.from("referees").select("*").order("nombre").order("id");
 
-    const userZone =
-      params?.user?.role === "delegado_zona" && params.user.zona
-        ? resolveZoneCode(params.user.zona)
-        : undefined;
-    if (userZone) {
-      query = query.eq("zona", userZone);
+    // Fail-closed, como el calendario y los exámenes: `undefined` significaba
+    // dos cosas que no son la misma —«este usuario no tiene que ver una parte»
+    // y «es delegado de zona pero su zona NO se reconoce»— y las dos se
+    // quedaban sin filtro. Un delegado con la zona en blanco o ilegible en su
+    // perfil leía el censo entero, con el teléfono, el domicilio y las notas de
+    // todos los jueces de España. `zoneScopeOf` separa los tres casos; es lo
+    // que ya usan los campeonatos y el panel.
+    const scope = zoneScopeOf(params?.user);
+    if (scope.kind === "unresolved") return [];
+    if (scope.kind === "zone") {
+      query = query.eq("zona", scope.code);
     }
 
     if (params?.zona && params.zona !== "TODAS") {
