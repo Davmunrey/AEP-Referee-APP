@@ -24,8 +24,6 @@ export async function getAnalytics(
 ): Promise<AnalyticsPayload> {
   const store = getStore();
   const competitions = await getCompetitions(user);
-  const userZone =
-    user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
   // Ver `zone-scope`: una zona ilegible no es «sin restricción».
   const visibleEnZona = zoneVisibilityFilter(user);
   const scopedReferees = store.referees.filter((r) => visibleEnZona(r.zona));
@@ -99,10 +97,12 @@ export async function getAnalytics(
     .filter(Boolean)
     .sort((a, b) => (b!.assignedCompetitions - a!.assignedCompetitions) || (b!.assignedSlots - a!.assignedSlots) || a!.nombre.localeCompare(b!.nombre, "es"))
     .slice(0, 5) as AnalyticsPayload["topReferees"];
-  const approvalsForYear = (userZone
-    ? store.approvals.filter((a) => resolveZoneCode(a.zona) === userZone)
-    : store.approvals
-  ).filter((a) => yearFromIso(a.submittedAt) === selectedYear);
+  // Como el twin de Supabase: `userZone` mezclaba «sin restricción» con
+  // «delegado de zona cuya zona no se reconoce», y el segundo se quedaba con
+  // las propuestas de todas las zonas.
+  const approvalsForYear = store.approvals
+    .filter((a) => visibleEnZona(a.zona))
+    .filter((a) => yearFromIso(a.submittedAt) === selectedYear);
   const reviewed = approvalsForYear.filter((a) => a.status !== "pendiente").length;
   const rejected = approvalsForYear.filter((a) => a.status === "rechazado").length;
   const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : 0;
