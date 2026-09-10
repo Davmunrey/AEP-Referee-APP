@@ -16,8 +16,22 @@
 -- Ejecutar en: Supabase Dashboard → SQL Editor. Idempotente.
 
 -- ── 1. Limpiar perfiles con IDs no-UUID (formato Clerk user_xxx) ─────
-DELETE FROM profiles
-WHERE id !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
+-- Solo tiene sentido mientras `profiles.id` sea de texto, que es como estaba
+-- cuando esto se ejecutó a mano. En la 001 tal y como está hoy en el
+-- repositorio ya nace `uuid`, y entonces el operador `!~` no existe para ese
+-- tipo y la migración revienta: no hay nada que limpiar porque el tipo ya
+-- impide guardar un id de Clerk.
+DO $migracion003$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'profiles'
+      AND column_name = 'id' AND data_type IN ('text', 'character varying')
+  ) THEN
+    DELETE FROM profiles
+    WHERE id !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
+  END IF;
+END $migracion003$;
 
 -- ── 2. Eliminar funciones SECURITY DEFINER y de Clerk (+ políticas) ──
 --    CASCADE elimina cualquier política RLS que dependa de ellas.
