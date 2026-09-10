@@ -20,6 +20,7 @@ import type {
   SanctionDurationPreset,
   Zone,
 } from "@/lib/types";
+import { formatBusinessDateTime } from "@/lib/business-date";
 
 interface RefereeSanctionsPanelProps {
   refereeId: string;
@@ -150,7 +151,7 @@ export function RefereeSanctionsPanel({
               <p className="mt-2 flex items-center gap-1 text-xs text-success">
                 <Bell className="h-3.5 w-3.5" />
                 Delegado notificado{" "}
-                {new Date(activeSanction.delegateNotify.notifiedAt).toLocaleString("es-ES")}
+                {formatBusinessDateTime(activeSanction.delegateNotify.notifiedAt)}
               </p>
             )}
           </div>
