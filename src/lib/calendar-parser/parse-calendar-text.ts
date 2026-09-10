@@ -261,8 +261,18 @@ export function parseAepCalendarText(input: string): ParsedCalendar {
     if (esEspaña && !zona) {
       warnings.push(zonaNoDeducidaWarning(nombre.trim(), localidad.trim()));
     }
-    if (esEspaña && !dates.start) {
-      warnings.push(fechaPendienteWarning(nombre.trim(), block));
+    // `pendiente` es del lector: dice que la fecha NO es exacta. Solo se
+    // avisaba cuando además faltaba, así que un rango de mes a mes —«oct-nov»,
+    // que se resuelve al 1 del primero y al último del segundo— se importaba
+    // como un campeonato de dos meses y nada lo decía.
+    if (esEspaña && (dates.pendiente || !dates.start)) {
+      warnings.push(
+        fechaPendienteWarning(
+          nombre.trim(),
+          block,
+          dates.start && dates.end ? { inicio: dates.start, fin: dates.end } : undefined,
+        ),
+      );
     }
 
     entries.push({
