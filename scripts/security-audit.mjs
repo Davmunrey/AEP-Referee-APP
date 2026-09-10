@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { tablasVivas } from "./lib/migration-tables.mjs";
 
 // Avisos que NO bloquean la auditoría, cada uno con su motivo. Se revisan
 // cuando cambie alguna de las condiciones que los justifican.
@@ -89,9 +90,15 @@ if (!importSecurity.includes("MAX_SELECTED_KEYS")) {
 // con service_role desde el servidor, así que ninguna tabla con datos o
 // historial necesita política para `authenticated`.
 //
-// Excepciones deliberadas: `zones` y `regulation_rules` son datos de
-// referencia sin nada personal, y `app_sync_state` es lo único que el
-// navegador consulta (poll de versión para el refresco en vivo).
+// Excepción deliberada: `app_sync_state`, lo único que el navegador consulta
+// con la clave anónima (poll de versión para el refresco en vivo).
+//
+// `zones` y `regulation_rules` siguen aquí por su historia: se documentaron
+// como lecturas abiertas a propósito por ser datos de referencia sin nada
+// personal, pero hoy no tienen ninguna política, así que están cerradas como el
+// resto y nada las lee desde el navegador. Se conservan en la lista para que
+// volver a abrirlas —si algún día el navegador las necesitara— no exija además
+// tocar esta auditoría, no porque estén abiertas ahora.
 const RLS_TABLAS_ABIERTAS_OK = new Set(["zones", "regulation_rules", "app_sync_state"]);
 
 const migrationsDir = "supabase/migrations";
@@ -151,6 +158,38 @@ for (const { nombre, tabla } of politicasPermisivas) {
   if (!dropped) {
     fail("RLS-01", `${tabla}: política permisiva «${nombre}» para authenticated sin retirar`);
   }
+}
+
+// ── RLS-02: toda tabla que crean las migraciones acaba con RLS activada ─────
+// La clave anónima va en el navegador, así que una tabla sin RLS es una tabla
+// pública. Hoy las 23 la tienen, pero eso era una coincidencia afortunada: nada
+// lo exigía, y la que se olvidara no lo diría en ninguna parte —quedaría
+// legible, y según los privilegios por defecto de Supabase también escribible,
+// sin un solo error en los logs—.
+//
+// Se compara contra el conjunto FINAL de tablas: las que una migración
+// posterior borra no cuentan (device_tokens muere en la 028,
+// referee_availability en la 019).
+const tablasConRls = new Set();
+for (const sql of sqlPorFichero) {
+  const limpio = sinComentariosSql(sql);
+  for (const [, t] of limpio.matchAll(
+    /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?"?([A-Za-z0-9_]+)"?\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi,
+  )) {
+    tablasConRls.add(t);
+  }
+}
+// Activarla con SQL dinámico también vale, siempre que la tabla salga de una
+// lista escrita en el fichero: es lo que hace la 037 y es más robusto que
+// nombrarlas una a una.
+if (/EXECUTE\s+format\(\s*'ALTER\s+TABLE\s+public\.%I\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY'/i.test(
+  sqlPorFichero.map(sinComentariosSql).join("\n"),
+)) {
+  for (const t of tablasBarridas) tablasConRls.add(t);
+}
+for (const tabla of tablasVivas(sqlPorFichero)) {
+  if (tablasConRls.has(tabla)) continue;
+  fail("RLS-02", `${tabla}: se crea sin ENABLE ROW LEVEL SECURITY en ninguna migración`);
 }
 
 if (failures.length) {
