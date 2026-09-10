@@ -13,7 +13,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const scopeError = await assertCompetitionInUserZone(user, id);
   if (scopeError) return scopeError;
-  const confirmedIds = await dataService.getCompetitionAvailability(id);
+  // Ver `competitions.GET`: el servicio distingue a propósito «nadie ha
+  // confirmado» de «no se pudo leer», y aquí el segundo volvía a salir como un
+  // 500 sin sobre y sin nombre en el log.
+  const confirmedIds = await readOrError(
+    "availability.GET",
+    "No se pudieron cargar las confirmaciones",
+    () => dataService.getCompetitionAvailability(id),
+  );
+  if (confirmedIds instanceof Response) return confirmedIds;
   return jsonOk({ confirmedIds });
 }
 

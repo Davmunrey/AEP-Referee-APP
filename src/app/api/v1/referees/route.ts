@@ -2,7 +2,7 @@ import { zonesMatch } from "@/lib/aep-zones";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { stripRefereeListPII } from "@/lib/api/referee-scope";
-import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import {
   REFEREE_LEVELS,
   REFEREE_STATUSES,
@@ -16,13 +16,18 @@ export async function GET(request: Request) {
   const user = await requireApiUser();
   if (!isSessionUser(user)) return user;
   const { searchParams } = new URL(request.url);
-  const referees = await dataService.getReferees({
-    zona: searchParams.get("zona") ?? undefined,
-    nivel: searchParams.get("nivel") ?? undefined,
-    estado: searchParams.get("estado") ?? undefined,
-    q: searchParams.get("q") ?? undefined,
-    user,
-  });
+  // Ver `competitions.GET`: sin esto el fallo de lectura salía como un 500 sin
+  // sobre y sin nombre en el log.
+  const referees = await readOrError("referees.list.GET", "No se pudo cargar el censo", () =>
+    dataService.getReferees({
+      zona: searchParams.get("zona") ?? undefined,
+      nivel: searchParams.get("nivel") ?? undefined,
+      estado: searchParams.get("estado") ?? undefined,
+      q: searchParams.get("q") ?? undefined,
+      user,
+    }),
+  );
+  if (referees instanceof Response) return referees;
   return jsonOk(stripRefereeListPII(referees, user));
 }
 
