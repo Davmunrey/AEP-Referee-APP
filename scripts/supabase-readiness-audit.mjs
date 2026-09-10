@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { tablasVivas } from "./lib/migration-tables.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -128,9 +129,26 @@ if (failures.length === 0) {
     }
   }
 
-  for (const table of ["profiles", "referees", "competitions", "referee_reports"]) {
+  // La clave anónima va en el navegador: se prueba a leer con ella TODAS las
+  // tablas que dejan vivas las migraciones, no una lista escrita a mano.
+  //
+  // Antes eran cuatro de veintitrés, y la lista no había crecido con el
+  // esquema: quedaban fuera, entre otras, las tres de tickets —conversaciones
+  // de soporte en texto libre—, las liquidaciones y la bitácora.
+  //
+  // Dos límites que conviene tener presentes al leer un OK:
+  //   · Una tabla VACÍA pasa la prueba aunque esté abierta, porque no hay fila
+  //     que devolver. Por eso existe además RLS-02 en la auditoría estática,
+  //     que no depende de que haya datos.
+  //   · Un error no es un aprobado. Con RLS denegando, PostgREST devuelve lista
+  //     vacía, no error; cualquier otra cosa —tabla ausente, caché de esquema
+  //     rancia— se avisa en vez de tragarse en silencio.
+  for (const table of tablasVivas()) {
     const { data, error } = await anon.from(table).select("*").limit(1);
-    if (error) continue;
+    if (error) {
+      warn("RLS-02", `${table}: no se pudo comprobar la lectura anónima: ${error.message}`);
+      continue;
+    }
     if (Array.isArray(data) && data.length > 0) {
       fail("RLS-01", `${table}: anon puede leer filas; revisar políticas RLS`);
     }
