@@ -26,15 +26,53 @@
 -- normativa), y cerrarlas no aporta nada.
 --
 -- Idempotente.
+--
+-- Dos cosas que la primera redacción daba por sentadas y no lo son:
+--
+--   · Que las políticas se llamen como en el repositorio. Producción se creó
+--     con versiones anteriores de estas migraciones —lo mismo que dejó
+--     approval_proposals con event_id en vez de competition_id—, así que un
+--     DROP POLICY por nombre puede no encontrar nada y dejar la tabla abierta
+--     mientras la migración informa de éxito. Un agujero que se presenta como
+--     arreglado es peor que uno conocido, así que se quitan TODAS las políticas
+--     de estas cuatro tablas, se llamen como se llamen.
+--
+--   · Que las cuatro tablas existan. Un ALTER TABLE sobre una que falte aborta
+--     el fichero entero y se lleva por delante a la 038, que cierra el alta de
+--     cuentas. Cada tabla se trata por separado y las ausentes se anotan en el
+--     log del workflow.
 
-DROP POLICY IF EXISTS activity_select ON public.activity_log;
-DROP POLICY IF EXISTS history_access ON public.roster_history;
-DROP POLICY IF EXISTS auth_read_availability ON public.referee_availability;
-DROP POLICY IF EXISTS auth_write_availability ON public.referee_availability;
-DROP POLICY IF EXISTS app_config_select ON public.app_config;
+DO $migracion037$
+DECLARE
+  tabla    TEXT;
+  politica TEXT;
+  ausentes TEXT[] := ARRAY[]::TEXT[];
+  tocadas  INT := 0;
+BEGIN
+  FOREACH tabla IN ARRAY ARRAY[
+    'activity_log', 'roster_history', 'referee_availability', 'app_config'
+  ] LOOP
+    IF to_regclass('public.' || quote_ident(tabla)) IS NULL THEN
+      ausentes := ausentes || tabla;
+      CONTINUE;
+    END IF;
 
--- RLS sigue activada en las cuatro (001/018); sin políticas, deny-by-default.
-ALTER TABLE public.activity_log ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.roster_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.referee_availability ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+    FOR politica IN
+      SELECT policyname FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = tabla
+    LOOP
+      EXECUTE format('DROP POLICY %I ON public.%I', politica, tabla);
+      tocadas := tocadas + 1;
+    END LOOP;
+
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', tabla);
+  END LOOP;
+
+  RAISE NOTICE 'Migración 037: % políticas retiradas.', tocadas;
+
+  IF cardinality(ausentes) > 0 THEN
+    RAISE NOTICE
+      'Migración 037: estas tablas no existen en esta base y no se han tocado: %. Si deberían existir, falta alguna migración anterior.',
+      array_to_string(ausentes, ', ');
+  END IF;
+END $migracion037$;
