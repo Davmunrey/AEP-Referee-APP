@@ -52,7 +52,7 @@ Al elegir un hueco, la lista de jueces se ordena por **idoneidad** para ese slot
 ## Ayuda y documentación in-app
 
 - Widget flotante (`HelpWidget`): primeros pasos por rol (quick-start) + buscador local sobre la base de conocimiento. 100 % en cliente, sin IA ni red.
-- Base de conocimiento: `src/lib/help/knowledge-base.ts` (~35 entradas).
+- Base de conocimiento: `src/lib/help/knowledge-base.ts` (~40 entradas).
 - Documentación web: `/docs` (pública en parte legal; guía operativa con sesión).
 - Normativa: `/regulations` — Guía AEP 2026, plazas en tarima, compensación jueces, reglamento IPF.
 
@@ -132,10 +132,21 @@ El XLSX del registro trae varias hojas de arbitrajes por año natural
 
 | Barrel | Módulos de dominio |
 |---|---|
-| `supabase-service.ts` | `supabase-referees`, `supabase-competitions`, `supabase-roster`, `supabase-analytics`, `supabase-exams`, `supabase-helpers` |
-| `memory-service.ts` | `memory-referees`, `memory-competitions`, `memory-analytics`, `memory-admin`, `memory-helpers` |
+| `supabase-service.ts` | `supabase-referees`, `supabase-competitions`, `supabase-roster`, `supabase-analytics`, `supabase-exams`, `supabase-compensation`, `supabase-tickets`, `supabase-helpers` |
+| `memory-service.ts` | `memory-referees`, `memory-competitions`, `memory-analytics`, `memory-admin`, `memory-compensation`, `memory-tickets`, `memory-helpers` |
 
-Todos los archivos ≤ 500 líneas. Módulos reciben funciones como args para evitar imports circulares.
+Fuera de los barrels: `referee-sanctions.ts` (sanciones, solo Supabase), `admin-users.ts` / `admin-audit.ts` (gestión de cuentas) e `import-judges-registry.ts` (censo XLSX). Los módulos reciben funciones como argumentos para evitar imports circulares.
+
+**Paridad memoria ↔ Supabase.** El backend en memoria (dev local y capturas de documentación con `AEP_DOCS_CAPTURE=1`) debe comportarse igual que el de Supabase: mismas validaciones, mismos errores y mismas reglas de negocio (p. ej. no tocar liquidaciones pagadas al recalcular). Lo que solo existe en Supabase (sanciones) responde un `503` explícito en memoria, nunca una lista vacía.
+
+## Contrato de errores y lecturas
+
+- **Una lectura que falla no es una lista vacía.** Los servicios lanzan cuando Supabase devuelve `error`; presentar «no hay nada» llevaba a decisiones equivocadas (un juez sancionado que sale limpio, un total de 0 € presentado como dato).
+- **Errores para el usuario**: `UserFacingServiceError(mensaje, status)` (`src/lib/competitions/service-types.ts`) atraviesa `jsonRouteError` con su mensaje y su código (400/403/409/423/503…). Cualquier otra excepción sale como 500 con un mensaje genérico en español y queda registrada; nunca se filtran mensajes de Postgres al navegador.
+- **Paginación**: PostgREST corta en 1000 filas. Toda lectura que pueda crecer usa `fetchAllPagesOf` (`supabase-helpers.ts`) con un orden total (columna de negocio + `id` como desempate); sin desempate, paginar duplica o pierde filas.
+- **Fechas de negocio**: `src/lib/business-date.ts` (`todayIso`, `addDaysIso`, `businessDayIso`) calcula el día natural en `Europe/Madrid`. El servidor corre en UTC; usar `new Date().toISOString()` daba el día equivocado entre medianoche y las 01:00–02:00. Las fechas de entrada se validan con `isIsoDate` (`src/app/api/_lib/validation.ts`), que rechaza días que no existen (`2026-02-30`).
+- **Zonas**: `resolveZoneCode` / `zonesMatch` / `zoneScopeOf` (`src/lib/aep-zones.ts`) canonicalizan alias y tildes. Los permisos zonales son *fail-closed*: un delegado sin zona o con una zona ilegible no ve nada, en lugar de verlo todo.
+- **Dinero congelado**: una liquidación `pagado` no se recalcula, no se borra y no admite cambios de importe (`423 Locked`, `CompensationClaimPaidError`); el juez pagado tampoco puede salir del hueco de la tarima.
 
 ## Responsive / breakpoints
 
@@ -149,9 +160,11 @@ Tailwind breakpoints utilizados:
 | `xl` | 1280px | MacBook Pro M1 14" (~1512px CSS) |
 | `2xl` | 1536px | Pantallas grandes |
 
-**Importante**: MacBook Pro M1 14" genera ~1512px CSS — alcanza `xl` pero **no** `2xl`. Los layouts de dos columnas del dashboard y los KPI de 5 columnas usan `xl:` (no `2xl:`) para que se vean correctamente en portátil pequeño.
+**Importante**: MacBook Pro M1 14" genera ~1512px CSS — alcanza `xl` pero **no** `2xl`. Los layouts de dos columnas del dashboard y la fila de KPIs usan `xl:` (no `2xl:`) para que se vean correctamente en portátil pequeño. La rejilla de KPIs ajusta sus columnas al número de tarjetas.
 
-El sidebar se auto-colapsa en `< 1024px` (primer render en tablet) para liberar espacio. El usuario puede expandirlo manualmente; la preferencia se persiste en localStorage.
+- **< 768 px (`md`)**: no hay menú lateral; un cajón (`app-shell.tsx`) se abre desde el botón ☰ de la barra superior, incluye el buscador y se cierra al navegar o con Escape.
+- **768–1024 px**: el sidebar se auto-colapsa en el primer render si el usuario no eligió antes; la preferencia se persiste en `localStorage`.
+- Las tablas anchas (compensación, directorio) viven dentro de contenedores con `overflow-x-auto`: la página nunca desborda en horizontal (comprobado a 375 px en todas las rutas).
 
 ## Seguridad
 
@@ -178,8 +191,15 @@ El sidebar se auto-colapsa en `< 1024px` (primer render en tablet) para liberar 
 - `loadRosterAssignmentData` — una consulta para assignments/flags/cross-zone.
 - Caché TTL 1 h para `zones` y `regulation_rules` (`src/server/cache/static-data.ts`).
 - Filtros SQL en directorio de jueces (zona, nivel, estado, búsqueda `ilike`).
-- Índices Postgres (migración `030`).
+- Índices Postgres (migraciones `030` y `039`).
+
+## Rendimiento (v2.4)
+
+- **Sentry bajo demanda**: `src/instrumentation-client.ts` solo importa el SDK si hay DSN; los `error.tsx` reportan con `reportClientError`. El JS compartido de cada página bajó de 185 kB a 105 kB.
+- **Recalcular compensación** en paralelo acotado (`mapWithConcurrency`, `src/lib/async-pool.ts`, 6 a la vez), saltando las liquidaciones pagadas y borrando huérfanas en una sola consulta.
+- **Contadores de navegación** (`getNavCountsFast`): `count` con `head: true` y lectura acotada de campeonatos vigentes, sin descargar el calendario entero.
+- Alta de campeonato y desplegables de campeonatos paginados con `fetchAllPagesOf`.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4

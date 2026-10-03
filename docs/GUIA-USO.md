@@ -8,8 +8,6 @@ Guía visual de la plataforma de gestión de jueces de la Asociación Española 
 
 ---
 
----
-
 ## 1. Entrar
 
 1. Abre `/sign-in`.
@@ -26,7 +24,7 @@ Pantalla de inicio. Resume el estado operativo de la temporada en curso.
 
 ![Dashboard](images/01-dashboard.png)
 
-- **KPIs** (arriba): jueces activos, próximas competiciones, plazas sin cubrir, aprobaciones pendientes, cobertura nacional.
+- **KPIs** (arriba): jueces activos, próximas competiciones, plazas sin cubrir y aprobaciones pendientes. Las competiciones ya celebradas no cuentan como «próximas».
 - **Salud operativa**: índice 0–100 ponderado (cobertura de plantillas, estabilidad, urgencia, aprobaciones, disponibilidad).
 - **Recomendaciones**: avisos priorizados por severidad (crítico/alerta/sugerencia).
 - **En vivo**: el panel refleja la sincronización global de la app (cambios de otros usuarios en segundos). El botón "Pausar" solo afecta al indicador visual.
@@ -35,16 +33,24 @@ Atajos arriba a la derecha: **Jueces**, **Aprobaciones**, **Exportar**, **+ Nuev
 
 ---
 
----
-
 ## 2b. Barra lateral y documentación
 
 ![Barra lateral](images/12-sidebar.png)
 
-- **Documentación** → `/docs` (guía web y privacidad).
-- **Compensación** → panel central `/compensation` (solo responsable financiero / super_admin).
+El menú se organiza en cinco grupos, y el rótulo pequeño encima del título de cada página dice en cuál estás:
+
+| Grupo | Secciones |
+|---|---|
+| **General** | Dashboard, Estadísticas |
+| **Competiciones** | Campeonatos, Tarima activa, Aprobaciones · Compensación (responsable financiero / super_admin) |
+| **Jueces** | Directorio, Ascensos, Exámenes, Informes |
+| **Referencia** | Normativa, Documentación (`/docs`), Soporte (`/tickets`) |
+| **Administración** | Usuarios (solo AEP Nacional) |
+
+- **Tarima activa** abre directamente el campeonato vigente más próximo.
 - El **usuario y «Cambiar contraseña»** están en la **esquina superior derecha** (topbar), no en el pie del menú.
-- **Colapsar** guarda la preferencia en el navegador.
+- **Colapsar** guarda la preferencia en el navegador; plegado, los contadores se ven como un punto.
+- **En el móvil** el menú se abre con el botón **☰** de arriba a la izquierda (incluye el buscador de jueces) y se cierra solo al elegir una sección.
 
 ---
 
@@ -65,7 +71,7 @@ Cada fila tiene icono de **Cuadrante PDF** (export directo) y "Montar tarima".
 
 ## 4. Tarima — montar una plantilla
 
-Al abrir un campeonato sin plantilla, la app guía el flujo en 3 pasos: **Plantilla → Asignación → Revisión**.
+Al abrir un campeonato sin plantilla, la app guía el flujo en 3 pasos: **Plantilla → Asignación → Revisión**. Un campeonato recién creado arranca en **Plantilla**, y cada paso solo aparece como hecho cuando lo está de verdad.
 
 ![Tarima vacía](images/03-tarima-vacia.png)
 
@@ -89,11 +95,11 @@ Tres formas de asignar:
 2. **Clic** en una plaza y luego en un juez.
 3. **Importar cuadrante (PDF)** desde "Plantilla ▾": detecta los jueces del cuadrante oficial, los cruza con el directorio y propone las asignaciones. Funciona con los 4 formatos AEP (rejilla, "SESIÓN N", cabeceras escalonadas; los escaneados avisan).
 
-Filtros del panel izquierdo: zona, nivel, búsqueda, y «solo confirmados» (disponibilidad). Los **badges de nivel** en tarima son compactos (**R**, **N**, **I**, **II**); en el directorio se muestra el nombre completo. El sistema avisa de huecos, solapes y cruces de zona.
+Filtros del panel izquierdo: zona, nivel, búsqueda, y «solo confirmados» (disponibilidad). Si los filtros dejan la lista vacía, **Quitar filtros** la restablece. Los jueces **de baja** o marcados como **no disponibles** en su ficha nunca aparecen en este panel; el pie del panel indica cuántos quedan ocultos por ese motivo. Los **badges de nivel** en tarima son compactos (**R**, **N**, **I**, **II**); en el directorio se muestra el nombre completo. El sistema avisa de huecos, solapes y cruces de zona.
 
 **Selección rápida** (al pulsar un hueco): la lista de la izquierda se ordena por **idoneidad** y muestra **solo los jueces disponibles**. Va **después** del paso de disponibilidad: si ya hay disponibilidad confirmada para el campeonato, oculta a los no confirmados. El **nivel recomendado** para la plaza es solo un **aviso**: no bloquea la asignación (los bloqueos duros, como repetir el mismo puesto, sí se ocultan).
 
-Cuando esté listo: **Guardar borrador** o **Enviar a aprobación**.
+Cuando esté listo: **Guardar borrador** o **Enviar a aprobación**. El envío está desactivado (y lo explica al pasar el ratón) mientras no haya plantilla o ningún juez asignado. Mientras la propuesta espera revisión, la tarima queda congelada.
 
 ### Tarima aprobada e imprevistos
 
@@ -149,6 +155,9 @@ Rol **`responsable_financiero_jueces`**: gestiona la compensación económica de
 
 Los totales de viaje y alojamiento no se confirman hasta que todos los km estén completos.
 
+- Una vez guardado el organizador, su tarjeta se pliega y muestra el nombre en la cabecera; ábrela para cambiarlo.
+- Una liquidación marcada como **pagada** queda en solo lectura (distintivo «pagada»): recalcular, calcular distancias o cambiar la tarima no la tocan, y el juez pagado no se puede quitar de su hueco.
+
 ---
 
 ## 7. Jueces — directorio y ficha
@@ -160,6 +169,7 @@ Los totales de viaje y alojamiento no se confirman hasta que todos los km estén
 - La ficha incluye **domicilio con autocomplete OpenStreetMap**: escribe al menos 3 caracteres y elige una sugerencia de la lista (búsqueda vía servidor). Si no hay sugerencia, puedes guardar y el servidor intentará geocodificar con Nominatim.
 - **Eliminar ubicación**: botón junto al campo domicilio borra dirección y coordenadas en Supabase al instante (útil si el juez ya no debe tener km de compensación calculados desde ese domicilio).
 - **Arbitrajes por año natural**: la ficha del juez incluye un **selector de año** más la opción **«Histórico»** (agregado de todos los años). Por defecto muestra el año natural más reciente con actividad (censo vigente). En el **directorio** hay un **filtro de censo por año** para ver quién arbitró en cada año natural, separado del histórico.
+- La cabecera de la ficha muestra nivel, estado y disponibilidad. **No disponible** significa que el juez no aparecerá al montar tarimas.
 - Historial real por campeonato (sesión, rol, hueco, flags compartido/intercambio), sanciones, exámenes, informes y ascensos.
 - **Importar Excel maestro**: alta/actualización masiva del registro (solo AEP Nacional). La opción **«reemplazar censo»** reimporta el Excel completo de forma segura: solo borra los jueces **ausentes del Excel y no asignados** a ninguna tarima; **no toca campeonatos ni cuadrantes** y conserva (avisando) a los jueces ya asignados.
 - **+ Nuevo juez**: alta individual.
@@ -223,10 +233,12 @@ Todo funciona en local, sin conexión externa ni IA. Documentación completa: `/
 
 ## 12. Aprobaciones, ascensos, exámenes, informes
 
-- **Aprobaciones**: las propuestas de tarima enviadas esperan revisión nacional aquí.
-- **Ascensos**: solicitud y revisión de cambios de categoría de juez.
+- **Aprobaciones**: las propuestas de tarima enviadas esperan revisión nacional aquí. Rechazar exige escribir el motivo, que le llega a quien propuso.
+- **Ascensos**: solicitud y revisión de cambios de categoría de juez (solo a un nivel superior al actual). Rechazar también exige motivo.
 - **Exámenes**: nuevo juez, ascenso a categoría IPF, recertificación.
 - **Informes**: por juez o por competición; el delegado de zona ve solo los de su zona, nacional ve todo.
+
+- **Soporte** (`/tickets`): cualquier usuario abre un ticket (incidencia, mejora o duda) con descripción y hasta 5 fotos. Los administradores lo trabajan en un hilo de comentarios, lo marcan en progreso y lo resuelven con una nota; tú ves siempre el estado de los tuyos y puedes cerrarlos.
 
 ---
 
@@ -252,7 +264,10 @@ La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de 
 - **Excel grande al importar jueces**: divide el archivo o elimina hojas no usadas (límite 8 MB).
 - **No veo «Usuarios»**: solo visible para AEP Nacional (`super_admin` / `delegado_jueces`).
 - **Tarima aprobada sin editar**: usa «Registrar imprevisto» en la cabecera.
+- **No encuentro a un juez al montar la tarima**: revisa en su ficha que esté **Activo** y **Disponible**; los demás no se listan (el pie del panel dice cuántos se ocultan). Si hay disponibilidad confirmada para el campeonato, al elegir un hueco solo salen los confirmados.
+- **«Enviar a aprobación» está gris**: falta la plantilla o no hay ningún juez asignado; pasa el ratón por encima para ver el motivo.
+- **No puedo cambiar los km o el importe de una liquidación**: está **pagada**; solo admite cambios de estado y notas.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4

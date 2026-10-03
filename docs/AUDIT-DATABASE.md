@@ -92,6 +92,22 @@ desincronizada y nada lo detecta.
 sin acotar por temporada. Funciona hoy; conviene decidir el corte antes de que
 duela.
 
+## Seguimiento (octubre 2026)
+
+Estado de lo que quedaba abierto, tras las rondas de corrección de septiembre y
+octubre (PRs #76–#187):
+
+| Punto | Estado |
+|---|---|
+| Reimportar el censo borraba historial | **Resuelto en código** (#112): un juez con sanciones, tarima o liquidaciones no se borra al reemplazar el censo, y la columna «activo» del Excel ya no levanta una sanción viva. La protección en base de datos (`ON DELETE RESTRICT`) sigue siendo una decisión pendiente. |
+| Varias solicitudes de ascenso pendientes | **Resuelto en código** (#147): el servicio responde `409` si el juez ya tiene una pendiente. Sin índice único en base de datos. |
+| Zonas como texto libre | **Mitigado** (#151–#168, #158): todas las comparaciones canonicalizan alias y tildes con `resolveZoneCode`/`zonesMatch`, y los permisos zonales son *fail-closed*. Sigue sin clave ajena contra `zones`. |
+| Campeonato sin zona invisible para el delegado | **Mitigado** (#154): las importaciones de calendario (PDF y CSV) avisan de cada campeonato que nace sin zona. El alta manual rechaza una zona que no se reconoce (sin zona sigue siendo posible para AEP Nacional). |
+| Expediente disciplinario visible para todos | **Acotado** (#151, #167): un delegado de zona solo lee las sanciones de su zona, y sin zona no lee ninguna. Para el resto de roles sigue siendo una decisión de producto. |
+| Estado sancionador derivado desde el código | Sin cambios de esquema; la liberación de una ficha que no se pudo actualizar se reintenta (#145). |
+| Claves ajenas sin índice | **Resuelto** (migración `039`). |
+| Lecturas sin acotar | Todas las lecturas que crecen paginan con desempate estable (#122, #138, #178, #187); el corte por temporada del hub y la analítica sigue pendiente de decidir. |
+
 ## Descartado tras verificarlo
 
 Merece la pena decir qué **no** es un problema, porque también da confianza.

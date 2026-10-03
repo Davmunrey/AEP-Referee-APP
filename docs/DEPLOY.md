@@ -19,7 +19,8 @@ AEP Tarima es una **aplicación web en producción** en **Vercel** con base de d
 
 1. Push a la rama `main` en GitHub.
 2. Vercel construye y publica **automáticamente** (integración continua del proyecto).
-3. GitHub Actions ejecuta en paralelo: `npm run verify`, smoke E2E y auditoría Supabase (`.github/workflows/ci.yml`).
+3. GitHub Actions ejecuta en paralelo (`.github/workflows/ci.yml`): `npm run verify`, **Reproducir migraciones** (toda la cadena `001`→última sobre un Postgres 16 limpio), smoke E2E y auditoría Supabase (estos dos últimos, solo si hay secrets).
+4. Si el push toca `supabase/migrations/`, el workflow «Migraciones Supabase» aplica las pendientes en producción.
 
 No hay paso manual de “subir build”: cada merge a `main` despliega en producción.
 
@@ -47,6 +48,9 @@ Copiar y adaptar:
 | `NOMINATIM_URL` | Opcional | Geocoding OSM |
 | `OSRM_URL` | Opcional | Rutas OSM |
 | `SUPABASE_ACCESS_TOKEN` | Opcional | Script `npm run supabase:email-branding` |
+| `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Opcional | Errores a Sentry (cliente / servidor). Sin DSN, el SDK del navegador ni siquiera se descarga |
+| `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE` / `SENTRY_TRACES_SAMPLE_RATE` | Opcional | Muestreo de trazas |
+| `SENTRY_ORG` / `SENTRY_PROJECT` | Opcional | Subida de source maps en el build |
 
 Variables solo CI (GitHub Secrets, no Vercel):
 
@@ -54,6 +58,7 @@ Variables solo CI (GitHub Secrets, no Vercel):
 |---|---|
 | `READINESS_ALLOWED_EMAILS` | Allowlist auditoría remota |
 | `E2E_EMAIL` / `E2E_PASSWORD` | Playwright smoke |
+| `SUPABASE_DB_URL` | Workflow «Migraciones Supabase» |
 
 No se requiere ninguna API key de mapas de pago.
 
@@ -68,12 +73,13 @@ No se requiere ninguna API key de mapas de pago.
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding
   ```
 - **Migraciones**: se aplican **solas**. El workflow «Migraciones Supabase» ejecuta lo pendiente de `supabase/migrations/` en cada push a `main` que las toque. Requiere el secret `SUPABASE_DB_URL` (cadena del *Session pooler*, puerto 5432, percent-encoded; la conexión directa `db.<ref>.supabase.co` no vale porque es solo IPv6 y los runners solo tienen IPv4).
-  - Las 001–033 se aplicaron a mano en su día; el workflow las registra como tales sin reejecutarlas.
+  - Las 001–033 se aplicaron a mano en su día; el workflow las registra como tales sin reejecutarlas. Estado actual: aplicadas hasta la `039`.
+  - Tras aplicar una migración, el workflow avisa a PostgREST para que recargue el esquema: la función nueva queda disponible sin reiniciar el proyecto.
   - Antes de tocar nada aborta si una migración pendiente trae `DROP`, `TRUNCATE`, un `DELETE`/`UPDATE` sin `WHERE` o un `ALTER TYPE … ADD VALUE`. Esas hay que aplicarlas a mano y con copia previa.
   - Para ver qué haría sin escribir: Actions → «Migraciones Supabase» → Run workflow → marcar *Solo mostrar qué se aplicaría*.
   - El registro vive en `deploy.applied_migrations`, aparte de `supabase_migrations.schema_migrations` (que escriben el CLI y el MCP de Supabase y aquí solo se lee para detectar conflictos).
 - **Realtime**: tabla `app_sync_state` publicada (migración `029`) para sincronización en vivo entre usuarios.
-- **Hardening RLS (033)**: elimina las políticas permisivas de `referee_sanctions` y `competition_availability`; ambas tablas quedan solo servidor (acceso vía `service_role`). Los advisors de Supabase ya no muestran esos 2 WARN de políticas permisivas.
+- **Hardening RLS (033, 037)**: sin políticas permisivas para `authenticated` en ninguna tabla; todo queda solo servidor (acceso vía `service_role`).
 - **Leaked Password Protection**: activar el toggle de Auth (HaveIBeenPwned) — ver «Hardening post-deploy».
 
 ## Dominio en Vercel
@@ -125,4 +131,4 @@ Los **recibos PDF de compensación** por campeonato siguen activos (flujo financ
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4
