@@ -35,11 +35,11 @@ export function MetricTile({ label, value, icon: Icon, tone = "neutral", hint, c
   return (
     <Card className={className}>
       <CardContent className="flex items-center gap-3 px-4 py-3.5">
-        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", t.chip)}>
+        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", t.chip)}>
           <Icon className={cn("h-4 w-4", t.icon)} aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-xl font-bold leading-none tracking-tight tabular-nums text-foreground">
+          <p className="truncate text-xl font-semibold leading-none tracking-[-0.02em] tabular-nums text-foreground">
             {value}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>

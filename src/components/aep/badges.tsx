@@ -26,7 +26,7 @@ export function LevelBadge({
       variant={variant}
       size={compact ? "sm" : "default"}
       title={compact ? level : undefined}
-      className={compact ? "min-w-[1.25rem] justify-center px-1 font-mono tabular-nums" : undefined}
+      className={compact ?"min-w-[1.25rem] justify-center px-1 tabular-nums": undefined}
     >
       {label}
     </Badge>

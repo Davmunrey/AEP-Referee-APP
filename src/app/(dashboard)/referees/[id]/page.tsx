@@ -95,7 +95,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
 
             {/* Identity */}
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
+              <p className="text-[11px] font-semibold text-subtle-muted">
                 {zoneName}
               </p>
               {/* La tarjeta ES la cabecera: antes un PageHeader encima repetía
@@ -120,7 +120,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                   </span>
                 )}
                 {referee.licencia && (
-                  <span className="font-mono text-[11px] text-subtle-muted">
+                  <span className="text-[11px] text-subtle-muted">
                     Lic. {referee.licencia}
                   </span>
                 )}
@@ -209,10 +209,10 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                       ))}
                     </div>
                   </div>
-                  <div className="font-mono text-xs text-muted-foreground md:text-right">
+                  <div className="text-xs text-muted-foreground md:text-right">
                     {item.fecha}
                   </div>
-                  <div className="font-mono text-xs text-muted-foreground md:text-right">
+                  <div className="text-xs text-muted-foreground md:text-right">
                     {item.slotCount} plaza{item.slotCount === 1 ? "" : "s"}
                   </div>
                 </Link>
@@ -256,7 +256,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
             </div>
             <div>
               <p className="friendly-label mb-1">Plazas importadas (histórico)</p>
-              <p className="font-mono text-sm text-foreground">{referee.eventos}</p>
+              <p className="text-sm text-foreground">{referee.eventos}</p>
             </div>
             <div>
               <p className="friendly-label mb-1">Última competición</p>
@@ -303,7 +303,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
             {referee.excelId != null && (
               <div>
                 <p className="friendly-label mb-1">ID registro</p>
-                <p className="font-mono text-sm text-foreground">{referee.excelId}</p>
+                <p className="text-sm text-foreground">{referee.excelId}</p>
               </div>
             )}
             {referee.notas && (

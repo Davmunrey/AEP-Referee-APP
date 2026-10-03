@@ -170,14 +170,14 @@ export function Sidebar({
         aria-current={active ? "page" : undefined}
         onClick={onNavigate}
         className={cn(
-          "group relative flex items-center text-[12.5px] font-medium transition-colors duration-150 focus-ring",
+          "group relative flex items-center text-[13px] font-medium transition-colors duration-150 focus-ring",
           collapsed
-            ? "mx-auto h-11 w-11 justify-center rounded-xl p-0"
-            : "gap-2.5 rounded-xl px-3 py-2",
-          active && !collapsed && "bg-surface-active text-foreground nav-glow-active",
-          active && collapsed && "bg-primary/8 text-primary ring-1 ring-primary/25",
+            ? "mx-auto h-9 w-9 justify-center rounded-lg p-0"
+            : "h-8 gap-2.5 rounded-lg px-2.5",
+          // Activo: una tarjeta blanca sobre el marco gris, sin halos.
+          active && "bg-card text-foreground shadow-sm ring-1 ring-border",
           !active &&
-            "text-muted-foreground hover:bg-surface hover:text-foreground active:bg-surface-hover",
+            "text-foreground-secondary hover:bg-surface-hover hover:text-foreground active:bg-surface-active",
         )}
         title={
           collapsed
@@ -187,31 +187,13 @@ export function Sidebar({
             : undefined
         }
       >
-        {active && !collapsed && (
-          <span
-            aria-hidden="true"
-            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary shadow-glow-primary"
-          />
-        )}
-        {active && collapsed && (
-          <span
-            aria-hidden="true"
-            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
-          />
-        )}
-        <span
+        <Icon
+          aria-hidden="true"
           className={cn(
-            "flex shrink-0 items-center justify-center transition-colors duration-150",
-            collapsed ? "h-9 w-9 rounded-xl" : "h-8 w-8 rounded-lg",
-            active && !collapsed
-              ? "bg-primary/15 text-primary"
-              : active && collapsed
-                ? "bg-transparent text-primary"
-              : "bg-transparent text-subtle-muted group-hover:bg-surface group-hover:text-foreground-secondary",
+            "h-4 w-4 shrink-0 transition-colors duration-150",
+            active ? "text-primary" : "text-subtle group-hover:text-foreground-secondary",
           )}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
+        />
         {/* Colapsada, la barra escondía también los contadores: en la tableta
             —que arranca colapsada— nadie veía que había propuestas esperando.
             Ahora queda un punto sobre el icono, y el número en el título. */}
@@ -219,7 +201,7 @@ export function Sidebar({
           <span
             aria-hidden="true"
             className={cn(
-              "absolute right-1.5 top-1.5 h-2 w-2 rounded-full ring-2 ring-sidebar",
+              "absolute right-1 top-1 h-2 w-2 rounded-full ring-2 ring-sidebar",
               item.href === "/approvals" ? "bg-primary" : "bg-foreground-secondary",
             )}
           />
@@ -230,10 +212,10 @@ export function Sidebar({
             {item.badge != null && item.badge > 0 ? (
               <span
                 className={cn(
-                  "inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-px text-center font-mono text-[10px] font-semibold tabular-nums leading-none",
+                  "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-md px-1 text-center text-[11px] font-medium tabular-nums leading-none",
                   item.href === "/approvals"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-surface-active text-foreground-secondary",
+                    ? "bg-primary text-primary-foreground"
+                    : "text-subtle",
                 )}
               >
                 {item.badge > 99 ? "99+" : item.badge}
@@ -248,12 +230,12 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-border-muted bg-sidebar/95 backdrop-blur-xl transition-[width] duration-200 ease-out",
-        drawer ? "w-[280px] max-w-[85vw] bg-sidebar" : collapsed ? "w-16" : "w-[224px] xl:w-[232px]",
+        "flex h-full flex-col bg-sidebar transition-[width] duration-200 ease-out",
+        drawer ? "w-[280px] max-w-[85vw] border-r border-border" : collapsed ? "w-16" : "w-[220px] xl:w-[232px]",
       )}
       aria-label="Navegación principal"
     >
-      <div className={cn("border-b border-border-muted px-4 py-4", collapsed && "px-0")}>
+      <div className={cn("px-4 pb-2 pt-4", collapsed && "px-0")}>
         <AepLogo collapsed={collapsed} className={collapsed ? "justify-center" : undefined} />
       </div>
       {top}
@@ -263,28 +245,30 @@ export function Sidebar({
           <nav
             key={group.title}
             className={cn(
-              "flex flex-col gap-1",
-              gi === 0 ? "mt-3" : "mt-5",
-              collapsed ? "px-0" : "px-3",
+              "flex flex-col gap-px",
+              gi === 0 ? "mt-2" : "mt-4",
+              collapsed ? "px-0" : "px-2.5",
             )}
             aria-label={group.title}
           >
-            {!collapsed && <p className="friendly-label mb-2 px-3">{group.title}</p>}
+            {!collapsed && (
+              <p className="mb-1 px-2.5 text-[11px] font-medium text-subtle">{group.title}</p>
+            )}
             {group.items.map((item) => renderLink(item))}
           </nav>
         ))}
       </div>
 
-      <div className={cn("border-t border-border-muted p-3", collapsed && "px-0")}>
+      <div className={cn("p-2.5", collapsed && "px-0")}>
         <Button
           variant="ghost"
           size={collapsed ? "icon" : "default"}
           onClick={onToggle}
           className={cn(
-            "justify-center rounded-xl text-subtle-muted hover:bg-surface focus-ring",
+            "justify-start rounded-lg text-subtle hover:bg-surface-hover focus-ring",
             // Colapsado: misma caja que los iconos de navegación (h-11 w-11) para
             // que el chevron quede alineado en la misma columna vertical.
-            collapsed ? "mx-auto h-11 w-11 p-0" : "w-full",
+            collapsed ? "mx-auto h-9 w-9 justify-center p-0" : "h-8 w-full px-2.5",
           )}
           aria-label={drawer ? "Cerrar menú" : collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
         >

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-      <p className="font-mono text-5xl font-bold text-muted-foreground/40">404</p>
+      <p className="text-5xl font-bold text-muted-foreground/40">404</p>
       <h1 className="text-xl font-semibold text-foreground">Página no encontrada</h1>
       <p className="max-w-sm text-sm text-muted-foreground">
         El recurso solicitado no existe o no tienes acceso a él.

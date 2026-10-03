@@ -32,7 +32,7 @@ interface NewCompetitionFormProps {
 function SectionDivider({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-3 pt-1">
-      <span className="shrink-0 text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">
+      <span className="shrink-0 text-[11px] font-semibold text-subtle-muted">
         {title}
       </span>
       <div className="flex-1 border-t border-border-muted" />
@@ -271,9 +271,9 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
             {fecha && fechaFin && fechaFin >= fecha && (
               <div className="flex items-center gap-2 rounded-md border border-border-muted bg-surface px-3 py-2 text-xs text-foreground-secondary">
                 <CalendarRange className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="font-mono">{fecha}</span>
+                <span>{fecha}</span>
                 <span className="text-subtle-muted">→</span>
-                <span className="font-mono">{fechaFin}</span>
+                <span>{fechaFin}</span>
                 {dateDiffDays !== null && dateDiffDays > 1 && (
                   <span className="ml-auto text-subtle-muted">{dateDiffDays} días</span>
                 )}

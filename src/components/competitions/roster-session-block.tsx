@@ -31,7 +31,7 @@ export function RequiredSlotsChips({
   const total = groups.reduce((acc, group) => acc + group.count, 0);
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+      <span className="text-[11px] font-semibold text-subtle-muted">
         Plazas {total}
       </span>
       {groups.map((group) => (
@@ -40,7 +40,7 @@ export function RequiredSlotsChips({
           className="inline-flex items-center gap-1 rounded-full border border-border-muted bg-background/60 px-1.5 py-0.5 text-[10px] text-foreground-secondary"
         >
           {group.label}
-          <span className="font-mono font-semibold text-foreground">{group.count}</span>
+          <span className="font-semibold text-foreground">{group.count}</span>
         </span>
       ))}
     </div>
@@ -73,14 +73,14 @@ export function SessionOverviewCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs font-semibold text-primary">{session.sesion}</span>
+            <span className="text-xs font-semibold text-primary">{session.sesion}</span>
             <span className="text-[13px] font-semibold text-foreground">{session.nombre}</span>
           </div>
           <p className="mt-0.5 line-clamp-1 text-[10.5px] leading-snug text-muted-foreground">
             {summarizeSessionCategories(session)}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-surface-hover px-2 py-1 font-mono text-[11px] text-foreground-secondary">
+        <span className="shrink-0 rounded-full bg-surface-hover px-2 py-1 text-[11px] text-foreground-secondary">
           {filled}/{slots}
         </span>
       </div>
@@ -138,12 +138,12 @@ export const SessionTab = memo(function SessionTab({
     >
       <span className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-baseline gap-1.5">
-          <span className="font-mono text-[11px] font-semibold text-primary">{session.sesion}</span>
+          <span className="text-[11px] font-semibold text-primary">{session.sesion}</span>
           <span className="truncate text-[12px] font-medium text-foreground">{session.nombre}</span>
         </span>
         <span
           className={cn(
-            "shrink-0 font-mono text-[10px] tabular-nums",
+"shrink-0 text-[10px] tabular-nums",
             done ? "text-success" : "text-subtle-muted",
           )}
         >
@@ -244,7 +244,7 @@ export const SessionBlock = memo(function SessionBlock({
 
         <div className="min-w-0">
           <div className="flex min-w-0 items-baseline gap-2">
-            <span className="font-mono text-xs font-semibold text-primary">{session.sesion}</span>
+            <span className="text-xs font-semibold text-primary">{session.sesion}</span>
             <h3 className="truncate text-sm font-semibold text-foreground">{session.nombre}</h3>
           </div>
           <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-subtle-muted">
@@ -275,7 +275,7 @@ export const SessionBlock = memo(function SessionBlock({
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-subtle-muted">
+          <p className="mt-1 text-right text-[11px] tabular-nums text-subtle-muted">
             {filled}/{slots}
           </p>
         </div>
@@ -283,7 +283,7 @@ export const SessionBlock = memo(function SessionBlock({
 
       {!collapsed && (
         <div className={cn("px-2.5 pb-2.5 pt-2", disclosureEnter)}>
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-secondary">
+          <p className="mb-1.5 text-[11px] font-semibold text-foreground-secondary">
             Competición
           </p>
           <SlotGrid roles={session.roles} {...grid} />
@@ -292,7 +292,7 @@ export const SessionBlock = memo(function SessionBlock({
             <>
               <div className="my-2.5 flex items-center gap-2">
                 <div className="flex-1 border-t border-border-muted" />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                <p className="text-[11px] font-semibold text-primary">
                   Pesaje · {session.horarioPesaje}
                 </p>
                 <div className="flex-1 border-t border-border-muted" />

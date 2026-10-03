@@ -268,14 +268,14 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                         onChange={() => toggleKey(e.key)}
                       />
                     </td>
-                    <td className="px-2 py-1.5 font-mono text-[10.5px] text-muted-foreground">
+                    <td className="px-2 py-1.5 text-[10.5px] text-muted-foreground">
                       {e.fechaInicio ?? "pendiente"}
                       {e.fechaFin && e.fechaFin !== e.fechaInicio && ` → ${e.fechaFin}`}
                     </td>
                     <td className="px-2 py-1.5 text-foreground">{e.tipo ?? "—"}</td>
                     <td className="px-2 py-1.5 text-foreground">{e.nombre}</td>
                     <td className="px-2 py-1.5 text-muted-foreground">{e.localidad}</td>
-                    <td className="px-2 py-1.5 font-mono text-[10.5px] text-muted-foreground">
+                    <td className="px-2 py-1.5 text-[10.5px] text-muted-foreground">
                       {e.zona ?? "—"}
                     </td>
                     <td className="px-2 py-1.5 text-[10.5px]">

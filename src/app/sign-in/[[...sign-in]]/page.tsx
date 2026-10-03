@@ -124,7 +124,7 @@ export default function SignInPage() {
             className="h-auto w-60"
             priority
           />
-          <p className="mt-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+          <p className="mt-4 text-center text-xs font-medium text-muted-foreground/70">
             Plataforma de gestión de jueces
           </p>
         </div>

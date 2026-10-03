@@ -260,7 +260,7 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
 
       {sessions.length > 0 && (
         <div className="rounded-lg border border-border-muted bg-surface/40 px-3 py-2">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+          <p className="mb-1 text-[11px] font-semibold text-subtle-muted">
             Plazas requeridas (total campeonato)
           </p>
           <RequiredSlotsChips source={sessions} />
@@ -326,7 +326,7 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1 text-sm">
-                    <span className="block text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">Horario competición</span>
+                    <span className="block text-[11px] font-semibold text-subtle-muted">Horario competición</span>
                     <TimeRangeInput
                       value={session.horarioCompeticion}
                       onChange={(v) => patchSession(si, { horarioCompeticion: v })}
@@ -334,7 +334,7 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
                     />
                   </div>
                   <div className="space-y-1 text-sm">
-                    <span className="block text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">Horario pesaje</span>
+                    <span className="block text-[11px] font-semibold text-subtle-muted">Horario pesaje</span>
                     <TimeRangeInput
                       value={session.horarioPesaje}
                       onChange={(v) => patchSession(si, { horarioPesaje: v })}
@@ -354,7 +354,7 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
                 />
 
                 <div className="rounded-lg border border-border-muted bg-background/40 px-3 py-2">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+                  <p className="mb-1 text-[11px] font-semibold text-subtle-muted">
                     Plazas requeridas (esta sesión)
                   </p>
                   <RequiredSlotsChips source={session} />

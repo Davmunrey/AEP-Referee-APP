@@ -444,7 +444,7 @@ export function UsersAdmin({
                       <span className="font-medium text-foreground">{u.nombre}</span>
                     </div>
                   </DataTableCell>
-                  <DataTableCell className="font-mono text-xs">{u.email}</DataTableCell>
+                  <DataTableCell className="text-xs">{u.email}</DataTableCell>
                   <DataTableCell>
                     <Badge variant={ROLE_BADGE_VARIANT[u.role]}>{ROLE_LABELS[u.role] ?? u.rol_label}</Badge>
                   </DataTableCell>

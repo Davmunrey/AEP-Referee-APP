@@ -83,7 +83,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
                 {/* Days-until pill */}
                 <span
                   className={cn(
-                    "shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
+"shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums",
                     day.pill,
                   )}
                 >
@@ -114,7 +114,7 @@ export function CoverageForecast({ coverage }: { coverage: EventCoverage[] }) {
                     // w-14 + text-right: la columna de progreso queda alineada
                     // entre filas en vez de bailar con el ancho de "3/12" vs
                     // "12/12"; sin ella las barras tienen longitudes distintas.
-                    "w-14 shrink-0 text-right font-mono text-[11px] font-semibold tabular-nums",
+"w-14 shrink-0 text-right text-[11px] font-semibold tabular-nums",
                     STATUS_TEXT[c.estado],
                   )}
                 >

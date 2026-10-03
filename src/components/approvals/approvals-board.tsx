@@ -1,5 +1,6 @@
 "use client";
 
+import { zoneUiName } from "@/lib/aep-zones";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -168,7 +169,7 @@ export function ApprovalsBoard({
                     className={cn(
                       "w-full rounded-xl border p-3.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.99] focus-ring",
                       selected?.id === item.id
-                        ? "border-primary-border bg-primary-muted shadow-glow-primary"
+                        ? "border-primary-border bg-card ring-1 ring-primary-border"
                         : "border-border hover:border-border-strong hover:bg-surface-hover",
                     )}
                   >
@@ -177,9 +178,9 @@ export function ApprovalsBoard({
                       <StatusPill status={item.status} className="shrink-0" />
                     </div>
                     <p className="mt-1 text-xs text-subtle-muted">
-                      {item.zona} · {item.submittedBy}
+                      {zoneUiName(item.zona)} · {item.submittedBy}
                     </p>
-                    <p className="mt-0.5 font-mono text-[11px] tabular-nums text-subtle-muted">
+                    <p className="mt-0.5 text-[11px] tabular-nums text-subtle-muted">
                       {item.submittedAt.slice(0, 10)}
                     </p>
                   </button>
@@ -255,7 +256,7 @@ export function ApprovalsBoard({
                 {/* Meta row */}
                 <div className="flex flex-wrap items-center gap-2">
                   <EventStatusBadge status={eventStatus} />
-                  <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-[10px] text-subtle-muted">
+                  <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] text-subtle-muted">
                     {selected.submittedAt.slice(0, 10)}
                   </span>
                   <span className="text-xs text-muted-foreground">por {selected.submittedBy}</span>
@@ -264,11 +265,11 @@ export function ApprovalsBoard({
                 {/* Diff table: slot → juez */}
                 <div className="overflow-hidden rounded-xl border border-border bg-background/80">
                   <div className="border-b border-border-muted bg-muted/50 px-4 py-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
+                    <span className="text-[11px] font-semibold text-subtle-muted">
                       Hueco → Juez
                     </span>
                   </div>
-                  <div className="max-h-[260px] divide-y divide-border-muted/60 overflow-y-auto font-mono text-xs">
+                  <div className="max-h-[260px] divide-y divide-border-muted/60 overflow-y-auto text-xs">
                     {assignments.length === 0 ? (
                       <p className="px-4 py-3 text-muted-foreground">
                         Sin asignaciones registradas.

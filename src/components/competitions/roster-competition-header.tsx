@@ -88,7 +88,7 @@ export function RosterCompetitionHeader({
               <EventStatusBadge status={competition.estado} />
               {isPast && (
                 <span
-                  className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                  className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-muted px-2 py-0.5 text-[11px] font-semibold capitalize text-muted-foreground"
                   title="Campeonato finalizado — editable con permisos para cargar histórico"
                 >
                   Histórico
