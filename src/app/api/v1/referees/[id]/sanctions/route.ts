@@ -1,9 +1,9 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
-import { jsonError, jsonOk, jsonRouteError, readOrError, jsonServerError } from "@/lib/api/route-utils";
+import { jsonError, jsonOk, jsonRouteError, readOrError,  } from "@/lib/api/route-utils";
 import { canManageSanctions } from "@/lib/permissions";
 import { SANCTION_DURATION_PRESETS } from "@/lib/sanctions";
-import { ISO_DATE_RE } from "@/app/api/_lib/validation";
+import { isIsoDate } from "@/app/api/_lib/validation";
 import { todayIso } from "@/lib/business-date";
 import type { SanctionDurationPreset } from "@/lib/types";
 import { dataService } from "@/server/services";
@@ -67,7 +67,7 @@ export async function POST(request: Request, context: RouteContext) {
   ).slice(0, 10);
   // Valida formato y presets ANTES de castear: entradas malformadas son un
   // 400 con mensaje claro, no un 500 genérico.
-  if (fechaInicio && !ISO_DATE_RE.test(fechaInicio)) {
+  if (fechaInicio && !isIsoDate(fechaInicio)) {
     return jsonError("La fecha de inicio debe tener formato AAAA-MM-DD", 400);
   }
   const durationRaw = String((body as { duration?: string }).duration ?? "30d");
@@ -78,7 +78,7 @@ export async function POST(request: Request, context: RouteContext) {
   const fechaFinCustom = (body as { fechaFin?: string }).fechaFin;
   if (
     duration === "custom" &&
-    (typeof fechaFinCustom !== "string" || !ISO_DATE_RE.test(fechaFinCustom))
+    !isIsoDate(fechaFinCustom)
   ) {
     return jsonError("Indica una fecha de fin válida", 400);
   }
@@ -112,6 +112,6 @@ export async function POST(request: Request, context: RouteContext) {
     ) {
       return jsonError(msg, 400);
     }
-    return jsonServerError("sanctions.POST", e, "No se pudo crear la sanción");
+    return jsonRouteError("sanctions.POST", e, "No se pudo crear la sanción");
   }
 }

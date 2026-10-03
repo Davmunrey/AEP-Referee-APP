@@ -3,13 +3,12 @@ import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
-import { REFEREE_LEVELS } from "@/app/api/_lib/validation";
+import { REFEREE_LEVELS, isIsoDate } from "@/app/api/_lib/validation";
 import type { ExamResult, ExamType, RefereeLevel } from "@/lib/types";
 
 const EXAM_TYPES: ReadonlyArray<ExamType> = ["Nuevo juez", "Ascenso IPF", "Recertificación"];
 const EXAM_RESULTS: ReadonlyArray<ExamResult> = ["Aprobado", "Suspenso", "Pendiente"];
 
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request) {
   const user = await requireApiUser();
@@ -65,7 +64,7 @@ export async function POST(request: Request) {
   if (body.resultado !== undefined && !EXAM_RESULTS.includes(body.resultado as ExamResult)) {
     return jsonError("Resultado no válido", 400);
   }
-  if (!ISO_DATE_RE.test(body.fecha)) {
+  if (!isIsoDate(body.fecha)) {
     return jsonError("La fecha debe tener formato AAAA-MM-DD", 400);
   }
   if (body.notas !== undefined && typeof body.notas !== "string") {

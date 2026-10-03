@@ -25,8 +25,22 @@ export const REFEREE_STATUSES = [
   "Sancionado",
 ] as const satisfies readonly RefereeStatus[];
 
-/** Formato de fecha ISO corto (AAAA-MM-DD). */
+/** Formato de fecha ISO corto (AAAA-MM-DD). Solo la forma: ver `isIsoDate`. */
 export const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * ¿Es una fecha AAAA-MM-DD que EXISTE en el calendario?
+ *
+ * Validar solo con el patrón dejaba pasar «2026-02-30» o «2026-13-01»: en
+ * memoria se guardaban tal cual y en Supabase la columna `DATE` las rechazaba
+ * con un 500 genérico en vez de un 400 que dijera qué estaba mal.
+ */
+export function isIsoDate(value: unknown): value is string {
+  if (typeof value !== "string" || !ISO_DATE_RE.test(value)) return false;
+  const [y, m, d] = value.split("-").map(Number) as [number, number, number];
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}
 
 export function isEventType(value: unknown): value is EventType {
   return typeof value === "string" && (EVENT_TYPES as readonly string[]).includes(value);
@@ -61,11 +75,11 @@ export function validateCompetitionFields(
   if (fields.tipo !== undefined && !isEventType(fields.tipo)) {
     return `Tipo de campeonato no válido. Valores permitidos: ${EVENT_TYPES.join(", ")}`;
   }
-  if (fields.fecha !== undefined && !ISO_DATE_RE.test(fields.fecha)) {
-    return "La fecha de inicio debe tener formato AAAA-MM-DD";
+  if (fields.fecha !== undefined && !isIsoDate(fields.fecha)) {
+    return "La fecha de inicio no es válida (formato AAAA-MM-DD)";
   }
-  if (fields.fechaFin !== undefined && !ISO_DATE_RE.test(fields.fechaFin)) {
-    return "La fecha de fin debe tener formato AAAA-MM-DD";
+  if (fields.fechaFin !== undefined && !isIsoDate(fields.fechaFin)) {
+    return "La fecha de fin no es válida (formato AAAA-MM-DD)";
   }
   const fecha = fields.fecha ?? baseline?.fecha;
   const fechaFin = fields.fechaFin ?? baseline?.fechaFin;

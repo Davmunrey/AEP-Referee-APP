@@ -1,4 +1,5 @@
 import { zonesMatch } from "@/lib/aep-zones";
+import { REFEREE_LEVELS, isRefereeLevel } from "@/app/api/_lib/validation";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, readOrError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
@@ -32,6 +33,11 @@ export async function POST(request: Request) {
 
   if (!refereeId || !toLevel) {
     return jsonError("refereeId y toLevel son obligatorios", 400);
+  }
+  // Antes un nivel que no existe caía en la comprobación de orden y respondía
+  // «debe ser superior al actual», que no dice qué estaba mal.
+  if (!isRefereeLevel(toLevel)) {
+    return jsonError(`Nivel no válido. Valores permitidos: ${REFEREE_LEVELS.join(", ")}`, 400);
   }
 
   // La zona se deriva SIEMPRE del juez, nunca del body (anti-IDOR).
