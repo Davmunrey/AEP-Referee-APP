@@ -6,6 +6,7 @@ import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { stripRefereeListPII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 import { redirect } from "next/navigation";
+import { contar } from "@/lib/plural";
 
 export default async function RefereesPage() {
   const user = await getSession();
@@ -21,9 +22,9 @@ export default async function RefereesPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Gestión de jueces"
+        eyebrow="Jueces"
         title="Directorio de jueces"
-        description={`${referees.length} jueces · ${zones.length} zonas federativas`}
+        description={`${contar(referees.length, "juez", "jueces")} · ${zones.length} zonas federativas`}
       />
       <RefereesDirectory
         initialReferees={referees}

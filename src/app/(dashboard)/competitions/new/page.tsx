@@ -23,7 +23,7 @@ export default async function NewCompetitionPage() {
       </Button>
 
       <PageHeader
-        eyebrow="Operaciones"
+        eyebrow="Competiciones"
         title="Nuevo campeonato"
         description="Crea un campeonato en borrador y configura la tarima de jueces después."
       />

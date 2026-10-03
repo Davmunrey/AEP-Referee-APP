@@ -11,6 +11,7 @@ import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { dataService } from "@/server/services";
 import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
+import { contar } from "@/lib/plural";
 
 export default async function CompetitionsPage() {
   const user = await getSession();
@@ -23,9 +24,9 @@ export default async function CompetitionsPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Operaciones"
+        eyebrow="Competiciones"
         title="Campeonatos"
-        description={`${competitions.length} campeonatos en calendario · gestión de plantillas de jueces`}
+        description={`${contar(competitions.length, "campeonato", "campeonatos")} en calendario · gestión de plantillas de jueces`}
       >
         <div className="flex flex-wrap gap-2">
           {canImportCalendar(user.role) && <CalendarImportButton />}

@@ -87,8 +87,8 @@ export function RosterHeaderActions({
         ]}
       />
       )}
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-col items-start gap-1.5 sm:items-end">
+      <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
         {/* Coverage card: plazas + barra de progreso */}
         <div
           className="flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-2.5"

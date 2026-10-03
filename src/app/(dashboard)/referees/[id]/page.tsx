@@ -85,7 +85,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       </Button>
 
       <PageHeader
-        eyebrow="Gestión de jueces"
+        eyebrow="Jueces"
         title={referee.nombre}
         description={`Ficha de jueces · ${zoneName}`}
       />

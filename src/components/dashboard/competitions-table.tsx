@@ -14,7 +14,7 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
         <CardTitle className="text-sm font-semibold">Plantillas de jueces — próximos campeonatos</CardTitle>
         <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-          Completitud del roster
+          Cobertura de la tarima
         </span>
       </CardHeader>
       <CardContent className="p-0">

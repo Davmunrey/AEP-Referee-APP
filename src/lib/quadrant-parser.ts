@@ -345,7 +345,7 @@ function makeCandidate(input: {
     matchedName: input.hit.text,
     confidence: input.hit.confidence,
     importable,
-    reason: importable ? "Lista para asignar" : "Slot no existe en plantilla",
+    reason: importable ? "Lista para asignar" : "El hueco no existe en la plantilla",
   };
 }
 

@@ -11,11 +11,12 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
+  Trophy,
 } from "lucide-react";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MetricTile } from "@/components/ui/metric-tile";
 import {
   DataTable,
   DataTableBody,
@@ -29,7 +30,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { api } from "@/lib/api/client";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
-import { cn, formatDateRange } from "@/lib/utils";
+import { formatDateRange } from "@/lib/utils";
 
 interface CompensationHubProps {
   initialHub: CompensationHubSummary;
@@ -62,6 +63,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
   return (
     <PageShell>
       <PageHeader
+        eyebrow="Competiciones"
         title="Compensación de jueces"
         description="Acceso directo a facturación y recibos por campeonato, sin ir tarima a tarima."
       />
@@ -85,48 +87,22 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Campeonatos con jueces</CardDescription>
-            <CardTitle className="font-mono text-2xl">{items.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total confirmado</CardDescription>
-            <CardTitle className="font-mono text-2xl">
-              {formatReceiptAmountEur(confirmedTotal)}
-            </CardTitle>
-            {pendingAmount > 0 && (
-              <p className="text-xs tabular-nums text-muted-foreground">
-                + {formatReceiptAmountEur(pendingAmount)} pendiente de km
-              </p>
-            )}
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Listos para exportar</CardDescription>
-            <CardTitle className="flex items-center gap-2 font-mono text-2xl text-success">
-              <CheckCircle2 className="h-5 w-5" />
-              {readyCount}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Jueces con km pendientes</CardDescription>
-            <CardTitle
-              className={cn(
-                "font-mono text-2xl",
-                totalPendingKm > 0 ? "text-warning" : "text-foreground",
-              )}
-            >
-              {totalPendingKm}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <MetricTile label="Campeonatos con jueces" value={items.length} icon={Trophy} />
+        <MetricTile
+          label="Total confirmado"
+          value={formatReceiptAmountEur(confirmedTotal)}
+          icon={Banknote}
+          tone="primary"
+          hint={pendingAmount > 0 ? `+ ${formatReceiptAmountEur(pendingAmount)} pendiente de km` : undefined}
+        />
+        <MetricTile label="Listos para exportar" value={readyCount} icon={CheckCircle2} tone="success" />
+        <MetricTile
+          label="Jueces con km pendientes"
+          value={totalPendingKm}
+          icon={MapPin}
+          tone={totalPendingKm > 0 ? "warning" : "neutral"}
+        />
       </div>
 
       {items.length === 0 ? (
@@ -159,7 +135,6 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
                   <DataTableCell>
                     <div className="min-w-0">
                       <p className="truncate font-medium text-foreground">{item.nombre}</p>
-                      <p className="text-[11px] text-muted-foreground">{item.competitionId}</p>
                     </div>
                   </DataTableCell>
                   <DataTableCell className="whitespace-nowrap text-sm text-foreground-secondary">

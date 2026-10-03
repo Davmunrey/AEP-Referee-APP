@@ -32,6 +32,7 @@ import { api } from "@/lib/api/client";
 import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
 import { arbitrajeYears } from "@/lib/judges-registry/arbitraje-stats";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
+import { contar } from "@/lib/plural";
 
 const CENSO_ALL = "TODOS";
 
@@ -197,7 +198,7 @@ export function RefereesDirectory({
         <p className="text-xs text-subtle-muted">
           {filtered.length < referees.length
             ? `${filtered.length} de ${referees.length} jueces`
-            : `${referees.length} jueces en total`}
+            : `${contar(referees.length, "juez", "jueces")} en total`}
         </p>
         <div className="flex items-center gap-2">
           {hasActiveFilters && (

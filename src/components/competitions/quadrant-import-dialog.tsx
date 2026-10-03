@@ -231,7 +231,7 @@ export function QuadrantImportDialog({
                   <th className="px-2 py-1.5 text-left">Sesión</th>
                   <th className="px-2 py-1.5 text-left">Rol</th>
                   <th className="px-2 py-1.5 text-left">Juez</th>
-                  <th className="px-2 py-1.5 text-left">Slot</th>
+                  <th className="px-2 py-1.5 text-left">Hueco</th>
                   <th className="px-2 py-1.5 text-left">Estado</th>
                 </tr>
               </thead>

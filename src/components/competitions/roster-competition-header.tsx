@@ -117,14 +117,16 @@ export function RosterCompetitionHeader({
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col items-end gap-1.5">
+        {/* Móvil: a lo ancho y de izquierda a derecha. Alineadas a la derecha,
+            siete acciones caían en filas irregulares pegadas al borde. */}
+        <div className="flex w-full min-w-0 flex-col items-start gap-1.5 sm:w-auto sm:items-end">
           {violationCount > 0 && (
             <p className="flex items-center gap-1.5 rounded-md border border-warning-border bg-warning-subtle px-2.5 py-1 text-[11px] font-semibold text-warning">
               <AlertTriangle className="h-3.5 w-3.5" />
               {violationCount} violación{violationCount > 1 ? "es" : ""} de normativa
             </p>
           )}
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
             {canEdit && isEditing && (
               <Button
                 type="button"

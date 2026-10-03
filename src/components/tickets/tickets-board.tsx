@@ -19,6 +19,7 @@ import {
   TICKET_STATUSES,
   TicketStatusPill,
 } from "@/components/tickets/ticket-shared";
+import { contar } from "@/lib/plural";
 
 const NewTicketDialog = dynamic(
   () => import("@/components/tickets/new-ticket-dialog").then((m) => m.NewTicketDialog),
@@ -95,7 +96,7 @@ export function TicketsBoard({
     <PageShell>
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          eyebrow="Soporte"
+          eyebrow="Referencia"
           title="Tickets de soporte"
           description={`${scopeNote} · ${tickets.length} en total · ${openCount} en curso`}
         />
@@ -185,7 +186,7 @@ export function TicketsBoard({
                   </div>
                   <span
                     className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground"
-                    aria-label={`${t.commentCount} comentarios`}
+                    aria-label={contar(t.commentCount, "comentario", "comentarios")}
                   >
                     <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
                     {t.commentCount}

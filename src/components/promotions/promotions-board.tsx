@@ -13,7 +13,6 @@ import { api } from "@/lib/api/client";
 import { textareaFieldClass } from "@/lib/design-tokens";
 import type { PromotionRequest, Referee } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
 const NewPromotionDialog = dynamic(
   () => import("@/components/promotions/new-promotion-dialog").then((m) => m.NewPromotionDialog),
   { ssr: false },
@@ -27,39 +26,9 @@ import {
   TrendingUp,
   XCircle,
 } from "lucide-react";
+import { contar } from "@/lib/plural";
+import { MetricTile } from "@/components/ui/metric-tile";
 
-function StatCard({
-  label,
-  value,
-  tone,
-  iconBg,
-  Icon,
-}: {
-  label: string;
-  value: number | string;
-  tone: string;
-  iconBg: string;
-  Icon: LucideIcon;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-center gap-3 px-4 py-3.5">
-        <div
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-            iconBg,
-          )}
-        >
-          <Icon className={cn("h-4 w-4", tone)} aria-hidden="true" />
-        </div>
-        <div>
-          <p className="text-xl font-bold leading-none tracking-tight text-foreground">{value}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 const GROUP_LABELS: Record<string, string> = {
   pendiente: "Pendientes de revisión",
@@ -186,9 +155,9 @@ export function PromotionsBoard({
     <PageShell>
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          eyebrow="Gestión"
+          eyebrow="Jueces"
           title="Ascensos de nivel"
-          description={`${pendingCount} solicitudes pendientes · Regional → Nacional → IPF · revisión centralizada`}
+          description={`${contar(pendingCount, "solicitud pendiente", "solicitudes pendientes")} · Regional → Nacional → IPF · revisión centralizada`}
         />
         {canCreate && (
           <NewPromotionDialog referees={referees} />
@@ -197,34 +166,10 @@ export function PromotionsBoard({
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
-          label="Pendientes"
-          value={pendingCount}
-          tone="text-warning"
-          iconBg="bg-warning-muted"
-          Icon={Clock}
-        />
-        <StatCard
-          label="Esta semana"
-          value={thisWeekCount}
-          tone="text-foreground-secondary"
-          iconBg="bg-muted"
-          Icon={TrendingUp}
-        />
-        <StatCard
-          label="Aprobadas"
-          value={approvedCount}
-          tone="text-success"
-          iconBg="bg-success-muted"
-          Icon={CheckCircle2}
-        />
-        <StatCard
-          label="Rechazadas"
-          value={rejectedCount}
-          tone="text-destructive"
-          iconBg="bg-destructive-muted"
-          Icon={XCircle}
-        />
+        <MetricTile label="Pendientes" value={pendingCount} tone="warning" icon={Clock} />
+        <MetricTile label="Esta semana" value={thisWeekCount} tone="neutral" icon={TrendingUp} />
+        <MetricTile label="Aprobadas" value={approvedCount} tone="success" icon={CheckCircle2} />
+        <MetricTile label="Rechazadas" value={rejectedCount} tone="danger" icon={XCircle} />
       </div>
 
       {/* Grouped sections */}

@@ -71,7 +71,7 @@ export default async function ReportsPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Gestión de jueces"
+        eyebrow="Jueces"
         title="Informes de zona"
         description="Informes de jueces y competiciones. Delegado de zona ve su zona; nacional y superadmin ven todo."
       />

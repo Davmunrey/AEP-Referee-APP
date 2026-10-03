@@ -22,6 +22,8 @@ import {
   getZones,
 } from "@/server/store";
 import { isCompetitionPast } from "@/lib/competition-status";
+import { contar } from "@/lib/plural";
+import { applyCoverageToCompetition } from "@/lib/roster-coverage";
 
 /** Bitácora de salud en memoria (modo dev sin Supabase). */
 export const healthHistory: { score: number; at: number }[] = [];
@@ -82,7 +84,17 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
       store.assignments.get(c.id) ?? {},
     );
   }
-  const critical = competitions.filter((c) => c.estado === "Crítico").length;
+  // El estado se deriva de la cobertura al leer (`applyCoverageToCompetition`);
+  // el guardado en el store puede ir atrasado. Con el crudo, la portada decía
+  // «0 campeonatos en estado crítico» mientras la lista marcaba uno Crítico.
+  const critical = competitions.filter(
+    (c) =>
+      applyCoverageToCompetition(
+        c,
+        getCompetitionTemplate(c.id),
+        store.assignments.get(c.id) ?? {},
+      ).estado === "Crítico",
+  ).length;
 
   const subAlcance = isZoneScoped ? `zona ${userZone}` : seasonLabel();
 
@@ -106,8 +118,8 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
     {
       label: "Plazas sin cubrir",
       value: String(openSlots),
-      sub: `en ${competitions.length} campeonatos`,
-      trend: `${critical} campeonatos en estado crítico`,
+      sub: `en ${contar(competitions.length, "campeonato", "campeonatos")}`,
+      trend: `${contar(critical, "campeonato", "campeonatos")} en estado crítico`,
       trendDir: critical > 0 ? "warn" : "flat",
       accent: "yellow",
     },

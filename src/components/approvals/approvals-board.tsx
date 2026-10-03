@@ -15,7 +15,6 @@ import { parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
 import { selectedApproval } from "@/lib/approvals/select";
 import type { ApprovalProposal, Competition } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -26,6 +25,8 @@ import {
   LayoutList,
   XCircle,
 } from "lucide-react";
+import { contar } from "@/lib/plural";
+import { MetricTile } from "@/components/ui/metric-tile";
 
 const PAGE_SIZE = 10;
 
@@ -36,40 +37,6 @@ interface ApprovalsBoardProps {
   competitions?: Competition[];
 }
 
-function StatCard({
-  label,
-  value,
-  tone,
-  iconBg,
-  Icon,
-}: {
-  label: string;
-  value: number | string;
-  tone: string;
-  iconBg: string;
-  Icon: LucideIcon;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-center gap-3 px-4 py-3.5">
-        <div
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-            iconBg,
-          )}
-        >
-          <Icon className={cn("h-4 w-4", tone)} aria-hidden="true" />
-        </div>
-        <div>
-          <p className="text-xl font-bold leading-none tracking-tight text-foreground">
-            {value}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 /**
  * Decode a raw slotKey like "S1_central_0" into a human-readable label.
@@ -163,41 +130,17 @@ export function ApprovalsBoard({
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Gestión"
+        eyebrow="Competiciones"
         title="Aprobaciones"
-        description={`${pendingCount} propuestas pendientes de revisión nacional · diff de roster y decisión centralizada`}
+        description={`${contar(pendingCount, "propuesta pendiente", "propuestas pendientes")} de revisión nacional`}
       />
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
-          label="Pendientes"
-          value={pendingCount}
-          tone="text-warning"
-          iconBg="bg-warning-muted"
-          Icon={Clock}
-        />
-        <StatCard
-          label="Esta semana"
-          value={thisWeekCount}
-          tone="text-foreground-secondary"
-          iconBg="bg-muted"
-          Icon={LayoutList}
-        />
-        <StatCard
-          label="Aprobadas"
-          value={approvedCount}
-          tone="text-success"
-          iconBg="bg-success-muted"
-          Icon={CheckCircle2}
-        />
-        <StatCard
-          label="Rechazadas"
-          value={rejectedCount}
-          tone="text-destructive"
-          iconBg="bg-destructive-muted"
-          Icon={XCircle}
-        />
+        <MetricTile label="Pendientes" value={pendingCount} tone="warning" icon={Clock} />
+        <MetricTile label="Esta semana" value={thisWeekCount} tone="neutral" icon={LayoutList} />
+        <MetricTile label="Aprobadas" value={approvedCount} tone="success" icon={CheckCircle2} />
+        <MetricTile label="Rechazadas" value={rejectedCount} tone="danger" icon={XCircle} />
       </div>
 
       {/* Dual-column layout */}
@@ -291,7 +234,7 @@ export function ApprovalsBoard({
           style={{ minHeight: "460px" }}
         >
           <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted pb-3">
-            <CardTitle className="text-sm">Detalle y diff de roster</CardTitle>
+            <CardTitle className="text-sm">Detalle de la propuesta</CardTitle>
             {selected && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/competitions/${selected.competitionId}`}>Abrir tarima</Link>
@@ -303,7 +246,7 @@ export function ApprovalsBoard({
             <CardContent className="flex flex-1 items-center justify-center pt-6">
               <EmptyState
                 title="Selecciona una propuesta"
-                description="Elige un envío en la cola para ver el diff y actuar."
+                description="Elige una propuesta de la cola para ver su tarima y decidir."
               />
             </CardContent>
           ) : (
@@ -322,7 +265,7 @@ export function ApprovalsBoard({
                 <div className="overflow-hidden rounded-xl border border-border bg-background/80">
                   <div className="border-b border-border-muted bg-muted/50 px-4 py-2">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
-                      Slot asignado → Juez
+                      Hueco → Juez
                     </span>
                   </div>
                   <div className="max-h-[260px] divide-y divide-border-muted/60 overflow-y-auto font-mono text-xs">
