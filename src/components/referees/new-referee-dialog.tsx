@@ -104,7 +104,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
         <form onSubmit={onSubmit} className="space-y-5 p-6">
           {/* Section: Datos principales */}
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+            <p className="text-[11px] font-semibold text-subtle-muted">
               Datos principales
             </p>
             <div>
@@ -170,7 +170,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
 
           {/* Section: Datos opcionales */}
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-subtle-muted">
+            <p className="text-[11px] font-semibold text-subtle-muted">
               Datos opcionales
             </p>
             <div>

@@ -58,7 +58,7 @@ export function DashboardHero({
             priority
           />
           <div className="min-w-0">
-            <p className="friendly-label mb-1 text-[10px] uppercase tracking-widest text-muted-foreground/70">
+            <p className="friendly-label mb-1 text-[11px] text-muted-foreground/70">
               Panel operativo · {quarter}
             </p>
             <h1 className="text-[24px] font-semibold tracking-tight text-foreground sm:text-[26px]">

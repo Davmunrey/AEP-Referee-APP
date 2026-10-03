@@ -44,7 +44,7 @@ export function RosterHelpPanel() {
             los huecos; el sistema avisa si no cumplen nivel o normativa. Si un mismo juez coincide
             en dos posiciones que se solapan (p. ej. tarima + pesaje de la sesión siguiente),
             te pedirá confirmación y, al aceptar, marca el puesto con{" "}
-            <span className="font-mono">*</span> (compartido).
+            <span>*</span> (compartido).
           </li>
           <li>
             <strong className="text-foreground-secondary">Revisión:</strong> comprueba cobertura y

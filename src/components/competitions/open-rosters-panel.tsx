@@ -45,10 +45,10 @@ export function OpenRostersPanel({ competitions, maxItems = 6 }: OpenRostersPane
                 {competition.fecha} · {competition.sede}
               </p>
               <Progress value={pct} className="h-1.5" />
-              <p className="font-mono text-[10px] text-subtle-muted">
+              <p className="text-[11px] tabular-nums text-subtle-muted">
                 {competition.confirmados}/{competition.requeridos} · {pct}%
               </p>
-              <Button size="sm" className="mt-auto w-full gap-1" asChild>
+              <Button size="sm" variant="outline" className="mt-auto w-full gap-1" asChild>
                 <Link href={`/competitions/${competition.id}`}>Montar tarima</Link>
               </Button>
             </li>

@@ -2,10 +2,11 @@
 @import "../styles/tokens.css";
 
 @theme inline {
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --color-background: var(--background);
+  --color-canvas: var(--canvas);
   --color-foreground: var(--foreground);
   --color-foreground-secondary: var(--foreground-secondary);
   --color-subtle: var(--subtle);
@@ -103,7 +104,9 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    font-feature-settings: "ss01", "ss02";
+    /* Las cifras alineadas en columna en toda la app (tablas, contadores). */
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.006em;
   }
 
   /*
@@ -172,11 +175,9 @@
 }
 
 @layer utilities {
-  .app-mesh {
-    background-color: var(--background);
-    background-image:
-      radial-gradient(ellipse 80% 50% at 12% -8%, var(--mesh-primary), transparent 60%),
-      radial-gradient(ellipse 60% 45% at 95% 0%, var(--mesh-warning), transparent 55%);
+  /* Lienzo de cada página: un plano propio sobre el marco de la app. */
+  .app-canvas {
+    background-color: var(--canvas);
   }
 
   .glass-panel {
@@ -197,11 +198,6 @@
     box-shadow: var(--shadow-card);
   }
 
-  .nav-glow-active {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 20%, transparent),
-      0 1px 3px color-mix(in srgb, var(--neutral-900) 6%, transparent);
-  }
-
   .skip-link {
     /* transition-[top], no `all`: lo único que se mueve al enfocar es la
      * posición vertical; `all` arrastraba también color, sombra y anillo. */
@@ -212,8 +208,10 @@
     background-color: color-mix(in srgb, var(--surface) 50%, transparent);
   }
 
+  /* Rótulos en minúscula de frase: las versales con tracking ancho por todas
+   * partes eran lo que más fechaba la interfaz. */
   .friendly-label {
-    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+    @apply text-xs font-medium text-muted-foreground;
   }
 
   /* Carga con barrido (shimmer) sutil: más premium que el pulse plano. La regla

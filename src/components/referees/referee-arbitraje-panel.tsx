@@ -71,11 +71,11 @@ export function RefereeArbitrajePanel({
           {selected === ALL_YEARS
             ? "Total histórico (todos los años naturales)"
             : `Año natural ${selected}`}
-          : <span className="font-mono font-semibold text-foreground">{active.total}</span>
+          : <span className="font-semibold text-foreground">{active.total}</span>
           {active.ipf > 0 && (
             <>
               {" "}
-              · IPF: <span className="font-mono text-foreground">{active.ipf}</span>
+              · IPF: <span className="text-foreground">{active.ipf}</span>
             </>
           )}
         </p>
@@ -124,7 +124,7 @@ function TierBlock({
 }) {
   return (
     <div className="rounded-lg border border-border-muted bg-surface/50 p-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
+      <p className="mb-2 text-[11px] font-semibold text-primary">
         {label}
       </p>
       {entries.length === 0 ? (
@@ -140,7 +140,7 @@ function TierBlock({
                 <td className="py-1 pr-2 text-foreground-secondary">
                   {ARBITRAJE_ROLE_LABELS[role] ?? role}
                 </td>
-                <td className="py-1 text-right font-mono font-semibold text-foreground">
+                <td className="py-1 text-right font-semibold text-foreground">
                   {count}
                 </td>
               </tr>

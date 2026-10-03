@@ -36,7 +36,7 @@ export function CredentialsBanner({
           Comparte estas credenciales con el nuevo usuario. El usuario también puede usar el enlace
           de recuperación de contraseña de Supabase para actualizar su acceso.
         </p>
-        <div className="mt-4 rounded-xl border border-border-muted bg-surface p-3 font-mono text-sm">
+        <div className="mt-4 rounded-xl border border-border-muted bg-surface p-3 text-sm">
           <p className="text-foreground-secondary">
             <span className="text-subtle-muted">Email:</span>{" "}
             <span className="select-all">{email}</span>

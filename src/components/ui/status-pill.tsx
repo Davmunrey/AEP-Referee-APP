@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 export type WorkflowStatus = "pendiente" | "aprobado" | "rechazado";
 
 const statusStyles: Record<WorkflowStatus, string> = {
-  pendiente: "bg-warning-muted text-warning ring-1 ring-inset ring-warning-border",
-  aprobado: "bg-success-muted text-success ring-1 ring-inset ring-success-border",
-  rechazado: "bg-primary-muted text-primary ring-1 ring-inset ring-primary-border",
+  pendiente: "bg-warning-muted text-warning",
+  aprobado: "bg-success-muted text-success",
+  rechazado: "bg-primary-muted text-primary",
 };
 
 interface StatusPillProps {
@@ -20,7 +20,7 @@ export function StatusPill({ status, className }: StatusPillProps) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
+        "inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium capitalize",
         style,
         className,
       )}

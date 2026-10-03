@@ -27,7 +27,7 @@ export default function GlobalError({
         Se ha producido un error inesperado. Hemos registrado el incidente para revisarlo.
       </p>
       {error.digest && (
-        <p className="font-mono text-xs text-subtle-muted">Referencia: {error.digest}</p>
+        <p className="text-xs text-subtle-muted">Referencia: {error.digest}</p>
       )}
       <Button onClick={reset}>Reintentar</Button>
     </div>

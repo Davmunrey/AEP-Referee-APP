@@ -98,7 +98,7 @@ function CoverageMeter({
           {noTemplate ? "Sin plantilla" : `${filled}/${required}`}
         </span>
         {!noTemplate && pct != null && (
-          <span className={cn("rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold", tone.pill)}>
+          <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold", tone.pill)}>
             {pct}%
           </span>
         )}
@@ -128,7 +128,7 @@ function SummaryMetric({
 }) {
   return (
     <div className="rounded-xl border border-border-muted bg-surface/60 px-3 py-2.5">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums tracking-tight text-foreground">{value}</p>
       {hint ? <p className="mt-0.5 text-[11px] text-subtle-muted">{hint}</p> : null}
     </div>
@@ -301,7 +301,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               <DataTableBody>
                 {data.yearlyHistory.map((row) => (
                   <DataTableRow key={row.year}>
-                    <DataTableCell className="font-mono text-xs font-semibold text-primary">{row.year}</DataTableCell>
+                    <DataTableCell className="text-xs font-semibold text-primary">{row.year}</DataTableCell>
                     <DataTableCell className="text-right tabular-nums">{row.competitions}</DataTableCell>
                     <DataTableCell className="text-right tabular-nums text-muted-foreground">
                       {row.requiredSlots}
@@ -362,7 +362,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                     <DataTableRow key={row.zona}>
                       <DataTableCell>
                         <div className="flex min-w-0 items-center gap-2">
-                          <span className="shrink-0 rounded-md border border-border-muted bg-surface px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
+                          <span className="shrink-0 rounded-md border border-border-muted bg-surface px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                             {row.zona}
                           </span>
                           <span className="truncate text-sm font-medium text-foreground">{row.name}</span>
@@ -372,13 +372,13 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                       <DataTableCell className="min-w-[132px]">
                         <CoverageMeter filled={row.filledSlots} required={row.requiredSlots} />
                       </DataTableCell>
-                      <DataTableCell className="text-right font-mono text-xs tabular-nums text-muted-foreground">
+                      <DataTableCell className="text-right text-xs tabular-nums text-muted-foreground">
                         <span className="font-semibold text-foreground">{row.uniqueAssignedReferees}</span>
                         <span className="text-subtle-muted"> / {row.activeReferees}</span>
                       </DataTableCell>
                       <DataTableCell className="text-right">
                         {(row.crossZoneSlots ?? 0) > 0 ? (
-                          <span className="inline-flex min-w-[2rem] justify-end rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 font-mono text-xs font-semibold text-warning">
+                          <span className="inline-flex min-w-[2rem] justify-end rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 text-xs font-semibold text-warning">
                             {row.crossZoneSlots}
                           </span>
                         ) : (
@@ -422,7 +422,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                 <div key={r.id} className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-surface-hover">
                   <span
                     className={cn(
-                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border font-mono text-xs font-bold tabular-nums",
+"flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-bold tabular-nums",
                       rankTone,
                     )}
                   >
@@ -440,10 +440,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                     <p className="mt-1.5 text-[11px] text-muted-foreground">{r.nivel}</p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="font-mono text-xs font-semibold tabular-nums text-foreground">
+                    <p className="text-xs font-semibold tabular-nums text-foreground">
                       {r.assignedCompetitions} camp.
                     </p>
-                    <p className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+                    <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
                       {r.assignedSlots} plazas
                     </p>
                   </div>
@@ -498,7 +498,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
             <CardTitle className="text-sm">Campeonatos críticos · {data.selectedYear}</CardTitle>
           </div>
           {data.criticalEvents.length > 0 && (
-            <span className="rounded-full border border-destructive-border bg-destructive-muted px-2.5 py-0.5 font-mono text-xs font-semibold text-destructive">
+            <span className="rounded-full border border-destructive-border bg-destructive-muted px-2.5 py-0.5 text-xs font-semibold text-destructive">
               {data.criticalEvents.length}
             </span>
           )}
@@ -530,7 +530,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                         {e.nombre}
                       </Link>
                     </DataTableCell>
-                    <DataTableCell className="font-mono text-xs text-muted-foreground">{e.fecha}</DataTableCell>
+                    <DataTableCell className="text-xs text-muted-foreground">{e.fecha}</DataTableCell>
                     <DataTableCell className="text-right">
                       <EventStatusBadge status={e.estado} />
                     </DataTableCell>

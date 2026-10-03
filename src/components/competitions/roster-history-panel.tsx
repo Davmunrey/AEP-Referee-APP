@@ -167,7 +167,7 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
                           {e.detail}
                         </p>
                       )}
-                      <p className="mt-1 font-mono text-[10px] text-subtle-muted">
+                      <p className="mt-1 text-[10px] text-subtle-muted">
                         {e.actor}
                         {" · "}
                         <time

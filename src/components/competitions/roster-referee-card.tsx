@@ -120,7 +120,7 @@ export const RefereeCard = memo(function RefereeCard({
             {isFromOtherZone ? `⟳ ${zoneLabel}` : zoneLabel}
           </span>
           <span className="mx-1 text-border">·</span>
-          <span className="font-mono">
+          <span>
             {referee.eventos} arb.
             {topRoles.length > 0 &&
               ` · ${topRoles.map((r) => `${r.count}×${r.role.split(" ")[0]}`).join(" ")}`}

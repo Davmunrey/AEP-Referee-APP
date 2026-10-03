@@ -229,7 +229,7 @@ export function RefereesDirectory({
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
           <div className="flex items-center gap-1.5 text-subtle-muted">
             <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider">Filtros</span>
+            <span className="text-[11px] font-semibold">Filtros</span>
           </div>
           <div className="h-4 w-px bg-border" />
           <Input
@@ -320,7 +320,7 @@ export function RefereesDirectory({
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <LevelBadge level={referee.nivel} />
                   <StatusBadge status={referee.estado} />
-                  <span className="font-mono text-[10px] text-subtle-muted">{referee.zona}</span>
+                  <span className="text-[10px] text-subtle-muted">{referee.zona}</span>
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1">
@@ -381,7 +381,7 @@ export function RefereesDirectory({
                 {/* Mismo peso de cabecera que la tabla compartida (DataTable):
                     en una tabla de nueve columnas los títulos tienen que pesar
                     más que el dato para poder guiar la lectura. */}
-                <tr className="border-b border-border/80 text-left font-mono text-[10px] uppercase tracking-wider text-subtle-muted">
+                <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
                   <th className="w-10 px-4 py-2" />
                   <th className="px-4 py-2 font-semibold">Juez</th>
                   <th className="px-4 py-2 font-semibold">Localidad</th>
@@ -424,13 +424,13 @@ export function RefereesDirectory({
                     <td className="px-4 py-2.5">
                       <StatusBadge status={referee.estado} />
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
+                    <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">
                       {referee.eventos}
                     </td>
                     {/* Las fechas son cifras: sin `tabular-nums` los dígitos
                         bailan de fila en fila y la columna deja de ser una
                         columna. */}
-                    <td className="px-4 py-2.5 font-mono text-[11px] tabular-nums text-subtle-muted">
+                    <td className="px-4 py-2.5 text-[11px] tabular-nums text-subtle-muted">
                       {displayUltimo(referee.ultimo)}
                     </td>
                     {/* En puntero grueso (tablet) no hay hover: las acciones se

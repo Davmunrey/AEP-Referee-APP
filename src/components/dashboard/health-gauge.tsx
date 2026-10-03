@@ -64,7 +64,7 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
         <CardTitle className="text-sm font-semibold">Salud operativa</CardTitle>
         <span
           className={cn(
-            "rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+            "rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize",
             style.chipBg,
           )}
         >
@@ -108,7 +108,7 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
             <span className={cn("text-[2rem] font-bold leading-none tracking-tight tabular-nums xl:text-[2.2rem]", style.text)}>
               {health.score}
             </span>
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               / 100
             </span>
             {typeof health.delta === "number" && (
@@ -146,7 +146,7 @@ export function HealthGauge({ health }: { health: OperationalHealth }) {
               <li key={f.label}>
                 <div className="mb-1 flex items-baseline justify-between gap-2">
                   <span className="text-[12px] font-medium text-foreground/80">{f.label}</span>
-                  <span className={cn("font-mono text-[11px] font-semibold", factorText(f.score))}>
+                  <span className={cn("text-[11px] font-semibold", factorText(f.score))}>
                     {f.score}
                   </span>
                 </div>

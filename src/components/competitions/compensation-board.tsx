@@ -281,7 +281,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   {clubs.map((club, index) => (
                     <div key={club.draftId} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
                       <div>
-                        <label htmlFor={`${fieldIdBase}-club-${index}`} className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <label htmlFor={`${fieldIdBase}-club-${index}`} className="mb-1 block text-[11px] font-semibold text-muted-foreground">
                           {organizer === "custom" ? "Nombre" : "Club"} {clubs.length > 1 ? index + 1 : ""}
                         </label>
                         <Input id={`${fieldIdBase}-club-${index}`}
@@ -314,7 +314,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         />
                       </div>
                       <div>
-                        <label htmlFor={`${fieldIdBase}-emails-${index}`} className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <label htmlFor={`${fieldIdBase}-emails-${index}`} className="mb-1 block text-[11px] font-semibold text-muted-foreground">
                           E-mails devolución
                         </label>
                         <Input id={`${fieldIdBase}-emails-${index}`}
@@ -387,7 +387,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           </Button>
         )}
         <div className="ml-auto text-right">
-          <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
+          <p className="text-sm font-semibold tabular-nums text-foreground">
             Total confirmado:{" "}
             {readiness?.readyForExport
               ? formatReceiptAmountEur(summary?.grandTotal ?? 0)
@@ -418,7 +418,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           {/* Cabecera: peso semibold como en el resto de tablas de la app, y las
               columnas de dinero alineadas a la derecha junto a sus cifras — un
               importe se lee por la coma, no por la primera letra. */}
-          <thead className="border-b border-border-muted bg-surface/50 text-[11px] font-semibold uppercase tracking-wide text-subtle-muted">
+          <thead className="border-b border-border-muted bg-surface/40 text-xs font-medium text-muted-foreground">
             <tr>
               <th className="w-8 px-2 py-2" />
               <th className="px-3 py-2">Juez</th>
@@ -489,7 +489,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs text-foreground-secondary">
+                    <td className="px-3 py-2 text-xs text-foreground-secondary">
                       {formatDutySessionsSummary(claim)}
                     </td>
                     <td className="px-3 py-2">
@@ -514,7 +514,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           }}
                         />
                       ) : (
-                        <span className="font-mono text-xs tabular-nums">{claim.distanceKmRoundTrip ?? "—"}</span>
+                        <span className="text-xs tabular-nums">{claim.distanceKmRoundTrip ??"—"}</span>
                       )}
                       {claim.travelMode === "shared_vehicle_passenger" && (
                         <p className="mt-0.5 text-[10px] text-muted-foreground">sin cobro km</p>
@@ -540,7 +540,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
+                    <td className="px-3 py-2 text-right text-xs tabular-nums">
                       {claim.financialComplete ? formatReceiptAmountEur(claim.lodgingAmount) : "—"}
                     </td>
                     <td className="px-3 py-2">
@@ -590,7 +590,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           )}
                         </div>
                       ) : claim.isComputerSetup ? (
-                        <span className="font-mono text-xs">
+                        <span className="text-xs">
                           {(claim.computerSetupAmount ?? 0) > 0
                             ? formatReceiptAmountEur(claim.computerSetupAmount ?? 0)
                             : "Sí"}
@@ -599,7 +599,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono font-semibold tabular-nums">
+                    <td className="px-3 py-2 text-right font-semibold tabular-nums">
                       {claim.financialComplete ? (
                         formatReceiptAmountEur(claim.totalAmount)
                       ) : (
@@ -628,7 +628,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   {isOpen && (
                     <tr className="bg-surface/30">
                       <td colSpan={canManage ? 10 : 9} className={cn("px-4 py-3", disclosureEnter)}>
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <p className="mb-2 text-xs font-semibold text-muted-foreground">
                           Desglose · {claim.refereeName}
                         </p>
                         <ul className="space-y-3 text-sm">
@@ -648,7 +648,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                                         · {formatReceiptAmountEur(line.unitAmount)}
                                       </span>
                                     </span>
-                                    <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                                    <span className="tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
                                   </li>
                                 ))}
                               </ul>
@@ -664,7 +664,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                                     <span className="text-muted-foreground"> · {line.detail}</span>
                                   ) : null}
                                 </span>
-                                <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                                <span className="tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
                               </li>
                             ))}
                         </ul>

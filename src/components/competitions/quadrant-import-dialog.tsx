@@ -252,7 +252,7 @@ export function QuadrantImportDialog({
                         aria-label={`Asignar ${candidate.refereeName}`}
                       />
                     </td>
-                    <td className="px-2 py-1.5 font-mono text-foreground">{candidate.session}</td>
+                    <td className="px-2 py-1.5 text-foreground">{candidate.session}</td>
                     <td className="px-2 py-1.5 text-foreground">{candidate.roleLabel}</td>
                     <td className="px-2 py-1.5 text-foreground">
                       {candidate.refereeName}
@@ -271,7 +271,7 @@ export function QuadrantImportDialog({
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
+                    <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
                       {candidate.slotKey ?? "—"}
                     </td>
                     <td className="px-2 py-1.5 text-[10.5px] text-subtle-muted">

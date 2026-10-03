@@ -102,7 +102,7 @@ function SlotCell({
 
   return (
     <div className="min-w-0">
-      <p className="mb-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-subtle-muted">
+      <p className="mb-0.5 truncate text-[11px] font-semibold text-subtle-muted">
         {slotLabel}
       </p>
       <div
@@ -166,12 +166,12 @@ function SlotCell({
                 <p className="truncate text-[11.5px] font-semibold leading-tight text-foreground">
                   {referee.nombre}
                   {slotFlags?.compartido && (
-                    <span className="ml-0.5 font-mono text-[10px] text-primary" title="Compartido">
+                    <span className="ml-0.5 text-[10px] text-primary"title="Compartido">
                       *
                     </span>
                   )}
                   {slotFlags?.intercambio && (
-                    <span className="ml-0.5 font-mono text-[10px] text-info" title="Intercambio">
+                    <span className="ml-0.5 text-[10px] text-info"title="Intercambio">
                       ↑↓
                     </span>
                   )}
@@ -234,7 +234,7 @@ function SlotCell({
                   title="Compartido (*) — permite solape tarima/pesaje"
                   aria-pressed={slotFlags?.compartido ? "true" : "false"}
                   className={cn(
-                    "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
+"flex h-5 min-w-[1.25rem] items-center justify-center rounded border text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.compartido
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-background text-subtle-muted hover:border-primary/50",
@@ -251,7 +251,7 @@ function SlotCell({
                   title="Intercambio (↑↓)"
                   aria-pressed={slotFlags?.intercambio ? "true" : "false"}
                   className={cn(
-                    "flex h-5 min-w-[1.25rem] items-center justify-center rounded border font-mono text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
+"flex h-5 min-w-[1.25rem] items-center justify-center rounded border text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.intercambio
                       ? "border-info bg-info text-primary-foreground"
                       : "border-border bg-background text-subtle-muted hover:border-info/50",
@@ -336,7 +336,7 @@ export function SlotGrid({
       {layout.map((row, rowIndex) => (
         <div key={row.label ?? `row-${rowIndex}`}>
           {row.label ? (
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-secondary">
+            <p className="mb-1 text-[11px] font-semibold text-foreground-secondary">
               {row.label}
             </p>
           ) : null}

@@ -13,15 +13,12 @@ export function PageHeader({ eyebrow, title, description, children, className }:
     <div className={cn("flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="max-w-2xl">
         {eyebrow && (
-          <p className="friendly-label mb-2 flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-            {eyebrow}
-          </p>
+          <p className="mb-1.5 text-[13px] font-medium text-subtle">{eyebrow}</p>
         )}
         {/* text-balance / text-pretty: reparte el título en líneas de largo
             parecido y evita que la descripción deje una palabra huérfana al
             final —los títulos de esta app rompen a dos líneas en portátil. */}
-        <h1 className="text-balance text-[24px] font-semibold leading-tight tracking-[-0.01em] text-foreground sm:text-[25px]">
+        <h1 className="text-balance text-[24px] font-semibold leading-tight tracking-[-0.025em] text-foreground sm:text-[26px]">
           {title}
         </h1>
         {description && (

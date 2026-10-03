@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const numericFieldClass = "h-8 font-mono text-xs tabular-nums";
+const numericFieldClass ="h-8 text-xs tabular-nums";
 
 /** Campo numérico entero: editable libremente; guarda al salir o con Enter. */
 export function CompensationKmInput({

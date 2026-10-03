@@ -78,7 +78,7 @@ export function CompensationExportDialog({
         </div>
 
         <div className="mb-4 rounded-xl border border-border-muted bg-surface/50 p-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Desglose</p>
+          <p className="mb-2 text-xs font-semibold text-muted-foreground">Desglose</p>
           <ul className="space-y-2 text-sm">
             {groupDutiesBySession(claim.dutyLines).map((group) => (
               <li key={group.session} className="rounded-lg border border-border-muted/70 bg-background/40 px-2.5 py-2">
@@ -87,7 +87,7 @@ export function CompensationExportDialog({
                   {group.lines.map((line) => (
                     <li key={`${group.session}-${line.roleLabel}`} className="flex justify-between gap-3 text-foreground-secondary">
                       <span>{line.roleLabel}</span>
-                      <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                      <span className="tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
                     </li>
                   ))}
                 </ul>
@@ -99,11 +99,11 @@ export function CompensationExportDialog({
                   {line.label}
                   {line.detail ? <span className="text-muted-foreground"> · {line.detail}</span> : null}
                 </span>
-                <span className="font-mono tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
+                <span className="tabular-nums">{formatReceiptAmountEur(line.amount)}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-3 border-t border-border-muted pt-2 text-right font-mono font-semibold">
+          <p className="mt-3 border-t border-border-muted pt-2 text-right font-semibold">
             Total: {formatReceiptAmountEur(claim.totalAmount)}
           </p>
         </div>

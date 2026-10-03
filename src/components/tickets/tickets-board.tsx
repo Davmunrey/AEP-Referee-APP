@@ -109,7 +109,7 @@ export function TicketsBoard({
       {/* Filtros */}
       <div className="space-y-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
+          <span className="mr-1 text-[11px] font-semibold text-subtle-muted">
             Estado
           </span>
           <Pill active={statusFilter === "todos"} onClick={() => setStatusFilter("todos")}>
@@ -122,7 +122,7 @@ export function TicketsBoard({
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
+          <span className="mr-1 text-[11px] font-semibold text-subtle-muted">
             Categoría
           </span>
           <Pill

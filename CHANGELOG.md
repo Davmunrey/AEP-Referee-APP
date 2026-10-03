@@ -4,6 +4,19 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🎨 **AEP Tarima v2.5** — _«Cara nueva»_ (2026-10-03)
+
+La app funcionaba muy bien y parecía de 2019. Ya no.
+
+- **Tipografía Geist** en lugar de DM Sans, y adiós a la monoespaciada de aire «terminal» en fechas y contadores: las cifras siguen alineadas en columna, pero con la misma letra que el resto.
+- **Paleta neutra y limpia**: fuera el beige; marco gris, lienzo de página con borde fino y tarjetas blancas encima.
+- **Sin MAYÚSCULAS GRITONAS**: más de cincuenta rótulos (cabeceras de tabla, menú, formularios, tarima) pasan a minúscula de frase.
+- **Menú lateral compacto**: ítems más bajos (ahora cabe entero en un portátil) y el activo es una tarjeta blanca con el icono en rojo.
+- **KPIs sobrios**: cifra en el color del texto, un punto de color junto al rótulo y nada de franjas ni halos.
+- Botones e insignias sin halos ni bordes de color, «Montar tarima» como botón secundario en las tarjetas, ayuda flotante discreta y zonas con su nombre («Noroeste», no «NOROESTE»).
+
+---
+
 ## ✨ **AEP Tarima v2.4** — _«Producto pulido»_ (2026-10-03 · PRs #181–#188)
 
 Auditoría pantalla a pantalla, en escritorio y en el móvil, como la usaría un delegado con prisa. Menos sustos, menos espacio perdido y ni un número inventado.

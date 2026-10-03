@@ -394,7 +394,7 @@ export function ExamsManager({
                 </span>
                 <Badge variant="muted">→ {exam.nivelObjetivo}</Badge>
                 {resultBadge(exam.resultado)}
-                <span className="ml-auto font-mono text-[11px] text-subtle-muted">
+                <span className="ml-auto text-[11px] text-subtle-muted">
                   {exam.fecha}
                 </span>
               </div>
@@ -426,7 +426,7 @@ export function ExamsManager({
                       style={{ width: `${Math.max(pct, 3)}%` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] tabular-nums text-subtle-muted">
+                  <span className="text-[11px] tabular-nums text-subtle-muted">
                     {exam.puntuacion}/{exam.puntuacionMaxima}
                   </span>
                 </div>
