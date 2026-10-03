@@ -88,6 +88,28 @@ export function claimAuditMeta(
   };
 }
 
+/**
+ * ¿Toca este cambio el importe de una liquidación ya pagada?
+ *
+ * Sobre una liquidación «pagado» solo se admite cambiar el estado y las
+ * notas —el comentario de revisión y las notas del viaje—: lo demás —km, modo
+ * de viaje, alojamiento, responsable, montaje, override— mueve la cifra de un
+ * pago ya hecho.
+ */
+const CAMPOS_SIN_IMPORTE = new Set(["status", "reviewComment", "travelNotes"]);
+
+export function touchesPaidAmount(
+  existing: Pick<CompensationClaim, "status">,
+  patch: CompensationClaimPatch,
+): boolean {
+  if (existing.status !== "pagado") return false;
+  // Pasar a otro estado en la misma petición no desbloquea: primero se
+  // reabre, y el cambio de importe va en una petición aparte.
+  return Object.entries(patch).some(
+    ([campo, valor]) => valor !== undefined && !CAMPOS_SIN_IMPORTE.has(campo),
+  );
+}
+
 export function applyCompensationClaimPatch(
   existing: CompensationClaim,
   patch: CompensationClaimPatch,

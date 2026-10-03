@@ -17,7 +17,14 @@ import { tablasVivas } from "./lib/migration-tables.mjs";
 //    forzarla con --legacy-peer-deps deja el árbol sin `webpack` y rompe el
 //    build. Se retiran en cuanto npm resuelva 4.1.11 o salga un parche en la
 //    línea 4.1.x que sí instale.
+//  - El de `braces` (GHSA-vfj7-8cjw-p6xm, DoS por patrones muy anidados)
+//    afecta a TODAS sus versiones: no hay ninguna corregida a la que subir.
+//    Llega solo por `eslint-config-next` → `fast-glob` → `micromatch`, es
+//    decir, por el linter: no entra en el bundle ni en el servidor, y los
+//    patrones que expande son los globs de configuración del propio
+//    repositorio. Se retira en cuanto salga una versión parcheada.
 const allowedAdvisories = new Set([
+  "GHSA-vfj7-8cjw-p6xm",
   "GHSA-4r6h-8v6p-xvw6",
   "GHSA-5pgg-2g8v-p4x9",
   "GHSA-82fw-gwwq-j7x9",

@@ -12,7 +12,7 @@ const crumbNameCache = new Map<string, string>();
 /** Resuelve título de competición para breadcrumbs `/competitions/[id]`. */
 export function useCompetitionCrumbLabel(fallback: string): string {
   const pathname = usePathname();
-  const match = pathname.match(/^\/competitions\/([^/]+)$/);
+  const match = pathname.match(/^\/competitions\/([^/]+)(?:\/compensation)?$/);
   const competitionId = match?.[1];
   const cached = competitionId ? crumbNameCache.get(competitionId) : undefined;
   const [label, setLabel] = useState(cached ?? fallback);

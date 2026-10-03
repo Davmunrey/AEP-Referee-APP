@@ -177,13 +177,23 @@ export const competitionService = {
     const existingRows =
       context?.existing ??
       (await (async () => {
-        const { data, error } = await supabase
-          .from("competitions")
-          .select("id, nombre, fecha, tipo");
-        // Antes se tragaba el error: la lista vacía saltaba el dedupe y dejaba
-        // maxNum=0 → id "evt-001" en colisión con el ya existente.
-        if (error) throw new Error(`competitions: ${error.message}`);
-        return (data ?? []).map((r) => ({
+        // Paginado: PostgREST corta en 1000 filas sin avisar, y de esta
+        // lectura salen el dedupe y el siguiente `evt-NNN`. Con más de mil
+        // campeonatos el dedupe miraba solo un trozo y el máximo salía de una
+        // muestra, así que el id nuevo podía repetir uno existente y los tres
+        // reintentos de abajo acababan en un 500.
+        // `fetchAllPagesOf` lanza ante error: antes se tragaba, la lista vacía
+        // saltaba el dedupe y dejaba maxNum=0 → id "evt-001" en colisión.
+        const data = await fetchAllPagesOf<{ id: unknown; nombre: unknown; fecha: unknown; tipo: unknown }>(
+          "competitions",
+          (from, to) =>
+            supabase
+              .from("competitions")
+              .select("id, nombre, fecha, tipo")
+              .order("id", { ascending: true })
+              .range(from, to),
+        );
+        return data.map((r) => ({
           id: String(r.id),
           nombre: String(r.nombre),
           fecha: String(r.fecha),

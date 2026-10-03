@@ -1,6 +1,7 @@
 import { canManageCompensation } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { CompensationClaimPaidError } from "@/lib/competitions/service-types";
 import { dataService } from "@/server/services";
 
 interface RouteContext {
@@ -18,6 +19,9 @@ export async function POST(_request: Request, context: RouteContext) {
     if (!claim) return jsonError("Juez o campeonato no encontrado", 404);
     return jsonOk(claim);
   } catch (err) {
+    // El candado de liquidación pagada es un motivo para el usuario, no un
+    // fallo de geocodificación ni un 500.
+    if (err instanceof CompensationClaimPaidError) return jsonError(err.message, 423);
     const msg = err instanceof Error ? err.message : "";
     // Solo los fallos de geocodificación/ruta (Nominatim/OSRM) son un 422 con
     // mensaje legible para el usuario. Un fallo de BD o de red interno era un

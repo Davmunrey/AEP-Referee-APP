@@ -20,9 +20,22 @@ export async function POST(request: Request, context: RouteContext) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
-  const approve = body.approve === true;
+  // La decisión tiene que venir dicha. Antes `approve` era `body.approve ===
+  // true`, así que una petición sin el campo —o con otro nombre, o con
+  // `"true"` como texto— RECHAZABA la propuesta: el error de un cliente se
+  // convertía en una decisión irreversible sobre la tarima de otra zona.
+  if (typeof body.approve !== "boolean") {
+    return jsonError("Falta la decisión: «approve» debe ser true o false", 400);
+  }
+  const approve = body.approve;
   const comment =
     typeof body.comment === "string" ? body.comment.trim().slice(0, 500) || undefined : undefined;
+  // La pantalla lo pide («obligatorio al rechazar») y la revisión de ascensos
+  // ya lo exigía; aquí se aceptaba un rechazo sin un solo motivo, y el
+  // delegado recibía su tarima devuelta sin saber qué cambiar.
+  if (!approve && !comment) {
+    return jsonError("El motivo de rechazo es obligatorio", 400);
+  }
 
   // El servicio devuelve undefined tanto si la propuesta no existe como si ya
   // fue revisada (o si otro revisor ganó la carrera): distingue 404 de 409. Y

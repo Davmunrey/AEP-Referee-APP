@@ -1,4 +1,4 @@
-import { zonesMatch } from "@/lib/aep-zones";
+import { resolveZoneCode, zonesMatch } from "@/lib/aep-zones";
 import { canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { stripRefereeListPII } from "@/lib/api/referee-scope";
@@ -55,6 +55,12 @@ export async function POST(request: Request) {
       400,
     );
   }
+  // Una zona que no existe se aceptaba sin más: en memoria el juez nacía
+  // invisible para todos los delegados (ningún filtro de zona lo reconoce), y en
+  // Supabase la clave ajena de `referees.zona` reventaba con un 500 genérico.
+  // Los campeonatos ya respondían «Zona no válida»; los jueces, igual.
+  const zonaCanonica = resolveZoneCode(String(body.zona));
+  if (!zonaCanonica) return jsonError("Zona no válida", 400);
   // delegado_zona solo puede crear jueces en su propia zona
   if (user.role === "delegado_zona") {
     if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
@@ -67,7 +73,7 @@ export async function POST(request: Request) {
   try {
     const referee = await dataService.createReferee({
       nombre: body.nombre,
-      zona: body.zona,
+      zona: zonaCanonica,
       nivel: body.nivel,
       estado: body.estado,
       eventos: body.eventos ?? 0,

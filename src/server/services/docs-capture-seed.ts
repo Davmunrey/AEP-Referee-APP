@@ -1,6 +1,7 @@
 import { PRESET_AEP2 } from "@/lib/mock-data";
 import type { AssignmentsMap, Competition, Referee } from "@/lib/types";
 import { isDocsCaptureMode } from "@/lib/auth/docs-capture";
+import { addDaysIso, todayIso } from "@/lib/business-date";
 import { getStore, setCompetitionTemplate } from "@/server/store";
 
 export const DOCS_CAPTURE_COMPETITION_ID = "evt-docs-001";
@@ -11,7 +12,7 @@ const REFEREES: Referee[] = [
   {
     id: "j001",
     nombre: "Ana Roa Sales",
-    zona: "LEV",
+    zona: "MEDITERRANEO",
     nivel: "Nacional",
     estado: "Activo",
     eventos: 24,
@@ -24,7 +25,7 @@ const REFEREES: Referee[] = [
   {
     id: "j002",
     nombre: "Javier Ruiz García",
-    zona: "NOR",
+    zona: "NOROESTE",
     nivel: "IPF Cat. 2",
     estado: "Activo",
     eventos: 18,
@@ -37,7 +38,7 @@ const REFEREES: Referee[] = [
   {
     id: "j003",
     nombre: "María López Prieto",
-    zona: "CEN",
+    zona: "CENTRO",
     nivel: "Nacional",
     estado: "Activo",
     eventos: 31,
@@ -50,7 +51,7 @@ const REFEREES: Referee[] = [
   {
     id: "j004",
     nombre: "Carlos Méndez Ortiz",
-    zona: "SUR",
+    zona: "ANDALUCIA",
     nivel: "Regional",
     estado: "Activo",
     eventos: 9,
@@ -63,7 +64,7 @@ const REFEREES: Referee[] = [
   {
     id: "j005",
     nombre: "Elena Torres Vega",
-    zona: "CAT",
+    zona: "MEDITERRANEO",
     nivel: "IPF Cat. 2",
     estado: "Activo",
     eventos: 15,
@@ -79,15 +80,16 @@ const COMPETITION: Competition = {
   id: DOCS_CAPTURE_COMPETITION_ID,
   nombre: "Open Powerlifting Cantabria 2026",
   tipo: "AEP-2",
-  fecha: "2026-04-12",
-  fechaFin: "2026-04-13",
+  // Fechas reales se ponen al sembrar, relativas a hoy (ver `ensureDocsCaptureSeed`).
+  fecha: "",
+  fechaFin: "",
   sede: "Polideportivo La Albericia, Santander",
   sesiones: 3,
   requeridos: 9,
   confirmados: 5,
   estado: "Incompleto",
   aprobacion: "Sin propuesta",
-  zona: "NOR",
+  zona: "NOROESTE",
   compensationOrganizer: "club",
   compensationClubName: "Cantabria Powerlifting Club",
   compensationClubEmail: "cantabriaplc@gmail.com",
@@ -130,7 +132,15 @@ export function ensureDocsCaptureSeed(): void {
 
   store.referees.push(...REFEREES.map((r) => ({ ...r })));
 
-  store.competitions.push({ ...COMPETITION });
+  // Relativas a hoy, no fijas: con «2026-04-12» escrito a mano la semilla
+  // envejecía, y desde mayo el manual enseñaba un panel sin un solo campeonato
+  // próximo, con la tarima marcada «Histórico».
+  const hoy = todayIso();
+  store.competitions.push({
+    ...COMPETITION,
+    fecha: addDaysIso(hoy, 21),
+    fechaFin: addDaysIso(hoy, 22),
+  });
   setCompetitionTemplate(DOCS_CAPTURE_COMPETITION_ID, PRESET_AEP2.map((s) => ({ ...s, roles: s.roles.map((r) => ({ ...r })), pesajeRoles: s.pesajeRoles.map((r) => ({ ...r })) })));
   store.assignments.set(DOCS_CAPTURE_COMPETITION_ID, { ...ASSIGNMENTS });
   store.slotFlags.set(DOCS_CAPTURE_COMPETITION_ID, {});
@@ -139,25 +149,28 @@ export function ensureDocsCaptureSeed(): void {
     id: "evt-docs-002",
     nombre: "Copa Madrid AEP-3 2026",
     tipo: "AEP-3",
-    fecha: "2026-05-03",
-    fechaFin: "2026-05-03",
+    fecha: addDaysIso(hoy, 35),
+    fechaFin: addDaysIso(hoy, 35),
     sede: "Madrid",
     sesiones: 2,
     requeridos: 6,
     confirmados: 4,
     estado: "Borrador",
-    aprobacion: "Sin propuesta",
-    zona: "CEN",
+    // Tiene una propuesta pendiente (abajo): con «Sin propuesta» la pantalla
+    // de aprobaciones enseñaba una propuesta de un campeonato que decía no
+    // tenerla.
+    aprobacion: "Propuesta enviada",
+    zona: "CENTRO",
   });
 
   store.approvals.push({
     id: "apr-docs-1",
     competitionId: "evt-docs-002",
     competitionName: "Copa Madrid AEP-3 2026",
-    zona: "CEN",
+    zona: "CENTRO",
     status: "pendiente",
     submittedBy: "Delegado Centro",
-    submittedAt: "2026-03-20T10:00:00Z",
+    submittedAt: `${addDaysIso(hoy, -2)}T10:00:00Z`,
     assignments: {},
   });
 

@@ -124,8 +124,11 @@ describe("POST /approvals/:id/review — 400/404/409", () => {
   it("approve: \"false\" no aprueba (antes Boolean(\"false\") === true)", async () => {
     getApprovals.mockResolvedValue([{ id: "apr-1", status: "pendiente" }]);
     reviewApproval.mockResolvedValue({ id: "apr-1", status: "rechazado" });
-    await approvalReview(post({ approve: "false", comment: "no" }), ctx);
-    expect(reviewApproval).toHaveBeenCalledWith("apr-1", false, "Admin", "u1", "no");
+    // Ni aprueba ni rechaza: una decisión que no llega como booleano es un 400.
+    // Antes se leía como rechazo, que también es una decisión irreversible.
+    const res = await approvalReview(post({ approve: "false", comment: "no" }), ctx);
+    expect(res.status).toBe(400);
+    expect(reviewApproval).not.toHaveBeenCalled();
   });
 });
 

@@ -214,3 +214,21 @@ export class CompensationClaimConflictError extends Error {
     this.name = "CompensationClaimConflictError";
   }
 }
+
+/**
+ * Se intentó cambiar el importe de una liquidación ya pagada.
+ *
+ * Su dinero ya salió de la cuenta: cambiar los kilómetros, el alojamiento o
+ * los extras reescribía en silencio la cifra de un pago hecho, y el recibo que
+ * se generara después ya no cuadraba con la transferencia. Para corregirla hay
+ * que devolverla antes a otro estado, que queda auditado.
+ */
+export class CompensationClaimPaidError extends UserFacingServiceError {
+  constructor(
+    message = "La liquidación ya está pagada: su importe no se puede cambiar. Si hay que corregirla, cambia antes su estado.",
+  ) {
+    // 423: la fila existe y la petición es válida, pero está bloqueada.
+    super(message, 423);
+    this.name = "CompensationClaimPaidError";
+  }
+}
