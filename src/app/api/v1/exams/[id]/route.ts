@@ -1,3 +1,4 @@
+import { isIsoDate } from "@/app/api/_lib/validation";
 import { canAdminJudges, canManageJudges } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
@@ -9,7 +10,6 @@ interface RouteContext {
 }
 
 const EXAM_RESULTS: ReadonlyArray<ExamResult> = ["Aprobado", "Suspenso", "Pendiente"];
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await requireApiUser();
@@ -46,7 +46,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     patch.resultado = body.resultado;
   }
   if (body.fecha !== undefined) {
-    if (typeof body.fecha !== "string" || !ISO_DATE_RE.test(body.fecha)) {
+    if (typeof body.fecha !== "string" || !isIsoDate(body.fecha)) {
       return jsonError("La fecha debe tener formato AAAA-MM-DD", 400);
     }
     patch.fecha = body.fecha;
