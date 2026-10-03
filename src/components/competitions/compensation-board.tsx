@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition, Fragment } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useTransition, Fragment } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
@@ -116,7 +116,20 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
     return contacts.length > 0 ? withDraftIds(contacts) : [emptyClub()];
   });
   const [volunteer, setVolunteer] = useState(competition.compensationVolunteer ?? false);
+  // Con el organizador ya guardado, la tarjeta se pliega: en móvil ocupaba la
+  // primera pantalla entera y la tabla de liquidaciones quedaba muy abajo.
+  const organizerSummary =
+    competition.compensationOrganizer === "aep"
+      ? "Asociación Española de Powerlifting"
+      : competitionClubContacts(competition)
+          .map((c) => c.name)
+          .filter(Boolean)
+          .join(" · ");
+  const [organizerOpen, setOrganizerOpen] = useState(() => !organizerSummary);
   const patchChainRef = useRef(Promise.resolve());
+  // Ids de los campos de cada club: `draftId` es aleatorio y no coincide entre
+  // servidor y cliente (rompe la hidratación); useId + índice sí.
+  const fieldIdBase = useId();
 
   const claims = summary?.claims ?? [];
   const readiness = summary?.readiness;
@@ -232,12 +245,24 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       />
 
       {canManage && (
-        <section className="glass-panel-soft space-y-4 rounded-2xl p-4">
-          <div>
+        <details
+          className="glass-panel-soft group rounded-2xl p-4"
+          open={organizerOpen}
+          onToggle={(e) => setOrganizerOpen(e.currentTarget.open)}
+        >
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md focus-ring [&::-webkit-details-marker]:hidden">
+            <ChevronRight
+              className="h-4 w-4 shrink-0 text-subtle-muted transition-transform group-open:rotate-90"
+              aria-hidden="true"
+            />
             <h2 className="text-sm font-semibold text-foreground">Organizadores del recibo</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Puede haber varios clubes y varios e-mails de devolución (separados por coma). Escribe los km
-              ida+vuelta (solo números) y pulsa Enter o sal del campo para guardar.
+            {organizerSummary && (
+              <span className="min-w-0 truncate text-xs text-muted-foreground">{organizerSummary}</span>
+            )}
+          </summary>
+          <div className="mt-3">
+            <p className="text-xs text-muted-foreground">
+              Puede haber varios clubes y varios e-mails de devolución (separados por coma).
             </p>
             <div className="mt-3 space-y-3">
               <select
@@ -256,10 +281,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   {clubs.map((club, index) => (
                     <div key={club.draftId} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
                       <div>
-                        <label htmlFor="cb-campo" className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <label htmlFor={`${fieldIdBase}-club-${index}`} className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           {organizer === "custom" ? "Nombre" : "Club"} {clubs.length > 1 ? index + 1 : ""}
                         </label>
-                        <Input id="cb-campo"
+                        <Input id={`${fieldIdBase}-club-${index}`}
                           list="organizer-clubs-list"
                           placeholder="Nombre del club"
                           value={club.name}
@@ -289,10 +314,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         />
                       </div>
                       <div>
-                        <label htmlFor="cb-e-mails-devolucion" className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <label htmlFor={`${fieldIdBase}-emails-${index}`} className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           E-mails devolución
                         </label>
-                        <Input id="cb-e-mails-devolucion"
+                        <Input id={`${fieldIdBase}-emails-${index}`}
                           placeholder="uno@club.com, otro@club.com"
                           value={Array.isArray(club.emails) ? club.emails.join(", ") : ""}
                           onChange={(e) =>
@@ -340,7 +365,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
               Guardar organizadores
             </Button>
           </div>
-        </section>
+        </details>
       )}
 
       {readiness && readiness.issues.length > 0 && (
@@ -383,6 +408,11 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
         </p>
       )}
 
+      {canManage && claims.some((c) => c.status !== "pagado") && (
+        <p className="-mb-2 text-xs text-muted-foreground">
+          Escribe los km ida+vuelta (solo números) y pulsa Enter o sal del campo para guardar.
+        </p>
+      )}
       <div className="overflow-x-auto rounded-2xl border border-border-muted">
         <table className="w-full min-w-[880px] text-left text-sm">
           {/* Cabecera: peso semibold como en el resto de tablas de la app, y las
