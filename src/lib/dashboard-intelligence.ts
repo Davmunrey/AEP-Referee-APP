@@ -16,6 +16,7 @@ import type {
   InsightSeverity,
   OperationalHealth,
 } from "@/lib/types";
+import { contar } from "@/lib/plural";
 
 export interface IntelligenceInput {
   referees: { estado: string; disp?: boolean }[];
@@ -118,7 +119,7 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
       detail:
         criticalEvents > 0
           ? `${criticalEvents} de ${totalEvents} en estado crítico`
-          : `${totalEvents} campeonatos sin alertas`,
+          : contar(totalEvents, "campeonato sin alertas", "campeonatos sin alertas"),
     },
     {
       label: "Urgencia operativa",
@@ -126,7 +127,7 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
       weight: 0.18,
       detail:
         urgentOpen > 0
-          ? `${urgentOpen} plazas abiertas en campeonatos ≤21 días`
+          ? `${contar(urgentOpen, "plaza abierta", "plazas abiertas")} en campeonatos ≤21 días`
           : "sin urgencias a corto plazo",
     },
     {
@@ -134,7 +135,7 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
       score: backlogScore,
       weight: 0.12,
       detail:
-        pending > 0 ? `${pending} propuestas sin revisar` : "bandeja al día",
+        pending > 0 ? contar(pending, "propuesta sin revisar", "propuestas sin revisar") : "bandeja al día",
     },
     {
       label: "Disponibilidad de jueces",
@@ -153,7 +154,8 @@ function buildHealth(input: IntelligenceInput, now: Date): OperationalHealth {
   const summary =
     status === "óptimo"
       ? `Operación óptima — cobertura al ${Math.round(coveragePct)}% y sin focos críticos.`
-      : `Operación ${status} — el punto débil es «${weakest?.label.toLowerCase()}» (${weakest?.score}/100).`;
+      : // «Operación atención» / «Operación crítico» no eran frases.
+        `${status === "crítico" ? "Situación crítica" : "Requiere atención"} — el punto débil es «${weakest?.label.toLowerCase()}» (${weakest?.score}/100).`;
 
   return { score, status, summary, factors };
 }
@@ -175,8 +177,8 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       title: `${c.nombre} en estado crítico`,
       detail:
         d !== null && d >= 0
-          ? `${c.open} plazas sin cubrir y la competición es en ${d} día${d === 1 ? "" : "s"}.`
-          : `${c.open} plazas sin cubrir. Asigna jueces cuanto antes.`,
+          ? `${contar(c.open, "plaza sin cubrir", "plazas sin cubrir")} y la competición es en ${d} día${d === 1 ? "" : "s"}.`
+          : `${contar(c.open, "plaza sin cubrir", "plazas sin cubrir")}. Asigna jueces cuanto antes.`,
       metric: `${c.open} libres`,
       action: { label: "Completar plantilla", href: `/competitions/${c.id}` },
     });
@@ -193,7 +195,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       title: `${c.nombre} se acerca`,
       detail: `Faltan ${d} día${d === 1 ? "" : "s"} y quedan ${c.open} plaza${c.open === 1 ? "" : "s"} por cubrir.`,
       metric: `${d}d`,
-      action: { label: "Revisar roster", href: `/competitions/${c.id}` },
+      action: { label: "Revisar tarima", href: `/competitions/${c.id}` },
     });
   }
 
@@ -203,7 +205,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
     insights.push({
       id: "approvals-backlog",
       severity: pendingApprovals >= 4 ? "alerta" : "sugerencia",
-      title: `${pendingApprovals} aprobaciones pendientes`,
+      title: contar(pendingApprovals, "aprobación pendiente", "aprobaciones pendientes"),
       detail: "Las propuestas regionales esperan revisión nacional para confirmar plantillas.",
       metric: `${pendingApprovals} en cola`,
       action: { label: "Ir a aprobaciones", href: "/approvals" },
@@ -218,7 +220,7 @@ function buildInsights(input: IntelligenceInput, now: Date): Insight[] {
       severity: "sugerencia",
       title: `${pendingPromos} ascensos por resolver`,
       detail: "Resolver ascensos amplía el grupo de jueces elegibles para roles superiores.",
-      metric: `${pendingPromos} solicitudes`,
+      metric: contar(pendingPromos, "solicitud", "solicitudes"),
       action: { label: "Ver ascensos", href: "/promotions" },
     });
   }

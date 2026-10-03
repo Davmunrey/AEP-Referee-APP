@@ -97,7 +97,7 @@ export function validateRosterOperation(input: {
   flags?: FlagsMap;
 }): AssignValidation {
   const target = parseSlotKey(input.slotKey);
-  if (!target) return { ok: false, error: "Slot inválido" };
+  if (!target) return { ok: false, error: "Hueco inválido" };
 
   const targetIndex = sessionIndex(input.template, target.session);
   const targetSlot = roleTimeSlot(target.roleKey);

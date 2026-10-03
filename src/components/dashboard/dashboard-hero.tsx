@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import { businessHour, todayIso } from "@/lib/business-date";
 import { canCreateCompetition } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { contar, palabra } from "@/lib/plural";
 
 // Hora y trimestre en zona de negocio: con la hora local, el servidor (UTC) y
 // el navegador (Madrid) calculaban saludos distintos entre las 22:00 y la
@@ -69,8 +70,10 @@ export function DashboardHero({
               {pendingApprovals && Number(pendingApprovals.value) > 0 ? (
                 <>
                   Tienes{" "}
-                  <span className="font-semibold text-primary">{pendingApprovals.value} aprobaciones</span>{" "}
-                  pendientes
+                  <span className="font-semibold text-primary">
+                    {contar(Number(pendingApprovals.value), "aprobación", "aprobaciones")}
+                  </span>{" "}
+                  {palabra(Number(pendingApprovals.value), "pendiente", "pendientes")}
                 </>
               ) : (
                 <>Todo al día en aprobaciones</>
@@ -78,16 +81,18 @@ export function DashboardHero({
               {criticalEvent ? (
                 <>
                   {" "}
-                  — el roster de{" "}
+                  — la tarima de{" "}
                   <span className="font-semibold text-warning">{criticalEvent.nombre}</span> necesita
                   atención.
                 </>
               ) : openSlots && Number(openSlots.value) > 0 ? (
                 <>
                   {" "}
-                  — quedan{" "}
-                  <span className="font-semibold text-warning">{openSlots.value} plazas</span> por
-                  cubrir.
+                  — {palabra(Number(openSlots.value), "queda", "quedan")}{" "}
+                  <span className="font-semibold text-warning">
+                    {contar(Number(openSlots.value), "plaza", "plazas")}
+                  </span>{" "}
+                  por cubrir.
                 </>
               ) : (
                 <> — buen momento para revisar la temporada.</>

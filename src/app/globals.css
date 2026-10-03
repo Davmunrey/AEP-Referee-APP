@@ -293,6 +293,20 @@
     }
   }
 
+  /* Cajón de navegación en móvil: entra desde la izquierda. */
+  @keyframes drawer-in {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .drawer-in {
+    animation: drawer-in 200ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+
   @keyframes rise-in {
     from {
       opacity: 0;

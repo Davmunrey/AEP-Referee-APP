@@ -401,7 +401,7 @@ export function RosterBuilder({
     setFlags((prev) => ({ ...prev, [slotKey]: next }));
     startTransition(async () => {
       try { const res = await api.setSlotFlags(competition.id, slotKey, next); setFlags(res.flags); refreshCompetitionList(); }
-      catch (err) { setFlags(snapshot); setStatusMsg(formatApiError(err, "No se pudieron guardar los marcadores del slot")); setStatusIsError(true); }
+      catch (err) { setFlags(snapshot); setStatusMsg(formatApiError(err, "No se pudieron guardar los marcadores del hueco")); setStatusIsError(true); }
     });
   }, [rosterReadOnly, assignments, flags, competition.id, refreshCompetitionList, startTransition]);
 
