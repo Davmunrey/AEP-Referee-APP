@@ -40,6 +40,9 @@
 | `canManageJudges` | Jueces, exámenes, informes |
 | `canManageCompensation` | Compensación y export de recibos (responsable financiero) |
 | `canAdminJudges` | Delete juez/informe/sanción |
+| `canManageSanctions` | Imponer, revocar y notificar sanciones (acotado a zona) |
+| `canAdminTickets` | Ver todos los tickets de soporte y cambiar su estado |
+| `canAssignRole` / `canAdministerUserWithRole` | Qué roles puede dar o administrar cada gestor (solo super_admin toca a otro super_admin) |
 | `canReviewPromotions` | Revisar ascensos |
 | `assertRefereeInUserZone` | Lectura/mutación juez por zona |
 | `assertCompetitionInUserZone` | Lectura/mutación campeonato por zona |
@@ -54,18 +57,18 @@ Servidor restringe:
 - Dashboard: competiciones, KPIs, calendario, intelligence, actividad filtrada.
 - Analytics: agregaciones y top jueces de su zona.
 - Exámenes y sanciones por zona en mutaciones.
-- Sin zona asignada: fail-closed (sin lectura nacional).
+- Sin zona asignada, o con una zona que no se reconoce: fail-closed (sin lectura nacional). Aplica también a listas, sanciones e historial disciplinario.
 
 ## Supabase
 
 - `profiles` enlaza Auth user con rol app.
 - Usuario inactivo no obtiene sesión app.
-- Primer usuario puede crear perfil `super_admin`; después usuarios deben ser invitados/activados.
+- El primer usuario de la base nace `super_admin`; los demás que se registren por su cuenta nacen **inactivos** como `solo_ver` (migración `038`: la bandera `invited` de los metadatos, que escribe el propio usuario, ya no activa la cuenta). Las cuentas reales se dan de alta desde `/admin/users`, que crea el perfil activo con su rol y zona.
 - En producción desactivar signup público desde Supabase Auth.
 - **Acceso a datos:** el cliente del navegador (clave anónima) solo se usa para auth y para leer/suscribirse a `app_sync_state`. Todo el resto de datos se lee/escribe desde el servidor con `service_role` (ignora RLS) + RBAC propio. El esquema está bloqueado por RLS "sin políticas" (ver [`DATABASE.md`](./DATABASE.md#rls); endurecido en migración 033).
 - **Pendiente de seguridad** (toggle manual del panel, no es código): activar **Leaked Password Protection** (HaveIBeenPwned) en Supabase Auth.
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0 · Site URL y redirect URLs deben apuntar a este dominio Vercel.
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4 · Site URL y redirect URLs deben apuntar a este dominio Vercel.
 
 ## GitHub Secrets CI
 

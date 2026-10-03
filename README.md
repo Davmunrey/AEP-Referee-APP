@@ -11,8 +11,8 @@
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/entrar-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.0-22c55e?style=for-the-badge&labelColor=0d1117" />
-  <img alt="Tests" src="https://img.shields.io/badge/tests-337%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.4-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-1233%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
 <p align="center">
@@ -55,22 +55,25 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 - 🗺️ **OpenStreetMap gratuito** — autocomplete de domicilio (Photon en servidor) + geocodificación al guardar.
 - 📄 **Import inteligente** de horarios y cuadrantes desde PDF con preview y selección granular.
 - 🛡️ **Privacidad zonal** — los delegados de zona ven solo datos de su macrozona.
-- 🔐 **Acceso solo por servidor** a los datos sensibles (Supabase `service_role` + RBAC); RLS endurecido.
+- 🔐 **Acceso solo por servidor** a los datos sensibles (Supabase `service_role` + RBAC); RLS endurecido en todas las tablas.
+- 💸 **El dinero pagado no se mueve** — una liquidación pagada congela su importe y el puesto del juez en la tarima.
+- 📱 **Usable en el móvil** — cajón de navegación y todas las pantallas sin desbordes a 375 px.
+- 🆘 **Soporte interno** — tickets con fotos e hilo de comentarios en `/tickets`.
 
 ---
 
-## 🆕 Novedades v2.0
+## 🆕 Novedades v2.2 → v2.4
 
-> Historial completo de versiones desplegadas en [CHANGELOG.md](CHANGELOG.md).
+> Historial completo de versiones desplegadas en [CHANGELOG.md](CHANGELOG.md) (también en la app, en `/docs` → Novedades).
 
 | Novedad | Detalle |
 |---|---|
-| **Centro de ayuda local** | Widget rediseñado: buscador sobre ~35 temas curados + primeros pasos por rol + temas frecuentes. 100 % en el navegador, sin IA ni red. |
-| **Sin asistente IA** | Retirada del asistente Gemini (ruta, cliente, prompt y rate-limit); la base de conocimiento se conserva para el buscador local. |
-| **Título de pestaña** | La pestaña del navegador muestra simplemente «AEP Tarima». |
-| **Censo por año natural** | Arbitrajes de cada juez separados por año; ficha con selector de año + «Histórico»; filtro de censo por año en el directorio. |
-| **Recibo configurable** | Organizador del recibo con 3 opciones — club(es) organizador(es) · Asociación Española de Powerlifting · personalizable. PDF con logo. |
-| **Endurecimiento de seguridad** | Políticas RLS permisivas eliminadas; los datos sensibles solo se leen desde el servidor. |
+| **Producto pulido (v2.4)** | Auditoría pantalla a pantalla: tarima nueva que arranca en «Plantilla», envío a aprobación que explica por qué no se puede, panel de jueces que dice qué oculta, navegación móvil, menú en cinco grupos, cifras sin inventar. |
+| **Dinero congelado** | Una liquidación pagada no admite cambios de importe (`423`), no se recalcula ni se borra, y su juez no puede salir de la tarima. |
+| **Cero silencios (v2.3)** | Una lectura que falla es un error, no una lista vacía; todas las lecturas grandes paginan; las fechas son del calendario español; los permisos zonales son *fail-closed*. |
+| **Migraciones automáticas (v2.2)** | Se aplican solas al llegar a `main` y el CI reproduce la cadena completa sobre un Postgres limpio en cada PR. |
+| **Rendimiento** | 80 kB menos de JS por página (Sentry bajo demanda) e índices en todas las claves ajenas (migración `039`). |
+| **Soporte** | Tickets internos con fotos, hilo de comentarios y adjuntos privados. |
 
 ---
 
@@ -88,6 +91,7 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 | **Exámenes / Informes / Ascensos** | Gestión nacional y zonal |
 | **Estadísticas** | Histórico por año natural, KPIs, export CSV |
 | **Documentación** | `/docs` web + widget Ayuda (guía por rol + buscador local) |
+| **Soporte** | `/tickets`: incidencias, mejoras y dudas con fotos; hilo con los administradores |
 | **Usuarios** | Gestión de roles, reset de contraseñas |
 
 ## 👥 Roles
@@ -115,12 +119,13 @@ Navegador
 | Capa | Tecnología |
 |---|---|
 | **Hosting** | Vercel (deploy automático desde `main`) |
-| **Base de datos** | Supabase Postgres — migraciones `001`–`033` |
+| **Base de datos** | Supabase Postgres — migraciones `001`–`039`, aplicadas solas al llegar a `main` |
 | **Auth** | Supabase email/contraseña — sin registro público |
 | **UI** | Tailwind CSS, Radix UI, Lucide |
 | **Geocoding** | Photon + Nominatim/OSRM — todo en servidor |
 | **Realtime** | Supabase Realtime en `app_sync_state` |
-| **Tests** | Vitest — 337 tests, 59 archivos |
+| **Tests** | Vitest — 1233 tests, 200 archivos · Playwright (smoke) · reproducción de migraciones en CI |
+| **Observabilidad** | Sentry opcional (solo se carga con DSN) |
 
 ---
 
@@ -137,8 +142,14 @@ Migraciones recientes:
 | `031` | **Organizador de recibo** — tercer tipo `custom` (personalizable) además de `club`/`aep` |
 | `032` | **Arbitrajes por año** — `referees.arbitraje_stats_by_year` (JSONB, desglose por año natural) |
 | `033` | **Seguridad RLS** — elimina políticas permisivas en `referee_sanctions` y `competition_availability` |
+| `034` | Override del importe de viaje, geocodificación cacheada, anti propuestas duplicadas |
+| `035` | **Soporte** — tickets, comentarios y adjuntos (bucket privado) |
+| `036` | **Integridad** — borrar un campeonato no arrastra sus liquidaciones; índice en `activity_log` |
+| `037` | **Seguridad RLS** — últimas políticas permisivas (`activity_log`, `roster_history`…) |
+| `038` | Alta de cuentas sin la bandera `invited` controlada por el usuario |
+| `039` | **Índices** en claves ajenas que no tenían ninguno |
 
-Estado en producción: migraciones hasta `033` aplicadas en el proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2).
+Estado en producción: migraciones hasta `039` aplicadas en el proyecto Supabase `foaemadggmpbcrhtpems` (eu-west-2). Desde la `034` las aplica el workflow «Migraciones Supabase» en cada push a `main` ([docs/DEPLOY.md](./docs/DEPLOY.md)).
 
 > **Modelo de seguridad:** todo el acceso a datos de la app pasa por el servidor con la clave `service_role`. El cliente del navegador (clave anónima) solo se usa para auth y para el contador de sincronización `app_sync_state`. Por eso el esquema sigue el patrón «RLS habilitado, sin políticas» = bloqueado a todo lo que no sea el servidor.
 
@@ -170,7 +181,7 @@ Estado en producción: migraciones hasta `033` aplicadas en el proyecto Supabase
 El despliegue es automático en Vercel. Para validar cambios antes de merge:
 
 ```bash
-npm run verify    # audit + lint + typecheck + test + build
+npm run verify    # audit (prod + seguridad) + lint + typecheck (tests incluidos) + test + build
 ```
 
 Detalle de variables, Supabase y checklist de release: [docs/DEPLOY.md](./docs/DEPLOY.md).
@@ -178,5 +189,5 @@ Detalle de variables, Supabase y checklist de release: [docs/DEPLOY.md](./docs/D
 ---
 
 <p align="center">
-  <sub>AEP Tarima · v2.0 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
+  <sub>AEP Tarima · v2.4 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
 </p>

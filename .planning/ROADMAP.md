@@ -2,6 +2,26 @@
 
 **Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) — deploy automático en Vercel desde `main`.
 
+## v2.4 — Producto pulido ✅
+
+| Área | Entregado |
+|---|---|
+| Flujos | Tarima nueva en «Plantilla», envío a aprobación desactivado con motivo, panel de jueces con ocultos y «Quitar filtros» |
+| Dinero | Liquidación pagada congelada (`423`) en edición, recálculo y distancias |
+| UI/UX | Cajón móvil, menú en 5 grupos, `MetricTile`, plurales, cabeceras sin duplicados, organizador plegable |
+| Datos | Revisiones booleanas, fechas/niveles inválidos → 400, paginación de desplegables y alta |
+| Rendimiento | Sentry bajo demanda (−80 kB), migración `039`, recálculo en paralelo |
+| Tests | 1233 pasan (1234 con 1 skip), 200 archivos |
+
+## v2.1 – v2.3 — Auditoría, migraciones automáticas y cero silencios ✅
+
+| Área | Entregado |
+|---|---|
+| Fiabilidad | Lecturas fallidas como error (no vacías), paginación con desempate, compare-and-set |
+| Dinero | Pago que congela el puesto en tarima; borrados que no arrastran liquidaciones |
+| Seguridad | RLS `037`, alta sin `invited` (`038`), zonas *fail-closed*, XSS en informes cerrado |
+| Plataforma | Migraciones automáticas en `main` y reproducción completa en CI; Soporte (`035`) |
+
 ## v1.9 — Censo anual, selección rápida y seguridad ✅
 
 | Área | Entregado |

@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: centro-ayuda-local-sin-ia
+milestone: v2.4
+milestone_name: producto-pulido
 status: complete
-last_updated: "2026-07-06"
-last_activity: julio 2026 — centro de ayuda 100 % local (retirada del asistente IA), título de pestaña «AEP Tarima», triaje de errores de Sentry
+last_updated: "2026-10-03"
+last_activity: octubre 2026 — auditoría de producto pantalla a pantalla, rendimiento, UI/UX móvil y documentación sincronizada
 progress:
   total_phases: 6
   completed_phases: 6
@@ -13,8 +13,15 @@ progress:
 
 ## Current Position
 
-Phase: Complete — v2.0 en `main`, producción en Vercel
-Last activity: Rediseño del centro de ayuda como buscador local sobre la base de conocimiento (sin IA), retirada del asistente Gemini, título de pestaña simplificado y triaje de errores de Sentry
+Phase: Complete — v2.4 en `main`, producción en Vercel
+Last activity: Auditoría de producto (PRs #181–#188): flujos de tarima, dinero pagado congelado, navegación móvil, cifras honestas, rendimiento (−80 kB JS, migración `039`) y todos los `.md` sincronizados a v2.4
+
+## Completed (v2.1 – v2.4)
+
+- **v2.4 Producto pulido** — ver [CHANGELOG.md](../CHANGELOG.md); 1233 tests Vitest (1234 con 1 skip), 200 archivos; migraciones hasta `039` en producción
+- **v2.3 Cero silencios** — PRs #76–#180: errores de lectura explícitos, paginación, zonas *fail-closed*, fechas en `Europe/Madrid`, RLS `037`/`038`
+- **v2.2 Migraciones automáticas** — workflow en `main` + reproducción en CI; `034`–`036`
+- **v2.1 La Gran Auditoría** — PR #72; zona de Soporte (`035`)
 
 ## Completed (v2.0)
 
@@ -73,3 +80,8 @@ Last activity: Rediseño del centro de ayuda como buscador local sobre la base d
 - Selección rápida: siempre subordinada a la disponibilidad declarada; el nivel recomendado es aviso, no filtro excluyente
 - Import «reemplazar censo»: nunca destruye campeonatos/cuadrantes ni pierde asignados
 - RLS: sin políticas permisivas (`033`); acceso siempre acotado por rol/zona
+- Una lectura que falla es un error, nunca una lista vacía; las lecturas que crecen paginan con desempate estable
+- Dinero pagado inmutable: liquidación `pagado` → `423` en cualquier cambio de importe; su juez no sale de la tarima
+- Fechas de negocio siempre en `Europe/Madrid` (`src/lib/business-date.ts`)
+- Permisos zonales *fail-closed*: sin zona reconocible, no se ve nada
+- Migraciones: idempotentes, no destructivas, aplicadas por workflow y reproducidas en CI

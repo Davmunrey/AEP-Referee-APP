@@ -30,18 +30,28 @@ Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 | `/promotions` | Ascensos |
 | `/analytics` | Estadísticas |
 | `/regulations` | Normativa (Guía AEP, plazas, compensación, IPF) |
-| `/admin/users` | Usuarios (solo nacional) |
+| `/tickets` | Soporte: tickets internos con fotos (cada usuario ve los suyos; admins, todos) |
+| `/tickets/[id]` | Detalle de ticket con hilo de comentarios y adjuntos |
+| `/admin/users` | Usuarios (super_admin y delegado de jueces) |
 
 ## Sidebar (navegación)
 
-| Sección | Enlaces |
+| Grupo | Enlaces |
 |---|---|
-| **Operaciones** | Dashboard, Campeonatos, Compensación (rol financiero / super_admin), Tarima activa (resto de roles), Directorio |
-| **Gestión** | Aprobaciones, Ascensos, Exámenes, Informes, Estadísticas, Normativa, Documentación (`/docs`), Usuarios (admin) |
+| **General** | Dashboard, Estadísticas |
+| **Competiciones** | Campeonatos, Tarima activa, Aprobaciones (no rol financiero) · Compensación (rol financiero / super_admin) |
+| **Jueces** | Directorio · Ascensos, Exámenes, Informes (no rol financiero) |
+| **Referencia** | Normativa, Documentación (`/docs`), Soporte (`/tickets`) |
+| **Administración** | Usuarios (super_admin / delegado de jueces) |
+
+Los rótulos (*eyebrow*) de cada página coinciden con el grupo del menú en el que vive.
+
+- **Tarima activa** lleva al campeonato vigente más próximo (por fecha de fin); si no hay ninguno vigente, al último pasado.
+- **Móvil (< 768 px):** el menú lateral se sustituye por un cajón que se abre desde el botón ☰ de la barra superior; incluye el buscador y se cierra al navegar o con Escape. La barra superior muestra el nombre de la página (o del campeonato) en lugar de las migas.
 
 - El **perfil de usuario** y **Cambiar contraseña** están en el **topbar** (esquina superior derecha).
 - Estado colapsado persiste en `localStorage` (`aep-tarima:sidebar-collapsed`).
-- Auto-colapsa en `< 1024px` (tablet).
+- Auto-colapsa en `< 1024px` (tablet) si el usuario no ha elegido antes; plegado, los contadores se muestran como un punto.
 - Widget **Ayuda** (esquina inferior derecha): primeros pasos por rol + buscador local de temas.
 - **Sincronización en vivo**: cambios en tarima, aprobaciones o compensación se reflejan automáticamente en todas las pestañas abiertas (sin recargar manualmente).
 
@@ -55,4 +65,4 @@ Compat de navegación antigua se mantiene solo para no romper enlaces guardados.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4

@@ -4,18 +4,31 @@
 
 | Componente | Uso |
 |---|---|
-| `AppShell` | Shell dashboard + `AppRealtimeSync` |
-| `Sidebar` | Navegación colapsable (Operaciones + Gestión) |
-| `Topbar` | Breadcrumb, menú usuario (cambiar contraseña, cerrar sesión) |
+| `AppShell` | Shell dashboard + `AppRealtimeSync`; en móvil, cajón de navegación con buscador (se cierra al navegar o con Escape) |
+| `Sidebar` | Navegación colapsable en 5 grupos (General, Competiciones, Jueces, Referencia, Administración); plegada, los contadores son un punto |
+| `Topbar` | Migas (en móvil, nombre de la página o del campeonato y botón ☰), buscador, menú usuario (cambiar contraseña, cerrar sesión) |
+| `PageShell` / `PageHeader` | Contenedor de página y cabecera canónica (eyebrow = grupo del menú, `h1`, descripción, acciones) |
 | `HelpWidget` | Ayuda flotante: primeros pasos por rol + buscador local de temas (sin IA) |
 | `AppRealtimeSync` | Sincronización en vivo con Supabase (invisible; shell) |
+
+## Primitivas UI (`src/components/ui`)
+
+| Componente | Uso |
+|---|---|
+| `MetricTile` | Cifra con icono y tono (`neutral`, `primary`, `success`, `warning`, `danger`). Única pieza para las tiras de cifras de Aprobaciones, Ascensos, Exámenes y el hub de Compensación |
+| `EmptyState` | Estado vacío con icono, título, descripción y acción opcional |
+| `StatusPill` | Estado de propuestas/solicitudes (pendiente, aprobado, rechazado…) |
+| `Skeleton` | Pantallas esqueleto de carga (todas las rutas tienen `loading.tsx`) |
+| `Button`, `Card`, `Input`, `Badge`, `DropdownMenu`, `DataTable`… | Base Radix/Tailwind |
+
+Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/lib/plural.ts` (nada de «1 jueces» ni «juez(es)»).
 
 ## Dashboard
 
 | Componente | Uso |
 |---|---|
 | `DashboardLive` | Indicador en vivo (sincronizado con Realtime global) |
-| `KpiCards` | KPIs de cobertura y operación |
+| `KpiCards` | KPIs de cobertura y operación; columnas según el número de tarjetas |
 | `HealthGauge` | Índice de salud operativa (0–100) |
 | `InsightsPanel` | Recomendaciones auto-generadas |
 | `CoverageForecast` | Cobertura próxima |
@@ -45,7 +58,9 @@
 | Componente | Uso |
 |---|---|
 | `RosterCompetitionHeader` | Cabecera, acciones plantilla/export, enlace compensación |
-| `RosterRefereePanel` | Panel jueces; selección rápida (ranking por idoneidad, `rankRefereesForSlot`); confirm-to-force en conflictos forzables |
+| `RosterHeaderActions` | Cobertura, guardar borrador, exportar y «Enviar a aprobación» (desactivado con el motivo si no hay plantilla o ningún juez) |
+| `RosterStepper` | Pasos Plantilla → Asignación → Revisión; un paso solo sale como hecho si lo está de verdad |
+| `RosterRefereePanel` | Panel jueces; selección rápida (ranking por idoneidad, `rankRefereesForSlot`); confirm-to-force en conflictos forzables; aviso de cuántos jueces no disponibles se ocultan y «Quitar filtros» |
 | `RefereeCard` | Tarjeta juez compacta; `LevelBadge compact` (R/N/I/II) |
 | `SlotGrid` | Grid de plazas (hasta 3 columnas por sesión/pesaje) |
 | `SessionBlock` | Bloque sesión expandible |
@@ -56,7 +71,7 @@
 | Componente | Uso |
 |---|---|
 | `CompensationHub` | Panel `/compensation` |
-| `CompensationBoard` | Km manual, comparte, montaje sistema, multi-club; organizador club/aep/custom |
+| `CompensationBoard` | Km manual, comparte, montaje sistema, multi-club; organizador club/aep/custom (tarjeta plegable una vez guardado); filas pagadas en solo lectura con distintivo «pagada» |
 | `CompensationExportDialog` | IBAN efímero → PDF recibo (3 tipos de organizador, logo AEP) |
 | `CompensationKmInput` / `CompensationEuroInput` | Entradas numéricas optimistas |
 
@@ -95,6 +110,15 @@
 | `ReportsManager` | Informes |
 | `PromotionsBoard` | Ascensos |
 | `UsersAdmin` | Usuarios |
+| `RefereeSanctionsPanel` | Sanciones de la ficha de juez |
+
+## Soporte
+
+| Componente | Uso |
+|---|---|
+| `TicketsBoard` | Bandeja `/tickets` con filtros de estado |
+| `NewTicketDialog` | Alta de ticket con hasta 5 fotos |
+| `TicketDetail` | Hilo de comentarios, adjuntos y cambio de estado |
 | `PasswordDialog` | Cambiar/resetear contraseña |
 
 ## Badges
@@ -116,9 +140,16 @@
 
 ## Responsive
 
+- `< 768px`: cajón de navegación en lugar del sidebar.
 - Sidebar auto-colapsa en `< 1024px`; preferencia en `localStorage`.
 - Breakpoints críticos en `xl` (1280px) para layouts de dos columnas en portátil 14".
 
+## Accesibilidad
+
+- Cada `<label>` está enlazada a su control (`htmlFor` + `id`); los ids dentro de listas se derivan de `useId()` + índice, nunca de valores aleatorios (rompen la hidratación).
+- Grupos de botones que actúan como selector (nivel destino de un ascenso) usan `role="group"` con nombre y `aria-pressed`.
+- Un solo `h1` por página: el de `PageHeader` o, en la ficha de juez, el de la tarjeta de identidad.
+
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4
