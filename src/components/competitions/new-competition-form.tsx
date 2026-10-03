@@ -165,10 +165,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
           <SectionDivider title="Identificación" />
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+            <label htmlFor="nc-nombre-del-campeonato" className="mb-1 block text-xs font-medium text-foreground-secondary">
               Nombre del campeonato
             </label>
-            <Input
+            <Input id="nc-nombre-del-campeonato"
               value={nombre}
               onChange={(e) => {
                 setNombre(e.target.value);
@@ -186,10 +186,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="nc-tipo-aep" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Tipo AEP
               </label>
-              <select
+              <select id="nc-tipo-aep"
                 value={tipo}
                 onChange={(e) => handleTipoChange(e.target.value as EventType)}
                 className={selectFieldClass}
@@ -204,10 +204,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
               <p className="mt-1 text-[11px] text-subtle-muted">{TYPE_DESC[tipo]}</p>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="nc-zona" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Zona
               </label>
-              <select
+              <select id="nc-zona"
                 value={zona}
                 onChange={(e) => setZona(e.target.value)}
                 className={selectFieldClass}
@@ -227,10 +227,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
           <div className="space-y-3">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+                <label htmlFor="nc-fecha-inicio" className="mb-1 block text-xs font-medium text-foreground-secondary">
                   Fecha inicio
                 </label>
-                <Input
+                <Input id="nc-fecha-inicio"
                   type="date"
                   value={fecha}
                   onChange={(e) => {
@@ -246,10 +246,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
                 <FieldError message={touched.has("fecha") ? fieldErrors.fecha : undefined} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+                <label htmlFor="nc-fecha-fin" className="mb-1 block text-xs font-medium text-foreground-secondary">
                   Fecha fin
                 </label>
-                <Input
+                <Input id="nc-fecha-fin"
                   type="date"
                   value={fechaFin}
                   min={fecha || undefined}
@@ -284,10 +284,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
           <SectionDivider title="Sede" />
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+            <label htmlFor="nc-lugar-de-celebracion" className="mb-1 block text-xs font-medium text-foreground-secondary">
               Lugar de celebración
             </label>
-            <Input
+            <Input id="nc-lugar-de-celebracion"
               value={sede}
               onChange={(e) => {
                 setSede(e.target.value);
@@ -307,10 +307,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="nc-sesiones" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Sesiones
               </label>
-              <Input
+              <Input id="nc-sesiones"
                 type="number"
                 min={1}
                 max={6}
@@ -329,10 +329,10 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="nc-plazas-requeridas" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Plazas requeridas
               </label>
-              <Input
+              <Input id="nc-plazas-requeridas"
                 type="number"
                 min={1}
                 value={requeridos}

@@ -256,10 +256,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   {clubs.map((club, index) => (
                     <div key={club.draftId} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <label htmlFor="cb-campo" className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           {organizer === "custom" ? "Nombre" : "Club"} {clubs.length > 1 ? index + 1 : ""}
                         </label>
-                        <Input
+                        <Input id="cb-campo"
                           list="organizer-clubs-list"
                           placeholder="Nombre del club"
                           value={club.name}
@@ -289,10 +289,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <label htmlFor="cb-e-mails-devolucion" className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           E-mails devolución
                         </label>
-                        <Input
+                        <Input id="cb-e-mails-devolucion"
                           placeholder="uno@club.com, otro@club.com"
                           value={Array.isArray(club.emails) ? club.emails.join(", ") : ""}
                           onChange={(e) =>

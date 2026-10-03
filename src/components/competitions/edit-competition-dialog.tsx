@@ -133,10 +133,10 @@ export function EditCompetitionDialog({
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
           {/* Nombre */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+            <label htmlFor="ec-nombre-del-campeonato" className="mb-1 block text-xs font-medium text-foreground-secondary">
               Nombre del campeonato
             </label>
-            <Input
+            <Input id="ec-nombre-del-campeonato"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               onBlur={(e) => handleBlur("nombre", e.target.value)}
@@ -148,10 +148,10 @@ export function EditCompetitionDialog({
           {/* Tipo + Zona */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="ec-tipo-aep" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Tipo AEP
               </label>
-              <select
+              <select id="ec-tipo-aep"
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value as Competition["tipo"])}
                 onBlur={(e) => handleBlur("tipo", e.target.value)}
@@ -165,10 +165,10 @@ export function EditCompetitionDialog({
               <p className="mt-1 text-[11px] text-subtle-muted">{AEP_COMPETITION_TYPE_DESC[tipo]}</p>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="ec-zona" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Zona
               </label>
-              <select
+              <select id="ec-zona"
                 value={zona}
                 disabled
                 className={cn(selectFieldClass, "opacity-60 cursor-not-allowed")}
@@ -184,10 +184,10 @@ export function EditCompetitionDialog({
           {/* Fechas */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="ec-fecha-inicio" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Fecha inicio
               </label>
-              <Input
+              <Input id="ec-fecha-inicio"
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
@@ -197,10 +197,10 @@ export function EditCompetitionDialog({
               <FieldError message={touched.has("fecha") ? errors.fecha : undefined} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="ec-fecha-fin" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Fecha fin
               </label>
-              <Input
+              <Input id="ec-fecha-fin"
                 type="date"
                 value={fechaFin}
                 min={fecha || undefined}
@@ -214,10 +214,10 @@ export function EditCompetitionDialog({
 
           {/* Sede */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+            <label htmlFor="ec-sede" className="mb-1 block text-xs font-medium text-foreground-secondary">
               Sede
             </label>
-            <Input
+            <Input id="ec-sede"
               value={sede}
               onChange={(e) => setSede(e.target.value)}
               onBlur={(e) => handleBlur("sede", e.target.value)}

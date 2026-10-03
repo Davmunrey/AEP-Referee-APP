@@ -30,6 +30,8 @@ interface RosterHeaderActionsProps {
   openSlots?: number;
   pending: boolean;
   rosterLocked?: boolean;
+  /** Si hay motivo, el envío no puede prosperar: se desactiva y se explica. */
+  submitBlockedReason?: string | null;
   statusMsg: string | null;
   statusIsError?: boolean;
   onStatus: (msg: string | null, isError?: boolean) => void;
@@ -45,6 +47,7 @@ export function RosterHeaderActions({
   openSlots = 0,
   pending,
   rosterLocked = false,
+  submitBlockedReason = null,
   statusMsg,
   statusIsError = false,
   onStatus,
@@ -184,7 +187,8 @@ export function RosterHeaderActions({
             // ahí deja de informar y pasa a molestar.
             fillPct >= 100 && "shadow-glow-primary-lg",
           )}
-          disabled={pending || rosterLocked}
+          disabled={pending || rosterLocked || Boolean(submitBlockedReason)}
+          title={submitBlockedReason ?? undefined}
           onClick={() => {
             const lines = [
               `Cobertura: ${fillPct}% (${filledSlots}/${totalSlots} plazas).`,
