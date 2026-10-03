@@ -225,14 +225,19 @@ export async function deleteReport(id: string): Promise<boolean> {
   return true;
 }
 
+// Sin Supabase no hay sanciones, pero la ficha del juez ofrece el botón: un
+// 500 «No se pudo crear la sanción» no decía por qué. Ahora un 503 con motivo.
+const SANCIONES_SIN_SUPABASE =
+  "Las sanciones necesitan la base de datos de Supabase; en este entorno local no están disponibles.";
+
 export async function createRefereeSanction(): Promise<never> {
-  throw new Error("Sanciones requieren Supabase configurado");
+  throw new UserFacingServiceError(SANCIONES_SIN_SUPABASE, 503);
 }
 export async function revokeRefereeSanction(): Promise<never> {
-  throw new Error("Sanciones requieren Supabase configurado");
+  throw new UserFacingServiceError(SANCIONES_SIN_SUPABASE, 503);
 }
 export async function markSanctionDelegateNotified(): Promise<never> {
-  throw new Error("Sanciones requieren Supabase configurado");
+  throw new UserFacingServiceError(SANCIONES_SIN_SUPABASE, 503);
 }
 export async function getSanctionAlerts(): Promise<[]> { return []; }
 export async function expireStaleSanctions(): Promise<number> { return 0; }
