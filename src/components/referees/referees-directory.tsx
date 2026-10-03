@@ -195,12 +195,14 @@ export function RefereesDirectory({
     <div className="space-y-4">
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-subtle-muted">
-          {filtered.length < referees.length
-            ? `${filtered.length} de ${referees.length} jueces`
-            : `${contar(referees.length, "juez", "jueces")} en total`}
-        </p>
-        <div className="flex items-center gap-2">
+        {/* El total ya lo da la cabecera de la página; aquí solo aporta algo
+            cuando los filtros recortan la lista. */}
+        {filtered.length < referees.length && (
+          <p className="text-xs text-subtle-muted" aria-live="polite">
+            {filtered.length} de {contar(referees.length, "juez", "jueces")}
+          </p>
+        )}
+        <div className="flex items-center gap-2 sm:ml-auto">
           {hasActiveFilters && (
             <Button
               size="sm"
