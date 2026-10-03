@@ -38,7 +38,9 @@ export function RosterStepper({
       {STEPS.map((step, i) => {
         const isCurrent = step === current;
         const isPast = i < idx;
-        const done = doneFor(step) || isPast;
+        // Un paso solo cuenta como hecho si lo está de verdad, no por haber
+        // pasado por delante (ir a «Revisión» no completa la plantilla).
+        const done = doneFor(step);
         return (
           <div key={step} className="flex items-center gap-1">
             {i > 0 && (

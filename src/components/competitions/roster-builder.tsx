@@ -8,6 +8,7 @@ import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
 import {
   computeRosterCoverage,
+  countRequiredSlots,
   isRosterFrozen,
   isRosterLockedByApproval,
   isRosterPendingApproval,
@@ -163,8 +164,10 @@ export function RosterBuilder({
   // Entra al paso REAL según el progreso: sin plantilla → "plantilla"; tarima
   // completa → "revisión"; si tiene plantilla pero faltan huecos → "asignación".
   const [workflowStep, setWorkflowStep] = useState<RosterWorkflowStep>(() => {
+    // Sin plantilla, `computeRosterCoverage` cae al fallback `requeridos` de la
+    // competición (p. ej. 12) y nunca da 0: hay que mirar los huecos REALES.
+    if (countRequiredSlots(initialTemplate) === 0) return "plantilla";
     const c = computeRosterCoverage(initialTemplate, initialAssignments, competition.requeridos);
-    if (c.requeridos === 0) return "plantilla";
     if (c.pct >= 100) return "revision";
     return "asignacion";
   });
@@ -178,7 +181,9 @@ export function RosterBuilder({
     [template, assignments, competition.requeridos],
   );
   const { requeridos: totalSlots, confirmados: filledSlots, openSlots, pct: fillPct } = coverage;
-  const plantillaDone = totalSlots > 0;
+  // Huecos definidos por la plantilla (sin el fallback de `requeridos`).
+  const templateSlots = useMemo(() => countRequiredSlots(template), [template]);
+  const plantillaDone = templateSlots > 0;
   const asignacionDone = filledSlots > 0;
 
   // Reconcilia los datos del servidor (estado/cobertura de la competición) tras
@@ -251,7 +256,7 @@ export function RosterBuilder({
     });
   };
 
-  useEffect(() => { if (totalSlots === 0) setWorkflowStep("plantilla"); }, [totalSlots]);
+  useEffect(() => { if (templateSlots === 0) setWorkflowStep("plantilla"); }, [templateSlots]);
 
   useEffect(() => {
     if (template.length === 0) { setActiveSessionKey(null); return; }
@@ -481,6 +486,13 @@ export function RosterBuilder({
           isPast={isPast} canEdit={canEdit}
           canManageCompensation={canManageCompensation}
           rosterLocked={approvalLocked}
+          submitBlockedReason={
+            templateSlots === 0
+              ? "Define primero la plantilla de la tarima"
+              : filledSlots === 0
+                ? "Asigna al menos un juez antes de enviar"
+                : null
+          }
           violationCount={violationCount} filledSlots={filledSlots} totalSlots={totalSlots}
           fillPct={fillPct} openSlots={openSlots} pending={pending} savingTemplate={savingTemplate}
           isEditing={isEditing} statusMsg={statusMsg} statusIsError={statusIsError}
@@ -493,7 +505,7 @@ export function RosterBuilder({
           onStatus={(msg, isError) => { setStatusMsg(msg); setStatusIsError(isError ?? false); }}
           startTransition={startTransition}
           onToggleEditing={() => {
-            if (isEditing) { setIsEditing(false); setWorkflowStep(totalSlots > 0 ? "asignacion" : "plantilla"); }
+            if (isEditing) { setIsEditing(false); setWorkflowStep(templateSlots > 0 ? "asignacion" : "plantilla"); }
             else { setIsEditing(true); setWorkflowStep("plantilla"); }
           }}
         />
@@ -514,7 +526,7 @@ export function RosterBuilder({
                 // "Plantilla" = trabajar la ESTRUCTURA. Si ya existe plantilla, abre el
                 // editor de sesiones directamente; antes mostraba la tarima en solo
                 // lectura (lo mismo que Asignación sin el panel de jueces), que no aporta.
-                setIsEditing(step === "plantilla" && totalSlots > 0);
+                setIsEditing(step === "plantilla" && templateSlots > 0);
               }}
               disabled={pending || savingTemplate}
               plantillaDone={plantillaDone}
@@ -526,7 +538,7 @@ export function RosterBuilder({
           <div className="min-h-0 flex-1 overflow-y-auto">
             <RosterRevisionPanel competitionId={competition.id} filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} />
           </div>
-        ) : workflowStep === "plantilla" && !isEditing && totalSlots === 0 ? (
+        ) : workflowStep === "plantilla" && !isEditing && templateSlots === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <p className="max-w-md text-sm text-muted-foreground">
               Este campeonato aún no tiene plantilla de tarima. Importa el horario PDF de esta competición o define sesiones y plazas manualmente.

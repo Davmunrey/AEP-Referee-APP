@@ -164,8 +164,8 @@ export function RefereeSanctionsPanel({
               de fin.
             </p>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Motivo</label>
-              <textarea
+              <label htmlFor="sn-motivo" className="mb-1 block text-xs font-medium text-foreground-secondary">Motivo</label>
+              <textarea id="sn-motivo"
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
                 rows={3}
@@ -177,8 +177,8 @@ export function RefereeSanctionsPanel({
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-foreground-secondary">Inicio</label>
-                <Input
+                <label htmlFor="sn-inicio" className="mb-1 block text-xs font-medium text-foreground-secondary">Inicio</label>
+                <Input id="sn-inicio"
                   type="date"
                   value={fechaInicio}
                   onChange={(e) => setFechaInicio(e.target.value)}
@@ -186,8 +186,8 @@ export function RefereeSanctionsPanel({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-foreground-secondary">Duración</label>
-                <select
+                <label htmlFor="sn-duracion" className="mb-1 block text-xs font-medium text-foreground-secondary">Duración</label>
+                <select id="sn-duracion"
                   value={duration}
                   onChange={(e) => setDuration(e.target.value as SanctionDurationPreset)}
                   className={selectFieldClass}
@@ -202,8 +202,8 @@ export function RefereeSanctionsPanel({
             </div>
             {duration === "custom" && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-foreground-secondary">Fin</label>
-                <Input
+                <label htmlFor="sn-fin" className="mb-1 block text-xs font-medium text-foreground-secondary">Fin</label>
+                <Input id="sn-fin"
                   type="date"
                   value={fechaFin}
                   min={fechaInicio}
@@ -213,8 +213,8 @@ export function RefereeSanctionsPanel({
               </div>
             )}
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Notas internas (opcional)</label>
-              <Input value={notas} onChange={(e) => setNotas(e.target.value)} />
+              <label htmlFor="sn-notas-internas-opcional" className="mb-1 block text-xs font-medium text-foreground-secondary">Notas internas (opcional)</label>
+              <Input id="sn-notas-internas-opcional" value={notas} onChange={(e) => setNotas(e.target.value)} />
             </div>
             {error && (
               <p role="alert" className="text-sm text-destructive">

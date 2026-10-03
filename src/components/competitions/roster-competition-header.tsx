@@ -22,6 +22,7 @@ interface RosterCompetitionHeaderProps {
   canEdit: boolean;
   canManageCompensation?: boolean;
   rosterLocked?: boolean;
+  submitBlockedReason?: string | null;
   violationCount: number;
   filledSlots: number;
   totalSlots: number;
@@ -49,6 +50,7 @@ export function RosterCompetitionHeader({
   canEdit,
   canManageCompensation = false,
   rosterLocked = false,
+  submitBlockedReason = null,
   violationCount,
   filledSlots,
   totalSlots,
@@ -208,6 +210,7 @@ export function RosterCompetitionHeader({
                 openSlots={openSlots}
                 pending={pending}
                 rosterLocked={rosterLocked}
+                submitBlockedReason={submitBlockedReason}
                 statusMsg={statusMsg}
                 statusIsError={statusIsError}
                 onStatus={onStatus}
