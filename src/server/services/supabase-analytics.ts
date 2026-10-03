@@ -31,6 +31,7 @@ import {
 } from "./supabase-helpers";
 import { competitionService } from "./supabase-competitions";
 import { zoneScopeOf, zoneVisibilityFilter } from "@/lib/zone-scope";
+import { contar } from "@/lib/plural";
 
 type KpiInput = {
   referees: { estado: string }[];
@@ -109,7 +110,7 @@ async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
   return [
     { label: "Jueces Activos", value: String(active), sub: `/ ${refereesLength} federados`, trend: `cuota operativa ${currentSeasonYear()}`, trendDir: "up", accent: "neutral" },
     { label: "Próximas Competiciones", value: String(competitionsLength), sub: "campeonatos en calendario", trend: "AEP-1 · AEP-2 · AEP-3", trendDir: "up", accent: "red" },
-    { label: "Plazas sin cubrir", value: String(openSlots), sub: `en ${competitionsLength} campeonatos`, trend: `${critical} campeonatos en estado crítico`, trendDir: critical > 0 ? "warn" : "flat", accent: "yellow" },
+    { label: "Plazas sin cubrir", value: String(openSlots), sub: `en ${contar(competitionsLength, "campeonato", "campeonatos")}`, trend: `${contar(critical, "campeonato", "campeonatos")} en estado crítico`, trendDir: critical > 0 ? "warn" : "flat", accent: "yellow" },
     { label: "Aprobaciones Pendientes", value: String(pending), sub: "propuestas regionales", trend: "esperan revisión nacional", trendDir: "flat", accent: "blue" },
     {
       label: "Cobertura Nacional",

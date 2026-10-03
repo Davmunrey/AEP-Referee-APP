@@ -30,7 +30,7 @@ export async function POST(request: Request, context: RouteContext) {
     expectedRefereeId: "expectedRefereeId" in body ? body.expectedRefereeId : undefined,
   });
   if (!parsed.success) {
-    return jsonError("Datos de slot inválidos", 400, parsed.error.flatten());
+    return jsonError("Datos de hueco inválidos", 400, parsed.error.flatten());
   }
 
   try {

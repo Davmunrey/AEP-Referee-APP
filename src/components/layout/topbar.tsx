@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, KeyRound, LogOut, Search } from "lucide-react";
+import { ChevronRight, KeyRound, LogOut, Menu, Search } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +26,13 @@ const PasswordDialog = dynamic(
   { ssr: false },
 );
 
-export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
+export function TopBar({
+  currentUser,
+  onOpenMenu,
+}: {
+  currentUser: CurrentUser;
+  onOpenMenu?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const meta = getPageMeta(pathname);
@@ -54,6 +60,21 @@ export function TopBar({ currentUser }: { currentUser: CurrentUser }) {
     <>
     <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-sidebar/80 px-4 sm:px-5 lg:px-6 backdrop-blur-xl">
       <div className="flex min-w-0 items-center gap-3">
+        {onOpenMenu && (
+          <button
+            type="button"
+            onClick={onOpenMenu}
+            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground-secondary hover:bg-surface focus-ring md:hidden"
+            aria-label="Abrir menú"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
+        {/* En móvil no caben las migas: el nombre de la página, y para un
+            campeonato su nombre real. */}
+        <p className="truncate text-sm font-semibold text-foreground md:hidden">
+          {competitionIdCrumb && competitionIdCrumb !== "new" ? competitionCrumbLabel : meta.title}
+        </p>
         <nav className="hidden items-center gap-1.5 text-[12px] text-subtle-muted md:flex">
           {meta.crumbs.map((crumb, i) => {
             const isLast = i === meta.crumbs.length - 1;

@@ -226,7 +226,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       </div>
 
       <PageHeader
-        eyebrow="Compensación"
+        eyebrow="Competiciones"
         title={competition.nombre}
         description={`${competition.fecha} → ${competition.fechaFin} · ${competition.sede}`}
       />

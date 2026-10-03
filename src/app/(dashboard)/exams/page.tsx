@@ -1,10 +1,9 @@
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { ExamsManager } from "@/components/judge/exams-manager";
-import { Card, CardContent } from "@/components/ui/card";
+import { MetricTile, type MetricTone } from "@/components/ui/metric-tile";
 import { canAdminJudges, canManageJudges, getSession } from "@/lib/auth/session";
 import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { dataService } from "@/server/services";
-import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { AEP_JUDGE_LICENSE_NOTE } from "@/lib/aep-guide-2026";
 import { BarChart2, BookOpen, CheckCircle2, Clock } from "lucide-react";
@@ -27,48 +26,18 @@ export default async function ExamsPage() {
   // mundo», que es justo lo contrario de «aún no hay datos».
   const tasa = resueltos > 0 ? Math.round((aprobados / resueltos) * 100) : null;
 
-  const stats: {
-    label: string;
-    value: string | number;
-    tone: string;
-    iconBg: string;
-    Icon: LucideIcon;
-  }[] = [
-    {
-      label: "Exámenes totales",
-      value: exams.length,
-      tone: "text-foreground-secondary",
-      iconBg: "bg-muted",
-      Icon: BookOpen,
-    },
-    {
-      label: "Aprobados",
-      value: aprobados,
-      tone: "text-success",
-      iconBg: "bg-success-muted",
-      Icon: CheckCircle2,
-    },
-    {
-      label: "Pendientes",
-      value: pendientes,
-      tone: "text-warning",
-      iconBg: "bg-warning-muted",
-      Icon: Clock,
-    },
-    {
-      label: "Tasa de aprobación",
-      value: tasa === null ? "—" : `${tasa}%`,
-      tone: "text-primary",
-      iconBg: "bg-primary-muted",
-      Icon: BarChart2,
-    },
+  const stats: { label: string; value: string | number; tone: MetricTone; icon: LucideIcon }[] = [
+    { label: "Exámenes totales", value: exams.length, tone: "neutral", icon: BookOpen },
+    { label: "Aprobados", value: aprobados, tone: "success", icon: CheckCircle2 },
+    { label: "Pendientes", value: pendientes, tone: "warning", icon: Clock },
+    { label: "Tasa de aprobación", value: tasa === null ? "—" : `${tasa}%`, tone: "primary", icon: BarChart2 },
   ];
 
   return (
     <PageShell>
       <div>
         <PageHeader
-          eyebrow="Gestión de jueces"
+          eyebrow="Jueces"
           title="Exámenes de jueces"
           description="Altas de nuevos jueces, ascensos a categoría IPF y recertificaciones"
         />
@@ -76,26 +45,9 @@ export default async function ExamsPage() {
           {AEP_JUDGE_LICENSE_NOTE}
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="flex items-center gap-3 px-4 py-3.5">
-              <div
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                  s.iconBg,
-                )}
-              >
-                <s.Icon className={cn("h-4 w-4", s.tone)} aria-hidden="true" />
-              </div>
-              <div>
-                <p className={cn("text-2xl font-bold leading-none tracking-tight", s.tone)}>
-                  {s.value}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {stats.map((st) => (
+          <MetricTile key={st.label} label={st.label} value={st.value} tone={st.tone} icon={st.icon} />
         ))}
       </div>
       <ExamsManager

@@ -19,6 +19,7 @@ import {
   LifeBuoy,
   UserCog,
   Users,
+  X,
 } from "lucide-react";
 import { AepLogo } from "@/components/aep/logo";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,14 @@ interface SidebarProps {
   currentUser: SessionUser;
   navCounts: NavCounts;
   onToggle: () => void;
+  /**
+   * Cajón de móvil: siempre expandido, el botón del pie cierra en vez de
+   * colapsar y cada enlace cierra el cajón al navegar.
+   */
+  drawer?: boolean;
+  onNavigate?: () => void;
+  /** Contenido bajo el logo; en el cajón, la búsqueda de jueces. */
+  top?: React.ReactNode;
 }
 
 export function Sidebar({
@@ -144,6 +153,9 @@ export function Sidebar({
   currentUser,
   navCounts,
   onToggle,
+  drawer = false,
+  onNavigate,
+  top,
 }: SidebarProps) {
   const navGroups = buildNavGroups(navCounts, currentUser);
   const pathname = usePathname();
@@ -156,6 +168,7 @@ export function Sidebar({
         key={`${item.label}-${item.href}`}
         href={item.href}
         aria-current={active ? "page" : undefined}
+        onClick={onNavigate}
         className={cn(
           "group relative flex items-center text-[12.5px] font-medium transition-colors duration-150 focus-ring",
           collapsed
@@ -166,7 +179,13 @@ export function Sidebar({
           !active &&
             "text-muted-foreground hover:bg-surface hover:text-foreground active:bg-surface-hover",
         )}
-        title={collapsed ? item.label : undefined}
+        title={
+          collapsed
+            ? item.badge
+              ? `${item.label} (${item.badge})`
+              : item.label
+            : undefined
+        }
       >
         {active && !collapsed && (
           <span
@@ -193,6 +212,18 @@ export function Sidebar({
         >
           <Icon className="h-4 w-4" />
         </span>
+        {/* Colapsada, la barra escondía también los contadores: en la tableta
+            —que arranca colapsada— nadie veía que había propuestas esperando.
+            Ahora queda un punto sobre el icono, y el número en el título. */}
+        {collapsed && item.badge != null && item.badge > 0 && (
+          <span
+            aria-hidden="true"
+            className={cn(
+              "absolute right-1.5 top-1.5 h-2 w-2 rounded-full ring-2 ring-sidebar",
+              item.href === "/approvals" ? "bg-primary" : "bg-foreground-secondary",
+            )}
+          />
+        )}
         {!collapsed && (
           <>
             <span className="flex-1 truncate">{item.label}</span>
@@ -218,12 +249,14 @@ export function Sidebar({
     <aside
       className={cn(
         "flex h-full flex-col border-r border-border-muted bg-sidebar/95 backdrop-blur-xl transition-[width] duration-200 ease-out",
-        collapsed ? "w-16" : "w-[224px] xl:w-[232px]",
+        drawer ? "w-[280px] max-w-[85vw] bg-sidebar" : collapsed ? "w-16" : "w-[224px] xl:w-[232px]",
       )}
+      aria-label="Navegación principal"
     >
       <div className={cn("border-b border-border-muted px-4 py-4", collapsed && "px-0")}>
         <AepLogo collapsed={collapsed} className={collapsed ? "justify-center" : undefined} />
       </div>
+      {top}
 
       <div className="flex-1 min-h-0 overflow-y-auto pb-2">
         {navGroups.map((group, gi) => (
@@ -253,10 +286,16 @@ export function Sidebar({
             // que el chevron quede alineado en la misma columna vertical.
             collapsed ? "mx-auto h-11 w-11 p-0" : "w-full",
           )}
-          aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+          aria-label={drawer ? "Cerrar menú" : collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          {!collapsed && <span className="ml-2 text-xs">Colapsar</span>}
+          {drawer ? (
+            <X className="h-4 w-4" />
+          ) : collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+          {!collapsed && <span className="ml-2 text-xs">{drawer ? "Cerrar" : "Colapsar"}</span>}
         </Button>
       </div>
     </aside>
