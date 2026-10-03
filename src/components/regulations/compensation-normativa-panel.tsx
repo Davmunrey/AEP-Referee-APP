@@ -40,7 +40,7 @@ export function CompensationNormativaPanel() {
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="border-b border-border-muted bg-surface/80 text-[11px] uppercase tracking-wide text-subtle-muted">
+            <thead className="border-b border-border-muted bg-surface/40 text-xs font-medium text-muted-foreground">
               <tr>
                 <th className="px-4 py-2">Concepto</th>
                 <th className="px-4 py-2">AEP-3</th>
@@ -53,10 +53,10 @@ export function CompensationNormativaPanel() {
               {COMPENSATION_RATE_TABLE.map((row) => (
                 <tr key={row.concept} className="border-b border-border-muted/60 last:border-0">
                   <td className="px-4 py-2.5 font-medium text-foreground">{row.concept}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs">{row.aep3}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs">{row.aep2}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs">{row.aep1}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs">{row.intl}</td>
+                  <td className="px-4 py-2.5 text-xs">{row.aep3}</td>
+                  <td className="px-4 py-2.5 text-xs">{row.aep2}</td>
+                  <td className="px-4 py-2.5 text-xs">{row.aep1}</td>
+                  <td className="px-4 py-2.5 text-xs">{row.intl}</td>
                 </tr>
               ))}
             </tbody>

@@ -97,7 +97,7 @@ export function RosterHeaderActions({
           className="flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-2.5"
           title={`Cobertura: ${filledSlots}/${totalSlots} plazas`}
         >
-          <span className="font-mono text-xs font-medium tabular-nums text-foreground">
+          <span className="text-xs font-medium tabular-nums text-foreground">
             {filledSlots}
             <span className="text-subtle-muted">/{totalSlots}</span>
           </span>

@@ -160,7 +160,7 @@ export function NewPromotionDialog({
           {/* Level transition visual */}
           {selectedRef && (
             <div className="rounded-xl border border-border bg-muted/40 px-4 py-3">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
+              <p className="mb-2 text-[11px] font-semibold text-subtle-muted">
                 Transición de nivel
               </p>
               <div className="flex items-center gap-2">

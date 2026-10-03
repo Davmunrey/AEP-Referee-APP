@@ -23,7 +23,7 @@ export function AepLogo({ collapsed, className }: AepLogoProps) {
           <p className="text-sm font-semibold tracking-tight text-foreground">
             AEP Tarima
           </p>
-          <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-subtle-muted">
+          <p className="mt-1 text-[11px] font-medium text-subtle-muted">
             Gestión de jueces
           </p>
         </div>

@@ -100,7 +100,7 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
 
   return [
     {
-      label: "Jueces Activos",
+      label: "Jueces activos",
       value: String(active),
       sub: `/ ${referees.length} federados`,
       trend: subAlcance,
@@ -108,7 +108,7 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
       accent: "neutral",
     },
     {
-      label: "Próximas Competiciones",
+      label: "Próximas competiciones",
       value: String(competitions.length),
       sub: "campeonatos en calendario",
       trend: subAlcance,
@@ -124,7 +124,7 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
       accent: "yellow",
     },
     {
-      label: "Aprobaciones Pendientes",
+      label: "Aprobaciones pendientes",
       value: String(pending),
       sub: "propuestas regionales",
       trend: subAlcance,

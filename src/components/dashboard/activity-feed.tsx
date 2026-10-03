@@ -79,7 +79,7 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
               <div className="min-w-0 flex-1 pt-0.5">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <ActivityTypeBadge tipo={item.tipo} />
-                  <time className="font-mono text-[10px] text-muted-foreground">
+                  <time className="text-[10px] text-muted-foreground">
                     {relativeTime(item.hace)}
                   </time>
                 </div>

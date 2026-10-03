@@ -16,7 +16,7 @@ describe("indicadores del panel en memoria", () => {
       { ...base, id: "kpi-pasado", nombre: "Pasado", fecha: addDaysIso(todayIso(), -60), fechaFin: addDaysIso(todayIso(), -59) },
       { ...base, id: "kpi-futuro", nombre: "Futuro", fecha: addDaysIso(todayIso(), 30), fechaFin: addDaysIso(todayIso(), 30) },
     );
-    const proximas = buildKpis().find((k) => k.label === "Próximas Competiciones")!;
+    const proximas = buildKpis().find((k) => k.label === "Próximas competiciones")!;
     const ids = store.competitions.filter((c) => c.id.startsWith("kpi-")).length;
     expect(ids).toBe(2);
     // El futuro cuenta; el pasado no.

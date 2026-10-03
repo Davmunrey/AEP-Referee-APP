@@ -123,7 +123,7 @@ export function AepGuidePanel() {
             {AEP_GEOGRAPHIC_ZONES.map((z) => (
               <li key={z.id}>
                 <span className="font-medium text-foreground">{z.name}</span>
-                <span className="font-mono text-subtle-muted"> ({z.id})</span>
+                <span className="text-subtle-muted"> ({z.id})</span>
               </li>
             ))}
           </ul>
@@ -138,7 +138,7 @@ export function AepGuidePanel() {
               <tbody>
                 {AEP_GEOGRAPHIC_ZONES.map((z) => (
                   <tr key={z.id} className="border-b border-border-muted/60 last:border-0">
-                    <td className="px-2 py-1 font-mono text-foreground">{z.id}</td>
+                    <td className="px-2 py-1 text-foreground">{z.id}</td>
                     <td className="px-2 py-1 text-foreground-secondary">{z.name}</td>
                   </tr>
                 ))}

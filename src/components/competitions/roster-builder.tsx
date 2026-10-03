@@ -607,7 +607,7 @@ export function RosterBuilder({
                     <div className="flex items-center gap-4 overflow-x-auto px-3 py-2">
                       {groupedSessions.map(([dia, sesiones]) => (
                         <div key={dia} className="flex shrink-0 items-center gap-2">
-                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                          <span className="shrink-0 text-[11px] font-semibold text-primary">
                             {dia}
                           </span>
                           {sesiones.map((session) => (
@@ -630,8 +630,8 @@ export function RosterBuilder({
                           {!readOnly && (
                             <div className="rounded-2xl border border-border-muted bg-surface/25 p-3">
                               <div className="mb-2 flex items-center justify-between gap-2">
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-subtle-muted">Huecos pendientes</p>
-                                <span className="font-mono text-[11px] text-subtle-muted">{activeSessionPendingSlots.length} sin cubrir</span>
+                                <p className="text-xs font-semibold text-subtle-muted">Huecos pendientes</p>
+                                <span className="text-[11px] text-subtle-muted">{activeSessionPendingSlots.length} sin cubrir</span>
                               </div>
                               {activeSessionPendingSlots.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
@@ -643,10 +643,10 @@ export function RosterBuilder({
                                         selectedSlot === slot.slotKey ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:border-border-strong hover:bg-surface",
                                       )}
                                     >
-                                      <span className="font-mono">{slot.sessionLabel}</span>
+                                      <span>{slot.sessionLabel}</span>
                                       <ChevronRight className="h-3 w-3" />
                                       <span>{slot.roleLabel}</span>
-                                      <span className="font-mono">{slot.slotNumber}</span>
+                                      <span>{slot.slotNumber}</span>
                                     </button>
                                   ))}
                                 </div>

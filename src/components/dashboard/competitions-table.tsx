@@ -21,7 +21,7 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-subtle-muted">
+              <tr className="border-b border-border text-left text-xs text-subtle-muted">
                 <th className="px-6 py-3 font-medium">Campeonato</th>
                 <th className="px-6 py-3 font-medium">Fechas</th>
                 <th className="px-6 py-3 font-medium">Tipo</th>
@@ -57,7 +57,7 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
                       <p className="font-medium text-foreground">{competition.nombre}</p>
                       <p className="text-xs text-subtle-muted">{competition.sede}</p>
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
+                    <td className="px-6 py-4 text-xs text-muted-foreground">
                       {formatDateRange(competition.fecha, competition.fechaFin)}
                     </td>
                     <td className="px-6 py-4">
@@ -68,7 +68,7 @@ export function CompetitionsTable({ competitions }: { competitions: Competition[
                         <>
                           <div className="flex items-center gap-2">
                             <Progress value={pct} className="h-2 flex-1" />
-                            <span className="w-10 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                            <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
                               {pct}%
                             </span>
                           </div>

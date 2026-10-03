@@ -58,7 +58,7 @@ export function TopBar({
 
   return (
     <>
-    <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-sidebar/80 px-4 sm:px-5 lg:px-6 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-canvas/85 px-4 sm:px-5 lg:px-6 backdrop-blur-md">
       <div className="flex min-w-0 items-center gap-3">
         {onOpenMenu && (
           <button

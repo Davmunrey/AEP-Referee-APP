@@ -25,7 +25,7 @@ export default function DashboardError({
           Ha ocurrido un error al cargar el panel. Por favor, inténtalo de nuevo.
         </p>
         {error.digest && (
-          <p className="font-mono text-[10px] text-muted-foreground/40">
+          <p className="text-[10px] text-muted-foreground/40">
             ref: {error.digest}
           </p>
         )}

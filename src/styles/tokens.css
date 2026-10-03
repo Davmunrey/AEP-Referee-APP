@@ -19,34 +19,37 @@
   --aep-emerald-500: #1faf63;
   --aep-emerald-100: #d8f0e2;
 
-  /* ── Neutros (escala cálida tipo stone) ────────────────────────────── */
+  /* ── Neutros (escala neutra, levemente fría, tipo zinc) ────────────── */
   --neutral-0: #ffffff;
-  --neutral-50: #faf9f7;
-  --neutral-100: #f4f2ef;
-  --neutral-150: #edeae5;
-  --neutral-200: #e3dfd8;
-  --neutral-300: #d0cabf;
-  --neutral-400: #aaa399;
-  --neutral-500: #837c72;
-  --neutral-600: #5f594f;
-  --neutral-700: #46413a;
-  --neutral-800: #2e2a25;
-  --neutral-900: #1c1916;
-  --neutral-950: #0f0d0b;
+  --neutral-50: #fafafa;
+  --neutral-100: #f4f4f5;
+  --neutral-150: #ededef;
+  --neutral-200: #e4e4e7;
+  --neutral-300: #d4d4d8;
+  --neutral-400: #a1a1aa;
+  --neutral-500: #71717a;
+  --neutral-600: #52525b;
+  --neutral-700: #3f3f46;
+  --neutral-800: #27272a;
+  --neutral-900: #18181b;
+  --neutral-950: #09090b;
 
   /* ── Semánticos: fondos ────────────────────────────────────────────── */
-  --background: var(--neutral-50);
+  /* Tres planos: el marco de la app (sidebar + fondo), el lienzo donde vive
+   * cada página y las tarjetas encima. Antes todo era un beige cálido único. */
+  --background: var(--neutral-100);
+  --canvas: var(--neutral-50);
   --foreground: var(--neutral-900);
   --foreground-secondary: var(--neutral-700);
   --subtle: var(--neutral-500);
-  --subtle-muted: var(--neutral-400);
+  --subtle-muted: #8b8b94;
 
   --card: var(--neutral-0);
   --card-foreground: var(--neutral-900);
   --popover: var(--neutral-0);
   --popover-foreground: var(--neutral-900);
 
-  --sidebar: var(--neutral-0);
+  --sidebar: var(--neutral-100);
   --sidebar-foreground: var(--neutral-900);
 
   --surface: var(--neutral-100);
@@ -62,11 +65,11 @@
   --accent-foreground: var(--neutral-800);
 
   /* ── Semánticos: marca / acción ────────────────────────────────────── */
-  --primary: var(--aep-red-500);
-  --primary-hover: var(--aep-red-600);
+  --primary: #d63a2c;
+  --primary-hover: #c0321f;
   --primary-soft: var(--aep-red-400);
   --primary-foreground: var(--neutral-0);
-  --primary-muted: color-mix(in srgb, var(--primary) 14%, transparent);
+  --primary-muted: color-mix(in srgb, var(--primary) 10%, transparent);
   --primary-subtle: var(--aep-red-100);
   --primary-border: color-mix(in srgb, var(--primary) 28%, transparent);
 
@@ -98,7 +101,7 @@
 
   /* ── Bordes ────────────────────────────────────────────────────────── */
   --border: var(--neutral-200);
-  --border-muted: var(--neutral-150);
+  --border-muted: #ececee;
   --border-strong: var(--neutral-300);
   --input: var(--neutral-300);
   --ring: color-mix(in srgb, var(--primary) 60%, transparent);
@@ -106,9 +109,9 @@
   /* ── Radios ────────────────────────────────────────────────────────── */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
-  --radius-lg: 0.625rem;
-  --radius-xl: 0.875rem;
-  --radius-2xl: 1.125rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 0.875rem;
   --radius-full: 9999px;
 
   /* ── Tipografía ────────────────────────────────────────────────────── */
@@ -141,15 +144,17 @@
   --default-transition-timing-function: var(--ease-out);
 
   /* ── Sombras (suaves, para fondo claro) ────────────────────────────── */
-  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--neutral-900) 6%, transparent);
-  --shadow-md: 0 4px 16px color-mix(in srgb, var(--neutral-900) 8%, transparent);
-  --shadow-card: 0 1px 3px color-mix(in srgb, var(--neutral-900) 7%, transparent), 0 0 0 1px color-mix(in srgb, var(--neutral-900) 3%, transparent);
-  --shadow-primary: 0 2px 8px color-mix(in srgb, var(--primary) 22%, transparent);
-  --shadow-primary-lg: 0 4px 14px color-mix(in srgb, var(--primary) 26%, transparent);
-  --shadow-glow-primary: 0 2px 8px color-mix(in srgb, var(--primary) 18%, transparent);
-  --shadow-glow-primary-lg: 0 4px 16px color-mix(in srgb, var(--primary) 24%, transparent);
-  --shadow-glow-warning: 0 2px 8px color-mix(in srgb, var(--aep-amber-500) 18%, transparent);
-  --shadow-glow-info: 0 2px 8px color-mix(in srgb, var(--aep-blue-500) 18%, transparent);
+  /* Sombras casi imperceptibles: la jerarquía la marcan el plano y el borde
+   * fino, no los halos. Los «glow» de color se quedan en un leve relieve. */
+  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--neutral-900) 5%, transparent);
+  --shadow-md: 0 8px 24px -6px color-mix(in srgb, var(--neutral-900) 12%, transparent), 0 2px 6px -2px color-mix(in srgb, var(--neutral-900) 6%, transparent);
+  --shadow-card: 0 1px 2px color-mix(in srgb, var(--neutral-900) 4%, transparent);
+  --shadow-primary: 0 1px 2px color-mix(in srgb, var(--aep-red-600) 25%, transparent), inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+  --shadow-primary-lg: var(--shadow-primary);
+  --shadow-glow-primary: var(--shadow-primary);
+  --shadow-glow-primary-lg: var(--shadow-primary);
+  --shadow-glow-warning: 0 1px 2px color-mix(in srgb, var(--aep-amber-600) 20%, transparent);
+  --shadow-glow-info: 0 1px 2px color-mix(in srgb, var(--aep-blue-600) 20%, transparent);
 
   /* ── Mesh / glass (suaves) ─────────────────────────────────────────── */
   --mesh-primary: color-mix(in srgb, var(--primary) 5%, transparent);

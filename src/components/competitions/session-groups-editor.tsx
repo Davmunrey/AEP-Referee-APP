@@ -24,7 +24,7 @@ export function SessionGroupsEditor({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[10.5px] font-semibold uppercase tracking-wider text-subtle-muted">
+        <p className="text-[11px] font-semibold text-subtle-muted">
           Grupos {list.length > 0 ? `(${list.length})` : ""}
         </p>
         <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs" onClick={onAddGrupo}>

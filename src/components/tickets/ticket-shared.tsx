@@ -91,7 +91,7 @@ export function CategoryBadge({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset",
+        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ring-1 ring-inset",
         CATEGORY_TONE[categoria],
         className,
       )}
@@ -119,7 +119,7 @@ export function TicketStatusPill({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset",
+"inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ring-1 ring-inset",
         STATUS_TONE[status],
         className,
       )}

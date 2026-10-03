@@ -142,7 +142,7 @@ export function OperationalCalendar({
             <div
               key={d}
               className={cn(
-                "border-r border-border/50 px-2 py-1.5 font-mono text-[10px] tracking-widest last:border-r-0",
+"border-r border-border/50 px-2 py-1.5 text-[10px] tracking-widest last:border-r-0",
                 // Weekend tone (SAB=5, DOM=6)
                 idx >= 5 ? "text-muted-foreground/70" : "text-muted-foreground",
               )}
@@ -186,7 +186,7 @@ export function OperationalCalendar({
                   <div className="flex items-center justify-between px-2 pt-2">
                     <span
                       className={cn(
-                        "flex h-6 w-6 items-center justify-center font-mono text-[11px] tabular-nums",
+"flex h-6 w-6 items-center justify-center text-[11px] tabular-nums",
                         isToday
                           ? "rounded-full bg-primary font-bold text-primary-foreground"
                           : otherMonth

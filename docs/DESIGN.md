@@ -8,6 +8,15 @@
 - Tokens de diseño, no colores hardcodeados.
 - Preview antes de aplicar cualquier import/export.
 
+## Lenguaje visual (v2.5)
+
+- **Tipografía**: Geist (texto) y Geist Mono solo para código y bloques preformateados. Cifras tabulares en toda la app (`font-variant-numeric: tabular-nums` en `body`).
+- **Tres planos**: el marco (sidebar + fondo, gris `neutral-100`), el lienzo de cada página (panel `canvas` con borde fino y esquinas de 12 px en escritorio) y las tarjetas blancas encima. Neutros fríos tipo zinc; nada de beige.
+- **Rótulos en minúscula de frase**: sin versales ni tracking ancho (cabeceras de tabla, grupos del menú, rótulos de formulario). Las píldoras de estado van capitalizadas.
+- **Un solo acento**: el rojo AEP, reservado a la acción principal y al estado activo. Las cifras de los KPI van en el color del texto; el tono del indicador es un punto junto al rótulo.
+- **Sin halos**: sombras de 1–2 px como mucho; la jerarquía la marcan el plano y el borde. Insignias sin borde, con fondo suave y radio de 6 px.
+- **Menú lateral compacto**: ítems de 32 px; el activo es una tarjeta blanca sobre el marco con el icono en rojo.
+
 ## Tokens
 
 Fuente de verdad:
@@ -81,4 +90,4 @@ Fuente de verdad:
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.5

@@ -234,7 +234,7 @@ export function RefereeSanctionsPanel({
 
         {sanctions.length > 0 && (
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-subtle-muted">
+            <p className="mb-2 text-xs font-semibold text-subtle-muted">
               Historial
             </p>
             <ul className="space-y-2">
@@ -248,7 +248,7 @@ export function RefereeSanctionsPanel({
                       {sanctionStatusLabel(s.status)}
                       {isSanctionActive(s) ? " · vigente" : ""}
                     </span>
-                    <span className="font-mono text-subtle-muted">
+                    <span className="text-subtle-muted">
                       {formatSanctionPeriod(s.fechaInicio, s.fechaFin)}
                     </span>
                   </div>

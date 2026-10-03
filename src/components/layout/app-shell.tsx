@@ -135,7 +135,9 @@ export function AppShell({
           </div>
         </div>
       )}
-      <div className="app-mesh relative flex min-w-0 flex-1 flex-col">
+      {/* El contenido es un panel propio sobre el marco (sidebar + fondo), con
+          borde fino y esquinas redondeadas en escritorio. */}
+      <div className="app-canvas relative flex min-w-0 flex-1 flex-col md:my-2 md:mr-2 md:overflow-hidden md:rounded-xl md:border md:border-border md:shadow-card">
         <TopBar currentUser={currentUser} onOpenMenu={() => setMobileOpen(true)} />
         <main id="main-content" className="flex-1 overflow-y-auto" tabIndex={-1}>
           {children}

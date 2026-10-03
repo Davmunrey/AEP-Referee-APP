@@ -27,7 +27,7 @@ import { selectFieldClassSm } from "@/lib/design-tokens";
 import { zoneFilterOptions } from "@/lib/competitions/list-filters";
 import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
-import { zonesMatch } from "@/lib/aep-zones";
+import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
 
 interface CompetitionsTableProps {
   initialCompetitions: Competition[];
@@ -290,10 +290,10 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                   <EventTypeBadge tipo={competition.tipo} />
-                  <span className="font-mono">{formatDateRange(competition.fecha, competition.fechaFin)}</span>
-                  {competition.zona && <span className="font-mono uppercase">· {competition.zona}</span>}
+                  <span>{formatDateRange(competition.fecha, competition.fechaFin)}</span>
+                  {competition.zona && <span>· {zoneUiName(competition.zona)}</span>}
                   {isPast && (
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
                       Histórico
                     </span>
                   )}
@@ -397,26 +397,26 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                           "Histórico" es un hecho (baja a etiqueta plana),
                           "Duplicado" pide una acción (conserva el chip). */}
                       {isPast && (
-                        <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-subtle-muted">
+                        <span className="ml-2 text-[11px] font-medium text-subtle-muted">
                           Histórico
                         </span>
                       )}
                       {duplicateIds.has(competition.id) && (
-                        <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-[10px] font-semibold uppercase text-warning">
+                        <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-[11px] font-semibold text-warning">
                           Duplicado
                         </span>
                       )}
                     </p>
                     <p className="text-xs text-subtle-muted">{competition.sede}</p>
                   </DataTableCell>
-                  <DataTableCell className="font-mono text-xs tabular-nums text-muted-foreground">
+                  <DataTableCell className="text-xs tabular-nums text-muted-foreground">
                     {formatDateRange(competition.fecha, competition.fechaFin)}
                   </DataTableCell>
                   <DataTableCell>
                     <EventTypeBadge tipo={competition.tipo} />
                   </DataTableCell>
-                  <DataTableCell className="font-mono text-[11px] uppercase text-muted-foreground">
-                    {competition.zona ?? "—"}
+                  <DataTableCell className="text-[13px] text-muted-foreground">
+                    {competition.zona ? zoneUiName(competition.zona) : "—"}
                   </DataTableCell>
                   <DataTableCell className="min-w-[140px]">
                     <Progress value={pct} />

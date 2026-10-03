@@ -146,7 +146,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
                       <span className="truncate">{item.sede}</span>
                     </span>
                   </DataTableCell>
-                  <DataTableCell className="text-center font-mono text-sm">{item.judgeCount}</DataTableCell>
+                  <DataTableCell className="text-center text-sm">{item.judgeCount}</DataTableCell>
                   <DataTableCell>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <EventStatusBadge status={item.estado} />
@@ -167,7 +167,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
                       ) : null}
                     </div>
                   </DataTableCell>
-                  <DataTableCell className="text-right font-mono text-sm font-medium">
+                  <DataTableCell className="text-right text-sm font-medium">
                     {/* Antes: un guion mientras faltaran km, aunque el importe
                         estuviera calculado. La pantalla del campeonato ya
                         enseñaba el provisional; aquí se ocultaba. */}
@@ -176,7 +176,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
                     ) : item.provisionalTotal > 0 ? (
                       <span className="font-normal text-muted-foreground">
                         {formatReceiptAmountEur(item.provisionalTotal)}
-                        <span className="ml-1 text-[10px] uppercase tracking-wide">prov.</span>
+                        <span className="ml-1 text-[11px]">prov.</span>
                       </span>
                     ) : (
                       "—"

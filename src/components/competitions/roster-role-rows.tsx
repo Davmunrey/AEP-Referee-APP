@@ -37,7 +37,7 @@ export function RoleRows({ title, accentClass, roles, allowedKeys, onChange, onA
   return (
     <div className="space-y-2">
       <div className={cn("flex items-center justify-between rounded-lg px-2 py-1", accentClass)}>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">{title}</p>
+        <p className="text-[11px] font-semibold text-subtle-muted">{title}</p>
         <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs" onClick={onAdd}>
           <Plus className="h-3 w-3" />
           Rol

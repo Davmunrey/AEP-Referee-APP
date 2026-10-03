@@ -193,7 +193,7 @@ export default async function DocsPage() {
       <main className="mx-auto max-w-4xl px-6 py-10">
         {/* Índice */}
         <nav aria-label="Índice" className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-subtle-muted">Índice</p>
+          <p className="text-xs font-semibold text-subtle-muted">Índice</p>
           <ul className="mt-2 grid gap-1.5 sm:grid-cols-3">
             {toc.map((item) => (
               <li key={item.id}>
@@ -278,7 +278,7 @@ export default async function DocsPage() {
           <Section id="roles" icon={ShieldCheck} title="Roles y permisos">
             <div className="overflow-hidden rounded-xl border border-border">
               <table className="w-full text-left text-sm">
-                <thead className="bg-muted/50 text-xs uppercase tracking-wider text-subtle-muted">
+                <thead className="bg-muted/50 text-xs text-subtle-muted">
                   <tr>
                     <th className="px-4 py-2.5 font-medium">Rol</th>
                     <th className="px-4 py-2.5 font-medium">Puede</th>
