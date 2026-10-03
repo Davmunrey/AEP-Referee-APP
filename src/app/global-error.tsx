@@ -4,7 +4,7 @@
 // puede atrapar). Reemplaza al layout, así que renderiza su propio html/body e
 // importa los estilos globales. Reporta a Sentry (no-op sin DSN).
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
+import { reportClientError } from "@/lib/observability/report-client-error";
 import "./globals.css";
 
 export default function GlobalError({
@@ -15,7 +15,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    reportClientError(error);
   }, [error]);
 
   return (
