@@ -24,12 +24,13 @@ const filas: Record<string, Fila[]> = {};
 function q(tabla: string): Record<string, unknown> {
   const self: Record<string, unknown> = {};
   let zonaFiltro: string | undefined;
-  const resultado = () => ({
-    data: (filas[tabla] ?? []).filter(
+  const resultado = () => {
+    const data = (filas[tabla] ?? []).filter(
       (f) => zonaFiltro === undefined || String(f.zona ?? "") === zonaFiltro,
-    ),
-    error: null,
-  });
+    );
+    // `count` para las lecturas con `{ count: "exact", head: true }`.
+    return { data, count: data.length, error: null };
+  };
   Object.assign(self, {
     select: () => self,
     eq: (col: string, val: unknown) => {
@@ -39,6 +40,7 @@ function q(tabla: string): Record<string, unknown> {
     gte: () => self,
     lt: () => self,
     order: () => self,
+    limit: () => self,
     then: (resolve: (v: unknown) => unknown) => Promise.resolve(resultado()).then(resolve),
   });
   return self;
