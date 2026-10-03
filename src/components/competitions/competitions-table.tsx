@@ -27,6 +27,7 @@ import { selectFieldClassSm } from "@/lib/design-tokens";
 import { zoneFilterOptions } from "@/lib/competitions/list-filters";
 import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
+import { zonesMatch } from "@/lib/aep-zones";
 
 interface CompetitionsTableProps {
   initialCompetitions: Competition[];
@@ -82,7 +83,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     return competitions.filter((e) => {
       if (filterTipo !== "TODOS" && e.tipo !== filterTipo) return false;
       if (filterEstado !== "TODOS" && e.estado !== filterEstado) return false;
-      if (filterZona !== "TODOS" && e.zona !== filterZona) return false;
+      if (filterZona !== "TODOS" && !zonesMatch(e.zona, filterZona)) return false;
       if (
         q &&
         !e.nombre.toLowerCase().includes(q) &&
@@ -293,7 +294,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   {competition.zona && <span className="font-mono uppercase">· {competition.zona}</span>}
                   {isPast && (
                     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-                      Solo lectura
+                      Histórico
                     </span>
                   )}
                 </div>
@@ -388,12 +389,16 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   <DataTableCell>
                     <p className="font-medium text-foreground">
                       {competition.nombre}
-                      {/* Dos avisos con el mismo chip pesaban igual, y no lo son:
-                          "Solo lectura" es un hecho (baja a etiqueta plana),
+                      {/* «Histórico», no «Solo lectura»: un campeonato celebrado
+                          sigue siendo editable para cargar el histórico (así lo
+                          dice la cabecera de la tarima), y la etiqueta prometía
+                          un bloqueo que no existe.
+                          Dos avisos con el mismo chip pesaban igual, y no lo son:
+                          "Histórico" es un hecho (baja a etiqueta plana),
                           "Duplicado" pide una acción (conserva el chip). */}
                       {isPast && (
                         <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-subtle-muted">
-                          Solo lectura
+                          Histórico
                         </span>
                       )}
                       {duplicateIds.has(competition.id) && (

@@ -7,7 +7,8 @@ import {
   geocodeAddress,
   osmThrottle,
 } from "@/lib/judge-compensation/osm-distance";
-import { applyCompensationClaimPatch } from "@/lib/judge-compensation/claim-patch";
+import { applyCompensationClaimPatch, touchesPaidAmount } from "@/lib/judge-compensation/claim-patch";
+import { CompensationClaimPaidError } from "@/lib/competitions/service-types";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { buildHubSummary } from "@/lib/judge-compensation/hub";
 import type {
@@ -484,6 +485,7 @@ export const compensationService = {
     const existing = await loadMergedClaimForReferee(competitionId, refereeId);
     if (!existing) return undefined;
 
+    if (touchesPaidAmount(existing, patch)) throw new CompensationClaimPaidError();
     const claim = applyCompensationClaimPatch(existing, patch, { actor });
     await persistClaim(claim, {
       syncDutyLines: false,
@@ -570,6 +572,8 @@ export const compensationService = {
     const summary = await buildSummary(competitionId);
     for (const claim of summary.claims) {
       if (claim.travelMode === "shared_vehicle_passenger" || claim.travelMode === "none") continue;
+      // Una liquidación pagada no se recalcula: su importe ya salió.
+      if (claim.status === "pagado") continue;
       await compensationService.calculateDistance(competitionId, claim.refereeId);
       await osmThrottle(300);
     }

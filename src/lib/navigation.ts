@@ -66,6 +66,22 @@ export function getPageMeta(pathname: string): PageMeta {
       ],
     };
   }
+  if (pathname === "/tickets") {
+    return {
+      title: "Soporte",
+      crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Soporte" }],
+    };
+  }
+  if (pathname.startsWith("/tickets/")) {
+    return {
+      title: "Ticket de soporte",
+      crumbs: [
+        { label: "AEP Tarima", href: "/" },
+        { label: "Soporte", href: "/tickets" },
+        { label: "Ticket" },
+      ],
+    };
+  }
   if (pathname === "/approvals") {
     return {
       title: "Aprobaciones",

@@ -23,7 +23,9 @@ export default async function ExamsPage() {
   const pendientes = exams.filter((e) => e.resultado === "Pendiente").length;
   const suspensos = exams.filter((e) => e.resultado === "Suspenso").length;
   const resueltos = aprobados + suspensos;
-  const tasa = resueltos > 0 ? Math.round((aprobados / resueltos) * 100) : 0;
+  // Sin exámenes resueltos no hay tasa: un «0 %» se lee como «suspende todo el
+  // mundo», que es justo lo contrario de «aún no hay datos».
+  const tasa = resueltos > 0 ? Math.round((aprobados / resueltos) * 100) : null;
 
   const stats: {
     label: string;
@@ -55,7 +57,7 @@ export default async function ExamsPage() {
     },
     {
       label: "Tasa de aprobación",
-      value: `${tasa}%`,
+      value: tasa === null ? "—" : `${tasa}%`,
       tone: "text-primary",
       iconBg: "bg-primary-muted",
       Icon: BarChart2,

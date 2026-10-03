@@ -21,6 +21,7 @@ import {
   getStore,
   getZones,
 } from "@/server/store";
+import { isCompetitionPast } from "@/lib/competition-status";
 
 /** Bitácora de salud en memoria (modo dev sin Supabase). */
 export const healthHistory: { score: number; at: number }[] = [];
@@ -63,7 +64,13 @@ export function buildKpis(user?: SessionUser): DashboardKpi[] {
   // Ver `zone-scope`: una zona ilegible no es «sin restricción».
   const visibleEnZona = zoneVisibilityFilter(user);
   const referees = store.referees.filter((r) => visibleEnZona(r.zona));
-  const competitions = store.competitions.filter((c) => visibleEnZona(c.zona));
+  // Solo los no celebrados, igual que el gemelo de Supabase: el panel es
+  // operativo. Contando los pasados, «Próximas competiciones» y «Plazas sin
+  // cubrir» sumaban campeonatos de abril mientras la salud, que sí filtraba,
+  // decía «0/0 plazas»: dos cifras contradictorias en la misma portada.
+  const competitions = store.competitions.filter(
+    (c) => visibleEnZona(c.zona) && !isCompetitionPast(c),
+  );
   const approvals = store.approvals.filter((a) => visibleEnZona(a.zona));
 
   const active = referees.filter((r) => r.estado === "Activo").length;

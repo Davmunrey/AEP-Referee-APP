@@ -243,7 +243,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
             <SummaryMetric label="Jueces distintos" value={data.totals.uniqueAssignedReferees} hint="Con al menos una plaza" />
             <SummaryMetric
               label="Rechazo propuestas"
-              value={`${data.rejectionRate}%`}
+              value={data.rejectionRate === null ? "—" : `${data.rejectionRate}%`}
               hint="Año en curso"
             />
             <SummaryMetric

@@ -105,7 +105,7 @@ export async function getAnalytics(
     .filter((a) => yearFromIso(a.submittedAt) === selectedYear);
   const reviewed = approvalsForYear.filter((a) => a.status !== "pendiente").length;
   const rejected = approvalsForYear.filter((a) => a.status === "rechazado").length;
-  const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : 0;
+  const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : null;
   const selectedYearAgg = yearAgg.get(selectedYear);
   return {
     availableYears: years, selectedYear, yearlyHistory, activityByZone, topReferees, rejectionRate,
