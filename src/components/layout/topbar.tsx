@@ -99,15 +99,12 @@ export function TopBar({
             );
           })}
         </nav>
-        {meta.title && !pathname.startsWith("/competitions/") && (
-          <div className="hidden min-w-0 border-l border-border-muted pl-3 xl:block">
-            {/* <p>, no <h1>: el h1 canónico de cada página lo pone PageHeader;
-                dos h1 simultáneos rompen la jerarquía para lectores de pantalla. */}
-            <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">
-              {meta.title}
-            </p>
-            {meta.subtitle && <p className="text-xs text-subtle-muted">{meta.subtitle}</p>}
-          </div>
+        {/* El título repetía la última miga y el h1 de la página justo debajo
+            (tres veces el mismo nombre); queda solo el contexto extra. */}
+        {meta.subtitle && !pathname.startsWith("/competitions/") && (
+          <p className="hidden truncate border-l border-border-muted pl-3 text-xs text-subtle-muted xl:block">
+            {meta.subtitle}
+          </p>
         )}
       </div>
 
