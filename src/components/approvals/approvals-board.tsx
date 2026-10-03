@@ -329,6 +329,7 @@ export function ApprovalsBoard({
                       setReviewError(null);
                     }}
                     placeholder="Comentario (obligatorio al rechazar)…"
+                    aria-label="Comentario de revisión (obligatorio al rechazar)"
                     className={textareaFieldClass}
                     rows={2}
                   />
