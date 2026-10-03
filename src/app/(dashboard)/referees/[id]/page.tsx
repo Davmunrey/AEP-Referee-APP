@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { EventTypeBadge, LevelBadge, StatusBadge } from "@/components/aep/badges";
 import { ExamsManager } from "@/components/judge/exams-manager";
 import { ReportsManager } from "@/components/judge/reports-manager";
-import { PageHeader, PageShell } from "@/components/layout/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
 import { RefereeEditForm } from "@/components/referees/referee-edit-form";
 import { RefereePromotionButton } from "@/components/referees/referee-promotion-button";
 import { Button } from "@/components/ui/button";
@@ -84,12 +84,6 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         </Link>
       </Button>
 
-      <PageHeader
-        eyebrow="Jueces"
-        title={referee.nombre}
-        description={`Ficha de jueces · ${zoneName}`}
-      />
-
       {/* Hero card */}
       <Card className="overflow-hidden p-0">
         <div className="px-5 py-4">
@@ -104,15 +98,25 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
               <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle-muted">
                 {zoneName}
               </p>
-              <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+              {/* La tarjeta ES la cabecera: antes un PageHeader encima repetía
+                  nombre y zona. Este es el h1 de la página. */}
+              <h1 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
                 {referee.nombre}
-              </h2>
+              </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <LevelBadge level={referee.nivel} />
                 <StatusBadge status={referee.estado} />
-                {referee.disp && (
+                {referee.disp ? (
                   <span className="rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-medium text-success">
                     Disponible
+                  </span>
+                ) : (
+                  // Importa verlo: un juez «no disponible» no aparece al montar tarimas.
+                  <span
+                    className="rounded-full bg-warning-muted px-2 py-0.5 text-[11px] font-medium text-warning"
+                    title="No aparece en el panel de jueces al montar tarimas"
+                  >
+                    No disponible
                   </span>
                 )}
                 {referee.licencia && (

@@ -4,42 +4,16 @@ import type { DashboardKpi } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
-/** CSS-only micro-trend: 5 bars with varying heights giving a sparkline feel. */
-function MicroTrend({ dir }: { dir: DashboardKpi["trendDir"] }) {
-  const barHeights =
-    dir === "up"
-      ? [2, 4, 3, 5, 7]
-      : dir === "down"
-        ? [7, 5, 6, 3, 2]
-        : dir === "warn"
-          ? [3, 5, 7, 5, 6]
-          : [4, 4, 4, 4, 4];
-
-  const barColor =
-    dir === "up"
-      ? "bg-success"
-      : dir === "down"
-        ? "bg-destructive"
-        : dir === "warn"
-          ? "bg-warning"
-          : "bg-subtle";
-
-  return (
-    <div className="flex items-end gap-0.5" aria-hidden="true">
-      {barHeights.map((h, i) => (
-        <span
-          key={i}
-          className={cn("w-1 rounded-sm opacity-70", barColor)}
-          style={{ height: `${h * 2}px` }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    // Columnas según cuántas tarjetas hay: con 4 en una rejilla de 5 quedaba un
+    // hueco vacío al final de la fila.
+    <div
+      className={cn(
+        "grid gap-3 sm:grid-cols-2",
+        kpis.length === 4 ? "xl:grid-cols-4" : "lg:grid-cols-3 xl:grid-cols-5",
+      )}
+    >
       {kpis.map((kpi) => {
         const style = kpiAccentTokens[kpi.accent];
         return (
@@ -61,7 +35,9 @@ export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
               {/* Trend row */}
               <div
                 className={cn(
-                  "mt-3 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5",
+                  // Sin la «mini-gráfica»: eran 5 barras de altura fija según la
+                  // flecha, no datos; sugería una serie temporal que no existe.
+                  "mt-3 flex items-center gap-2 rounded-lg px-2 py-1.5",
                   tokens.bg.surfaceHover,
                 )}
               >
@@ -80,7 +56,6 @@ export function KpiCards({ kpis }: { kpis: DashboardKpi[] }) {
                   )}
                   <span className="leading-snug">{kpi.trend}</span>
                 </div>
-                <MicroTrend dir={kpi.trendDir} />
               </div>
             </CardContent>
           </Card>

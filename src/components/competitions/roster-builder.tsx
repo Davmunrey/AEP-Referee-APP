@@ -312,6 +312,17 @@ export function RosterBuilder({
     return true;
   }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, flags, referees, regulations, deferredSearch, selectedRoleKey, selectedSlot, template]);
 
+  const hiddenUnavailableCount = useMemo(
+    () => referees.filter((r) => r.estado !== "Activo" || !r.disp).length,
+    [referees],
+  );
+  const clearRefereeFilters = useCallback(() => {
+    setFilterZona("TODAS");
+    setFilterNivel("TODOS");
+    setSearch("");
+    setFilterOnlyConfirmed(false);
+  }, []);
+
   // useCallback en persistAssign/persistClear/onDrop/onQuickAssign/toggleFlag:
   // son props de SessionBlock/RefereeCard (memoizados); si se recrearan en cada
   // render el memo no serviría de nada.
@@ -579,6 +590,8 @@ export function RosterBuilder({
                 onSearch={setSearch} onFilterConfirmed={setFilterOnlyConfirmed}
                 onDragStart={setDraggedId} onDragEnd={onDragEnd}
                 onQuickAssign={onQuickAssign}
+                hiddenUnavailableCount={hiddenUnavailableCount}
+                onClearFilters={clearRefereeFilters}
               />
             )}
             <section className="flex flex-col overflow-hidden">

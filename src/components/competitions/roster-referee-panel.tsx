@@ -1,6 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction, useMemo } from "react";
+import { contar } from "@/lib/plural";
 import type { AssignmentsMap, Competition, FlagsMap, Referee, RefereeLevel, RegulationRule, RoleKey, RosterSession, Zone } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Users } from "lucide-react";
@@ -43,6 +44,9 @@ interface RosterRefereePanelProps {
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
   onQuickAssign: (id: string) => void;
+  /** Jueces de baja o marcados como no disponibles: nunca se listan. */
+  hiddenUnavailableCount?: number;
+  onClearFilters?: () => void;
 }
 
 export function RosterRefereePanelLeft({
@@ -78,6 +82,8 @@ export function RosterRefereePanelLeft({
   onDragStart,
   onDragEnd,
   onQuickAssign,
+  hiddenUnavailableCount = 0,
+  onClearFilters,
 }: RosterRefereePanelProps) {
   const busyElsewhereIds = useMemo(
     () => new Set(Object.keys(busyElsewhere)),
@@ -117,6 +123,8 @@ export function RosterRefereePanelLeft({
     busyElsewhereIds,
   ]);
   const suggestionsActive = !readOnly && !!selectedSlot && !!selectedRoleKey;
+  const filtersActive =
+    filterZona !== "TODAS" || filterNivel !== "TODOS" || search.trim() !== "" || filterOnlyConfirmed;
 
   // Precalcula bloqueo/aviso por fila una sola vez por cambio real de inputs.
   // Antes se hacía getOperationalBlock/getAssignabilityReason (~90×) en cada
@@ -219,6 +227,7 @@ export function RosterRefereePanelLeft({
         <div className="mt-2 grid grid-cols-2 gap-1.5">
           <Input
             placeholder="Buscar…"
+            aria-label="Buscar juez por nombre"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             className="col-span-2 h-8 text-xs"
@@ -286,12 +295,28 @@ export function RosterRefereePanelLeft({
               {suggestionsActive && confirmedIds.size > 0
                 ? "Ningún juez disponible para este hueco. Revisa la disponibilidad o ajusta los filtros."
                 : "Sin coincidencias. Ajusta los filtros."}
+              {filtersActive && onClearFilters && (
+                <button
+                  type="button"
+                  onClick={onClearFilters}
+                  className="mx-auto mt-2 block rounded-md border border-border px-2 py-1 text-[11px] font-medium text-foreground-secondary hover:bg-surface-hover focus-ring"
+                >
+                  Quitar filtros
+                </button>
+              )}
             </li>
           )}
         </ul>
       </div>
 
       <div className="hidden border-t border-border px-2 py-1 sm:block">
+        {/* Sin este aviso, un juez dado de baja o marcado «no disponible» en su
+            ficha simplemente no aparecía y no había forma de saber por qué. */}
+        {hiddenUnavailableCount > 0 && (
+          <p className="truncate text-[10px] text-subtle-muted" title="Los jueces de baja o marcados como no disponibles en su ficha no se pueden asignar.">
+            {contar(hiddenUnavailableCount, "juez no disponible oculto", "jueces no disponibles ocultos")}
+          </p>
+        )}
         <p className="truncate text-[10px] text-subtle-muted" title="Arrastra un juez a un hueco, o selecciona hueco y juez.">
           Arrastra o clic hueco → juez
         </p>

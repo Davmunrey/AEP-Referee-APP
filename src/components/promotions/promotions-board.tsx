@@ -297,11 +297,15 @@ export function PromotionsBoard({
                         {/* Inline reject panel */}
                         {isRejecting && (
                           <div className="border-t border-border-muted bg-destructive-muted/30 px-6 py-4">
-                            <p className="mb-2 text-xs font-semibold text-destructive">
+                            <label
+                              htmlFor={`pr-rechazo-${p.id}`}
+                              className="mb-2 block text-xs font-semibold text-destructive"
+                            >
                               Motivo del rechazo{" "}
                               <span className="font-normal text-subtle-muted">(obligatorio)</span>
-                            </p>
+                            </label>
                             <textarea
+                              id={`pr-rechazo-${p.id}`}
                               autoFocus
                               value={rejectComment}
                               onChange={(e) => {
