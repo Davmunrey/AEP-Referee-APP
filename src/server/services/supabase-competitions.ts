@@ -77,12 +77,14 @@ export const competitionService = {
     user?: SessionUser,
   ): Promise<{ id: string; nombre: string }[]> => {
     const supabase = db();
-    const { data, error } = await supabase
-      .from("competitions")
-      .select("id, nombre, zona")
-      .order("fecha");
-    if (error) throw new Error(`competitions: ${error.message}`);
-    let list = (data ?? []) as { id: string; nombre: string; zona: string }[];
+    // Paginado como getCompetitions: el calendario acumula temporadas y a
+    // partir de 1000 filas PostgREST cortaba la lista sin avisar (los
+    // campeonatos más recientes desaparecían de los desplegables).
+    const query = supabase.from("competitions").select("id, nombre, zona").order("fecha").order("id");
+    const data = await fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
+      query.range(from, to),
+    );
+    let list = data as { id: string; nombre: string; zona: string }[];
     if (user?.role === "delegado_zona") {
       const userZone = resolveZoneCode(user.zona);
       list = userZone
