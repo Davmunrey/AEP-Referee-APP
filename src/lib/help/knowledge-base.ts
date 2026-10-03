@@ -94,7 +94,7 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     question: "¿Qué muestra el panel de inicio?",
     keywords: ["panel", "inicio", "dashboard", "kpi", "cobertura", "resumen", "avisos", "salud", "recomendaciones"],
     answer:
-      "El Dashboard resume KPIs (jueces activos, próximos campeonatos, plazas sin cubrir, aprobaciones pendientes, cobertura nacional), un índice de salud operativa (0–100), recomendaciones priorizadas y próximos eventos. Se actualiza en vivo; puedes pausar el refresco. Atajos: Jueces, Aprobaciones, Exportar y Nuevo campeonato.",
+      "El Dashboard resume KPIs (jueces activos, próximos campeonatos, plazas sin cubrir y aprobaciones pendientes), un índice de salud operativa (0–100), recomendaciones priorizadas y próximos eventos. Se actualiza en vivo; puedes pausar el refresco. Atajos: Jueces, Aprobaciones, Exportar y Nuevo campeonato.",
     links: [{ label: "Abrir panel", href: "/" }],
   },
   {
@@ -102,7 +102,7 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     question: "¿Cómo me muevo por la aplicación?",
     keywords: ["menu", "barra lateral", "sidebar", "navegacion", "secciones", "donde esta"],
     answer:
-      "La barra lateral agrupa Operaciones (Dashboard, Campeonatos, Compensación si aplica, Tarima activa, Directorio) y Gestión (Aprobaciones, Ascensos, Exámenes, Informes, Estadísticas, Normativa, Documentación, Usuarios si eres admin). Puedes colapsar el menú; la preferencia se guarda en el navegador. Tu usuario y contraseña están en la esquina superior derecha.",
+      "La barra lateral tiene cinco grupos: General (Dashboard, Estadísticas), Competiciones (Campeonatos, Tarima activa, Aprobaciones y, si aplica, Compensación), Jueces (Directorio, Ascensos, Exámenes, Informes), Referencia (Normativa, Documentación, Soporte) y Administración (Usuarios, si eres admin). Puedes colapsar el menú; la preferencia se guarda en el navegador. En el móvil, el menú se abre con el botón ☰ de arriba a la izquierda. Tu usuario y contraseña están en la esquina superior derecha.",
     links: [{ label: "Documentación", href: "/docs" }],
   },
   {
@@ -157,6 +157,15 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     keywords: ["asignar", "asignacion", "juez", "plaza", "puesto", "central", "lateral", "jurado", "arrastrar", "drag"],
     answer:
       "En la pestaña Asignación hay dos paneles: jueces disponibles (izquierda) y sesiones con plazas (derecha). Asigna arrastrando, tocando plaza y luego juez, o importando cuadrante PDF. Filtra por zona, nivel y búsqueda. Cada plaza exige nivel mínimo según tipo de competición y rol. Para quitar un juez, vuelve a tocar la plaza.",
+    roles: ["super_admin", "delegado_jueces", "delegado_zona"],
+  },
+  {
+    id: "referee-missing",
+    question: "¿Por qué no aparece un juez al montar la tarima?",
+    keywords: ["no aparece", "no sale", "falta", "oculto", "ocultos", "no disponible", "baja", "inactivo", "buscar juez", "confirmados"],
+    answer:
+      "El panel de jueces solo lista jueces Activos y marcados como Disponibles en su ficha; el pie del panel dice cuántos se ocultan por eso. Si hay disponibilidad confirmada para el campeonato, al elegir un hueco solo salen los confirmados, y se ocultan los que no pueden ocupar ese puesto por nivel o porque ya están en otro hueco incompatible. Revisa también los filtros de zona, nivel y búsqueda: «Quitar filtros» los restablece.",
+    links: [{ label: "Directorio", href: "/referees" }],
     roles: ["super_admin", "delegado_jueces", "delegado_zona"],
   },
   {
@@ -301,6 +310,15 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     keywords: ["km", "kilometraje", "comparte", "montaje", "mont", "alojamiento", "club", "organizador", "desglose", "funciones"],
     answer:
       "Abre el campeonato desde Compensación o su pestaña de compensación. Configura clubes organizadores (listado curado AEP, varios clubes posibles) y e-mails del recibo. Introduce km ida+vuelta manualmente por juez. Marca Comparte si viaja en vehículo compartido (solo exime km al pasajero; los km siguen sirviendo para alojamiento). Marca Mont. si monta el sistema informático (Liftingcast/OpenLifter/Goodlift) con importe manual; es distinto del puesto ordenador en tarima. Expande cada fila para ver el desglose por sesión y posición (S1 Central, Pesaje…).",
+    links: [{ label: "Compensación", href: "/compensation" }],
+    roles: ["super_admin", "responsable_financiero_jueces"],
+  },
+  {
+    id: "compensation-paid",
+    question: "¿Por qué no puedo cambiar una liquidación pagada?",
+    keywords: ["pagada", "pagado", "bloqueada", "no editable", "423", "cambiar importe", "recalcular"],
+    answer:
+      "Una liquidación marcada como pagada queda congelada: el dinero ya salió. No se pueden cambiar km ni importes, y recalcular o calcular distancias la salta. Solo admite cambios de estado, comentario de revisión y notas de viaje. Su juez tampoco se puede quitar del hueco de la tarima. Si hubo un error, cámbiala de estado primero y luego corrígela.",
     links: [{ label: "Compensación", href: "/compensation" }],
     roles: ["super_admin", "responsable_financiero_jueces"],
   },

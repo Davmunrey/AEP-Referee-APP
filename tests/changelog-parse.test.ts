@@ -7,10 +7,17 @@ describe("parseChangelog sobre el CHANGELOG.md real", () => {
   const md = readFileSync(join(process.cwd(), "CHANGELOG.md"), "utf8");
   const versions = parseChangelog(md);
 
-  it("encuentra todas las versiones, de la v2.1 a la v1.0", () => {
+  it("encuentra todas las versiones, de la más reciente a la v1.0", () => {
     expect(versions.length).toBeGreaterThanOrEqual(10);
-    expect(versions[0]!.heading).toContain("v2.1");
+    expect(versions.some((v) => v.heading.includes("v2.1"))).toBe(true);
     expect(versions[versions.length - 1]!.heading).toContain("v1.0");
+    // La más reciente va arriba: sin fijar cuál, para no romper con cada versión.
+    const num = (h: string) => {
+      const m = h.match(/v(\d+)\.(\d+)/);
+      return m ? Number(m[1]) * 100 + Number(m[2]) : -1;
+    };
+    const nums = versions.map((v) => num(v.heading));
+    expect(nums[0]).toBe(Math.max(...nums));
   });
 
   it("cada versión tiene contenido y no cuela separadores ni vacíos", () => {

@@ -19,6 +19,8 @@ Incluye:
 - tests
 - build
 
+Además, en cada PR el job **Reproducir migraciones** aplica `001`→última sobre un Postgres 16 limpio (y sobre la forma que tiene producción).
+
 ## Gate browser
 
 ```bash
@@ -41,7 +43,8 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - API privada con sesión.
 - Login server-side con rate-limit.
 - Mutaciones con RBAC y scope zonal.
-- RLS deny-by-default; endurecimiento aplicado (migración `033`): eliminadas las políticas permisivas de `referee_sanctions` y `competition_availability` (ambas solo servidor). Los advisors de Supabase ya no muestran los 2 WARN de políticas permisivas.
+- RLS deny-by-default; endurecimiento aplicado (migraciones `033` y `037`): sin políticas permisivas para `authenticated`. Toda tabla nueva debe nacer con RLS (lo comprueba un test).
+- Alta de cuentas sin la bandera `invited` controlada por el usuario (migración `038`).
 - Geocoding vía API propia (Photon/Nominatim en servidor).
 - Imports con preview/selección.
 - Validación roster server-side.
@@ -49,12 +52,13 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - IBAN compensación no persistido.
 - Realtime: solo lectura de `app_sync_state` para clientes autenticados.
 
-## Rendimiento (v1.8)
+## Rendimiento
 
-- Consultas Supabase optimizadas (sin escaneo global de asignaciones por campeonato).
+- Consultas Supabase optimizadas (sin escaneo global de asignaciones por campeonato); lecturas grandes paginadas con desempate estable.
 - Caché TTL zonas/normativa (1 h).
-- Índices en `roster_assignments` y `referees`.
+- Índices en `roster_assignments` y `referees` (`030`) y en claves ajenas sin índice (`039`).
 - Sincronización en vivo sin tormenta de APIs redundantes.
+- JS compartido por página: 105 kB (Sentry se carga solo si hay DSN).
 
 ## Seguridad — único item pendiente
 
@@ -72,7 +76,7 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - CI verde en GitHub.
 - Deploy Vercel automático desde `main`.
 - `audit:remote` verde contra Supabase producción.
-- Migraciones hasta `033` aplicadas.
+- Migraciones hasta `039` aplicadas (las nuevas, automáticamente al llegar a `main`).
 - `NEXT_PUBLIC_APP_URL` y Site URL Supabase = `https://aep-tarima.vercel.app`.
 - Plantillas correo Auth con branding AEP.
 - Realtime activo (`app_sync_state`).
@@ -80,4 +84,4 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4

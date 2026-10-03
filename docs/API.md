@@ -7,6 +7,18 @@ Todas las rutas privadas exigen sesión Supabase por **cookie** (web). Respuesta
 { "error": "mensaje" }
 ```
 
+### Códigos de estado
+
+| Código | Cuándo |
+|---|---|
+| `400` | Entrada inválida: JSON mal formado, fecha que no existe (`2026-02-30`), zona o nivel desconocidos, decisión de revisión que no es booleana… El mensaje dice qué falta. |
+| `401` / `403` | Sin sesión / sin permiso (incluye fuera de zona y delegado sin zona asignada). |
+| `404` | El recurso no existe. Un fallo al **leer** no se convierte en 404: es un 500. |
+| `409` | Conflicto (propuesta ya revisada, ascenso pendiente duplicado, hueco ocupado). |
+| `423` | Bloqueado: campeonato pasado, tarima en revisión o aprobada, liquidación ya **pagada**. |
+| `503` | Función que necesita Supabase en un despliegue sin él (sanciones, usuarios). |
+| `500` | Error interno, con mensaje genérico en español; el detalle solo va al log. |
+
 ## Auth
 
 | Método | Ruta | Uso |
@@ -61,7 +73,7 @@ Todas las rutas privadas exigen sesión Supabase por **cookie** (web). Respuesta
 | `POST` | `/competitions/:id/roster/clear` | `canEditRoster` |
 | `PATCH` | `/competitions/:id/roster/flags` | `canEditRoster` |
 | `POST` | `/competitions/:id/roster/draft` | `canEditRoster` |
-| `POST` | `/competitions/:id/roster/submit` | `canEditRoster` |
+| `POST` | `/competitions/:id/roster/submit` | `canEditRoster` — `400` sin plantilla o sin jueces |
 | `POST` | `/competitions/:id/roster/imprevisto` | `canEditRoster` — desbloquea tarima aprobada por imprevisto |
 | `GET` | `/competitions/:id/roster/export` | sesión |
 | `GET` | `/competitions/:id/roster/quadrant` | sesión |
@@ -101,6 +113,8 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | Ascensos | `/promotions`, `/promotions/:id/review` | crear gestor; revisar nacional |
 | Aprobaciones | `/approvals`, `/approvals/:id/review` | revisar nacional |
 
+Las revisiones (`/approvals/:id/review`, `/promotions/:id/review`) exigen `approve` **booleano** (`true`/`false`; antes `"false"` como texto se leía como aprobación) y, al rechazar, un `comment` no vacío. `POST /promotions` rechaza un `toLevel` que no sea un nivel válido o que no esté por encima del actual.
+
 ## Sanciones
 
 | Método | Ruta | Permiso |
@@ -135,7 +149,9 @@ Al guardar ficha juez o sede sin coordenadas, el servidor geocodifica con Nomina
 | `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
 | `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` |
 | `GET` | `/compensation/hub` | `canManageCompensation` — panel central |
-| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km manual, comparte, montaje, resp. |
+| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km manual, comparte, montaje, resp. Una liquidación `pagado` solo admite cambios de estado, comentario de revisión y notas de viaje (`423` si se toca el importe). |
+| `POST` | `/competitions/:id/compensation/:refereeId/distance` | `canManageCompensation` — calcula km con OSRM para un juez |
+| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — calcula km de todos (salta las pagadas) |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` efímero → `application/pdf` |
 
 `PATCH /competitions/:id` acepta `sedeDireccion`, `sedeLat`, `sedeLng` (desde autocomplete OSM), `compensationClubs[]`, `compensationOrganizer`, etc.
@@ -145,6 +161,25 @@ Al guardar ficha juez o sede sin coordenadas, el servidor geocodifica con Nomina
 `PATCH /referees/:id` acepta `domicilio`, `domicilioLat`, `domicilioLng` (desde autocomplete OSM o geocode Nominatim en servidor). Enviar `domicilio: ""` borra dirección y coordenadas (`NULL` en Postgres).
 
 El **IBAN no se almacena** en base de datos; solo viaja en la petición de export. Ver [`JUDGE-COMPENSATION.md`](./JUDGE-COMPENSATION.md).
+
+## Soporte (tickets)
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/tickets?status=` | sesión — cada usuario ve los suyos; `canAdminTickets`, todos |
+| `POST` | `/tickets` | sesión — `multipart/form-data` con hasta 5 fotos |
+| `GET` | `/tickets/:id` | autor o admin — incluye hilo y adjuntos con URL firmada (1 h) |
+| `PATCH` | `/tickets/:id` | admin (estado, nota de resolución); el autor solo puede cerrarlo |
+| `POST` | `/tickets/:id/comments` | autor o admin — comentario con fotos opcionales |
+
+Adjuntos: máximo 5 por envío y 5 MB cada uno. El tipo se decide por la firma binaria del fichero (JPEG/PNG/WebP/GIF), no por lo que declare el navegador.
+
+## Usuarios (administración)
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` / `POST` | `/admin/users` | `canManageUsers` — alta con rol y zona (obligatoria para `delegado_zona`) |
+| `PATCH` / `DELETE` | `/admin/users/:id` | `canManageUsers`; solo un super_admin administra a otro super_admin |
 
 ## Ayuda (widget)
 
@@ -161,4 +196,4 @@ con un buscador sobre la base de conocimiento curada
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4

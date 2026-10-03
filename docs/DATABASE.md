@@ -5,7 +5,9 @@ decisiones abiertas: [AUDIT-DATABASE.md](./AUDIT-DATABASE.md).
 
 **Producción:** proyecto `foaemadggmpbcrhtpems` (eu-west-2).
 
-**Cómo se aplican.** Las `001`–`033` se ejecutaron a mano en el editor SQL (y las `023`–`025`, con el MCP de Supabase). A partir de la `034` las aplica sola la acción «Migraciones Supabase» en cada push a `main`; ver [DEPLOY.md](./DEPLOY.md) para el secret que necesita y las salvaguardas que trae.
+**Cómo se aplican.** Las `001`–`033` se ejecutaron a mano en el editor SQL (y las `023`–`025`, con el MCP de Supabase). A partir de la `034` las aplica sola la acción «Migraciones Supabase» en cada push a `main` que toque `supabase/migrations/`; ver [DEPLOY.md](./DEPLOY.md) para el secret que necesita y las salvaguardas que trae. **Estado en producción:** aplicadas hasta la `039` (2026-10-03).
+
+**Reproducción en CI.** El job «Reproducir migraciones» levanta un Postgres 16 limpio y aplica la cadena completa `001`→última en cada PR (también sobre la forma que tiene producción), así que una migración que dependa de un esquema que no existe falla antes de llegar a `main`. En local: `bash scripts/replay-migrations.sh "postgresql://…"`.
 
 Una migración nueva debe ser **idempotente** (`IF NOT EXISTS`, `OR REPLACE`, `ON CONFLICT`) y **no destructiva**: el workflow rechaza `DROP`, `TRUNCATE` y `DELETE`/`UPDATE` sin `WHERE`, y también `ALTER TYPE … ADD VALUE`, que no admite ir en la misma transacción que lo consume. Si de verdad hace falta borrar algo, aparta las filas antes en una tabla de cuarentena —como hace la `034` con las propuestas pendientes duplicadas— o aplícala a mano con copia previa.
 
@@ -32,6 +34,7 @@ Una migración nueva debe ser **idempotente** (`IF NOT EXISTS`, `OR REPLACE`, `O
 | `referee_sanctions` | 014 | Sanciones |
 | `competition_availability` | 019 | Jueces confirmados disponibles por campeonato |
 | `app_sync_state` | 029 | Versión global para Realtime |
+| `support_tickets`, `support_ticket_comments`, `support_ticket_attachments` | 035 | Zona de soporte (tickets, hilo y fotos en bucket privado) |
 
 ### `app_sync_state` (migration 029)
 
@@ -69,6 +72,17 @@ Reemplaza `referee_availability` (eliminada en 019). Registra qué jueces confir
 
 `referees.arbitraje_stats_by_year` (JSONB) desglosa los arbitrajes por año natural: `{ "2024": {…}, "2025": {…}, … }`. Permite separar censo vigente vs histórico y analítica por año. El agregado histórico (suma de todos los años) sigue en `referees.arbitraje_stats`.
 
+### Migraciones 034–039 (aplicadas por el workflow)
+
+| Migración | Contenido |
+|---|---|
+| `034` | Override manual del importe de viaje (`travel_amount_override`), coordenadas de domicilio cacheadas e índice único anti propuestas pendientes duplicadas (las duplicadas se apartan antes a una tabla de cuarentena). |
+| `035` | Zona de soporte: `support_tickets`, `support_ticket_comments`, `support_ticket_attachments` + bucket privado. RLS activada sin políticas. |
+| `036` | Salida de [AUDIT-DATABASE.md](./AUDIT-DATABASE.md): borrar un campeonato ya no arrastra sus liquidaciones (FK sin `CASCADE`), índice en `activity_log`, triggers de tiempo real en las tablas de Soporte y RLS en la tabla de cuarentena de la `034`. |
+| `037` | RLS: retira las últimas políticas `USING (true)` para `authenticated` (`activity_log`, `roster_history`, `referee_availability`…). |
+| `038` | El alta de una cuenta ya no se activa por la bandera `invited` de los metadatos, que escribía el propio usuario. |
+| `039` | Índices en claves ajenas sin índice: `promotion_requests.referee_id`, `support_ticket_attachments.comment_id`, `referee_sanctions.impuesta_por_id`, `referees.active_sanction_id` (parciales donde la columna admite NULL). |
+
 ### Índices de rendimiento (migration 030)
 
 | Índice | Tabla | Columna(s) |
@@ -88,6 +102,8 @@ Modelo: **todo el acceso a datos de la app va por el servidor con la clave `serv
 
 **Endurecimiento (migration 033):** se eliminaron las últimas políticas permisivas `USING (true)` / `WITH CHECK (true)` para el rol `authenticated` en `referee_sanctions` (datos disciplinarios) y `competition_availability`, que las dejaban abiertas a cualquier usuario autenticado vía la clave anónima. Ahora esas tablas quedan bloqueadas como el resto del esquema (RLS on, sin políticas para anon/authenticated): solo accesibles desde el servidor con `service_role`. Sin impacto funcional.
 
+**Toda tabla nueva nace con RLS activada:** un test recorre las migraciones y falla si una `CREATE TABLE` no va acompañada de `ENABLE ROW LEVEL SECURITY` (desde el PR #177).
+
 Único pendiente de seguridad (no es código): activar **Leaked Password Protection** (HaveIBeenPwned) desde el panel de Supabase Auth.
 
 ## Compat legacy
@@ -106,4 +122,4 @@ Backups van a `backups/`, ignorado por git. Ejecutar desde entorno con credencia
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4

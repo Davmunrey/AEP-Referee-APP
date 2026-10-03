@@ -1,5 +1,28 @@
 # Milestones — AEP Tarima
 
+## v2.4 — Producto pulido (2026-10)
+
+- Auditoría pantalla a pantalla (escritorio y 375 px): flujo de tarima nueva, envío a aprobación con motivo cuando no se puede, panel de jueces que dice qué oculta
+- Liquidaciones pagadas congeladas (`423`), revisiones con decisión booleana y motivo obligatorio, fechas y niveles inexistentes rechazados
+- Navegación móvil (cajón), menú en cinco grupos, `MetricTile` único, plurales y vocabulario homogéneos, cabeceras sin duplicados
+- Rendimiento: Sentry bajo demanda (185 → 105 kB de JS compartido), migración `039` (índices en claves ajenas), recálculo en paralelo acotado
+- 1233 tests (1234 con 1 skip), 200 archivos; toda la documentación sincronizada a v2.4
+
+## v2.3 — Cero silencios (2026-09)
+
+- PRs #76–#180: lecturas fallidas que se presentaban como vacías, paginación con desempate, dinero pagado que congela la tarima, compare-and-set contra ediciones simultáneas
+- Zonas canonicalizadas y permisos zonales *fail-closed*; fechas de negocio en `Europe/Madrid`
+- Migraciones `037` (RLS) y `038` (alta sin bandera `invited`); reproducción de migraciones en CI
+
+## v2.2 — Migraciones automáticas (2026-07/08)
+
+- Workflow «Migraciones Supabase» con registro propio, modo plan y portero anti-destructivo; migraciones `034`–`036`
+- CVE de Next.js cerradas; auditoría de la base de datos (`docs/AUDIT-DATABASE.md`)
+
+## v2.1 — La Gran Auditoría (2026-07)
+
+- Cinco rondas de auditoría (bugs, rendimiento, diseño, accesibilidad); zona de Soporte (migración `035`); pantallas esqueleto en todas las rutas
+
 ## v2.0 — Centro de ayuda local, sin IA (2026-07)
 
 - Centro de ayuda rediseñado: buscador local sobre la base de conocimiento (~35 temas) + primeros pasos por rol + temas frecuentes; 100 % en cliente, sin IA ni red

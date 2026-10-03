@@ -63,16 +63,25 @@ Body: { "iban": "ES28 0182 …" }   ← efímero
 
 Código: `src/lib/judge-compensation/receipt-document.ts`, `receipt-pdf.ts`, `iban.ts`.
 
-## Modelo de datos (migrations `024`–`027`, `031`)
+## Modelo de datos (migrations `024`–`027`, `031`, `034`, `036`)
 
 | Tabla / columna | Uso |
 |---|---|
 | `referees.domicilio`, `domicilio_lat`, `domicilio_lng` | Referencia del juez (opcional; km manual en compensación). Borrables desde ficha con «Eliminar ubicación» → `NULL` en los tres campos |
 | `competitions.ambito`, `compensation_*` | Baremo y metadatos del recibo. `compensation_organizer` admite `club` / `aep` / `custom` (migración `031`) |
-| `judge_compensation_claims` | Una fila por juez × campeonato; `is_computer_setup`, `computer_setup_amount` |
+| `judge_compensation_claims` | Una fila por juez × campeonato; `is_computer_setup`, `computer_setup_amount`; `travel_amount_override` (importe de viaje fijado a mano, `034`). Borrar el campeonato ya no borra sus liquidaciones (`036`) |
 | `judge_compensation_duty_lines` | Desglose por sesión × posición (`role_key`, `role_label`) |
 
 Estados del claim: `borrador` → `enviado` → `aprobado` → `pagado` / `rechazado`.
+
+### Liquidación pagada = congelada
+
+Cuando una liquidación pasa a `pagado`, el dinero ya ha salido y nada puede cambiarlo por la puerta de atrás:
+
+- `PATCH` solo admite `status`, `reviewComment` y `travelNotes`; cualquier campo que afecte al importe responde **`423`** (`CompensationClaimPaidError`).
+- **Recalcular** y **calcular distancias** saltan las pagadas; las huérfanas (juez que ya no está en la tarima) se borran solo si no están pagadas.
+- En la tarima, el juez pagado no puede salir de su hueco: ni asignando a otro, ni liberando, ni vaciando, ni importando un cuadrante, ni cambiando la plantilla.
+- Dos personas editando la misma liquidación no se pisan: la escritura compara la versión leída y responde `409` si cambió.
 
 ## Arquitectura
 
@@ -96,8 +105,10 @@ Export PDF + IBAN introducido al vuelo
 |---|---|---|
 | `GET` | `/compensation/hub` | `canManageCompensation` — panel central |
 | `GET` | `/competitions/:id/compensation` | `canManageCompensation` |
-| `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` |
-| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km, comparte, ordenador, resp. |
+| `POST` | `/competitions/:id/compensation/recalculate` | `canManageCompensation` — en paralelo acotado (6), salta las pagadas |
+| `POST` | `/competitions/:id/compensation/:refereeId/distance` | `canManageCompensation` — km con OSRM para un juez |
+| `POST` | `/competitions/:id/compensation/distances` | `canManageCompensation` — km de todos (salta las pagadas) |
+| `PATCH` | `/competitions/:id/compensation/:refereeId` | `canManageCompensation` — km, comparte, ordenador, resp. (`423` si está pagada y se toca el importe) |
 | `POST` | `/competitions/:id/compensation/:refereeId/export` | `canManageCompensation` — body `{ iban }` |
 
 ## UI
@@ -107,7 +118,8 @@ Export PDF + IBAN introducido al vuelo
 - **Mont.** para montaje del sistema (Liftingcast / OpenLifter / Goodlift), con importe manual. Distinto de la posición ordenador en tarima.
 - Desglose por **Sx** con la **posición real** (Juez Central, Pesaje, Lateral…); columna funciones tipo `S1(Cent+Pz) · S2`.
 - Organizador del recibo con selector de 3 opciones (club(es) organizador(es) / Asociación Española de Powerlifting / personalizable). Clubes desde listado curado (~180 clubes AEP en `src/lib/aep-clubs-curated.ts`); la opción personalizable acepta nombres y correos a mano.
-- Totales bloqueados hasta completar todos los km (modo `none` exento).
+- Totales bloqueados hasta completar todos los km (modo `none` exento); mientras tanto se muestra el total provisional.
+- La tarjeta del organizador se pliega cuando ya está guardado. Las filas pagadas se ven con el distintivo «pagada» y no son editables.
 - Exportar recibo → modal con IBAN → PDF con logo AEP (sin desglose línea a línea en el PDF; desglose en pantalla).
 - Baremo también en **Normativa** → pestaña Compensación de jueces.
 
@@ -123,4 +135,4 @@ Ver captura: `docs/images/10-compensacion.png`.
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.0
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4
