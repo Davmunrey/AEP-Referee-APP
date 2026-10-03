@@ -29,7 +29,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { selectFieldClassSm } from "@/lib/design-tokens";
 import { api } from "@/lib/api/client";
-import { zoneUiName } from "@/lib/aep-zones";
+import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
 import { arbitrajeYears } from "@/lib/judges-registry/arbitraje-stats";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 
@@ -153,7 +153,7 @@ export function RefereesDirectory({
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return referees.filter((a) => {
-      if (filterZona !== "TODAS" && a.zona !== filterZona) return false;
+      if (filterZona !== "TODAS" && !zonesMatch(a.zona, filterZona)) return false;
       if (filterNivel !== "TODOS" && a.nivel !== filterNivel) return false;
       if (filterEstado !== "TODOS" && a.estado !== filterEstado) return false;
       if (filterCenso !== CENSO_ALL && !activeInYear(a, filterCenso)) return false;

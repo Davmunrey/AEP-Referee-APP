@@ -510,7 +510,8 @@ export interface AnalyticsPayload {
     assignedCompetitions: number;
     assignedSlots: number;
   }[];
-  rejectionRate: number;
+  /** `null` si en el año no se ha revisado ninguna propuesta: no hay tasa. */
+  rejectionRate: number | null;
   criticalEvents: Competition[];
   totals: {
     competitions: number;

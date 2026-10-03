@@ -74,6 +74,7 @@ import {
   findNextOpenSlot,
   groupSessionsByDay,
 } from "./roster-session-helpers";
+import { zonesMatch } from "@/lib/aep-zones";
 
 // Defaults estables a nivel de módulo: un literal `{}` inline crearía un objeto
 // nuevo por render y, al ser dependencia del efecto de re-sincronización, podría
@@ -290,7 +291,7 @@ export function RosterBuilder({
     // disponibilidad confirmada para la competición, se ocultan los no
     // confirmados (la selección rápida va DESPUÉS del paso de disponibilidad).
     if (selectedSlot && confirmedIds.size > 0 && !confirmedIds.has(r.id)) return false;
-    if (filterZona !== "TODAS" && r.zona !== filterZona) return false;
+    if (filterZona !== "TODAS" && !zonesMatch(r.zona, filterZona)) return false;
     if (filterNivel !== "TODOS" && r.nivel !== filterNivel) return false;
     if (deferredSearch) {
       const q = deferredSearch.toLowerCase();

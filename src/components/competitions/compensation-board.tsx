@@ -410,6 +410,10 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           <tbody>
             {claims.map((claim) => {
               const isOpen = expanded.has(claim.refereeId);
+              // Una liquidación pagada se ve pero no se toca: su importe ya
+              // salió, y el servidor rechaza cualquier cambio de cifra (423).
+              const isPaid = claim.status === "pagado";
+              const editable = canManage && !isPaid;
               return (
                 <Fragment key={claim.refereeId}>
                   {/* Nueve columnas de ancho: sin realce de fila al pasar, seguir
@@ -438,6 +442,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           tarima (una sustitución posterior). Antes la fila
                           simplemente no se pintaba y su importe desaparecía
                           del total sin dejar rastro. */}
+                      {isPaid && (
+                        <span
+                          className="ml-2 rounded-full border border-success-border bg-success-muted px-2 py-0.5 text-[10px] font-semibold text-success"
+                          title="Liquidación pagada: su importe ya no se puede cambiar."
+                        >
+                          pagada
+                        </span>
+                      )}
                       {claim.offRoster && (
                         <span
                           className="ml-2 rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 text-[10px] font-semibold text-warning"
@@ -451,7 +463,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       {formatDutySessionsSummary(claim)}
                     </td>
                     <td className="px-3 py-2">
-                      {canManage ? (
+                      {editable ? (
                         <CompensationKmInput
                           valueKm={claim.distanceKmRoundTrip}
                           label={`Kilometraje ida y vuelta de ${claim.refereeName}`}
@@ -479,7 +491,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       )}
                     </td>
                     <td className="px-3 py-2">
-                      {canManage ? (
+                      {editable ? (
                         <input
                           type="checkbox"
                           className="h-4 w-4 rounded border-border accent-primary"
@@ -502,7 +514,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       {claim.financialComplete ? formatReceiptAmountEur(claim.lodgingAmount) : "—"}
                     </td>
                     <td className="px-3 py-2">
-                      {canManage ? (
+                      {editable ? (
                         <input
                           type="checkbox"
                           className="h-4 w-4 rounded border-border accent-primary"
@@ -519,7 +531,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       )}
                     </td>
                     <td className="px-3 py-2">
-                      {canManage ? (
+                      {editable ? (
                         <div className="flex items-center gap-1.5">
                           <input
                             type="checkbox"

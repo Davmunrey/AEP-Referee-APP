@@ -68,7 +68,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   // Lista blanca de campos editables — nunca `id` ni `iniciales` (derivado).
   const patch: Partial<Referee> = {};
   if (typeof raw.nombre === "string") patch.nombre = raw.nombre;
-  if (typeof raw.zona === "string") patch.zona = raw.zona;
+  if (typeof raw.zona === "string") {
+    // Igual que al crear: se guarda el código canónico, y una zona que no
+    // existe es un 400 y no un juez invisible (o un 500 por la clave ajena).
+    const zonaCanonica = resolveZoneCode(raw.zona);
+    if (!zonaCanonica) return jsonError("Zona no válida", 400);
+    patch.zona = zonaCanonica;
+  }
   if (typeof raw.nivel === "string") {
     if (!isRefereeLevel(raw.nivel)) {
       return jsonError(

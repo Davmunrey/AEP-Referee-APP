@@ -59,7 +59,7 @@ export async function GET(request: Request) {
       analytics.totals.openSlots,
       analytics.totals.uniqueAssignedReferees,
       analytics.totals.pendingApprovals,
-      `${analytics.rejectionRate}%`,
+      analytics.rejectionRate === null ? "" : `${analytics.rejectionRate}%`,
     ),
     "",
     "HISTORICO_POR_AÑO",

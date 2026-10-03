@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { canManageCompensation } from "@/lib/auth/session";
-import { CompensationClaimConflictError } from "@/lib/competitions/service-types";
+import { CompensationClaimConflictError, CompensationClaimPaidError } from "@/lib/competitions/service-types";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
@@ -55,6 +55,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     // 409, no 500: la petición era válida; lo que cambió fue la fila por
     // debajo. El cliente distingue así «dato mal enviado» de «llegas tarde».
     if (err instanceof CompensationClaimConflictError) return jsonError(err.message, 409);
+    // 423: la fila existe y la petición es válida, pero está bloqueada.
+    if (err instanceof CompensationClaimPaidError) return jsonError(err.message, 423);
     // Guardar la liquidación sincroniza sus conceptos, y esa sincronización
     // tiene tres motivos escritos para quien lleva el dinero: no se pudieron
     // leer los conceptos, no se pudieron guardar, o quedaron conceptos que ya

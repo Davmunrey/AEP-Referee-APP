@@ -433,7 +433,7 @@ export const analyticsService = {
       .filter((a) => yearFromIso(String(a.submitted_at ?? "")) === selectedYear);
     const reviewed = approvalsForYear.filter((a) => a.status !== "pendiente").length;
     const rejected = approvalsForYear.filter((a) => a.status === "rechazado").length;
-    const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : 0;
+    const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : null;
     const yearlyHistory = [...yearAgg.entries()].sort((a, b) => a[0] - b[0]).map(([year, agg]) => ({ year, competitions: agg.competitions, criticalCompetitions: agg.criticalCompetitions, requiredSlots: agg.requiredSlots, filledSlots: agg.filledSlots, uniqueAssignedReferees: agg.refereeIds.size }));
     const selectedYearAgg = yearAgg.get(selectedYear);
     const selectedYearCompetitionIds = competitions.filter((c) => yearFromIso(c.fecha) === selectedYear).map((c) => c.id);

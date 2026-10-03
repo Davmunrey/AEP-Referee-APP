@@ -17,7 +17,12 @@ export async function POST(request: Request, context: RouteContext) {
   const body = await request.json().catch(() => ({}));
   // `Boolean("false")` es true: solo el booleano literal aprueba, igual que en
   // la revisión de tarima.
-  const approve = body?.approve === true;
+  // La decisión tiene que venir dicha: con `=== true` una petición sin el
+  // campo se leía como rechazo.
+  if (typeof body?.approve !== "boolean") {
+    return jsonError("Falta la decisión: «approve» debe ser true o false", 400);
+  }
+  const approve: boolean = body.approve;
   const comment =
     typeof body?.comment === "string" ? body.comment.trim() : undefined;
 
