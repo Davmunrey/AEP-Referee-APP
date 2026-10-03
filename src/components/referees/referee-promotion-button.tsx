@@ -109,8 +109,8 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
 
           {/* Destination level selector */}
           <div>
-            <label className="friendly-label mb-1 block">Nivel destino</label>
-            <select
+            <label htmlFor="pb-nivel-destino" className="friendly-label mb-1 block">Nivel destino</label>
+            <select id="pb-nivel-destino"
               className={`${selectFieldClass} w-full`}
               value={toLevel}
               onChange={(e) => setToLevel(e.target.value as RefereeLevel)}
@@ -126,9 +126,9 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
 
           {/* Motivo with character counter */}
           <div>
-            <label className="friendly-label mb-1 block">Motivo (opcional)</label>
+            <label htmlFor="pb-motivo-opcional" className="friendly-label mb-1 block">Motivo (opcional)</label>
             <div className="relative">
-              <textarea
+              <textarea id="pb-motivo-opcional"
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value.slice(0, MOTIVO_MAX))}
                 placeholder="Ej. 6 competiciones como central en AEP-2, examen teórico aprobado…"

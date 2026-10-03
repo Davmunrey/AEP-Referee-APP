@@ -108,10 +108,10 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
               Datos principales
             </p>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+              <label htmlFor="nr-nombre-completo" className="mb-1 block text-xs font-medium text-foreground-secondary">
                 Nombre completo <span className="text-destructive" aria-hidden="true">*</span>
               </label>
-              <Input
+              <Input id="nr-nombre-completo"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 required
@@ -120,10 +120,10 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+                <label htmlFor="nr-zona" className="mb-1 block text-xs font-medium text-foreground-secondary">
                   Zona <span className="text-destructive" aria-hidden="true">*</span>
                 </label>
-                <select
+                <select id="nr-zona"
                   value={zona}
                   onChange={(e) => setZona(e.target.value)}
                   className={selectFieldClass}
@@ -136,10 +136,10 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-foreground-secondary">
+                <label htmlFor="nr-nivel" className="mb-1 block text-xs font-medium text-foreground-secondary">
                   Nivel <span className="text-destructive" aria-hidden="true">*</span>
                 </label>
-                <select
+                <select id="nr-nivel"
                   value={nivel}
                   onChange={(e) => setNivel(e.target.value as RefereeLevel)}
                   className={selectFieldClass}
@@ -153,8 +153,8 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Estado</label>
-              <select
+              <label htmlFor="nr-estado" className="mb-1 block text-xs font-medium text-foreground-secondary">Estado</label>
+              <select id="nr-estado"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value as RefereeStatus)}
                 className={selectFieldClass}
@@ -174,8 +174,8 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
               Datos opcionales
             </p>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Email</label>
-              <Input
+              <label htmlFor="nr-email" className="mb-1 block text-xs font-medium text-foreground-secondary">Email</label>
+              <Input id="nr-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -183,8 +183,8 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground-secondary">Licencia</label>
-              <Input
+              <label htmlFor="nr-licencia" className="mb-1 block text-xs font-medium text-foreground-secondary">Licencia</label>
+              <Input id="nr-licencia"
                 value={licencia}
                 onChange={(e) => setLicencia(e.target.value)}
                 placeholder="Nº de licencia AEP"

@@ -141,8 +141,8 @@ export function NewPromotionDialog({
         <form onSubmit={submit} className="space-y-4">
           {/* Juez selector */}
           <div>
-            <label className="friendly-label mb-1 block">Juez</label>
-            <select
+            <label htmlFor="np-juez" className="friendly-label mb-1 block">Juez</label>
+            <select id="np-juez"
               className={`${selectFieldClass} w-full`}
               value={form.refereeId}
               onChange={(e) => onRefereeChange(e.target.value)}
@@ -177,17 +177,20 @@ export function NewPromotionDialog({
 
           {/* Nivel destino — visual pill picker (destino siempre > origen) */}
           <div>
-            <label className="friendly-label mb-2 block">Nivel destino</label>
+            {/* No es un campo sino un grupo de botones: un <label> suelto no
+                nombraba nada. Grupo con nombre y cada botón dice si está elegido. */}
+            <p id="np-nivel-destino" className="friendly-label mb-2 block">Nivel destino</p>
             {availableLevels.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 No hay niveles superiores disponibles para este juez.
               </p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div role="group" aria-labelledby="np-nivel-destino" className="flex flex-wrap gap-2">
                 {availableLevels.map((l) => (
                   <button
                     key={l}
                     type="button"
+                    aria-pressed={form.toLevel === l}
                     onClick={() => setForm((f) => ({ ...f, toLevel: l }))}
                     className={cn(
                       "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-95 focus-ring",
@@ -205,11 +208,11 @@ export function NewPromotionDialog({
 
           {/* Motivo — textarea for longer descriptions */}
           <div>
-            <label className="friendly-label mb-1 block">
+            <label htmlFor="np-motivo-opcional" className="friendly-label mb-1 block">
               Motivo{" "}
               <span className="font-normal text-subtle-muted">(opcional)</span>
             </label>
-            <textarea
+            <textarea id="np-motivo-opcional"
               placeholder="Ej. 6 competiciones completadas como central en AEP-2, nivel técnico demostrado…"
               value={form.motivo}
               onChange={(e) => setForm((f) => ({ ...f, motivo: e.target.value }))}
