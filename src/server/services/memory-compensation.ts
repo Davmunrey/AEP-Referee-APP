@@ -108,9 +108,13 @@ export const memoryCompensationService = {
   recalculate: async (competitionId: string): Promise<CompetitionCompensationSummary> => {
     const summary = await buildSummary(competitionId);
     for (const claim of summary.claims) {
-      store.set(key(competitionId, claim.refereeId), claim);
+      const k = key(competitionId, claim.refereeId);
+      // Paridad con Supabase: lo pagado no se toca, y lo demás vuelve a
+      // borrador porque la aprobación anterior no cubre la cifra nueva.
+      if (store.get(k)?.status === "pagado") continue;
+      store.set(k, claim.status === "borrador" ? claim : { ...claim, status: "borrador" });
     }
-    return summary;
+    return buildSummary(competitionId);
   },
 
   updateClaim: async (

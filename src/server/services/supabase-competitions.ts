@@ -1,3 +1,4 @@
+import { todayIso } from "@/lib/business-date";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import {
   competitionDedupKey,
@@ -15,7 +16,7 @@ import {
 import type { Competition, RosterSession, SessionUser } from "@/lib/types";
 import { CompetitionHasClaimsError, UserFacingServiceError } from "@/lib/competitions/service-types";
 import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
-import { zoneVisibilityFilter } from "@/lib/zone-scope";
+import { zoneVisibilityFilter, zoneScopeOf } from "@/lib/zone-scope";
 import {
   cachedLoadAllAssignments,
   db,
@@ -114,53 +115,81 @@ export const competitionService = {
   /** Contadores de navegación sin cargar plantillas ni asignaciones completas. */
   getNavCountsFast: async (user?: SessionUser) => {
     const supabase = db();
-    const userZone =
-      user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
-    // Ver `zone-scope`: una zona ilegible no es «sin restricción».
+    // Esto lo pide el layout del panel, o sea, CADA navegación. Antes leía
+    // todos los campeonatos (sin paginar: con más de mil, contador corto) solo
+    // para contarlos y elegir el atajo de «Tarima activa». Ahora el total es un
+    // recuento en la base y solo se traen los campeonatos que no han terminado.
+    const scope = zoneScopeOf(user);
+    // Ver `zone-scope`: una zona ilegible no es «sin restricción», es «nada».
+    if (scope.kind === "unresolved") {
+      return { competitions: 0, approvals: 0, activeRosterHref: "/competitions" };
+    }
     const visibleEnZona = zoneVisibilityFilter(user);
+    const zona = scope.kind === "zone" ? scope.code : null;
 
-    let compQuery = supabase.from("competitions").select("id, fecha, estado, zona").order("fecha");
+    let countQuery = supabase.from("competitions").select("id", { count: "exact", head: true });
+    let vigentesQuery = supabase
+      .from("competitions")
+      .select("id, fecha, fecha_fin, estado")
+      .gte("fecha_fin", todayIso())
+      .order("fecha", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(200);
+    // El último celebrado, por si no queda ninguno vigente.
+    let ultimoQuery = supabase
+      .from("competitions")
+      .select("id, fecha, fecha_fin, estado")
+      .lt("fecha_fin", todayIso())
+      .order("fecha", { ascending: false })
+      .limit(1);
+    if (zona) {
+      countQuery = countQuery.eq("zona", zona);
+      vigentesQuery = vigentesQuery.eq("zona", zona);
+      ultimoQuery = ultimoQuery.eq("zona", zona);
+    }
     // `competitions.zona` es FK canónica, pero `approval_proposals.zona` es
     // texto libre con códigos anteriores a la 013: con `.eq` el delegado veía un
     // contador de aprobaciones más bajo que su propia bandeja. Se traen las
     // pendientes (son pocas) y se cuentan canonicalizando.
-    const apprQuery = supabase
-      .from("approval_proposals")
-      .select("zona")
-      .eq("status", "pendiente");
+    const apprQuery = supabase.from("approval_proposals").select("zona").eq("status", "pendiente");
 
-    if (userZone) {
-      compQuery = compQuery.eq("zona", userZone);
-    }
-
-    const [{ data: comps, error: compsError }, { data: apprRows, error: apprError }] =
-      await Promise.all([compQuery, apprQuery]);
+    const [conteo, vigentes, ultimo, aprob] = await Promise.all([
+      countQuery,
+      vigentesQuery,
+      ultimoQuery,
+      apprQuery,
+    ]);
     // No se lanza: estos contadores los pide el layout del panel, así que un
     // corte de lectura tumbaría TODAS las pantallas a la vez. La barra lateral
     // ya oculta el distintivo cuando el número es 0, así que degradar no dice
     // ninguna mentira — pero callarse el motivo dejaba el atajo «tarima activa»
     // y la bandeja de aprobaciones sin distintivo y sin forma de saber por qué.
-    if (compsError) console.error("[nav.competitions]", compsError.message);
-    if (apprError) console.error("[nav.approvals]", apprError.message);
-    const apprCount = (apprRows ?? []).filter(
-      (row) => visibleEnZona(String(row.zona ?? "")),
+    for (const [que, res] of [
+      ["competitions", conteo],
+      ["competitions", vigentes],
+      ["competitions", ultimo],
+      ["approvals", aprob],
+    ] as const) {
+      if (res.error) {
+        console.error(`[nav.${que}]`, res.error.message);
+        if (que === "competitions") break;
+      }
+    }
+    const apprCount = (aprob.data ?? []).filter((row) =>
+      visibleEnZona(String((row as { zona?: unknown }).zona ?? "")),
     ).length;
-    // El `.eq` de arriba solo se aplica cuando la zona del perfil se reconoce.
-    // Un delegado de zona con la zona mal escrita se quedaba sin filtro y
-    // contaba los campeonatos de toda España, mientras la mitad de las
-    // aprobaciones —dos líneas más arriba— ya usaba `zoneVisibilityFilter` y
-    // fallaba cerrada. Las dos mitades del mismo contador, con criterios
-    // distintos.
-    const navComps = (comps ?? [])
-      .filter((r) => visibleEnZona(String(r.zona ?? "")))
-      .map((r) => ({
-        id: String(r.id),
-        fecha: String(r.fecha),
-        estado: String(r.estado) as Competition["estado"],
-      }));
+    const navComps = [...(vigentes.data ?? []), ...(ultimo.data ?? [])].map((r) => {
+      const row = r as { id: unknown; fecha: unknown; fecha_fin: unknown; estado: unknown };
+      return {
+        id: String(row.id),
+        fecha: String(row.fecha),
+        fechaFin: row.fecha_fin ? String(row.fecha_fin) : undefined,
+        estado: String(row.estado) as Competition["estado"],
+      };
+    });
 
     return {
-      competitions: navComps.length,
+      competitions: conteo.count ?? 0,
       approvals: apprCount,
       activeRosterHref: pickActiveRosterHref(navComps),
     };

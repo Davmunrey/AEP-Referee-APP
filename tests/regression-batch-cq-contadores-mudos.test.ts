@@ -21,12 +21,17 @@ function q(tabla: string): Record<string, unknown> {
   const self: Record<string, unknown> = {};
   const resultado = () => ({
     data: fallos[tabla] ? null : (filas[tabla] ?? []),
+    // `count` para las lecturas con `{ count: "exact", head: true }`.
+    count: fallos[tabla] ? null : (filas[tabla] ?? []).length,
     error: fallos[tabla] ?? null,
   });
   Object.assign(self, {
     select: () => self,
     eq: () => self,
     order: () => self,
+    gte: () => self,
+    lt: () => self,
+    limit: () => self,
     then: (resolve: (v: unknown) => unknown) => Promise.resolve(resultado()).then(resolve),
   });
   return self;

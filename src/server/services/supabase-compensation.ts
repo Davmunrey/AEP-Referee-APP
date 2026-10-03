@@ -8,6 +8,7 @@ import {
   osmThrottle,
 } from "@/lib/judge-compensation/osm-distance";
 import { applyCompensationClaimPatch, touchesPaidAmount } from "@/lib/judge-compensation/claim-patch";
+import { mapWithConcurrency } from "@/lib/async-pool";
 import { CompensationClaimPaidError } from "@/lib/competitions/service-types";
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { buildHubSummary } from "@/lib/judge-compensation/hub";
@@ -406,42 +407,47 @@ export const compensationService = {
       loadStoredClaims(competitionId, competition),
       refereeService.getRefereesByIds(refereeIds),
     ]);
-    const claims: CompensationClaim[] = [];
-
-    for (const refereeId of refereeIds) {
-      const referee = refereesById.get(refereeId);
-      if (!referee) continue;
+    // Cada liquidación es independiente de las demás y guardarla cuesta tres o
+    // cuatro viajes a la base (cabecera, lectura y escritura de conceptos). En
+    // serie, una tarima de 27 jueces sumaba un centenar de viajes uno detrás de
+    // otro; con un tope de seis a la vez el recálculo tarda una fracción.
+    const conJuez = refereeIds.filter((id) => refereesById.has(id));
+    const claims = await mapWithConcurrency(conJuez, 6, async (refereeId) => {
+      const referee = refereesById.get(refereeId)!;
       const existing = stored.get(refereeId);
+      // Una liquidación pagada no se recalcula: su importe ya salió de la
+      // cuenta, y reescribirla saltaba el candado que impide cambiar la cifra
+      // de un pago hecho (`touchesPaidAmount`).
+      if (existing?.status === "pagado") return existing;
       const claim = mergeClaimFromRoster({
         competition,
         referee,
         template: roster.template,
         assignments: roster.assignments,
         // Recalcular cambia los importes, así que una aprobación anterior ya no
-        // cubre la cifra nueva y la liquidación vuelve a borrador. Lo pagado no:
-        // ese dinero ya salió.
-        existing: existing
-          ? { ...existing, status: existing.status === "pagado" ? "pagado" : "borrador" }
-          : undefined,
+        // cubre la cifra nueva y la liquidación vuelve a borrador.
+        existing: existing ? { ...existing, status: "borrador" } : undefined,
       });
       await persistClaim(claim);
-      claims.push(claim);
-    }
+      return claim;
+    });
 
     const activeIds = new Set(claims.map((c) => c.refereeId));
     const supabase = db();
     // Antes se borraba toda liquidación huérfana sin mirar el estado, incluida
     // la pagada o aprobada de un juez sustituido. Ver `discardableOrphanClaimIds`.
-    for (const claimRowId of discardableOrphanClaimIds(stored, activeIds)) {
+    // Una sola consulta, no una por huérfana.
+    const huerfanas = discardableOrphanClaimIds(stored, activeIds);
+    if (huerfanas.length > 0) {
       const { error: huerfanaError } = await supabase
         .from("judge_compensation_claims")
         .delete()
-        .eq("id", claimRowId);
+        .in("id", huerfanas);
       // No aborta el recálculo —lo que queda es un borrador de un juez que ya
       // no está, no una cifra mal—, pero se registra: si el borrado falla
       // siempre, el hub acumula liquidaciones fantasma sin que nadie lo vea.
       if (huerfanaError) {
-        console.error("[compensation.huerfana]", claimRowId, huerfanaError.message);
+        console.error("[compensation.huerfana]", huerfanas.join(","), huerfanaError.message);
       }
     }
 
