@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEscapeClose } from "@/hooks/use-escape-close";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LevelBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,8 @@ export function NewPromotionDialog({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const dialogRef = useRef<HTMLDivElement>(null);
+  // Escape, foco atrapado dentro, foco devuelto al cerrar y sin scroll detrás.
+  const dialogRef = useEscapeClose<HTMLDivElement>(() => setOpen(false), open);
 
   const eligible = referees.filter(
     (r) => r.estado === "Activo" && higherLevels(r.nivel).length > 0,
@@ -66,16 +68,6 @@ export function NewPromotionDialog({
     setError(null);
   }, [open, referees]);
 
-  // Escape key + initial focus
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handler);
-    dialogRef.current?.focus();
-    return () => document.removeEventListener("keydown", handler);
-  }, [open]);
 
   const onRefereeChange = (id: string) => {
     const ref = eligible.find((r) => r.id === id);
