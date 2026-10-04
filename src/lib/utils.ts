@@ -27,6 +27,11 @@ export function formatDateRange(start: string, end: string) {
   return `${s.toLocaleDateString("es-ES", { day: "numeric", month: "short" })} – ${e.toLocaleDateString("es-ES", opts)}`;
 }
 
+/** Un día suelto, como el resto de la interfaz: «25 oct 2026», nunca «2026-10-25». */
+export function formatDate(iso: string) {
+  return formatDateRange(iso, iso);
+}
+
 export function getInitials(name: string) {
   return name
     .split(" ")

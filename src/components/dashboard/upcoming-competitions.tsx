@@ -3,23 +3,11 @@ import { ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { daysUntil } from "@/lib/dashboard-intelligence";
 import { coveragePct } from "@/lib/roster-coverage";
-import type { Competition, EventStatus } from "@/lib/types";
+import type { Competition } from "@/lib/types";
+import { STATUS_BAR as barColor, STATUS_TEXT as statusText } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-
-const barColor: Record<EventStatus, string> = {
-  Completo: "bg-success",
-  Incompleto: "bg-warning",
-  Crítico: "bg-destructive",
-  Borrador: "bg-subtle",
-};
-const statusText: Record<EventStatus, string> = {
-  Completo: "text-success",
-  Incompleto: "text-warning",
-  Crítico: "text-destructive",
-  Borrador: "text-muted-foreground",
-};
 
 function whenLabel(c: Competition): string {
   const start = daysUntil(c.fecha);
