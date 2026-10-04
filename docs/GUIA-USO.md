@@ -12,7 +12,7 @@ Guía visual de la plataforma de gestión de jueces de la Asociación Española 
 
 1. Abre `/sign-in`.
 2. Introduce tu **email** y **contraseña**.
-3. Si no recuerdas la contraseña, usa "¿Olvidaste tu contraseña?" o pide a un administrador que te la resetee (ver §9).
+3. Si no recuerdas la contraseña, pide a un administrador que te ponga una nueva (ver §9). La aplicación no envía correos.
 
 Sin registro público: las cuentas las crea AEP Nacional.
 
@@ -215,11 +215,16 @@ Cada juez del censo puede tener su propia cuenta para ver sus designaciones y ap
 
 **Dar acceso**
 
-- Desde el **directorio**: **Invitar al portal** invita a los jueces de la lista que estás viendo (aplica antes los filtros de zona o nivel). Te dice cuántos ya tienen acceso y cuántos no tienen e-mail en la ficha.
-- Desde la **ficha del juez**: el bloque *Portal del juez* muestra si tiene acceso y permite **Invitar**, **Reenviar enlace** o **Retirar acceso** (efecto inmediato).
-- El propio juez puede pedirlo en la pantalla de acceso, pestaña **Soy juez** (enlace directo: `/sign-in?juez=1`): si su e-mail es el de su ficha, le llega el enlace.
+La aplicación no envía correos: el acceso se da con un **código** que le pasas al juez por WhatsApp o en mano.
 
-Un delegado de zona solo invita a jueces de su zona. Si el e-mail de la ficha ya es de una cuenta de gestión (un delegado que también es juez), no se invita: avisa al Comité.
+- Desde la **ficha del juez**: en el bloque *Portal del juez*, **Dar acceso** genera su código (`K7QM-4TZP`). Cópialo o pulsa **Copiar mensaje para el juez**, que ya lleva el enlace y los pasos. Vale 14 días y una sola vez, y **solo se ve en ese momento**.
+- Desde el **directorio**: **Dar acceso al portal** genera los códigos de los jueces sin acceso de la lista que estás viendo (aplica antes los filtros de zona o nivel). Cópialos uno a uno o con **Copiar todos** antes de cerrar.
+- El juez entra en la pantalla de acceso, **Soy juez › Tengo un código**, escribe su e-mail del censo y el código, y crea su contraseña. Desde entonces entra con e-mail y contraseña, y puede cambiarla en **Mi ficha**.
+- **Si olvida su contraseña**, o el código caduca: **Código nuevo** en su ficha (anula el anterior).
+- Si un juez no tiene código, puede pedirlo desde **Soy juez › No tengo código**: te llega un aviso a la campana con el enlace a su ficha.
+- **Retirar acceso** corta la entrada al momento y anula su código pendiente.
+
+Un delegado de zona solo da acceso a jueces de su zona. Si el e-mail de la ficha ya es de una cuenta de gestión (un delegado que también es juez), no se le da acceso de juez: avisa al Comité.
 
 **Lo que ve el juez** (pensado para el móvil)
 

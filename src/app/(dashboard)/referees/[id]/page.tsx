@@ -66,7 +66,8 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   }
   const zoneName = zoneUiName(referee.zona);
   const canEdit = canManageJudges(user);
-  const portalStatus = canEdit ? (await getJudgeAccessStatuses([rawReferee]))[rawReferee.id] : undefined;
+  const portalAccess = canEdit ? await getJudgeAccessStatuses([rawReferee]) : undefined;
+  const portalStatus = portalAccess?.statuses[rawReferee.id];
   const canSanction = canManageSanctions(user, referee.zona);
   const canDelete = user.role === "super_admin" || user.role === "delegado_jueces";
 
@@ -160,7 +161,13 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       </MetricStrip>
 
       {portalStatus && (
-        <RefereePortalAccess refereeId={rawReferee.id} status={portalStatus} hasEmail={Boolean(rawReferee.email)} />
+        <RefereePortalAccess
+          refereeId={rawReferee.id}
+          nombre={rawReferee.nombre}
+          email={rawReferee.email}
+          status={portalStatus}
+          codeExpiresAt={portalAccess?.codeExpiry[rawReferee.id]}
+        />
       )}
 
       {referee.arbitrajeStats && referee.arbitrajeStats.total > 0 && (

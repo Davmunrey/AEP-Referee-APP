@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { isSessionUser, requireApiUser } from "@/lib/api/auth";
+import { isSessionUser, requireAnyUser } from "@/lib/api/auth";
 import {
   canAttemptLogin,
   clearLoginAttempts,
@@ -13,13 +13,14 @@ import { getSupabaseAnonKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
 
 /**
- * Self-service: el usuario autenticado cambia SU PROPIA contraseña.
- * Requiere sesión (requireApiUser) pero no lleva guard RBAC a propósito —
+ * Self-service: el usuario autenticado cambia SU PROPIA contraseña. Vale
+ * para la gestión y para los jueces (que crean la suya con un código y la
+ * cambian desde «Mi ficha»): requireAnyUser. No lleva guard RBAC a propósito —
  * solo actúa sobre la cuenta del propio llamante, verificando antes la
  * contraseña actual. Listada como self-service en el readiness check.
  */
 export async function POST(request: Request) {
-  const user = await requireApiUser();
+  const user = await requireAnyUser();
   if (!isSessionUser(user)) return user;
   if (!isSupabaseConfigured()) return jsonError("Supabase no configurado", 503);
 

@@ -8,7 +8,7 @@
 - Rate-limit: 5 fallos por IP+email cada 15 min. Las acciones públicas `fail`/`success` en `/auth/password` devuelven **403** (no manipulables desde cliente).
 - Errores genéricos: no se diferencia cuenta inexistente, password erróneo o email sin confirmar.
 - Sin registro público visible.
-- Reset: enlace "¿Olvidaste tu contraseña?" (Supabase `resetPasswordForEmail`).
+- Sin correos: la aplicación no envía ninguno (no hay SMTP propio). «¿Olvidaste tu contraseña?» explica a quién pedirla: a la gestión se la pone un administrador desde Usuarios; a un juez, su delegado le da un código nuevo.
 - Sesión: cookies `sb-*-auth-token`, TTL app 7 días.
 - **Correos transaccionales**: plantillas con branding AEP Tarima y URL `https://aep-tarima.vercel.app`. Fuente: `src/lib/auth/supabase-email-branding.ts` + `supabase/templates/`. Aplicar en remoto con `npm run supabase:email-branding` (requiere `SUPABASE_ACCESS_TOKEN`).
 
@@ -32,8 +32,10 @@
 
 ### Cuentas de juez
 
-- Cada cuenta de juez va enlazada a su ficha del censo (`referees.user_id`, único) y se crea de dos maneras: un delegado la **invita** desde el directorio o la ficha, o el propio juez la **pide** en `/sign-in?juez=1` con el e-mail que figura en su ficha.
-- El juez entra con un **enlace por e-mail** (sin contraseña). Los enlaces que inicia el servidor llegan con la sesión en el fragmento de la URL; `AuthFragmentHandler` (layout raíz) la completa.
+- Cada cuenta de juez va enlazada a su ficha del censo (`referees.user_id`, único). La crea un delegado con **Dar acceso** (en la ficha o en bloque desde el directorio): `auth.admin.createUser` con el e-mail de la ficha y una contraseña aleatoria que nadie conoce, **sin enviar nada**, y un **código de acceso**.
+- **Código de acceso** (`judge_access_codes`, migración `045`): 8 símbolos sin ambigüedades (`K7QM-4TZP`), uno vivo por juez, guardado como SHA-256 ligado a la ficha, caduca a los 14 días, un solo uso y se anula tras 5 intentos fallidos. El delegado lo ve una vez y se lo pasa al juez (WhatsApp, en mano); el mensaje para copiar lleva el enlace `/sign-in?codigo=1`.
+- El juez canjea el código en **Soy juez › Tengo un código** (`POST /auth/judge-code`, pública, con límite por e-mail y por IP): e-mail del censo + código + contraseña nueva. Después entra con e-mail y contraseña como cualquier cuenta y la cambia desde «Mi ficha». Si la olvida, su delegado le da un código nuevo.
+- **Pedir acceso** (`POST /auth/judge-access`, pública): el juez sin código escribe su e-mail y llega un aviso a la campana de su delegado de zona (o de la gestión nacional). Responde siempre lo mismo y después de contestar, para no revelar quién es juez.
 - `getSession()` es la sesión **de gestión** y devuelve `null` para un juez: las páginas del panel y `requireApiUser` lo dejan fuera sin comprobarlo una a una. El portal usa `getJudgeSession()`. Un juez que abre una página del panel va a `/portal` (`redirectSinAcceso`).
 - Las cuentas de juez no aparecen en `/admin/users` ni se pueden editar desde ahí (`canAdministerUserWithRole`): se gestionan desde la ficha del juez. Retirar el acceso desactiva el perfil y corta la sesión en la siguiente petición.
 

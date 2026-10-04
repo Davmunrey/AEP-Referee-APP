@@ -1,3 +1,4 @@
+import { ChangePasswordButton } from "@/components/portal/change-password-button";
 import { zoneUiName } from "@/lib/aep-zones";
 import { loadPortal } from "@/lib/portal-page";
 import { formatDateRange } from "@/lib/utils";
@@ -33,6 +34,15 @@ export default async function PortalProfilePage() {
         Estos datos son los del censo de jueces de la AEP. Si alguno no es correcto, avisa a tu delegado de zona para que
         lo cambie.
       </p>
+      <section aria-labelledby="acceso" className="space-y-2 border-t border-border-muted pt-5">
+        <h2 id="acceso" className="text-title font-semibold text-foreground">
+          Acceso
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Entras con tu e-mail del censo y tu contraseña. Si la olvidas, pide a tu delegado un código nuevo.
+        </p>
+        <ChangePasswordButton nombre={p.nombre} />
+      </section>
     </div>
   );
 }

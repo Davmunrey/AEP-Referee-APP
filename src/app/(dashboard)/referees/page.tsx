@@ -18,7 +18,7 @@ export default async function RefereesPage() {
   const referees = stripRefereeListPII(await dataService.getReferees({ user }), user);
   const zones = meta.zones;
   // Quién tiene ya cuenta en el portal: solo para quien puede invitar.
-  const portalStatuses = canManageJudges(user) ? await getJudgeAccessStatuses(referees) : undefined;
+  const portalStatuses = canManageJudges(user) ? (await getJudgeAccessStatuses(referees)).statuses : undefined;
 
   return (
     <PageShell>

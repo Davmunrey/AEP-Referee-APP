@@ -5,48 +5,64 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { confirmar } from "@/components/ui/confirm-dialog";
+import { AccessCodeCard } from "@/components/referees/access-code-card";
 import { api } from "@/lib/api/client";
 import {
-  isInviteProblem,
   JUDGE_ACCESS_LABEL,
-  JUDGE_INVITE_OUTCOME_LABEL,
+  JUDGE_CODE_OUTCOME_LABEL,
   type JudgeAccessStatus,
+  type JudgeCodeResult,
 } from "@/lib/judge-access";
-import { cn } from "@/lib/utils";
-import { confirmar } from "@/components/ui/confirm-dialog";
+import { formatDate } from "@/lib/utils";
 
-/** Acceso de este juez al portal: estado, invitar o reenviar el enlace, retirar. */
+/**
+ * Acceso de este juez al portal: estado, dar acceso (o un código nuevo si
+ * olvidó su contraseña) y retirarlo. Sin correos: el código se le pasa por
+ * WhatsApp o en mano.
+ */
 export function RefereePortalAccess({
   refereeId,
+  nombre,
+  email,
   status,
-  hasEmail,
+  codeExpiresAt,
 }: {
   refereeId: string;
+  nombre: string;
+  email?: string;
   status: JudgeAccessStatus;
-  hasEmail: boolean;
+  codeExpiresAt?: string;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<"invite" | "revoke" | null>(null);
-  const [message, setMessage] = useState<{ text: string; tone: "ok" | "warn" } | null>(null);
+  const [busy, setBusy] = useState<"code" | "revoke" | null>(null);
+  const [issued, setIssued] = useState<JudgeCodeResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const invite = async () => {
-    setBusy("invite");
-    setMessage(null);
-    try {
-      const { results } = await api.inviteToPortal([refereeId]);
-      const outcome = results[0]?.outcome ?? "error";
-      setMessage({
-        text:
-          outcome === "invitado"
-            ? "Invitación enviada. Le llegará un enlace al e-mail de su ficha."
-            : outcome === "enlace-reenviado" || outcome === "reactivado"
-              ? `${JUDGE_INVITE_OUTCOME_LABEL[outcome]}: le llegará un enlace para entrar.`
-              : JUDGE_INVITE_OUTCOME_LABEL[outcome],
-        tone: isInviteProblem(outcome) ? "warn" : "ok",
+  const issue = async () => {
+    if (status === "codigo-pendiente" || status === "con-acceso") {
+      const ok = await confirmar({
+        titulo: "¿Generar un código nuevo?",
+        detalle:
+          status === "con-acceso"
+            ? "Sirve si ha olvidado su contraseña: con el código nuevo crea otra. La actual sigue valiendo hasta que lo use."
+            : "El código que tiene sin usar dejará de valer.",
+        accion: "Generar código",
       });
-      router.refresh();
+      if (!ok) return;
+    }
+    setBusy("code");
+    setError(null);
+    try {
+      const { result } = await api.issuePortalCode(refereeId);
+      if (result.outcome === "codigo" && result.code) {
+        setIssued(result);
+        router.refresh();
+      } else {
+        setError(JUDGE_CODE_OUTCOME_LABEL[result.outcome]);
+      }
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : "No se pudo enviar la invitación", tone: "warn" });
+      setError(err instanceof Error ? err.message : "No se pudo generar el código");
     } finally {
       setBusy(null);
     }
@@ -55,50 +71,65 @@ export function RefereePortalAccess({
   const revoke = async () => {
     const ok = await confirmar({
       titulo: "¿Retirar el acceso al portal?",
-      detalle: "El juez dejará de poder entrar al momento. Podrás volver a invitarle desde aquí.",
+      detalle: "El juez dejará de poder entrar al momento y su código pendiente, si lo tiene, deja de valer.",
       accion: "Retirar acceso",
       peligro: true,
     });
     if (!ok) return;
     setBusy("revoke");
-    setMessage(null);
+    setError(null);
+    setIssued(null);
     try {
       await api.revokePortalAccess(refereeId);
-      setMessage({ text: "Acceso retirado.", tone: "ok" });
       router.refresh();
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : "No se pudo retirar el acceso", tone: "warn" });
+      setError(err instanceof Error ? err.message : "No se pudo retirar el acceso");
     } finally {
       setBusy(null);
     }
   };
 
+  const hasEmail = Boolean(email);
+  const detail =
+    status === "codigo-pendiente" && codeExpiresAt
+      ? `Tiene un código sin usar hasta el ${formatDate(codeExpiresAt.slice(0, 10))}`
+      : status === "sin-acceso" && !hasEmail
+        ? "Añade su e-mail a la ficha para poder darle acceso"
+        : status === "con-acceso"
+          ? "Entra con su e-mail y su contraseña"
+          : null;
+
   return (
-    <Card className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-foreground">Portal del juez</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {JUDGE_ACCESS_LABEL[status]}
-          {status === "sin-acceso" && !hasEmail && " · añade su e-mail a la ficha para poder invitarle"}
-        </p>
-        {message && (
-          <p role="status" className={cn("mt-1 text-xs", message.tone === "ok" ? "text-success" : "text-warning")}>
-            {message.text}
+    <Card className="space-y-3 px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">Portal del juez</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {JUDGE_ACCESS_LABEL[status]}
+            {detail ? ` · ${detail}` : ""}
           </p>
-        )}
-      </div>
-      <div className="flex gap-2">
-        {status === "con-acceso" && (
-          <Button variant="ghost" size="sm" onClick={() => void revoke()} disabled={busy !== null}>
-            {busy === "revoke" && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-            Retirar acceso
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(status === "con-acceso" || status === "codigo-pendiente") && (
+            <Button variant="ghost" size="sm" onClick={() => void revoke()} disabled={busy !== null}>
+              {busy === "revoke" && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+              Retirar acceso
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => void issue()} disabled={busy !== null || !hasEmail}>
+            {busy === "code" && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+            {status === "sin-acceso" ? "Dar acceso" : status === "revocado" ? "Devolver acceso" : "Código nuevo"}
           </Button>
-        )}
-        <Button variant="outline" size="sm" onClick={() => void invite()} disabled={busy !== null || !hasEmail}>
-          {busy === "invite" && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-          {status === "sin-acceso" ? "Invitar" : status === "revocado" ? "Devolver acceso" : "Reenviar enlace"}
-        </Button>
+        </div>
       </div>
+      {issued?.code && issued.expiresAt && (
+        <AccessCodeCard nombre={nombre} email={email} code={issued.code} expiresAt={issued.expiresAt} />
+      )}
+      {error && (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </Card>
   );
 }

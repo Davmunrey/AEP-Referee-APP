@@ -4,6 +4,19 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🔑 **AEP Tarima v2.14** — _«Con código»_ (2026-10-04)
+
+La aplicación deja de depender del correo: no habrá SMTP propio y el de Supabase solo entrega a los miembros del proyecto, así que invitaciones, enlaces de acceso y restablecer la contraseña no llegaban a nadie.
+
+- **Código de acceso para los jueces**: «Dar acceso» (en la ficha o en bloque desde el directorio) crea la cuenta sin enviar nada y genera un código (`K7QM-4TZP`, 14 días, un solo uso, se anula tras 5 fallos; se guarda su resumen, nunca el código). El delegado lo copia, o copia el mensaje con el enlace y los pasos, y se lo pasa por WhatsApp o en mano.
+- **El juez crea su contraseña** en «Soy juez › Tengo un código» y desde entonces entra con e-mail y contraseña; la puede cambiar en «Mi ficha». Si la olvida, «Código nuevo» en su ficha.
+- **Pedir acceso sin código**: el aviso llega a la campana de su delegado de zona (o de la gestión nacional), con el enlace a la ficha.
+- **«¿Olvidaste tu contraseña?»** ya no promete un correo: dice a quién pedirla (administrador en Usuarios, o delegado para jueces).
+- Fuera los envíos de Supabase Auth (`inviteUserByEmail`, `signInWithOtp`, `resetPasswordForEmail`) y el componente que completaba los enlaces por correo. Un test impide que vuelvan.
+- Migración `045_codigos_de_acceso.sql` (tabla `judge_access_codes`).
+
+---
+
 ## 🧹 **AEP Tarima v2.13** — _«Sin terceros»_ (2026-10-04)
 
 La aplicación deja de cargar servicios de terceros de errores y analítica.

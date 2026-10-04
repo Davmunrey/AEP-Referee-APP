@@ -77,8 +77,16 @@ export const KNOWLEDGE_BASE: HelpEntry[] = [
     question: "¿Cómo recupero mi contraseña?",
     keywords: ["contrasena", "clave", "olvide", "olvidada", "recuperar", "restablecer", "reset", "password", "cambiar"],
     answer:
-      "En la pantalla de acceso pulsa «¿Olvidaste tu contraseña?» e introduce tu correo; recibirás un enlace para restablecerla. Una vez dentro, también puedes cambiarla desde el menú de usuario (esquina superior derecha) → «Cambiar contraseña» (pide la actual y la nueva, mínimo 8 caracteres).",
+      "La aplicación no envía correos. Si eres de la gestión, pide a un administrador que te ponga una nueva desde Usuarios. Si eres juez, pide a tu delegado de zona un código nuevo (o pídelo desde la pantalla de acceso, «Soy juez › No tengo código») y crea otra en «Tengo un código». Una vez dentro, puedes cambiarla desde el menú de usuario → «Cambiar contraseña» (en el portal, en «Mi ficha»).",
     links: [{ label: "Ir al acceso", href: "/sign-in" }],
+  },
+  {
+    id: "judge-access-code",
+    question: "¿Cómo doy acceso al portal a un juez?",
+    keywords: ["portal", "juez", "acceso", "codigo", "invitar", "cuenta", "whatsapp", "contrasena juez"],
+    answer:
+      "Desde su ficha, bloque «Portal del juez» → «Dar acceso»: se genera un código de 8 caracteres que vale 14 días y una sola vez. Cópialo o copia el mensaje con los pasos y pásaselo por WhatsApp o en mano. El juez entra en «Soy juez › Tengo un código», escribe su e-mail del censo y el código, y crea su contraseña. Para varios a la vez: Directorio → «Dar acceso al portal». Si olvida la contraseña, «Código nuevo» en su ficha.",
+    links: [{ label: "Ir al directorio", href: "/referees" }],
   },
   {
     id: "change-password",
