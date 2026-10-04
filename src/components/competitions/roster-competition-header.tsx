@@ -4,7 +4,12 @@ import Link from "next/link";
 import type { Competition } from "@/lib/types";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { RosterHeaderActions } from "@/components/competitions/roster-header-actions";
-import { RosterHistoryPanel } from "@/components/competitions/roster-history-panel";
+import dynamic from "next/dynamic";
+// El historial es un desplegable que se abre a demanda.
+const RosterHistoryPanel = dynamic(
+  () => import("@/components/competitions/roster-history-panel").then((m) => m.RosterHistoryPanel),
+  { ssr: false, loading: () => <span className="inline-block h-8 w-[92px]" aria-hidden="true" /> },
+);
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

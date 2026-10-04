@@ -11,7 +11,7 @@ Varios delegados en la misma tarima, o cada uno en la suya, sin que nadie pierda
 - **Dos personas sobre el mismo hueco**: la escritura es condicional en la propia base de datos. Antes se comprobaba y luego se escribía, y en ese instante otro podía colarse; ahora gana el primero y el segundo recibe «Otro usuario acaba de cambiar ese hueco».
 - **La plantilla ya no se pisa**: si otra persona la guardó mientras tú la editabas, la app te pregunta si sustituir su versión o cargar la actual. Antes ganaba el último en guardar y se perdían las sesiones (y los jueces) del otro.
 - **Importar un cuadrante** no pisa lo que otro asignó entre la vista previa y «Aplicar»; esos huecos se informan uno a uno.
-- **Editar un campeonato** solo envía lo que cambias: corregir la sede ya no devuelve la fecha a su valor antiguo si otro la acababa de cambiar.
+- **Editar un campeonato, la ficha de un juez, un usuario o un informe** solo envía lo que cambias: guardar la ficha ya no devuelve la disponibilidad a su valor antiguo si otro delegado la acababa de cambiar desde el directorio.
 - **Siempre al día**: si entra un cambio de otro mientras editas la plantilla, al terminar se cargan los datos actuales (antes se quedaba fuera hasta el siguiente cambio).
 - **Todas las pantallas con el estilo nuevo**: radios, sombras y pesos de letra unificados en las 43 pantallas y componentes que aún tenían restos del estilo anterior; etiquetas de estado como insignias sin borde y selecciones en tono suave en lugar de rojo macizo.
 - **Más rápida con mucha gente conectada**: las pestañas en segundo plano ya no se recargan con cada cambio de cualquiera, las ráfagas de avisos se agrupan, la tarima se carga con 2 consultas en vez de 6 y cada asignación hace 4 consultas menos.
