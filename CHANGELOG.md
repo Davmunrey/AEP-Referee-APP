@@ -4,6 +4,17 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🌙 **AEP Tarima v2.6** — _«De noche también»_ (2026-10-04)
+
+Para quien monta tarimas a última hora y para la pantalla más usada de la app.
+
+- **Modo oscuro**: menú de usuario → Tema (Sistema, Claro u Oscuro). Sin destello al cargar, sigue al sistema si así lo eliges y se recuerda en cada navegador. El logo AEP tiene su versión para fondo oscuro.
+- **La tarima, más limpia**: cada hueco ocupa una sola fila (nivel, nombre, avisos y acciones), los pasos son pestañas con la ayuda al lado en vez de dos franjas, el aviso de normativa va junto a las acciones y la cobertura deja de parecer un campo de texto.
+- **Fichas de juez más legibles** en el panel de la tarima: texto más grande y las ya asignadas, atenuadas pero sin parecer deshabilitadas.
+- Las barras de cobertura por debajo del 70 % de la cabecera de la tarima no tenían color (la familia `chart-*` no estaba registrada en el tema). Ya lo tienen.
+
+---
+
 ## 🎨 **AEP Tarima v2.5** — _«Cara nueva»_ (2026-10-03)
 
 La app funcionaba muy bien y parecía de 2019. Ya no.

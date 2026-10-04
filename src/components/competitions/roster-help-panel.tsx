@@ -4,28 +4,35 @@ import { useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function RosterHelpPanel() {
+/**
+ * Fila de pasos + ayuda. Antes eran dos franjas (la ayuda plegable encima y
+ * los pasos debajo); ahora los pasos van a la izquierda y la ayuda, a la
+ * derecha, y su contenido se despliega debajo de la misma fila.
+ */
+export function RosterHelpPanel({ children }: { children?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-border-muted bg-muted/30 px-4 py-1.5">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 text-left text-xs font-medium text-foreground-secondary focus-ring"
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-2">
-          <HelpCircle className="h-3.5 w-3.5 text-primary" aria-hidden />
+    <div className="border-b border-border-muted px-4 py-2 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {children}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="ml-auto flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring"
+          aria-expanded={open}
+        >
+          <HelpCircle className="h-3.5 w-3.5" aria-hidden />
           Cómo montar una tarima
-        </span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 transition-transform duration-200 ease-(--ease-out)",
-            open && "rotate-180",
-          )}
-        />
-      </button>
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 transition-transform duration-200 ease-(--ease-out)",
+              open && "rotate-180",
+            )}
+            aria-hidden
+          />
+        </button>
+      </div>
       <div
         className={cn(
           // `transition-all` animaba también color y sombra sin motivo. Aquí lo

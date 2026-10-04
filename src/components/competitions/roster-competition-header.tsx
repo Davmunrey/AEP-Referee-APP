@@ -74,10 +74,10 @@ export function RosterCompetitionHeader({
   const readOnly = !canEdit;
 
   return (
-    <div className="glass-panel-soft border-b border-border-muted px-4 py-2.5">
+    <div className="border-b border-border-muted px-4 py-3 sm:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
             <Link href="/competitions" aria-label="Volver a campeonatos">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -88,7 +88,7 @@ export function RosterCompetitionHeader({
               <EventStatusBadge status={competition.estado} />
               {isPast && (
                 <span
-                  className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-muted px-2 py-0.5 text-[11px] font-semibold capitalize text-muted-foreground"
+                  className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border"
                   title="Campeonato finalizado — editable con permisos para cargar histórico"
                 >
                   Histórico
@@ -97,7 +97,7 @@ export function RosterCompetitionHeader({
               <span className="text-xs text-subtle-muted">{competition.aprobacion}</span>
             </div>
             <div className="flex items-center gap-1">
-              <h1 className="truncate text-lg font-semibold leading-tight text-foreground">
+              <h1 className="truncate text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">
                 {competition.nombre}
               </h1>
               {canEdit && (
@@ -122,13 +122,18 @@ export function RosterCompetitionHeader({
         {/* Móvil: a lo ancho y de izquierda a derecha. Alineadas a la derecha,
             siete acciones caían en filas irregulares pegadas al borde. */}
         <div className="flex w-full min-w-0 flex-col items-start gap-1.5 sm:w-auto sm:items-end">
-          {violationCount > 0 && (
-            <p className="flex items-center gap-1.5 rounded-md border border-warning-border bg-warning-subtle px-2.5 py-1 text-[11px] font-semibold text-warning">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              {violationCount} violación{violationCount > 1 ? "es" : ""} de normativa
-            </p>
-          )}
           <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
+            {/* El aviso va en la misma fila que las acciones: antes flotaba
+                encima, en una línea propia. */}
+            {violationCount > 0 && (
+              <p
+                className="flex h-8 items-center gap-1.5 rounded-lg bg-warning-muted px-2.5 text-xs font-medium text-warning"
+                title="Hay jueces asignados por debajo del nivel mínimo del puesto"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                {violationCount} {violationCount > 1 ? "avisos" : "aviso"} de normativa
+              </p>
+            )}
             {canEdit && isEditing && (
               <Button
                 type="button"

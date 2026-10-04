@@ -62,6 +62,13 @@
   --color-info-border: var(--info-border);
   --color-info-soft: var(--info-soft);
 
+  /* Sin esto, `bg-chart-danger` (barras de cobertura < 70 %) no generaba
+   * ninguna regla y la barra se quedaba sin color. */
+  --color-chart-track: var(--chart-track);
+  --color-chart-success: var(--chart-success);
+  --color-chart-warning: var(--chart-warning);
+  --color-chart-danger: var(--chart-danger);
+
   --color-border: var(--border);
   --color-border-muted: var(--border-muted);
   --color-border-strong: var(--border-strong);

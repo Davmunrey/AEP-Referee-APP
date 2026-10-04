@@ -79,15 +79,16 @@ export const RefereeCard = memo(function RefereeCard({
       className={cn(
         // Solo color/opacidad/escala: nada que fuerce layout mientras se arrastra
         // una lista de ~90 filas. 100 ms es feedback, no animación.
-        "flex select-none items-center gap-1.5 rounded-md border border-border bg-surface/80 px-2 py-1 transition-[color,background-color,border-color,opacity,scale] duration-100 ease-(--ease-out) focus-ring",
-        assigned && "opacity-55",
+        "flex select-none items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-sm transition-[color,background-color,border-color,opacity,scale] duration-100 ease-(--ease-out) focus-ring",
+        // Ya en la sesión: atenuada pero legible (antes, al 55 %, parecía deshabilitada).
+        assigned && "opacity-70",
         // La ficha es el objeto que se agarra: la mano al pasar, el puño al
         // pulsar y un hundido de 1.5% que confirma que el gesto se ha oído.
         locked ? "cursor-default" : "cursor-grab active:scale-[0.985] active:cursor-grabbing",
         dragging && "scale-[0.98] opacity-40",
         !locked && highlight && "cursor-pointer border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10",
         !locked && isDragging && !dragging && "hover:border-success/50 hover:bg-success/5",
-        !locked && !highlight && !isDragging && "hover:border-border-strong hover:bg-surface",
+        !locked && !highlight && !isDragging && "hover:border-border-strong",
         alertText && !blockedReason && referee.eventos >= 8 && "border-warning-border/60",
         busyReason && !blockedReason && "border-warning-border/60",
         blockedReason && "border-warning-border/60 bg-warning-subtle/40",
@@ -101,7 +102,7 @@ export const RefereeCard = memo(function RefereeCard({
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1">
-          <p className="min-w-0 flex-1 truncate text-[12px] font-semibold leading-tight text-foreground">
+          <p className="min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-foreground">
             {referee.nombre}
           </p>
           {assigned ? (
@@ -115,7 +116,7 @@ export const RefereeCard = memo(function RefereeCard({
             />
           ) : null}
         </div>
-        <p className="truncate text-[10px] leading-tight text-subtle-muted">
+        <p className="mt-0.5 truncate text-[11px] leading-tight text-subtle-muted">
           <span className={cn(isFromOtherZone && "font-medium text-warning")}>
             {isFromOtherZone ? `⟳ ${zoneLabel}` : zoneLabel}
           </span>
@@ -129,7 +130,7 @@ export const RefereeCard = memo(function RefereeCard({
         {busyReason && (
           // Visible, no solo en el `title`: el choque entre campeonatos no se
           // ve en ninguna otra pantalla de la tarima.
-          <p className="truncate text-[10px] font-medium leading-tight text-warning" title={busyReason}>
+          <p className="truncate text-[11px] font-medium leading-tight text-warning" title={busyReason}>
             ⚠ {busyReason}
           </p>
         )}
