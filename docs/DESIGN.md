@@ -10,7 +10,7 @@
 
 ## Lenguaje visual (v2.5)
 
-- **Tipografía**: Geist (texto) y Geist Mono solo para código y bloques preformateados. Cifras tabulares en toda la app (`font-variant-numeric: tabular-nums` en `body`).
+- **Tipografía**: Archivo (grotesca de deporte y datos, con eje de anchura) para toda la interfaz; los `h1` van algo ensanchados (`font-stretch: 112%`), sin cursivas. Geist Mono solo para código y bloques preformateados. Cifras tabulares en toda la app (`font-variant-numeric: tabular-nums` en `body`). Sustituye a Geist (v2.12), la grotesca de cualquier panel generado.
 - **Tres planos**: el marco (sidebar + fondo, gris `neutral-100`), el lienzo de cada página (panel `canvas` con borde fino y esquinas de 12 px en escritorio) y las tarjetas blancas encima. Neutros fríos tipo zinc; nada de beige.
 - **Rótulos en minúscula de frase**: sin versales ni tracking ancho (cabeceras de tabla, grupos del menú, rótulos de formulario). Las píldoras de estado van capitalizadas.
 - **Un solo acento**: el rojo AEP, reservado a la acción principal y al estado activo. Las cifras de los KPI van en el color del texto; el tono del indicador es un punto junto al rótulo.
@@ -64,6 +64,11 @@ Fuente de verdad:
 - Una cifra que no se puede calcular se muestra como «—», no como 0 (p. ej. tasa de aprobación sin exámenes).
 - Nada de gráficos decorativos que parezcan datos (se retiraron las «mini-gráficas» de los KPIs del dashboard).
 - Plurales con `contar()`/`palabra()`; vocabulario de la casa: tarima, hueco, plantilla (no roster, slot, diff).
+
+## Contraste
+
+- Todo texto pasa 4,5:1 (WCAG AA) sobre las superficies en las que aparece, incluido el gris del marco. Los tonos de estado tienen dos usos: el semántico (`text-success`, `text-warning`…, más oscuro) para texto e insignias, y el de gráfico (`bg-chart-success`, `bg-chart-warning`, `bg-chart-danger`, más vivo) para barras y puntos. La cobertura se pinta con `lib/status-tone.ts`.
+- `--subtle-muted` ya no es un gris más claro que `--subtle`: un gris más claro no llegaba a 4,5:1. La jerarquía terciaria la da el tamaño.
 
 ## Confirmaciones
 
