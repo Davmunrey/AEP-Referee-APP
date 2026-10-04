@@ -23,6 +23,7 @@ import { expireStaleSanctions, getSanctionAlerts } from "@/server/services/refer
 import {
   applyHealthHistory,
   cachedLoadAllAssignments,
+  loadAssignmentsFor,
   db,
   fetchAllPagesOf,
   fetchAllRowsIn,
@@ -158,9 +159,12 @@ export const analyticsService = {
     // approval_proposals por submitted_at+id); estas cuatro se habían quedado
     // atrás, y `referees`, `approval_proposals` y `promotion_requests` ni
     // siquiera pedían un orden.
+    // Columnas ligeras (sin la plantilla JSON): el calendario y la actividad
+    // necesitan todo el histórico, pero solo nombres y fechas. La plantilla y
+    // las asignaciones se piden después, y solo de los campeonatos vigentes.
     let competitionQuery = supabase
       .from("competitions")
-      .select("*")
+      .select("id, nombre, tipo, fecha, fecha_fin, sede, sesiones, requeridos, confirmados, estado, aprobacion, zona")
       .order("fecha", { ascending: true })
       .order("id", { ascending: true });
     let refereeQuery = supabase
@@ -195,7 +199,6 @@ export const analyticsService = {
       referees,
       approvals,
       promotions,
-      assignmentsByComp,
     ] = await Promise.all([
       fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
         competitionQuery.range(from, to),
@@ -210,7 +213,6 @@ export const analyticsService = {
       fetchAllPagesOf<{ status: string; zona?: unknown }>("promotion_requests", (from, to) =>
         promotionQuery.range(from, to),
       ),
-      cachedLoadAllAssignments(),
     ]);
     if (activityError) throw new Error(`activity_log: ${activityError.message}`);
 
@@ -224,11 +226,27 @@ export const analyticsService = {
     const dashboardCompetitions = competitions.filter((c) => !isCompetitionPast(c));
     const dashboardIds = new Set(dashboardCompetitions.map((c) => c.id));
     const competitionNames = new Set(competitions.map((c) => c.nombre));
+    const dashboardIdList = [...dashboardIds];
+    const [templateRows, assignmentsByComp] = await Promise.all([
+      dashboardIdList.length === 0
+        ? Promise.resolve([] as { id: string; template: RosterSession[] | null; tipo: string }[])
+        : fetchAllPagesOf<{ id: string; template: RosterSession[] | null; tipo: string }>(
+            "competitions",
+            (from, to) =>
+              supabase
+                .from("competitions")
+                .select("id, template, tipo")
+                .in("id", dashboardIdList)
+                .order("id", { ascending: true })
+                .range(from, to),
+          ),
+      loadAssignmentsFor(dashboardIdList),
+    ]);
     const templateByComp = new Map(
-      (competitionRows ?? []).map((r) => {
-        const row = r as { id: string; template: RosterSession[] | null; tipo: string };
-        return [row.id, normalizeCompetitionTemplate(row.template, row.tipo as Competition["tipo"])] as const;
-      }),
+      templateRows.map((row) => [
+        String(row.id),
+        normalizeCompetitionTemplate(row.template, row.tipo as Competition["tipo"]),
+      ] as const),
     );
     // Misma fórmula que analítica y que el `estado` derivado (helper compartido):
     // la versión ad hoc contaba claves huérfanas como cubiertas e ignoraba el
@@ -259,19 +277,14 @@ export const analyticsService = {
       activity: activityItems,
     });
 
-    const kpiCompetitions = (competitionRows ?? []).filter((r) =>
-      dashboardIds.has(String((r as { id: string }).id)),
-    ) as {
-      id: string;
-      estado: string;
-      template: RosterSession[] | null;
-      tipo: string;
-    }[];
+    const kpiCompetitions = dashboardCompetitions.map((c) => ({
+      id: c.id,
+      estado: c.estado,
+      template: templateByComp.get(c.id) ?? null,
+      tipo: c.tipo,
+    }));
     const kpiOpenSlots = new Map<string, number>(
-      kpiCompetitions.map((c) => {
-        const tpl = normalizeCompetitionTemplate(c.template, c.tipo as Competition["tipo"]);
-        return [c.id, countOpenSlots(tpl, assignmentsByComp.get(c.id) ?? {})];
-      }),
+      kpiCompetitions.map((c) => [c.id, countOpenSlots(c.template ?? [], assignmentsByComp.get(c.id) ?? {})]),
     );
 
     const coverageLabel = isZoneScoped ? "Cobertura Zonal" : "Cobertura Nacional";
