@@ -53,9 +53,12 @@ const publicApi = new Set([
   "src/app/api/v1/auth/logout/route.ts",
   "src/app/api/v1/auth/password/route.ts",
   "src/app/api/v1/auth/signout/route.ts",
-  // El juez pide su enlace de acceso: pública, con límite de intentos y una
-  // respuesta que no dice si el e-mail está en el censo.
+  // El juez pide acceso (aviso a su delegado): pública, con límite de
+  // intentos y una respuesta que no dice si el e-mail está en el censo.
   "src/app/api/v1/auth/judge-access/route.ts",
+  // El juez canjea su código y crea su contraseña: pública, con límite por
+  // e-mail y por IP, y el código se anula tras varios intentos fallidos.
+  "src/app/api/v1/auth/judge-code/route.ts",
 ]);
 
 // Rutas self-service: EXIGEN sesión (sujetas a API-01) pero no llevan guard

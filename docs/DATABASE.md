@@ -87,6 +87,7 @@ Reemplaza `referee_availability` (eliminada en 019). Registra qué jueces confir
 | `042` | Convocatorias: `convocatorias` (una viva por campeonato, `sesiones TEXT[]`, `cierra_el`), `convocatoria_zonas` (zona × estado aceptada/pendiente/rechazada × origen) y `convocatoria_inscripciones` (juez × sesión, PK compuesta). RLS sin políticas y disparadores de tiempo real.
 | `043` | `designacion_respuestas` (juez × campeonato: confirmada/rechazada + motivo) y `notificaciones` (por usuario; índice único **completo** `(user_id, clave)` para no repetir avisos —uno parcial no lo puede usar el `ON CONFLICT` de PostgREST—; índice de no leídas). RLS sin políticas y tiempo real.
 | `044` | Tiempo real solo con cambios reales: `notificaciones` deja de avisar (son de cada usuario) y `convocatoria_inscripciones` / `designacion_respuestas` pasan a disparadores `FOR EACH ROW` (una sentencia sin filas no refresca a nadie).
+| `045` | `judge_access_codes`: código de acceso de cada juez al portal (uno vivo por ficha; SHA-256, caducidad, intentos fallidos). Sustituye a las invitaciones por correo. RLS sin políticas.
 
 ### Índices de rendimiento (migration 030)
 

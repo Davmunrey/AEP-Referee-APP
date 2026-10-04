@@ -6,7 +6,7 @@ import { resolveZoneCode } from "@/lib/aep-zones";
 import { DOCS_CAPTURE_SESSION, isDocsCaptureMode } from "@/lib/auth/docs-capture";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { isMemoryJudgeAccountActive } from "@/server/services/judge-accounts";
+import { isMemoryJudgeAccountActive } from "@/server/judge-memory";
 import { getStore } from "@/server/store";
 
 async function activos(ids: string[], role: string): Promise<string[]> {

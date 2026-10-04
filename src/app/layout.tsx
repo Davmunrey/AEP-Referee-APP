@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Archivo, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { themeBootScript } from "@/lib/theme";
-import { AuthFragmentHandler } from "@/components/auth/auth-fragment-handler";
 import { ConfirmHost } from "@/components/ui/confirm-dialog";
 
 // Archivo: grotesca pensada para deporte y datos (Omnibus-Type), con cifras
@@ -40,7 +39,6 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className={`${archivo.variable} ${geistMono.variable} antialiased`}>
-        <AuthFragmentHandler />
         {children}
         <ConfirmHost />
       </body>

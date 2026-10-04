@@ -12,7 +12,7 @@ import {
   SlidersHorizontal,
   Trash2,
   UserCheck,
-  Send,
+  KeyRound,
   UserPlus,
   UserX,
   X,
@@ -301,8 +301,8 @@ export function RefereesDirectory({
         {canImport && <JudgesRegistryImportButton />}
         {canEdit && portalStatuses && (
           <Button size="sm" variant="outline" className="gap-1.5 max-sm:h-9" onClick={() => setShowInvite(true)}>
-            <Send className="h-3.5 w-3.5" aria-hidden="true" />
-            Invitar al portal
+            <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+            Dar acceso al portal
           </Button>
         )}
       </PageHeader>
