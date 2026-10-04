@@ -587,7 +587,7 @@ export function RosterBuilder({
 
   return (
     <>
-      <div className="flex h-[calc(100dvh-3rem)] flex-col">
+      <div className="flex h-[calc(100dvh-var(--size-topbar))] flex-col">
         {/* Render condicional: así el chunk dynamic solo se descarga al abrir
             el diálogo, no al montar la ruta. */}
         {importOpen && (
@@ -658,7 +658,7 @@ export function RosterBuilder({
           // enteraba.
           <div role="status" className="flex flex-wrap items-start gap-2 border-b border-destructive/20 bg-destructive-muted px-4 py-2.5 text-xs sm:px-5 lg:px-6">
             <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden="true" />
-            <p className="min-w-0 max-w-[75ch] flex-1 text-foreground">
+            <p className="min-w-0 max-w-prose flex-1 text-foreground">
               {rechazos.map(([id, r], i) => (
                 <span key={id}>
                   {i > 0 && " · "}
@@ -708,14 +708,14 @@ export function RosterBuilder({
                 </Button>
               </div>
             )}
-            <p className="text-[11px] text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
+            <p className="text-2xs text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
           </div>
         ) : (
           <div
             className={cn(
               "grid min-h-0 flex-1 grid-cols-1",
               showRefereePanel &&
-                "md:grid-cols-[minmax(0,220px)_1fr] lg:grid-cols-[minmax(0,252px)_1fr] xl:grid-cols-[minmax(0,272px)_1fr] 2xl:grid-cols-[minmax(0,292px)_1fr]",
+                "md:grid-cols-(--grid-tarima)",
             )}
           >
             {showRefereePanel && (
@@ -754,7 +754,7 @@ export function RosterBuilder({
                         <div key={dia} className="flex shrink-0 items-center gap-2">
                           {/* Rótulo de día en tono neutro: el rojo queda para la
                               sesión activa y la acción principal. */}
-                          <span className="shrink-0 text-[11px] font-semibold text-foreground-secondary">
+                          <span className="shrink-0 text-2xs font-semibold text-foreground-secondary">
                             {dia}
                           </span>
                           {sesiones.map((session) => (
@@ -778,7 +778,7 @@ export function RosterBuilder({
                             <div className="rounded-xl border border-border-muted bg-surface/25 p-3">
                               <div className="mb-2 flex items-center justify-between gap-2">
                                 <p className="text-xs font-semibold text-subtle-muted">Huecos pendientes</p>
-                                <span className="text-[11px] text-subtle-muted">{activeSessionPendingSlots.length} sin cubrir</span>
+                                <span className="text-2xs text-subtle-muted">{activeSessionPendingSlots.length} sin cubrir</span>
                               </div>
                               {activeSessionPendingSlots.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
@@ -786,7 +786,7 @@ export function RosterBuilder({
                                     <button
                                       key={slot.slotKey} type="button" onClick={() => setSelectedSlot(slot.slotKey)}
                                       className={cn(
-                                        "inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[11px] transition-colors focus-ring",
+                                        "inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-2xs transition-colors focus-ring",
                                         selectedSlot === slot.slotKey ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:border-border-strong hover:bg-surface",
                                       )}
                                     >

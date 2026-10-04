@@ -107,7 +107,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 {referee.nombre}
               </h1>
-              <p className="mt-0.5 text-[13px] text-muted-foreground">
+              <p className="mt-0.5 text-ui text-muted-foreground">
                 {zoneName}
                 {referee.licencia ? <span className="tabular-nums"> · Lic. {referee.licencia}</span> : null}
               </p>

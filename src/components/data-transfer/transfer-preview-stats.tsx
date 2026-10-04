@@ -38,7 +38,7 @@ export function TransferPreviewStats({
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-lg border border-border-muted bg-surface/80 px-3 py-2 shadow-sm transition-shadow duration-200 hover:shadow-card"
+          className="rounded-lg border border-border-muted bg-surface/80 px-3 py-2 shadow-sm transition-shadow duration-(--duration-enter) hover:shadow-card"
         >
           <p className="text-xs text-subtle-muted">{item.label}</p>
           <p className={cn("text-lg font-semibold tabular-nums", toneClass(item.tone))}>

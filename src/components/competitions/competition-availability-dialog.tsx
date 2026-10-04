@@ -74,14 +74,14 @@ export function CompetitionAvailabilityDialog({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
+    <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
       <div
         ref={panelRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="availability-title"
-        className={`flex max-h-[85vh] w-full max-w-md flex-col rounded-xl border border-border bg-card shadow-md outline-none ${dialogPanelEnter}`}
+        className={`flex max-h-(--size-dialog-h) w-full max-w-md flex-col rounded-xl border border-border bg-card shadow-md outline-none ${dialogPanelEnter}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
@@ -127,7 +127,7 @@ export function CompetitionAvailabilityDialog({
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{r.nombre}</p>
-                    <p className="text-[11px] text-subtle-muted">
+                    <p className="text-2xs text-subtle-muted">
                       {zoneUiName(r.zona)} · {r.nivel}
                     </p>
                   </div>

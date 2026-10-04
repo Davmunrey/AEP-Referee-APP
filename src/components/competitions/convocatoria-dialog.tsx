@@ -86,14 +86,14 @@ export function ConvocatoriaDialog({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`} onClick={busy ? undefined : onClose}>
+    <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`} onClick={busy ? undefined : onClose}>
       <div
         ref={dialogRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="convocatoria-title"
-        className={`flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-md outline-none ${dialogPanelEnter}`}
+        className={`flex max-h-(--size-dialog-h) w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-md outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">

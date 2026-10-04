@@ -72,7 +72,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       // Sombra teñida con el propio color del botón (los shadow-md/xl de serie
       // son negro plano y no pertenecen a la escala del tema). El scale al
       // pulsar devuelve la sensación de que el botón ha oído el clic.
-      className="fixed bottom-5 right-5 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground-secondary shadow-md transition-[background-color,color,box-shadow,transform] duration-150 hover:bg-surface hover:text-foreground active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="fixed bottom-5 right-5 z-(--z-float) flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground-secondary shadow-md transition-[background-color,color,box-shadow,transform] duration-(--duration-base) hover:bg-surface hover:text-foreground active:scale-(--scale-enter) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       {open ? <X className="h-4 w-4" /> : <HelpCircle className="h-5 w-5" />}
     </button>
@@ -87,7 +87,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       aria-label="Ayuda de AEP Tarima"
       // pop-in anclado abajo-derecha: el panel crece desde el botón que lo
       // abre, en vez de materializarse de golpe en mitad de la pantalla.
-      className="pop-in [--pop-origin:bottom_right] fixed bottom-20 right-5 z-[60] flex max-h-[min(36rem,calc(100vh-7rem))] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-card shadow-md"
+      className="pop-in [--pop-origin:bottom_right] fixed bottom-20 right-5 z-(--z-float) flex max-h-[min(36rem,calc(100vh-7rem))] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-card shadow-md"
     >
       {/* Cabecera */}
       <div className="border-b border-border bg-surface px-4 pb-3 pt-3.5">

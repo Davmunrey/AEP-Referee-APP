@@ -32,7 +32,7 @@ interface NewCompetitionFormProps {
 function SectionDivider({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-3 pt-1">
-      <span className="shrink-0 text-[11px] font-semibold text-subtle-muted">
+      <span className="shrink-0 text-2xs font-semibold text-subtle-muted">
         {title}
       </span>
       <div className="flex-1 border-t border-border-muted" />
@@ -201,7 +201,7 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-[11px] text-subtle-muted">{TYPE_DESC[tipo]}</p>
+              <p className="mt-1 text-2xs text-subtle-muted">{TYPE_DESC[tipo]}</p>
             </div>
             <div>
               <label htmlFor="nc-zona" className="mb-1 block text-xs font-medium text-foreground-secondary">
@@ -350,7 +350,7 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
               />
             </div>
           </div>
-          <p className="text-[11px] text-subtle-muted">
+          <p className="text-2xs text-subtle-muted">
             Valores predeterminados para {tipo}. Puedes ajustarlos libremente.
           </p>
 

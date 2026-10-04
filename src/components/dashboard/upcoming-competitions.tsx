@@ -53,7 +53,7 @@ export function UpcomingCompetitions({ competitions }: { competitions: Competiti
                   className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   <div className="w-10 shrink-0 text-center leading-none" aria-hidden="true">
-                    <p className="text-[11px] text-muted-foreground">{MONTHS[(m ?? 1) - 1]}</p>
+                    <p className="text-2xs text-muted-foreground">{MONTHS[(m ?? 1) - 1]}</p>
                     <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">{d}</p>
                   </div>
                   <div className="min-w-0 flex-1">

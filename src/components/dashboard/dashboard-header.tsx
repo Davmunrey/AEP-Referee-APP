@@ -78,7 +78,7 @@ export function DashboardHeader({ dashboard }: { dashboard: DashboardPayload }) 
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pb-1">
       <div className="min-w-0 max-w-3xl">
-        <h1 className="text-[22px] font-semibold text-foreground sm:text-2xl">
+        <h1 className="text-heading font-semibold text-foreground sm:text-2xl">
           {greet(user.nombre)}
         </h1>
         {/* text-pretty: la frase cambia de longitud según los datos del día. */}

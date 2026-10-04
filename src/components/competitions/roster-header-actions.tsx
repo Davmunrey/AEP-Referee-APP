@@ -177,7 +177,7 @@ export function RosterHeaderActions({
           className="flex h-8 items-center gap-2 px-1"
           title={`Cobertura: ${filledSlots}/${totalSlots} plazas`}
         >
-          <span className="text-[13px] font-medium tabular-nums text-foreground">
+          <span className="text-ui font-medium tabular-nums text-foreground">
             {filledSlots}
             <span className="text-subtle-muted">/{totalSlots}</span>
           </span>
@@ -185,7 +185,7 @@ export function RosterHeaderActions({
             <div
               className={cn(
                 // Misma ley que las barras de cobertura de las sesiones.
-                "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
+                "h-full rounded-full transition-[width] duration-(--duration-slow) ease-(--ease-out)",
                 coverageBarColor,
               )}
               style={{ width: `${fillPct}%` }}
@@ -232,11 +232,14 @@ export function RosterHeaderActions({
         <Button
           size="sm"
           className={cn(
-            "h-8 gap-1.5 max-md:h-9 max-md:flex-1 px-2.5 text-xs font-semibold shadow-sm transition-[color,background-color,box-shadow,scale] duration-150 ease-(--ease-out)",
+            "h-8 gap-1.5 max-md:h-9 max-md:flex-1 px-2.5 text-xs font-semibold shadow-sm transition-[color,background-color,box-shadow,scale] duration-(--duration-base) ease-(--ease-out)",
             // Tarima completa: se marca con un halo fijo, no con un latido. Este
             // botón está en pantalla toda la sesión de montaje; un bucle infinito
             // ahí deja de informar y pasa a molestar.
             fillPct >= 100 && "ring-2 ring-success/40",
+            // Tarima aprobada: en móvil no ocupa la fila un botón muerto; la
+            // salida es «Registrar imprevisto», en el aviso de debajo.
+            rosterLocked && "max-md:hidden",
           )}
           disabled={pending || rosterLocked || Boolean(submitBlockedReason)}
           title={submitBlockedReason ?? undefined}

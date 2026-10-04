@@ -28,7 +28,7 @@ export function RosterHelpPanel({ children }: { children?: React.ReactNode }) {
           Cómo montar una tarima
           <ChevronDown
             className={cn(
-              "h-3.5 w-3.5 transition-transform duration-200 ease-(--ease-out)",
+              "h-3.5 w-3.5 transition-transform duration-(--duration-enter) ease-(--ease-out)",
               open && "rotate-180",
             )}
             aria-hidden
@@ -58,7 +58,7 @@ export function RosterHelpPanel({ children }: { children?: React.ReactNode }) {
             envía a aprobación cuando esté listo.
           </li>
         </ol>
-        <p className="text-[11px] text-subtle-muted">
+        <p className="text-2xs text-subtle-muted">
           Calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.
         </p>
       </div>

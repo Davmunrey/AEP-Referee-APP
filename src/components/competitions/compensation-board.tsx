@@ -280,7 +280,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                   {clubs.map((club, index) => (
                     <div key={club.draftId} className="grid gap-2 rounded-xl border border-border-muted bg-surface/40 p-3 sm:grid-cols-2">
                       <div>
-                        <label htmlFor={`${fieldIdBase}-club-${index}`} className="mb-1 block text-[11px] font-semibold text-muted-foreground">
+                        <label htmlFor={`${fieldIdBase}-club-${index}`} className="mb-1 block text-2xs font-semibold text-muted-foreground">
                           {organizer === "custom" ? "Nombre" : "Club"} {clubs.length > 1 ? index + 1 : ""}
                         </label>
                         <Input id={`${fieldIdBase}-club-${index}`}
@@ -313,7 +313,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         />
                       </div>
                       <div>
-                        <label htmlFor={`${fieldIdBase}-emails-${index}`} className="mb-1 block text-[11px] font-semibold text-muted-foreground">
+                        <label htmlFor={`${fieldIdBase}-emails-${index}`} className="mb-1 block text-2xs font-semibold text-muted-foreground">
                           E-mails devolución
                         </label>
                         <Input id={`${fieldIdBase}-emails-${index}`}
@@ -447,11 +447,11 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                 <Fragment key={claim.refereeId}>
                   {/* Nueve columnas de ancho: sin realce de fila al pasar, seguir
                       la horizontal de un juez hasta su total es pura fe. */}
-                  <tr className="border-b border-border-muted/60 transition-colors duration-100 hover:bg-surface-hover/60">
+                  <tr className="border-b border-border-muted/60 transition-colors duration-(--duration-fast) hover:bg-surface-hover/60">
                     <td className="px-2 py-2">
                       <button
                         type="button"
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-100 ease-(--ease-out) hover:bg-surface-hover hover:text-foreground active:scale-90 focus-ring"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-(--duration-fast) ease-(--ease-out) hover:bg-surface-hover hover:text-foreground active:scale-90 focus-ring"
                         onClick={() => toggleExpanded(claim.refereeId)}
                         aria-label={isOpen ? "Ocultar desglose" : "Ver desglose"}
                       >
@@ -459,7 +459,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                             abre lo que hay debajo. */}
                         <ChevronRight
                           className={cn(
-                            "h-4 w-4 transition-transform duration-200 ease-(--ease-out)",
+                            "h-4 w-4 transition-transform duration-(--duration-enter) ease-(--ease-out)",
                             isOpen && "rotate-90",
                           )}
                         />
@@ -473,7 +473,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           del total sin dejar rastro. */}
                       {isPaid && (
                         <span
-                          className="ml-2 rounded-md bg-success-muted px-1.5 py-0.5 text-[11px] font-semibold text-success"
+                          className="ml-2 rounded-md bg-success-muted px-1.5 py-0.5 text-2xs font-semibold text-success"
                           title="Liquidación pagada: su importe ya no se puede cambiar."
                         >
                           pagada
@@ -481,7 +481,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       )}
                       {claim.offRoster && (
                         <span
-                          className="ml-2 rounded-md bg-warning-muted px-1.5 py-0.5 text-[11px] font-semibold text-warning"
+                          className="ml-2 rounded-md bg-warning-muted px-1.5 py-0.5 text-2xs font-semibold text-warning"
                           title="Este juez ya no ocupa ningún puesto en la tarima; su liquidación sigue registrada."
                         >
                           fuera de tarima
@@ -516,7 +516,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         <span className="text-xs tabular-nums">{claim.distanceKmRoundTrip ??"—"}</span>
                       )}
                       {claim.travelMode === "shared_vehicle_passenger" && (
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">sin cobro km</p>
+                        <p className="mt-0.5 text-2xs text-muted-foreground">sin cobro km</p>
                       )}
                     </td>
                     <td className="px-3 py-2">

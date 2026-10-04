@@ -339,11 +339,11 @@ export function UsersAdmin({
         className="glass-panel mb-8 space-y-5 rounded-xl border border-border-muted p-5 sm:p-6"
         aria-labelledby="nuevo-usuario-titulo"
       >
-        <h2 id="nuevo-usuario-titulo" className="text-[15px] font-semibold text-foreground">
+        <h2 id="nuevo-usuario-titulo" className="text-title font-semibold text-foreground">
           Nuevo usuario
         </h2>
         <fieldset className="grid gap-4 md:grid-cols-2">
-          <legend className="mb-3 text-[13px] font-medium text-muted-foreground">Acceso</legend>
+          <legend className="mb-3 text-ui font-medium text-muted-foreground">Acceso</legend>
           <div>
             <label htmlFor="nu-email" className="friendly-label mb-1 block">Email</label>
             <Input id="nu-email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
@@ -355,7 +355,7 @@ export function UsersAdmin({
           </div>
         </fieldset>
         <fieldset className="grid gap-4 md:grid-cols-2">
-          <legend className="mb-3 text-[13px] font-medium text-muted-foreground">Perfil</legend>
+          <legend className="mb-3 text-ui font-medium text-muted-foreground">Perfil</legend>
           <div>
             <label htmlFor="nu-nombre" className="friendly-label mb-1 block">Nombre completo</label>
             <Input id="nu-nombre" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
@@ -531,7 +531,7 @@ export function UsersAdmin({
                   <DataTableCell>
                     {isRestrictedAccount(u.role) && !canManageRestrictedRoles ? (
                       <span
-                        className="text-[11px] text-subtle-muted"
+                        className="text-2xs text-subtle-muted"
                         title="Solo un Super Admin puede gestionar esta cuenta"
                       >
                         Solo Super Admin

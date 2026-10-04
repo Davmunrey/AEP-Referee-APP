@@ -170,7 +170,7 @@ export function Sidebar({
         aria-current={active ? "page" : undefined}
         onClick={onNavigate}
         className={cn(
-          "group relative flex items-center text-[13px] font-medium transition-colors duration-150 focus-ring",
+          "group relative flex items-center text-ui font-medium transition-colors duration-(--duration-base) focus-ring",
           collapsed
             ? "mx-auto h-9 w-9 justify-center rounded-lg p-0"
             : "h-8 gap-2.5 rounded-lg px-2.5",
@@ -190,7 +190,7 @@ export function Sidebar({
         <Icon
           aria-hidden="true"
           className={cn(
-            "h-4 w-4 shrink-0 transition-colors duration-150",
+            "h-4 w-4 shrink-0 transition-colors duration-(--duration-base)",
             active ? "text-primary" : "text-subtle group-hover:text-foreground-secondary",
           )}
         />
@@ -212,7 +212,7 @@ export function Sidebar({
             {item.badge != null && item.badge > 0 ? (
               <span
                 className={cn(
-                  "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-md px-1 text-center text-[11px] font-medium tabular-nums leading-none",
+                  "inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1 text-center text-2xs font-medium tabular-nums leading-none",
                   item.href === "/approvals"
                     ? "bg-primary text-primary-foreground"
                     : "text-subtle",
@@ -233,7 +233,7 @@ export function Sidebar({
         // Plegar es instantáneo: animar `width` recalculaba el layout de toda la
         // página en cada fotograma, y la tarima (la pantalla más pesada) lo notaba.
         "flex h-full flex-col bg-sidebar",
-        drawer ? "w-[280px] max-w-[85vw] border-r border-border" : collapsed ? "w-16" : "w-[220px] xl:w-[232px]",
+        drawer ? "w-(--size-drawer) border-r border-border" : collapsed ? "w-16" : "w-(--size-sidebar)",
       )}
       aria-label="Navegación principal"
     >
@@ -254,7 +254,7 @@ export function Sidebar({
             aria-label={group.title}
           >
             {!collapsed && (
-              <p className="mb-1 px-2.5 text-[11px] font-medium text-subtle">{group.title}</p>
+              <p className="mb-1 px-2.5 text-2xs font-medium text-subtle">{group.title}</p>
             )}
             {group.items.map((item) => renderLink(item))}
           </nav>

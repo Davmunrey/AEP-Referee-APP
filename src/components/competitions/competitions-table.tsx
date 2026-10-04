@@ -199,7 +199,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           {notice.text}
         </p>
       )}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border-muted bg-card px-4 py-3">
+      <div className="sticky top-0 z-(--z-sticky) flex flex-wrap items-center gap-2 border-b border-border-muted bg-card px-4 py-3">
         <Input
           type="search"
           placeholder="Buscar campeonato o sede…"
@@ -314,19 +314,19 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   </div>
                   <EventStatusBadge status={competition.estado} />
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
                   <EventTypeBadge tipo={competition.tipo} />
                   <span>{formatDateRange(competition.fecha, competition.fechaFin)}</span>
                   {competition.zona && <span>· {zoneUiName(competition.zona)}</span>}
                   {isPast && (
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-2xs font-semibold text-muted-foreground">
                       Histórico
                     </span>
                   )}
                 </div>
                 <div>
                   <CoverageBar pct={pct} estado={competition.estado} label={`Cobertura de ${competition.nombre}: ${pct} %`} />
-                  <p className="mt-1 text-[11px] tabular-nums text-subtle-muted">
+                  <p className="mt-1 text-2xs tabular-nums text-subtle-muted">
                     {competition.confirmados}/{competition.requeridos} · {pct}%
                   </p>
                 </div>
@@ -388,7 +388,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                 <DataTableRow
                   key={competition.id}
                   className={cn(
-                    "group transition-colors duration-150",
+                    "group transition-colors duration-(--duration-base)",
                     deletingId === competition.id && "opacity-60",
                   )}
                 >
@@ -403,12 +403,12 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                           "Histórico" es un hecho (baja a etiqueta plana),
                           "Duplicado" pide una acción (conserva el chip). */}
                       {isPast && (
-                        <span className="ml-2 text-[11px] font-medium text-subtle-muted">
+                        <span className="ml-2 text-2xs font-medium text-subtle-muted">
                           Histórico
                         </span>
                       )}
                       {duplicateIds.has(competition.id) && (
-                        <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-[11px] font-semibold text-warning">
+                        <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-2xs font-semibold text-warning">
                           Duplicado
                         </span>
                       )}
@@ -421,12 +421,12 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   <DataTableCell>
                     <EventTypeBadge tipo={competition.tipo} />
                   </DataTableCell>
-                  <DataTableCell className="text-[13px] text-muted-foreground">
+                  <DataTableCell className="text-ui text-muted-foreground">
                     {competition.zona ? zoneUiName(competition.zona) : "—"}
                   </DataTableCell>
                   <DataTableCell className="min-w-[140px]">
                     <CoverageBar pct={pct} estado={competition.estado} label={`Cobertura de ${competition.nombre}: ${pct} %`} />
-                    <p className="mt-1 text-[11px] tabular-nums text-subtle-muted">
+                    <p className="mt-1 text-2xs tabular-nums text-subtle-muted">
                       {competition.confirmados}/{competition.requeridos} · {pct}%
                     </p>
                   </DataTableCell>
@@ -438,7 +438,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity duration-100 hover:text-foreground group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
+                        className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity duration-(--duration-fast) hover:text-foreground group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
                         onClick={() =>
                           window.open(
                             `${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`,
@@ -460,7 +460,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive opacity-0 transition-opacity duration-100 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
+                          className="h-8 w-8 text-destructive opacity-0 transition-opacity duration-(--duration-fast) hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
                           disabled={deletingId === competition.id}
                           onClick={() => void deleteEvent(competition)}
                           aria-label={`Eliminar ${competition.nombre}`}

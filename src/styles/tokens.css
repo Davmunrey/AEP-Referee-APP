@@ -148,6 +148,20 @@
   --tracking-wider: 0.075em;
   --tracking-widest: 0.095em;
 
+  /* ── Medidas de composición ────────────────────────────────────────── */
+  /* Las que se repiten entre pantallas, con nombre. Se usan como
+   * `max-w-(--size-page)`. */
+  --size-page: 1360px; /* ancho máximo del contenido de una página */
+  --size-dialog-h: 90dvh; /* alto máximo de un diálogo */
+  --size-popover: min(22rem, calc(100vw - 2rem)); /* avisos, menús anchos */
+  --size-empty-state: 60vh; /* alto de una página vacía o de error */
+  --grid-dashboard: minmax(0, 1.6fr) minmax(320px, 1fr); /* columna principal + lateral */
+  --size-topbar: 3rem; /* alto de la barra superior */
+  --size-sidebar: 220px; /* menú lateral desplegado (232 px desde xl) */
+  --size-drawer: min(280px, 85vw); /* menú lateral en móvil */
+  --size-tarima-panel: 220px; /* columna de jueces de la tarima (crece por punto de corte) */
+  --grid-tarima: minmax(0, var(--size-tarima-panel)) 1fr;
+
   /* ── Capas (z-index) ───────────────────────────────────────────────── */
   /* Un orden con nombre en vez de números sueltos (10, 50, 60, 9999…): qué
    * tapa a qué se decide aquí una vez. Se usa como `z-(--z-modal)`. */
@@ -173,13 +187,22 @@
   /* Ritmo por defecto de cualquier `transition-*` que no declare duración ni
    * curva: unifica de una vez las decenas de `transition-colors` sueltos que
    * heredaban 150ms + ease-in-out (arranque lento = sensación de lag). */
-  --default-transition-duration: 150ms;
+  /* Duraciones con nombre: la respuesta a un toque, el cambio de estado, la
+   * entrada de un panel y los dos lentos (desplegables y barras). */
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+  --duration-enter: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+  --duration-shimmer: 1.6s; /* barrido de los esqueletos de carga */
+  --default-transition-duration: var(--duration-base);
   --default-transition-timing-function: var(--ease-out);
 
   /* Escalas de gesto: lo que encoge un botón al pulsarlo y desde dónde entra
    * un panel. Nunca desde 0: nada aparece de la nada. */
   --scale-press: 0.98;
   --scale-enter: 0.97;
+  --scale-lift: 1.01; /* zona de soltar con un archivo encima */
 
   /* ── Sombras (suaves, para fondo claro) ────────────────────────────── */
   /* Sombras casi imperceptibles: la jerarquía la marcan el plano y el borde
@@ -446,5 +469,24 @@
     --role-jueces-bg-to: var(--card);
     --role-financiero-bg-from: color-mix(in srgb, var(--success) 14%, var(--card));
     --role-financiero-bg-to: var(--card);
+  }
+}
+
+/* Medidas que crecen con la pantalla: la columna de jueces de la tarima y el
+ * menú lateral. Fuera de los bloques de tema porque no dependen de él. */
+@media (min-width: 1024px) {
+  :root {
+    --size-tarima-panel: 252px;
+  }
+}
+@media (min-width: 1280px) {
+  :root {
+    --size-tarima-panel: 272px;
+    --size-sidebar: 232px;
+  }
+}
+@media (min-width: 1536px) {
+  :root {
+    --size-tarima-panel: 292px;
   }
 }

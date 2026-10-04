@@ -350,7 +350,7 @@ export function ExamsManager({
           {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
             <button
               type="button"
-              className="flex items-center gap-1 rounded text-[11px] text-subtle-muted hover:text-foreground focus-ring"
+              className="flex items-center gap-1 rounded text-2xs text-subtle-muted hover:text-foreground focus-ring"
               onClick={() => { setFilterTipo("TODOS"); setFilterResultado("TODOS"); }}
             >
               <X className="h-3 w-3" />
@@ -358,7 +358,7 @@ export function ExamsManager({
             </button>
           )}
           {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
-            <span className="ml-auto text-[11px] text-subtle-muted">
+            <span className="ml-auto text-2xs text-subtle-muted">
               {filteredExams.length} de {exams.length}
             </span>
           )}
@@ -394,7 +394,7 @@ export function ExamsManager({
           return (
             <div key={exam.id} className="px-4 py-3.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[13px] font-semibold text-foreground">
+                <span className="text-ui font-semibold text-foreground">
                   {exam.tipo}
                 </span>
                 <Badge variant="muted">→ {exam.nivelObjetivo}</Badge>
@@ -404,11 +404,11 @@ export function ExamsManager({
                 </span>
               </div>
               {!lockedRefereeId && (
-                <p className="mt-1 text-[12px] font-medium text-foreground-secondary">
+                <p className="mt-1 text-xs font-medium text-foreground-secondary">
                   {exam.refereeName}
                 </p>
               )}
-              <p className="mt-0.5 text-[11.5px] text-subtle-muted">
+              <p className="mt-0.5 text-xs text-subtle-muted">
                 Examinador: {exam.examinador}
               </p>
               {pct != null && (
@@ -425,19 +425,19 @@ export function ExamsManager({
                       className={cn(
                         // Solo el ancho, y con la misma curva/duración que el
                         // resto de barras de progreso de la app.
-                        "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
+                        "h-full rounded-full transition-[width] duration-(--duration-slow) ease-(--ease-out)",
                         pct >= 60 ? "bg-success" : "bg-destructive",
                       )}
                       style={{ width: `${Math.max(pct, 3)}%` }}
                     />
                   </div>
-                  <span className="text-[11px] tabular-nums text-subtle-muted">
+                  <span className="text-2xs tabular-nums text-subtle-muted">
                     {exam.puntuacion}/{exam.puntuacionMaxima}
                   </span>
                 </div>
               )}
               {exam.notas && (
-                <p className="mt-1.5 text-[12px] leading-snug text-muted-foreground">
+                <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
                   {exam.notas}
                 </p>
               )}
@@ -448,7 +448,7 @@ export function ExamsManager({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1.5 rounded-lg border-success-border text-[11.5px] text-success hover:bg-success-muted hover:text-success"
+                        className="h-7 gap-1.5 rounded-lg border-success-border text-xs text-success hover:bg-success-muted hover:text-success"
                         disabled={busy}
                         onClick={() => mark(exam.id, "Aprobado")}
                       >
@@ -458,7 +458,7 @@ export function ExamsManager({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1.5 rounded-lg border-destructive-border text-[11.5px] text-destructive hover:bg-destructive-muted hover:text-destructive"
+                        className="h-7 gap-1.5 rounded-lg border-destructive-border text-xs text-destructive hover:bg-destructive-muted hover:text-destructive"
                         disabled={busy}
                         onClick={() => mark(exam.id, "Suspenso")}
                       >
@@ -471,7 +471,7 @@ export function ExamsManager({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 gap-1 rounded-lg text-[11.5px] text-subtle-muted hover:text-destructive"
+                      className="h-7 gap-1 rounded-lg text-xs text-subtle-muted hover:text-destructive"
                       disabled={busy}
                       onClick={() => remove(exam.id)}
                     >

@@ -11,7 +11,7 @@ export default function RegulationsLoading() {
       </div>
 
       {/* Secciones de lectura */}
-      <div className="max-w-[70ch] space-y-8 pt-2">
+      <div className="max-w-prose space-y-8 pt-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="space-y-2.5">
             <Skeleton className="h-5 w-1/3" />

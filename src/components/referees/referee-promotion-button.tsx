@@ -59,7 +59,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
     >
       <div
@@ -125,7 +125,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
                 maxLength={MOTIVO_MAX}
               />
               <span
-                className={`absolute bottom-2 right-3 text-[11px] tabular-nums ${
+                className={`absolute bottom-2 right-3 text-2xs tabular-nums ${
                   motivo.length >= MOTIVO_MAX * 0.9
                     ? "text-warning"
                     : "text-subtle-muted"

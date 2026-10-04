@@ -111,7 +111,7 @@ function EventBar({
       href={`/competitions/${event.id}`}
       title={eventTitle(event)}
       className={cn(
-        "flex h-6 min-w-0 items-center gap-1.5 rounded-md bg-surface px-1.5 text-[11px] font-medium leading-none text-foreground transition-colors hover:bg-surface-active focus-ring",
+        "flex h-6 min-w-0 items-center gap-1.5 rounded-md bg-surface px-1.5 text-2xs font-medium leading-none text-foreground transition-colors hover:bg-surface-active focus-ring",
         past && "text-muted-foreground",
         // La barra cruza el borde de la celda para unirse con la del día vecino.
         joinsLeft && "-ml-[7px] rounded-l-none pl-2",
@@ -126,7 +126,7 @@ function EventBar({
       )}
       {showLabel ? (
         <span
-          className="relative z-[1] min-w-0 shrink-0 truncate"
+          className="relative z-(--z-raised) min-w-0 shrink-0 truncate"
           // El nombre continúa sobre la barra de los días siguientes en vez de
           // cortarse en la primera celda («Campeonato de…»).
           style={{ maxWidth: `calc(${labelSpan * 100}% + ${(labelSpan - 1) * 12}px)` }}
@@ -193,7 +193,7 @@ export function OperationalCalendar({
     <Card role="region" aria-label="Calendario de campeonatos" className="overflow-hidden p-0">
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-border-muted px-4 py-3">
         <div className="flex items-baseline gap-2">
-          <CardTitle className="text-[15px]">Calendario</CardTitle>
+          <CardTitle className="text-title">Calendario</CardTitle>
           <span className="text-sm text-muted-foreground first-letter:uppercase" aria-live="polite">
             {MONTHS_ES[viewMonth]} {viewYear}
           </span>
@@ -275,7 +275,7 @@ export function OperationalCalendar({
                       // Antes era texto sin enlace: el tercer campeonato de un día
                       // no tenía forma de abrirse.
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="h-5 w-fit rounded px-1.5 text-left text-[11px] font-medium text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-ring">
+                        <DropdownMenuTrigger className="h-5 w-fit rounded px-1.5 text-left text-2xs font-medium text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-ring">
                           +{hidden} más
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-64">
@@ -313,7 +313,7 @@ export function OperationalCalendar({
               {agenda.map(({ cell, events }) => (
                 <li key={cell.key} className="flex gap-3 px-4 py-3">
                   <div className="w-10 shrink-0 text-center">
-                    <p className="text-[11px] text-muted-foreground">{WEEKDAYS[cell.weekday]}</p>
+                    <p className="text-2xs text-muted-foreground">{WEEKDAYS[cell.weekday]}</p>
                     <p
                       className={cn(
                         "mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",

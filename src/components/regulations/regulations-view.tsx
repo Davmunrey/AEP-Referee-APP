@@ -114,7 +114,7 @@ function IpfArticleList({
             </div>
             {isOpen && (
               <div id={`${anchorId}-content`} className="pb-4 pl-8 pr-2">
-                <p className="max-w-[70ch] whitespace-pre-line text-[15px] leading-relaxed text-foreground-secondary">
+                <p className="max-w-prose whitespace-pre-line text-title leading-relaxed text-foreground-secondary">
                   {query ? <HighlightText text={art.text} query={query} /> : art.text}
                 </p>
               </div>
@@ -302,7 +302,7 @@ export function RegulationsView() {
             })}
           </div>
 
-          <footer className="max-w-[70ch] space-y-1.5 border-t border-border-muted pt-4 text-sm leading-relaxed text-muted-foreground">
+          <footer className="max-w-prose space-y-1.5 border-t border-border-muted pt-4 text-sm leading-relaxed text-muted-foreground">
             <p>
               Fuente:{" "}
               <strong className="text-foreground-secondary">IPF Technical Rules (01/03/2026)</strong>

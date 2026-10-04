@@ -56,7 +56,7 @@ export function RosterStepper({
             >
               <span
                 className={cn(
-                  "flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold",
+                  "flex h-4 w-4 items-center justify-center rounded-full text-2xs font-semibold",
                   isCurrent && "bg-primary text-primary-foreground",
                   !isCurrent && done && "bg-success text-primary-foreground",
                   !isCurrent && !done && "bg-muted text-muted-foreground",

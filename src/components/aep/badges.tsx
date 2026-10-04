@@ -52,7 +52,7 @@ export function LevelBadge({
       className={cn(
         RANK_CLASS[LEVEL_RANK[level] ?? 0],
         // 11 px es el suelo de la casa; el tamaño «sm» compartido baja de ahí.
-        compact && "min-w-[1.25rem] justify-center px-1 text-[11px] tabular-nums",
+        compact && "min-w-[1.25rem] justify-center px-1 text-2xs tabular-nums",
       )}
     >
       {label}
@@ -113,7 +113,7 @@ export function ActivityTypeBadge({ tipo }: { tipo: string }) {
     cambio: "Cambio",
   };
   return (
-    <Badge variant={map[tipo] ?? "muted"} size="sm" className="text-[11px]">
+    <Badge variant={map[tipo] ?? "muted"} size="sm" className="text-2xs">
       {labels[tipo] ?? tipo}
     </Badge>
   );

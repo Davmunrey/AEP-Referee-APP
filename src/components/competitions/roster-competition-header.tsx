@@ -180,7 +180,7 @@ export function RosterCompetitionHeader({
               <span className="text-xs text-subtle-muted">{competition.aprobacion}</span>
             </div>
             <div className="flex items-center gap-1">
-              <h1 className="truncate text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">
+              <h1 className="truncate text-xl font-semibold leading-tight tracking-tight text-foreground">
                 {competition.nombre}
               </h1>
               {canEdit && (
@@ -298,7 +298,7 @@ export function RosterCompetitionHeader({
                 {convocatoria && (
                   <span
                     className={cn(
-                      "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
+                      "rounded-full px-1.5 text-2xs font-semibold tabular-nums",
                       convocatoria.abierta ? "bg-info-muted text-info" : "bg-surface-active text-muted-foreground",
                     )}
                   >

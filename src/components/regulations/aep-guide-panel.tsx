@@ -52,7 +52,7 @@ function MarksSection({
 export function AepGuidePanel() {
   return (
     <article className="max-w-3xl space-y-6">
-      <p className="max-w-[70ch] text-[15px] leading-relaxed text-foreground-secondary">
+      <p className="max-w-prose text-title leading-relaxed text-foreground-secondary">
         <strong className="font-semibold text-foreground">{AEP_GUIDE_META.title}</strong>, temporada{" "}
         {AEP_GUIDE_META.season}. Última actualización: {AEP_GUIDE_META.updatedLabel}. Referencia
         para delegados y comité de jueces en AEP Tarima; la convocatoria de cada campeonato

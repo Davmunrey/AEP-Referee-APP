@@ -22,11 +22,11 @@ export function ReadingSection({
   return (
     <section id={id} className="scroll-mt-20 border-t border-border-muted pt-6 first:border-t-0 first:pt-0">
       <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      {subtitle ? <p className="mt-1 max-w-[70ch] text-sm text-muted-foreground">{subtitle}</p> : null}
+      {subtitle ? <p className="mt-1 max-w-prose text-sm text-muted-foreground">{subtitle}</p> : null}
       <div
         className={cn(
-          "mt-3 space-y-3 text-[15px] leading-relaxed text-foreground-secondary",
-          wide ? "max-w-3xl" : "max-w-[70ch]",
+          "mt-3 space-y-3 text-title leading-relaxed text-foreground-secondary",
+          wide ? "max-w-3xl" : "max-w-prose",
         )}
       >
         {children}

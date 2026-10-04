@@ -86,11 +86,11 @@ export function MetricTile({ label, value, tone = "neutral", hint, href, classNa
       {/* El rótulo parte línea en vez de cortarse: en móvil, a dos columnas,
           «Aprobaciones pendientes» no cabe en una y «Aprobaciones pendie…»
           no dice qué se cuenta. */}
-      <p className="flex items-start gap-1.5 text-[13px] leading-snug text-muted-foreground">
+      <p className="flex items-start gap-1.5 text-ui leading-snug text-muted-foreground">
         {dot ? <span className={cn("mt-[0.4em] h-1.5 w-1.5 shrink-0 rounded-full", dot)} aria-hidden="true" /> : null}
         <span className="text-pretty">{label}</span>
       </p>
-      <p className="mt-1.5 truncate text-[26px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
+      <p className="mt-1.5 truncate text-display font-semibold leading-none tracking-tighter tabular-nums text-foreground">
         {value}
       </p>
       {hint ? <p className={cn("mt-1.5 text-pretty text-xs tabular-nums", HINT[tone])}>{hint}</p> : null}

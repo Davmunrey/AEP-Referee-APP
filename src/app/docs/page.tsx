@@ -113,7 +113,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
       <h2 id={`${id}-titulo`} className="text-xl font-semibold tracking-tight text-foreground">
         {title}
       </h2>
-      <div className="mt-3 space-y-4 text-[15px] leading-relaxed text-foreground-secondary">{children}</div>
+      <div className="mt-3 space-y-4 text-title leading-relaxed text-foreground-secondary">{children}</div>
     </section>
   );
 }
@@ -150,7 +150,7 @@ export default async function DocsPage() {
     <div className="min-h-screen bg-background">
       {/* Cabecera opaca: con la prosa pasando por debajo, un fondo translúcido
           solo añadía ruido a la lectura. */}
-      <header className="sticky top-0 z-10 border-b border-border bg-card">
+      <header className="sticky top-0 z-(--z-sticky) border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <Image
@@ -193,7 +193,7 @@ export default async function DocsPage() {
           </nav>
         </aside>
 
-        <main className="min-w-0 max-w-[70ch]">
+        <main className="min-w-0 max-w-prose">
           <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">
             Documentación de AEP Tarima
           </h1>
@@ -292,7 +292,7 @@ export default async function DocsPage() {
                 <h2 id="guia-privada-titulo" className="text-base font-semibold text-foreground">
                   Guía de uso para personal autorizado
                 </h2>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-foreground-secondary">
+                <p className="mt-1.5 text-title leading-relaxed text-foreground-secondary">
                   La guía paso a paso, el flujo de la tarima, los roles y permisos y las preguntas
                   frecuentes operativas están disponibles para las cuentas autorizadas por el
                   Comité de Jueces. Inicia sesión para consultarlas.

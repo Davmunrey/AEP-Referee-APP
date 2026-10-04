@@ -312,7 +312,7 @@ export function RefereesDirectory({
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
           <div className="flex items-center gap-1.5 text-subtle-muted">
             <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-[11px] font-semibold">Filtros</span>
+            <span className="text-2xs font-semibold">Filtros</span>
           </div>
           <div className="h-4 w-px bg-border" />
           <Input
@@ -464,7 +464,7 @@ export function RefereesDirectory({
                 {rows.map((referee) => (
                   <tr
                     key={referee.id}
-                    className="group border-b border-border/50 transition-colors duration-100 hover:bg-muted/30"
+                    className="group border-b border-border/50 transition-colors duration-(--duration-fast) hover:bg-muted/30"
                   >
                     <td className="px-4 py-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border-strong bg-muted text-xs font-semibold text-foreground-secondary">
@@ -497,14 +497,14 @@ export function RefereesDirectory({
                     {/* Las fechas son cifras: sin `tabular-nums` los dígitos
                         bailan de fila en fila y la columna deja de ser una
                         columna. */}
-                    <td className="px-4 py-2.5 text-[11px] tabular-nums text-subtle-muted">
+                    <td className="px-4 py-2.5 text-2xs tabular-nums text-subtle-muted">
                       {displayUltimo(referee.ultimo)}
                     </td>
                     {/* En puntero grueso (tablet) no hay hover: las acciones se
                         quedarían invisibles para siempre. Con el menú abierto
                         el puntero ya no está en la fila y el disparador tiene
                         que seguir a la vista. */}
-                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity duration-100 group-hover:opacity-100 pointer-coarse:opacity-100 focus-within:opacity-100 has-[[data-state=open]]:opacity-100">
+                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity duration-(--duration-fast) group-hover:opacity-100 pointer-coarse:opacity-100 focus-within:opacity-100 has-[[data-state=open]]:opacity-100">
                       {canEdit && (
                         <RowActions
                           referee={referee}

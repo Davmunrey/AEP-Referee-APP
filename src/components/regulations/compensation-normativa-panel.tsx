@@ -14,7 +14,7 @@ const linkClass = "rounded-sm text-primary underline underline-offset-2 hover:te
 export function CompensationNormativaPanel() {
   return (
     <article className="max-w-3xl space-y-6">
-      <div className="max-w-[70ch] space-y-2 text-[15px] leading-relaxed text-foreground-secondary">
+      <div className="max-w-prose space-y-2 text-title leading-relaxed text-foreground-secondary">
         <p>
           <strong className="font-semibold text-foreground">{COMPENSATION_NORMATIVA_META.title}</strong>:
           baremo vigente desde {COMPENSATION_NORMATIVA_META.revisionLabel}. La aplicación calcula

@@ -72,7 +72,7 @@ export function ReportCard({
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
-            <span className="text-[13px] font-semibold text-foreground">{report.titulo}</span>
+            <span className="text-ui font-semibold text-foreground">{report.titulo}</span>
             {typeBadge(report.tipo)}
             {safeAdjunto && (
               <span className="text-muted-foreground" aria-label="Tiene documento adjunto" title="Documento adjunto disponible">
@@ -80,14 +80,14 @@ export function ReportCard({
               </span>
             )}
           </span>
-          <span className="mt-0.5 block text-[11.5px] text-subtle-muted">
+          <span className="mt-0.5 block text-xs text-subtle-muted">
             {!lockedRefereeId && report.subjectType === "juez" && report.refereeName && <>{report.refereeName} · </>}
             {!lockedRefereeId && report.subjectType === "competicion" && report.competitionName && <>{report.competitionName} · </>}
             {report.autor} · {fmtDate(report.createdAt)}
             {report.subjectType === "juez" && report.evento ? ` · ${report.evento}` : ""}
           </span>
           {!isOpen && (
-            <span className="mt-1 block line-clamp-2 text-[12px] leading-relaxed text-foreground-secondary">
+            <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-foreground-secondary">
               {report.contenido}
             </span>
           )}
@@ -139,9 +139,9 @@ export function ReportCard({
             </div>
           ) : (
             <>
-              <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-foreground-secondary">{report.contenido}</p>
+              <p className="whitespace-pre-line text-ui leading-relaxed text-foreground-secondary">{report.contenido}</p>
               {safeAdjunto && (
-                <a href={safeAdjunto} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11.5px] font-medium text-primary hover:bg-surface-hover">
+                <a href={safeAdjunto} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-primary hover:bg-surface-hover">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Ver documento adjunto
                 </a>
@@ -151,13 +151,13 @@ export function ReportCard({
           {editingId !== report.id && (
             <div className="mt-3 flex items-center gap-2">
               {canEdit && (
-                <Button size="sm" variant="ghost" className="h-7 gap-1 rounded-lg text-[11.5px] text-subtle-muted hover:text-foreground" disabled={busy || editBusy} onClick={onStartEdit}>
+                <Button size="sm" variant="ghost" className="h-7 gap-1 rounded-lg text-xs text-subtle-muted hover:text-foreground" disabled={busy || editBusy} onClick={onStartEdit}>
                   <Pencil className="h-3 w-3" />
                   Editar
                 </Button>
               )}
               {canDelete && (
-                <Button size="sm" variant="ghost" className="h-7 gap-1 rounded-lg text-[11.5px] text-subtle-muted hover:text-destructive" disabled={busy || editBusy} onClick={onRemove}>
+                <Button size="sm" variant="ghost" className="h-7 gap-1 rounded-lg text-xs text-subtle-muted hover:text-destructive" disabled={busy || editBusy} onClick={onRemove}>
                   <Trash2 className="h-3 w-3" />
                   Eliminar informe
                 </Button>

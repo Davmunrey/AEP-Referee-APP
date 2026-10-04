@@ -34,7 +34,7 @@ export default async function ReportsPage() {
           la descripción la línea pasaba de 90 y costaba de leer. */}
       <div>
         <PageHeader title="Informes de zona" description="Informes de jueces y competiciones." />
-        <p className="mt-1 max-w-[75ch] text-pretty text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
+        <p className="mt-1 max-w-prose text-pretty text-ui leading-relaxed text-muted-foreground sm:text-sm">
           Delegado de zona ve su zona; nacional y superadmin ven todo.
         </p>
       </div>

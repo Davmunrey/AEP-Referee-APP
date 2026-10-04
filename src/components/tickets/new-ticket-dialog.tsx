@@ -104,7 +104,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={onClose}
     >
       <div
@@ -113,7 +113,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-ticket-title"
-        className={`max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-md outline-none ${dialogPanelEnter}`}
+        className={`max-h-(--size-dialog-h) w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-md outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between">
@@ -139,7 +139,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
               maxLength={140}
               required
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-2xs text-muted-foreground">
               Entre 4 y 140 caracteres.
             </p>
           </div>
@@ -175,7 +175,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
               rows={5}
               required
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-2xs text-muted-foreground">
               Entre 10 y 5000 caracteres.
             </p>
           </div>
@@ -200,7 +200,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
                 onChange={(e) => onPickFiles(e.target.files)}
               />
             </label>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-2xs text-muted-foreground">
               Máximo {TICKET_MAX_FILES} fotos · JPG, PNG, WEBP o GIF · hasta 5 MB cada una.
             </p>
 

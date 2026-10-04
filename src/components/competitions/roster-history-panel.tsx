@@ -122,7 +122,7 @@ export function RosterHistoryPanel({
         <div
           role="dialog"
           aria-label="Historial de cambios"
-          className="z-50 rounded-xl border border-border bg-background shadow-md max-md:fixed max-md:inset-x-4 max-md:top-16 md:absolute md:right-0 md:top-full md:mt-2 md:w-80"
+          className="z-(--z-modal) rounded-xl border border-border bg-background shadow-md max-md:fixed max-md:inset-x-4 max-md:top-16 md:absolute md:right-0 md:top-full md:mt-2 md:w-80"
         >
           <div className="flex items-center justify-between border-b border-border-muted px-4 py-3">
             <p className="text-xs font-semibold text-foreground">Historial de cambios</p>
@@ -168,7 +168,7 @@ export function RosterHistoryPanel({
                     {/* Timeline dot */}
                     <div
                       className={cn(
-                        "relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-background ring-2",
+                        "relative z-(--z-sticky) mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-background ring-2",
                         actionDotClass(e.action),
                       )}
                       aria-hidden="true"
@@ -176,18 +176,18 @@ export function RosterHistoryPanel({
                     <div className="min-w-0 flex-1 pb-0.5">
                       <p
                         className={cn(
-                          "text-[11.5px] font-medium leading-snug",
+                          "text-xs font-medium leading-snug",
                           actionTextClass(e.action),
                         )}
                       >
                         {e.action}
                       </p>
                       {e.detail && (
-                        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                        <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
                           {e.detail}
                         </p>
                       )}
-                      <p className="mt-1 text-[11px] text-subtle-muted">
+                      <p className="mt-1 text-2xs text-subtle-muted">
                         {e.actor}
                         {" · "}
                         <time

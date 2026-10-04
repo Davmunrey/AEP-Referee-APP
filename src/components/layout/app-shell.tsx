@@ -91,7 +91,7 @@ export function AppShell({
         />
       </div>
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden" role="dialog" aria-modal="true" aria-label="Menú">
+        <div className="fixed inset-0 z-(--z-drawer) flex md:hidden" role="dialog" aria-modal="true" aria-label="Menú">
           <button
             type="button"
             aria-label="Cerrar menú"

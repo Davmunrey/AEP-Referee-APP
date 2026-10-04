@@ -109,7 +109,7 @@ export function NewPromotionDialog({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
     >
       <div
@@ -152,7 +152,7 @@ export function NewPromotionDialog({
           {/* Level transition visual */}
           {selectedRef && (
             <div className="rounded-xl border border-border bg-muted/40 px-4 py-3">
-              <p className="mb-2 text-[11px] font-semibold text-subtle-muted">
+              <p className="mb-2 text-2xs font-semibold text-subtle-muted">
                 Transición de nivel
               </p>
               <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export function NewPromotionDialog({
                     aria-pressed={form.toLevel === l}
                     onClick={() => setForm((f) => ({ ...f, toLevel: l }))}
                     className={cn(
-                      "rounded-md border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-95 focus-ring",
+                      "rounded-md border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-(--duration-base) ease-(--ease-out) active:scale-95 focus-ring",
                       form.toLevel === l
                         ? "border-primary-border bg-primary-muted text-primary"
                         : "border-border bg-surface text-foreground hover:border-border-strong hover:bg-surface-hover",

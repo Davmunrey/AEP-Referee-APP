@@ -34,7 +34,7 @@ function ConfirmPanel({ pending }: { pending: PendingConfirm }) {
   const peligro = Boolean(pending.peligro);
   return (
     <div
-      className={cn("fixed inset-0 z-[70] flex items-end justify-center bg-overlay p-4 sm:items-center", dialogOverlayEnter)}
+      className={cn("fixed inset-0 z-(--z-confirm) flex items-end justify-center bg-overlay p-4 sm:items-center", dialogOverlayEnter)}
       onClick={() => settleConfirm(false)}
     >
       <div
@@ -55,7 +55,7 @@ function ConfirmPanel({ pending }: { pending: PendingConfirm }) {
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
           ) : null}
           <div className="min-w-0 space-y-1.5">
-            <h2 id="confirm-title" className="text-pretty text-[15px] font-semibold leading-snug text-foreground">
+            <h2 id="confirm-title" className="text-pretty text-title font-semibold leading-snug text-foreground">
               {pending.titulo}
             </h2>
             {pending.detalle ? (

@@ -55,6 +55,29 @@ describe("diseño: reglas de la casa", () => {
   });
 });
 
+describe("todo tokenizado", () => {
+  const rules: Array<[string, RegExp]> = [
+    ["tamaño de letra suelto (usa text-2xs, text-ui, text-title, text-heading, text-display…)", /\btext-\[\d+(?:\.\d+)?px\]/],
+    ["capa con número (usa z-(--z-…))", /\bz-\[\d+\]|(?<![\w-])z-[1-9]0\b/],
+    ["espaciado de letra suelto (usa tracking-tighter/tight/snug)", /\btracking-\[/],
+    ["duración con número (usa duration-(--duration-…))", /\bduration-\d+\b/],
+    ["escala suelta (usa scale-(--scale-…))", /\bscale-\[/],
+  ];
+  // También los .ts: las clases de movimiento compartidas viven en motion.ts.
+  const ts = (function walk(dir: string): string[] {
+    return readdirSync(dir).flatMap((name) => {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) return walk(path);
+      return path.endsWith(".ts") ? [path] : [];
+    });
+  })("src").map((path) => ({ path, text: stripComments(readFileSync(path, "utf8")) }));
+  for (const [label, pattern] of rules) {
+    it(`sin ${label}`, () => {
+      expect([...sources, ...ts].filter(({ text }) => pattern.test(text)).map(({ path }) => path)).toEqual([]);
+    });
+  }
+});
+
 describe("confirmar()", () => {
   it("sin anfitrión montado ni navegador, no confirma nada", async () => {
     await expect(confirmar({ titulo: "¿Eliminar?", peligro: true })).resolves.toBe(false);

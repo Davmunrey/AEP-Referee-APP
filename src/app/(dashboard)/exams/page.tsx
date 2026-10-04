@@ -39,7 +39,7 @@ export default async function ExamsPage() {
         />
         {/* 75 caracteres por línea como mucho: a lo ancho de la cabecera la
             nota pasaba de 90 y costaba seguirla de una línea a la siguiente. */}
-        <p className="mt-1.5 max-w-[75ch] text-pretty text-[13px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 max-w-prose text-pretty text-ui leading-relaxed text-muted-foreground">
           {AEP_JUDGE_LICENSE_NOTE}
         </p>
       </div>

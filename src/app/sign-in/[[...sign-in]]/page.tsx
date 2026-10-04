@@ -11,7 +11,7 @@ import { mensajeDeAcceso, SIN_ACCESO_PARAM, SIN_ACCESO_VALUE } from "@/lib/auth/
 // Mismo foco que el resto de la app: el anillo usa el token --ring (no el
 // primario a pelo) y se separa 1px del borde, igual que <Input>.
 const inputClass =
-  "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle-muted transition-[color,background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:border-primary-border hover:border-border-strong";
+  "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle-muted transition-[color,background-color,border-color,box-shadow] duration-(--duration-base) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:border-primary-border hover:border-border-strong";
 
 // Etiqueta visible encima de cada campo: con solo el placeholder, el nombre
 // del campo desaparecía al empezar a escribir.
@@ -20,7 +20,7 @@ const labelClass = "mb-1.5 block text-sm font-medium text-foreground";
 // Botones de la pantalla de acceso: no usan <Button> (esta ruta va sin el
 // bundle de la app), así que replican su gesto de pulsación.
 const submitClass =
-  "transition-[background-color,box-shadow,transform] duration-150 hover:bg-primary/90 active:scale-[0.98] focus-ring disabled:opacity-60 disabled:active:scale-100";
+  "transition-[background-color,box-shadow,transform] duration-(--duration-base) hover:bg-primary/90 active:scale-(--scale-press) focus-ring disabled:opacity-60 disabled:active:scale-100";
 
 export default function SignInPage() {
   const router = useRouter();

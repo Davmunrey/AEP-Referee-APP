@@ -61,7 +61,7 @@ function VersionBody({ version }: { version: ChangelogVersion }) {
     }
   }
   return (
-    <div className="space-y-2.5 text-[15px] leading-relaxed text-foreground-secondary">
+    <div className="space-y-2.5 text-title leading-relaxed text-foreground-secondary">
       {groups.map((group, i) =>
         group.type === "ul" ? (
           <ul key={i} className="space-y-1.5 pl-5">
@@ -126,7 +126,7 @@ function VersionHeading({ heading, current }: { heading: string; current?: boole
         <span className="font-semibold text-foreground">{title}</span>
         {codename && <span className="text-foreground-secondary">{codename}</span>}
         {current && (
-          <span className="rounded-full border border-border px-2 py-px text-[11px] font-medium text-muted-foreground">
+          <span className="rounded-full border border-border px-2 py-px text-2xs font-medium text-muted-foreground">
             actual
           </span>
         )}

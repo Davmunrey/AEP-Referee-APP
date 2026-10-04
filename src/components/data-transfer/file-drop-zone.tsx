@@ -73,16 +73,16 @@ export function FileDropZone({
         className={cn(
           // Misma ley que los huecos de la tarima: la zona crece un poco cuando
           // el archivo está encima, para que se note que va a aceptarlo.
-          "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) focus-ring",
+          "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-[color,background-color,border-color,box-shadow,scale] duration-(--duration-base) ease-(--ease-out) focus-ring",
           dragOver
-            ? "scale-[1.01] border-primary bg-primary-muted shadow-card"
-            : "border-border-muted bg-surface/50 hover:border-border-strong hover:bg-surface-hover active:scale-[0.995]",
+            ? "scale-(--scale-lift) border-primary bg-primary-muted shadow-card"
+            : "border-border-muted bg-surface/50 hover:border-border-strong hover:bg-surface-hover active:scale-(--scale-press)",
           disabled && "pointer-events-none opacity-50",
         )}
       >
         <Upload
           className={cn(
-            "h-8 w-8 transition-colors duration-150",
+            "h-8 w-8 transition-colors duration-(--duration-base)",
             dragOver ? "text-primary" : "text-subtle-muted",
           )}
           aria-hidden="true"

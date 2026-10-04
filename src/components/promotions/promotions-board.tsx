@@ -238,7 +238,7 @@ export function PromotionsBoard({
                                   <button
                                     type="button"
                                     onClick={() => toggleMotivo(p.id)}
-                                    className="mt-0.5 inline-flex items-center gap-0.5 rounded text-[11px] text-primary hover:underline focus-ring"
+                                    className="mt-0.5 inline-flex items-center gap-0.5 rounded text-2xs text-primary hover:underline focus-ring"
                                   >
                                     {motivoExpanded ? (
                                       <>

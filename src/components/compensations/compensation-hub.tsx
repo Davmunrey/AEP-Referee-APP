@@ -38,7 +38,7 @@ type HubItem = CompensationHubSummary["items"][number];
 function ExportChip({ item }: { item: HubItem }) {
   if (item.readyForExport) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-success-muted px-1.5 py-0.5 text-[11px] font-medium text-success">
+      <span className="inline-flex items-center gap-1 rounded-md bg-success-muted px-1.5 py-0.5 text-2xs font-medium text-success">
         <CheckCircle2 className="h-3 w-3" />
         Listo
       </span>
@@ -46,7 +46,7 @@ function ExportChip({ item }: { item: HubItem }) {
   }
   if (item.pendingKmCount > 0) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-1.5 py-0.5 text-[11px] font-medium text-warning">
+      <span className="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-1.5 py-0.5 text-2xs font-medium text-warning">
         <AlertCircle className="h-3 w-3" />
         {item.pendingKmCount} km pend.
       </span>
@@ -54,7 +54,7 @@ function ExportChip({ item }: { item: HubItem }) {
   }
   if (item.issueCount > 0) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-1.5 py-0.5 text-[11px] font-medium text-warning">
+      <span className="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-1.5 py-0.5 text-2xs font-medium text-warning">
         Revisar
       </span>
     );
@@ -73,7 +73,7 @@ function ItemAmount({ item }: { item: HubItem }) {
     return (
       <span className="font-normal text-muted-foreground">
         {formatReceiptAmountEur(item.provisionalTotal)}
-        <span className="ml-1 text-[11px]">prov.</span>
+        <span className="ml-1 text-2xs">prov.</span>
       </span>
     );
   }

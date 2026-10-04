@@ -200,12 +200,12 @@ export function TicketsBoard({
                     <p className="mt-2 truncate text-sm font-semibold text-foreground">
                       {t.titulo}
                     </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
+                    <p className="mt-1 text-2xs text-muted-foreground">
                       {t.createdByName} · {relativeDate(t.createdAt)}
                     </p>
                   </div>
                   <span
-                    className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground"
+                    className="flex shrink-0 items-center gap-1 text-2xs text-muted-foreground"
                     aria-label={contar(t.commentCount, "comentario", "comentarios")}
                   >
                     <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
@@ -219,7 +219,7 @@ export function TicketsBoard({
                       <AttachmentThumb key={a.id} attachment={a} />
                     ))}
                     {photos.length > 4 && (
-                      <span className="flex h-10 w-10 items-center justify-center rounded bg-muted text-[11px] font-medium text-muted-foreground">
+                      <span className="flex h-10 w-10 items-center justify-center rounded bg-muted text-2xs font-medium text-muted-foreground">
                         +{photos.length - 4}
                       </span>
                     )}

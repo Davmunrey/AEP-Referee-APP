@@ -25,7 +25,7 @@ export default async function PortalCallPage({ params }: { params: Promise<{ id:
         Convocatorias
       </Link>
       <div>
-        <h1 className="text-[22px] font-semibold leading-tight text-foreground">{item.competitionName}</h1>
+        <h1 className="text-heading font-semibold leading-tight text-foreground">{item.competitionName}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {formatDateRange(item.fecha, item.fechaFin)} · {item.tipo} · {item.sede}
           {item.zona ? ` · ${zoneUiName(item.zona)}` : ""}

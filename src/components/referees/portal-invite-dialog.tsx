@@ -74,7 +74,7 @@ export function PortalInviteDialog({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={sending ? undefined : onClose}
     >
       <div

@@ -8,10 +8,10 @@ export default async function PortalSessionsPage() {
   const { data } = await loadPortal();
   return (
     <div className="space-y-6">
-      <h1 className="text-[22px] font-semibold text-foreground">Mis sesiones</h1>
+      <h1 className="text-heading font-semibold text-foreground">Mis sesiones</h1>
 
       <section aria-labelledby="proximas" className="space-y-3">
-        <h2 id="proximas" className="text-[15px] font-semibold text-foreground">Próximas</h2>
+        <h2 id="proximas" className="text-title font-semibold text-foreground">Próximas</h2>
         {data.upcoming.length === 0 ? (
           <p className="surface-card rounded-xl px-4 py-6 text-center text-sm text-muted-foreground">
             No tienes designaciones próximas.
@@ -22,7 +22,7 @@ export default async function PortalSessionsPage() {
       </section>
 
       <section aria-labelledby="historial" className="space-y-3">
-        <h2 id="historial" className="text-[15px] font-semibold text-foreground">Historial</h2>
+        <h2 id="historial" className="text-title font-semibold text-foreground">Historial</h2>
         {data.past.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay campeonatos en tu historial.</p>
         ) : (
