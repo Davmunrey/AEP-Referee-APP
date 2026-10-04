@@ -12,7 +12,7 @@ export function SanctionsAlerts({ alerts }: { alerts: SanctionAlert[] }) {
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <ShieldBan className="h-4 w-4 text-warning" aria-hidden="true" />
           Sanciones activas
-          <span className="rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 text-[11px] font-semibold text-warning">
+          <span className="rounded-md bg-warning-muted px-1.5 py-0.5 text-[11px] font-semibold text-warning">
             {alerts.length}
           </span>
         </CardTitle>

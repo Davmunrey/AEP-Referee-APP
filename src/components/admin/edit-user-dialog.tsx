@@ -49,7 +49,7 @@ export function EditUserDialog({
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div ref={panelRef} tabIndex={-1} className={`outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl ${dialogPanelEnter}`}>
+      <div ref={panelRef} tabIndex={-1} className={`outline-none w-full max-w-sm rounded-xl border border-border-strong bg-card p-6 shadow-md ${dialogPanelEnter}`}>
         <h3 id="edit-user-title" className="text-base font-semibold text-foreground">
           Editar usuario
         </h3>

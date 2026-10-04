@@ -126,7 +126,7 @@ export function NewPromotionDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-promo-title"
-        className={`w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl outline-none ${dialogPanelEnter}`}
+        className={`w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-md outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between">
@@ -193,9 +193,9 @@ export function NewPromotionDialog({
                     aria-pressed={form.toLevel === l}
                     onClick={() => setForm((f) => ({ ...f, toLevel: l }))}
                     className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-95 focus-ring",
+                      "rounded-md border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-95 focus-ring",
                       form.toLevel === l
-                        ? "border-primary bg-primary text-primary-foreground shadow-glow-primary"
+                        ? "border-primary-border bg-primary-muted text-primary"
                         : "border-border bg-surface text-foreground hover:border-border-strong hover:bg-surface-hover",
                     )}
                   >

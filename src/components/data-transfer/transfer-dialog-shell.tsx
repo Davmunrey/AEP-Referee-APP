@@ -88,7 +88,7 @@ export function TransferDialogShell({
           // keyframe `transfer-enter`, que además duplicaba la entrada: el marco
           // y su contenido subían a la vez y el gesto se leía borroso. Ese
           // keyframe sigue siendo el de los pasos interiores, no el del marco.
-          "flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-2xl border border-border-muted bg-card shadow-card",
+          "flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-xl border border-border-muted bg-card shadow-card",
           dialogPanelEnter,
           maxWidthClass,
         )}

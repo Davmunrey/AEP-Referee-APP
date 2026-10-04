@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function DashboardNotFound() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-6 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface text-3xl font-bold text-muted-foreground/30">
+      <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-surface text-3xl font-semibold text-muted-foreground/30">
         404
       </div>
       <div className="space-y-1">

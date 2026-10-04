@@ -29,7 +29,7 @@ export default function TicketsLoading() {
 
       {/* Filas */}
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-2xl border border-border p-4">
+        <div key={i} className="space-y-3 rounded-xl border border-border p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex gap-2">

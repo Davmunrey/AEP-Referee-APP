@@ -71,7 +71,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       onClick={() => setOpen((o) => !o)}
       aria-label={open ? "Cerrar ayuda" : "Abrir ayuda"}
       aria-expanded={open}
-      // Sombra teñida con el propio color del botón (los shadow-lg/xl de serie
+      // Sombra teñida con el propio color del botón (los shadow-md/xl de serie
       // son negro plano y no pertenecen a la escala del tema). El scale al
       // pulsar devuelve la sensación de que el botón ha oído el clic.
       className="fixed bottom-5 right-5 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground-secondary shadow-md transition-[background-color,color,box-shadow,transform] duration-150 hover:bg-surface hover:text-foreground active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -161,7 +161,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
               <ol className="mt-2.5 space-y-3">
                 {steps.map((step, i) => (
                   <li key={step.title} className="relative pl-8">
-                    <span className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    <span className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                       {i + 1}
                     </span>
                     <p className="text-sm font-medium text-foreground">{step.title}</p>
@@ -195,7 +195,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                       setQuery(t.question);
                       inputRef.current?.focus();
                     }}
-                    className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground-secondary transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-ring"
+                    className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground-secondary transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-ring"
                   >
                     {t.question}
                   </button>

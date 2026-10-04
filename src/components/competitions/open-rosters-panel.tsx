@@ -18,7 +18,7 @@ export function OpenRostersPanel({ competitions, maxItems = 6 }: OpenRostersPane
   if (active.length === 0) return null;
 
   return (
-    <section className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-card">
+    <section className="mb-6 rounded-xl border border-border bg-card p-4 shadow-card">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <LayoutGrid className="h-4 w-4 text-primary" aria-hidden />

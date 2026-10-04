@@ -130,7 +130,7 @@ function SummaryMetric({
   return (
     <div className="rounded-xl border border-border-muted bg-surface/60 px-3 py-2.5">
       <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-bold tabular-nums tracking-tight text-foreground">{value}</p>
+      <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
       {hint ? <p className="mt-0.5 text-[11px] text-subtle-muted">{hint}</p> : null}
     </div>
   );
@@ -196,7 +196,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                   onClick={() => router.push(`/analytics?year=${y}`)}
                   aria-pressed={y === data.selectedYear}
                   className={cn(
-                    "rounded-full border px-3 py-1.5 text-[11px] font-medium tabular-nums transition-colors focus-ring",
+                    "rounded-md border px-3 py-1.5 text-[11px] font-medium tabular-nums transition-colors focus-ring",
                     y === data.selectedYear
                       ? "border-primary/40 bg-primary/10 text-primary"
                       : "border-border text-subtle-muted hover:bg-surface-hover",
@@ -225,7 +225,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               role="img"
               aria-label={`Cobertura anual ${yearCoveragePct ?? 0} por ciento`}
             >
-              <span className={cn("text-3xl font-bold tabular-nums tracking-tight", yearTone.value)}>
+              <span className={cn("text-3xl font-semibold tabular-nums tracking-tight", yearTone.value)}>
                 {yearCoveragePct != null ? `${yearCoveragePct}%` : "—"}
               </span>
             </div>
@@ -256,7 +256,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
       </section>
 
       {data.crossZoneSummary && data.crossZoneSummary.totalCrossZoneSlots > 0 && (
-        <section className="flex items-start gap-3 rounded-2xl border border-warning-border bg-warning-subtle px-4 py-3.5">
+        <section className="flex items-start gap-3 rounded-xl border border-warning-border bg-warning-subtle px-4 py-3.5">
           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-warning-border bg-warning-muted">
             <ArrowLeftRight className="h-4 w-4 text-warning" aria-hidden="true" />
           </span>
@@ -377,7 +377,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                       </DataTableCell>
                       <DataTableCell className="text-right">
                         {(row.crossZoneSlots ?? 0) > 0 ? (
-                          <span className="inline-flex min-w-[2rem] justify-end rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 text-xs font-semibold text-warning">
+                          <span className="inline-flex min-w-[2rem] justify-end rounded-md bg-warning-muted px-1.5 py-0.5 text-xs font-semibold text-warning">
                             {row.crossZoneSlots}
                           </span>
                         ) : (
@@ -421,7 +421,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                 <div key={r.id} className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-surface-hover">
                   <span
                     className={cn(
-"flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-bold tabular-nums",
+"flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold tabular-nums",
                       rankTone,
                     )}
                   >
@@ -497,7 +497,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
             <CardTitle className="text-sm">Campeonatos críticos · {data.selectedYear}</CardTitle>
           </div>
           {data.criticalEvents.length > 0 && (
-            <span className="rounded-full border border-destructive-border bg-destructive-muted px-2.5 py-0.5 text-xs font-semibold text-destructive">
+            <span className="rounded-md bg-destructive-muted px-1.5 py-0.5 text-xs font-semibold text-destructive">
               {data.criticalEvents.length}
             </span>
           )}

@@ -89,7 +89,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
         <div className="px-5 py-4">
           <div className="flex flex-wrap items-start gap-4">
             {/* Avatar */}
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/20 bg-primary/10 text-lg font-bold text-primary">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border-2 border-primary/20 bg-primary/10 text-lg font-semibold text-primary">
               {referee.iniciales}
             </span>
 
@@ -100,7 +100,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
               </p>
               {/* La tarjeta ES la cabecera: antes un PageHeader encima repetía
                   nombre y zona. Este es el h1 de la página. */}
-              <h1 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+              <h1 className="mt-0.5 text-xl font-semibold tracking-tight text-foreground">
                 {referee.nombre}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -200,7 +200,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                       {item.positions.map((position) => (
                         <span
                           key={position.slotKey}
-                          className="rounded-full border border-border-muted bg-surface px-2 py-1 text-[11px] font-medium text-muted-foreground"
+                          className="rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-inset ring-border"
                         >
                           {position.session} · {position.roleLabel} · Hueco {position.slotIndex + 1}
                           {position.flags?.compartido ? " · *" : ""}
@@ -321,7 +321,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
             <Card key={t.label}>
               <CardContent className="px-4 py-3.5">
                 <p className="friendly-label mb-1">{t.label}</p>
-                <p className="text-2xl font-bold tracking-tight text-foreground">
+                <p className="text-2xl font-semibold tracking-tight text-foreground">
                   {t.value}
                 </p>
               </CardContent>

@@ -116,7 +116,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
           </Button>
         </EmptyState>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border-muted">
+        <div className="overflow-hidden rounded-xl border border-border-muted">
           <DataTable>
             <DataTableHead>
               <DataTableHeaderRow>
@@ -151,17 +151,17 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <EventStatusBadge status={item.estado} />
                       {item.readyForExport ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-success-border bg-success-muted px-2 py-0.5 text-[10px] font-medium text-success">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-success-muted px-1.5 py-0.5 text-[11px] font-medium text-success">
                           <CheckCircle2 className="h-3 w-3" />
                           Listo
                         </span>
                       ) : item.pendingKmCount > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-warning-border bg-warning-subtle px-2 py-0.5 text-[10px] font-medium text-warning">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-1.5 py-0.5 text-[11px] font-medium text-warning">
                           <AlertCircle className="h-3 w-3" />
                           {item.pendingKmCount} km pend.
                         </span>
                       ) : item.issueCount > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-warning-border bg-warning-subtle px-2 py-0.5 text-[10px] font-medium text-warning">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-1.5 py-0.5 text-[11px] font-medium text-warning">
                           Revisar
                         </span>
                       ) : null}

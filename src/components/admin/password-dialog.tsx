@@ -76,7 +76,7 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div ref={panelRef} tabIndex={-1} className={`outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl ${dialogPanelEnter}`}>
+      <div ref={panelRef} tabIndex={-1} className={`outline-none w-full max-w-sm rounded-xl border border-border-strong bg-card p-6 shadow-md ${dialogPanelEnter}`}>
         <h3 id="password-title" className="text-base font-semibold text-foreground">
           {mode === "self" ? "Cambiar mi contraseña" : "Resetear contraseña"}
         </h3>

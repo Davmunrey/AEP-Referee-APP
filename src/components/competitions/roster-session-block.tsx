@@ -37,7 +37,7 @@ export function RequiredSlotsChips({
       {groups.map((group) => (
         <span
           key={group.key}
-          className="inline-flex items-center gap-1 rounded-full border border-border-muted bg-background/60 px-1.5 py-0.5 text-[10px] text-foreground-secondary"
+          className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[11px] text-foreground-secondary"
         >
           {group.label}
           <span className="font-semibold text-foreground">{group.count}</span>

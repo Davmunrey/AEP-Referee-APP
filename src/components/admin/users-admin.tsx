@@ -314,7 +314,7 @@ export function UsersAdmin({
       {/* Create user form */}
       <form
         onSubmit={(e) => void onSubmit(e)}
-        className="glass-panel mb-8 grid gap-4 rounded-2xl border border-border-muted p-6 md:grid-cols-2"
+        className="glass-panel mb-8 grid gap-4 rounded-xl border border-border-muted p-6 md:grid-cols-2"
       >
         <h2 className="friendly-label md:col-span-2">Nuevo usuario</h2>
         <Input placeholder="Email" aria-label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
@@ -440,7 +440,7 @@ export function UsersAdmin({
                   </DataTableCell>
                   <DataTableCell>
                     <div className="flex items-center gap-2.5">
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary" aria-hidden="true">{initials}</span>
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary" aria-hidden="true">{initials}</span>
                       <span className="font-medium text-foreground">{u.nombre}</span>
                     </div>
                   </DataTableCell>
