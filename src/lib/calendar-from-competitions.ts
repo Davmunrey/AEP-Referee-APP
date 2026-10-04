@@ -29,9 +29,20 @@ export function calendarEventsFromCompetitions(
   competitions: Competition[],
 ): Record<string, CalendarDayEvent[]> {
   const out: Record<string, CalendarDayEvent[]> = {};
-  for (const c of competitions) {
-    const label =
-      c.nombre.length > 28 ? `${c.nombre.slice(0, 26).trim()}…` : c.nombre;
+  // Orden estable: primero lo que empieza antes y, a igual inicio, lo que dura
+  // más. Así un campeonato de varios días ocupa la misma fila en todos sus días
+  // en lugar de saltar de posición según quién más caiga ese día.
+  const ordered = [...competitions].sort(
+    (a, b) =>
+      a.fecha.localeCompare(b.fecha) ||
+      (b.fechaFin || b.fecha).localeCompare(a.fechaFin || a.fecha) ||
+      a.nombre.localeCompare(b.nombre, "es") ||
+      a.id.localeCompare(b.id),
+  );
+  for (const c of ordered) {
+    // Nombre entero: antes se cortaba aquí a 28 caracteres y el recorte acababa
+    // también en el título emergente, donde sí cabe completo.
+    const label = c.nombre;
     const start = parseIsoDate(c.fecha);
     const end = parseIsoDate(c.fechaFin || c.fecha);
     if (!start || !end || end < start) continue;
@@ -46,6 +57,8 @@ export function calendarEventsFromCompetitions(
       day.push({
         id: c.id,
         label,
+        sede: c.sede || undefined,
+        zona: c.zona || undefined,
         tipo: c.tipo,
         estado: c.estado,
         fecha: c.fecha,

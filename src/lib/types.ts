@@ -206,7 +206,10 @@ export interface ActivityItem {
 
 export interface CalendarDayEvent {
   id: string;
+  /** Nombre completo; el recorte lo hace la interfaz según el espacio. */
   label: string;
+  sede?: string;
+  zona?: string;
   tipo: EventType;
   estado: EventStatus;
   fecha: string;

@@ -216,9 +216,13 @@ export const analyticsService = {
     ]);
     if (activityError) throw new Error(`activity_log: ${activityError.message}`);
 
-    const competitions = (competitionRows ?? []).map((r) =>
-      mapCompetition(r as Record<string, unknown>),
-    );
+    // El `.eq("zona")` de la consulta solo se aplica cuando la zona del
+    // delegado se reconoce. Con la zona vacía o ilegible no había filtro y el
+    // delegado veía en el calendario, los KPIs y la cobertura los campeonatos
+    // de toda España (el twin en memoria sí filtraba). Fail-closed aquí.
+    const competitions = (competitionRows ?? [])
+      .map((r) => mapCompetition(r as Record<string, unknown>))
+      .filter((c) => visibleEnZona(c.zona));
     // El dashboard es operativo: solo campeonatos no celebrados. Sin filtro,
     // eventos de temporadas pasadas inflaban KPIs, salud e insights para
     // siempre y encabezaban la tabla de "próximos". El calendario sí conserva
@@ -260,7 +264,9 @@ export const analyticsService = {
     const activityItems = (activity ?? [])
       .map((r) => mapActivity(r as Record<string, unknown>))
       .filter((item) => zoneScopeOf(user).kind === "all" || competitionNames.has(item.evento));
-    const scopedReferees = (referees ?? []) as { estado: string; disp?: boolean }[];
+    const scopedReferees = ((referees ?? []) as { estado: string; disp?: boolean; zona?: unknown }[]).filter(
+      (r) => visibleEnZona(String(r.zona ?? "")),
+    );
     const inUserZone = (r: { zona?: unknown }) => visibleEnZona(String(r.zona ?? ""));
     const scopedApprovals = ((approvals ?? []) as { status: string; zona?: unknown }[]).filter(
       inUserZone,

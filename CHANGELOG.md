@@ -16,6 +16,8 @@ Varios delegados en la misma tarima, o cada uno en la suya, sin que nadie pierda
 - **Todas las pantallas con el estilo nuevo**: radios, sombras y pesos de letra unificados en las 43 pantallas y componentes que aún tenían restos del estilo anterior; etiquetas de estado como insignias sin borde y selecciones en tono suave en lugar de rojo macizo.
 - **Diálogos que se usan con teclado**: el tabulador ya no se escapa a la página de detrás, al cerrar el foco vuelve al botón que abrió el diálogo y la página no se desplaza mientras está abierto. Los diálogos de exportar recibo, disponibilidad y editar campeonato, además, ya se cierran con Escape.
 - **Más rápida con mucha gente conectada**: las pestañas en segundo plano ya no se recargan con cada cambio de cualquiera, las ráfagas de avisos se agrupan, la tarima se carga con 2 consultas en vez de 6, cada asignación hace 4 consultas menos y el panel de inicio ya no descarga el histórico entero de plantillas y asignaciones en cada visita (solo lo vigente).
+- **Calendario rehecho**: un solo color por campeonato (en el borde de la barra, antes cuatro veces por día), los de varios días se ven como una barra continua con el nombre completo, los ya celebrados en gris, botón «Hoy» y, en el móvil, una agenda del mes legible en vez de una rejilla de 50 px. «+N más» ahora abre la lista del día con enlace a cada campeonato (antes era texto sin enlace).
+- **El calendario respeta la zona**: un delegado con la zona sin reconocer veía en el panel de inicio los campeonatos y jueces de toda España; ahora no ve ninguno, igual que en el resto de la app.
 
 ---
 
