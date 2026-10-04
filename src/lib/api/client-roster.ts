@@ -18,10 +18,15 @@ export const rosterApi = {
       `/competitions/${competitionId}/roster`,
     ),
 
-  saveTemplate: (competitionId: string, template: RosterSession[]) =>
+  /**
+   * `baseHash` es la huella de la plantilla sobre la que se editó (ver
+   * `rosterTemplateHash`); el servidor responde 409 si otra persona la cambió
+   * entretanto. Sin él, se sobrescribe.
+   */
+  saveTemplate: (competitionId: string, template: RosterSession[], baseHash?: string) =>
     request<{ template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }>(
       `/competitions/${competitionId}/roster/template`,
-      { method: "PUT", body: JSON.stringify({ template }) },
+      { method: "PUT", body: JSON.stringify(baseHash ? { template, baseHash } : { template }) },
     ),
 
   /**

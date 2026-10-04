@@ -4,6 +4,19 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🤝 **AEP Tarima v2.7** — _«Todos a la vez»_ (2026-10-04)
+
+Varios delegados en la misma tarima, o cada uno en la suya, sin que nadie pierda nada.
+
+- **Dos personas sobre el mismo hueco**: la escritura es condicional en la propia base de datos. Antes se comprobaba y luego se escribía, y en ese instante otro podía colarse; ahora gana el primero y el segundo recibe «Otro usuario acaba de cambiar ese hueco».
+- **La plantilla ya no se pisa**: si otra persona la guardó mientras tú la editabas, la app te pregunta si sustituir su versión o cargar la actual. Antes ganaba el último en guardar y se perdían las sesiones (y los jueces) del otro.
+- **Importar un cuadrante** no pisa lo que otro asignó entre la vista previa y «Aplicar»; esos huecos se informan uno a uno.
+- **Editar un campeonato** solo envía lo que cambias: corregir la sede ya no devuelve la fecha a su valor antiguo si otro la acababa de cambiar.
+- **Siempre al día**: si entra un cambio de otro mientras editas la plantilla, al terminar se cargan los datos actuales (antes se quedaba fuera hasta el siguiente cambio).
+- **Más rápida con mucha gente conectada**: las pestañas en segundo plano ya no se recargan con cada cambio de cualquiera, las ráfagas de avisos se agrupan, la tarima se carga con 2 consultas en vez de 6 y cada asignación hace 4 consultas menos.
+
+---
+
 ## 🌙 **AEP Tarima v2.6** — _«De noche también»_ (2026-10-04)
 
 Para quien monta tarimas a última hora y para la pantalla más usada de la app.

@@ -1,5 +1,6 @@
 "use client";
 
+import { rosterTemplateHash } from "@/lib/roster-template-hash";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -214,8 +215,18 @@ export function RosterBuilder({
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
 
+  // Si llega un cambio del servidor mientras se edita o hay una operación en
+  // curso, se aparta; al terminar se piden los datos actuales (ver abajo).
+  // Antes simplemente se perdía: al cancelar la edición, la tarima seguía sin
+  // las asignaciones que otro delegado había hecho entretanto.
+  const skippedServerUpdateRef = useRef(false);
+
   useEffect(() => {
-    if (isEditingRef.current || pendingRef.current) return;
+    if (isEditingRef.current || pendingRef.current) {
+      skippedServerUpdateRef.current = true;
+      return;
+    }
+    skippedServerUpdateRef.current = false;
     setTemplate(initialTemplate);
     setAssignments(initialAssignments);
     setFlags(initialFlags);
@@ -228,6 +239,14 @@ export function RosterBuilder({
     initialCrossZoneMap,
     initialTemplate,
   ]);
+
+  useEffect(() => {
+    if (isEditing || pending || !skippedServerUpdateRef.current) return;
+    skippedServerUpdateRef.current = false;
+    // No se aplica la instantánea apartada (puede ser anterior a lo que este
+    // usuario acaba de guardar): se pide la actual.
+    refreshCompetitionList();
+  }, [isEditing, pending, refreshCompetitionList]);
 
   const handleUnlockImprevisto = () => {
     const pendingApproval = isRosterPendingApproval(aprobacion);
@@ -423,14 +442,41 @@ export function RosterBuilder({
 
   const saveTemplate = (next: RosterSession[]) => {
     setSavingTemplate(true);
+    // Mientras se edita no entran los cambios del servidor, así que `template`
+    // sigue siendo la versión sobre la que se empezó a editar: su huella es la
+    // que el servidor compara para no pisar a otra persona.
+    const baseHash = rosterTemplateHash(template);
     startTransition(async () => {
-      try {
-        const res = await api.saveTemplate(competition.id, next);
+      const aplicar = (res: Awaited<ReturnType<typeof api.saveTemplate>>) => {
         setTemplate(res.template); setAssignments(res.assignments); setFlags(res.flags);
         setIsEditing(false); setWorkflowStep("asignacion");
         setStatusMsg("Plantilla guardada"); setStatusIsError(false);
         refreshCompetitionList();
-      } catch (err) { setStatusMsg(formatApiError(err, "No se pudo guardar la plantilla")); setStatusIsError(true); }
+      };
+      try {
+        aplicar(await api.saveTemplate(competition.id, next, baseHash));
+      } catch (err) {
+        if (err instanceof ApiRequestError && err.status === 409) {
+          const sobrescribir = window.confirm(
+            "Otra persona ha cambiado la plantilla mientras la editabas.\n\n" +
+              "Aceptar: guardar tu versión y sustituir la suya.\n" +
+              "Cancelar: descartar tus cambios y cargar la versión actual.",
+          );
+          if (sobrescribir) {
+            try {
+              aplicar(await api.saveTemplate(competition.id, next));
+            } catch (err2) {
+              setStatusMsg(formatApiError(err2, "No se pudo guardar la plantilla")); setStatusIsError(true);
+            }
+          } else {
+            setIsEditing(false);
+            setStatusMsg("Se ha cargado la plantilla actual; tus cambios no se han guardado."); setStatusIsError(true);
+            router.refresh();
+          }
+        } else {
+          setStatusMsg(formatApiError(err, "No se pudo guardar la plantilla")); setStatusIsError(true);
+        }
+      }
       finally { setSavingTemplate(false); }
     });
   };

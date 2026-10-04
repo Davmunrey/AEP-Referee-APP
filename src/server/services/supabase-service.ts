@@ -37,6 +37,7 @@ export const supabaseDataService = {
   getCompetitions: competitionService.getCompetitions,
   getCompetitionOptions: competitionService.getCompetitionOptions,
   getCompetition: competitionService.getCompetition,
+  getCompetitionWithRoster: competitionService.getCompetitionWithRoster,
   createCompetition: competitionService.createCompetition,
   updateCompetition: competitionService.updateCompetition,
   deleteCompetition: competitionService.deleteCompetition,
@@ -56,11 +57,22 @@ export const supabaseDataService = {
   // ── Roster ────────────────────────────────────────────────────────────────
   getRoster: (competitionId: string) =>
     rosterService.getRoster(competitionId, competitionService.getCompetition),
-  saveCompetitionTemplate: (competitionId: string, template: import("@/lib/types").RosterSession[], actor: string) =>
-    rosterService.saveCompetitionTemplate(competitionId, template, actor, competitionService.getCompetition),
+  saveCompetitionTemplate: (
+    competitionId: string,
+    template: import("@/lib/types").RosterSession[],
+    actor: string,
+    baseHash?: string,
+  ) =>
+    rosterService.saveCompetitionTemplate(
+      competitionId,
+      template,
+      actor,
+      competitionService.getCompetitionRow,
+      baseHash,
+    ),
   setSlotFlags: rosterService.setSlotFlags,
   validateAssign: (competitionId: string, slotKey: string, refereeId: string) =>
-    rosterService.validateAssign(competitionId, slotKey, refereeId, competitionService.getCompetition, refereeService.getReferee),
+    rosterService.validateAssign(competitionId, slotKey, refereeId, competitionService.getCompetitionRow, refereeService.getReferee),
   assignReferee: (
     competitionId: string,
     slotKey: string,
@@ -75,7 +87,7 @@ export const supabaseDataService = {
       slotKey,
       refereeId,
       actor,
-      competitionService.getCompetition,
+      competitionService.getCompetitionRow,
       refereeService.getReferee,
       slotFlags,
       crossZoneReason,
@@ -90,7 +102,7 @@ export const supabaseDataService = {
       competitionId,
       entries,
       actor,
-      competitionService.getCompetition,
+      competitionService.getCompetitionRow,
       refereeService.getRefereesByIds,
     ),
   clearSlot: rosterService.clearSlot,

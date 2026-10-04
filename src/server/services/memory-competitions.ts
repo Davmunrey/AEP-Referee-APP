@@ -1,4 +1,5 @@
 import { isCompetitionPast } from "@/lib/competition-status";
+import { rosterTemplateHash } from "@/lib/roster-template-hash";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { competitionDedupKey } from "@/lib/competition-dedup";
 import {
@@ -17,6 +18,7 @@ import { buildIntelligence } from "@/lib/dashboard-intelligence";
 import {
   CompetitionHasClaimsError,
   RosterPaidClaimError,
+  RosterTemplateConflictError,
   RosterSlotConflictError,
 } from "@/lib/competitions/service-types";
 import {
@@ -274,9 +276,15 @@ export async function saveCompetitionTemplate(
   competitionId: string,
   template: RosterSession[],
   actor: string,
+  baseHash?: string,
 ) {
   const comp = await getCompetition(competitionId);
   if (!comp) return undefined;
+  // Paridad con Supabase: no sobrescribir una plantilla que otra persona
+  // cambió mientras esta se editaba.
+  if (baseHash !== undefined && rosterTemplateHash(getCompetitionTemplate(competitionId)) !== baseHash) {
+    throw new RosterTemplateConflictError();
+  }
   const store = getStore();
   const assignments = store.assignments.get(competitionId) ?? {};
   const flags = store.slotFlags.get(competitionId) ?? {};

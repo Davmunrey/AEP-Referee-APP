@@ -66,7 +66,7 @@ Todas las rutas privadas exigen sesión Supabase por **cookie** (web). Respuesta
 | Método | Ruta | Permiso |
 |---|---|---|
 | `GET` | `/competitions/:id/roster` | sesión |
-| `PUT` | `/competitions/:id/roster/template` | `canEditRoster` |
+| `PUT` | `/competitions/:id/roster/template` | `canEditRoster` — body `{ template, baseHash? }`; `409` si la plantilla cambió desde `baseHash` |
 | `POST` | `/competitions/:id/roster/template/import` | `canEditRoster` |
 | `POST` | `/competitions/:id/roster/assignments/import` | `canEditRoster` |
 | `POST` | `/competitions/:id/roster/assign` | `canEditRoster` |

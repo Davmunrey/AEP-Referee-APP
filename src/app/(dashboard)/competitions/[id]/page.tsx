@@ -17,8 +17,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
 
   const { id } = await params;
   const [
-    competition,
-    roster,
+    competitionWithRoster,
     meta,
     regulations,
     referees,
@@ -28,8 +27,8 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
     paidRefereeIds,
   ] =
     await Promise.all([
-      dataService.getCompetition(id),
-      dataService.getRoster(id),
+      // Una sola lectura de la fila y de las asignaciones (antes, tres de cada).
+      dataService.getCompetitionWithRoster(id),
       dataService.getMeta(user),
       dataService.getRegulations(),
       dataService.getReferees(),
@@ -38,7 +37,8 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       dataService.getLatestApproval(id),
       dataService.getPaidClaimRefereeIds(id),
     ]);
-  if (!competition || !roster) notFound();
+  if (!competitionWithRoster) notFound();
+  const { competition, roster } = competitionWithRoster;
   // Mismo criterio canónico que `assertCompetitionInUserZone` en la API: sin
    // esto la página podía dar 404 sobre una competición que la API sí permitía.
   if (user.role === "delegado_zona" && !zonesMatch(competition.zona, user.zona)) notFound();

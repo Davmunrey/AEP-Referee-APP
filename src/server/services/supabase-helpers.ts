@@ -354,22 +354,37 @@ export async function loadPaidClaimRefereeIds(competitionId: string): Promise<Se
   return new Set((data ?? []).map((row) => String(row.referee_id)));
 }
 
-export async function syncCompetitionCoverage(competitionId: string) {
+export async function syncCompetitionCoverage(
+  competitionId: string,
+  /**
+   * Datos que el llamador acaba de leer DESPUÉS de escribir (no antes): así no
+   * se vuelven a pedir. Sin ellos se leen aquí.
+   */
+  known?: { template: RosterSession[]; assignments: AssignmentsMap; requeridos: number },
+) {
   const supabase = db();
-  // Las tres lecturas son independientes: en paralelo ahorran dos round-trips
-  // en la ruta de mutación más caliente (cada asignación de juez pasa por aquí).
-  const [templateResult, assignments, { data: row, error: rowError }] = await Promise.all([
-    getCompetitionTemplate(competitionId),
-    loadAssignments(competitionId),
-    supabase.from("competitions").select("requeridos").eq("id", competitionId).maybeSingle(),
-  ]);
-  // Sus dos hermanas de arriba lanzan; esta se tragaba el error y dejaba
-  // `requeridos` en 0. Solo pesa cuando aún no hay plantilla —entonces el
-  // recuento sale de esta columna— y ahí escribía un 0 encima del valor
-  // guardado y el campeonato bajaba a «Borrador» por un corte de lectura.
-  if (rowError) throw new Error(`competitions.requeridos: ${rowError.message}`);
-  const template = templateResult ?? [];
-  const fallbackRequeridos = row?.requeridos != null ? Number(row.requeridos) : 0;
+  let template: RosterSession[];
+  let assignments: AssignmentsMap;
+  let fallbackRequeridos: number;
+  if (known) {
+    ({ template, assignments } = known);
+    fallbackRequeridos = known.requeridos;
+  } else {
+    // Las tres lecturas son independientes: en paralelo ahorran dos round-trips.
+    const [templateResult, loaded, { data: row, error: rowError }] = await Promise.all([
+      getCompetitionTemplate(competitionId),
+      loadAssignments(competitionId),
+      supabase.from("competitions").select("requeridos").eq("id", competitionId).maybeSingle(),
+    ]);
+    // Sus dos hermanas de arriba lanzan; esta se tragaba el error y dejaba
+    // `requeridos` en 0. Solo pesa cuando aún no hay plantilla —entonces el
+    // recuento sale de esta columna— y ahí escribía un 0 encima del valor
+    // guardado y el campeonato bajaba a «Borrador» por un corte de lectura.
+    if (rowError) throw new Error(`competitions.requeridos: ${rowError.message}`);
+    template = templateResult ?? [];
+    assignments = loaded;
+    fallbackRequeridos = row?.requeridos != null ? Number(row.requeridos) : 0;
+  }
   const coverage = computeRosterCoverage(template, assignments, fallbackRequeridos);
   const estado = deriveCompetitionEstado(coverage);
   const { error } = await supabase
