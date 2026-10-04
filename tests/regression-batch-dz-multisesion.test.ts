@@ -172,3 +172,30 @@ describe("dos personas editando la plantilla a la vez", () => {
     expect(src).toContain("api.saveTemplate(competition.id, next, baseHash)");
   });
 });
+
+describe("los formularios de edición solo envían lo que cambió", () => {
+  it("un campo no tocado no viaja (y no revierte lo que otro cambió)", async () => {
+    const { changedFields } = await import("@/lib/changed-fields");
+    const original = { nombre: "Ana", disp: true, email: undefined, notas: "" };
+    // El formulario se abrió con disp=true; otro lo puso a false en el
+    // directorio. Esta ficha solo cambia el nombre: disp no debe viajar.
+    expect(changedFields(original, { nombre: "Ana Ruiz", disp: true, email: undefined, notas: undefined })).toEqual({
+      nombre: "Ana Ruiz",
+    });
+  });
+
+  it("vaciar un campo sí se envía", async () => {
+    const { changedFields } = await import("@/lib/changed-fields");
+    expect(changedFields({ domicilio: "Calle Mayor 1" }, { domicilio: "" })).toEqual({ domicilio: "" });
+  });
+
+  it("los tres formularios usan el diff", () => {
+    for (const f of [
+      "src/components/referees/referee-edit-form.tsx",
+      "src/components/admin/users-admin.tsx",
+      "src/components/judge/reports-manager.tsx",
+    ]) {
+      expect(readFileSync(f, "utf8")).toContain("changedFields(");
+    }
+  });
+});

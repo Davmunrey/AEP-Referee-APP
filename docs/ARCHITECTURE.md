@@ -160,7 +160,7 @@ Ninguna escritura concurrente se pierde en silencio: o se aplica, o la segunda p
 | Guardar la plantilla | Concurrencia optimista: el cliente envía `baseHash` (`rosterTemplateHash`, FNV-1a sobre JSON con claves ordenadas) de la versión sobre la que editó; si la guardada ya es otra, `409` y el usuario elige sobrescribir o cargar la actual. |
 | Liquidaciones | Compare-and-set sobre `updated_at` (`409`). |
 | Revisar propuestas y ascensos | Solo pasan si siguen pendientes. |
-| Editar campeonato | El diálogo envía solo los campos cambiados: no revierte lo que otro corrigió en otro campo. |
+| Editar campeonato, ficha de juez, usuario o informe | Los formularios envían solo los campos cambiados (`changedFields`, `src/lib/changed-fields.ts`): no revierten lo que otro corrigió en otro campo del mismo registro. |
 
 **Sincronización en vivo:** cada escritura sube `app_sync_state.version`; los clientes refrescan agrupando ráfagas (600 ms, máximo 2 s). Una pestaña oculta no refresca: apunta el cambio y se pone al día al volver. Mientras alguien edita la plantilla o tiene una operación en curso, el constructor de la tarima aparta los datos que llegan y, al terminar, pide los actuales (nunca aplica una instantánea vieja).
 

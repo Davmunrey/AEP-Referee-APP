@@ -1,5 +1,6 @@
 "use client";
 
+import { changedFields } from "@/lib/changed-fields";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
@@ -108,14 +109,21 @@ export function ReportsManager({
     if (!editTitulo.trim() || !editContenido.trim()) { setEditError("Título y contenido son obligatorios."); return; }
     setEditBusy(true); setEditError(null);
     try {
-      const updated = await api.updateReport(reportId, {
+      const original = reports.find((r) => r.id === reportId);
+      const form = {
         titulo: editTitulo.trim(), tipo: editTipo,
-        evento: reports.find((r) => r.id === reportId)?.subjectType === "juez" ? editEvento.trim() || undefined : undefined,
+        evento: original?.subjectType === "juez" ? editEvento.trim() || undefined : undefined,
         // Cadena vacía, no `undefined`: con `undefined` la clave desaparecía
         // del JSON, el PATCH no tocaba el campo y no había forma de QUITAR un
         // enlace adjunto una vez puesto.
         contenido: editContenido.trim(), adjuntoUrl: editAdjuntoUrl.trim(),
-      });
+      };
+      // Solo lo cambiado, para no pisar lo que otro haya editado en el mismo informe.
+      const patch = original ? changedFields(original as unknown as Record<string, unknown>, form) : form;
+      // Quitar el adjunto se manda explícito ("" en vez de omitirlo).
+      if (original?.adjuntoUrl && !form.adjuntoUrl) patch.adjuntoUrl = "";
+      const updated =
+        Object.keys(patch).length > 0 || !original ? await api.updateReport(reportId, patch) : original;
       setReports((prev) => prev.map((r) => (r.id === reportId ? updated : r)));
       setEditingId(null); router.refresh();
     } catch (err) { setEditError(err instanceof Error ? err.message : "Error al guardar"); }
