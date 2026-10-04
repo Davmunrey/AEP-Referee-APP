@@ -91,7 +91,7 @@ export function InsightsPanel({ insights }: { insights: Insight[] }) {
                   {insight.metric && (
                     <span
                       className={cn(
-"shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+"shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
                         s.chip,
                       )}
                     >

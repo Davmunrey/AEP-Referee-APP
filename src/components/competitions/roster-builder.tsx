@@ -675,7 +675,7 @@ export function RosterBuilder({
                       {activeSession ? (
                         <div className="space-y-2">
                           {!readOnly && (
-                            <div className="rounded-2xl border border-border-muted bg-surface/25 p-3">
+                            <div className="rounded-xl border border-border-muted bg-surface/25 p-3">
                               <div className="mb-2 flex items-center justify-between gap-2">
                                 <p className="text-xs font-semibold text-subtle-muted">Huecos pendientes</p>
                                 <span className="text-[11px] text-subtle-muted">{activeSessionPendingSlots.length} sin cubrir</span>
@@ -686,7 +686,7 @@ export function RosterBuilder({
                                     <button
                                       key={slot.slotKey} type="button" onClick={() => setSelectedSlot(slot.slotKey)}
                                       className={cn(
-                                        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors focus-ring",
+                                        "inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[11px] transition-colors focus-ring",
                                         selectedSlot === slot.slotKey ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:border-border-strong hover:bg-surface",
                                       )}
                                     >

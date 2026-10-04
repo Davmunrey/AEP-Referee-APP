@@ -19,12 +19,12 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface/30 px-8 py-16 text-center",
+        "flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/30 px-8 py-16 text-center",
         className,
       )}
     >
       {Icon ? (
-        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-border-muted bg-muted shadow-sm">
+        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-border-muted bg-muted shadow-sm">
           <Icon className="h-6 w-6 text-subtle-muted" />
         </span>
       ) : null}

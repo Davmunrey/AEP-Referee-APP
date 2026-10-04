@@ -188,7 +188,7 @@ export function OperationalCalendar({
                       className={cn(
 "flex h-6 w-6 items-center justify-center text-[11px] tabular-nums",
                         isToday
-                          ? "rounded-full bg-primary font-bold text-primary-foreground"
+                          ? "rounded-full bg-primary font-semibold text-primary-foreground"
                           : otherMonth
                             ? "text-muted-foreground/30"
                             : isWeekend

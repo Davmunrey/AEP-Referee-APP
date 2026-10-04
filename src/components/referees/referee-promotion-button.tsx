@@ -75,7 +75,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
         role="dialog"
         aria-modal="true"
         aria-labelledby="promotion-dialog-title"
-        className={`w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-xl outline-none ${dialogPanelEnter}`}
+        className={`w-full max-w-md overflow-hidden rounded-xl border border-border bg-card p-0 shadow-md outline-none ${dialogPanelEnter}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

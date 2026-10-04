@@ -120,14 +120,14 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
         {leader && (
           <Link
             href={`/competitions/${leader.id}`}
-            className="group block rounded-2xl border border-primary/15 bg-primary/5 p-4 transition-colors hover:bg-primary/10 focus-ring"
+            className="group block rounded-xl border border-primary/15 bg-primary/5 p-4 transition-colors hover:bg-primary/10 focus-ring"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span
                     className={cn(
-"rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums",
+"rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
                       riskTone(leader.risk),
                     )}
                   >
@@ -154,7 +154,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
                 </div>
               </div>
               <div className="shrink-0 rounded-xl bg-background/70 px-3 py-2 text-right">
-                <p className="text-lg font-bold tabular-nums text-foreground">
+                <p className="text-lg font-semibold tabular-nums text-foreground">
                   {leader.filled}/{leader.required}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
@@ -190,7 +190,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
             href={`/competitions/${item.id}`}
             className="group flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-surface-hover focus-ring"
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-hover text-xs font-bold text-muted-foreground">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-hover text-xs font-semibold text-muted-foreground">
               {index + 2}
             </span>
             <div className="min-w-0 flex-1">
@@ -204,7 +204,7 @@ export function PriorityRadar({ coverage }: { coverage: EventCoverage[] }) {
             </div>
             <span
               className={cn(
-"shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums",
+"shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
                 riskTone(item.risk),
               )}
             >

@@ -73,7 +73,7 @@ export function SessionCategoriesEditor({ categorias, onAdd, onRemove, onPatch }
                     onClick={() => toggleWeight(ci, cat, w)}
                     aria-pressed={active}
                     className={cn(
-"rounded-full border px-2.5 py-1 text-[11px] tabular-nums transition-colors focus-ring",
+"rounded-md border px-2.5 py-1 text-[11px] tabular-nums transition-colors focus-ring",
                       active
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-surface text-muted-foreground hover:border-border-strong hover:text-foreground",
@@ -86,7 +86,7 @@ export function SessionCategoriesEditor({ categorias, onAdd, onRemove, onPatch }
               {customs.map((t) => (
                 <span
                   key={t}
-                  className="inline-flex items-center gap-1 rounded-full border border-warning-border bg-warning-muted px-2 py-1 text-[11px] text-warning"
+                  className="inline-flex items-center gap-1 rounded-md bg-warning-muted px-1.5 py-0.5 text-[11px] text-warning"
                   title="Valor libre (no es una categoría estándar)"
                 >
                   {t}

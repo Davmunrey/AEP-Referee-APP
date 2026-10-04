@@ -136,7 +136,7 @@ export default function SignInPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card shadow-card">
+        <div className="rounded-xl border border-border bg-card shadow-card">
           <div className="px-6 pb-6 pt-6">
             <h1 className="text-base font-semibold text-foreground">Iniciar sesión</h1>
             <p className="mt-1 text-xs text-muted-foreground">
