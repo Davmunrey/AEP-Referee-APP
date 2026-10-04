@@ -74,7 +74,7 @@ No se requiere ninguna API key de mapas de pago.
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding
   ```
 - **Migraciones**: se aplican **solas**. El workflow «Migraciones Supabase» ejecuta lo pendiente de `supabase/migrations/` en cada push a `main` que las toque. Requiere el secret `SUPABASE_DB_URL` (cadena del *Session pooler*, puerto 5432, percent-encoded; la conexión directa `db.<ref>.supabase.co` no vale porque es solo IPv6 y los runners solo tienen IPv4).
-  - Las 001–033 se aplicaron a mano en su día; el workflow las registra como tales sin reejecutarlas. Estado actual: aplicadas hasta la `042`.
+  - Las 001–033 se aplicaron a mano en su día; el workflow las registra como tales sin reejecutarlas. Estado actual: aplicadas hasta la `044`.
   - Tras aplicar una migración, el workflow avisa a PostgREST para que recargue el esquema: la función nueva queda disponible sin reiniciar el proyecto.
   - Antes de tocar nada aborta si una migración pendiente trae `DROP`, `TRUNCATE`, un `DELETE`/`UPDATE` sin `WHERE` o un `ALTER TYPE … ADD VALUE` mezclado con otras sentencias. Esas hay que aplicarlas a mano y con copia previa. Un `ADD VALUE` **solo** en su fichero sí se aplica (como la `040`): sin nada más en la transacción, el valor nuevo no se usa antes del `COMMIT`.
   - Para ver qué haría sin escribir: Actions → «Migraciones Supabase» → Run workflow → marcar *Solo mostrar qué se aplicaría*.

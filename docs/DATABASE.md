@@ -5,7 +5,7 @@ decisiones abiertas: [AUDIT-DATABASE.md](./AUDIT-DATABASE.md).
 
 **Producción:** proyecto `foaemadggmpbcrhtpems` (eu-west-2).
 
-**Cómo se aplican.** Las `001`–`033` se ejecutaron a mano en el editor SQL (y las `023`–`025`, con el MCP de Supabase). A partir de la `034` las aplica sola la acción «Migraciones Supabase» en cada push a `main` que toque `supabase/migrations/`; ver [DEPLOY.md](./DEPLOY.md) para el secret que necesita y las salvaguardas que trae. **Estado en producción:** aplicadas hasta la `042` (2026-10-04).
+**Cómo se aplican.** Las `001`–`033` se ejecutaron a mano en el editor SQL (y las `023`–`025`, con el MCP de Supabase). A partir de la `034` las aplica sola la acción «Migraciones Supabase» en cada push a `main` que toque `supabase/migrations/`; ver [DEPLOY.md](./DEPLOY.md) para el secret que necesita y las salvaguardas que trae. **Estado en producción:** aplicadas hasta la `044` (2026-10-04).
 
 **Reproducción en CI.** El job «Reproducir migraciones» levanta un Postgres 16 limpio y aplica la cadena completa `001`→última en cada PR (también sobre la forma que tiene producción), así que una migración que dependa de un esquema que no existe falla antes de llegar a `main`. En local: `bash scripts/replay-migrations.sh "postgresql://…"`.
 

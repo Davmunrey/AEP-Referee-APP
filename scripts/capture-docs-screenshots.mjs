@@ -50,6 +50,9 @@ function startLocalServer() {
         NEXT_PUBLIC_SUPABASE_ANON_KEY: "",
       },
       stdio: ["ignore", "pipe", "pipe"],
+      // Grupo de procesos propio: al terminar se para npx Y el next-server
+      // que cuelga de él (si no, se queda con el puerto para la siguiente vez).
+      detached: true,
     },
   );
   child.stdout?.on("data", (d) => process.stdout.write(`[dev] ${d}`));
@@ -89,6 +92,9 @@ async function resolveCompetitionId(page) {
 
 async function shot(page, file, fn) {
   await fn();
+  // El distintivo de Next en modo desarrollo tapa la esquina inferior (en
+  // móvil, la pestaña «Inicio»): fuera de las capturas.
+  await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
   await page.waitForTimeout(400);
   await page.screenshot({ path: join(OUT, file), fullPage: false });
   console.log("✓", file);
@@ -106,7 +112,11 @@ async function main() {
     console.log(`Capturas contra ${BASE}`);
   }
 
-  const browser = await chromium.launch();
+  // `PLAYWRIGHT_EXECUTABLE_PATH`: un Chromium ya instalado, cuando la versión
+  // del navegador de Playwright no está descargada en la máquina.
+  const browser = await chromium.launch(
+    process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {},
+  );
   const page = await browser.newPage({ viewport: VIEWPORT });
 
   try {
@@ -176,12 +186,39 @@ async function main() {
       await page.getByText("Documentación").first().waitFor({ timeout: 15_000 });
     });
 
+    if (USE_LOCAL_CAPTURE) {
+      // La convocatoria vista desde la tarima del delegado.
+      await shot(page, "15-convocatoria-tarima.png", async () => {
+        await page.goto(`${BASE}/competitions/${compId}`, { waitUntil: "networkidle" });
+        await page.getByRole("button", { name: /Convocatoria/ }).first().click();
+        await page.getByRole("dialog").waitFor({ timeout: 15_000 });
+      });
+
+      // Portal del juez, en móvil (el modo captura entra como juez con la cookie).
+      const juez = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      await juez.addCookies([{ name: "aep-captura-rol", value: "juez", url: BASE }]);
+      const movil = await juez.newPage();
+      await shot(movil, "13-portal-inicio.png", async () => {
+        await movil.goto(`${BASE}/portal`, { waitUntil: "networkidle" });
+        await movil.getByRole("heading", { name: /Hola/ }).waitFor({ timeout: 15_000 });
+      });
+      await shot(movil, "14-portal-convocatoria.png", async () => {
+        await movil.goto(`${BASE}/portal/convocatorias/conv-docs-001`, { waitUntil: "networkidle" });
+        await movil.getByRole("heading", { name: "Sesiones" }).waitFor({ timeout: 15_000 });
+      });
+      await juez.close();
+    }
+
     console.log(`\nCapturas guardadas en ${OUT}`);
   } finally {
     await page.close();
     await browser.close();
     if (server) {
-      server.kill("SIGTERM");
+      try {
+        process.kill(-server.pid, "SIGTERM");
+      } catch {
+        server.kill("SIGTERM");
+      }
     }
   }
 }
