@@ -212,13 +212,14 @@ export function RegulationsView() {
       {tab === "ipf" && (
         <>
           <div className="space-y-4">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-muted" />
+            <div className="relative max-w-xl">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-muted" aria-hidden="true" />
               <input
                 type="search"
                 value={ipfQuery}
                 onChange={(e) => setIpfQuery(e.target.value)}
                 placeholder="Buscar en el Reglamento IPF…"
+                aria-label="Buscar en el Reglamento IPF"
                 autoComplete="off"
                 className="h-11 w-full rounded-xl border border-border-strong bg-surface pl-10 pr-10 text-sm text-foreground placeholder:text-subtle-muted focus-ring"
               />
@@ -244,7 +245,7 @@ export function RegulationsView() {
                 </p>
               ) : (
                 <p>
-                  <strong className="text-foreground-secondary">IPF Technical Rulebook</strong> —{" "}
+                  <strong className="text-foreground-secondary">IPF Technical Rulebook</strong>:{" "}
                   {IPF_CHAPTERS.length} capítulos. Haz clic en un artículo para expandirlo.
                 </p>
               )}
@@ -260,7 +261,7 @@ export function RegulationsView() {
             {ipfChapters.map((chapter) => {
               const isOpen = q ? true : openChapters.has(chapter.num);
               return (
-                <section key={chapter.num} className="border-t border-border-muted pt-3">
+                <section key={chapter.num} className="max-w-3xl border-t border-border-muted pt-3">
                   <h2>
                     <button
                       type="button"

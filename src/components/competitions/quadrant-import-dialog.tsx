@@ -257,24 +257,24 @@ export function QuadrantImportDialog({
                     <td className="px-2 py-1.5 text-foreground">
                       {candidate.refereeName}
                       {candidate.matchedName ? (
-                        <span className="ml-1 text-[10px] text-subtle-muted">
+                        <span className="ml-1 text-[11px] text-subtle-muted">
                           ({candidate.matchedName})
                         </span>
                       ) : null}
                       {/* El cruce de zona se importa, pero se ve antes de aplicar. */}
                       {candidate.crossZone ? (
                         <span
-                          className="ml-1 rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
+                          className="ml-1 rounded border border-warning-border bg-warning-muted px-1 py-px text-[11px] font-semibold text-warning"
                           title={`Juez de otra zona (${candidate.refereeZona ?? "—"})`}
                         >
                           ⟳ {candidate.refereeZona ?? "otra zona"}
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                    <td className="px-2 py-1.5 text-[11px] text-muted-foreground">
                       {candidate.slotKey ?? "—"}
                     </td>
-                    <td className="px-2 py-1.5 text-[10.5px] text-subtle-muted">
+                    <td className="px-2 py-1.5 text-[11px] text-subtle-muted">
                       {candidate.reason} · {candidate.confidence}
                     </td>
                   </tr>

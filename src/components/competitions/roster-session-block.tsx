@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { coverageBarClass } from "@/lib/status-tone";
 import { disclosureEnter } from "@/components/aep/motion";
 import { summarizeRequiredSlots } from "@/lib/roster-template";
 import { sessionProgress, summarizeSessionCategories, summarizeSessionGroups } from "./roster-session-helpers";
@@ -74,10 +75,12 @@ export function SessionOverviewCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-primary">{session.sesion}</span>
+            <span className={cn("text-xs font-semibold", active ? "text-primary" : "text-muted-foreground")}>
+              {session.sesion}
+            </span>
             <span className="text-[13px] font-semibold text-foreground">{session.nombre}</span>
           </div>
-          <p className="mt-0.5 line-clamp-1 text-[10.5px] leading-snug text-muted-foreground">
+          <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground">
             {summarizeSessionCategories(session)}
           </p>
         </div>
@@ -85,7 +88,7 @@ export function SessionOverviewCard({
           {filled}/{slots}
         </span>
       </div>
-      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-[10.5px] text-subtle-muted">
+      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-[11px] text-subtle-muted">
         <span>Comp. {session.horarioCompeticion}</span>
         <span>Pesaje {session.horarioPesaje}</span>
         {groupsCount > 0 && <span>{groupsCount} grupo{groupsCount > 1 ? "s" : ""}</span>}
@@ -96,7 +99,9 @@ export function SessionOverviewCard({
             // Una sola ley para todas las barras de cobertura de la tarima:
             // 300 ms, misma curva, y solo el ancho (lo demás no cambia).
             "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
-            pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
+            // Mismo tono de cobertura que el resto de la app; el rojo de marca
+            // en una sesión a medias se leía como «acción», no como estado.
+            coverageBarClass(pct),
           )}
           style={{ width: `${pct}%` }}
         />
@@ -139,12 +144,16 @@ export const SessionTab = memo(function SessionTab({
     >
       <span className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-baseline gap-1.5">
-          <span className="text-[11px] font-semibold text-primary">{session.sesion}</span>
+          {/* El código va en rojo solo en la pestaña activa: es el estado
+              «seleccionada», no un adorno de todas. */}
+          <span className={cn("text-[11px] font-semibold", active ? "text-primary" : "text-muted-foreground")}>
+            {session.sesion}
+          </span>
           <span className="truncate text-[12px] font-medium text-foreground">{session.nombre}</span>
         </span>
         <span
           className={cn(
-"shrink-0 text-[10px] tabular-nums",
+            "shrink-0 text-[11px] tabular-nums",
             done ? "text-success" : "text-subtle-muted",
           )}
         >
@@ -155,7 +164,7 @@ export const SessionTab = memo(function SessionTab({
         <span
           className={cn(
             "block h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
-            pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
+            coverageBarClass(pct),
           )}
           style={{ width: `${pct}%` }}
         />
@@ -204,7 +213,7 @@ export const SessionBlock = memo(function SessionBlock({
 }) {
   const [collapsed, setCollapsed] = useState(!defaultExpanded);
   const { filled, slots, pct } = sessionProgress(session, assignments);
-  const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
+  const barColor = coverageBarClass(pct);
   const pesajeRoles = session.pesajeRoles ?? [];
   const groupsSummary = summarizeSessionGroups(session);
 
@@ -248,7 +257,7 @@ export const SessionBlock = memo(function SessionBlock({
 
         <div className="min-w-0">
           <div className="flex min-w-0 items-baseline gap-2">
-            <span className="text-xs font-semibold text-primary">{session.sesion}</span>
+            <span className="text-xs font-semibold text-muted-foreground">{session.sesion}</span>
             <h3 className="truncate text-sm font-semibold text-foreground">{session.nombre}</h3>
           </div>
           <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-subtle-muted">
@@ -262,7 +271,7 @@ export const SessionBlock = memo(function SessionBlock({
             {summarizeSessionCategories(session)}
           </p>
           {groupsSummary ? (
-            <p className="mt-1 truncate text-[10.5px] text-subtle-muted" title={groupsSummary}>
+            <p className="mt-1 truncate text-[11px] text-subtle-muted" title={groupsSummary}>
               {groupsSummary}
             </p>
           ) : null}
@@ -296,7 +305,7 @@ export const SessionBlock = memo(function SessionBlock({
             <>
               <div className="my-2.5 flex items-center gap-2">
                 <div className="flex-1 border-t border-border-muted" />
-                <p className="text-[11px] font-semibold text-primary">
+                <p className="text-[11px] font-semibold text-foreground-secondary">
                   Pesaje · {session.horarioPesaje}
                 </p>
                 <div className="flex-1 border-t border-border-muted" />

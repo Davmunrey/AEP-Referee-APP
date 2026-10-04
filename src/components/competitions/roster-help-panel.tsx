@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { disclosureEnter } from "@/components/aep/motion";
 
 /**
  * Fila de pasos + ayuda. Antes eran dos franjas (la ayuda plegable encima y
@@ -21,6 +22,7 @@ export function RosterHelpPanel({ children }: { children?: React.ReactNode }) {
           onClick={() => setOpen((v) => !v)}
           className="ml-auto flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring"
           aria-expanded={open}
+          aria-controls={open ? "roster-help" : undefined}
         >
           <HelpCircle className="h-3.5 w-3.5" aria-hidden />
           Cómo montar una tarima
@@ -33,14 +35,12 @@ export function RosterHelpPanel({ children }: { children?: React.ReactNode }) {
           />
         </button>
       </div>
-      <div
-        className={cn(
-          // `transition-all` animaba también color y sombra sin motivo. Aquí lo
-          // que cambia es alto y opacidad, y nada más.
-          "grid gap-2 overflow-hidden text-xs text-muted-foreground transition-[max-height,opacity,margin] duration-200 ease-(--ease-out)",
-          open ? "mt-3 max-h-96 opacity-100" : "max-h-0 opacity-0",
-        )}
-      >
+      {/* Plegada se desmonta: antes quedaba en el DOM a opacidad 0 (texto
+          invisible que sí leían los lectores de pantalla) y animaba
+          max-height, que recalcula el layout en cada fotograma. Ahora entra
+          solo con opacidad, como el resto de desplegables. */}
+      {open && (
+      <div id="roster-help" className={cn("mt-3 grid max-w-prose gap-2 text-xs text-muted-foreground", disclosureEnter)}>
         <ol className="list-decimal space-y-1.5 pl-4">
           <li>
             <strong className="text-foreground-secondary">Plantilla:</strong> define sesiones y
@@ -62,6 +62,7 @@ export function RosterHelpPanel({ children }: { children?: React.ReactNode }) {
           Calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.
         </p>
       </div>
+      )}
     </div>
   );
 }

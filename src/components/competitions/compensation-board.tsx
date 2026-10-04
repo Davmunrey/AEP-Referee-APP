@@ -516,7 +516,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                         <span className="text-xs tabular-nums">{claim.distanceKmRoundTrip ??"—"}</span>
                       )}
                       {claim.travelMode === "shared_vehicle_passenger" && (
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">sin cobro km</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">sin cobro km</p>
                       )}
                     </td>
                     <td className="px-3 py-2">

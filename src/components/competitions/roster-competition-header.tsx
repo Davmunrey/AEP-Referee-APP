@@ -226,7 +226,7 @@ export function RosterCompetitionHeader({
                 {convocatoria && (
                   <span
                     className={cn(
-                      "rounded-full px-1.5 text-[10px] font-semibold tabular-nums",
+                      "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
                       convocatoria.abierta ? "bg-info-muted text-info" : "bg-surface-active text-muted-foreground",
                     )}
                   >

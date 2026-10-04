@@ -163,11 +163,11 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
                         {e.action}
                       </p>
                       {e.detail && (
-                        <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
+                        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
                           {e.detail}
                         </p>
                       )}
-                      <p className="mt-1 text-[10px] text-subtle-muted">
+                      <p className="mt-1 text-[11px] text-subtle-muted">
                         {e.actor}
                         {" · "}
                         <time

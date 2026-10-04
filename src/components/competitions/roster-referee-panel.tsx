@@ -186,19 +186,19 @@ export function RosterRefereePanelLeft({
       <div className="border-b border-border px-2.5 py-2">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-[13px] font-semibold text-foreground-secondary">Jueces</h2>
-          <span className="text-[10px] text-subtle-muted">
+          <span className="text-[11px] text-subtle-muted">
             {referees.length} · {referees.filter((r) => assignedIds.has(r.id)).length} en sesión
           </span>
         </div>
         {selectedSlot && !readOnly && (
-          <p className="mt-0.5 truncate text-[10px] font-medium text-primary">
+          <p className="mt-0.5 truncate text-[11px] font-medium text-primary">
             {selectedSlotMeta
               ? `${selectedSlotMeta.sessionLabel} · ${selectedSlotMeta.roleLabel} ${selectedSlotMeta.slotNumber}`
               : "Hueco seleccionado"}
           </p>
         )}
         {suggestionsActive && (
-          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-subtle-muted">
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-subtle-muted">
             <Sparkles className="h-2.5 w-2.5 text-primary" />
             {confirmedIds.size > 0
               ? "Solo disponibles · ordenados por idoneidad"
@@ -215,7 +215,7 @@ export function RosterRefereePanelLeft({
               <Users className="h-3 w-3" />
               Disp.
               {confirmedIds.size > 0 && (
-                <span className="rounded-full bg-success/20 px-1 text-[9px] font-semibold text-success">
+                <span className="rounded-full bg-success/20 px-1 text-[11px] font-semibold text-success">
                   {confirmedIds.size}
                 </span>
               )}
@@ -228,7 +228,7 @@ export function RosterRefereePanelLeft({
               // El foco visible estaba solo en la rama inactiva: al activarlo, el
               // botón desaparecía del recorrido de teclado. `focus-ring` va en la
               // base, que es donde no depende del estado.
-              className={`rounded-md border px-2 py-1 text-[10px] font-medium transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-95 focus-ring ${filterOnlyConfirmed ? "border-success/40 bg-success/10 text-success" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
+              className={`rounded-md border px-2 py-1 text-[11px] font-medium transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-95 focus-ring ${filterOnlyConfirmed ? "border-success/40 bg-success/10 text-success" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
             >
               Confirmados
             </button>
@@ -239,7 +239,7 @@ export function RosterRefereePanelLeft({
               onClick={() => onFilterInscritos((v) => !v)}
               aria-pressed={filterOnlyInscritos}
               title={`Solo los que se apuntaron a ${inscritos.sessionLabel} en la convocatoria`}
-              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-95 focus-ring ${filterOnlyInscritos ? "border-info/40 bg-info-muted text-info" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
+              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-95 focus-ring ${filterOnlyInscritos ? "border-info/40 bg-info-muted text-info" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
             >
               Inscritos
               <span className="tabular-nums">{inscritos.ids.size}</span>
@@ -345,11 +345,11 @@ export function RosterRefereePanelLeft({
         {/* Sin este aviso, un juez dado de baja o marcado «no disponible» en su
             ficha simplemente no aparecía y no había forma de saber por qué. */}
         {hiddenUnavailableCount > 0 && (
-          <p className="truncate text-[10px] text-subtle-muted" title="Los jueces de baja o marcados como no disponibles en su ficha no se pueden asignar.">
+          <p className="truncate text-[11px] text-subtle-muted" title="Los jueces de baja o marcados como no disponibles en su ficha no se pueden asignar.">
             {contar(hiddenUnavailableCount, "juez no disponible oculto", "jueces no disponibles ocultos")}
           </p>
         )}
-        <p className="truncate text-[10px] text-subtle-muted" title="Arrastra un juez a un hueco, o selecciona hueco y juez.">
+        <p className="truncate text-[11px] text-subtle-muted" title="Arrastra un juez a un hueco, o selecciona hueco y juez.">
           Arrastra o clic hueco → juez
         </p>
       </div>

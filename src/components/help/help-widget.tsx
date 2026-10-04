@@ -7,10 +7,8 @@ import {
   ArrowRight,
   BookOpen,
   HelpCircle,
-  LifeBuoy,
   Mail,
   Search,
-  Sparkles,
   X,
 } from "lucide-react";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
@@ -93,16 +91,11 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
     >
       {/* Cabecera */}
       <div className="border-b border-border bg-surface px-4 pb-3 pt-3.5">
-        <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <LifeBuoy className="h-4 w-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight text-foreground">Centro de ayuda</p>
-            <p className="truncate text-[11px] leading-tight text-subtle-muted">
-              {ROLE_LABELS[user.role]}
-            </p>
-          </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold leading-tight text-foreground">Centro de ayuda</p>
+          <p className="mt-0.5 truncate text-xs leading-tight text-muted-foreground">
+            {ROLE_LABELS[user.role]}
+          </p>
         </div>
         {/* Buscador */}
         <div className="relative mt-3">
@@ -135,18 +128,17 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {searching ? (
           results.length > 0 ? (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {results.map(({ entry }) => (
                 <TopicCard key={entry.id} entry={entry} onNavigate={() => setOpen(false)} />
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center">
-              <Search className="mx-auto h-5 w-5 text-subtle-muted" />
-              <p className="mt-2 text-sm text-muted-foreground">
+            <div className="py-2">
+              <p className="text-sm text-foreground">
                 No hay temas para «{query.trim()}».
               </p>
-              <p className="mt-0.5 text-xs text-subtle-muted">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 Prueba con otra palabra o consulta la documentación completa.
               </p>
             </div>
@@ -155,15 +147,12 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
           <div className="space-y-5">
             {/* Primeros pasos */}
             <section>
-              <h3 className="text-[11px] font-semibold text-subtle-muted">
+              <h3 className="text-sm font-semibold text-foreground">
                 Primeros pasos para tu rol
               </h3>
-              <ol className="mt-2.5 space-y-3">
-                {steps.map((step, i) => (
-                  <li key={step.title} className="relative pl-8">
-                    <span className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                      {i + 1}
-                    </span>
+              <ol className="mt-2 list-decimal space-y-3 pl-5 marker:text-sm marker:font-medium marker:text-muted-foreground">
+                {steps.map((step) => (
+                  <li key={step.title} className="pl-1">
                     <p className="text-sm font-medium text-foreground">{step.title}</p>
                     <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{step.body}</p>
                     {step.href && (
@@ -183,7 +172,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
 
             {/* Temas destacados */}
             <section>
-              <h3 className="text-[11px] font-semibold text-subtle-muted">
+              <h3 className="text-sm font-semibold text-foreground">
                 Temas frecuentes
               </h3>
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -195,7 +184,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                       setQuery(t.question);
                       inputRef.current?.focus();
                     }}
-                    className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground-secondary transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-ring"
+                    className="min-h-9 rounded-md border border-border bg-surface px-2.5 py-1.5 text-left text-xs font-medium text-foreground-secondary transition-colors hover:border-border-strong hover:bg-surface-hover hover:text-foreground focus-ring"
                   >
                     {t.question}
                   </button>
@@ -211,7 +200,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
         <Link
           href="/docs"
           onClick={() => setOpen(false)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-ring"
+          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover focus-ring"
         >
           <BookOpen className="h-3.5 w-3.5" />
           Documentación
@@ -219,7 +208,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
         <Link
           href={CONTACT_HREF}
           onClick={() => setOpen(false)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-ring"
+          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover focus-ring"
         >
           <Mail className="h-3.5 w-3.5" />
           Contacto
@@ -232,6 +221,11 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
 
   return createPortal(
     <>
+      {/* En móvil el botón flotante tapaba la última fila de cada pantalla
+          (el botón de guardar de un formulario, la última fila de una
+          lista). Se reserva su hueco al final del contenido principal para
+          que siempre se pueda desplazar por encima de él. */}
+      <style>{`@media (max-width: 767px) { #main-content { padding-bottom: 4.5rem; } }`}</style>
       {launcher}
       {panel}
     </>,
@@ -242,11 +236,8 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
 /** Tarjeta de un tema de la base de conocimiento con sus enlaces de acción. */
 function TopicCard({ entry, onNavigate }: { entry: HelpEntry; onNavigate: () => void }) {
   return (
-    <div className="rounded-xl border border-border bg-surface/60 px-3 py-2.5">
-      <div className="flex items-start gap-2">
-        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-        <p className="text-sm font-semibold leading-snug text-foreground">{entry.question}</p>
-      </div>
+    <div className="border-b border-border-muted pb-3 last:border-b-0 last:pb-0">
+      <p className="text-sm font-semibold leading-snug text-foreground">{entry.question}</p>
       <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{entry.answer}</p>
       {entry.links && entry.links.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -255,7 +246,7 @@ function TopicCard({ entry, onNavigate }: { entry: HelpEntry; onNavigate: () => 
               key={l.href}
               href={l.href}
               onClick={onNavigate}
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-primary underline-offset-2 hover:underline focus-ring"
+              className="inline-flex min-h-9 items-center gap-1 rounded-sm text-xs font-medium text-primary underline-offset-2 hover:underline focus-ring"
             >
               {l.label}
               <ArrowRight className="h-3 w-3" />

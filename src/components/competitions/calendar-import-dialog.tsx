@@ -268,17 +268,17 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                         onChange={() => toggleKey(e.key)}
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-[10.5px] text-muted-foreground">
+                    <td className="px-2 py-1.5 text-[11px] text-muted-foreground">
                       {e.fechaInicio ?? "pendiente"}
                       {e.fechaFin && e.fechaFin !== e.fechaInicio && ` → ${e.fechaFin}`}
                     </td>
                     <td className="px-2 py-1.5 text-foreground">{e.tipo ?? "—"}</td>
                     <td className="px-2 py-1.5 text-foreground">{e.nombre}</td>
                     <td className="px-2 py-1.5 text-muted-foreground">{e.localidad}</td>
-                    <td className="px-2 py-1.5 text-[10.5px] text-muted-foreground">
+                    <td className="px-2 py-1.5 text-[11px] text-muted-foreground">
                       {e.zona ?? "—"}
                     </td>
-                    <td className="px-2 py-1.5 text-[10.5px]">
+                    <td className="px-2 py-1.5 text-[11px]">
                       {selectedKeys.has(e.key) ? (
                         <span className="rounded bg-success-muted px-1.5 py-0.5 text-success">
                           seleccionada
@@ -295,7 +295,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                         <span className="text-subtle-muted">duplicada</span>
                       )}
                     </td>
-                    <td className="px-2 py-1.5 text-[10.5px] text-subtle-muted">
+                    <td className="px-2 py-1.5 text-[11px] text-subtle-muted">
                       {e.reason}
                     </td>
                   </tr>

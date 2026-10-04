@@ -10,8 +10,8 @@ export default function RegulationsLoading() {
         <Skeleton className="h-4 w-80" />
       </div>
 
-      {/* Content card */}
-      <div className="space-y-5 rounded-xl border border-border p-5">
+      {/* Secciones de lectura */}
+      <div className="max-w-[70ch] space-y-8 pt-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="space-y-2.5">
             <Skeleton className="h-5 w-1/3" />

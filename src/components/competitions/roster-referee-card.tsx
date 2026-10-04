@@ -109,7 +109,7 @@ export const RefereeCard = memo(function RefereeCard({
             {referee.nombre}
           </p>
           {isInscrito && (
-            <span className="shrink-0 rounded bg-info-muted px-1 text-[10px] font-medium leading-4 text-info" title="Se apuntó a esta sesión en la convocatoria">
+            <span className="shrink-0 rounded bg-info-muted px-1 text-[11px] font-medium leading-4 text-info" title="Se apuntó a esta sesión en la convocatoria">
               Inscrito
             </span>
           )}
