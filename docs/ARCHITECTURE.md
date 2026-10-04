@@ -215,6 +215,7 @@ Tailwind breakpoints utilizados:
 - **Recalcular compensación** en paralelo acotado (`mapWithConcurrency`, `src/lib/async-pool.ts`, 6 a la vez), saltando las liquidaciones pagadas y borrando huérfanas en una sola consulta.
 - **Contadores de navegación** (`getNavCountsFast`): `count` con `head: true` y lectura acotada de campeonatos vigentes, sin descargar el calendario entero.
 - Alta de campeonato y desplegables de campeonatos paginados con `fetchAllPagesOf`.
+- **Panel de inicio**: lista ligera de campeonatos (sin plantilla) para calendario y actividad; plantilla y asignaciones solo de los vigentes (`loadAssignmentsFor`, en tandas de 100 ids). Antes descargaba en cada visita todas las plantillas y asignaciones del histórico.
 - **Tarima**: la página carga campeonato y tarima con `getCompetitionWithRoster` (2 consultas; antes 6). Las escrituras validan con `getCompetitionRow` (sin recalcular la cobertura) y, al asignar, la cobertura se calcula con los datos releídos tras escribir y se guarda en paralelo con el historial.
 
 ---

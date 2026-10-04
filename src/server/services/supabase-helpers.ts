@@ -309,6 +309,38 @@ export async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>>
 export const cachedLoadAllAssignments = cache(loadAllAssignments);
 
 /**
+ * Asignaciones solo de los campeonatos indicados (en tandas de 100 ids, cada
+ * tanda paginada). El panel de inicio solo calcula la cobertura de los
+ * campeonatos vigentes: cargar las de todas las temporadas en cada visita era
+ * trabajo que crecía sin límite con el histórico.
+ */
+export async function loadAssignmentsFor(competitionIds: string[]): Promise<Map<string, AssignmentsMap>> {
+  const out = new Map<string, AssignmentsMap>();
+  const supabase = db();
+  for (let i = 0; i < competitionIds.length; i += 100) {
+    const chunk = competitionIds.slice(i, i + 100);
+    const rows = await fetchAllPagesOf<{ competition_id: unknown; slot_key: string; referee_id: string }>(
+      "roster_assignments",
+      (from, to) =>
+        supabase
+          .from("roster_assignments")
+          .select("competition_id, slot_key, referee_id")
+          .in("competition_id", chunk)
+          .order("competition_id", { ascending: true })
+          .order("slot_key", { ascending: true })
+          .range(from, to),
+    );
+    for (const row of rows) {
+      const id = String(row.competition_id);
+      const map = out.get(id) ?? {};
+      map[row.slot_key] = row.referee_id;
+      out.set(id, map);
+    }
+  }
+  return out;
+}
+
+/**
  * Jueces de una competición con la liquidación ya pagada.
  *
  * El puesto de un juez pagado queda congelado en la tarima: el importe ya

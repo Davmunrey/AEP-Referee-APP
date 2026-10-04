@@ -15,7 +15,7 @@ Varios delegados en la misma tarima, o cada uno en la suya, sin que nadie pierda
 - **Siempre al día**: si entra un cambio de otro mientras editas la plantilla, al terminar se cargan los datos actuales (antes se quedaba fuera hasta el siguiente cambio).
 - **Todas las pantallas con el estilo nuevo**: radios, sombras y pesos de letra unificados en las 43 pantallas y componentes que aún tenían restos del estilo anterior; etiquetas de estado como insignias sin borde y selecciones en tono suave en lugar de rojo macizo.
 - **Diálogos que se usan con teclado**: el tabulador ya no se escapa a la página de detrás, al cerrar el foco vuelve al botón que abrió el diálogo y la página no se desplaza mientras está abierto. Los diálogos de exportar recibo, disponibilidad y editar campeonato, además, ya se cierran con Escape.
-- **Más rápida con mucha gente conectada**: las pestañas en segundo plano ya no se recargan con cada cambio de cualquiera, las ráfagas de avisos se agrupan, la tarima se carga con 2 consultas en vez de 6 y cada asignación hace 4 consultas menos.
+- **Más rápida con mucha gente conectada**: las pestañas en segundo plano ya no se recargan con cada cambio de cualquiera, las ráfagas de avisos se agrupan, la tarima se carga con 2 consultas en vez de 6, cada asignación hace 4 consultas menos y el panel de inicio ya no descarga el histórico entero de plantillas y asignaciones en cada visita (solo lo vigente).
 
 ---
 
