@@ -1,4 +1,3 @@
-import { isCompetitionPast } from "@/lib/competition-status";
 import { rosterTemplateHash } from "@/lib/roster-template-hash";
 import { normalizeZoneInput, resolveZoneCode } from "@/lib/aep-zones";
 import { competitionDedupKey } from "@/lib/competition-dedup";
@@ -8,7 +7,6 @@ import {
   isRosterPendingApproval,
   rosterMutationBlockedMessage,
   ROSTER_IMPREVISTO_STATE,
-  rosterAnalyticsStats,
 } from "@/lib/roster-coverage";
 import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
@@ -49,21 +47,16 @@ import {
   pushHistory,
   setCompetitionTemplate,
 } from "@/server/store";
-import { buildKpis, healthHistory, parseSlotKey, syncCompetitionCoverage } from "./memory-helpers";
+import { healthHistory, liveDashboardData, parseSlotKey, syncCompetitionCoverage } from "./memory-helpers";
+import { buildDashboardKpis } from "@/lib/dashboard-kpis";
 import { getReferee } from "./memory-referees";
-import { zoneScopeOf, zoneVisibilityFilter } from "@/lib/zone-scope";
+import { zoneScopeOf } from "@/lib/zone-scope";
 
 export async function getDashboard(user: SessionUser): Promise<DashboardPayload> {
   const store = getStore();
-  // Ver `zone-scope`: una zona ilegible no es «sin restricción».
-  const visibleEnZona = zoneVisibilityFilter(user);
-  const competitions = [...store.competitions]
-    .filter((c) => visibleEnZona(c.zona))
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const { competitions, dashboardCompetitions, coverage, referees, approvals, promotions } =
+    liveDashboardData(user);
   const competitionNames = new Set(competitions.map((c) => c.nombre));
-  const scopedReferees = store.referees.filter((r) => visibleEnZona(r.zona));
-  const scopedApprovals = store.approvals.filter((a) => visibleEnZona(a.zona));
-  const scopedPromotions = store.promotions.filter((p) => visibleEnZona(p.zona));
   // Ídem que el twin de Supabase, que usa `zoneScopeOf(user).kind === "all"`:
   // con `userZone` una zona ilegible pasaba por «sin restricción» y el registro
   // de actividad enseñaba los movimientos de todas las zonas.
@@ -71,27 +64,11 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
     zoneScopeOf(user).kind === "all"
       ? store.activity
       : store.activity.filter((item) => competitionNames.has(item.evento));
-  // Solo campeonatos no celebrados: los pasados inflaban KPIs, salud e
-  // "insights" indefinidamente. Misma fórmula de cobertura que la analítica.
-  const dashboardCompetitions = competitions.filter((c) => !isCompetitionPast(c));
-  const coverage = dashboardCompetitions.map((c) => {
-    const assignments = store.assignments.get(c.id) ?? {};
-    const s = rosterAnalyticsStats(getCompetitionTemplate(c.id), assignments, c.requeridos);
-    return {
-      id: c.id,
-      nombre: c.nombre,
-      fecha: c.fecha,
-      estado: c.estado,
-      filled: s.filledSlots,
-      open: s.openSlots,
-      required: s.requiredSlots,
-    };
-  });
   const { health, insights } = buildIntelligence({
-    referees: scopedReferees,
+    referees,
     competitions: dashboardCompetitions,
-    approvals: scopedApprovals,
-    promotions: scopedPromotions,
+    approvals,
+    promotions,
     coverage,
     activity,
   });
@@ -104,7 +81,7 @@ export async function getDashboard(user: SessionUser): Promise<DashboardPayload>
     healthHistory.push({ score: health.score, at: Date.now() });
   }
   return {
-    kpis: buildKpis(user),
+    kpis: buildDashboardKpis({ coverage, referees, approvals }),
     activity,
     calendar: getCalendarEvents(competitions),
     upcomingCompetitions: dashboardCompetitions.slice(0, 6),

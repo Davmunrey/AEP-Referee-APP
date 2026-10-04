@@ -1,15 +1,10 @@
 import { PageShell } from "@/components/layout/page-shell";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
-import { CoverageForecast } from "@/components/dashboard/coverage-forecast";
-import { DashboardHero } from "@/components/dashboard/dashboard-hero";
-import { DashboardLive } from "@/components/dashboard/dashboard-live";
-import { CompetitionsTable } from "@/components/dashboard/competitions-table";
-import { HealthGauge } from "@/components/dashboard/health-gauge";
-import { InsightsPanel } from "@/components/dashboard/insights-panel";
-import { SanctionsAlerts } from "@/components/dashboard/sanctions-alerts";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { OperationalCalendar } from "@/components/dashboard/operational-calendar";
-import { PriorityRadar } from "@/components/dashboard/priority-radar";
+import { PendingPanel } from "@/components/dashboard/pending-panel";
+import { UpcomingCompetitions } from "@/components/dashboard/upcoming-competitions";
 import { getSession } from "@/lib/auth/session";
 import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { dataService } from "@/server/services";
@@ -21,41 +16,28 @@ export default async function DashboardPage() {
 
   const dashboard = await dataService.getDashboard(user);
 
+  // Cada dato aparece una vez. Antes el mismo campeonato salía en el saludo,
+  // en «Recomendaciones», en «Radar operativo», en «Previsión de cobertura» y
+  // en la tabla del pie, con dos coberturas distintas.
   return (
     <PageShell>
-      {/* Live status bar */}
-      <DashboardLive generatedAt={dashboard.generatedAt} />
+      <DashboardHeader dashboard={dashboard} />
 
-      {/* Hero */}
-      <DashboardHero user={dashboard.currentUser} dashboard={dashboard} />
-
-      {/* KPIs */}
       <KpiCards kpis={dashboard.kpis} />
 
-      <SanctionsAlerts alerts={dashboard.sanctionAlerts} />
-
-      {/* Health + Insights side-by-side on large screens */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(320px,0.92fr)_minmax(0,1.08fr)]">
-        <HealthGauge health={dashboard.health} />
-        <InsightsPanel insights={dashboard.insights} />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+        <div className="min-w-0 [&>*]:h-full">
+          <UpcomingCompetitions competitions={dashboard.upcomingCompetitions} />
+        </div>
+        <PendingPanel insights={dashboard.insights} sanctions={dashboard.sanctionAlerts} />
       </div>
 
-      {/* Priority radar + Coverage forecast */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
-        <PriorityRadar coverage={dashboard.coverage} />
-        <CoverageForecast coverage={dashboard.coverage} />
-      </div>
-
-      {/* Calendar */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
-        <div className="min-w-0">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+        <div className="min-w-0 [&>*]:h-full">
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>
         <ActivityFeed activity={dashboard.activity} />
       </div>
-
-      {/* Events table */}
-      <CompetitionsTable competitions={dashboard.upcomingCompetitions} />
     </PageShell>
   );
 }

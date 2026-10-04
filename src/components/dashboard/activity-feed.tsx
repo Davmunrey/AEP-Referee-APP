@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { ArrowRight, History } from "lucide-react";
+import { History } from "lucide-react";
 import { ActivityTypeBadge } from "@/components/aep/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ActivityItem } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 /** Two-letter initials from a name. */
 function initials(name: string): string {
@@ -14,37 +12,13 @@ function initials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-/** Subtle hue from name — picks one of a few palette slots deterministically. */
-function avatarColor(name: string): string {
-  const palette = [
-    "bg-primary/15 text-primary",
-    "bg-info/15 text-info-soft",
-    "bg-success/15 text-success",
-    "bg-warning/15 text-warning",
-    "bg-surface-active text-foreground-secondary",
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return palette[hash % palette.length]!;
-}
-
-/** How long ago — short, friendly tone. */
-function relativeTime(hace: string): string {
-  return hace; // already computed server-side; preserve it
-}
-
 export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
   return (
     <Card className="overflow-hidden p-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
-        <CardTitle className="text-sm font-semibold">Actividad reciente</CardTitle>
-        <Link
-          href="/approvals"
-          className="inline-flex items-center gap-1 rounded-md text-xs font-medium text-primary hover:text-primary/80 focus-ring"
-        >
-          Ver todo
-          <ArrowRight className="h-3 w-3" aria-hidden="true" />
-        </Link>
+      {/* Sin «Ver todo»: llevaba a /approvals, que no es un registro de
+          actividad, y no hay otra página que lo sea. */}
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border-muted px-4 py-3">
+        <CardTitle>Actividad reciente</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {activity.length === 0 && (
@@ -66,10 +40,7 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
             >
               {/* Actor avatar */}
               <div
-                className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
-                  avatarColor(item.actor),
-                )}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-active text-[10px] font-semibold text-foreground-secondary"
                 aria-hidden="true"
               >
                 {initials(item.actor)}
@@ -80,7 +51,7 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <ActivityTypeBadge tipo={item.tipo} />
                   <time className="text-[10px] text-muted-foreground">
-                    {relativeTime(item.hace)}
+                    {item.hace}
                   </time>
                 </div>
                 <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
