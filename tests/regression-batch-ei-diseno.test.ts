@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { confirmar, currentConfirm, settleConfirm, subscribeConfirm } from "@/lib/confirm-store";
 import { coverageBarClass, STATUS_BAR } from "@/lib/status-tone";
 import { BRAND } from "@/lib/document-tokens";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 /**
  * Auditoría de diseño (v2.12): reglas de la casa que no deben volver.
@@ -152,5 +152,18 @@ describe("tokens de documentos", () => {
       .filter((path) => !allowed.has(path))
       .filter((path) => /#[0-9a-f]{6}\b|#[0-9a-f]{3}\b(?![0-9a-z-])|rgba?\(|hsla?\(|oklch\(/i.test(stripComments(readFileSync(path, "utf8"))));
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("cn() con la escala propia", () => {
+  it("un tamaño de la escala no borra el color del texto", () => {
+    expect(cn("bg-primary text-primary-foreground", "text-ui")).toBe("bg-primary text-primary-foreground text-ui");
+    expect(cn("text-2xs text-muted-foreground", "text-success")).toBe("text-2xs text-success");
+  });
+
+  it("dos tamaños sí se sustituyen", () => {
+    expect(cn("text-sm", "text-ui")).toBe("text-ui");
+    expect(cn("text-2xs", "text-title")).toBe("text-title");
+    expect(cn("tracking-tight", "tracking-snug")).toBe("tracking-snug");
   });
 });

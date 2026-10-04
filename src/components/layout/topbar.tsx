@@ -151,8 +151,8 @@ export function TopBar({
               <p className="text-xs font-medium text-foreground">{currentUser.nombre}</p>
               <p className="max-w-[140px] truncate text-2xs text-muted-foreground">{currentUser.rol}</p>
             </div>
-            <Avatar className="h-8 w-8 ring-2 ring-border transition-shadow hover:ring-primary/30">
-              <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
+            <Avatar className="h-8 w-8 ring-2 ring-border transition-shadow hover:ring-border-strong">
+              <AvatarFallback className="bg-surface text-xs font-semibold text-foreground-secondary">
                 {currentUser.iniciales}
               </AvatarFallback>
             </Avatar>

@@ -185,10 +185,10 @@ export function RosterHeaderActions({
             <div
               className={cn(
                 // Misma ley que las barras de cobertura de las sesiones.
-                "h-full rounded-full transition-[width] duration-(--duration-slow) ease-(--ease-out)",
+                "h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
                 coverageBarColor,
               )}
-              style={{ width: `${fillPct}%` }}
+              style={{ transform: `scaleX(${fillPct / 100})` }}
             />
           </div>
         </div>

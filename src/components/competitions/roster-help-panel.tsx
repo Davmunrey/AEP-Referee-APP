@@ -58,7 +58,7 @@ export function RosterHelpPanel({ children }: { children?: React.ReactNode }) {
             envía a aprobación cuando esté listo.
           </li>
         </ol>
-        <p className="text-2xs text-subtle-muted">
+        <p className="text-xs text-subtle-muted">
           Calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.
         </p>
       </div>

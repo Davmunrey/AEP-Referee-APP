@@ -181,7 +181,7 @@ export function EditCompetitionDialog({
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
-              <p className="mt-1 text-2xs text-subtle-muted">{AEP_COMPETITION_TYPE_DESC[tipo]}</p>
+              <p className="mt-1 text-xs text-subtle-muted">{AEP_COMPETITION_TYPE_DESC[tipo]}</p>
             </div>
             <div>
               <label htmlFor="ec-zona" className="mb-1 block text-xs font-medium text-foreground-secondary">

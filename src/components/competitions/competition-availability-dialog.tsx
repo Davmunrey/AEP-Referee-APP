@@ -127,7 +127,7 @@ export function CompetitionAvailabilityDialog({
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{r.nombre}</p>
-                    <p className="text-2xs text-subtle-muted">
+                    <p className="text-xs text-subtle-muted">
                       {zoneUiName(r.zona)} · {r.nivel}
                     </p>
                   </div>

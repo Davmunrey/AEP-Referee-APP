@@ -201,7 +201,7 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-2xs text-subtle-muted">{TYPE_DESC[tipo]}</p>
+              <p className="mt-1 text-xs text-subtle-muted">{TYPE_DESC[tipo]}</p>
             </div>
             <div>
               <label htmlFor="nc-zona" className="mb-1 block text-xs font-medium text-foreground-secondary">
@@ -350,7 +350,7 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
               />
             </div>
           </div>
-          <p className="text-2xs text-subtle-muted">
+          <p className="text-xs text-subtle-muted">
             Valores predeterminados para {tipo}. Puedes ajustarlos libremente.
           </p>
 

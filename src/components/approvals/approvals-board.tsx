@@ -167,7 +167,7 @@ export function ApprovalsBoard({
                         aria-pressed={selected?.id === item.id}
                         className={cn(
                           "w-full px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                          selected?.id === item.id ? "bg-surface-active" : "hover:bg-surface-hover",
+                          selected?.id === item.id ? "bg-surface-hover" : "hover:bg-surface",
                         )}
                       >
                         <div className="flex items-start justify-between gap-2">

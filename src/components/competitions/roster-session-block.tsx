@@ -97,13 +97,14 @@ export function SessionOverviewCard({
         <div
           className={cn(
             // Una sola ley para todas las barras de cobertura de la tarima:
-            // 300 ms, misma curva, y solo el ancho (lo demás no cambia).
-            "h-full rounded-full transition-[width] duration-(--duration-slow) ease-(--ease-out)",
+            // 300 ms, misma curva, y solo la escala horizontal: animar el ancho
+            // recalculaba la maquetación en cada fotograma.
+            "h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
             // Mismo tono de cobertura que el resto de la app; el rojo de marca
             // en una sesión a medias se leía como «acción», no como estado.
             coverageBarClass(pct),
           )}
-          style={{ width: `${pct}%` }}
+          style={{ transform: `scaleX(${pct / 100})` }}
         />
       </div>
     </button>
@@ -163,10 +164,10 @@ export const SessionTab = memo(function SessionTab({
       <span className="block h-1 overflow-hidden rounded-full bg-muted">
         <span
           className={cn(
-            "block h-full rounded-full transition-[width] duration-(--duration-slow) ease-(--ease-out)",
+            "block h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
             coverageBarClass(pct),
           )}
-          style={{ width: `${pct}%` }}
+          style={{ transform: `scaleX(${pct / 100})` }}
         />
       </span>
     </button>
@@ -282,10 +283,10 @@ export const SessionBlock = memo(function SessionBlock({
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className={cn(
-                "h-full rounded-full transition-[width] duration-(--duration-slow) ease-(--ease-out)",
+                "h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
                 barColor,
               )}
-              style={{ width: `${pct}%` }}
+              style={{ transform: `scaleX(${pct / 100})` }}
             />
           </div>
           <p className="mt-1 text-right text-2xs tabular-nums text-subtle-muted">

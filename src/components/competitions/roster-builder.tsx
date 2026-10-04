@@ -708,7 +708,7 @@ export function RosterBuilder({
                 </Button>
               </div>
             )}
-            <p className="text-2xs text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
+            <p className="text-xs text-subtle-muted">El calendario anual (varios campeonatos) se importa desde la lista de Campeonatos.</p>
           </div>
         ) : (
           <div

@@ -72,7 +72,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
       // Sombra teñida con el propio color del botón (los shadow-md/xl de serie
       // son negro plano y no pertenecen a la escala del tema). El scale al
       // pulsar devuelve la sensación de que el botón ha oído el clic.
-      className="fixed bottom-5 right-5 z-(--z-float) flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground-secondary shadow-md transition-[background-color,color,box-shadow,transform] duration-(--duration-base) hover:bg-surface hover:text-foreground active:scale-(--scale-enter) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="fixed bottom-5 right-5 z-(--z-float) flex h-10 w-10 items-center justify-center rounded-full bg-card text-foreground-secondary shadow-md transition-[background-color,color,box-shadow,transform] duration-(--duration-base) hover:bg-surface hover:text-foreground active:scale-(--scale-enter) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       {open ? <X className="h-4 w-4" /> : <HelpCircle className="h-5 w-5" />}
     </button>

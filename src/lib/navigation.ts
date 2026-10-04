@@ -14,14 +14,14 @@ export interface PageMeta {
 export function getPageMeta(pathname: string): PageMeta {
   if (pathname === "/") {
     return {
-      title: "Dashboard Nacional",
+      title: "Dashboard",
       subtitle: operationalQuarterLabel(),
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Dashboard" }],
     };
   }
   if (pathname === "/referees") {
     return {
-      title: "Directorio de Jueces",
+      title: "Directorio de jueces",
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Directorio" }],
     };
   }
@@ -34,7 +34,6 @@ export function getPageMeta(pathname: string): PageMeta {
   if (pathname === "/compensation") {
     return {
       title: "Compensación de jueces",
-      subtitle: "Panel central de facturación y recibos",
       crumbs: [{ label: "AEP Tarima", href: "/" }, { label: "Compensación" }],
     };
   }

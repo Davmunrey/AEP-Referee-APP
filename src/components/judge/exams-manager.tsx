@@ -425,10 +425,10 @@ export function ExamsManager({
                       className={cn(
                         // Solo el ancho, y con la misma curva/duración que el
                         // resto de barras de progreso de la app.
-                        "h-full rounded-full transition-[width] duration-(--duration-slow) ease-(--ease-out)",
+                        "h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
                         pct >= 60 ? "bg-success" : "bg-destructive",
                       )}
-                      style={{ width: `${Math.max(pct, 3)}%` }}
+                      style={{ transform: `scaleX(${Math.max(pct, 3) / 100})` }}
                     />
                   </div>
                   <span className="text-2xs tabular-nums text-subtle-muted">

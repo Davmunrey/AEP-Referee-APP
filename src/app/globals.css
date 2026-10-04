@@ -12,6 +12,8 @@
    * interlineado para que `text-ui` o `text-2xs` no hereden el del padre. */
   --text-2xs: var(--text-2xs);
   --text-2xs--line-height: 1.4;
+  --text-xs: var(--text-xs);
+  --text-xs--line-height: calc(1 / 0.75);
   --text-ui: var(--text-ui);
   --text-ui--line-height: 1.45;
   --text-title: var(--text-title);

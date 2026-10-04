@@ -83,8 +83,10 @@ export const RefereeCard = memo(function RefereeCard({
         // Solo color/opacidad/escala: nada que fuerce layout mientras se arrastra
         // una lista de ~90 filas. 100 ms es feedback, no animación.
         "flex select-none items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-sm transition-[color,background-color,border-color,opacity,scale] duration-(--duration-fast) ease-(--ease-out) focus-ring",
-        // Ya en la sesión: atenuada pero legible (antes, al 55 %, parecía deshabilitada).
-        assigned && "opacity-70",
+        // Ya en la sesión: se hunde en el plano (fondo gris, sin sombra) en vez de
+        // volverse transparente. Con opacidad el nombre bajaba a ~2,3:1 de
+        // contraste; así sigue leyéndose entero y aun así se distingue.
+        assigned && "border-border-muted bg-surface shadow-none",
         // La ficha es el objeto que se agarra: la mano al pasar, el puño al
         // pulsar y un hundido de 1.5% que confirma que el gesto se ha oído.
         locked ? "cursor-default" : "cursor-grab active:scale-(--scale-press) active:cursor-grabbing",

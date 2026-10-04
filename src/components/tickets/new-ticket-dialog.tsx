@@ -139,7 +139,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
               maxLength={140}
               required
             />
-            <p className="mt-1 text-2xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               Entre 4 y 140 caracteres.
             </p>
           </div>
@@ -175,7 +175,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
               rows={5}
               required
             />
-            <p className="mt-1 text-2xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               Entre 10 y 5000 caracteres.
             </p>
           </div>
@@ -200,7 +200,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
                 onChange={(e) => onPickFiles(e.target.files)}
               />
             </label>
-            <p className="mt-1 text-2xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               Máximo {TICKET_MAX_FILES} fotos · JPG, PNG, WEBP o GIF · hasta 5 MB cada una.
             </p>
 

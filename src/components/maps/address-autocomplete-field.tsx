@@ -187,13 +187,13 @@ export function AddressAutocompleteField({
           </ul>
         )}
       </div>
-      {hint && <p className="text-2xs text-muted-foreground">{hint}</p>}
-      <p className="text-2xs text-muted-foreground">
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      <p className="text-xs text-muted-foreground">
         Autocomplete OpenStreetMap (gratuito) — elige una sugerencia de la lista.
       </p>
-      {loading && <p className="text-2xs text-muted-foreground">Buscando…</p>}
+      {loading && <p className="text-xs text-muted-foreground">Buscando…</p>}
       {!loading && searchError && (
-        <p className="text-2xs text-warning">{searchError}</p>
+        <p className="text-xs text-warning">{searchError}</p>
       )}
       {coordsHint && (
         <p className={cn("text-2xs", coordsOk ? "text-success" : "text-warning")}>{coordsHint}</p>

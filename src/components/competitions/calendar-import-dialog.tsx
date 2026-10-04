@@ -305,7 +305,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
               </tbody>
             </table>
           </div>
-          <p className="text-2xs text-subtle-muted">
+          <p className="text-xs text-subtle-muted">
             Al aplicar: primero se eliminan duplicados en BD (mismo nombre, fecha y tipo; se
             conserva el que más tarima tenga), luego se crean solo las filas seleccionadas.
           </p>
