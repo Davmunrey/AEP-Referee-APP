@@ -48,7 +48,7 @@ export default async function DashboardPage() {
 
       {/* Calendar */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
-        <div>
+        <div className="min-w-0">
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>
         <ActivityFeed activity={dashboard.activity} />
