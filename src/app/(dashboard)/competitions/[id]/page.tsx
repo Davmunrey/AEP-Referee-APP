@@ -5,6 +5,7 @@ import { canEditRoster, canManageCompensation, getSession, redirectSinAcceso } f
 import { isCompetitionPast } from "@/lib/competition-status";
 import { stripRefereeListPII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
+import { getConvocatoriaDeCampeonato } from "@/server/convocatorias";
 
 interface CompetitionPageProps {
   params: Promise<{ id: string }>;
@@ -24,6 +25,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
     refereeBusyMap,
     lastApproval,
     paidRefereeIds,
+    convocatoria,
   ] =
     await Promise.all([
       // Una sola lectura de la fila y de las asignaciones (antes, tres de cada).
@@ -35,6 +37,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       dataService.getRefereeBusyMap(id),
       dataService.getLatestApproval(id),
       dataService.getPaidClaimRefereeIds(id),
+      getConvocatoriaDeCampeonato(id),
     ]);
   if (!competitionWithRoster) notFound();
   const { competition, roster } = competitionWithRoster;
@@ -62,6 +65,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       initialConfirmedIds={confirmedRefereeIds}
       refereeBusyMap={refereeBusyMap}
       paidRefereeIds={paidRefereeIds}
+      initialConvocatoria={convocatoria}
       lastReview={
         lastApproval && {
           status: lastApproval.status,

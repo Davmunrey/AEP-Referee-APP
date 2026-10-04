@@ -7,6 +7,7 @@ import { rosterService } from "./supabase-roster";
 import { compensationService } from "./supabase-compensation";
 import { ticketService } from "./supabase-tickets";
 import { portalService } from "./supabase-portal";
+import { convocatoriaService } from "./supabase-convocatorias";
 
 export const supabaseDataService = {
   // ── Meta / Analytics ─────────────────────────────────────────────────────
@@ -172,4 +173,15 @@ export const supabaseDataService = {
 
   // ── Portal del juez ───────────────────────────────────────────────────────
   getJudgePortal: portalService.getJudgePortal,
+
+  // ── Convocatorias (almacenamiento; las reglas, en server/convocatorias) ──
+  getConvocatoria: convocatoriaService.getConvocatoria,
+  getLiveConvocatoria: convocatoriaService.getLiveConvocatoria,
+  listConvocatoriasAbiertasParaZona: convocatoriaService.listConvocatoriasAbiertasParaZona,
+  insertConvocatoria: convocatoriaService.insertConvocatoria,
+  updateConvocatoria: convocatoriaService.updateConvocatoria,
+  listInscripciones: convocatoriaService.listInscripciones,
+  listInscripcionesDeJuez: convocatoriaService.listInscripcionesDeJuez,
+  insertInscripcion: convocatoriaService.insertInscripcion,
+  deleteInscripcion: convocatoriaService.deleteInscripcion,
 };

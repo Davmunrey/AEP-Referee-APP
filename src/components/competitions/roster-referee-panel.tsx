@@ -41,6 +41,13 @@ interface RosterRefereePanelProps {
   onFilterNivel: Dispatch<SetStateAction<string>>;
   onSearch: Dispatch<SetStateAction<string>>;
   onFilterConfirmed: Dispatch<SetStateAction<boolean>>;
+  /**
+   * Convocatoria del campeonato: quién se apuntó a la sesión que se está
+   * montando (la del hueco elegido o la sesión activa). `null` si no hay.
+   */
+  inscritos?: { ids: Set<string>; sessionLabel: string } | null;
+  filterOnlyInscritos?: boolean;
+  onFilterInscritos?: Dispatch<SetStateAction<boolean>>;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
   onQuickAssign: (id: string) => void;
@@ -79,6 +86,9 @@ export function RosterRefereePanelLeft({
   onFilterNivel,
   onSearch,
   onFilterConfirmed,
+  inscritos = null,
+  filterOnlyInscritos = false,
+  onFilterInscritos,
   onDragStart,
   onDragEnd,
   onQuickAssign,
@@ -92,7 +102,7 @@ export function RosterRefereePanelLeft({
 
   // Selección rápida: al elegir un hueco, ordena los jueces por idoneidad
   // (elegibles y disponibles de la misma zona/nivel arriba; inasignables al fondo).
-  const orderedReferees = useMemo(() => {
+  const rankedReferees = useMemo(() => {
     if (readOnly || !selectedSlot || !selectedRoleKey) return referees;
     return rankRefereesForSlot(referees, {
       slotKey: selectedSlot,
@@ -122,6 +132,15 @@ export function RosterRefereePanelLeft({
     assignedIds,
     busyElsewhereIds,
   ]);
+  // Los que se apuntaron a esta sesión, arriba (sin alterar el orden entre
+  // ellos ni entre los demás): son la primera opción del delegado.
+  const orderedReferees = useMemo(() => {
+    if (!inscritos || inscritos.ids.size === 0) return rankedReferees;
+    return [
+      ...rankedReferees.filter((r) => inscritos.ids.has(r.id)),
+      ...rankedReferees.filter((r) => !inscritos.ids.has(r.id)),
+    ];
+  }, [rankedReferees, inscritos]);
   const suggestionsActive = !readOnly && !!selectedSlot && !!selectedRoleKey;
   const filtersActive =
     filterZona !== "TODAS" || filterNivel !== "TODOS" || search.trim() !== "" || filterOnlyConfirmed;
@@ -214,6 +233,18 @@ export function RosterRefereePanelLeft({
               Confirmados
             </button>
           )}
+          {inscritos && onFilterInscritos && (
+            <button
+              type="button"
+              onClick={() => onFilterInscritos((v) => !v)}
+              aria-pressed={filterOnlyInscritos}
+              title={`Solo los que se apuntaron a ${inscritos.sessionLabel} en la convocatoria`}
+              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-95 focus-ring ${filterOnlyInscritos ? "border-info/40 bg-info-muted text-info" : "border-border text-subtle-muted hover:bg-surface-hover"}`}
+            >
+              Inscritos
+              <span className="tabular-nums">{inscritos.ids.size}</span>
+            </button>
+          )}
           {selectedSlot && !readOnly && (
             <button
               type="button"
@@ -287,6 +318,7 @@ export function RosterRefereePanelLeft({
                 isDragging={isDragging}
                 readOnly={readOnly}
                 isConfirmed={confirmedIds.has(referee.id)}
+                isInscrito={inscritos?.ids.has(referee.id) ?? false}
               />
             );
           })}
