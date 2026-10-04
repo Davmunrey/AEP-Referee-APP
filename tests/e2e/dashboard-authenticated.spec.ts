@@ -43,8 +43,8 @@ test("authenticated dashboard fits 14-inch viewport", async ({ page }) => {
     const suffix = errorText?.trim() ? `: ${errorText.trim()}` : "";
     throw new Error(`Browser login did not reach dashboard${suffix}`, { cause: error });
   }
-  await expect(page.getByText("Radar operativo")).toBeVisible();
-  await expect(page.getByText("Previsión de cobertura")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Próximos campeonatos" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Calendario de campeonatos" })).toBeVisible();
 
   const overflow = await page.evaluate(() => {
     const root = document.documentElement;

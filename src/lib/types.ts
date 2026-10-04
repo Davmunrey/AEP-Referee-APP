@@ -218,12 +218,14 @@ export interface CalendarDayEvent {
 }
 
 export interface DashboardKpi {
+  /** Identificador estable: la interfaz no busca indicadores por su rótulo. */
+  id: "openSlots" | "upcoming" | "approvals" | "referees";
   label: string;
   value: string;
   sub: string;
-  trend: string;
-  trendDir: "up" | "down" | "warn" | "flat";
-  accent: "red" | "yellow" | "blue" | "neutral";
+  /** Color solo cuando la cifra pide hacer algo. */
+  tone: "default" | "warning" | "critical";
+  href?: string;
 }
 
 export type AssignmentsMap = Record<string, string>;

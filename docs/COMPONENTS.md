@@ -27,11 +27,12 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 
 | Componente | Uso |
 |---|---|
-| `DashboardLive` | Indicador en vivo (sincronizado con Realtime global) |
-| `KpiCards` | KPIs de cobertura y operación; columnas según el número de tarjetas |
-| `HealthGauge` | Índice de salud operativa (0–100) |
-| `InsightsPanel` | Recomendaciones auto-generadas |
-| `CoverageForecast` | Cobertura próxima |
+| `DashboardHeader` | Saludo, frase de resumen con cifras, indicador de actualización y acciones |
+| `DashboardLive` | Indicador compacto de actualización con pausa real y refresco manual |
+| `KpiCards` | Franja de cuatro cifras enlazadas (`buildDashboardKpis`); color solo si la cifra pide acción |
+| `UpcomingCompetitions` | Próximos campeonatos con cobertura viva (plantilla + asignaciones) |
+| `PendingPanel` | Acciones pendientes (`insights`) y sanciones activas |
+| `ActivityFeed` | Actividad reciente filtrada por zona |
 | `OperationalCalendar` | Calendario de campeonatos: rejilla mensual (escritorio) con barras continuas para varios días, color de estado en el borde, celebrados en gris y «+N más» como menú con enlaces; agenda del mes en móvil |
 
 ## Campeonatos / tarima
