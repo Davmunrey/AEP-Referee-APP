@@ -27,7 +27,9 @@ export type UserRole =
   | "delegado_jueces"
   | "delegado_zona"
   | "responsable_financiero_jueces"
-  | "solo_ver";
+  | "solo_ver"
+  /** Juez del censo con cuenta propia: solo entra al portal del juez. */
+  | "juez";
 
 /** Etiqueta legible para cada rol de usuario. */
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -36,10 +38,20 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   delegado_zona: "Delegado de Zona",
   responsable_financiero_jueces: "Responsable Financiero Jueces",
   solo_ver: "Solo Ver",
+  juez: "Juez",
 };
 
-/** Conjunto canónico de roles asignables. Fuente única para validar en la API. */
-export const USER_ROLES = Object.keys(ROLE_LABELS) as UserRole[];
+/**
+ * Roles de la gestión (todo menos `juez`). Las cuentas de juez no se crean ni
+ * se editan desde «Usuarios»: nacen de la ficha del censo, por invitación o por
+ * la petición del propio juez, y van enlazadas a ella.
+ */
+export type StaffRole = Exclude<UserRole, "juez">;
+
+/** Conjunto canónico de roles asignables desde «Usuarios». Fuente única para validar en la API. */
+export const USER_ROLES: readonly UserRole[] = (Object.keys(ROLE_LABELS) as UserRole[]).filter(
+  (r): r is StaffRole => r !== "juez",
+);
 
 /**
  * Roles cuyas cuentas solo puede gestionar un super admin.
@@ -252,6 +264,8 @@ export interface SessionUser extends CurrentUser {
   id: string;
   role: UserRole;
   zona?: string;
+  /** Solo en sesiones de juez: su ficha del censo (`referees.id`). */
+  refereeId?: string;
 }
 
 export interface AppMeta {

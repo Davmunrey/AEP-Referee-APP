@@ -14,7 +14,9 @@ import { SessionProfileReadError } from "@/lib/auth/session-errors";
  */
 
 const getSession = vi.fn();
-vi.mock("@/lib/auth/session", () => ({ getSession: () => getSession() }));
+// `getJudgeSession`: sin juez en estas pruebas (un juez recibe 403, ver
+// regression-batch-ee-portal-sesion).
+vi.mock("@/lib/auth/session", () => ({ getSession: () => getSession(), getJudgeSession: async () => null }));
 
 const { requireApiUser, isSessionUser } = await import("@/lib/api/auth");
 

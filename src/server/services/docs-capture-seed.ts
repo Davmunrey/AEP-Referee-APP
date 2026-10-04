@@ -21,6 +21,9 @@ const REFEREES: Referee[] = [
     iniciales: "AR",
     email: "ana.roa@example.test",
     localidad: "Murcia",
+    // Con cuenta en el portal: es el juez con el que entra el modo captura
+    // cuando se le pide (`DOCS_CAPTURE_ROLE_COOKIE`).
+    userId: "docs-capture-juez",
   },
   {
     id: "j002",

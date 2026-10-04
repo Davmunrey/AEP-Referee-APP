@@ -1,16 +1,14 @@
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { ReportsManager } from "@/components/judge/reports-manager";
 import { MetricTile, type MetricTone } from "@/components/ui/metric-tile";
-import { canAdminJudges, canManageJudges, getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { canAdminJudges, canManageJudges, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { redirect } from "next/navigation";
 import { AlertTriangle, FileText, Star, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export default async function ReportsPage() {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const [reports, referees, competitions] = await Promise.all([
     dataService.getReports(undefined, user),

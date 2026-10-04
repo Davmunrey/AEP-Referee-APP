@@ -66,6 +66,9 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
     admin
       .from("profiles")
       .select("id, email, nombre, rol_label, iniciales, role, zona, activo, created_at")
+      // Las cuentas de juez se gestionan desde su ficha del censo, no aquí:
+      // son cientos y no tienen nada que ver con los permisos de la gestión.
+      .neq("role", "juez")
       .order("nombre"),
     loadLastSignIns(),
   ]);

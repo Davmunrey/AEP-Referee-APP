@@ -11,12 +11,15 @@ import {
   SlidersHorizontal,
   Trash2,
   UserCheck,
+  Send,
   UserPlus,
   UserX,
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { JudgesRegistryImportButton } from "@/components/referees/judges-registry-import";
+import { PortalInviteDialog } from "@/components/referees/portal-invite-dialog";
+import type { JudgeAccessStatus } from "@/lib/judge-access";
 
 const NewRefereeDialog = dynamic(
   () => import("@/components/referees/new-referee-dialog").then((m) => m.NewRefereeDialog),
@@ -62,6 +65,8 @@ interface RefereesDirectoryProps {
   levels: RefereeLevel[];
   canEdit?: boolean;
   canImport?: boolean;
+  /** Acceso al portal por ficha; solo llega a quien puede invitar. */
+  portalStatuses?: Record<string, JudgeAccessStatus>;
 }
 
 export function RefereesDirectory({
@@ -70,7 +75,9 @@ export function RefereesDirectory({
   levels,
   canEdit = false,
   canImport = false,
+  portalStatuses,
 }: RefereesDirectoryProps) {
+  const [showInvite, setShowInvite] = useState(false);
   const searchParams = useSearchParams();
   const [referees, setReferees] = useState(initialReferees);
   // Re-sincroniza con los datos del servidor cuando cambian (p. ej. tras importar
@@ -215,6 +222,12 @@ export function RefereesDirectory({
             </Button>
           )}
           {canImport && <JudgesRegistryImportButton />}
+          {canEdit && portalStatuses && (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowInvite(true)}>
+              <Send className="h-3.5 w-3.5" aria-hidden="true" />
+              Invitar al portal
+            </Button>
+          )}
           {canEdit && (
             <Button size="sm" className="gap-1.5" onClick={() => setShowNew(true)}>
               <UserPlus className="h-3.5 w-3.5" />
@@ -568,6 +581,14 @@ export function RefereesDirectory({
           levels={levels}
           open
           onClose={() => setShowNew(false)}
+        />
+      )}
+      {showInvite && portalStatuses && (
+        <PortalInviteDialog
+          open
+          onClose={() => setShowInvite(false)}
+          referees={filtered}
+          statuses={portalStatuses}
         />
       )}
     </div>

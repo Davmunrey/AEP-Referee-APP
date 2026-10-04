@@ -1,7 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { TicketDetail } from "@/components/tickets/ticket-detail";
-import { getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 
 interface TicketPageProps {
@@ -10,7 +9,7 @@ interface TicketPageProps {
 
 export default async function TicketDetailPage({ params }: TicketPageProps) {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const { id } = await params;
   const ticket = await dataService.getTicket(id, user);

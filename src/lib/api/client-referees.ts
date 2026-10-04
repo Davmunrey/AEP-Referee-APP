@@ -8,6 +8,7 @@ import type {
   RefereeSanction,
   SanctionDurationPreset,
 } from "@/lib/types";
+import type { JudgeInviteResult } from "@/lib/judge-access";
 
 export const refereeApi = {
   getReferees: (params?: Record<string, string>) => {
@@ -25,6 +26,16 @@ export const refereeApi = {
 
   deleteReferee: (id: string) =>
     request<{ deleted: boolean }>(`/referees/${id}`, { method: "DELETE" }),
+
+  /** Invita al portal del juez (o reenvía el enlace). Máximo 200 por llamada. */
+  inviteToPortal: (refereeIds: string[]) =>
+    request<{ results: JudgeInviteResult[] }>("/referees/portal-access", {
+      method: "POST",
+      body: JSON.stringify({ refereeIds }),
+    }),
+
+  revokePortalAccess: (refereeId: string) =>
+    request<{ ok: true }>(`/referees/${refereeId}/portal-access`, { method: "DELETE" }),
 
   listRefereeSanctions: (refereeId: string) =>
     request<RefereeSanction[]>(`/referees/${refereeId}/sanctions`),
