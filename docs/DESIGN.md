@@ -29,7 +29,7 @@ Fuente de verdad:
 ## Layout
 
 - Sidebar expandido en escritorio y agrupado en General · Competiciones · Jueces · Referencia · Administración; usuario en **topbar** (no en pie del sidebar).
-- El *eyebrow* de cada página repite el grupo del menú en el que vive; la barra superior no repite el título (la última miga y el `h1` ya lo dicen).
+- Sin rótulo (*eyebrow*) encima del título: la miga de pan y el menú ya dicen dónde estás. La barra superior no repite el título (la última miga y el `h1` ya lo dicen). Las acciones de la página van a la derecha del título y, en móvil, debajo.
 - En móvil, cajón de navegación desde el botón ☰ y nombre de la página en la barra superior.
 - Tarima: panel jueces izquierda, sesiones/slots derecha.
 - Sin footer legal en dashboard (`/docs` + widget Ayuda).
@@ -60,10 +60,15 @@ Fuente de verdad:
 
 ## Cifras y textos
 
-- Las tiras de cifras usan `MetricTile`; nada de tarjetas de KPI hechas a mano por pantalla.
+- Las cifras de una pantalla van en una sola franja (`MetricStrip` + `MetricTile`): celdas separadas por un filete, sin iconos en cuadrados de color. El tono es un punto junto al rótulo y solo se usa cuando la cifra pide hacer algo (pendientes, incidencias, km sin rellenar).
 - Una cifra que no se puede calcular se muestra como «—», no como 0 (p. ej. tasa de aprobación sin exámenes).
 - Nada de gráficos decorativos que parezcan datos (se retiraron las «mini-gráficas» de los KPIs del dashboard).
 - Plurales con `contar()`/`palabra()`; vocabulario de la casa: tarima, hueco, plantilla (no roster, slot, diff).
+
+## Confirmaciones
+
+- Nunca `window.confirm` ni `alert`: `confirmar()` (`components/ui/confirm-dialog.tsx`) abre un diálogo de la app. El botón nombra la acción («Eliminar juez», «Vaciar asignaciones»); con `peligro` se pinta en rojo y el foco empieza en «Cancelar».
+- Lo destructivo nunca es el botón más visible de la pantalla: va como acción discreta o dentro del menú «…».
 
 ## Estados
 

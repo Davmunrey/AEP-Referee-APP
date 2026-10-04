@@ -5,6 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 import { Button } from "@/components/ui/button";
 import { useEscapeClose } from "@/hooks/use-escape-close";
+import { currentConfirm, settleConfirm, subscribeConfirm, type PendingConfirm } from "@/lib/confirm-store";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,74 +18,24 @@ import { cn } from "@/lib/utils";
  * bloqueado por el propio navegador. Aquí el botón nombra la acción
  * («Eliminar juez») y la destructiva se pinta como tal.
  *
- * Se usa como el nativo, con `await`, desde cualquier manejador:
- *
- *   if (!(await confirmar({ titulo: "¿Eliminar este examen?", accion: "Eliminar", peligro: true }))) return;
- *
- * `<ConfirmHost />` vive una sola vez en el layout raíz.
+ * `confirmar()` vive en `lib/confirm-store.ts`; `<ConfirmHost />` se monta una
+ * sola vez en el layout raíz.
  */
-export interface ConfirmOptions {
-  titulo: string;
-  /** Qué pasa si se confirma; una o dos frases. */
-  detalle?: string;
-  /** Texto del botón que confirma: el verbo de la acción. */
-  accion?: string;
-  /** Texto del botón que no hace nada. */
-  cancelar?: string;
-  /** Acción destructiva: botón rojo y el foco empieza en «Cancelar». */
-  peligro?: boolean;
-}
-
-type Pending = ConfirmOptions & { resolve: (ok: boolean) => void };
-
-let current: Pending | null = null;
-const listeners = new Set<() => void>();
-const emit = () => listeners.forEach((l) => l());
-
-export function confirmar(options: ConfirmOptions): Promise<boolean> {
-  // Sin anfitrión montado (tests, o un render fuera del layout) se comporta
-  // como el nativo para no dejar la acción colgada.
-  if (listeners.size === 0) {
-    const text = options.detalle ? `${options.titulo}\n\n${options.detalle}` : options.titulo;
-    return Promise.resolve(typeof window !== "undefined" ? window.confirm(text) : false);
-  }
-  current?.resolve(false);
-  return new Promise<boolean>((resolve) => {
-    current = { ...options, resolve };
-    emit();
-  });
-}
-
-function settle(ok: boolean) {
-  const pending = current;
-  current = null;
-  emit();
-  pending?.resolve(ok);
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
+export { confirmar } from "@/lib/confirm-store";
+export type { ConfirmOptions } from "@/lib/confirm-store";
 
 export function ConfirmHost() {
-  const pending = useSyncExternalStore(
-    subscribe,
-    () => current,
-    () => null,
-  );
+  const pending = useSyncExternalStore(subscribeConfirm, currentConfirm, () => null);
   return pending ? <ConfirmPanel key={pending.titulo} pending={pending} /> : null;
 }
 
-function ConfirmPanel({ pending }: { pending: Pending }) {
-  const panelRef = useEscapeClose<HTMLDivElement>(() => settle(false));
+function ConfirmPanel({ pending }: { pending: PendingConfirm }) {
+  const panelRef = useEscapeClose<HTMLDivElement>(() => settleConfirm(false));
   const peligro = Boolean(pending.peligro);
   return (
     <div
       className={cn("fixed inset-0 z-[70] flex items-end justify-center bg-overlay p-4 sm:items-center", dialogOverlayEnter)}
-      onClick={() => settle(false)}
+      onClick={() => settleConfirm(false)}
     >
       <div
         ref={panelRef}
@@ -115,10 +66,10 @@ function ConfirmPanel({ pending }: { pending: Pending }) {
           </div>
         </div>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={() => settle(false)} autoFocus={peligro}>
+          <Button variant="outline" onClick={() => settleConfirm(false)} autoFocus={peligro}>
             {pending.cancelar ?? "Cancelar"}
           </Button>
-          <Button variant={peligro ? "destructive" : "default"} onClick={() => settle(true)} autoFocus={!peligro}>
+          <Button variant={peligro ? "destructive" : "default"} onClick={() => settleConfirm(true)} autoFocus={!peligro}>
             {pending.accion ?? "Continuar"}
           </Button>
         </div>

@@ -118,6 +118,16 @@
     /* Las cifras alineadas en columna en toda la app (tablas, contadores). */
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.006em;
+    /* Casillas, radios y barras nativas en el color de la app, no en el azul
+     * del sistema; el cursor de escritura, igual. */
+    accent-color: var(--primary);
+    caret-color: var(--primary);
+  }
+
+  /* Los enlaces subrayados no pisan los descendentes. */
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: from-font;
   }
 
   /*
