@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": [
+    "lhr1"
+  ],
   "git": {
     "deploymentEnabled": {
       "claude/workflows-audit-refinement-xeekpg": false

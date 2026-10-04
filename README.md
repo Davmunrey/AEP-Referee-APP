@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/entrar-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.14-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.14.1-22c55e?style=for-the-badge&labelColor=0d1117" />
   <img alt="Tests" src="https://img.shields.io/badge/tests-1233%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
@@ -190,5 +190,5 @@ Detalle de variables, Supabase y checklist de release: [docs/DEPLOY.md](./docs/D
 ---
 
 <p align="center">
-  <sub>AEP Tarima · v2.14 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
+  <sub>AEP Tarima · v2.14.1 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
 </p>
