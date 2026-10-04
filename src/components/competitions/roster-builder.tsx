@@ -529,7 +529,7 @@ export function RosterBuilder({
         />
         {!readOnly && (
           <>
-            <RosterHelpPanel />
+            <RosterHelpPanel>
             <RosterStepper
               current={isEditing ? "plantilla" : workflowStep}
               onChange={(step) => {
@@ -543,6 +543,7 @@ export function RosterBuilder({
               plantillaDone={plantillaDone}
               asignacionDone={asignacionDone}
             />
+            </RosterHelpPanel>
           </>
         )}
         {workflowStep === "revision" && !isEditing && !readOnly ? (
