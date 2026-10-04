@@ -4,6 +4,15 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## ⚡ **AEP Tarima v2.14.1** — _«Al lado de la base de datos»_ (2026-10-04)
+
+Las pantallas tardaban porque el servidor estaba en Washington y la base de datos en Londres.
+
+- **Funciones de Vercel en Londres** (`lhr1`, `vercel.json`), junto a Supabase (eu-west-2). Cada consulta pasa de ~80 ms de ida y vuelta a 1–2 ms, y una pantalla hace varias seguidas.
+- Producción llevaba sin desplegarse desde el 10 de septiembre (#180): el repositorio se había desenlazado del proyecto de Vercel. Se vuelve a desplegar `main`.
+
+---
+
 ## 🔑 **AEP Tarima v2.14** — _«Con código»_ (2026-10-04)
 
 La aplicación deja de depender del correo: no habrá SMTP propio y el de Supabase solo entrega a los miembros del proyecto, así que invitaciones, enlaces de acceso y restablecer la contraseña no llegaban a nadie.
