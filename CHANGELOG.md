@@ -11,6 +11,9 @@ Para quien monta tarimas a última hora y para la pantalla más usada de la app.
 - **Modo oscuro**: menú de usuario → Tema (Sistema, Claro u Oscuro). Sin destello al cargar, sigue al sistema si así lo eliges y se recuerda en cada navegador. El logo AEP tiene su versión para fondo oscuro.
 - **La tarima, más limpia**: cada hueco ocupa una sola fila (nivel, nombre, avisos y acciones), los pasos son pestañas con la ayuda al lado en vez de dos franjas, el aviso de normativa va junto a las acciones y la cobertura deja de parecer un campo de texto.
 - **Fichas de juez más legibles** en el panel de la tarima: texto más grande y las ya asignadas, atenuadas pero sin parecer deshabilitadas.
+- **Formularios actuales**: campos blancos con borde fino y anillo de foco suave (antes, grises rellenos); los desplegables y áreas de texto, igual.
+- **Filtros y pestañas sin rojo macizo** (Soporte, Normativa): la selección activa es una pestaña elevada, y el rojo queda para la acción principal.
+- Estadísticas sin la zona escrita dos veces («NOROESTE» + «1- NOROESTE») y sin la caja rosa de la cifra; Informes usa la misma tira de cifras que el resto; diálogos con un velo más ligero; portada de `/docs` y aviso de la Guía AEP sin fondo rosa.
 - Las barras de cobertura por debajo del 70 % de la cabecera de la tarima no tenían color (la familia `chart-*` no estaba registrada en el tema). Ya lo tienen.
 
 ---

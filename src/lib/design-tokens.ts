@@ -128,10 +128,10 @@ export const roleTokens: Record<
 };
 
 export const selectFieldClass =
-  "h-9 w-full rounded-xl border border-border-strong bg-surface px-2.5 text-sm text-foreground focus-ring";
+  "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-sm text-foreground shadow-sm transition-[border-color,box-shadow] hover:border-border-strong focus-visible:border-primary-border focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/15";
 
 export const selectFieldClassSm =
-  "h-8 rounded-md border border-border-strong bg-surface px-2.5 text-[11.5px] text-foreground-secondary focus-ring";
+  "h-8 rounded-lg border border-input bg-card px-2.5 text-xs text-foreground-secondary shadow-sm transition-[border-color,box-shadow] hover:border-border-strong focus-visible:border-primary-border focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/15";
 
 export const textareaFieldClass =
-  "min-h-[72px] w-full rounded-xl border border-border-strong bg-surface px-3 py-2 text-sm text-foreground-secondary placeholder:text-subtle-muted focus-ring";
+  "min-h-[72px] w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-subtle-muted shadow-sm transition-[border-color,box-shadow] hover:border-border-strong focus-visible:border-primary-border focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/15";
