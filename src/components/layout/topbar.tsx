@@ -24,6 +24,8 @@ import dynamic from "next/dynamic";
 import { useCompetitionCrumbLabel } from "@/components/layout/competition-crumb-label";
 import { getPageMeta } from "@/lib/navigation";
 import type { CurrentUser } from "@/lib/types";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import type { BandejaNotificaciones } from "@/lib/notificaciones";
 
 // El diálogo de contraseña solo se abre desde el menú de usuario: fuera del
 // bundle compartido (la barra superior está en el layout de todas las páginas).
@@ -35,9 +37,11 @@ const PasswordDialog = dynamic(
 export function TopBar({
   currentUser,
   onOpenMenu,
+  notificaciones,
 }: {
   currentUser: CurrentUser;
   onOpenMenu?: () => void;
+  notificaciones?: BandejaNotificaciones;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -140,6 +144,7 @@ export function TopBar({
             />
           </div>
         )}
+        {notificaciones && <NotificationBell initial={notificaciones} />}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-full focus-ring">
             <div className="hidden text-right sm:block">

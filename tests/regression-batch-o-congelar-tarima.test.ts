@@ -77,7 +77,7 @@ async function escenario() {
   const juezB = await createReferee({
     nombre: "Bea López", zona: "CENTRO", nivel: "Nacional", estado: "Activo", disp: true,
   } as never);
-  await assignReferee(comp.id, SLOT, juezA.id, "Ana", undefined, null);
+  await assignReferee(comp.id, SLOT, juezA.id, "Ana", undefined, undefined, null);
   return { comp, juezA, juezB };
 }
 
@@ -91,7 +91,7 @@ describe("tarima congelada con propuesta pendiente", () => {
   it("tras enviar la propuesta no se puede seguir editando", async () => {
     await submitRoster(ctx.comp.id, "Ana");
 
-    const res = await assignReferee(ctx.comp.id, SLOT_2, ctx.juezB.id, "Carlos", undefined, null);
+    const res = await assignReferee(ctx.comp.id, SLOT_2, ctx.juezB.id, "Carlos", undefined, undefined, null);
     expect(res.error).toMatch(/pendiente de aprobación/i);
     expect(getStore().assignments.get(ctx.comp.id)?.[SLOT_2]).toBeUndefined();
   });
@@ -134,7 +134,7 @@ describe("retirar la propuesta es la salida de la congelación", () => {
     await submitRoster(ctx.comp.id, "Ana");
     await unlockImprevisto(ctx.comp.id, "Ana");
 
-    const res = await assignReferee(ctx.comp.id, SLOT_2, ctx.juezB.id, "Ana", undefined, null);
+    const res = await assignReferee(ctx.comp.id, SLOT_2, ctx.juezB.id, "Ana", undefined, undefined, null);
     expect(res.error).toBeUndefined();
     expect(getStore().assignments.get(ctx.comp.id)?.[SLOT_2]).toBe(ctx.juezB.id);
   });

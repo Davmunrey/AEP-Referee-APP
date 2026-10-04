@@ -2,7 +2,9 @@ import { canApprove } from "@/lib/auth/session";
 import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { ApprovalReviewError } from "@/lib/competitions/service-types";
 import { jsonError, jsonOk, jsonRouteError, readOrError } from "@/lib/api/route-utils";
+import { afterResponse } from "@/lib/after-response";
 import { dataService } from "@/server/services";
+import { notificarDesignacion } from "@/server/convocatorias";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -66,5 +68,8 @@ export async function POST(request: Request, context: RouteContext) {
     return jsonRouteError("approvals.review", err, "No se pudo revisar la propuesta");
   }
   if (!result) return jsonError("La propuesta ya fue revisada por otro usuario", 409);
+  // Tarima aprobada: cada juez designado recibe su aviso. Después de
+  // responder, para no hacer esperar al revisor.
+  if (approve) afterResponse(() => notificarDesignacion(existing.competitionId, id));
   return jsonOk(result);
 }

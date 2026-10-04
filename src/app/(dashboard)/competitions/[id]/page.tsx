@@ -26,6 +26,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
     lastApproval,
     paidRefereeIds,
     convocatoria,
+    respuestas,
   ] =
     await Promise.all([
       // Una sola lectura de la fila y de las asignaciones (antes, tres de cada).
@@ -38,6 +39,7 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       dataService.getLatestApproval(id),
       dataService.getPaidClaimRefereeIds(id),
       getConvocatoriaDeCampeonato(id),
+      dataService.getDesignacionRespuestas(id),
     ]);
   if (!competitionWithRoster) notFound();
   const { competition, roster } = competitionWithRoster;
@@ -66,6 +68,8 @@ export default async function CompetitionPage({ params }: CompetitionPageProps) 
       refereeBusyMap={refereeBusyMap}
       paidRefereeIds={paidRefereeIds}
       initialConvocatoria={convocatoria}
+      respuestas={respuestas}
+      isNationalUser={user.role === "super_admin" || user.role === "delegado_jueces"}
       lastReview={
         lastApproval && {
           status: lastApproval.status,

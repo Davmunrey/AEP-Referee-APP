@@ -59,7 +59,9 @@ export function ConvocatoriaSignup({ initial }: { initial: PortalConvocatoria })
 
       <ul className="surface-card divide-y divide-border-muted overflow-hidden rounded-xl">
         {item.sesiones.map((s) => {
-          const disabled = !item.abierta || Boolean(item.bloqueo) || (Boolean(s.bloqueo) && !s.inscrito) || busy !== null;
+          // Retirarse se puede aunque haya un bloqueo nuevo (una sanción después
+          // de apuntarse): el bloqueo impide apuntarse, no quitarse.
+          const disabled = !item.abierta || busy !== null || (!s.inscrito && (Boolean(item.bloqueo) || Boolean(s.bloqueo)));
           return (
             <li key={s.session} className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">

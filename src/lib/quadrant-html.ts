@@ -267,7 +267,7 @@ export function generateQuadrantHtml(
 ${embed ? "" : `<button class="print-btn no-print" onclick="window.print()">Imprimir / Guardar PDF</button>`}
 
 <div class="doc-header">
-  <img src="/assets/aep-mark.png" alt="AEP" onerror="this.style.display='none'"/>
+  <img src="/assets/aep-mark.png" alt="AEP"${embed ? "" : ` onerror="this.style.display='none'"`}/>
   <div class="doc-header-text">
     <div class="doc-org">ASOCIACIÓN ESPAÑOLA de POWERLIFTING</div>
     <div class="doc-title">${esc(comp.nombre)}</div>

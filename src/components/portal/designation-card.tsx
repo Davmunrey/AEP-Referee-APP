@@ -1,8 +1,9 @@
+import { DesignationResponse } from "@/components/portal/designation-response";
 import type { PortalDesignation } from "@/lib/judge-portal";
 import { formatDateRange } from "@/lib/utils";
 
 /** Un campeonato en el que el juez está designado, sesión a sesión. */
-export function DesignationCard({ item }: { item: PortalDesignation }) {
+export function DesignationCard({ item, respond = false }: { item: PortalDesignation; respond?: boolean }) {
   return (
     <article className="surface-card overflow-hidden rounded-xl">
       <header className="border-b border-border-muted px-4 py-3">
@@ -30,6 +31,7 @@ export function DesignationCard({ item }: { item: PortalDesignation }) {
           </li>
         ))}
       </ul>
+      {respond && <DesignationResponse competitionId={item.competitionId} initial={item.respuesta} />}
     </article>
   );
 }

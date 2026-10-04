@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isSessionUser, requireJudgeUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { allowAction } from "@/lib/api/action-rate-limit";
 import { apuntarse, retirarse } from "@/server/convocatorias";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -11,6 +12,9 @@ const bodySchema = z.object({ sesion: z.string().min(1).max(100), nota: z.string
 export async function POST(req: Request, { params }: Ctx) {
   const judge = await requireJudgeUser();
   if (!isSessionUser(judge)) return judge;
+  if (!allowAction(`portal:inscripcion:${judge.id}`, 60, 10 * 60_000)) {
+    return jsonError("Demasiadas peticiones seguidas. Espera un momento.", 429);
+  }
   const { id } = await params;
   const body = bodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return jsonError("Indica la sesión", 400);
@@ -25,6 +29,9 @@ export async function POST(req: Request, { params }: Ctx) {
 export async function DELETE(req: Request, { params }: Ctx) {
   const judge = await requireJudgeUser();
   if (!isSessionUser(judge)) return judge;
+  if (!allowAction(`portal:inscripcion:${judge.id}`, 60, 10 * 60_000)) {
+    return jsonError("Demasiadas peticiones seguidas. Espera un momento.", 429);
+  }
   const { id } = await params;
   const sesion = new URL(req.url).searchParams.get("sesion");
   if (!sesion) return jsonError("Indica la sesión", 400);

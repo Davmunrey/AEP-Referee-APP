@@ -13,6 +13,7 @@ let referees: Row[];
 let invited: string[];
 let deletedUsers: string[];
 let magicLinks: string[];
+let authEmails: Record<string, string>;
 
 function query(table: string) {
   const rows = () => (table === "profiles" ? profiles : referees);
@@ -56,6 +57,11 @@ vi.mock("@/lib/supabase/admin", () => ({
           invited.push(email);
           return { data: { user: { id: `u-${invited.length}` } }, error: null };
         },
+        getUserById: async (id: string) => ({ data: { user: { id, email: authEmails[id] } }, error: null }),
+        updateUserById: async (id: string, attrs: { email: string }) => {
+          authEmails[id] = attrs.email;
+          return { data: { user: { id } }, error: null };
+        },
         deleteUser: async (id: string) => {
           deletedUsers.push(id);
           return { error: null };
@@ -87,6 +93,7 @@ beforeEach(() => {
   invited = [];
   deletedUsers = [];
   magicLinks = [];
+  authEmails = {};
 });
 
 describe("invitar jueces (Supabase)", () => {
@@ -114,7 +121,20 @@ describe("invitar jueces (Supabase)", () => {
     expect(referees[0]!.user_id).toBe("otro");
   });
 
+  it("si el e-mail del censo cambió, la cuenta pasa a entrar con el nuevo antes de reenviar", async () => {
+    // Si no, el buzón viejo seguía entrando como el juez y al nuevo no le
+    // llegaba nada (no tiene cuenta).
+    profiles = [{ id: "u-9", email: "vieja@club.test", role: "juez", activo: true }];
+    authEmails = { "u-9": "vieja@club.test" };
+    const [r] = await inviteJudges([ficha({ email: "Ana@aep.test", userId: "u-9" })], "http://x/");
+    expect(r!.outcome).toBe("enlace-reenviado");
+    expect(authEmails["u-9"]).toBe("ana@aep.test");
+    expect(profiles[0]!.email).toBe("ana@aep.test");
+    expect(magicLinks).toEqual(["ana@aep.test"]);
+  });
+
   it("con cuenta activa, reenvía el enlace en vez de crear otra", async () => {
+    authEmails = { "u-9": "ana@aep.test" };
     profiles = [{ id: "u-9", email: "ana@aep.test", role: "juez", activo: true }];
     const [r] = await inviteJudges([ficha({ email: "ana@aep.test", userId: "u-9" })], "http://x/");
     expect(r!.outcome).toBe("enlace-reenviado");

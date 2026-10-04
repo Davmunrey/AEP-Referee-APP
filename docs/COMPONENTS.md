@@ -166,3 +166,11 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 | `DesignationCard` | Una designación aprobada, sesión a sesión |
 | `ConvocatoriaCard` | Convocatoria abierta en la lista (cierre, sesiones apuntadas, «Otra zona») |
 | `ConvocatoriaSignup` | Apuntarse / retirarse por sesión, con bloqueos y avisos |
+| `DesignationResponse` | Confirmar la designación o avisar de que no puede ir (con motivo) |
+
+## Avisos
+
+| Componente | Uso |
+|---|---|
+| `NotificationBell` | Campana con no leídas; al abrirla marca como leídos. En la barra superior y en el portal |
+| `ZoneRequestActions` | Aceptar o rechazar que tus jueces vean la convocatoria de otra zona (en «Pendiente») |

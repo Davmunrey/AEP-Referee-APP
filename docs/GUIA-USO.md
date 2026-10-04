@@ -190,6 +190,21 @@ En vez de llamar uno a uno, lanza una **convocatoria** y deja que los jueces se 
 
 Apuntarse no es estar designado: tú montas la tarima y, cuando se aprueba, el juez la ve en «Mis sesiones». Un juez con sanción activa o con la ficha inactiva no puede apuntarse.
 
+**Otras zonas**
+
+- Al lanzarla (o después, desde el mismo botón) puedes **abrirla también a otras zonas**. Si eres de la gestión nacional, sus jueces la ven en el acto; si eres delegado de zona, el delegado de la otra zona tiene que **aceptarlo** antes.
+- Marca **«Si faltan inscritos, pedir ayuda a las demás zonas»** y cuántos días antes del cierre: si para entonces alguna sesión tiene menos inscritos que plazas, se pide a todas las demás zonas (cada delegado decide si se suma).
+- Las peticiones de otras zonas a la tuya te llegan a la campana y aparecen en **Pendiente**, en el panel de inicio, con **Aceptar** y **Rechazar**.
+- Un juez de otra zona que asignes desde la convocatoria cuenta como asignación de fuera de zona, como siempre.
+
+**Después de aprobar la tarima**
+
+Cada juez designado recibe un aviso y, en su portal, confirma que va o dice que no puede (con el motivo). Si alguno no puede, te llega a la campana y la tarima lo muestra arriba («… no puede ir. Registra un imprevisto para sustituirle») y en su hueco («No va»).
+
+**La campana**
+
+Arriba a la derecha (en el panel y en el portal). Avisa de convocatorias nuevas, peticiones de otras zonas y sus respuestas, el cierre de una convocatoria al día siguiente, las designaciones y los jueces que no pueden ir. Al abrirla, los avisos quedan leídos.
+
 ---
 
 ## 7b. Portal del juez
@@ -207,7 +222,7 @@ Un delegado de zona solo invita a jueces de su zona. Si el e-mail de la ficha ya
 **Lo que ve el juez** (pensado para el móvil)
 
 - **Inicio**: sus próximas designaciones y, si la tiene, el aviso de sanción activa.
-- **Mis sesiones**: cada campeonato en el que está designado, sesión a sesión, con el día, los horarios de pesaje y competición y su función; y su historial. Solo aparecen tarimas **aprobadas**: un borrador todavía puede cambiar.
+- **Mis sesiones**: cada campeonato en el que está designado (con **Confirmo** / **No puedo ir**), sesión a sesión, con el día, los horarios de pesaje y competición y su función; y su historial. Solo aparecen tarimas **aprobadas**: un borrador todavía puede cambiar.
 - **Mi ficha**: sus datos del censo. Si algo no es correcto, te lo pedirá a ti.
 - **Convocatorias**: los campeonatos a los que se puede apuntar. Entra en uno y pulsa **Apuntarme** en cada sesión a la que pueda ir; se guarda al momento y puede retirarse mientras la convocatoria siga abierta. Si ese fin de semana ya está designado en otro campeonato, se le avisa.
 

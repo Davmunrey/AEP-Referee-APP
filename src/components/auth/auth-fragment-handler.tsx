@@ -29,9 +29,22 @@ export function AuthFragmentHandler() {
     if (!access_token || !refresh_token) return;
     // Fuera de la barra de direcciones cuanto antes: es una credencial.
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    // Solo los enlaces que envía la aplicación (invitación o acceso). Sin este
+    // filtro, cualquiera podía mandar un enlace con los tokens de SU cuenta y
+    // dejar a quien lo abriera trabajando, sin saberlo, dentro de ella.
+    const tipo = params.get("type");
+    if (tipo !== "invite" && tipo !== "magiclink") return;
     void (async () => {
       const { createClient } = await import("@/lib/supabase/client");
-      const { error } = await createClient().auth.setSession({ access_token, refresh_token });
+      const supabase = createClient();
+      // Y nunca sustituye una sesión abierta: quien ya ha entrado sigue con
+      // la suya.
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        window.location.replace("/");
+        return;
+      }
+      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
       // Navegación completa: el servidor tiene que ver ya la cookie de sesión.
       window.location.replace(error ? "/sign-in?error=sesion-fallida" : "/");
     })();

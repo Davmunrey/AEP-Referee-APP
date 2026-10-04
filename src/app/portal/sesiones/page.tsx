@@ -17,7 +17,7 @@ export default async function PortalSessionsPage() {
             No tienes designaciones próximas.
           </p>
         ) : (
-          data.upcoming.map((item) => <DesignationCard key={item.competitionId} item={item} />)
+          data.upcoming.map((item) => <DesignationCard key={item.competitionId} item={item} respond />)
         )}
       </section>
 

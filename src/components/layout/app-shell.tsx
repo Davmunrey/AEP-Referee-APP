@@ -9,6 +9,7 @@ import { HelpWidget } from "@/components/help/help-widget";
 import { AppRealtimeSync } from "@/components/realtime/app-realtime-sync";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
+import type { BandejaNotificaciones } from "@/lib/notificaciones";
 
 const COLLAPSE_KEY = "aep-tarima:sidebar-collapsed";
 
@@ -22,10 +23,12 @@ export function AppShell({
   children,
   currentUser,
   navCounts,
+  notificaciones,
 }: {
   children: React.ReactNode;
   currentUser: SessionUser;
   navCounts: NavCounts;
+  notificaciones?: BandejaNotificaciones;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   // Móvil (< md): sin carril fijo de iconos —se comía 64 px de 390— y con la
@@ -138,7 +141,7 @@ export function AppShell({
       {/* El contenido es un panel propio sobre el marco (sidebar + fondo), con
           borde fino y esquinas redondeadas en escritorio. */}
       <div className="app-canvas relative flex min-w-0 flex-1 flex-col md:my-2 md:mr-2 md:overflow-hidden md:rounded-xl md:border md:border-border md:shadow-card">
-        <TopBar currentUser={currentUser} onOpenMenu={() => setMobileOpen(true)} />
+        <TopBar currentUser={currentUser} onOpenMenu={() => setMobileOpen(true)} notificaciones={notificaciones} />
         <main id="main-content" className="flex-1 overflow-y-auto" tabIndex={-1}>
           {children}
         </main>

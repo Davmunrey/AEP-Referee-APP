@@ -52,3 +52,21 @@ export async function requireJudgeUser(): Promise<(SessionUser & { refereeId: st
 export function isSessionUser(value: SessionUser | Response): value is SessionUser {
   return "id" in value && "email" in value;
 }
+
+/**
+ * Cualquier cuenta activa, de gestión o de juez: para lo que es de cada
+ * persona y no depende del rol (la campana de avisos).
+ */
+export async function requireAnyUser(): Promise<SessionUser | Response> {
+  try {
+    const user = (await getSession()) ?? (await getJudgeSession());
+    if (!user) return jsonError("No autenticado", 401);
+    return user;
+  } catch (err) {
+    if (err instanceof SessionProfileReadError) {
+      console.error("[api.auth.any]", err.message);
+      return jsonError("No se pudo comprobar tu sesión. Vuelve a intentarlo.", 503);
+    }
+    throw err;
+  }
+}

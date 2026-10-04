@@ -379,6 +379,11 @@ export async function assignReferee(
   refereeId: string,
   actor: string,
   slotFlags?: SlotFlags,
+  // Mismo orden que el twin de Supabase. Faltaba este parámetro y el motivo de
+  // fuera de zona llegaba como `expectedRefereeId`: en memoria, toda asignación
+  // de un juez de otra zona salía como «otro usuario liberó ese hueco».
+  // `satisfies DataService` no lo veía porque un texto cabe en `string | null`.
+  _crossZoneReason?: string,
   expectedRefereeId?: string | null,
 ): Promise<{
   assignments?: AssignmentsMap;

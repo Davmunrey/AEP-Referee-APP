@@ -4,7 +4,7 @@ import { assertCompetitionInUserZone } from "@/lib/api/referee-scope";
 import { jsonError, jsonOk, jsonRouteError, readOrError } from "@/lib/api/route-utils";
 import { canEditRoster } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { actualizarConvocatoria, crearConvocatoria, getConvocatoriaDeCampeonato } from "@/server/convocatorias";
+import { abrirAOtrasZonas, actualizarConvocatoria, crearConvocatoria, getConvocatoriaDeCampeonato } from "@/server/convocatorias";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -36,6 +36,8 @@ const createSchema = z.object({
   sesiones: z.array(z.string().min(1)).min(1).max(50),
   cierraEl: z.string(),
   mensaje: z.string().max(1000).optional(),
+  zonasExtra: z.array(z.string().min(1)).max(10).optional(),
+  ampliarDiasAntes: z.number().int().min(1).max(60).optional(),
 });
 
 /** Lanza la convocatoria (gestores de la tarima del campeonato). */
@@ -60,6 +62,8 @@ const patchSchema = z.object({
   cierraEl: z.string().optional(),
   mensaje: z.string().max(1000).optional(),
   sesiones: z.array(z.string().min(1)).min(1).max(50).optional(),
+  /** Abrir además a estas zonas (pendientes de su delegado, salvo gestión nacional). */
+  zonasExtra: z.array(z.string().min(1)).min(1).max(10).optional(),
 });
 
 /** Cerrar, reabrir, cancelar o cambiar fecha, mensaje o sesiones. */
@@ -74,7 +78,12 @@ export async function PATCH(req: Request, { params }: Ctx) {
   try {
     const current = await dataService.getLiveConvocatoria(id);
     if (!current) return jsonError("Este campeonato no tiene convocatoria", 404);
-    const convocatoria = await actualizarConvocatoria(current, data.competition, data.roster.template, body.data);
+    const { zonasExtra, ...patch } = body.data;
+    let convocatoria = current;
+    if (Object.values(patch).some((v) => v !== undefined)) {
+      convocatoria = await actualizarConvocatoria(current, data.competition, data.roster.template, patch);
+    }
+    if (zonasExtra) convocatoria = await abrirAOtrasZonas(user, convocatoria, data.competition, zonasExtra);
     return jsonOk({ convocatoria, inscripciones: await dataService.listInscripciones(convocatoria.id) });
   } catch (err) {
     return jsonRouteError("convocatoria.PATCH", err, "No se pudo guardar la convocatoria");
