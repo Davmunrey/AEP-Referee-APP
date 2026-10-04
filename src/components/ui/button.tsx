@@ -17,7 +17,9 @@ const buttonVariants = cva(
         ghost:
           "text-muted-foreground hover:bg-surface hover:text-foreground active:bg-surface-hover",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-primary hover:bg-primary-hover",
+          // Mismo relleno que la acción principal: en oscuro, el rojo de texto
+          // (--destructive) es demasiado claro para llevar texto blanco encima.
+          "bg-primary text-primary-foreground shadow-primary hover:bg-primary-hover",
       },
       size: {
         default: "h-9 px-4 py-2",

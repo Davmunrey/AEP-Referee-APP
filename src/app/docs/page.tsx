@@ -100,7 +100,7 @@ const faqs: { q: string; a: string }[] = [
   },
 ];
 
-const linkClass = "rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-ring";
+const linkClass = "rounded-sm text-brand underline underline-offset-2 hover:text-primary-hover focus-ring";
 
 /**
  * Una sección de lectura: título y prosa a ~70 caracteres por línea. Sin

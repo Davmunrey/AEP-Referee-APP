@@ -75,7 +75,7 @@ export function SessionCategoriesEditor({ categorias, onAdd, onRemove, onPatch }
                     className={cn(
 "rounded-md border px-2.5 py-1 text-2xs tabular-nums transition-colors focus-ring",
                       active
-                        ? "border-primary bg-primary/10 text-primary"
+                        ? "border-primary bg-primary/10 text-brand"
                         : "border-border bg-surface text-muted-foreground hover:border-border-strong hover:text-foreground",
                     )}
                   >

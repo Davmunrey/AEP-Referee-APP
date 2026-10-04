@@ -191,7 +191,7 @@ export function Sidebar({
           aria-hidden="true"
           className={cn(
             "h-4 w-4 shrink-0 transition-colors duration-(--duration-base)",
-            active ? "text-primary" : "text-subtle group-hover:text-foreground-secondary",
+            active ? "text-brand" : "text-subtle group-hover:text-foreground-secondary",
           )}
         />
         {/* Colapsada, la barra escondía también los contadores: en la tableta

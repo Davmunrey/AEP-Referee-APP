@@ -26,7 +26,7 @@ export function TransferStepper({
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1",
-                  active && "bg-primary-muted text-primary",
+                  active && "bg-primary-muted text-brand",
                   done && !active && "bg-success-muted text-success",
                   !active && !done && "bg-surface text-subtle-muted",
                 )}

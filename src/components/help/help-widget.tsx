@@ -159,7 +159,7 @@ export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"
                       <Link
                         href={step.href}
                         onClick={() => setOpen(false)}
-                        className="mt-1 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-primary underline-offset-2 hover:underline focus-ring"
+                        className="mt-1 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-brand underline-offset-2 hover:underline focus-ring"
                       >
                         {step.linkLabel ?? "Abrir"}
                         <ArrowRight className="h-3 w-3" />
@@ -246,7 +246,7 @@ function TopicCard({ entry, onNavigate }: { entry: HelpEntry; onNavigate: () => 
               key={l.href}
               href={l.href}
               onClick={onNavigate}
-              className="inline-flex min-h-9 items-center gap-1 rounded-sm text-xs font-medium text-primary underline-offset-2 hover:underline focus-ring"
+              className="inline-flex min-h-9 items-center gap-1 rounded-sm text-xs font-medium text-brand underline-offset-2 hover:underline focus-ring"
             >
               {l.label}
               <ArrowRight className="h-3 w-3" />

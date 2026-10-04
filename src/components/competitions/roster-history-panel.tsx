@@ -47,7 +47,7 @@ function actionTextClass(action: string): string {
   if (lower.includes("quitar") || lower.includes("elimin") || lower.includes("borra"))
     return "text-warning";
   if (lower.includes("envi") || lower.includes("aprobac") || lower.includes("submit"))
-    return "text-primary";
+    return "text-brand";
   return "text-foreground";
 }
 

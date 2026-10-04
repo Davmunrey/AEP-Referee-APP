@@ -223,17 +223,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
 
   return (
     <PageShell>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" className="gap-1.5" asChild>
-          <Link href="/compensation">
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Panel compensación
-          </Link>
-        </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5" asChild>
+      {/* Una sola vuelta: a la tarima de la que se viene. El panel de
+          compensación está en el menú y en la miga de pan; dos flechas atrás
+          seguidas no dicen cuál es «atrás». */}
+      <div>
+        <Button variant="ghost" size="sm" className="-ml-2 gap-1.5" asChild>
           <Link href={`/competitions/${competition.id}`}>
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Volver a tarima
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            Volver a la tarima
           </Link>
         </Button>
       </div>
@@ -370,11 +367,16 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
       {readiness && readiness.issues.length > 0 && (
         <div className="flex gap-3 rounded-xl border border-warning-border bg-warning-subtle px-4 py-3 text-sm">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          <ul className="list-inside list-disc space-y-1 text-foreground-secondary">
-            {readiness.issues.map((issue) => (
-              <li key={issue}>{issue}</li>
-            ))}
-          </ul>
+          {/* Un solo aviso es una frase, no una lista de un elemento. */}
+          {readiness.issues.length === 1 ? (
+            <p className="text-pretty text-foreground-secondary">{readiness.issues[0]}</p>
+          ) : (
+            <ul className="list-inside list-disc space-y-1 text-pretty text-foreground-secondary">
+              {readiness.issues.map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

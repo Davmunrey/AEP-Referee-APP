@@ -57,7 +57,7 @@ export function DesignationResponse({ competitionId, initial }: { competitionId:
             type="button"
             onClick={() => void enviar("rechazada")}
             disabled={busy || !motivo.trim()}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-destructive px-3 text-sm font-medium text-white hover:bg-destructive/90 focus-ring disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover focus-ring disabled:opacity-50"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             Avisar que no puedo

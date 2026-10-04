@@ -83,7 +83,7 @@ export function FileDropZone({
         <Upload
           className={cn(
             "h-8 w-8 transition-colors duration-(--duration-base)",
-            dragOver ? "text-primary" : "text-subtle-muted",
+            dragOver ? "text-brand" : "text-subtle-muted",
           )}
           aria-hidden="true"
         />

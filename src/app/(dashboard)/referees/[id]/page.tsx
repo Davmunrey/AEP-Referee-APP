@@ -298,7 +298,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
           {referee.email && (
             <div>
               <p className="friendly-label mb-1">Email</p>
-              <a href={`mailto:${referee.email}`} className="text-sm text-primary hover:underline">
+              <a href={`mailto:${referee.email}`} className="text-sm text-brand hover:underline">
                 {referee.email}
               </a>
             </div>

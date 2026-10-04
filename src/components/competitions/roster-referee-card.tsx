@@ -102,7 +102,7 @@ export const RefereeCard = memo(function RefereeCard({
       <GripVertical
         className={cn(
           "h-3 w-3 shrink-0",
-          highlight ? "text-primary" : "text-subtle-muted/80",
+          highlight ? "text-brand" : "text-subtle-muted/80",
         )}
       />
       <div className="min-w-0 flex-1">
@@ -130,7 +130,7 @@ export const RefereeCard = memo(function RefereeCard({
           <span className={cn(isFromOtherZone && "font-medium text-warning")}>
             {isFromOtherZone ? `⟳ ${zoneLabel}` : zoneLabel}
           </span>
-          <span className="mx-1 text-border">·</span>
+          <span className="mx-1 text-border" aria-hidden="true">·</span>
           <span>
             {referee.eventos} arb.
             {topRoles.length > 0 &&

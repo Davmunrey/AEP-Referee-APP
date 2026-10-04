@@ -151,7 +151,7 @@ export function RosterRevisionPanel({
             srcDoc={previewHtml}
             sandbox="allow-same-origin"
             title="Vista previa del cuadrante que se exportará"
-            className="h-[68vh] w-full rounded-b-xl border border-border bg-white"
+            className="h-[68vh] w-full rounded-b-xl border border-border bg-paper"
           />
         )}
       </div>

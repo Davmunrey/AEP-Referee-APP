@@ -587,7 +587,11 @@ export function RosterBuilder({
 
   return (
     <>
-      <div className="flex h-[calc(100dvh-var(--size-topbar))] flex-col">
+      {/* Alto fijo (la tarima como herramienta de pantalla completa) solo desde
+          md. En móvil, flujo normal de página: con alto fijo, la lista de
+          jueces y las sesiones se repartían la pantalla y a 320 px la lista
+          se quedaba en cero. */}
+      <div className="flex flex-col md:h-[calc(100dvh-var(--size-topbar))]">
         {/* Render condicional: así el chunk dynamic solo se descarga al abrir
             el diálogo, no al montar la ruta. */}
         {importOpen && (
@@ -713,7 +717,7 @@ export function RosterBuilder({
         ) : (
           <div
             className={cn(
-              "grid min-h-0 flex-1 grid-cols-1",
+              "grid grid-cols-1 md:min-h-0 md:flex-1",
               showRefereePanel &&
                 "md:grid-cols-(--grid-tarima)",
             )}
@@ -739,7 +743,7 @@ export function RosterBuilder({
                 onClearFilters={clearRefereeFilters}
               />
             )}
-            <section className="flex flex-col overflow-hidden">
+            <section className="flex flex-col md:overflow-hidden">
               {isEditing ? (
                 <ScrollArea className="flex-1">
                   <div className="p-4">
@@ -787,7 +791,7 @@ export function RosterBuilder({
                                       key={slot.slotKey} type="button" onClick={() => setSelectedSlot(slot.slotKey)}
                                       className={cn(
                                         "inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-2xs transition-colors focus-ring",
-                                        selectedSlot === slot.slotKey ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:border-border-strong hover:bg-surface",
+                                        selectedSlot === slot.slotKey ? "border-primary bg-primary/10 text-brand" : "border-border bg-background text-muted-foreground hover:border-border-strong hover:bg-surface",
                                       )}
                                     >
                                       <span>{slot.sessionLabel}</span>

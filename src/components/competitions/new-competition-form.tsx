@@ -270,7 +270,7 @@ export function NewCompetitionForm({ zones, defaultZona }: NewCompetitionFormPro
 
             {fecha && fechaFin && fechaFin >= fecha && (
               <div className="flex items-center gap-2 rounded-md border border-border-muted bg-surface px-3 py-2 text-xs text-foreground-secondary">
-                <CalendarRange className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <CalendarRange className="h-3.5 w-3.5 shrink-0 text-brand" />
                 <span>{fecha}</span>
                 <span className="text-subtle-muted">→</span>
                 <span>{fechaFin}</span>

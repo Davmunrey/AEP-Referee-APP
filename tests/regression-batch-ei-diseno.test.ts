@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { confirmar, currentConfirm, settleConfirm, subscribeConfirm } from "@/lib/confirm-store";
 import { coverageBarClass, STATUS_BAR } from "@/lib/status-tone";
 import { BRAND } from "@/lib/document-tokens";
+import { pendingKmMessage } from "@/lib/judge-compensation/readiness";
 import { cn, formatDate } from "@/lib/utils";
 
 /**
@@ -62,6 +63,8 @@ describe("todo tokenizado", () => {
     ["espaciado de letra suelto (usa tracking-tighter/tight/snug)", /\btracking-\[/],
     ["duración con número (usa duration-(--duration-…))", /\bduration-\d+\b/],
     ["escala suelta (usa scale-(--scale-…))", /\bscale-\[/],
+    ["blanco o negro a pelo (usa bg-card, bg-paper, text-primary-foreground…)", /(?<![\w-])(?:bg|text|border|fill|stroke)-(?:white|black)\b/],
+    ["rojo de marca como texto con el token de relleno (usa text-brand)", /(?<![\w-])text-primary(?![\w-])/],
   ];
   // También los .ts: las clases de movimiento compartidas viven en motion.ts.
   const ts = (function walk(dir: string): string[] {
@@ -165,5 +168,13 @@ describe("cn() con la escala propia", () => {
     expect(cn("text-sm", "text-ui")).toBe("text-ui");
     expect(cn("text-2xs", "text-title")).toBe("text-title");
     expect(cn("tracking-tight", "tracking-snug")).toBe("tracking-snug");
+  });
+});
+
+describe("aviso de km pendientes", () => {
+  it("dice cuántos faltan y no acaba en «…».", () => {
+    expect(pendingKmMessage(["Ana"])).toBe("Faltan los km de Ana: introdúcelos en su fila.");
+    expect(pendingKmMessage(["Ana", "Luis"])).toBe("Faltan los km de 2 jueces: Ana y Luis. Introdúcelos en su fila.");
+    expect(pendingKmMessage(["A", "B", "C", "D", "E"])).toBe("Faltan los km de 5 jueces: A, B, C y 2 más. Introdúcelos en su fila.");
   });
 });

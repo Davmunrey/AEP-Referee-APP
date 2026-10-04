@@ -301,7 +301,7 @@ function StatusControls({
                     className={cn(
                       "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors focus-ring disabled:opacity-50",
                       active
-                        ? "border-primary-border bg-primary-muted text-primary"
+                        ? "border-primary-border bg-primary-muted text-brand"
                         : "border-border bg-card text-foreground hover:border-border-strong hover:bg-surface",
                     )}
                   >

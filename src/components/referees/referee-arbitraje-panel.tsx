@@ -106,7 +106,7 @@ function YearChip({
       aria-pressed={active}
       className={`rounded-md border px-2.5 py-0.5 text-2xs font-medium transition-colors focus-ring ${
         active
-          ? "border-primary/40 bg-primary/10 text-primary"
+          ? "border-primary/40 bg-primary/10 text-brand"
           : "border-border text-subtle-muted hover:bg-surface-hover"
       }`}
     >

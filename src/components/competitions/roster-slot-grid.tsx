@@ -215,7 +215,7 @@ function SlotCell({
             {readOnly ? (
               <>
                 {slotFlags?.compartido && (
-                  <span className="shrink-0 text-2xs font-semibold text-primary" title="Compartido">*</span>
+                  <span className="shrink-0 text-2xs font-semibold text-brand" title="Compartido">*</span>
                 )}
                 {slotFlags?.intercambio && (
                   <span className="shrink-0 text-2xs font-semibold text-info" title="Intercambio">↑↓</span>
@@ -277,9 +277,9 @@ function SlotCell({
         ) : (
           <div className="flex min-h-7 items-center justify-center gap-1.5 text-center">
             {isDropTarget ? (
-              <p className="text-xs font-medium text-primary">Soltar aquí</p>
+              <p className="text-xs font-medium text-brand">Soltar aquí</p>
             ) : isSelected ? (
-              <p className="text-xs font-medium text-primary">
+              <p className="text-xs font-medium text-brand">
                 Hueco {cell.slotIndex + 1} · elige un juez a la izquierda
               </p>
             ) : (

@@ -52,6 +52,9 @@
   --subtle-muted: var(--neutral-500);
 
   --card: var(--neutral-0);
+  /* Papel: la vista previa de lo que se imprime (el cuadrante) es blanca en
+   * los dos temas, como la hoja. Los temas oscuros no la redefinen. */
+  --paper: #ffffff;
   /* Velo bajo los modales: tinta de la app, no negro puro. */
   --overlay: color-mix(in srgb, var(--neutral-950) 38%, transparent);
   --card-foreground: var(--neutral-900);
@@ -78,6 +81,11 @@
   --primary-hover: #c0321f;
   --primary-soft: var(--aep-red-400);
   --primary-foreground: var(--neutral-0);
+  /* Rojo de marca como TEXTO (enlaces, iconos activos, cifras en rojo). Va
+   * aparte del relleno: en oscuro ningún rojo sirve a la vez de fondo con
+   * texto blanco y de texto sobre gris oscuro (4,5:1 en los dos casos es
+   * imposible), así que el relleno se oscurece y el texto se aclara. */
+  --brand-text: var(--aep-red-600);
   --primary-muted: color-mix(in srgb, var(--primary) 10%, transparent);
   --primary-subtle: var(--aep-red-100);
   --primary-border: color-mix(in srgb, var(--primary) 28%, transparent);
@@ -161,6 +169,7 @@
   --size-drawer: min(280px, 85vw); /* menú lateral en móvil */
   --size-tarima-panel: 220px; /* columna de jueces de la tarima (crece por punto de corte) */
   --grid-tarima: minmax(0, var(--size-tarima-panel)) 1fr;
+  --size-tarima-list: 45dvh; /* alto de la lista de jueces de la tarima en móvil */
 
   /* ── Capas (z-index) ───────────────────────────────────────────────── */
   /* Un orden con nombre en vez de números sueltos (10, 50, 60, 9999…): qué
@@ -305,8 +314,9 @@
   --accent: #26262c;
   --accent-foreground: #e4e4e8;
 
-  --primary: #e5533f;
-  --primary-hover: #f0654f;
+  --primary: #c8402f; /* blanco encima: 4,96:1 */
+  --primary-hover: #b8392a;
+  --brand-text: #ef6a57; /* sobre las superficies oscuras: ≥5,3:1 */
   --primary-soft: #f17b67;
   --primary-muted: color-mix(in srgb, var(--primary) 16%, transparent);
   --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));
@@ -404,8 +414,9 @@
     --accent: #26262c;
     --accent-foreground: #e4e4e8;
 
-    --primary: #e5533f;
-    --primary-hover: #f0654f;
+    --primary: #c8402f; /* blanco encima: 4,96:1 */
+    --primary-hover: #b8392a;
+    --brand-text: #ef6a57; /* sobre las superficies oscuras: ≥5,3:1 */
     --primary-soft: #f17b67;
     --primary-muted: color-mix(in srgb, var(--primary) 16%, transparent);
     --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));

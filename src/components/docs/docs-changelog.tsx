@@ -36,7 +36,7 @@ function renderInline(text: string): React.ReactNode {
         <a
           key={i}
           href={link[2]}
-          className="rounded-sm text-primary underline-offset-2 hover:underline focus-ring"
+          className="rounded-sm text-brand underline-offset-2 hover:underline focus-ring"
           target={link[2]!.startsWith("http") ? "_blank" : undefined}
           rel={link[2]!.startsWith("http") ? "noreferrer" : undefined}
         >
