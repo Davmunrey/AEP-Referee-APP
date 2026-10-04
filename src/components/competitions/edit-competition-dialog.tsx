@@ -135,7 +135,7 @@ export function EditCompetitionDialog({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
           <div className="flex items-center gap-2">
-            <Pencil className="h-4 w-4 text-primary" />
+            <Pencil className="h-4 w-4 text-brand" />
             <h2 id="edit-competition-title" className="text-sm font-semibold text-foreground">Editar campeonato</h2>
           </div>
           <button

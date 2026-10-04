@@ -75,7 +75,7 @@ export function SessionOverviewCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={cn("text-xs font-semibold", active ? "text-primary" : "text-muted-foreground")}>
+            <span className={cn("text-xs font-semibold", active ? "text-brand" : "text-muted-foreground")}>
               {session.sesion}
             </span>
             <span className="text-ui font-semibold text-foreground">{session.nombre}</span>
@@ -147,7 +147,7 @@ export const SessionTab = memo(function SessionTab({
         <span className="flex min-w-0 items-baseline gap-1.5">
           {/* El código va en rojo solo en la pestaña activa: es el estado
               «seleccionada», no un adorno de todas. */}
-          <span className={cn("text-2xs font-semibold", active ? "text-primary" : "text-muted-foreground")}>
+          <span className={cn("text-2xs font-semibold", active ? "text-brand" : "text-muted-foreground")}>
             {session.sesion}
           </span>
           <span className="truncate text-xs font-medium text-foreground">{session.nombre}</span>

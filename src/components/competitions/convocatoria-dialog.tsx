@@ -379,7 +379,7 @@ function ZoneChips({ zonas, selected, onToggle }: { zonas: string[]; selected: s
             onClick={() => onToggle(z)}
             className={cn(
               "rounded-md border px-2 py-1 text-xs transition-colors focus-ring",
-              on ? "border-primary/40 bg-primary/10 font-medium text-primary" : "border-border text-muted-foreground hover:bg-surface-hover hover:text-foreground",
+              on ? "border-primary/40 bg-primary/10 font-medium text-brand" : "border-border text-muted-foreground hover:bg-surface-hover hover:text-foreground",
             )}
           >
             {zoneUiName(z)}

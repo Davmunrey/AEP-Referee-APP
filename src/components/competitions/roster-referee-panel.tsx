@@ -182,7 +182,9 @@ export function RosterRefereePanelLeft({
   ]);
 
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden border-r border-border">
+    // En móvil la lista va en el flujo de la página con un alto máximo y su
+    // propio scroll; en escritorio ocupa la columna entera.
+    <section className="flex min-h-0 flex-col overflow-hidden border-b border-border md:border-b-0 md:border-r">
       <div className="border-b border-border px-2.5 py-2">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-ui font-semibold text-foreground-secondary">Jueces</h2>
@@ -191,7 +193,7 @@ export function RosterRefereePanelLeft({
           </span>
         </div>
         {selectedSlot && !readOnly && (
-          <p className="mt-0.5 truncate text-2xs font-medium text-primary">
+          <p className="mt-0.5 truncate text-2xs font-medium text-brand">
             {selectedSlotMeta
               ? `${selectedSlotMeta.sessionLabel} · ${selectedSlotMeta.roleLabel} ${selectedSlotMeta.slotNumber}`
               : "Hueco seleccionado"}
@@ -292,7 +294,7 @@ export function RosterRefereePanelLeft({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="max-h-(--size-tarima-list) min-h-0 flex-1 overflow-y-auto overscroll-contain md:max-h-none">
         <ul className="space-y-0.5 p-1.5">
           {orderedReferees.map((referee) => {
             // Bloqueo duro (nivel/normativa o conflicto no forzable) → no asignable.

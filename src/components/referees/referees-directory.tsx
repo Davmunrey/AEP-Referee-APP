@@ -418,7 +418,7 @@ export function RefereesDirectory({
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/referees/${referee.id}`}
-                  className="block truncate text-sm font-medium text-foreground hover:text-primary hover:underline"
+                  className="block truncate text-sm font-medium text-foreground hover:text-brand hover:underline"
                 >
                   {referee.nombre}
                 </Link>
@@ -474,7 +474,7 @@ export function RefereesDirectory({
                     <td className="px-4 py-2.5 font-medium text-foreground">
                       <Link
                         href={`/referees/${referee.id}`}
-                        className="hover:text-primary hover:underline"
+                        className="hover:text-brand hover:underline"
                       >
                         {referee.nombre}
                       </Link>

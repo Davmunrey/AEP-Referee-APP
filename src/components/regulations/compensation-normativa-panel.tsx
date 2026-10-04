@@ -9,7 +9,7 @@ import {
   COMPENSATION_RATE_TABLE,
 } from "@/lib/judge-compensation/normativa-content";
 
-const linkClass = "rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-ring";
+const linkClass = "rounded-sm text-brand underline underline-offset-2 hover:text-primary-hover focus-ring";
 
 export function CompensationNormativaPanel() {
   return (

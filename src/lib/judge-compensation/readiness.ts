@@ -92,6 +92,19 @@ export function isClaimTravelResolved(claim: Pick<CompensationClaim, "travelMode
   return isTravelModeResolved(claim.travelMode, claim.distanceKmRoundTrip, claim.distanceKmOneWay);
 }
 
+/**
+ * «Faltan los km de 5 jueces: A, B, C y 2 más.» Antes acababa en «…».
+ * (puntos suspensivos y punto) y no decía cuántos faltaban.
+ */
+export function pendingKmMessage(names: string[]): string {
+  const shown = names.slice(0, 3);
+  const rest = names.length - shown.length;
+  const list = rest > 0 ? `${shown.join(", ")} y ${rest} más` : shown.join(", ").replace(/, ([^,]*)$/, " y $1");
+  return names.length === 1
+    ? `Faltan los km de ${list}: introdúcelos en su fila.`
+    : `Faltan los km de ${names.length} jueces: ${list}. Introdúcelos en su fila.`;
+}
+
 export function assessCompensationReadiness(input: {
   competition: Competition;
   claims: CompensationClaim[];
@@ -125,9 +138,7 @@ export function assessCompensationReadiness(input: {
   }
 
   if (pendingTravelReferees.length > 0) {
-    issues.push(
-      `Km pendientes (introduce manualmente): ${pendingTravelReferees.slice(0, 3).join(", ")}${pendingTravelReferees.length > 3 ? "…" : ""}.`,
-    );
+    issues.push(pendingKmMessage(pendingTravelReferees));
   }
 
   const allTravelResolved = pendingTravelReferees.length === 0;

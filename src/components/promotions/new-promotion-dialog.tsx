@@ -187,7 +187,7 @@ export function NewPromotionDialog({
                     className={cn(
                       "rounded-md border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-(--duration-base) ease-(--ease-out) active:scale-95 focus-ring",
                       form.toLevel === l
-                        ? "border-primary-border bg-primary-muted text-primary"
+                        ? "border-primary-border bg-primary-muted text-brand"
                         : "border-border bg-surface text-foreground hover:border-border-strong hover:bg-surface-hover",
                     )}
                   >

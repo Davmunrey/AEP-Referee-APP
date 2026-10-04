@@ -5,7 +5,7 @@ export type WorkflowStatus = "pendiente" | "aprobado" | "rechazado";
 const statusStyles: Record<WorkflowStatus, string> = {
   pendiente: "bg-warning-muted text-warning",
   aprobado: "bg-success-muted text-success",
-  rechazado: "bg-primary-muted text-primary",
+  rechazado: "bg-primary-muted text-brand",
 };
 
 interface StatusPillProps {

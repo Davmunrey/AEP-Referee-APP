@@ -34,6 +34,7 @@
   --color-subtle-muted: var(--subtle-muted);
 
   --color-card: var(--card);
+  --color-paper: var(--paper);
   --color-overlay: var(--overlay);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -58,6 +59,7 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-soft: var(--primary-soft);
   --color-primary-foreground: var(--primary-foreground);
+  --color-brand: var(--brand-text);
   --color-primary-muted: var(--primary-muted);
   --color-primary-subtle: var(--primary-subtle);
   --color-primary-border: var(--primary-border);
