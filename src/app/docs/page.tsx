@@ -172,7 +172,7 @@ export default async function DocsPage() {
       </header>
 
       {/* Hero */}
-      <div className="border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
+      <div className="border-b border-border bg-canvas">
         <div className="mx-auto max-w-4xl px-6 py-12 text-center">
           <Image
             src="/assets/aep-mark.png"

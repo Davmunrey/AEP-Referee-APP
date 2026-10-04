@@ -46,7 +46,7 @@ export function EditUserDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-user-title"
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div ref={panelRef} tabIndex={-1} className={`outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl ${dialogPanelEnter}`}>

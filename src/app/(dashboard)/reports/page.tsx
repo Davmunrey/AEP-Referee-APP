@@ -1,10 +1,9 @@
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { ReportsManager } from "@/components/judge/reports-manager";
-import { Card, CardContent } from "@/components/ui/card";
+import { MetricTile, type MetricTone } from "@/components/ui/metric-tile";
 import { canAdminJudges, canManageJudges, getSession } from "@/lib/auth/session";
 import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import { dataService } from "@/server/services";
-import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { AlertTriangle, FileText, Star, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -24,48 +23,12 @@ export default async function ReportsPage() {
   const jueces = new Set(reports.map((r) => r.refereeId).filter(Boolean)).size;
   const competiciones = reports.filter((r) => r.subjectType === "competicion").length;
 
-  const stats: {
-    label: string;
-    value: string | number;
-    tone: string;
-    iconBg: string;
-    Icon: LucideIcon;
-  }[] = [
-    {
-      label: "Informes totales",
-      value: reports.length,
-      tone: "text-foreground-secondary",
-      iconBg: "bg-muted",
-      Icon: FileText,
-    },
-    {
-      label: "Incidencias",
-      value: incidencias,
-      tone: "text-destructive",
-      iconBg: "bg-destructive-muted",
-      Icon: AlertTriangle,
-    },
-    {
-      label: "Evaluaciones",
-      value: evaluaciones,
-      tone: "text-warning",
-      iconBg: "bg-warning-muted",
-      Icon: Star,
-    },
-    {
-      label: "Jueces con informe",
-      value: jueces,
-      tone: "text-primary",
-      iconBg: "bg-primary-muted",
-      Icon: Users,
-    },
-    {
-      label: "Informes de competición",
-      value: competiciones,
-      tone: "text-info-soft",
-      iconBg: "bg-info-muted",
-      Icon: FileText,
-    },
+  const stats: { label: string; value: number; tone: MetricTone; icon: LucideIcon }[] = [
+    { label: "Informes totales", value: reports.length, tone: "neutral", icon: FileText },
+    { label: "Incidencias", value: incidencias, tone: "danger", icon: AlertTriangle },
+    { label: "Evaluaciones", value: evaluaciones, tone: "warning", icon: Star },
+    { label: "Jueces con informe", value: jueces, tone: "primary", icon: Users },
+    { label: "Informes de competición", value: competiciones, tone: "neutral", icon: FileText },
   ];
 
   return (
@@ -75,26 +38,10 @@ export default async function ReportsPage() {
         title="Informes de zona"
         description="Informes de jueces y competiciones. Delegado de zona ve su zona; nacional y superadmin ven todo."
       />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {/* La misma pieza de cifras que Aprobaciones, Ascensos y Exámenes. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         {stats.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="flex items-center gap-3 px-4 py-3.5">
-              <div
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                  s.iconBg,
-                )}
-              >
-                <s.Icon className={cn("h-4 w-4", s.tone)} aria-hidden="true" />
-              </div>
-              <div>
-                <p className={cn("text-2xl font-bold leading-none tracking-tight", s.tone)}>
-                  {s.value}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <MetricTile key={s.label} label={s.label} value={s.value} tone={s.tone} icon={s.icon} />
         ))}
       </div>
       <ReportsManager

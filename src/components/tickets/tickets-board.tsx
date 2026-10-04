@@ -44,10 +44,12 @@ function Pill({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-ring",
+        "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-ring",
+        // Filtro activo: resaltado sobrio (texto y borde), no un botón rojo macizo
+        // que compita con «Nuevo ticket».
         active
-          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-border bg-surface text-muted-foreground hover:border-border-strong hover:bg-surface-hover hover:text-foreground",
+          ? "border-border-strong bg-card text-foreground shadow-sm"
+          : "border-transparent text-muted-foreground hover:bg-surface-hover hover:text-foreground",
       )}
     >
       {children}

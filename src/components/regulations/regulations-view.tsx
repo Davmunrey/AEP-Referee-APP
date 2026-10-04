@@ -182,7 +182,7 @@ export function RegulationsView() {
       />
 
       <div
-        className="flex flex-wrap gap-1 rounded-xl border border-border-muted bg-surface/60 p-1"
+        className="flex w-fit flex-wrap gap-0.5 rounded-lg bg-surface p-0.5"
         role="tablist"
         aria-label="Secciones de normativa"
       >
@@ -194,10 +194,11 @@ export function RegulationsView() {
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-ring",
+              // Pestañas segmentadas, como los pasos de la tarima.
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-ring",
               tab === t.id
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-foreground-secondary hover:bg-surface-hover",
+                ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+                : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
             )}
           >
             {t.label}
