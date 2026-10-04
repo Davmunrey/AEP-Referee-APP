@@ -8,6 +8,22 @@
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
+  /* Escala tipográfica (valores en tokens.css). Cada paso lleva su
+   * interlineado para que `text-ui` o `text-2xs` no hereden el del padre. */
+  --text-2xs: var(--text-2xs);
+  --text-2xs--line-height: 1.4;
+  --text-ui: var(--text-ui);
+  --text-ui--line-height: 1.45;
+  --text-title: var(--text-title);
+  --text-title--line-height: 1.35;
+  --text-heading: var(--text-heading);
+  --text-heading--line-height: 1.2;
+  --text-display: var(--text-display);
+  --text-display--line-height: 1.15;
+  --tracking-tighter: var(--tracking-tighter);
+  --tracking-tight: var(--tracking-tight);
+  --tracking-snug: var(--tracking-snug);
+
   --color-background: var(--background);
   --color-canvas: var(--canvas);
   --color-foreground: var(--foreground);

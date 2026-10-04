@@ -124,18 +124,42 @@
   --radius-full: 9999px;
 
   /* ── Tipografía ────────────────────────────────────────────────────── */
+  /* Escala de la interfaz. Los pasos propios van en px a propósito: entre
+   * 1280 y 1512 px de ancho el `html` baja a 15 px y una escala en rem
+   * dejaría el rótulo más pequeño por debajo de 11 px, el suelo de lectura.
+   * Antes eran 200 tamaños sueltos (`text-[11px]`, `[10.5px]`, `[13px]`…). */
+  --text-2xs: 11px; /* rótulos densos: tarima, chips, metadatos */
   --text-xs: 0.75rem;
+  --text-ui: 13px; /* texto secundario de la interfaz, descripciones */
   --text-sm: 0.875rem;
+  --text-title: 15px; /* títulos de tarjeta y de diálogo */
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
+  --text-heading: 22px; /* títulos de página en móvil y del portal */
   --text-2xl: 1.5rem;
+  --text-display: 26px; /* título de página en escritorio y cifras */
   --text-3xl: 1.875rem;
 
+  --tracking-tighter: -0.03em; /* cifras grandes */
   --tracking-tight: -0.02em;
+  --tracking-snug: -0.01em; /* títulos */
   --tracking-wide: 0.06em;
   --tracking-wider: 0.075em;
   --tracking-widest: 0.095em;
+
+  /* ── Capas (z-index) ───────────────────────────────────────────────── */
+  /* Un orden con nombre en vez de números sueltos (10, 50, 60, 9999…): qué
+   * tapa a qué se decide aquí una vez. Se usa como `z-(--z-modal)`. */
+  --z-raised: 1; /* un elemento sobre sus hermanos */
+  --z-sticky: 10; /* cabeceras y filas fijas dentro de una página */
+  --z-header: 20; /* barra superior y navegación del portal */
+  --z-sidebar: 30;
+  --z-drawer: 40; /* menú lateral en móvil */
+  --z-modal: 50;
+  --z-float: 60; /* ayuda flotante, menús por encima de un modal */
+  --z-confirm: 70; /* confirmación sobre cualquier otro diálogo */
+  --z-skip: 100; /* enlace «saltar al contenido» */
 
   /* ── Movimiento ────────────────────────────────────────────────────── */
   /* Curva única de salida. La `ease-out` de serie (0,0,.2,1) es demasiado
@@ -151,6 +175,11 @@
    * heredaban 150ms + ease-in-out (arranque lento = sensación de lag). */
   --default-transition-duration: 150ms;
   --default-transition-timing-function: var(--ease-out);
+
+  /* Escalas de gesto: lo que encoge un botón al pulsarlo y desde dónde entra
+   * un panel. Nunca desde 0: nada aparece de la nada. */
+  --scale-press: 0.98;
+  --scale-enter: 0.97;
 
   /* ── Sombras (suaves, para fondo claro) ────────────────────────────── */
   /* Sombras casi imperceptibles: la jerarquía la marcan el plano y el borde

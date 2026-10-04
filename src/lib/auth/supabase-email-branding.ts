@@ -12,7 +12,7 @@ function button(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 8px;">
   <tr>
     <td style="border-radius:10px;background:${THEME.red};">
-      <a href="${href}" style="display:inline-block;padding:12px 22px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">${label}</a>
+      <a href="${href}" style="display:inline-block;padding:12px 22px;color:${THEME.white};font-size:14px;font-weight:600;text-decoration:none;">${label}</a>
     </td>
   </tr>
 </table>`;
@@ -40,7 +40,7 @@ export function wrapAepTarimaEmail(bodyHtml: string): string {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${THEME.white};border:1px solid ${THEME.border};border-radius:12px;overflow:hidden;">
           <tr>
             <td style="background:${THEME.red};padding:24px 28px;text-align:center;">
-              <p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.02em;">AEP Tarima</p>
+              <p style="margin:0;color:${THEME.white};font-size:22px;font-weight:700;letter-spacing:-0.02em;">AEP Tarima</p>
               <p style="margin:8px 0 0;color:${THEME.redLight};font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;">Gestión de jueces · ${AEP_BRANDING.association}</p>
             </td>
           </tr>

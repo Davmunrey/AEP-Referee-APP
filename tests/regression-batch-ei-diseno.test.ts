@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { confirmar, currentConfirm, settleConfirm, subscribeConfirm } from "@/lib/confirm-store";
 import { coverageBarClass, STATUS_BAR } from "@/lib/status-tone";
+import { BRAND } from "@/lib/document-tokens";
 import { formatDate } from "@/lib/utils";
 
 /**
@@ -99,5 +100,34 @@ describe("tono de cobertura", () => {
 describe("fechas", () => {
   it("un día suelto se escribe como en el resto de la interfaz", () => {
     expect(formatDate("2026-10-25")).toMatch(/^25 oct\.? 2026$/);
+  });
+});
+
+describe("tokens de documentos", () => {
+  it("la marca de correos y PDF es la misma que la de la app", () => {
+    const css = readFileSync("src/styles/tokens.css", "utf8");
+    const primitive = (name: string) => css.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, "i"))?.[1]?.toLowerCase();
+    expect(BRAND.red).toBe(primitive("aep-red-600"));
+    expect(BRAND.redSoft).toBe(primitive("aep-red-100"));
+    expect(BRAND.ink).toBe(primitive("neutral-900"));
+    expect(BRAND.muted).toBe(primitive("neutral-500"));
+    expect(BRAND.border).toBe(primitive("neutral-200"));
+    expect(BRAND.surface).toBe(primitive("neutral-50"));
+    expect(BRAND.paper).toBe(primitive("neutral-0"));
+  });
+
+  it("ningún color suelto fuera de los ficheros de tokens", () => {
+    const allowed = new Set(["src/styles/tokens.css", "src/lib/document-tokens.ts"]);
+    const files = (function walk(dir: string): string[] {
+      return readdirSync(dir).flatMap((name) => {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) return walk(path);
+        return /\.(tsx?|css)$/.test(path) ? [path] : [];
+      });
+    })("src");
+    const offenders = files
+      .filter((path) => !allowed.has(path))
+      .filter((path) => /#[0-9a-f]{6}\b|#[0-9a-f]{3}\b(?![0-9a-z-])|rgba?\(|hsla?\(|oklch\(/i.test(stripComments(readFileSync(path, "utf8"))));
+    expect(offenders).toEqual([]);
   });
 });

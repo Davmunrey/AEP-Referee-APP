@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/document-tokens";
 import { describe, expect, it } from "vitest";
 import {
   buildSupabaseAuthEmailTemplates,
@@ -8,7 +9,7 @@ describe("supabase-email-branding", () => {
   it("envuelve el cuerpo con cabecera AEP Tarima", () => {
     const html = wrapAepTarimaEmail("<p>Hola</p>");
     expect(html).toContain("AEP Tarima");
-    expect(html).toContain("#c8362a");
+    expect(html).toContain(BRAND.red);
     expect(html).toContain("powerhispania@gmail.com");
   });
 
