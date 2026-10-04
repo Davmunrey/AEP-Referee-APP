@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/entrar-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.9-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.10-22c55e?style=for-the-badge&labelColor=0d1117" />
   <img alt="Tests" src="https://img.shields.io/badge/tests-1233%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
@@ -85,7 +85,7 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 | **Tarima** | Plantilla, import horario/cuadrante PDF, drag-and-drop, selección rápida, imprevistos, badges de nivel compactos (R/N/I/II) |
 | **Compensación** | Panel `/compensation`, km manual, montaje del sistema, multi-club, recibo PDF, IBAN efímero, organizador configurable |
 | **Jueces** | Directorio, ficha, arbitrajes por año, domicilio OSM, sanciones, historial |
-| **Portal del juez** | `/portal`: cada juez entra con un enlace a su e-mail del censo y ve sus designaciones sesión a sesión; invitación en bloque desde el directorio o petición del propio juez |
+| **Portal del juez** | `/portal`: cada juez entra con un enlace a su e-mail del censo y ve sus designaciones sesión a sesión; invitación en bloque desde el directorio o petición del propio juez; **convocatorias** por sesión lanzadas desde la tarima |
 | **Disponibilidad** | Por campeonato; la selección rápida y el filtro «confirmados» trabajan sobre ella |
 | **Normativa** | `/regulations` — Guía AEP, plazas, compensación, IPF |
 | **Export cuadrante** | PDF formato oficial AEP, Excel, WhatsApp |
@@ -190,5 +190,5 @@ Detalle de variables, Supabase y checklist de release: [docs/DEPLOY.md](./docs/D
 ---
 
 <p align="center">
-  <sub>AEP Tarima · v2.9 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
+  <sub>AEP Tarima · v2.10 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
 </p>

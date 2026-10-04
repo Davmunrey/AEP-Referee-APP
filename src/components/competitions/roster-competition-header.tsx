@@ -18,7 +18,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, ArrowLeft, Banknote, ChevronDown, FileUp, Layers, Pencil, Trash2, UsersRound } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Banknote, ChevronDown, FileUp, Layers, Megaphone, Pencil, Trash2, UsersRound } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { TransitionStartFunction } from "react";
 
 interface RosterCompetitionHeaderProps {
@@ -40,6 +41,10 @@ interface RosterCompetitionHeaderProps {
   statusIsError: boolean;
   templateLength: number;
   onOpenEdit: () => void;
+  /** Resumen de la convocatoria del campeonato (`null` si no hay). */
+  convocatoria?: { abierta: boolean; inscritos: number } | null;
+  /** Abre la convocatoria; sin él (sin permiso, sin plantilla) no hay botón. */
+  onOpenConvocatoria?: () => void;
   onOpenImport: () => void;
   onOpenQuadrant: () => void;
   clearAllAssignments: () => void;
@@ -68,6 +73,8 @@ export function RosterCompetitionHeader({
   statusIsError,
   templateLength,
   onOpenEdit,
+  convocatoria = null,
+  onOpenConvocatoria,
   onOpenImport,
   onOpenQuadrant,
   clearAllAssignments,
@@ -200,6 +207,33 @@ export function RosterCompetitionHeader({
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+            {onOpenConvocatoria && !isEditing && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-2.5 text-xs"
+                onClick={onOpenConvocatoria}
+                title={
+                  convocatoria
+                    ? `${convocatoria.abierta ? "Convocatoria abierta" : "Convocatoria cerrada"} · ${convocatoria.inscritos} inscritos`
+                    : "Lanzar la convocatoria para que los jueces se apunten"
+                }
+              >
+                <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
+                {convocatoria ? "Convocatoria" : "Convocar"}
+                {convocatoria && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 text-[10px] font-semibold tabular-nums",
+                      convocatoria.abierta ? "bg-info-muted text-info" : "bg-surface-active text-muted-foreground",
+                    )}
+                  >
+                    {convocatoria.inscritos}
+                  </span>
+                )}
+              </Button>
             )}
             {canManageCompensation && (
               <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" asChild>

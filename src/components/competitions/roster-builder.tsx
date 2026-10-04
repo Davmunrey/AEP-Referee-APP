@@ -42,6 +42,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronRight, FileUp } from "lucide-react";
 import { parseSlotKey } from "@/lib/roster-template";
+import { isConvocatoriaAbierta, type ConvocatoriaStaffView } from "@/lib/convocatorias";
 // Diálogos/editores pesados: se cargan bajo demanda (al abrirlos), no en el
 // bundle inicial de la ruta de tarima (la más pesada de la app).
 // Solo se ve en el paso «Revisión»: no tiene por qué ir en la carga inicial.
@@ -63,6 +64,10 @@ const QuadrantImportDialog = dynamic(
 );
 const CompetitionAvailabilityDialog = dynamic(
   () => import("@/components/competitions/competition-availability-dialog").then((m) => m.CompetitionAvailabilityDialog),
+  { ssr: false },
+);
+const ConvocatoriaDialog = dynamic(
+  () => import("@/components/competitions/convocatoria-dialog").then((m) => m.ConvocatoriaDialog),
   { ssr: false },
 );
 const EditCompetitionDialog = dynamic(
@@ -114,6 +119,8 @@ interface RosterBuilderProps {
   /** Jueces con la liquidación pagada: su puesto no se puede sustituir. */
   paidRefereeIds?: string[];
   defaultZonaFilter?: string;
+  /** Convocatoria viva del campeonato y sus inscripciones. */
+  initialConvocatoria?: ConvocatoriaStaffView | null;
 }
 
 export function RosterBuilder({
@@ -134,6 +141,7 @@ export function RosterBuilder({
   lastReview,
   paidRefereeIds = EMPTY_PAID_REFEREE_IDS,
   defaultZonaFilter = "TODAS",
+  initialConvocatoria = null,
 }: RosterBuilderProps) {
   const router = useRouter();
   const readOnly = !canEdit;
@@ -158,6 +166,11 @@ export function RosterBuilder({
   const deferredSearch = useDeferredValue(search);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set(initialConfirmedIds));
   const [filterOnlyConfirmed, setFilterOnlyConfirmed] = useState(false);
+  const [convocatoria, setConvocatoria] = useState<ConvocatoriaStaffView | null>(initialConvocatoria);
+  // Un juez que se apunta desde el portal llega con el refresco en tiempo real.
+  useEffect(() => setConvocatoria(initialConvocatoria), [initialConvocatoria]);
+  const [convocatoriaOpen, setConvocatoriaOpen] = useState(false);
+  const [filterOnlyInscritos, setFilterOnlyInscritos] = useState(false);
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [editCompetitionOpen, setEditCompetitionOpen] = useState(false);
   const [activeSessionKey, setActiveSessionKey] = useState<string | null>(initialTemplate[0]?.sesion ?? null);
@@ -312,9 +325,22 @@ export function RosterBuilder({
   );
   const selectedRoleKey = selectedSlot ? parseSlotKey(selectedSlot)?.roleKey : undefined;
 
+  // Inscritos en la convocatoria para la sesión que se está montando: la del
+  // hueco elegido o, sin hueco, la sesión activa.
+  const signupSessionKey = (selectedSlot ? parseSlotKey(selectedSlot)?.session : undefined) ?? activeSessionKey;
+  const inscritos = useMemo(() => {
+    if (!convocatoria || !signupSessionKey || !convocatoria.convocatoria.sesiones.includes(signupSessionKey)) return null;
+    const session = template.find((s) => s.sesion === signupSessionKey);
+    return {
+      ids: new Set(convocatoria.inscripciones.filter((i) => i.sesion === signupSessionKey).map((i) => i.refereeId)),
+      sessionLabel: session?.nombre || signupSessionKey,
+    };
+  }, [convocatoria, signupSessionKey, template]);
+
   const availableReferees = useMemo(() => referees.filter((r) => {
     if (r.estado !== "Activo" || !r.disp) return false;
     if (filterOnlyConfirmed && !confirmedIds.has(r.id)) return false;
+    if (filterOnlyInscritos && inscritos && !inscritos.ids.has(r.id)) return false;
     // Selección rápida = solo disponibles: al elegir un hueco, si hay
     // disponibilidad confirmada para la competición, se ocultan los no
     // confirmados (la selección rápida va DESPUÉS del paso de disponibilidad).
@@ -333,7 +359,7 @@ export function RosterBuilder({
       if (block && !block.overridable) return false;
     }
     return true;
-  }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterZona, flags, referees, regulations, deferredSearch, selectedRoleKey, selectedSlot, template]);
+  }), [assignments, competition.tipo, confirmedIds, filterNivel, filterOnlyConfirmed, filterOnlyInscritos, inscritos, filterZona, flags, referees, regulations, deferredSearch, selectedRoleKey, selectedSlot, template]);
 
   const hiddenUnavailableCount = useMemo(
     () => referees.filter((r) => r.estado !== "Activo" || !r.disp).length,
@@ -344,6 +370,7 @@ export function RosterBuilder({
     setFilterNivel("TODOS");
     setSearch("");
     setFilterOnlyConfirmed(false);
+    setFilterOnlyInscritos(false);
   }, []);
 
   // useCallback en persistAssign/persistClear/onDrop/onQuickAssign/toggleFlag:
@@ -559,6 +586,15 @@ export function RosterBuilder({
           isEditing={isEditing} statusMsg={statusMsg} statusIsError={statusIsError}
           templateLength={template.length}
           onOpenEdit={() => setEditCompetitionOpen(true)}
+          convocatoria={
+            convocatoria
+              ? {
+                  abierta: isConvocatoriaAbierta(convocatoria.convocatoria),
+                  inscritos: new Set(convocatoria.inscripciones.map((i) => i.refereeId)).size,
+                }
+              : null
+          }
+          onOpenConvocatoria={canEdit && !isPast && template.length > 0 ? () => setConvocatoriaOpen(true) : undefined}
           onOpenImport={() => setImportOpen(true)}
           onOpenQuadrant={() => setQuadrantImportOpen(true)}
           clearAllAssignments={clearAllAssignments}
@@ -639,6 +675,7 @@ export function RosterBuilder({
                 onSelectSlot={setSelectedSlot} onAvailabilityOpen={() => setAvailabilityOpen(true)}
                 onFilterZona={setFilterZona} onFilterNivel={setFilterNivel}
                 onSearch={setSearch} onFilterConfirmed={setFilterOnlyConfirmed}
+                inscritos={inscritos} filterOnlyInscritos={filterOnlyInscritos} onFilterInscritos={setFilterOnlyInscritos}
                 onDragStart={setDraggedId} onDragEnd={onDragEnd}
                 onQuickAssign={onQuickAssign}
                 hiddenUnavailableCount={hiddenUnavailableCount}
@@ -734,6 +771,17 @@ export function RosterBuilder({
           cada apertura (sin valores "fantasma" de una edición cancelada). */}
       {editCompetitionOpen && (
         <EditCompetitionDialog competition={competition} zones={zones} open={editCompetitionOpen} onClose={() => setEditCompetitionOpen(false)} />
+      )}
+      {convocatoriaOpen && (
+        <ConvocatoriaDialog
+          open
+          onClose={() => setConvocatoriaOpen(false)}
+          competition={competition}
+          template={template}
+          referees={referees}
+          view={convocatoria}
+          onChange={setConvocatoria}
+        />
       )}
       {availabilityOpen && (
         <CompetitionAvailabilityDialog

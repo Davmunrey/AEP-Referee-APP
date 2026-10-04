@@ -19,6 +19,7 @@ Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 |---|---|
 | `/portal` | Inicio: próximas designaciones y aviso de sanción activa |
 | `/portal/convocatorias` | Convocatorias abiertas para el juez |
+| `/portal/convocatorias/[id]` | Apuntarse o retirarse sesión a sesión |
 | `/portal/sesiones` | Designaciones aprobadas (sesión, día, horarios, funciones) e historial |
 | `/portal/ficha` | Sus datos del censo (solo lectura) |
 

@@ -39,6 +39,7 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 
 | Componente | Uso |
 |---|---|
+| `ConvocatoriaDialog` | Lanzar y llevar la convocatoria del campeonato (sesiones, fecha límite, inscritos por sesión, cerrar/reabrir/cancelar) |
 | `CompetitionsTable` | Listado con filtros |
 | `OpenRostersPanel` | Tarimas abiertas priorizadas |
 | `CalendarImportDialog` | Import calendario anual |
@@ -156,3 +157,12 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 ---
 
 **Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4
+
+## Portal del juez
+
+| Componente | Uso |
+|---|---|
+| `PortalShell` | Marco del portal: cabecera y pestañas (abajo en móvil) |
+| `DesignationCard` | Una designación aprobada, sesión a sesión |
+| `ConvocatoriaCard` | Convocatoria abierta en la lista (cierre, sesiones apuntadas, «Otra zona») |
+| `ConvocatoriaSignup` | Apuntarse / retirarse por sesión, con bloqueos y avisos |

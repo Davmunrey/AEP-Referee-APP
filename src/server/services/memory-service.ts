@@ -5,6 +5,7 @@ import * as referees from "./memory-referees";
 import { memoryCompensationService } from "./memory-compensation";
 import { ticketService } from "./memory-tickets";
 import { memoryPortalService } from "./memory-portal";
+import { memoryConvocatoriaService } from "./memory-convocatorias";
 
 export const memoryDataService = {
   getMeta: referees.getMeta,
@@ -100,4 +101,14 @@ export const memoryDataService = {
   updateTicketStatus: ticketService.updateTicketStatus,
 
   getJudgePortal: memoryPortalService.getJudgePortal,
+
+  getConvocatoria: memoryConvocatoriaService.getConvocatoria,
+  getLiveConvocatoria: memoryConvocatoriaService.getLiveConvocatoria,
+  listConvocatoriasAbiertasParaZona: memoryConvocatoriaService.listConvocatoriasAbiertasParaZona,
+  insertConvocatoria: memoryConvocatoriaService.insertConvocatoria,
+  updateConvocatoria: memoryConvocatoriaService.updateConvocatoria,
+  listInscripciones: memoryConvocatoriaService.listInscripciones,
+  listInscripcionesDeJuez: memoryConvocatoriaService.listInscripcionesDeJuez,
+  insertInscripcion: memoryConvocatoriaService.insertInscripcion,
+  deleteInscripcion: memoryConvocatoriaService.deleteInscripcion,
 };

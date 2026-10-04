@@ -26,6 +26,7 @@ export const RefereeCard = memo(function RefereeCard({
   isDragging,
   readOnly = false,
   isConfirmed = false,
+  isInscrito = false,
 }: {
   zones: Zone[];
   referee: Referee;
@@ -43,6 +44,8 @@ export const RefereeCard = memo(function RefereeCard({
   isDragging: boolean;
   readOnly?: boolean;
   isConfirmed?: boolean;
+  /** Se apuntó a esta sesión en la convocatoria del campeonato. */
+  isInscrito?: boolean;
 }) {
   const locked = readOnly || !!blockedReason;
   const topRoles = referee.arbitrajeStats
@@ -105,6 +108,11 @@ export const RefereeCard = memo(function RefereeCard({
           <p className="min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-foreground">
             {referee.nombre}
           </p>
+          {isInscrito && (
+            <span className="shrink-0 rounded bg-info-muted px-1 text-[10px] font-medium leading-4 text-info" title="Se apuntó a esta sesión en la convocatoria">
+              Inscrito
+            </span>
+          )}
           {assigned ? (
             <Check className="h-3 w-3 shrink-0 text-success" aria-label="Asignado en esta sesión" />
           ) : isConfirmed ? (

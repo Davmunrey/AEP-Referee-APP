@@ -2,6 +2,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { LEVELS, PRESET_AEP1, ZONES } from "@/lib/mock-data";
 import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
+import type { Convocatoria, Inscripcion } from "@/lib/convocatorias";
 import type {
   ActivityItem,
   ApprovalProposal,
@@ -31,6 +32,8 @@ interface AppStore {
   exams: RefereeExam[];
   reports: RefereeReport[];
   sanctions: RefereeSanction[];
+  convocatorias: Convocatoria[];
+  inscripciones: Inscripcion[];
 }
 
 const globalStore = globalThis as unknown as { __aepStore?: AppStore };
@@ -49,6 +52,8 @@ function createStore(): AppStore {
     exams: [],
     reports: [],
     sanctions: [],
+    convocatorias: [],
+    inscripciones: [],
   };
 }
 
