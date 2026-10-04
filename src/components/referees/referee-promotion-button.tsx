@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEscapeClose } from "@/hooks/use-escape-close";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, TrendingUp, X } from "lucide-react";
 import { LevelBadge } from "@/components/aep/badges";
@@ -26,17 +27,9 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
-  const dialogRef = useRef<HTMLDivElement>(null);
+  // Escape, foco atrapado dentro, foco devuelto al cerrar y sin scroll detrás.
+  const dialogRef = useEscapeClose<HTMLDivElement>(() => setOpen(false), open);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handler);
-    dialogRef.current?.focus();
-    return () => document.removeEventListener("keydown", handler);
-  }, [open]);
 
   if (higherLevels.length === 0) return null;
 

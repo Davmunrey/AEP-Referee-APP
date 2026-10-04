@@ -1,5 +1,6 @@
 "use client";
 
+import { useEscapeClose } from "@/hooks/use-escape-close";
 import { useMemo, useState, useTransition } from "react";
 import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ export function CompensationExportDialog({
   readyForExport,
   onClose,
 }: CompensationExportDialogProps) {
+  // Escape, foco atrapado dentro, foco devuelto al cerrar y sin scroll detrás.
+  const panelRef = useEscapeClose<HTMLDivElement>(onClose);
   const [iban, setIban] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -61,7 +64,7 @@ export function CompensationExportDialog({
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
-      <div role="dialog" aria-modal="true" aria-labelledby="export-receipt-title" className={`max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-md ${dialogPanelEnter}`}>
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="export-receipt-title" className={`max-h-[90vh] w-full outline-none max-w-md overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-md ${dialogPanelEnter}`}>
         <div className="mb-4 flex items-start justify-between gap-2">
           <div>
             <h3 id="export-receipt-title" className="text-sm font-semibold">Exportar recibo</h3>

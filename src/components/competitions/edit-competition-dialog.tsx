@@ -1,5 +1,6 @@
 "use client";
 
+import { useEscapeClose } from "@/hooks/use-escape-close";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Pencil, X } from "lucide-react";
@@ -50,6 +51,8 @@ export function EditCompetitionDialog({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [globalError, setGlobalError] = useState<string | null>(null);
+  // Antes del `return null`: los hooks no pueden ir detrás de un retorno.
+  const panelRef = useEscapeClose<HTMLDivElement>(onClose, open);
 
   if (!open) return null;
 
@@ -121,12 +124,19 @@ export function EditCompetitionDialog({
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
-      <div className={`w-full max-w-md rounded-xl border border-border bg-card shadow-md ${dialogPanelEnter}`}>
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-competition-title"
+        className={`w-full max-w-md rounded-xl border border-border bg-card shadow-md outline-none ${dialogPanelEnter}`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
           <div className="flex items-center gap-2">
             <Pencil className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">Editar campeonato</h2>
+            <h2 id="edit-competition-title" className="text-sm font-semibold text-foreground">Editar campeonato</h2>
           </div>
           <button
             type="button"

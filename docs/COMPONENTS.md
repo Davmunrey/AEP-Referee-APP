@@ -150,6 +150,7 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 - Cada `<label>` está enlazada a su control (`htmlFor` + `id`); los ids dentro de listas se derivan de `useId()` + índice, nunca de valores aleatorios (rompen la hidratación).
 - Grupos de botones que actúan como selector (nivel destino de un ascenso) usan `role="group"` con nombre y `aria-pressed`.
 - Un solo `h1` por página: el de `PageHeader` o, en la ficha de juez, el de la tarjeta de identidad.
+- Diálogos modales: `useEscapeClose(onClose, active?)` (`src/hooks/use-escape-close.ts`) da Escape, foco atrapado dentro, foco devuelto al que abrió y scroll bloqueado detrás. Todo diálogo con velo lo usa (un test lo comprueba); `TransferDialogShell` trae su propia trampa.
 
 ---
 
