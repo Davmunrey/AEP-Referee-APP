@@ -178,6 +178,27 @@ Los totales de viaje y alojamiento no se confirman hasta que todos los km estén
 
 ---
 
+## 7b. Portal del juez
+
+Cada juez del censo puede tener su propia cuenta para ver sus designaciones y apuntarse a convocatorias. Solo entra a su portal: no ve el directorio, ni otras fichas, ni las tarimas.
+
+**Dar acceso**
+
+- Desde el **directorio**: **Invitar al portal** invita a los jueces de la lista que estás viendo (aplica antes los filtros de zona o nivel). Te dice cuántos ya tienen acceso y cuántos no tienen e-mail en la ficha.
+- Desde la **ficha del juez**: el bloque *Portal del juez* muestra si tiene acceso y permite **Invitar**, **Reenviar enlace** o **Retirar acceso** (efecto inmediato).
+- El propio juez puede pedirlo en la pantalla de acceso, pestaña **Soy juez** (enlace directo: `/sign-in?juez=1`): si su e-mail es el de su ficha, le llega el enlace.
+
+Un delegado de zona solo invita a jueces de su zona. Si el e-mail de la ficha ya es de una cuenta de gestión (un delegado que también es juez), no se invita: avisa al Comité.
+
+**Lo que ve el juez** (pensado para el móvil)
+
+- **Inicio**: sus próximas designaciones y, si la tiene, el aviso de sanción activa.
+- **Mis sesiones**: cada campeonato en el que está designado, sesión a sesión, con el día, los horarios de pesaje y competición y su función; y su historial. Solo aparecen tarimas **aprobadas**: un borrador todavía puede cambiar.
+- **Mi ficha**: sus datos del censo. Si algo no es correcto, te lo pedirá a ti.
+- **Convocatorias**: los campeonatos a los que se puede apuntar.
+
+---
+
 ## 8. Estadísticas
 
 `Estadísticas` en el menú. Histórico anual y KPIs.
@@ -255,6 +276,7 @@ Todo funciona en local, sin conexión externa ni IA. Documentación completa: `/
 | `delegado_zona` | Campeonatos, tarimas y jueces de **su zona** |
 | `responsable_financiero_jueces` | Panel `/compensation`, compensación y recibos PDF (lectura tarimas/censo) |
 | `solo_ver` | Solo lectura |
+| `juez` | Solo su portal (`/portal`): su ficha, sus designaciones y las convocatorias |
 
 La UI oculta las acciones fuera de tu alcance, pero el servidor es la fuente de verdad (un delegado de zona no puede tocar datos de otra zona aunque manipule la petición).
 

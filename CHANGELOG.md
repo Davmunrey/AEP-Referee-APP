@@ -4,6 +4,17 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🎫 **AEP Tarima v2.9** — _«Cada juez, su cuenta»_ (2026-10-04)
+
+Primera parte del portal del juez: cada juez del censo puede entrar con su propia cuenta.
+
+- **Portal del juez**: inicio, mis sesiones, mi ficha y convocatorias, pensado para el móvil (pestañas abajo). Cada designación se ve sesión a sesión, con día, horarios de pesaje y competición y función. Solo aparecen tarimas aprobadas.
+- **Entrar sin contraseña**: el juez recibe un enlace en el e-mail de su ficha. La primera vez lo invita su delegado (desde el directorio, a todos los de la lista filtrada a la vez, o desde la ficha) o lo pide él mismo en la pestaña **Soy juez** de la pantalla de acceso.
+- **Cerrado por diseño**: una cuenta de juez no tiene acceso a nada de la gestión, y no por ocultar el menú: el servidor lo deja fuera de todas las páginas y de toda la API. Solo hay cuenta de juez para quien está en el censo, y el enlace va siempre al e-mail de la ficha.
+- **Gestión del acceso**: el estado se ve en la ficha del juez, que permite invitar, reenviar el enlace o retirar el acceso (efecto inmediato). Las cuentas de juez no se mezclan con las de «Usuarios».
+
+---
+
 ## 🧭 **AEP Tarima v2.8** — _«Una sola cuenta»_ (2026-10-04)
 
 El panel de inicio, rehecho para leerse de un vistazo y sin cifras que se contradigan.

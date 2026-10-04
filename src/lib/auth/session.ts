@@ -1,4 +1,6 @@
 import { cache } from "react";
+import { redirect } from "next/navigation";
+import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
 import type { User } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -6,7 +8,12 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { profileToSessionUser, type ProfileRow } from "@/lib/auth/profile";
 import { SessionProfileReadError } from "@/lib/auth/session-errors";
 import { resolveZoneCode } from "@/lib/aep-zones";
-import { DOCS_CAPTURE_SESSION, isDocsCaptureMode } from "@/lib/auth/docs-capture";
+import {
+  DOCS_CAPTURE_SESSION,
+  docsCaptureAsJudge,
+  docsCaptureJudgeSession,
+  isDocsCaptureMode,
+} from "@/lib/auth/docs-capture";
 import { ensureDocsCaptureSeed } from "@/server/services/docs-capture-seed";
 import {
   ROLE_LABELS,
@@ -122,11 +129,14 @@ export async function resolveSessionUser(admin: AdminClient, user: User): Promis
   return profileToSessionUser(profile as ProfileRow);
 }
 
-/** Sesión del usuario actual vía cookie de sesión Supabase SSR. */
-export const getSession = cache(async (): Promise<SessionUser | null> => {
+/**
+ * Usuario autenticado y activo, del rol que sea. Privada: el resto de la
+ * aplicación entra por `getSession` (gestión) o por `getJudgeSession` (portal).
+ */
+const getAuthenticatedUser = cache(async (): Promise<SessionUser | null> => {
   if (isDocsCaptureMode()) {
     ensureDocsCaptureSeed();
-    return DOCS_CAPTURE_SESSION;
+    return (await docsCaptureAsJudge()) ? docsCaptureJudgeSession() : DOCS_CAPTURE_SESSION;
   }
 
   if (!isSupabaseConfigured()) return null;
@@ -137,6 +147,54 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
 
   return resolveSessionUser(createAdminClient(), data.user);
 });
+
+/**
+ * Sesión de la GESTIÓN (panel, API de `/api/v1/*`). Un juez no la tiene.
+ *
+ * Es la puerta de todo lo que no es el portal: las 25 páginas y rutas que
+ * llaman aquí, y `requireApiUser`, dejan fuera al rol `juez` sin tener que
+ * acordarse una a una. Fail-closed: un rol nuevo que se añada al portal no
+ * gana acceso a la gestión por omisión.
+ */
+export const getSession = cache(async (): Promise<SessionUser | null> => {
+  const user = await getAuthenticatedUser();
+  if (!user || user.role === "juez") return null;
+  return user;
+});
+
+/**
+ * Sesión del PORTAL del juez: su cuenta y la ficha del censo enlazada.
+ *
+ * Sin ficha enlazada no hay portal: el juez existe para la aplicación por su
+ * ficha (zona, nivel, sanciones, designaciones), no por su cuenta. La zona
+ * sale de la ficha y no del perfil, que podría quedarse atrás si el juez
+ * cambia de zona en el censo.
+ */
+export const getJudgeSession = cache(async (): Promise<SessionUser | null> => {
+  const user = await getAuthenticatedUser();
+  if (!user || user.role !== "juez") return null;
+  if (user.refereeId) return user;
+  const { data, error } = await createAdminClient()
+    .from("referees")
+    .select("id, zona")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw new SessionProfileReadError(error.message);
+  if (!data) return null;
+  return { ...user, refereeId: String(data.id), zona: resolveZoneCode(String(data.zona ?? "")) ?? undefined };
+});
+
+/**
+ * Destino de una página de la gestión cuando no hay sesión de gestión.
+ *
+ * Un juez que abre una dirección del panel (un enlace antiguo, el marcador de
+ * otra persona) va a su portal; cualquier otro, a la pantalla de acceso que
+ * explica que su cuenta no tiene acceso.
+ */
+export async function redirectSinAcceso(): Promise<never> {
+  if (await getJudgeSession()) redirect("/portal");
+  redirect(SIGN_IN_SIN_ACCESO);
+}
 
 /**
  * RBAC. Cinco roles:
@@ -198,11 +256,15 @@ export function canAdministerUserWithRole(
 ): boolean {
   if (!canManageUsers(user)) return false;
   const role = String(targetRole ?? "") as UserRole;
+  // Una cuenta de juez va enlazada a su ficha del censo y se gestiona desde
+  // ahí. Desde «Usuarios» se podría, por ejemplo, ascenderla a delegado.
+  if (role === "juez") return false;
   return SUPER_ADMIN_ONLY_ROLES.includes(role) ? user.role === "super_admin" : true;
 }
 
 /** Mensaje único para los tres caminos. */
 export function restrictedRoleMessage(role: UserRole | string): string {
+  if (role === "juez") return "Las cuentas de juez se gestionan desde la ficha del juez en el directorio.";
   return `Solo Super Admin puede gestionar cuentas con el rol ${ROLE_LABELS[role as UserRole] ?? role}.`;
 }
 

@@ -53,6 +53,9 @@ const publicApi = new Set([
   "src/app/api/v1/auth/logout/route.ts",
   "src/app/api/v1/auth/password/route.ts",
   "src/app/api/v1/auth/signout/route.ts",
+  // El juez pide su enlace de acceso: pública, con límite de intentos y una
+  // respuesta que no dice si el e-mail está en el censo.
+  "src/app/api/v1/auth/judge-access/route.ts",
 ]);
 
 // Rutas self-service: EXIGEN sesión (sujetas a API-01) pero no llevan guard
@@ -73,7 +76,7 @@ const selfServiceApi = new Set([
 for (const file of apiRoutes) {
   const rel = toPosix(relative(root, file));
   const src = readFileSync(file, "utf8");
-  if (!publicApi.has(rel) && !/requireApiUser|getSession/.test(src)) {
+  if (!publicApi.has(rel) && !/requireApiUser|requireJudgeUser|getSession/.test(src)) {
     fail("API-01", `${rel} no exige sesión`);
   }
 
@@ -81,8 +84,10 @@ for (const file of apiRoutes) {
   // `loadCompetitionForRosterWrite` es `guardRosterWrite` más la lectura que lo
   // alimenta, en una sola llamada: sigue siendo el guard RBAC a la vista en la
   // ruta, que es lo que esta comprobación exige. Su nombre lo dice, además.
+  // `requireJudgeUser`: las rutas del portal solo actúan en nombre del juez de
+  // la sesión (su `refereeId`), nunca sobre datos de otro.
   const hasAuthz =
-    /can(EditRoster|Manage|Approve|Admin|Review)|canManageSanctions|guardRosterWrite|loadCompetitionForRosterWrite|user\.role|checkRefereeScope/.test(
+    /can(EditRoster|Manage|Approve|Admin|Review)|canManageSanctions|guardRosterWrite|loadCompetitionForRosterWrite|user\.role|checkRefereeScope|requireJudgeUser/.test(
       src,
     );
   if (mutates && !publicApi.has(rel) && !selfServiceApi.has(rel) && !hasAuthz) {

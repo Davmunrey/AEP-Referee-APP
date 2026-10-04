@@ -38,6 +38,36 @@ export default function SignInPage() {
   // bucle— y la cookie caduca sola.
   const sinAcceso = searchParams.get(SIN_ACCESO_PARAM) === SIN_ACCESO_VALUE;
   const [forgotEmail, setForgotEmail] = useState("");
+  // Los jueces entran con un enlace al e-mail del censo, sin contraseña.
+  // `?juez=1` abre directamente esa pestaña (es el enlace que se les comparte).
+  const [modo, setModo] = useState<"gestion" | "juez">(searchParams.get("juez") === "1" ? "juez" : "gestion");
+  const [judgeEmail, setJudgeEmail] = useState("");
+  const [judgeLoading, setJudgeLoading] = useState(false);
+
+  const requestJudgeLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setJudgeLoading(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/auth/judge-access`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: judgeEmail.trim() }),
+      });
+      const body = (await res.json().catch(() => null)) as { data?: { message?: string }; error?: string } | null;
+      if (!res.ok) {
+        setError(body?.error ?? "No se pudo enviar el enlace. Inténtalo de nuevo.");
+        return;
+      }
+      setInfo(body?.data?.message ?? "Si ese e-mail figura en el censo, te llegará un enlace para entrar.");
+    } catch {
+      setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
+    } finally {
+      setJudgeLoading(false);
+    }
+  };
   const [forgotLoading, setForgotLoading] = useState(false);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -138,6 +168,65 @@ export default function SignInPage() {
 
         <div className="rounded-xl border border-border bg-card shadow-card">
           <div className="px-6 pb-6 pt-6">
+            <div role="tablist" aria-label="Tipo de acceso" className="mb-5 grid grid-cols-2 gap-1 rounded-lg bg-surface p-1">
+              {(
+                [
+                  ["gestion", "Gestión AEP"],
+                  ["juez", "Soy juez"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={modo === value}
+                  onClick={() => {
+                    setModo(value);
+                    setError(null);
+                    setInfo(null);
+                  }}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-ring ${
+                    modo === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {modo === "juez" ? (
+              <>
+                <h1 className="text-base font-semibold text-foreground">Acceso de jueces</h1>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Escribe el e-mail que figura en tu ficha del censo y te enviaremos un enlace para entrar. No
+                  necesitas contraseña: sirve igual la primera vez que las siguientes.
+                </p>
+                <form onSubmit={(e) => void requestJudgeLink(e)} className="mt-5 space-y-3">
+                  <label htmlFor="judge-email" className="sr-only">
+                    Tu e-mail
+                  </label>
+                  <input
+                    id="judge-email"
+                    type="email"
+                    placeholder="Tu e-mail"
+                    value={judgeEmail}
+                    onChange={(e) => setJudgeEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    className={inputClass}
+                  />
+                  <button
+                    type="submit"
+                    disabled={judgeLoading}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground ${submitClass}`}
+                  >
+                    {judgeLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                    Enviarme el enlace
+                  </button>
+                </form>
+              </>
+            ) : (
+            <>
             <h1 className="text-base font-semibold text-foreground">Iniciar sesión</h1>
             <p className="mt-1 text-xs text-muted-foreground">
               Acceso restringido a cuentas autorizadas por el Comité de Jueces.
@@ -237,6 +326,8 @@ export default function SignInPage() {
                 </form>
               )}
             </div>
+            </>
+            )}
 
             {error && (
               <div

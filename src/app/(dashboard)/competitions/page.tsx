@@ -6,16 +6,14 @@ import { OpenRostersPanel } from "@/components/competitions/open-rosters-panel";
 import { CompetitionsTable } from "@/components/competitions/competitions-table";
 import { CalendarImportButton } from "@/components/competitions/calendar-import-button";
 import { canCreateCompetition, canImportCalendar } from "@/lib/permissions";
-import { getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { Plus } from "lucide-react";
-import { redirect } from "next/navigation";
 import { contar } from "@/lib/plural";
 
 export default async function CompetitionsPage() {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const competitions = [...(await dataService.getCompetitions(user))].sort((a, b) =>
     a.fecha.localeCompare(b.fecha),

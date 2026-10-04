@@ -91,6 +91,11 @@ export const roleTokens: Record<
     bg: "bg-role-lectura",
     icon: tokens.text.subtle,
   },
+  juez: {
+    ring: "ring-role-lectura",
+    bg: "bg-role-lectura",
+    icon: tokens.text.subtle,
+  },
 };
 
 export const selectFieldClass =

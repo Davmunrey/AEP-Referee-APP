@@ -1,11 +1,9 @@
 import { RegulationsView } from "@/components/regulations/regulations-view";
-import { getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
-import { redirect } from "next/navigation";
+import { getSession, redirectSinAcceso } from "@/lib/auth/session";
 
 export default async function RegulationsPage() {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   return <RegulationsView />;
 }

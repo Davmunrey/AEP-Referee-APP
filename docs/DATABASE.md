@@ -72,7 +72,7 @@ Reemplaza `referee_availability` (eliminada en 019). Registra qué jueces confir
 
 `referees.arbitraje_stats_by_year` (JSONB) desglosa los arbitrajes por año natural: `{ "2024": {…}, "2025": {…}, … }`. Permite separar censo vigente vs histórico y analítica por año. El agregado histórico (suma de todos los años) sigue en `referees.arbitraje_stats`.
 
-### Migraciones 034–039 (aplicadas por el workflow)
+### Migraciones 034–041 (aplicadas por el workflow)
 
 | Migración | Contenido |
 |---|---|
@@ -82,6 +82,8 @@ Reemplaza `referee_availability` (eliminada en 019). Registra qué jueces confir
 | `037` | RLS: retira las últimas políticas `USING (true)` para `authenticated` (`activity_log`, `roster_history`, `referee_availability`…). |
 | `038` | El alta de una cuenta ya no se activa por la bandera `invited` de los metadatos, que escribía el propio usuario. |
 | `039` | Índices en claves ajenas sin índice: `promotion_requests.referee_id`, `support_ticket_attachments.comment_id`, `referee_sanctions.impuesta_por_id`, `referees.active_sanction_id` (parciales donde la columna admite NULL). |
+| `040` | Valor `juez` en el tipo `user_role` (solo esto en el fichero: `ADD VALUE` no puede convivir en la misma transacción con su uso). |
+| `041` | Cuentas de juez: `referees.user_id` pasa a índice **único** (una cuenta por juez) e índice por `lower(email)` para la petición de acceso. |
 
 ### Índices de rendimiento (migration 030)
 

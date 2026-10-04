@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { themeBootScript } from "@/lib/theme";
+import { AuthFragmentHandler } from "@/components/auth/auth-fragment-handler";
 
 // Geist: grotesca neutra y actual, con cifras tabulares de serie; sustituye a
 // DM Sans + IBM Plex Mono, cuya mono de aire «terminal» envejecía la interfaz.
@@ -34,6 +35,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
+        <AuthFragmentHandler />
         {children}
       </body>
     </html>

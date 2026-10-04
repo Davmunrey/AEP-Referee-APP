@@ -174,6 +174,8 @@ const QUICK_START: Record<UserRole, QuickStartStep[]> = {
   delegado_zona: DELEGADO_ZONA,
   responsable_financiero_jueces: FINANCIERO,
   solo_ver: SOLO_VER,
+  // El juez no entra al panel de gestión: su ayuda vive en el portal.
+  juez: [],
 };
 
 /** Pasos de inicio para un rol (con respaldo a «solo lectura» si no se reconoce). */

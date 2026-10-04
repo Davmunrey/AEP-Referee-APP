@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { TicketsBoard } from "@/components/tickets/tickets-board";
-import { getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 
 export const metadata: Metadata = {
@@ -11,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function TicketsPage() {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const tickets = await dataService.getTickets({ user });
 

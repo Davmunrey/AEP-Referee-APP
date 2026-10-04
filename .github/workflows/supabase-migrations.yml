@@ -208,10 +208,17 @@ jobs:
 
             # ALTER TYPE ... ADD VALUE no puede ejecutarse en la misma
             # transacción que consume el valor nuevo, y aquí cada fichero va en
-            # una sola transacción.
+            # una sola transacción. Solo se admite en un fichero que no haga
+            # NADA más: así el valor nuevo no se puede usar en la misma
+            # transacción (desde PostgreSQL 12 añadirlo dentro de una
+            # transacción es válido; lo que falla es usarlo antes del COMMIT).
             if grep -qE 'alter[[:space:]]+type[[:space:]]+.*add[[:space:]]+value' <<< "$cuerpo"; then
-              echo "::error::$f usa ALTER TYPE ... ADD VALUE, que no admite ejecutarse dentro de una transacción junto con su uso. Sepáralo en su propio fichero o aplícalo a mano."
-              problemas=1
+              otras=$(tr ';' '\n' <<< "$cuerpo" | grep -vE '^[[:space:]]*$' \
+                | grep -vcE '^[[:space:]]*alter[[:space:]]+type[[:space:]]+[^ ]+[[:space:]]+add[[:space:]]+value' || true)
+              if [ "$otras" -gt 0 ]; then
+                echo "::error::$f usa ALTER TYPE ... ADD VALUE junto con otras sentencias. Déjalo solo en su propio fichero (el uso del valor, en el siguiente)."
+                problemas=1
+              fi
             fi
 
             # DELETE o UPDATE sin WHERE arrasan la tabla entera. Se parte por

@@ -10,16 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
 import { displayUltimo } from "@/lib/utils";
-import { canManageJudges, getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { canManageJudges, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { stripRefereePII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { redirect } from "next/navigation";
 import { RefereeArbitrajePanel } from "@/components/referees/referee-arbitraje-panel";
 import { RefereeSanctionsPanel } from "@/components/referees/referee-sanctions-panel";
 import { canManageSanctions } from "@/lib/permissions";
 import { DeleteRefereeButton } from "./delete-referee-button";
+import { RefereePortalAccess } from "@/components/referees/referee-portal-access";
+import { getJudgeAccessStatuses } from "@/server/services/judge-accounts";
 
 interface RefereePageProps {
   params: Promise<{ id: string }>;
@@ -27,7 +27,7 @@ interface RefereePageProps {
 
 export default async function RefereeDetailPage({ params }: RefereePageProps) {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const { id } = await params;
   const [profile, meta, competitions] = await Promise.all([
@@ -63,6 +63,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
   }
   const zoneName = zoneUiName(referee.zona);
   const canEdit = canManageJudges(user);
+  const portalStatus = canEdit ? (await getJudgeAccessStatuses([rawReferee]))[rawReferee.id] : undefined;
   const canSanction = canManageSanctions(user, referee.zona);
   const canDelete = user.role === "super_admin" || user.role === "delegado_jueces";
 
@@ -151,6 +152,10 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
           </div>
         </div>
       </Card>
+
+      {portalStatus && (
+        <RefereePortalAccess refereeId={rawReferee.id} status={portalStatus} hasEmail={Boolean(rawReferee.email)} />
+      )}
 
       {referee.arbitrajeStats && referee.arbitrajeStats.total > 0 && (
         <RefereeArbitrajePanel

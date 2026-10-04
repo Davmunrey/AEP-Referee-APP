@@ -28,12 +28,21 @@
 | `delegado_zona` | Jueces, informes y tarimas de su zona; dashboard/analytics acotados |
 | `responsable_financiero_jueces` | Compensación de gastos de jueces (lectura de tarimas/censo; export PDF). **No** edita tarima ni censo. Acceso principal: `/compensation` |
 | `solo_ver` | Lectura |
+| `juez` | Solo el **portal del juez** (`/portal`): su ficha, sus designaciones y las convocatorias. Sin acceso a nada de la gestión |
+
+### Cuentas de juez
+
+- Cada cuenta de juez va enlazada a su ficha del censo (`referees.user_id`, único) y se crea de dos maneras: un delegado la **invita** desde el directorio o la ficha, o el propio juez la **pide** en `/sign-in?juez=1` con el e-mail que figura en su ficha.
+- El juez entra con un **enlace por e-mail** (sin contraseña). Los enlaces que inicia el servidor llegan con la sesión en el fragmento de la URL; `AuthFragmentHandler` (layout raíz) la completa.
+- `getSession()` es la sesión **de gestión** y devuelve `null` para un juez: las páginas del panel y `requireApiUser` lo dejan fuera sin comprobarlo una a una. El portal usa `getJudgeSession()`. Un juez que abre una página del panel va a `/portal` (`redirectSinAcceso`).
+- Las cuentas de juez no aparecen en `/admin/users` ni se pueden editar desde ahí (`canAdministerUserWithRole`): se gestionan desde la ficha del juez. Retirar el acceso desactiva el perfil y corta la sesión en la siguiente petición.
 
 ## Guards
 
 | Guard | Uso |
 |---|---|
-| `requireApiUser` | Toda API privada |
+| `requireApiUser` | Toda API privada de gestión (403 para el rol `juez`) |
+| `requireJudgeUser` | API del portal del juez (solo `juez` con ficha enlazada) |
 | `canEditRoster` | Campeonatos/tarima |
 | `canApprove` | Aprobaciones |
 | `canManageUsers` | Usuarios |

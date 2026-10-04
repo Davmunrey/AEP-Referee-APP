@@ -6,6 +6,7 @@ import { refereeService } from "./supabase-referees";
 import { rosterService } from "./supabase-roster";
 import { compensationService } from "./supabase-compensation";
 import { ticketService } from "./supabase-tickets";
+import { portalService } from "./supabase-portal";
 
 export const supabaseDataService = {
   // ── Meta / Analytics ─────────────────────────────────────────────────────
@@ -168,4 +169,7 @@ export const supabaseDataService = {
   createTicket: ticketService.createTicket,
   addTicketComment: ticketService.addComment,
   updateTicketStatus: ticketService.updateTicketStatus,
+
+  // ── Portal del juez ───────────────────────────────────────────────────────
+  getJudgePortal: portalService.getJudgePortal,
 };

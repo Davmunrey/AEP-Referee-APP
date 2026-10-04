@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +10,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const navCounts = await dataService.getNavCounts(user);
 

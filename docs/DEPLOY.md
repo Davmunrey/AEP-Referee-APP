@@ -68,6 +68,7 @@ No se requiere ninguna API key de mapas de pago.
 - **Auth**: email/contraseña; signup público desactivado; reset de contraseña activo.
 - **Redirect URLs** en Supabase Auth: incluir `https://aep-tarima.vercel.app/**` y el dominio Vercel si se usa en preview.
 - **Site URL** en Auth: `https://aep-tarima.vercel.app`
+- **Correo de los jueces**: las invitaciones al portal y los enlaces de acceso los envía Supabase Auth. El servicio de correo de serie de Supabase solo admite unos pocos envíos por hora: para invitar a un censo entero hace falta **SMTP propio** configurado en Auth (los envíos de invitación van de uno en uno). La vuelta del enlace es la raíz del sitio, que ya está en las Redirect URLs.
 - **Plantillas de correo**: branding AEP en `src/lib/auth/supabase-email-branding.ts`. Aplicar en remoto:
   ```bash
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding
@@ -75,7 +76,7 @@ No se requiere ninguna API key de mapas de pago.
 - **Migraciones**: se aplican **solas**. El workflow «Migraciones Supabase» ejecuta lo pendiente de `supabase/migrations/` en cada push a `main` que las toque. Requiere el secret `SUPABASE_DB_URL` (cadena del *Session pooler*, puerto 5432, percent-encoded; la conexión directa `db.<ref>.supabase.co` no vale porque es solo IPv6 y los runners solo tienen IPv4).
   - Las 001–033 se aplicaron a mano en su día; el workflow las registra como tales sin reejecutarlas. Estado actual: aplicadas hasta la `039`.
   - Tras aplicar una migración, el workflow avisa a PostgREST para que recargue el esquema: la función nueva queda disponible sin reiniciar el proyecto.
-  - Antes de tocar nada aborta si una migración pendiente trae `DROP`, `TRUNCATE`, un `DELETE`/`UPDATE` sin `WHERE` o un `ALTER TYPE … ADD VALUE`. Esas hay que aplicarlas a mano y con copia previa.
+  - Antes de tocar nada aborta si una migración pendiente trae `DROP`, `TRUNCATE`, un `DELETE`/`UPDATE` sin `WHERE` o un `ALTER TYPE … ADD VALUE` mezclado con otras sentencias. Esas hay que aplicarlas a mano y con copia previa. Un `ADD VALUE` **solo** en su fichero sí se aplica (como la `040`): sin nada más en la transacción, el valor nuevo no se usa antes del `COMMIT`.
   - Para ver qué haría sin escribir: Actions → «Migraciones Supabase» → Run workflow → marcar *Solo mostrar qué se aplicaría*.
   - El registro vive en `deploy.applied_migrations`, aparte de `supabase_migrations.schema_migrations` (que escriben el CLI y el MCP de Supabase y aquí solo se lee para detectar conflictos).
 - **Realtime**: tabla `app_sync_state` publicada (migración `029`) para sincronización en vivo entre usuarios.

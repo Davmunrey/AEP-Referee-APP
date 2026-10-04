@@ -11,6 +11,18 @@ Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 | `/login` | Legacy redirect |
 | `/auth/callback` | Supabase callback |
 | `/docs` | Documentación web (parte pública + guía interna si hay sesión) |
+| `/sign-in?juez=1` | Acceso de jueces: piden su enlace con el e-mail del censo |
+
+## Portal del juez (rol `juez`)
+
+| Ruta | Uso |
+|---|---|
+| `/portal` | Inicio: próximas designaciones y aviso de sanción activa |
+| `/portal/convocatorias` | Convocatorias abiertas para el juez |
+| `/portal/sesiones` | Designaciones aprobadas (sesión, día, horarios, funciones) e historial |
+| `/portal/ficha` | Sus datos del censo (solo lectura) |
+
+El personal de gestión que abre `/portal` vuelve a `/`; un juez que abre una ruta del panel va a `/portal`. En móvil la navegación es una barra de pestañas inferior.
 
 ## Privadas (dashboard)
 

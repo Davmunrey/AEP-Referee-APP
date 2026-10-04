@@ -4,6 +4,7 @@ import * as competitions from "./memory-competitions";
 import * as referees from "./memory-referees";
 import { memoryCompensationService } from "./memory-compensation";
 import { ticketService } from "./memory-tickets";
+import { memoryPortalService } from "./memory-portal";
 
 export const memoryDataService = {
   getMeta: referees.getMeta,
@@ -97,4 +98,6 @@ export const memoryDataService = {
   createTicket: ticketService.createTicket,
   addTicketComment: ticketService.addComment,
   updateTicketStatus: ticketService.updateTicketStatus,
+
+  getJudgePortal: memoryPortalService.getJudgePortal,
 };
