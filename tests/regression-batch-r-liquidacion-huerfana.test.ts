@@ -73,7 +73,7 @@ async function escenario() {
   const juez = await createReferee({
     nombre: "Ana Pérez", zona: "CENTRO", nivel: "Nacional", estado: "Activo", disp: true,
   } as never);
-  await assignReferee(comp.id, SLOT, juez.id, "Ana", undefined, null);
+  await assignReferee(comp.id, SLOT, juez.id, "Ana", undefined, undefined, null);
 
   // Guardar la liquidación es lo que persiste la fila.
   await memoryCompensationService.updateClaim(comp.id, juez.id, {
@@ -122,7 +122,7 @@ describe("liquidación de un juez que sale de la tarima", () => {
 
   it("volver a asignar al juez la devuelve a la tarima sin duplicarla", async () => {
     await clearSlot(ctx.comp.id, SLOT, "Carlos", ctx.juez.id);
-    await assignReferee(ctx.comp.id, SLOT, ctx.juez.id, "Carlos", undefined, null);
+    await assignReferee(ctx.comp.id, SLOT, ctx.juez.id, "Carlos", undefined, undefined, null);
 
     const resumen = await memoryCompensationService.getSummary(ctx.comp.id);
     expect(resumen.claims).toHaveLength(1);
@@ -136,7 +136,7 @@ describe("liquidación de un juez que sale de la tarima", () => {
       nombre: "Bea López", zona: "CENTRO", nivel: "Nacional", estado: "Activo", disp: true,
     } as never);
     await clearSlot(ctx.comp.id, SLOT, "Carlos", ctx.juez.id);
-    await assignReferee(ctx.comp.id, SLOT, otro.id, "Carlos", undefined, null);
+    await assignReferee(ctx.comp.id, SLOT, otro.id, "Carlos", undefined, undefined, null);
     await memoryCompensationService.updateClaim(ctx.comp.id, otro.id, {
       distanceKmRoundTrip: 100,
     });

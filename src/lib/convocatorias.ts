@@ -34,6 +34,8 @@ export interface Convocatoria {
   ampliarDiasAntes?: number;
   ampliadaAt?: string;
   creadaPor?: string;
+  /** Cuenta que la lanzó: recibe la respuesta de las zonas a las que pidió ayuda. */
+  creadaPorId?: string;
   createdAt?: string;
   zonas: ConvocatoriaZona[];
 }
@@ -44,6 +46,30 @@ export interface Inscripcion {
   sesion: string;
   nota?: string;
   createdAt?: string;
+}
+
+/** El juez confirma que va a su designación, o dice que no puede. */
+export interface DesignacionRespuesta {
+  estado: "confirmada" | "rechazada";
+  motivo?: string;
+  updatedAt?: string;
+}
+
+/** Una zona a la que se ha pedido sumarse a una convocatoria y aún no responde. */
+export interface ZonaPendiente {
+  convocatoriaId: string;
+  zona: string;
+  origen: ConvocatoriaZonaOrigen;
+  solicitadaAt?: string;
+}
+
+/** Una petición de sumarse, con lo que necesita quien la responde. */
+export interface SolicitudDeZona extends ZonaPendiente {
+  competitionId: string;
+  competitionName: string;
+  competitionZona?: string;
+  fecha: string;
+  cierraEl: string;
 }
 
 /** Lo que ve el delegado: la convocatoria y quién se ha apuntado a qué. */

@@ -164,6 +164,13 @@ Ninguna escritura concurrente se pierde en silencio: o se aplica, o la segunda p
 
 **Sincronización en vivo:** cada escritura sube `app_sync_state.version`; los clientes refrescan agrupando ráfagas (600 ms, máximo 2 s). Una pestaña oculta no refresca: apunta el cambio y se pone al día al volver. Mientras alguien edita la plantilla o tiene una operación en curso, el constructor de la tarima aparta los datos que llegan y, al terminar, pide los actuales (nunca aplica una instantánea vieja).
 
+## Portal del juez y convocatorias (v2.9–v2.11)
+
+- **Sesiones separadas**: `getSession()` es la sesión de gestión (un `juez` no la tiene) y `getJudgeSession()` la del portal. La API de gestión responde 403 a un juez; la del portal (`requireJudgeUser`) actúa siempre con el `refereeId` de la sesión.
+- **Reglas en un sitio**: los dos gemelos solo guardan convocatorias, inscripciones, zonas, respuestas y avisos; quién puede apuntarse, a qué zonas llega y cuándo se amplía vive en `src/server/convocatorias.ts`.
+- **Sin planificador**: la ampliación automática y el recordatorio de cierre los hace `revisarConvocatorias()`, que se lanza con `after()` al abrir el panel o el portal (como mucho cada 5 minutos por instancia). Las escrituras son condicionales (`ampliada_at IS NULL`, avisos con `clave` única), así que dos instancias a la vez no duplican nada.
+- **Avisos**: `src/server/destinatarios.ts` resuelve a quién va cada aviso (cuentas activas por rol y zona). La campana se pinta con la bandeja ya leída en el servidor y se refresca con la sincronización en tiempo real, también en el portal.
+
 ## Responsive / breakpoints
 
 Tailwind breakpoints utilizados:

@@ -11,10 +11,11 @@ import type {
   RegulationRule,
   RosterRole,
 } from "@/lib/types";
-import { AlertTriangle, Lock, X } from "lucide-react";
+import { AlertTriangle, CheckCheck, Lock, X } from "lucide-react";
 import { LevelBadge } from "@/components/aep/badges";
 import { abbreviateRefereeLevel } from "@/lib/referee-level-label";
 import { cn } from "@/lib/utils";
+import type { DesignacionRespuesta } from "@/lib/convocatorias";
 import {
   buildCompetitionSlotLayout,
   buildPesajeSlotLayout,
@@ -29,6 +30,8 @@ export interface SlotGridProps {
   crossZoneMap?: CrossZoneMap;
   /** Jueces con la liquidación pagada: su puesto no se puede tocar. */
   paidRefereeIds?: ReadonlySet<string>;
+  /** Respuesta de cada juez a su designación (tarima aprobada). */
+  respuestas?: Readonly<Record<string, DesignacionRespuesta>>;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -43,6 +46,7 @@ export interface SlotGridProps {
 }
 
 const EMPTY_PAID_IDS: ReadonlySet<string> = new Set<string>();
+const EMPTY_RESPUESTAS: Readonly<Record<string, DesignacionRespuesta>> = {};
 
 function slotKeyFor(sesion: string, cell: SlotCellRef): string {
   return `${sesion}_${cell.role.key}_${cell.slotIndex}`;
@@ -55,6 +59,7 @@ function SlotCell({
   flags,
   crossZoneMap,
   paidRefereeIds,
+  respuestas,
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -73,6 +78,7 @@ function SlotCell({
   flags: FlagsMap;
   crossZoneMap: CrossZoneMap;
   paidRefereeIds: ReadonlySet<string>;
+  respuestas: Readonly<Record<string, DesignacionRespuesta>>;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -96,6 +102,7 @@ function SlotCell({
   // Con la liquidación pagada el puesto queda congelado: el servidor rechaza
   // la sustitución, así que conviene verlo antes de intentarla.
   const isPaid = !!refereeId && paidRefereeIds.has(refereeId);
+  const respuesta = refereeId ? respuestas[refereeId] : undefined;
   const slotLabel =
     cell.role.slots > 1 ? `${cell.role.rol} ${cell.slotIndex + 1}` : cell.role.rol;
 
@@ -181,6 +188,19 @@ function SlotCell({
               >
                 <Lock className="h-3 w-3" aria-hidden="true" />
                 Pagada
+              </span>
+            )}
+            {respuesta?.estado === "rechazada" && (
+              <span
+                title={`No puede ir${respuesta.motivo ? `: ${respuesta.motivo}` : ""}`}
+                className="shrink-0 rounded-md bg-destructive-muted px-1 py-px text-[11px] font-semibold text-destructive"
+              >
+                No va
+              </span>
+            )}
+            {respuesta?.estado === "confirmada" && (
+              <span title="Ha confirmado que va" className="shrink-0 text-success">
+                <CheckCheck className="h-3.5 w-3.5" aria-label="Ha confirmado que va" />
               </span>
             )}
             {violation && (
@@ -282,6 +302,7 @@ export function SlotGrid({
   flags,
   crossZoneMap = {},
   paidRefereeIds,
+  respuestas,
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -320,6 +341,7 @@ export function SlotGrid({
     dragOverKey,
     setDragOverKey,
     paidRefereeIds: paidRefereeIds ?? EMPTY_PAID_IDS,
+    respuestas: respuestas ?? EMPTY_RESPUESTAS,
   };
 
   return (

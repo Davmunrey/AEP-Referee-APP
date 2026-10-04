@@ -141,7 +141,21 @@ Las revisiones (`/approvals/:id/review`, `/promotions/:id/review`) exigen `appro
 | `POST` | `/portal/convocatorias/:id/inscripciones` | juez · `{ sesion, nota? }` (idempotente) |
 | `DELETE` | `/portal/convocatorias/:id/inscripciones?sesion=` | juez · solo con la convocatoria abierta |
 
+| `POST` | `/convocatorias/:id/zonas/:zona` | delegado de esa zona o gestión nacional · `{ aceptar }` (condicional: una petición ya respondida da 409) |
+| `POST` | `/portal/designaciones/:competitionId` | juez · `{ estado: confirmada\|rechazada, motivo? }` (motivo obligatorio al rechazar; solo tarima aprobada en la que esté) |
+
+`POST`/`PATCH` de la convocatoria aceptan además `zonasExtra` (y el `POST`, `ampliarDiasAntes` 1–60). Si las abre la gestión nacional entran **aceptadas**; si las abre un delegado de zona, quedan **pendientes** hasta que el delegado de la otra zona (o la gestión nacional) acepte. La ampliación automática siempre queda pendiente.
+
 Una convocatoria viva por campeonato (índice único parcial). La fecha límite es un día natural español, inclusive, y no puede pasar del primer día del campeonato. Un juez no se apunta si tiene sanción activa o su ficha está inactiva o no disponible (las mismas condiciones que impiden asignarle en la tarima); estar designado en otro campeonato esas fechas es un **aviso**, no un bloqueo. Cerrada la convocatoria, retirarse es avisar al delegado. Las reglas viven en `src/server/convocatorias.ts`, comunes a los dos backends.
+
+## Avisos (campana)
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/notificaciones` | cualquier cuenta (gestión o juez) · sus 20 últimos avisos y cuántos sin leer |
+| `PATCH` | `/notificaciones` | ídem · `{ ids? }` marca como leídos (todos si no se indica) |
+
+Los avisos los genera el servidor: convocatoria nueva para tu zona, una zona que pide sumarse, la respuesta a esa petición, el recordatorio de cierre (el día antes, a quien no se ha apuntado), la designación al aprobarse la tarima y un juez que avisa de que no puede ir. Un aviso con `clave` no se repite a la misma persona. Un fallo al escribir avisos se registra y **no** rompe la acción que lo provocó.
 
 ## Disponibilidad por campeonato
 

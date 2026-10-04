@@ -55,6 +55,11 @@ async function sendMagicLink(email: string, redirectTo: string): Promise<boolean
 // probar el directorio y el portal en local.
 const memoryActive = new Map<string, boolean>();
 
+/** ¿Cuenta de juez activa? (memoria; en Supabase lo dice `profiles.activo`). */
+export function isMemoryJudgeAccountActive(userId: string): boolean {
+  return memoryActive.get(userId) !== false;
+}
+
 function memoryInvite(referee: Referee): JudgeInviteOutcome {
   if (!referee.email || !EMAIL_RE.test(referee.email)) return "sin-email";
   const store = getStore();

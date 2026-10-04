@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CalendarCheck, Home, LogOut, Megaphone, UserRound } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { AppRealtimeSync } from "@/components/realtime/app-realtime-sync";
+import type { BandejaNotificaciones } from "@/lib/notificaciones";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -18,7 +21,17 @@ const NAV = [
  * un juez: barra de pestañas abajo en pantallas pequeñas y arriba en las
  * grandes. Nada del menú de la gestión.
  */
-export function PortalShell({ nombre, iniciales, children }: { nombre: string; iniciales: string; children: React.ReactNode }) {
+export function PortalShell({
+  nombre,
+  iniciales,
+  notificaciones,
+  children,
+}: {
+  nombre: string;
+  iniciales: string;
+  notificaciones: BandejaNotificaciones;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const isActive = (href: string, exact?: boolean) => (exact ? pathname === href : pathname.startsWith(href));
@@ -39,6 +52,7 @@ export function PortalShell({ nombre, iniciales, children }: { nombre: string; i
             <span className="truncate text-sm font-semibold text-foreground">Portal del juez</span>
           </Link>
           <div className="flex items-center gap-1">
+            <NotificationBell initial={notificaciones} />
             <span
               className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-active text-[11px] font-semibold text-foreground-secondary"
               title={nombre}
@@ -79,6 +93,9 @@ export function PortalShell({ nombre, iniciales, children }: { nombre: string; i
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-28 pt-5 sm:pb-12">{children}</main>
+      {/* Lo que cambie otro (una convocatoria nueva, la tarima aprobada) llega
+          sin recargar, igual que en la gestión. */}
+      <AppRealtimeSync />
 
       {/* Móvil: pestañas abajo, al alcance del pulgar. */}
       <nav

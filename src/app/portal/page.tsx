@@ -50,7 +50,7 @@ export default async function PortalHomePage() {
             Cuando una tarima en la que estés se apruebe, la verás aquí con tus sesiones y horarios.
           </p>
         ) : (
-          next.map((item) => <DesignationCard key={item.competitionId} item={item} />)
+          next.map((item) => <DesignationCard key={item.competitionId} item={item} respond />)
         )}
       </section>
 

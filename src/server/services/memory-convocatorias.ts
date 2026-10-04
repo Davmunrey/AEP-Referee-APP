@@ -1,6 +1,6 @@
 /** Convocatorias en memoria: mismo contrato que `supabase-convocatorias`. */
 import { resolveZoneCode, zonesMatch } from "@/lib/aep-zones";
-import type { Convocatoria, Inscripcion } from "@/lib/convocatorias";
+import type { Convocatoria, ConvocatoriaZona, DesignacionRespuesta, Inscripcion, ZonaPendiente } from "@/lib/convocatorias";
 import { UserFacingServiceError } from "@/lib/competitions/service-types";
 import { getStore, nextSeqId } from "@/server/store";
 
@@ -9,6 +9,7 @@ function store() {
   // Un store creado antes de esta versión (recarga en caliente) no las trae.
   s.convocatorias ??= [];
   s.inscripciones ??= [];
+  s.respuestas ??= new Map();
   return s;
 }
 
@@ -35,15 +36,14 @@ async function listConvocatoriasAbiertasParaZona(zona: string, desde: string): P
     .map(copy);
 }
 
-async function insertConvocatoria(input: Omit<Convocatoria, "id" | "createdAt"> & { creadaPorId?: string }): Promise<Convocatoria> {
+async function insertConvocatoria(input: Omit<Convocatoria, "id" | "createdAt">): Promise<Convocatoria> {
   const s = store();
   if (s.convocatorias.some((c) => c.competitionId === input.competitionId && c.estado !== "cancelada")) {
     throw new UserFacingServiceError("Este campeonato ya tiene una convocatoria. Recarga la página para verla.");
   }
-  const { creadaPorId: _id, ...rest } = input;
   const now = new Date().toISOString();
   const c: Convocatoria = {
-    ...rest,
+    ...input,
     id: nextSeqId("conv"),
     createdAt: now,
     zonas: input.zonas.map((z) => ({ ...z, solicitadaAt: now, resueltaAt: z.estado === "pendiente" ? undefined : now })),
@@ -98,6 +98,82 @@ async function deleteInscripcion(convocatoriaId: string, refereeId: string, sesi
   return s.inscripciones.length < before;
 }
 
+
+async function addConvocatoriaZonas(convocatoriaId: string, zonas: ConvocatoriaZona[]): Promise<void> {
+  const c = store().convocatorias.find((x) => x.id === convocatoriaId);
+  if (!c) return;
+  const now = new Date().toISOString();
+  for (const z of zonas) {
+    if (c.zonas.some((x) => x.zona === z.zona)) continue;
+    c.zonas.push({ ...z, solicitadaAt: now, resueltaAt: z.estado === "pendiente" ? undefined : now });
+  }
+}
+
+async function resolverConvocatoriaZona(
+  convocatoriaId: string,
+  zona: string,
+  estado: "aceptada" | "rechazada",
+  resueltaPor: string,
+): Promise<boolean> {
+  const z = store().convocatorias.find((x) => x.id === convocatoriaId)?.zonas.find((x) => x.zona === zona);
+  if (!z || z.estado !== "pendiente") return false;
+  Object.assign(z, { estado, resueltaPor, resueltaAt: new Date().toISOString() });
+  return true;
+}
+
+async function listZonasPendientes(zona?: string): Promise<ZonaPendiente[]> {
+  return store().convocatorias.flatMap((c) =>
+    c.zonas
+      .filter((z) => z.estado === "pendiente" && (!zona || z.zona === zona))
+      .map((z) => ({ convocatoriaId: c.id, zona: z.zona, origen: z.origen, solicitadaAt: z.solicitadaAt })),
+  );
+}
+
+async function listConvocatoriasAbiertas(desde: string): Promise<Convocatoria[]> {
+  return store().convocatorias.filter((c) => c.estado === "abierta" && c.cierraEl >= desde).map(copy);
+}
+
+async function listConvocatoriasParaAmpliar(): Promise<Convocatoria[]> {
+  return store()
+    .convocatorias.filter((c) => c.estado === "abierta" && c.ampliarDiasAntes != null && !c.ampliadaAt)
+    .map(copy);
+}
+
+async function marcarConvocatoriaAmpliada(id: string): Promise<boolean> {
+  const c = store().convocatorias.find((x) => x.id === id);
+  if (!c || c.ampliadaAt) return false;
+  c.ampliadaAt = new Date().toISOString();
+  return true;
+}
+
+const respKey = (competitionId: string, refereeId: string) => `${competitionId}::${refereeId}`;
+
+async function getDesignacionRespuestas(competitionId: string): Promise<Record<string, DesignacionRespuesta>> {
+  const out: Record<string, DesignacionRespuesta> = {};
+  for (const [k, v] of store().respuestas) {
+    const [comp, ref] = k.split("::");
+    if (comp === competitionId && ref) out[ref] = { ...v };
+  }
+  return out;
+}
+
+async function getRespuestasDeJuez(refereeId: string): Promise<Record<string, DesignacionRespuesta>> {
+  const out: Record<string, DesignacionRespuesta> = {};
+  for (const [k, v] of store().respuestas) {
+    const [comp, ref] = k.split("::");
+    if (ref === refereeId && comp) out[comp] = { ...v };
+  }
+  return out;
+}
+
+async function setDesignacionRespuesta(
+  competitionId: string,
+  refereeId: string,
+  respuesta: Omit<DesignacionRespuesta, "updatedAt">,
+): Promise<void> {
+  store().respuestas.set(respKey(competitionId, refereeId), { ...respuesta, updatedAt: new Date().toISOString() });
+}
+
 export const memoryConvocatoriaService = {
   getConvocatoria,
   getLiveConvocatoria,
@@ -108,4 +184,13 @@ export const memoryConvocatoriaService = {
   listInscripcionesDeJuez,
   insertInscripcion,
   deleteInscripcion,
+  addConvocatoriaZonas,
+  resolverConvocatoriaZona,
+  listZonasPendientes,
+  listConvocatoriasParaAmpliar,
+  listConvocatoriasAbiertas,
+  marcarConvocatoriaAmpliada,
+  getDesignacionRespuestas,
+  getRespuestasDeJuez,
+  setDesignacionRespuesta,
 };

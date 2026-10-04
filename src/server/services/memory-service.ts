@@ -6,6 +6,7 @@ import { memoryCompensationService } from "./memory-compensation";
 import { ticketService } from "./memory-tickets";
 import { memoryPortalService } from "./memory-portal";
 import { memoryConvocatoriaService } from "./memory-convocatorias";
+import { memoryNotificacionService } from "./memory-notificaciones";
 
 export const memoryDataService = {
   getMeta: referees.getMeta,
@@ -111,4 +112,17 @@ export const memoryDataService = {
   listInscripcionesDeJuez: memoryConvocatoriaService.listInscripcionesDeJuez,
   insertInscripcion: memoryConvocatoriaService.insertInscripcion,
   deleteInscripcion: memoryConvocatoriaService.deleteInscripcion,
+  addConvocatoriaZonas: memoryConvocatoriaService.addConvocatoriaZonas,
+  resolverConvocatoriaZona: memoryConvocatoriaService.resolverConvocatoriaZona,
+  listZonasPendientes: memoryConvocatoriaService.listZonasPendientes,
+  listConvocatoriasParaAmpliar: memoryConvocatoriaService.listConvocatoriasParaAmpliar,
+  listConvocatoriasAbiertas: memoryConvocatoriaService.listConvocatoriasAbiertas,
+  marcarConvocatoriaAmpliada: memoryConvocatoriaService.marcarConvocatoriaAmpliada,
+  getDesignacionRespuestas: memoryConvocatoriaService.getDesignacionRespuestas,
+  getRespuestasDeJuez: memoryConvocatoriaService.getRespuestasDeJuez,
+  setDesignacionRespuesta: memoryConvocatoriaService.setDesignacionRespuesta,
+
+  insertNotificaciones: memoryNotificacionService.insertNotificaciones,
+  getBandejaNotificaciones: memoryNotificacionService.getBandeja,
+  marcarNotificacionesLeidas: memoryNotificacionService.marcarLeidas,
 };

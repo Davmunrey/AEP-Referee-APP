@@ -17,6 +17,7 @@ import { disclosureEnter } from "@/components/aep/motion";
 import { summarizeRequiredSlots } from "@/lib/roster-template";
 import { sessionProgress, summarizeSessionCategories, summarizeSessionGroups } from "./roster-session-helpers";
 import { SlotGrid, type SlotGridProps } from "./roster-slot-grid";
+import type { DesignacionRespuesta } from "@/lib/convocatorias";
 
 /** Chips compactos con las plazas requeridas por área (tarima, mesa, control, pesaje). */
 export function RequiredSlotsChips({
@@ -171,6 +172,7 @@ export const SessionBlock = memo(function SessionBlock({
   flags,
   crossZoneMap = {},
   paidRefereeIds,
+  respuestas,
   getReferee,
   selectedSlot,
   onSelectSlot,
@@ -188,6 +190,7 @@ export const SessionBlock = memo(function SessionBlock({
   crossZoneMap?: CrossZoneMap;
   /** Jueces con la liquidación pagada: su puesto queda congelado. */
   paidRefereeIds?: ReadonlySet<string>;
+  respuestas?: Readonly<Record<string, DesignacionRespuesta>>;
   getReferee: (id: string) => Referee | undefined;
   selectedSlot: string | null;
   onSelectSlot: (key: string | null) => void;
@@ -211,6 +214,7 @@ export const SessionBlock = memo(function SessionBlock({
     flags,
     crossZoneMap,
     paidRefereeIds,
+    respuestas,
     getReferee,
     selectedSlot,
     onSelectSlot,

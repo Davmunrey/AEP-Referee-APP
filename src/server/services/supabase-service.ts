@@ -8,6 +8,7 @@ import { compensationService } from "./supabase-compensation";
 import { ticketService } from "./supabase-tickets";
 import { portalService } from "./supabase-portal";
 import { convocatoriaService } from "./supabase-convocatorias";
+import { notificacionService } from "./supabase-notificaciones";
 
 export const supabaseDataService = {
   // ── Meta / Analytics ─────────────────────────────────────────────────────
@@ -184,4 +185,18 @@ export const supabaseDataService = {
   listInscripcionesDeJuez: convocatoriaService.listInscripcionesDeJuez,
   insertInscripcion: convocatoriaService.insertInscripcion,
   deleteInscripcion: convocatoriaService.deleteInscripcion,
+  addConvocatoriaZonas: convocatoriaService.addConvocatoriaZonas,
+  resolverConvocatoriaZona: convocatoriaService.resolverConvocatoriaZona,
+  listZonasPendientes: convocatoriaService.listZonasPendientes,
+  listConvocatoriasParaAmpliar: convocatoriaService.listConvocatoriasParaAmpliar,
+  listConvocatoriasAbiertas: convocatoriaService.listConvocatoriasAbiertas,
+  marcarConvocatoriaAmpliada: convocatoriaService.marcarConvocatoriaAmpliada,
+  getDesignacionRespuestas: convocatoriaService.getDesignacionRespuestas,
+  getRespuestasDeJuez: convocatoriaService.getRespuestasDeJuez,
+  setDesignacionRespuesta: convocatoriaService.setDesignacionRespuesta,
+
+  // ── Avisos (campana) ──────────────────────────────────────────────────────
+  insertNotificaciones: notificacionService.insertNotificaciones,
+  getBandejaNotificaciones: notificacionService.getBandeja,
+  marcarNotificacionesLeidas: notificacionService.marcarLeidas,
 };

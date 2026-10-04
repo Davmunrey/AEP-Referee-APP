@@ -9,6 +9,7 @@ import { useEscapeClose } from "@/hooks/use-escape-close";
 import { api } from "@/lib/api/client";
 import { addDaysIso, todayIso } from "@/lib/business-date";
 import { isConvocatoriaAbierta, type ConvocatoriaStaffView } from "@/lib/convocatorias";
+import { AEP_MACRO_ZONES, resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
 import { contar } from "@/lib/plural";
 import type { Competition, Referee, RosterSession } from "@/lib/types";
 import { cn, formatDateRange } from "@/lib/utils";
@@ -27,10 +28,13 @@ export function ConvocatoriaDialog({
   referees,
   view,
   onChange,
+  isNational = false,
 }: {
   open: boolean;
   onClose: () => void;
-  competition: Pick<Competition, "id" | "nombre" | "fecha">;
+  competition: Pick<Competition, "id" | "nombre" | "fecha" | "zona">;
+  /** Gestión nacional: las zonas que añade entran ya aceptadas. */
+  isNational?: boolean;
   template: RosterSession[];
   referees: Referee[];
   view: ConvocatoriaStaffView | null;
@@ -43,6 +47,9 @@ export function ConvocatoriaDialog({
   const [sesiones, setSesiones] = useState<string[]>(template.map((s) => s.sesion));
   const [cierraEl, setCierraEl] = useState(view?.convocatoria.cierraEl ?? cierreSugerido);
   const [mensaje, setMensaje] = useState("");
+  const [zonasExtra, setZonasExtra] = useState<string[]>([]);
+  const [ampliar, setAmpliar] = useState(false);
+  const [ampliarDias, setAmpliarDias] = useState(5);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +75,8 @@ export function ConvocatoriaDialog({
   };
 
   const conv = view?.convocatoria;
+  const propia = resolveZoneCode(competition.zona) ?? "";
+  const otrasZonas = AEP_MACRO_ZONES.map((z) => z.id as string).filter((z) => z !== propia);
   const abierta = conv ? isConvocatoriaAbierta(conv) : false;
   const inscritosTotal = new Set((view?.inscripciones ?? []).map((i) => i.refereeId)).size;
   const sessionLabel = (key: string) => {
@@ -128,6 +137,40 @@ export function ConvocatoriaDialog({
                   <Input type="date" value={cierraEl} min={hoy} max={competition.fecha} onChange={(e) => setCierraEl(e.target.value)} />
                 </label>
               </div>
+              <fieldset>
+                <legend className="mb-1.5 text-xs font-medium text-foreground-secondary">Abrir también a otras zonas</legend>
+                <ZoneChips
+                  zonas={otrasZonas.filter((z) => z !== propia)}
+                  selected={zonasExtra}
+                  onToggle={(z) => setZonasExtra((cur) => (cur.includes(z) ? cur.filter((x) => x !== z) : [...cur, z]))}
+                />
+                {zonasExtra.length > 0 && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {isNational
+                      ? "Sus jueces la verán en cuanto la lances."
+                      : "Su delegado tendrá que aceptarlo antes de que la vean sus jueces."}
+                  </p>
+                )}
+              </fieldset>
+              <label className="flex items-start gap-2.5">
+                <input type="checkbox" className="mt-0.5 h-4 w-4 accent-primary" checked={ampliar} onChange={(e) => setAmpliar(e.target.checked)} />
+                <span className="text-sm text-foreground">
+                  Si faltan inscritos, pedir ayuda a las demás zonas
+                  <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={ampliarDias}
+                      disabled={!ampliar}
+                      onChange={(e) => setAmpliarDias(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+                      className="h-7 w-16 px-2 text-xs"
+                      aria-label="Días antes del cierre"
+                    />
+                    días antes del cierre. Su delegado decide si se suman.
+                  </span>
+                </span>
+              </label>
               <label className="block">
                 <span className="mb-1 block text-xs font-medium text-foreground-secondary">Mensaje para los jueces (opcional)</span>
                 <textarea
@@ -173,6 +216,56 @@ export function ConvocatoriaDialog({
                   );
                 })}
               </ul>
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-foreground-secondary">Zonas</p>
+                <ul className="flex flex-wrap gap-1.5">
+                  {conv.zonas.map((z) => (
+                    <li
+                      key={z.zona}
+                      className={cn(
+                        "rounded-md px-2 py-1 text-xs",
+                        z.estado === "aceptada" ? "bg-success-muted text-success" : z.estado === "pendiente" ? "bg-warning-muted text-warning" : "bg-surface text-muted-foreground line-through",
+                      )}
+                      title={z.estado === "pendiente" ? "Esperando a que su delegado acepte" : z.estado === "rechazada" ? "Su delegado no se suma" : z.origen === "propia" ? "Zona del campeonato" : "Sus jueces la ven"}
+                    >
+                      {zoneUiName(z.zona)}
+                      {z.estado === "pendiente" ? " · pendiente" : ""}
+                      {z.origen === "automatica" ? " · auto" : ""}
+                    </li>
+                  ))}
+                </ul>
+                {conv.ampliarDiasAntes && !conv.ampliadaAt && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Si faltan inscritos, {conv.ampliarDiasAntes} {conv.ampliarDiasAntes === 1 ? "día" : "días"} antes del cierre se pedirá ayuda a las demás zonas.
+                  </p>
+                )}
+                {abierta && otrasZonas.some((z) => !conv.zonas.some((x) => x.zona === z)) && (
+                  <div className="mt-2">
+                    <ZoneChips
+                      zonas={otrasZonas.filter((z) => !conv.zonas.some((x) => x.zona === z))}
+                      selected={zonasExtra}
+                      onToggle={(z) => setZonasExtra((cur) => (cur.includes(z) ? cur.filter((x) => x !== z) : [...cur, z]))}
+                    />
+                    {zonasExtra.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(async () => {
+                            const r = await api.updateConvocatoria(competition.id, { zonasExtra });
+                            setZonasExtra([]);
+                            return r;
+                          })
+                        }
+                      >
+                        Abrir también a {zonasExtra.map(zoneUiName).join(", ")}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
               {conv.estado !== "cancelada" && (
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-foreground-secondary">
@@ -217,6 +310,8 @@ export function ConvocatoriaDialog({
                       sesiones: template.map((s) => s.sesion).filter((s) => sesiones.includes(s)),
                       cierraEl,
                       mensaje: mensaje.trim() || undefined,
+                      zonasExtra: zonasExtra.length ? zonasExtra : undefined,
+                      ampliarDiasAntes: ampliar ? ampliarDias : undefined,
                     }),
                   )
                 }
@@ -259,6 +354,30 @@ export function ConvocatoriaDialog({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function ZoneChips({ zonas, selected, onToggle }: { zonas: string[]; selected: string[]; onToggle: (z: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {zonas.map((z) => {
+        const on = selected.includes(z);
+        return (
+          <button
+            key={z}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onToggle(z)}
+            className={cn(
+              "rounded-md border px-2 py-1 text-xs transition-colors focus-ring",
+              on ? "border-primary/40 bg-primary/10 font-medium text-primary" : "border-border text-muted-foreground hover:bg-surface-hover hover:text-foreground",
+            )}
+          >
+            {zoneUiName(z)}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -4,6 +4,18 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🔔 **AEP Tarima v2.11** — _«Todas las zonas»_ (2026-10-04)
+
+Tercera parte del portal del juez: otras zonas, designación con respuesta y avisos.
+
+- **Convocatorias a otras zonas**: al lanzarla o después. Si la abre la gestión nacional, sus jueces la ven al momento; si la abre un delegado de zona, el delegado de la otra zona tiene que aceptarlo desde **Pendiente** en su panel.
+- **Ampliación automática**: si a X días del cierre faltan inscritos, la convocatoria pide ayuda a las demás zonas (cada delegado decide).
+- **Designación con respuesta**: al aprobarse la tarima, cada juez recibe un aviso y confirma que va o dice que no puede, con el motivo. La tarima lo muestra arriba y en el hueco.
+- **La campana**: avisos dentro de la aplicación, en el panel y en el portal, sin correo. Convocatoria nueva, peticiones de otras zonas y su respuesta, recordatorio el día antes del cierre, designaciones y jueces que no pueden ir.
+- **Corregido en el modo local**: asignar un juez de otra zona con motivo daba un conflicto falso («otro usuario liberó ese hueco»), porque el gemelo en memoria tenía los parámetros en otro orden que el de Supabase.
+
+---
+
 ## 📣 **AEP Tarima v2.10** — _«Me apunto»_ (2026-10-04)
 
 Segunda parte del portal del juez: las convocatorias.
