@@ -12,7 +12,7 @@ import type {
   RefereeExam,
   RefereeLevel,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import {
   Check,
   GraduationCap,
@@ -180,18 +180,21 @@ export function ExamsManager({
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <GraduationCap className="h-4 w-4 text-primary" />
+        {/* Sin icono de color delante del título: el rojo es para la acción
+            principal, y el título ya dice qué hay. */}
+        <CardTitle className="flex items-baseline gap-1.5 text-sm font-semibold">
           Exámenes de jueces
-          <span className="text-xs font-normal text-subtle-muted">
+          <span className="text-xs font-normal tabular-nums text-muted-foreground">
             ({exams.length})
           </span>
         </CardTitle>
         {canEdit && (
           <Button
             size="sm"
-            variant={showForm ? "outline" : "default"}
-            className="gap-1.5"
+            // En la ficha del juez convive con «Editar», «Subir informe»…: una
+            // sola acción principal por pantalla, así que allí va en contorno.
+            variant={showForm || lockedRefereeId ? "outline" : "default"}
+            className="gap-1.5 max-sm:h-9"
             onClick={() => setShowForm((v) => !v)}
           >
             {showForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -365,7 +368,7 @@ export function ExamsManager({
       <CardContent className="divide-y divide-border-muted p-0">
         {exams.length === 0 && (
           <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-            <GraduationCap className="h-10 w-10 text-border-strong" />
+            <GraduationCap className="h-8 w-8 text-subtle-muted" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium text-foreground-secondary">
                 Sin exámenes registrados
@@ -396,8 +399,8 @@ export function ExamsManager({
                 </span>
                 <Badge variant="muted">→ {exam.nivelObjetivo}</Badge>
                 {resultBadge(exam.resultado)}
-                <span className="ml-auto text-[11px] text-subtle-muted">
-                  {exam.fecha}
+                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                  {formatDate(exam.fecha)}
                 </span>
               </div>
               {!lockedRefereeId && (

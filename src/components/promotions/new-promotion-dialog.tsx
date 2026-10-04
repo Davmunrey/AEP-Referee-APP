@@ -100,7 +100,7 @@ export function NewPromotionDialog({
 
   if (!open) {
     return (
-      <Button size="sm" onClick={() => setOpen(true)} disabled={eligible.length === 0}>
+      <Button size="sm" className="max-sm:h-9" onClick={() => setOpen(true)} disabled={eligible.length === 0}>
         <TrendingUp className="mr-1.5 h-4 w-4" />
         Nueva solicitud
       </Button>

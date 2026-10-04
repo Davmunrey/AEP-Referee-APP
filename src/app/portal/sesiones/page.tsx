@@ -8,7 +8,7 @@ export default async function PortalSessionsPage() {
   const { data } = await loadPortal();
   return (
     <div className="space-y-6">
-      <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Mis sesiones</h1>
+      <h1 className="text-[22px] font-semibold text-foreground">Mis sesiones</h1>
 
       <section aria-labelledby="proximas" className="space-y-3">
         <h2 id="proximas" className="text-[15px] font-semibold text-foreground">Próximas</h2>

@@ -10,7 +10,7 @@ export default async function PortalCallsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Convocatorias</h1>
+        <h1 className="text-[22px] font-semibold text-foreground">Convocatorias</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Apúntate a cada sesión a la que puedas ir. Tu delegado monta la tarima con los inscritos.
         </p>

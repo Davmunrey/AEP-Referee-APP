@@ -14,7 +14,7 @@ export default async function PortalHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+        <h1 className="text-[22px] font-semibold text-foreground">
           Hola, {judge.nombre.split(" ")[0]}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

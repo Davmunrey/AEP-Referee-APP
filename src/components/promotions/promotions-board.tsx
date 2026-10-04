@@ -12,7 +12,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { api } from "@/lib/api/client";
 import { textareaFieldClass } from "@/lib/design-tokens";
 import type { PromotionRequest, Referee } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 const NewPromotionDialog = dynamic(
   () => import("@/components/promotions/new-promotion-dialog").then((m) => m.NewPromotionDialog),
   { ssr: false },
@@ -21,7 +21,6 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
-  TrendingUp,
 } from "lucide-react";
 import { contar } from "@/lib/plural";
 import { MetricStrip, MetricTile } from "@/components/ui/metric-tile";
@@ -150,15 +149,14 @@ export function PromotionsBoard({
 
   return (
     <PageShell>
-      <div className="flex items-start justify-between gap-4">
-        <PageHeader
-          title="Ascensos de nivel"
-          description={`${contar(pendingCount, "solicitud pendiente", "solicitudes pendientes")} · Regional → Nacional → IPF · revisión centralizada`}
-        />
-        {canCreate && (
-          <NewPromotionDialog referees={referees} />
-        )}
-      </div>
+      {/* La acción va dentro de la cabecera, que ya la coloca junto al título
+          en escritorio y debajo, a lo ancho, en móvil. */}
+      <PageHeader
+        title="Ascensos de nivel"
+        description={`${contar(pendingCount, "solicitud pendiente", "solicitudes pendientes")} · Regional → Nacional → IPF · revisión centralizada`}
+      >
+        {canCreate && <NewPromotionDialog referees={referees} />}
+      </PageHeader>
 
       {/* KPI strip */}
       <MetricStrip columns={4}>
@@ -175,27 +173,20 @@ export function PromotionsBoard({
           return (
             <Card key={status}>
               <CardHeader className="border-b border-border-muted pb-3">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-sm">{label}</CardTitle>
-                  <span
-                    className={cn(
-"inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      status === "pendiente"
-                        ? "bg-warning-muted text-warning"
-                        : status === "aprobado"
-                          ? "bg-success-muted text-success"
-                          : "bg-destructive-muted text-destructive",
-                    )}
-                  >
-                    {groupItems.length}
+                {/* El recuento va en neutro: el estado ya lo dice el título del
+                    grupo y la píldora de cada fila; una píldora ámbar con un
+                    «0» parecía un aviso. */}
+                <CardTitle className="flex items-baseline gap-1.5 text-sm">
+                  {label}
+                  <span className="text-xs font-normal tabular-nums text-muted-foreground">
+                    ({groupItems.length})
                   </span>
-                </div>
+                </CardTitle>
               </CardHeader>
               <CardContent className="divide-y divide-border-muted p-0">
                 {groupItems.length === 0 ? (
                   <EmptyState
-                    icon={TrendingUp}
-                    className="m-4 border-none bg-transparent"
+                    className="m-4 border-none bg-transparent py-12"
                     title="Sin solicitudes"
                     description="No hay ascensos pendientes de revisión."
                   />
@@ -213,7 +204,7 @@ export function PromotionsBoard({
                             <p className="font-medium text-foreground">{p.refereeName}</p>
                             <p className="mt-0.5 text-xs text-subtle-muted">
                               {p.zona} · {p.eventosCompletados} arbitrajes ·{" "}
-                              {p.submittedAt.slice(0, 10)}
+                              {formatDate(p.submittedAt.slice(0, 10))}
                             </p>
 
                             {/* Level transition */}

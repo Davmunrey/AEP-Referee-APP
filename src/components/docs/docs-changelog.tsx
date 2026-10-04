@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { getChangelogVersions, type ChangelogVersion } from "@/lib/changelog";
+import { formatDate, formatDateRange } from "@/lib/utils";
 
 /**
  * Sección «Novedades» de /docs: renderiza CHANGELOG.md (fuente única de
@@ -60,12 +61,12 @@ function VersionBody({ version }: { version: ChangelogVersion }) {
     }
   }
   return (
-    <div className="space-y-2.5 text-sm leading-relaxed text-muted-foreground">
+    <div className="space-y-2.5 text-[15px] leading-relaxed text-foreground-secondary">
       {groups.map((group, i) =>
         group.type === "ul" ? (
-          <ul key={i} className="space-y-1.5 pl-4">
+          <ul key={i} className="space-y-1.5 pl-5">
             {group.items.map((item, j) => (
-              <li key={j} className="list-disc marker:text-primary/60">
+              <li key={j} className="list-disc pl-1 marker:text-muted-foreground">
                 {renderInline(item)}
               </li>
             ))}
@@ -75,6 +76,63 @@ function VersionBody({ version }: { version: ChangelogVersion }) {
         ),
       )}
     </div>
+  );
+}
+
+// Fechas del CHANGELOG (ISO, a veces solo año-mes o año) al formato del resto
+// de la interfaz: «4 oct 2026», nunca «2026-10-04».
+const ISO_RANGE_RE = /(\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/g;
+const ISO_DAY_RE = /\b(\d{4}-\d{2}-\d{2})\b/g;
+const ISO_MONTH_RE = /\b(\d{4})-(\d{2})\b/g;
+
+function humanizeDates(text: string): string {
+  return text
+    .replace(ISO_RANGE_RE, (_, a: string, b: string) => formatDateRange(a, b))
+    .replace(ISO_DAY_RE, (_, d: string) => formatDate(d))
+    .replace(ISO_MONTH_RE, (_, y: string, m: string) =>
+      new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("es-ES", { month: "long", year: "numeric" }),
+    );
+}
+
+interface ParsedHeading {
+  title: string;
+  codename: string | null;
+  meta: string | null;
+}
+
+/**
+ * La cabecera del CHANGELOG lleva un emoji delante, el título en negrita, el
+ * nombre en clave en cursiva y la fecha entre paréntesis. En la página el
+ * emoji sobra (no es un icono que aporte nada a quien lee) y el resto se
+ * compone con su propia jerarquía en vez de mezclar negritas y cursivas.
+ * El fichero no se toca: es la fuente que se lee también en GitHub.
+ */
+function parseHeading(heading: string): ParsedHeading {
+  // Todo lo anterior a la primera letra, dígito, asterisco o guion bajo es
+  // decoración (emoji, selectores de variación, espacios).
+  const clean = heading.replace(/^[^\p{L}\p{N}*_]+/u, "").trim();
+  const title = /\*\*([^*]+)\*\*/.exec(clean)?.[1]?.trim();
+  if (!title) return { title: clean, codename: null, meta: null };
+  const codename = /_([^_]+)_/.exec(clean)?.[1]?.trim() ?? null;
+  const metaRaw = /\(([^)]+)\)\s*$/.exec(clean)?.[1]?.trim() ?? null;
+  return { title, codename, meta: metaRaw ? humanizeDates(metaRaw) : null };
+}
+
+function VersionHeading({ heading, current }: { heading: string; current?: boolean }) {
+  const { title, codename, meta } = parseHeading(heading);
+  return (
+    <span className="flex flex-col gap-0.5">
+      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="font-semibold text-foreground">{title}</span>
+        {codename && <span className="text-foreground-secondary">{codename}</span>}
+        {current && (
+          <span className="rounded-full border border-border px-2 py-px text-[11px] font-medium text-muted-foreground">
+            actual
+          </span>
+        )}
+      </span>
+      {meta && <span className="text-sm font-normal text-muted-foreground">{meta}</span>}
+    </span>
   );
 }
 
@@ -90,28 +148,27 @@ export function DocsChangelog() {
   const [latest, ...previous] = versions;
 
   return (
-    <div className="space-y-4">
-      {/* Última versión: siempre visible */}
-      <div className="rounded-xl border border-primary-border bg-primary-muted/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground">{renderInline(latest!.heading)}</h3>
-        <div className="mt-2.5">
+    <div className="border-t border-border-muted">
+      {/* Última versión: siempre visible, marcada solo con «actual». */}
+      <article className="border-b border-border-muted py-5">
+        <h3 className="text-base">
+          <VersionHeading heading={latest!.heading} current />
+        </h3>
+        <div className="mt-3">
           <VersionBody version={latest!} />
         </div>
-      </div>
+      </article>
 
       {/* Anteriores: plegadas para no hacer la página kilométrica */}
       {previous.map((version) => (
-        <details
-          key={version.heading}
-          className="group rounded-xl border border-border bg-card p-4"
-        >
-          <summary className="cursor-pointer list-none rounded-sm text-sm font-semibold text-foreground focus-ring [&::-webkit-details-marker]:hidden">
-            <span className="mr-1.5 inline-block text-subtle-muted transition-transform group-open:rotate-90">
+        <details key={version.heading} className="group border-b border-border-muted">
+          <summary className="flex min-h-11 cursor-pointer list-none items-start gap-2 rounded-sm py-3 text-base focus-ring [&::-webkit-details-marker]:hidden">
+            <span aria-hidden="true" className="mt-px w-3 shrink-0 text-muted-foreground transition-transform group-open:rotate-90">
               ›
             </span>
-            {renderInline(version.heading)}
+            <VersionHeading heading={version.heading} />
           </summary>
-          <div className="mt-2.5">
+          <div className="pb-5 pl-5">
             <VersionBody version={version} />
           </div>
         </details>

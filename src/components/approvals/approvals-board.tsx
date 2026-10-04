@@ -15,7 +15,7 @@ import { textareaFieldClass } from "@/lib/design-tokens";
 import { parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
 import { selectedApproval } from "@/lib/approvals/select";
 import type { ApprovalProposal, Competition } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import {
   ArrowRight,
   ChevronLeft,
@@ -146,7 +146,7 @@ export function ApprovalsBoard({
           <CardHeader className="border-b border-border-muted pb-3">
             <CardTitle className="text-sm">Cola de propuestas</CardTitle>
           </CardHeader>
-          <CardContent className="max-h-[600px] flex-1 space-y-1.5 overflow-y-auto p-2">
+          <CardContent className="max-h-[600px] flex-1 overflow-y-auto p-0">
             {items.length === 0 ? (
               <EmptyState
                 icon={ClipboardList}
@@ -155,51 +155,52 @@ export function ApprovalsBoard({
               />
             ) : (
               <>
-                {pagedItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSelectedId(item.id)}
-                    aria-pressed={selected?.id === item.id}
-                    className={cn(
-                      "w-full rounded-xl border p-3.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.99] focus-ring",
-                      selected?.id === item.id
-                        ? "border-primary-border bg-card ring-1 ring-primary-border"
-                        : "border-border hover:border-border-strong hover:bg-surface-hover",
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium leading-tight text-foreground">{item.competitionName}</p>
-                      <StatusPill status={item.status} className="shrink-0" />
-                    </div>
-                    <p className="mt-1 text-xs text-subtle-muted">
-                      {zoneUiName(item.zona)} · {item.submittedBy}
-                    </p>
-                    <p className="mt-0.5 text-[11px] tabular-nums text-subtle-muted">
-                      {item.submittedAt.slice(0, 10)}
-                    </p>
-                  </button>
-                ))}
+                {/* Filas, no tarjetas dentro de la tarjeta: la seleccionada se
+                    marca con el fondo, como el elemento activo de la barra
+                    lateral. */}
+                <ul className="divide-y divide-border-muted">
+                  {pagedItems.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(item.id)}
+                        aria-pressed={selected?.id === item.id}
+                        className={cn(
+                          "w-full px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                          selected?.id === item.id ? "bg-surface-active" : "hover:bg-surface-hover",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium leading-tight text-foreground">{item.competitionName}</p>
+                          <StatusPill status={item.status} className="shrink-0" />
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {zoneUiName(item.zona)} · {item.submittedBy} · {formatDate(item.submittedAt)}
+                        </p>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-1 pt-2">
+                  <div className="flex items-center justify-between border-t border-border-muted px-4 py-2">
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.max(0, p - 1))}
                       disabled={page === 0}
                       aria-label="Página anterior"
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors focus-ring",
+                        "inline-flex h-9 items-center gap-1 rounded-lg border px-2.5 text-xs transition-colors focus-ring sm:h-8",
                         page === 0
                           ? "cursor-not-allowed border-border text-muted-foreground opacity-40"
                           : "border-border hover:border-border-strong hover:bg-surface-hover",
                       )}
                     >
                       <ChevronLeft className="h-3 w-3" aria-hidden="true" />
-                      Prev
+                      Anterior
                     </button>
-                    <span className="text-[11px] text-subtle-muted">
+                    <span className="text-xs tabular-nums text-muted-foreground">
                       {page + 1} / {totalPages}
                     </span>
                     <button
@@ -208,13 +209,13 @@ export function ApprovalsBoard({
                       disabled={page >= totalPages - 1}
                       aria-label="Página siguiente"
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors focus-ring",
+                        "inline-flex h-9 items-center gap-1 rounded-lg border px-2.5 text-xs transition-colors focus-ring sm:h-8",
                         page >= totalPages - 1
                           ? "cursor-not-allowed border-border text-muted-foreground opacity-40"
                           : "border-border hover:border-border-strong hover:bg-surface-hover",
                       )}
                     >
-                      Sig
+                      Siguiente
                       <ChevronRight className="h-3 w-3" aria-hidden="true" />
                     </button>
                   </div>
@@ -225,10 +226,7 @@ export function ApprovalsBoard({
         </Card>
 
         {/* Right: detail + diff + action bar */}
-        <Card
-          className="glass-panel-soft flex flex-col lg:col-span-3"
-          style={{ minHeight: "460px" }}
-        >
+        <Card className="flex flex-col lg:col-span-3 lg:min-h-[460px]">
           <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted pb-3">
             <CardTitle className="text-sm">Detalle de la propuesta</CardTitle>
             {selected && (
@@ -251,31 +249,28 @@ export function ApprovalsBoard({
                 {/* Meta row */}
                 <div className="flex flex-wrap items-center gap-2">
                   <EventStatusBadge status={eventStatus} />
-                  <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] text-subtle-muted">
-                    {selected.submittedAt.slice(0, 10)}
+                  <span className="text-xs text-muted-foreground">
+                    Enviada el {formatDate(selected.submittedAt)} por {selected.submittedBy}
                   </span>
-                  <span className="text-xs text-muted-foreground">por {selected.submittedBy}</span>
                 </div>
 
                 {/* Diff table: slot → juez */}
-                <div className="overflow-hidden rounded-xl border border-border bg-background/80">
-                  <div className="border-b border-border-muted bg-muted/50 px-4 py-2">
-                    <span className="text-[11px] font-semibold text-subtle-muted">
-                      Hueco → Juez
-                    </span>
-                  </div>
-                  <div className="max-h-[260px] divide-y divide-border-muted/60 overflow-y-auto text-xs">
+                {/* Lista plana bajo un rótulo: antes, una caja con borde y
+                    cabecera gris dentro de la tarjeta. */}
+                <section aria-label="Hueco y juez asignado">
+                  <h3 className="text-xs font-medium text-muted-foreground">Hueco → juez</h3>
+                  <div className="mt-1.5 max-h-[260px] divide-y divide-border-muted overflow-y-auto border-y border-border-muted text-xs">
                     {assignments.length === 0 ? (
-                      <p className="px-4 py-3 text-muted-foreground">
+                      <p className="py-3 text-muted-foreground">
                         Sin asignaciones registradas.
                       </p>
                     ) : (
                       assignments.map(([slot, refId]) => (
                         <div
                           key={slot}
-                          className="flex items-center gap-2 px-4 py-2.5 transition-colors hover:bg-muted/30"
+                          className="flex items-center gap-2 py-2.5"
                         >
-                          <span className="w-48 shrink-0 truncate text-subtle-muted">
+                          <span className="w-40 shrink-0 truncate text-muted-foreground sm:w-48">
                             {decodeSlotKey(slot, allSlotKeys)}
                           </span>
                           <ArrowRight
@@ -289,7 +284,7 @@ export function ApprovalsBoard({
                       ))
                     )}
                   </div>
-                </div>
+                </section>
 
                 {/* Resolution banner (when not pending) */}
                 {selected.status !== "pendiente" && (
@@ -306,9 +301,9 @@ export function ApprovalsBoard({
                       <p className="mt-1 text-xs opacity-80">{selected.comment}</p>
                     )}
                     {selected.reviewedBy && (
-                      <p className="mt-1 text-[11px] opacity-80">
+                      <p className="mt-1 text-xs opacity-80">
                         por {selected.reviewedBy}
-                        {selected.reviewedAt ? ` · ${selected.reviewedAt.slice(0, 10)}` : ""}
+                        {selected.reviewedAt ? ` · ${formatDate(selected.reviewedAt)}` : ""}
                       </p>
                     )}
                   </div>
@@ -317,7 +312,7 @@ export function ApprovalsBoard({
 
               {/* Sticky action bar */}
               {canReview && selected.status === "pendiente" && (
-                <div className="rounded-b-xl border-t border-border bg-card/95 p-4 backdrop-blur-sm">
+                <div className="rounded-b-xl border-t border-border bg-card p-4">
                   <textarea
                     value={comment}
                     onChange={(e) => {

@@ -4,19 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 import { safeExternalUrl } from "@/lib/safe-url";
-import type { RefereeReport, ReportSubjectType, ReportType } from "@/lib/types";
+import type { RefereeReport, ReportType } from "@/lib/types";
 import { ChevronDown, ChevronRight, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { formatBusinessDate } from "@/lib/business-date";
 
 const REPORT_TYPES: ReportType[] = ["General", "Incidencia", "Evaluación"];
 
-export function typeBadge(t: ReportType, subjectType: ReportSubjectType) {
-  if (t === "General" || t === "Competición" || t === "Juez") {
-    return <Badge variant={subjectType === "competicion" ? "regional" : "success"}>General</Badge>;
-  }
+// El tipo de informe es una categoría: solo la incidencia pide atención y
+// lleva color de estado. «General» y «Evaluación» iban en verde/azul y ámbar,
+// como si fueran un aprobado o un aviso.
+export function typeBadge(t: ReportType) {
   if (t === "Incidencia") return <Badge variant="danger">{t}</Badge>;
-  if (t === "Evaluación") return <Badge variant="warning">{t}</Badge>;
-  return <Badge variant="success">General</Badge>;
+  if (t === "Evaluación") return <Badge variant="secondary" className="bg-surface-active text-foreground">{t}</Badge>;
+  return <Badge variant="outline" className="text-muted-foreground">General</Badge>;
 }
 
 export function fmtDate(iso?: string) {
@@ -67,15 +67,15 @@ export function ReportCard({
         aria-expanded={isOpen}
         aria-controls={`report-body-${report.id}`}
       >
-        <span className="mt-0.5 shrink-0 text-primary" aria-hidden="true">
+        <span className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true">
           {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
             <span className="text-[13px] font-semibold text-foreground">{report.titulo}</span>
-            {typeBadge(report.tipo, report.subjectType)}
+            {typeBadge(report.tipo)}
             {safeAdjunto && (
-              <span className="text-primary" aria-label="Tiene documento adjunto" title="Documento adjunto disponible">
+              <span className="text-muted-foreground" aria-label="Tiene documento adjunto" title="Documento adjunto disponible">
                 <ExternalLink className="h-3 w-3" />
               </span>
             )}

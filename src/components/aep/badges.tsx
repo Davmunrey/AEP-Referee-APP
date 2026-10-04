@@ -1,6 +1,38 @@
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { abbreviateRefereeLevel } from "@/lib/referee-level-label";
 import type { EventStatus, EventType, RefereeLevel, RefereeStatus } from "@/lib/types";
+
+/**
+ * Nivel y tipo de campeonato son categorías, no estados: antes «Nacional» y
+ * «AEP-1» salían en rojo (el acento de la marca y el color de peligro), «IPF
+ * Cat. 2» y «AEP-2» en ámbar (aviso) y «Regional» y «AEP-3» en azul (info), y
+ * una ficha normal parecía tener tres alertas. Ahora son una familia neutra
+ * en la que el rango se lee por intensidad: contorno → relleno suave →
+ * relleno oscuro → relleno pleno. Los colores de estado quedan libres para
+ * el estado (Activo, Sancionado, Incompleto…), que es lo que tiene que saltar
+ * a la vista. Con tokens de primer plano y fondo, el escalón se invierte solo
+ * en modo oscuro y conserva el contraste.
+ */
+const RANK_CLASS = [
+  "bg-transparent text-muted-foreground ring-1 ring-inset ring-border-strong",
+  "bg-surface-active text-foreground",
+  "bg-foreground-secondary text-background",
+  "bg-foreground text-background",
+] as const;
+
+const LEVEL_RANK: Record<RefereeLevel, number> = {
+  Regional: 0,
+  Nacional: 1,
+  "IPF Cat. 2": 2,
+  "IPF Cat. 1": 3,
+};
+
+const EVENT_TYPE_RANK: Record<EventType, number> = {
+  "AEP-3": 0,
+  "AEP-2": 1,
+  "AEP-1": 3,
+};
 
 export function LevelBadge({
   level,
@@ -10,23 +42,18 @@ export function LevelBadge({
   /** Abreviatura (R, N, I, II) para la tarima; el directorio usa el nombre completo. */
   compact?: boolean;
 }) {
-  const variant =
-    level === "Regional"
-      ? "regional"
-      : level === "Nacional"
-        ? "nacional"
-        : level === "IPF Cat. 1"
-          ? "ipf1"
-          : "ipf2";
-
   const label = compact ? abbreviateRefereeLevel(level) : level;
 
   return (
     <Badge
-      variant={variant}
+      variant="secondary"
       size={compact ? "sm" : "default"}
       title={compact ? level : undefined}
-      className={compact ?"min-w-[1.25rem] justify-center px-1 tabular-nums": undefined}
+      className={cn(
+        RANK_CLASS[LEVEL_RANK[level] ?? 0],
+        // 11 px es el suelo de la casa; el tamaño «sm» compartido baja de ahí.
+        compact && "min-w-[1.25rem] justify-center px-1 text-[11px] tabular-nums",
+      )}
     >
       {label}
     </Badge>
@@ -58,28 +85,36 @@ export function EventStatusBadge({ status }: { status: EventStatus }) {
 }
 
 export function EventTypeBadge({ tipo }: { tipo: EventType }) {
-  const variant = tipo === "AEP-1" ? "danger" : tipo === "AEP-2" ? "warning" : "regional";
-  return <Badge variant={variant}>{tipo}</Badge>;
+  // Tres categorías, de AEP-3 a AEP-1 (la que lleva Jurado): la de más rango
+  // toma el relleno pleno, como IPF Cat. 1 en los niveles.
+  return (
+    <Badge variant="secondary" className={cn("tabular-nums", RANK_CLASS[EVENT_TYPE_RANK[tipo] ?? 0])}>
+      {tipo}
+    </Badge>
+  );
 }
 
 export function ActivityTypeBadge({ tipo }: { tipo: string }) {
-  const map: Record<string, "success" | "danger" | "warning" | "ipf1" | "muted"> = {
+  // Aprobación, rechazo y propuesta sí son estados de una tarima; ascenso y
+  // cambio son movimientos sin más, en neutro (antes el ascenso iba en el
+  // rojo del acento, como si fuera la acción principal de la pantalla).
+  const map: Record<string, "success" | "danger" | "warning" | "muted"> = {
     aprobacion: "success",
     rechazo: "danger",
     propuesta: "warning",
-    ascenso: "ipf1",
+    ascenso: "muted",
     cambio: "muted",
   };
   const labels: Record<string, string> = {
-    aprobacion: "APROBADO",
-    rechazo: "RECHAZO",
-    propuesta: "PROPUESTA",
-    ascenso: "ASCENSO",
-    cambio: "CAMBIO",
+    aprobacion: "Aprobado",
+    rechazo: "Rechazo",
+    propuesta: "Propuesta",
+    ascenso: "Ascenso",
+    cambio: "Cambio",
   };
   return (
-    <Badge variant={map[tipo] ?? "muted"} size="sm" className="tracking-wider">
-      {labels[tipo] ?? tipo.toUpperCase()}
+    <Badge variant={map[tipo] ?? "muted"} size="sm" className="text-[11px]">
+      {labels[tipo] ?? tipo}
     </Badge>
   );
 }

@@ -1,5 +1,5 @@
 import { RefereesDirectory } from "@/components/referees/referees-directory";
-import { PageHeader, PageShell } from "@/components/layout/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
 import { canImportJudgesRegistry } from "@/lib/permissions";
 import { canManageJudges, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { stripRefereeListPII } from "@/lib/referee-pii";
@@ -22,11 +22,9 @@ export default async function RefereesPage() {
 
   return (
     <PageShell>
-      <PageHeader
+      <RefereesDirectory
         title="Directorio de jueces"
         description={`${contar(referees.length, "juez", "jueces")} · ${zones.length} zonas federativas`}
-      />
-      <RefereesDirectory
         initialReferees={referees}
         zones={zones}
         levels={meta.levels}

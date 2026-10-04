@@ -30,14 +30,26 @@ export default async function ReportsPage() {
 
   return (
     <PageShell>
-      <PageHeader
-        title="Informes de zona"
-        description="Informes de jueces y competiciones. Delegado de zona ve su zona; nacional y superadmin ven todo."
-      />
+      {/* El alcance va en su propia línea, a 75 caracteres como mucho: junto a
+          la descripción la línea pasaba de 90 y costaba de leer. */}
+      <div>
+        <PageHeader title="Informes de zona" description="Informes de jueces y competiciones." />
+        <p className="mt-1 max-w-[75ch] text-pretty text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
+          Delegado de zona ve su zona; nacional y superadmin ven todo.
+        </p>
+      </div>
       {/* La misma pieza de cifras que Aprobaciones, Ascensos y Exámenes. */}
       <MetricStrip columns={5}>
-        {stats.map((s) => (
-          <MetricTile key={s.label} label={s.label} value={s.value} tone={s.tone} />
+        {/* Cinco cifras en dos columnas (móvil) dejan un hueco gris al final:
+            la quinta ocupa la fila entera hasta que caben todas en una. */}
+        {stats.map((s, i) => (
+          <MetricTile
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            tone={s.tone}
+            className={i === stats.length - 1 ? "col-span-2 sm:col-span-1" : undefined}
+          />
         ))}
       </MetricStrip>
       <ReportsManager

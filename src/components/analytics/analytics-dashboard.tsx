@@ -1,7 +1,7 @@
 "use client";
 
 import { zoneUiName } from "@/lib/aep-zones";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MetricStrip, MetricTile, type MetricTone } from "@/components/ui/metric-tile";
 import {
   DataTable,
   DataTableBody,
@@ -25,59 +26,28 @@ const ExportPreviewDialog = dynamic(
   { ssr: false },
 );
 import { api } from "@/lib/api/client";
-import { tokens } from "@/lib/design-tokens";
-import { cn } from "@/lib/utils";
-import {
-  AlertTriangle,
-  ArrowLeftRight,
-  CalendarRange,
-  Download,
-  MapPin,
-  Trophy,
-  Users,
-} from "lucide-react";
+import { coverageBarClass, coverageTextClass } from "@/lib/status-tone";
+import { cn, formatDate } from "@/lib/utils";
+import { ArrowLeftRight, Download } from "lucide-react";
 
 function coveragePct(filled: number, required: number) {
   if (required <= 0) return null;
   return Math.min(100, Math.round((filled / required) * 100));
 }
 
-function coverageTone(pct: number | null, noTemplate: boolean) {
-  if (noTemplate) {
-    return {
-      bar: "bg-muted",
-      value: tokens.text.muted,
-      pill: "bg-surface text-muted-foreground",
-    };
-  }
-  if (pct == null) {
-    return {
-      bar: "bg-muted",
-      value: tokens.text.muted,
-      pill: "bg-surface text-muted-foreground",
-    };
-  }
-  if (pct >= 80) {
-    return {
-      bar: "bg-success",
-      value: tokens.text.success,
-      pill: "bg-success-muted text-success",
-    };
-  }
-  if (pct >= 40) {
-    return {
-      bar: "bg-warning",
-      value: tokens.text.warning,
-      pill: "bg-warning-muted text-warning",
-    };
-  }
-  return {
-    bar: "bg-destructive",
-    value: tokens.text.destructive,
-    pill: "bg-destructive-muted text-destructive",
-  };
+/** Tono de la cifra de cobertura en la franja: el mismo corte que las barras. */
+function coverageMetricTone(pct: number | null): MetricTone {
+  if (pct == null) return "neutral";
+  if (pct >= 100) return "success";
+  if (pct <= 0) return "neutral";
+  return pct >= 50 ? "warning" : "danger";
 }
 
+/**
+ * Barra de cobertura con el color común de `status-tone` (verde completa,
+ * ámbar a medias, rojo crítica). Antes iba con su propio corte (80 / 40) y
+ * una píldora de color con el porcentaje que repetía lo que dice la barra.
+ */
 function CoverageMeter({
   filled,
   required,
@@ -88,53 +58,44 @@ function CoverageMeter({
   className?: string;
 }) {
   const noTemplate = required <= 0;
-  const pct = coveragePct(filled, required);
-  const tone = coverageTone(pct, noTemplate);
-  const width = noTemplate ? 0 : (pct ?? 0);
+  const pct = coveragePct(filled, required) ?? 0;
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className={cn("font-medium tabular-nums", tone.value)}>
-          {noTemplate ? "Sin plantilla" : `${filled}/${required}`}
-        </span>
-        {!noTemplate && pct != null && (
-          <span className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums", tone.pill)}>
-            {pct}%
-          </span>
-        )}
+      <div className="flex items-baseline justify-between gap-2 text-xs tabular-nums">
+        <span className="text-foreground-secondary">{noTemplate ? "Sin plantilla" : `${filled}/${required}`}</span>
+        {!noTemplate && <span className={cn("font-medium", coverageTextClass(pct))}>{pct}%</span>}
       </div>
       <div
-        className="h-2 overflow-hidden rounded-full bg-surface-active"
+        className="h-1.5 overflow-hidden rounded-full bg-surface-active"
         role="progressbar"
         aria-label={noTemplate ? "Sin plantilla" : `Cobertura ${filled} de ${required}`}
-        aria-valuenow={width}
+        aria-valuenow={noTemplate ? 0 : pct}
         aria-valuemin={0}
         aria-valuemax={100}
       >
-        <div className={cn("h-full rounded-full transition-[width] duration-500", tone.bar)} style={{ width: `${width}%` }} />
+        {!noTemplate && (
+          <div className={cn("h-full rounded-full", coverageBarClass(pct))} style={{ width: `${pct}%` }} />
+        )}
       </div>
     </div>
   );
 }
 
-function SummaryMetric({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: ReactNode;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border-muted bg-surface/60 px-3 py-2.5">
-      <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
-      {hint ? <p className="mt-0.5 text-[11px] text-subtle-muted">{hint}</p> : null}
-    </div>
-  );
-}
+const GLOSARIO = [
+  {
+    title: "Plazas cubiertas",
+    body: "Huecos de plantilla con juez asignado. Misma lógica que la lista de campeonatos.",
+  },
+  {
+    title: "Jueces distintos",
+    body: "Personas únicas con al menos una plaza válida en el año.",
+  },
+  {
+    title: "Otra zona (Ext.)",
+    body: "Puestos cubiertos por jueces cuya zona de registro no coincide con la del campeonato.",
+  },
+];
 
 export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
   const router = useRouter();
@@ -149,7 +110,6 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
 
   const totalPlazas = data.totals.filledSlots + data.totals.openSlots;
   const yearCoveragePct = coveragePct(data.totals.filledSlots, totalPlazas);
-  const yearTone = coverageTone(yearCoveragePct, totalPlazas <= 0);
 
   const zonesWithActivity = useMemo(
     () =>
@@ -195,7 +155,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                   onClick={() => router.push(`/analytics?year=${y}`)}
                   aria-pressed={y === data.selectedYear}
                   className={cn(
-                    "rounded-md border px-3 py-1.5 text-[11px] font-medium tabular-nums transition-colors focus-ring",
+                    "h-9 rounded-md border px-3 text-xs font-medium tabular-nums transition-colors focus-ring sm:h-8",
                     y === data.selectedYear
                       ? "border-primary/40 bg-primary/10 text-primary"
                       : "border-border text-subtle-muted hover:bg-surface-hover",
@@ -213,57 +173,42 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         </div>
       </PageHeader>
 
-      {/* Resumen anual */}
-      <section className="glass-panel-soft overflow-hidden rounded-xl">
-        <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,200px)_1fr] lg:items-center lg:gap-6 lg:p-5">
-          <div className="flex items-center gap-4">
-            <div
-              className={cn(
-                "relative flex h-[72px] w-[84px] shrink-0 items-center justify-center rounded-xl bg-surface",
-              )}
-              role="img"
-              aria-label={`Cobertura anual ${yearCoveragePct ?? 0} por ciento`}
-            >
-              <span className={cn("text-3xl font-semibold tabular-nums tracking-tight", yearTone.value)}>
-                {yearCoveragePct != null ? `${yearCoveragePct}%` : "—"}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Cobertura {data.selectedYear}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {data.totals.filledSlots} cubiertas · {data.totals.openSlots} abiertas
-              </p>
-              <CoverageMeter filled={data.totals.filledSlots} required={totalPlazas} className="mt-3 max-w-xs" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <SummaryMetric label="Campeonatos" value={data.totals.competitions} />
-            <SummaryMetric label="Jueces distintos" value={data.totals.uniqueAssignedReferees} hint="Con al menos una plaza" />
-            <SummaryMetric
-              label="Rechazo propuestas"
-              value={data.rejectionRate === null ? "—" : `${data.rejectionRate}%`}
-              hint="Año en curso"
-            />
-            <SummaryMetric
-              label="Pendientes"
-              value={data.totals.pendingApprovals}
-              hint="Aprobaciones"
-            />
-          </div>
-        </div>
-      </section>
+      {/* Resumen anual: la franja de cifras común. Antes, un «33 %» enorme en
+          un recuadro gris junto a cuatro tarjetas pequeñas. */}
+      <MetricStrip columns={5} label={`Resumen ${data.selectedYear}`}>
+        <MetricTile
+          label={`Cobertura ${data.selectedYear}`}
+          value={yearCoveragePct != null ? `${yearCoveragePct}%` : "—"}
+          tone={coverageMetricTone(yearCoveragePct)}
+          hint={`${data.totals.filledSlots} de ${totalPlazas} plazas`}
+          // Cinco cifras en dos columnas dejarían un hueco: en móvil la
+          // cobertura, que es la principal, ocupa la fila entera.
+          className="col-span-2 sm:col-span-1"
+        />
+        <MetricTile label="Campeonatos" value={data.totals.competitions} />
+        <MetricTile label="Jueces distintos" value={data.totals.uniqueAssignedReferees} hint="Con al menos una plaza" />
+        <MetricTile
+          label="Rechazo de propuestas"
+          value={data.rejectionRate === null ? "—" : `${data.rejectionRate}%`}
+          hint="Año en curso"
+        />
+        <MetricTile
+          label="Por aprobar"
+          hint="Propuestas de tarima"
+          value={data.totals.pendingApprovals}
+          tone={data.totals.pendingApprovals > 0 ? "warning" : "neutral"}
+          href="/approvals"
+        />
+      </MetricStrip>
 
       {data.crossZoneSummary && data.crossZoneSummary.totalCrossZoneSlots > 0 && (
-        <section className="flex items-start gap-3 rounded-xl border border-warning-border bg-warning-subtle px-4 py-3.5">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-warning-border bg-warning-muted">
-            <ArrowLeftRight className="h-4 w-4 text-warning" aria-hidden="true" />
-          </span>
+        <section className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3.5">
+          <ArrowLeftRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <div className="min-w-0 text-sm text-foreground-secondary">
             <p className="font-medium text-foreground">
               {data.crossZoneSummary.totalCrossZoneSlots} plazas con juez de otra zona
             </p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
               {data.crossZoneSummary.pctOfFilledSlots}% de las {data.totals.filledSlots} plazas cubiertas.
               Cuenta puestos, no personas: un juez en varios roles suma varias plazas externas.
             </p>
@@ -273,18 +218,11 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="overflow-hidden">
-          <CardHeader className="border-b border-border-muted bg-surface/30 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-info-muted">
-                <CalendarRange className="h-4 w-4 text-info" aria-hidden="true" />
-              </span>
-              <div>
-                <CardTitle className="text-sm">Histórico por año</CardTitle>
-                <CardDescription className="mt-0.5 text-xs">
-                  Plazas de plantilla y asignaciones válidas en tarima.
-                </CardDescription>
-              </div>
-            </div>
+          <CardHeader className="border-b border-border-muted pb-4">
+            <CardTitle className="text-sm">Histórico por año</CardTitle>
+            <CardDescription className="mt-0.5 text-xs">
+              Plazas de plantilla y asignaciones válidas en tarima.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <DataTable className="data-table-zebra">
@@ -300,7 +238,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               <DataTableBody>
                 {data.yearlyHistory.map((row) => (
                   <DataTableRow key={row.year}>
-                    <DataTableCell className="text-xs font-semibold text-primary">{row.year}</DataTableCell>
+                    <DataTableCell className="font-medium text-foreground">{row.year}</DataTableCell>
                     <DataTableCell className="text-right tabular-nums">{row.competitions}</DataTableCell>
                     <DataTableCell className="text-right tabular-nums text-muted-foreground">
                       {row.requiredSlots}
@@ -317,18 +255,11 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
         </Card>
 
         <Card className="overflow-hidden">
-          <CardHeader className="border-b border-border-muted bg-surface/30 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-muted">
-                <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
-              </span>
-              <div>
-                <CardTitle className="text-sm">Actividad por zona · {data.selectedYear}</CardTitle>
-                <CardDescription className="mt-0.5 text-xs">
-                  Zonas con campeonatos. Jueces = asignados / activos en registro.
-                </CardDescription>
-              </div>
-            </div>
+          <CardHeader className="border-b border-border-muted pb-4">
+            <CardTitle className="text-sm">Actividad por zona · {data.selectedYear}</CardTitle>
+            <CardDescription className="mt-0.5 text-xs">
+              Zonas con campeonatos. Jueces = asignados / activos en registro.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {zonesWithActivity.length === 0 ? (
@@ -394,111 +325,68 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="overflow-hidden">
-          <CardHeader className="border-b border-border-muted bg-surface/30 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning-muted">
-                <Trophy className="h-4 w-4 text-warning" aria-hidden="true" />
-              </span>
-              <CardTitle className="text-sm">Jueces más asignados · {data.selectedYear}</CardTitle>
-            </div>
+          <CardHeader className="border-b border-border-muted pb-4">
+            <CardTitle className="text-sm">Jueces más asignados · {data.selectedYear}</CardTitle>
           </CardHeader>
-          <CardContent className="divide-y divide-border-muted p-0">
-            {data.topReferees.length === 0 && (
+          <CardContent className="p-0">
+            {data.topReferees.length === 0 ? (
               <p className="px-6 py-10 text-center text-sm text-muted-foreground">Sin asignaciones aún.</p>
+            ) : (
+              <ol className="divide-y divide-border-muted">
+                {data.topReferees.map((r, i) => {
+                  const barW = Math.round((r.assignedCompetitions / maxCompetitions) * 100);
+                  // Un recuento, no un estado: barra neutra. Antes, salmón a
+                  // todo el ancho y puestos 1-3 en ámbar, gris y azul.
+                  return (
+                    <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                      <span className="w-5 shrink-0 text-right text-xs tabular-nums text-muted-foreground">{i + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {r.nombre}
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">{r.nivel}</span>
+                        </p>
+                        <div className="mt-1.5 h-1.5 max-w-xs overflow-hidden rounded-full bg-surface-active">
+                          <div
+                            className="h-full rounded-full bg-foreground/60"
+                            style={{ width: `${barW}%` }}
+                            aria-hidden="true"
+                          />
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right text-xs tabular-nums">
+                        <p className="font-medium text-foreground">{r.assignedCompetitions} camp.</p>
+                        <p className="mt-0.5 text-muted-foreground">{r.assignedSlots} plazas</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
             )}
-            {data.topReferees.map((r, i) => {
-              const barW = Math.round((r.assignedCompetitions / maxCompetitions) * 100);
-              const rankTone =
-                i === 0
-                  ? "border-warning-border bg-warning-muted text-warning"
-                  : i === 1
-                    ? "border-border-strong bg-surface text-foreground-secondary"
-                    : i === 2
-                      ? "border-info-border bg-info-muted text-info"
-                      : "border-border-muted bg-surface text-muted-foreground";
-              return (
-                <div key={r.id} className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-surface-hover">
-                  <span
-                    className={cn(
-"flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold tabular-nums",
-                      rankTone,
-                    )}
-                  >
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{r.nombre}</p>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-active">
-                      <div
-                        className="h-full rounded-full bg-primary/70 transition-[width] duration-500"
-                        style={{ width: `${barW}%` }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">{r.nivel}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-xs font-semibold tabular-nums text-foreground">
-                      {r.assignedCompetitions} camp.
-                    </p>
-                    <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                      {r.assignedSlots} plazas
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
           </CardContent>
         </Card>
 
         <Card className="overflow-hidden">
-          <CardHeader className="border-b border-border-muted bg-surface/30 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-success-muted">
-                <Users className="h-4 w-4 text-success" aria-hidden="true" />
-              </span>
-              <CardTitle className="text-sm">Glosario</CardTitle>
-            </div>
+          <CardHeader className="border-b border-border-muted pb-4">
+            <CardTitle className="text-sm">Glosario</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-2 p-4">
-            {[
-              {
-                title: "Plazas cubiertas",
-                body: "Huecos de plantilla con juez asignado. Misma lógica que la lista de campeonatos.",
-              },
-              {
-                title: "Jueces distintos",
-                body: "Personas únicas con al menos una plaza válida en el año.",
-              },
-              {
-                title: "Otra zona (Ext.)",
-                body: "Puestos cubiertos por jueces cuya zona de registro no coincide con la del campeonato.",
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="rounded-xl border border-border-muted bg-surface/50 px-3 py-2.5"
-              >
-                <p className="text-xs font-semibold text-foreground">{item.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
-              </div>
-            ))}
+          <CardContent className="p-4">
+            <dl className="space-y-3 text-xs leading-relaxed">
+              {GLOSARIO.map((item) => (
+                <div key={item.title}>
+                  <dt className="font-semibold text-foreground">{item.title}</dt>
+                  <dd className="mt-0.5 text-muted-foreground">{item.body}</dd>
+                </div>
+              ))}
+            </dl>
           </CardContent>
         </Card>
       </div>
 
       <Card className="overflow-hidden">
-        <CardHeader className="flex flex-row items-center gap-3 border-b border-border-muted bg-surface/30 pb-4">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive-muted">
-            <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-sm">Campeonatos críticos · {data.selectedYear}</CardTitle>
-          </div>
+        <CardHeader className="flex flex-row items-baseline justify-between gap-3 space-y-0 border-b border-border-muted pb-4">
+          <CardTitle className="text-sm">Campeonatos críticos · {data.selectedYear}</CardTitle>
           {data.criticalEvents.length > 0 && (
-            <span className="rounded-md bg-destructive-muted px-1.5 py-0.5 text-xs font-semibold text-destructive">
-              {data.criticalEvents.length}
-            </span>
+            <span className="text-xs tabular-nums text-muted-foreground">{data.criticalEvents.length}</span>
           )}
         </CardHeader>
         <CardContent className="p-0">
@@ -528,7 +416,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                         {e.nombre}
                       </Link>
                     </DataTableCell>
-                    <DataTableCell className="text-xs text-muted-foreground">{e.fecha}</DataTableCell>
+                    <DataTableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatDate(e.fecha)}</DataTableCell>
                     <DataTableCell className="text-right">
                       <EventStatusBadge status={e.estado} />
                     </DataTableCell>

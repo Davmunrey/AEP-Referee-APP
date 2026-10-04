@@ -9,7 +9,10 @@ import { RefereePromotionButton } from "@/components/referees/referee-promotion-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
-import { displayUltimo } from "@/lib/utils";
+import { displayUltimo, formatDateRange } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { MetricStrip, MetricTile } from "@/components/ui/metric-tile";
+import { contar } from "@/lib/plural";
 import { canManageJudges, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { stripRefereePII } from "@/lib/referee-pii";
 import { dataService } from "@/server/services";
@@ -89,41 +92,35 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       <Card className="overflow-hidden p-0">
         <div className="px-5 py-4">
           <div className="flex flex-wrap items-start gap-4">
-            {/* Avatar */}
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border-2 border-primary/20 bg-primary/10 text-lg font-semibold text-primary">
+            {/* Avatar neutro, como en el directorio: el rojo de la marca se
+                reserva para la acción principal y el estado activo, no para
+                decorar la inicial. */}
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border-strong bg-muted text-lg font-semibold text-foreground-secondary">
               {referee.iniciales}
             </span>
 
             {/* Identity */}
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-subtle-muted">
-                {zoneName}
-              </p>
               {/* La tarjeta ES la cabecera: antes un PageHeader encima repetía
-                  nombre y zona. Este es el h1 de la página. */}
-              <h1 className="mt-0.5 text-xl font-semibold tracking-tight text-foreground">
+                  nombre y zona. Este es el h1 de la página. La zona va en la
+                  línea de datos, no como rótulo sobre el nombre. */}
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 {referee.nombre}
               </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="mt-0.5 text-[13px] text-muted-foreground">
+                {zoneName}
+                {referee.licencia ? <span className="tabular-nums"> · Lic. {referee.licencia}</span> : null}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <LevelBadge level={referee.nivel} />
                 <StatusBadge status={referee.estado} />
                 {referee.disp ? (
-                  <span className="rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-medium text-success">
-                    Disponible
-                  </span>
+                  <Badge variant="success">Disponible</Badge>
                 ) : (
                   // Importa verlo: un juez «no disponible» no aparece al montar tarimas.
-                  <span
-                    className="rounded-full bg-warning-muted px-2 py-0.5 text-[11px] font-medium text-warning"
-                    title="No aparece en el panel de jueces al montar tarimas"
-                  >
+                  <Badge variant="warning" title="No aparece en el panel de jueces al montar tarimas">
                     No disponible
-                  </span>
-                )}
-                {referee.licencia && (
-                  <span className="text-[11px] text-subtle-muted">
-                    Lic. {referee.licencia}
-                  </span>
+                  </Badge>
                 )}
               </div>
             </div>
@@ -135,9 +132,9 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                   refereeId={referee.id}
                   currentLevel={referee.nivel}
                 />
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" className="max-sm:h-9" asChild>
                   <a href="#edit-form">
-                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                    <Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                     Editar
                   </a>
                 </Button>
@@ -152,6 +149,15 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
           </div>
         </div>
       </Card>
+
+      {/* Cifras de trayectoria en la franja común (MetricTile), justo bajo la
+          cabecera: antes eran seis tarjetitas sueltas en una rejilla de 2×3 al
+          lado de los datos, al final de la ficha. */}
+      <MetricStrip columns={3} label="Trayectoria">
+        {trayectoria.map((t) => (
+          <MetricTile key={t.label} label={t.label} value={t.value} />
+        ))}
+      </MetricStrip>
 
       {portalStatus && (
         <RefereePortalAccess refereeId={rawReferee.id} status={portalStatus} hasEmail={Boolean(rawReferee.email)} />
@@ -189,7 +195,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                 <Link
                   key={item.competitionId}
                   href={`/competitions/${item.competitionId}`}
-                  className="grid gap-3 px-5 py-3 transition-colors hover:bg-surface-hover md:grid-cols-[minmax(0,1fr)_120px_120px]"
+                  className="grid gap-2 px-5 py-3 transition-colors hover:bg-surface-hover md:grid-cols-[minmax(0,1fr)_150px_80px] md:gap-3"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -201,25 +207,32 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                     <p className="mt-1 text-xs text-subtle-muted">
                       {item.sede}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
+                    {/* Un puesto por chip: primero el puesto (lo que se busca
+                        al leer), luego sesión y hueco en tono secundario. Las
+                        marcas del acta (* y ↑↓) van en palabras: fuera del
+                        acta nadie sabe leerlas. */}
+                    <ul className="mt-2 flex flex-wrap gap-1.5">
                       {item.positions.map((position) => (
-                        <span
+                        <li
                           key={position.slotKey}
-                          className="rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-inset ring-border"
+                          className="rounded-md bg-surface px-2 py-0.5 text-xs text-muted-foreground ring-1 ring-inset ring-border-muted"
                         >
-                          {position.session} · {position.roleLabel} · Hueco {position.slotIndex + 1}
-                          {position.flags?.compartido ? " · *" : ""}
-                          {position.flags?.intercambio ? " · ↑↓" : ""}
-                        </span>
+                          <span className="font-medium text-foreground-secondary">{position.roleLabel}</span>
+                          {" · "}
+                          {position.session} · hueco {position.slotIndex + 1}
+                          {position.flags?.compartido ? " · comparte sesión" : ""}
+                          {position.flags?.intercambio ? " · intercambio de pesaje" : ""}
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
-                  <div className="text-xs text-muted-foreground md:text-right">
-                    {item.fecha}
-                  </div>
-                  <div className="text-xs text-muted-foreground md:text-right">
-                    {item.slotCount} plaza{item.slotCount === 1 ? "" : "s"}
-                  </div>
+                  {/* En móvil fecha y plazas comparten línea; en escritorio,
+                      columnas alineadas a la derecha. */}
+                  <p className="text-xs tabular-nums text-muted-foreground md:contents">
+                    <span className="md:text-right">{formatDateRange(item.fecha, item.fechaFin || item.fecha)}</span>
+                    <span className="md:hidden"> · </span>
+                    <span className="md:text-right">{contar(item.slotCount, "plaza", "plazas")}</span>
+                  </p>
                 </Link>
               ))}
             </div>
@@ -239,101 +252,83 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
       )}
 
 
-      {/* Data + Trajectory two-column layout */}
-      <div className="grid gap-4 lg:grid-cols-5">
-        {/* Data fields — 3/5 */}
-        <Card className="glass-panel-soft lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">Datos del juez</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
+      <Card className="glass-panel-soft">
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">Datos del juez</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <p className="friendly-label mb-1">Zona</p>
+            <p className="text-sm text-foreground">{zoneName}</p>
+          </div>
+          <div>
+            <p className="friendly-label mb-1">Nivel</p>
+            <LevelBadge level={referee.nivel} />
+          </div>
+          <div>
+            <p className="friendly-label mb-1">Estado</p>
+            <StatusBadge status={referee.estado} />
+          </div>
+          <div>
+            <p className="friendly-label mb-1">Plazas importadas (histórico)</p>
+            <p className="text-sm text-foreground">{referee.eventos}</p>
+          </div>
+          <div>
+            <p className="friendly-label mb-1">Última competición</p>
+            <p className="text-sm text-foreground">{displayUltimo(referee.ultimo)}</p>
+          </div>
+          <div>
+            <p className="friendly-label mb-1">Disponibilidad</p>
+            <p className="text-sm text-foreground">
+              {referee.disp ? "Disponible" : "No disponible"}
+            </p>
+          </div>
+          {referee.localidad && (
             <div>
-              <p className="friendly-label mb-1">Zona</p>
-              <p className="text-sm text-foreground">{zoneName}</p>
+              <p className="friendly-label mb-1">Localidad</p>
+              <p className="text-sm text-foreground">{referee.localidad}</p>
             </div>
+          )}
+          {referee.telefono && (
             <div>
-              <p className="friendly-label mb-1">Nivel</p>
-              <LevelBadge level={referee.nivel} />
+              <p className="friendly-label mb-1">Teléfono</p>
+              <p className="text-sm text-foreground">{referee.telefono}</p>
             </div>
+          )}
+          {referee.email && (
             <div>
-              <p className="friendly-label mb-1">Estado</p>
-              <StatusBadge status={referee.estado} />
+              <p className="friendly-label mb-1">Email</p>
+              <a href={`mailto:${referee.email}`} className="text-sm text-primary hover:underline">
+                {referee.email}
+              </a>
             </div>
+          )}
+          {referee.genero && (
             <div>
-              <p className="friendly-label mb-1">Plazas importadas (histórico)</p>
-              <p className="text-sm text-foreground">{referee.eventos}</p>
+              <p className="friendly-label mb-1">Género</p>
+              <p className="text-sm text-foreground">{referee.genero}</p>
             </div>
+          )}
+          {referee.antiguedad && (
             <div>
-              <p className="friendly-label mb-1">Última competición</p>
-              <p className="text-sm text-foreground">{displayUltimo(referee.ultimo)}</p>
+              <p className="friendly-label mb-1">Antigüedad</p>
+              <p className="text-sm text-foreground">{referee.antiguedad}</p>
             </div>
+          )}
+          {referee.excelId != null && (
             <div>
-              <p className="friendly-label mb-1">Disponibilidad</p>
-              <p className="text-sm text-foreground">
-                {referee.disp ? "Disponible" : "No disponible"}
-              </p>
+              <p className="friendly-label mb-1">ID registro</p>
+              <p className="text-sm text-foreground">{referee.excelId}</p>
             </div>
-            {referee.localidad && (
-              <div>
-                <p className="friendly-label mb-1">Localidad</p>
-                <p className="text-sm text-foreground">{referee.localidad}</p>
-              </div>
-            )}
-            {referee.telefono && (
-              <div>
-                <p className="friendly-label mb-1">Teléfono</p>
-                <p className="text-sm text-foreground">{referee.telefono}</p>
-              </div>
-            )}
-            {referee.email && (
-              <div>
-                <p className="friendly-label mb-1">Email</p>
-                <a href={`mailto:${referee.email}`} className="text-sm text-primary hover:underline">
-                  {referee.email}
-                </a>
-              </div>
-            )}
-            {referee.genero && (
-              <div>
-                <p className="friendly-label mb-1">Género</p>
-                <p className="text-sm text-foreground">{referee.genero}</p>
-              </div>
-            )}
-            {referee.antiguedad && (
-              <div>
-                <p className="friendly-label mb-1">Antigüedad</p>
-                <p className="text-sm text-foreground">{referee.antiguedad}</p>
-              </div>
-            )}
-            {referee.excelId != null && (
-              <div>
-                <p className="friendly-label mb-1">ID registro</p>
-                <p className="text-sm text-foreground">{referee.excelId}</p>
-              </div>
-            )}
-            {referee.notas && (
-              <div className="sm:col-span-2">
-                <p className="friendly-label mb-1">Notas</p>
-                <p className="text-sm text-foreground-secondary">{referee.notas}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Trajectory stats — 2/5 */}
-        <div className="grid grid-cols-2 content-start gap-4 lg:col-span-2">
-          {trayectoria.map((t) => (
-            <Card key={t.label}>
-              <CardContent className="px-4 py-3.5">
-                <p className="friendly-label mb-1">{t.label}</p>
-                <p className="text-2xl font-semibold tracking-tight text-foreground">
-                  {t.value}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+          )}
+          {referee.notas && (
+            <div className="sm:col-span-2 lg:col-span-3">
+              <p className="friendly-label mb-1">Notas</p>
+              <p className="text-sm text-foreground-secondary">{referee.notas}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <ExamsManager
         exams={exams}

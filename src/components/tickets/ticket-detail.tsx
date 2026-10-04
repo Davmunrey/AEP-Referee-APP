@@ -61,7 +61,7 @@ function AttachmentGallery({
           >
             <AttachmentImage
               attachment={a}
-              className="aspect-square w-full object-cover transition-transform duration-150 group-hover:scale-[1.03]"
+              className="aspect-square w-full object-cover transition-opacity duration-150 group-hover:opacity-90"
             />
           </a>
         ) : (

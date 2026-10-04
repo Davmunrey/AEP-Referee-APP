@@ -124,7 +124,7 @@ function TierBlock({
 }) {
   return (
     <div className="rounded-lg border border-border-muted bg-surface/50 p-3">
-      <p className="mb-2 text-[11px] font-semibold text-primary">
+      <p className="mb-2 text-xs font-semibold text-foreground">
         {label}
       </p>
       {entries.length === 0 ? (

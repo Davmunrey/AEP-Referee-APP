@@ -11,7 +11,11 @@ import { mensajeDeAcceso, SIN_ACCESO_PARAM, SIN_ACCESO_VALUE } from "@/lib/auth/
 // Mismo foco que el resto de la app: el anillo usa el token --ring (no el
 // primario a pelo) y se separa 1px del borde, igual que <Input>.
 const inputClass =
-  "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 transition-[color,background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:border-primary-border hover:border-border-strong";
+  "w-full rounded-xl border border-input bg-background/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle-muted transition-[color,background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:border-primary-border hover:border-border-strong";
+
+// Etiqueta visible encima de cada campo: con solo el placeholder, el nombre
+// del campo desaparecía al empezar a escribir.
+const labelClass = "mb-1.5 block text-sm font-medium text-foreground";
 
 // Botones de la pantalla de acceso: no usan <Button> (esta ruta va sin el
 // bundle de la app), así que replican su gesto de pulsación.
@@ -140,11 +144,11 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-6">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background via-background to-primary/4" />
-      <div className="pointer-events-none absolute -top-48 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
-
-      <div className="relative z-10 w-full max-w-sm">
+    // Fondo liso del lienzo: la marca la ponen el logotipo y el botón rojo;
+    // el halo y el degradado de antes solo restaban calma a una pantalla que
+    // se ve a diario.
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
+      <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center">
           <Image
             src="/assets/aep-master-logo.png"
@@ -161,7 +165,7 @@ export default function SignInPage() {
             height={76}
             className="h-auto w-60 hidden dark:block"
           />
-          <p className="mt-4 text-center text-xs font-medium text-muted-foreground/70">
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Plataforma de gestión de jueces
           </p>
         </div>
@@ -185,7 +189,7 @@ export default function SignInPage() {
                     setError(null);
                     setInfo(null);
                   }}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-ring ${
+                  className={`min-h-9 rounded-md px-3 text-sm font-medium transition-colors focus-ring ${
                     modo === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -202,19 +206,21 @@ export default function SignInPage() {
                   necesitas contraseña: sirve igual la primera vez que las siguientes.
                 </p>
                 <form onSubmit={(e) => void requestJudgeLink(e)} className="mt-5 space-y-3">
-                  <label htmlFor="judge-email" className="sr-only">
-                    Tu e-mail
-                  </label>
-                  <input
-                    id="judge-email"
-                    type="email"
-                    placeholder="Tu e-mail"
-                    value={judgeEmail}
-                    onChange={(e) => setJudgeEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                    className={inputClass}
-                  />
+                  <div>
+                    <label htmlFor="judge-email" className={labelClass}>
+                      Tu e-mail
+                    </label>
+                    <input
+                      id="judge-email"
+                      type="email"
+                      placeholder="nombre@ejemplo.com"
+                      value={judgeEmail}
+                      onChange={(e) => setJudgeEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                      className={inputClass}
+                    />
+                  </div>
                   <button
                     type="submit"
                     disabled={judgeLoading}
@@ -247,13 +253,13 @@ export default function SignInPage() {
 
             <form onSubmit={(e) => void submit(e)} className="mt-5 space-y-3">
               <div>
-                <label htmlFor="email" className="sr-only">
+                <label htmlFor="email" className={labelClass}>
                   Email
                 </label>
                 <input
                   id="email"
                   type="email"
-                  placeholder="Email"
+                  placeholder="nombre@ejemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -262,13 +268,12 @@ export default function SignInPage() {
                 />
               </div>
               <div>
-                <label htmlFor="password" className="sr-only">
+                <label htmlFor="password" className={labelClass}>
                   Contraseña
                 </label>
                 <input
                   id="password"
                   type="password"
-                  placeholder="Contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -294,35 +299,38 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="rounded text-xs text-muted-foreground/70 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline focus-ring"
+                  className="inline-flex min-h-9 items-center rounded text-sm text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline focus-ring"
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
               ) : (
-                <form
-                  onSubmit={(e) => void handleForgotPassword(e)}
-                  className="mt-1 flex gap-2"
-                >
-                  <input
-                    type="email"
-                    placeholder="Tu email"
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                    className={inputClass}
-                  />
-                  <button
-                    type="submit"
-                    disabled={forgotLoading}
-                    className={`shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground ${submitClass}`}
-                  >
-                    {forgotLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                    ) : (
-                      "Enviar enlace"
-                    )}
-                  </button>
+                <form onSubmit={(e) => void handleForgotPassword(e)} className="mt-1">
+                  <label htmlFor="forgot-email" className={labelClass}>
+                    E-mail de tu cuenta
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="nombre@ejemplo.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                      className={inputClass}
+                    />
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className={`shrink-0 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground ${submitClass}`}
+                    >
+                      {forgotLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                      ) : (
+                        "Enviar enlace"
+                      )}
+                    </button>
+                  </div>
                 </form>
               )}
             </div>
