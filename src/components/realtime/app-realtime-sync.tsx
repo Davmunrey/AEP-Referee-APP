@@ -7,7 +7,11 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { dispatchAppDataSync, isAutoSyncPaused } from "@/lib/realtime/sync-events";
 
 const POLL_MS = 30_000;
-const DEBOUNCE_MS = 400;
+// Agrupa ráfagas: importar un cuadrante o recalcular dispara un aviso por fila
+// (el trigger de app_sync_state es por fila). Se espera a que paren, pero nunca
+// más de MAX_WAIT_MS desde el primero, para que la pantalla no se quede atrás.
+const DEBOUNCE_MS = 600;
+const MAX_WAIT_MS = 2_000;
 
 /**
  * Mantiene la UI sincronizada con Supabase:
@@ -20,7 +24,11 @@ export function AppRealtimeSync() {
   const [isPending, startTransition] = useTransition();
   const versionRef = useRef<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingRef = useRef(false);
+  const firstEventAtRef = useRef<number | null>(null);
+  // Cambio llegado con la pestaña oculta: se aplica al volver a ella. Con
+  // varios delegados trabajando a la vez, cada pestaña de fondo se recargaba en
+  // cada cambio de cualquiera (trabajo de servidor que nadie estaba mirando).
+  const staleWhileHiddenRef = useRef(false);
 
   const applySync = useCallback(
     (source: "realtime" | "poll" | "manual") => {
@@ -28,18 +36,27 @@ export function AppRealtimeSync() {
       // que se salta no se pierde para siempre: al reanudar, el control fuerza
       // un refresco (la versión ya está anotada y no volvería a dispararse).
       if (source !== "manual" && isAutoSyncPaused()) return;
-      if (pendingRef.current) return;
-      pendingRef.current = true;
+      if (source !== "manual" && typeof document !== "undefined" && document.hidden) {
+        staleWhileHiddenRef.current = true;
+        return;
+      }
+      const now = Date.now();
+      if (firstEventAtRef.current === null) firstEventAtRef.current = now;
+      const waited = now - firstEventAtRef.current;
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        startTransition(() => {
-          router.refresh();
-          if (source === "realtime") {
-            dispatchAppDataSync(source);
-          }
-          pendingRef.current = false;
-        });
-      }, DEBOUNCE_MS);
+      debounceRef.current = setTimeout(
+        () => {
+          firstEventAtRef.current = null;
+          debounceRef.current = null;
+          startTransition(() => {
+            router.refresh();
+            if (source === "realtime") {
+              dispatchAppDataSync(source);
+            }
+          });
+        },
+        Math.max(0, Math.min(DEBOUNCE_MS, MAX_WAIT_MS - waited)),
+      );
     },
     [router],
   );
@@ -106,11 +123,16 @@ export function AppRealtimeSync() {
       });
 
     const pollId = setInterval(() => {
-      if (!cancelled) void pollVersion();
+      // En segundo plano no se sondea: al volver a la pestaña se comprueba.
+      if (!cancelled && !document.hidden) void pollVersion();
     }, POLL_MS);
 
     const onVisible = () => {
       if (document.visibilityState === "visible") {
+        if (staleWhileHiddenRef.current) {
+          staleWhileHiddenRef.current = false;
+          applySync("realtime");
+        }
         void pollVersion();
       }
     };

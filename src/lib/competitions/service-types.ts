@@ -192,6 +192,19 @@ export class RosterSlotConflictError extends Error {
  * huecos: quitarlo deja un pago sin nada que lo respalde y un acta que no
  * cuadra con lo cobrado. Se para la operación y se pide revertir antes el pago.
  */
+/**
+ * Otra persona guardó la plantilla de la tarima mientras esta se editaba. Se
+ * rechaza en vez de sobrescribir su versión (y podar sus asignaciones).
+ */
+export class RosterTemplateConflictError extends UserFacingServiceError {
+  constructor(
+    message = "Otra persona ha cambiado la plantilla mientras la editabas.",
+  ) {
+    super(message, 409);
+    this.name = "RosterTemplateConflictError";
+  }
+}
+
 export class RosterPaidClaimError extends Error {
   constructor(message: string) {
     super(message);

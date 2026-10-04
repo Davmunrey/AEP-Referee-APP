@@ -26,6 +26,7 @@ import {
   hasApprovalCompetitionColumns,
   hasHistoryCompetitionColumn,
   loadAssignments,
+  loadRosterAssignmentData,
 } from "./supabase-helpers";
 
 function enrichCompetitionRows(
@@ -112,6 +113,50 @@ export const competitionService = {
     if (!data) return undefined;
     const assignmentsByComp = new Map([[id, assignments]]);
     return enrichCompetitionRows([data as Record<string, unknown>], assignmentsByComp)[0];
+  },
+
+  /**
+   * Solo la fila del campeonato, sin calcular la cobertura (que obliga a leer
+   * todas sus asignaciones). Es lo que necesitan las escrituras de la tarima
+   * para validar —tipo, zona, fechas, estado de aprobación—, y ellas ya leen
+   * las asignaciones por su cuenta: con `getCompetition` cada asignación las
+   * leía dos veces.
+   */
+  getCompetitionRow: async (id: string): Promise<Competition | undefined> => {
+    const { data, error } = await db().from("competitions").select("*").eq("id", id).single();
+    if (error && error.code !== "PGRST116") throw new Error(`competitions: ${error.message}`);
+    return data ? mapCompetition(data as Record<string, unknown>) : undefined;
+  },
+
+  /**
+   * Campeonato + tarima en dos consultas. La página de la tarima pedía
+   * `getCompetition` y `getRoster` por separado, y `getRoster` volvía a llamar
+   * a `getCompetition`: tres lecturas de la fila y tres de las asignaciones en
+   * cada carga, y en cada refresco en vivo de cada delegado conectado.
+   */
+  getCompetitionWithRoster: async (id: string) => {
+    const supabase = db();
+    const [{ data, error }, rosterData] = await Promise.all([
+      supabase.from("competitions").select("*").eq("id", id).single(),
+      loadRosterAssignmentData(id),
+    ]);
+    if (error && error.code !== "PGRST116") throw new Error(`competitions: ${error.message}`);
+    if (!data) return undefined;
+    const row = data as Record<string, unknown>;
+    const competition = enrichCompetitionRows([row], new Map([[id, rosterData.assignments]]))[0]!;
+    const template = normalizeCompetitionTemplate(
+      (row.template as RosterSession[] | null) ?? null,
+      competition.tipo,
+    );
+    return {
+      competition,
+      roster: {
+        template: template ?? [],
+        assignments: rosterData.assignments,
+        flags: rosterData.flags,
+        crossZoneMap: rosterData.crossZoneMap,
+      },
+    };
   },
 
   /** Contadores de navegación sin cargar plantillas ni asignaciones completas. */

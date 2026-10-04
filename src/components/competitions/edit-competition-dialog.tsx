@@ -89,14 +89,23 @@ export function EditCompetitionDialog({
         // AAAA-MM-DD: vaciarla devolvía un 400 que el usuario no podía
         // resolver desde el diálogo. Un campeonato de un solo día termina el
         // día que empieza.
-        await api.updateCompetition(competition.id, {
-          nombre,
-          tipo,
-          fecha,
-          fechaFin: fechaFin || fecha,
-          sede,
-          zona,
-        });
+        // Solo lo que ha cambiado: si se mandaba el formulario entero, cambiar
+        // la sede devolvía a su valor antiguo la fecha que otro delegado acababa
+        // de corregir en ese mismo campeonato. Las fechas viajan juntas porque
+        // se validan entre sí.
+        const fin = fechaFin || fecha;
+        const patch: Parameters<typeof api.updateCompetition>[1] = {};
+        if (nombre !== competition.nombre) patch.nombre = nombre;
+        if (tipo !== competition.tipo) patch.tipo = tipo;
+        if (sede !== competition.sede) patch.sede = sede;
+        if (zona !== (competition.zona ?? "")) patch.zona = zona;
+        if (fecha !== competition.fecha || fin !== competition.fechaFin) {
+          patch.fecha = fecha;
+          patch.fechaFin = fin;
+        }
+        if (Object.keys(patch).length > 0) {
+          await api.updateCompetition(competition.id, patch);
+        }
         onClose();
         router.refresh();
       } catch (err) {

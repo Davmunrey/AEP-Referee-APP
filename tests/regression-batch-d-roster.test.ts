@@ -98,7 +98,12 @@ describe("rosterService.getApprovals", () => {
 describe("rosterService.clearSlot", () => {
   it("falla si el borrado no llega a la base de datos", async () => {
     // Antes seguía adelante y la ruta respondía 200 con el juez todavía puesto.
-    respond = ({ op }) => (op === "delete" ? fail("permission denied") : ok([]));
+    respond = ({ table, op }) =>
+      op === "delete"
+        ? fail("permission denied")
+        : table === "roster_assignments"
+          ? ok([{ slot_key: "S1__ARB__1", referee_id: "r1", flags: {} }])
+          : ok([]);
     await expect(rosterService.clearSlot("evt-1", "S1__ARB__1", "Ana")).rejects.toThrow(
       /roster_assignments/,
     );

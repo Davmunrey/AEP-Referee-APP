@@ -43,6 +43,13 @@ export const memoryDataService = {
   removeDuplicateCompetitions: competitions.removeDuplicateCompetitions,
 
   getRoster: competitions.getRoster,
+  getCompetitionWithRoster: async (id: string) => {
+    const [competition, roster] = await Promise.all([
+      competitions.getCompetition(id),
+      competitions.getRoster(id),
+    ]);
+    return competition && roster ? { competition, roster } : undefined;
+  },
   saveCompetitionTemplate: competitions.saveCompetitionTemplate,
   setSlotFlags: competitions.setSlotFlags,
   validateAssign: competitions.validateAssign,
