@@ -188,6 +188,8 @@ En vez de llamar uno a uno, lanza una **convocatoria** y deja que los jueces se 
 4. En la tarima, el botón **Convocatoria** lleva la cuenta de inscritos. En el panel de jueces, los que se apuntaron a la sesión que estás montando salen **arriba** con la etiqueta *Inscrito*, y el filtro **Inscritos** deja solo a ellos.
 5. Desde el mismo botón puedes **cerrar** la convocatoria antes de tiempo, **reabrirla** o cambiar la fecha límite, y **cancelarla**.
 
+![Convocatoria en la tarima](images/15-convocatoria-tarima.png)
+
 Apuntarse no es estar designado: tú montas la tarima y, cuando se aprueba, el juez la ve en «Mis sesiones». Un juez con sanción activa o con la ficha inactiva no puede apuntarse.
 
 **Otras zonas**
@@ -220,6 +222,11 @@ Cada juez del censo puede tener su propia cuenta para ver sus designaciones y ap
 Un delegado de zona solo invita a jueces de su zona. Si el e-mail de la ficha ya es de una cuenta de gestión (un delegado que también es juez), no se invita: avisa al Comité.
 
 **Lo que ve el juez** (pensado para el móvil)
+
+<p>
+  <img src="images/13-portal-inicio.png" alt="Portal del juez: inicio" width="300">
+  <img src="images/14-portal-convocatoria.png" alt="Portal del juez: apuntarse a una convocatoria" width="300">
+</p>
 
 - **Inicio**: sus próximas designaciones y, si la tiene, el aviso de sanción activa.
 - **Mis sesiones**: cada campeonato en el que está designado (con **Confirmo** / **No puedo ir**), sesión a sesión, con el día, los horarios de pesaje y competición y su función; y su historial. Solo aparecen tarimas **aprobadas**: un borrador todavía puede cambiar.

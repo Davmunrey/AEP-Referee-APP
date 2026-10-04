@@ -177,5 +177,69 @@ export function ensureDocsCaptureSeed(): void {
     assignments: {},
   });
 
+  // Portal del juez: la convocatoria del campeonato de demostración (Noroeste),
+  // abierta también a Mediterráneo, con dos inscritos; y un campeonato de
+  // Mediterráneo con la tarima aprobada en el que está la jueza de la captura,
+  // para que «Mis sesiones» no salga vacío.
+  seedPortalDemo(hoy);
+
   seeded = true;
+}
+
+function seedPortalDemo(hoy: string) {
+  const store = getStore();
+  const sesiones = PRESET_AEP2.map((x) => x.sesion);
+  store.convocatorias ??= [];
+  store.inscripciones ??= [];
+  store.convocatorias.push({
+    id: "conv-docs-001",
+    competitionId: DOCS_CAPTURE_COMPETITION_ID,
+    estado: "abierta",
+    sesiones,
+    cierraEl: addDaysIso(hoy, 10),
+    mensaje: "Llegada a las 7:30 en la puerta principal. Uniforme oficial AEP.",
+    creadaPor: "Delegado Noroeste",
+    createdAt: `${addDaysIso(hoy, -1)}T09:00:00Z`,
+    zonas: [
+      { zona: "NOROESTE", estado: "aceptada", origen: "propia" },
+      { zona: "MEDITERRANEO", estado: "aceptada", origen: "delegado" },
+    ],
+  });
+  store.inscripciones.push(
+    { convocatoriaId: "conv-docs-001", refereeId: "j002", sesion: sesiones[0]! },
+    { convocatoriaId: "conv-docs-001", refereeId: "j001", sesion: sesiones[1] ?? sesiones[0]! },
+  );
+
+  const fecha = addDaysIso(hoy, 12);
+  store.competitions.push({
+    id: "evt-docs-003",
+    nombre: "Campeonato Mediterráneo AEP-3",
+    tipo: "AEP-3",
+    fecha,
+    fechaFin: fecha,
+    sede: "Pabellón Font de Sant Lluís, Valencia",
+    sesiones: 1,
+    requeridos: 3,
+    confirmados: 3,
+    estado: "Completo",
+    aprobacion: "Aprobado",
+    zona: "MEDITERRANEO",
+  });
+  setCompetitionTemplate("evt-docs-003", [
+    {
+      sesion: "S1",
+      nombre: "Sesión única",
+      dia: "Sábado",
+      categorias: [],
+      horarioCompeticion: "10:00",
+      horarioPesaje: "08:00",
+      roles: [
+        { rol: "Juez Central", key: "central", slots: 1 },
+        { rol: "Juez Lateral", key: "lateral", slots: 2 },
+      ],
+      pesajeRoles: [],
+    },
+  ]);
+  store.assignments.set("evt-docs-003", { S1_central_0: "j001", S1_lateral_0: "j005", S1_lateral_1: "j003" });
+  store.slotFlags.set("evt-docs-003", {});
 }
