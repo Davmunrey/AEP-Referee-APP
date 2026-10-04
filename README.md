@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://aep-tarima.vercel.app/"><img alt="Producción" src="https://img.shields.io/badge/entrar-aep--tarima.vercel.app-4f46e5?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0d1117" /></a>
-  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.12.1-22c55e?style=for-the-badge&labelColor=0d1117" />
+  <img alt="Versión" src="https://img.shields.io/badge/versión-v2.13-22c55e?style=for-the-badge&labelColor=0d1117" />
   <img alt="Tests" src="https://img.shields.io/badge/tests-1233%20passing-16a34a?style=for-the-badge&logo=vitest&logoColor=white&labelColor=0d1117" />
 </p>
 
@@ -72,7 +72,7 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 | **Dinero congelado** | Una liquidación pagada no admite cambios de importe (`423`), no se recalcula ni se borra, y su juez no puede salir de la tarima. |
 | **Cero silencios (v2.3)** | Una lectura que falla es un error, no una lista vacía; todas las lecturas grandes paginan; las fechas son del calendario español; los permisos zonales son *fail-closed*. |
 | **Migraciones automáticas (v2.2)** | Se aplican solas al llegar a `main` y el CI reproduce la cadena completa sobre un Postgres limpio en cada PR. |
-| **Rendimiento** | 80 kB menos de JS por página (Sentry bajo demanda) e índices en todas las claves ajenas (migración `039`). |
+| **Rendimiento** | ~105 kB de JS compartido por página, sin SDK de terceros, e índices en todas las claves ajenas (migración `039`). |
 | **Soporte** | Tickets internos con fotos, hilo de comentarios y adjuntos privados. |
 
 ---
@@ -126,7 +126,7 @@ Navegador
 | **Geocoding** | Photon + Nominatim/OSRM — todo en servidor |
 | **Realtime** | Supabase Realtime en `app_sync_state` |
 | **Tests** | Vitest — 1233 tests, 200 archivos · Playwright (smoke) · reproducción de migraciones en CI |
-| **Observabilidad** | Sentry opcional (solo se carga con DSN) |
+| **Observabilidad** | Registros de Vercel (errores de servidor con su referencia); sin servicios de terceros de analítica ni de errores |
 
 ---
 
@@ -190,5 +190,5 @@ Detalle de variables, Supabase y checklist de release: [docs/DEPLOY.md](./docs/D
 ---
 
 <p align="center">
-  <sub>AEP Tarima · v2.12.1 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
+  <sub>AEP Tarima · v2.13 · Uso interno AEP · <a href="https://aep-tarima.vercel.app/">aep-tarima.vercel.app</a></sub>
 </p>

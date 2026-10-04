@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { reportClientError } from "@/lib/observability/report-client-error";
 import { Button } from "@/components/ui/button";
 
 export default function GlobalError({
@@ -12,8 +11,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Queda en la consola del navegador; los del servidor, en los registros
+    // de Vercel con la referencia (digest) que se muestra abajo.
     console.error(error);
-    reportClientError(error);
   }, [error]);
 
   return (
@@ -24,7 +24,7 @@ export default function GlobalError({
           técnico. El mismo texto que `global-error.tsx`, y la referencia para
           poder buscarlo en los registros. */}
       <p className="max-w-sm text-sm text-muted-foreground">
-        Se ha producido un error inesperado. Hemos registrado el incidente para revisarlo.
+        Se ha producido un error inesperado. Prueba de nuevo; si se repite, avisa al Comité de Jueces con la referencia.
       </p>
       {error.digest && (
         <p className="text-xs text-subtle-muted">Referencia: {error.digest}</p>

@@ -4,6 +4,16 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🧹 **AEP Tarima v2.13** — _«Sin terceros»_ (2026-10-04)
+
+La aplicación deja de cargar servicios de terceros de errores y analítica.
+
+- **Fuera Sentry**: SDK (`@sentry/nextjs`), configuración de servidor y edge, instrumentación, envoltura de `next.config`, ayudante de errores del navegador, dominios de Sentry en la CSP y variables de entorno. PostHog no tenía código en el repositorio.
+- Los errores de servidor siguen en los registros de Vercel con su referencia; las páginas de error la enseñan (también la del layout raíz, que no lo hacía) y piden avisar al Comité con ella, en vez de decir que el incidente «se ha registrado».
+- Si en Vercel quedan las variables `SENTRY_*` / `NEXT_PUBLIC_SENTRY_*`, ya no se usan y se pueden borrar.
+
+---
+
 ## 🌗 **AEP Tarima v2.12.1** — _«También de noche»_ (2026-10-04)
 
 Segunda pasada de la auditoría de diseño: modo oscuro, portal del juez y tamaños de tableta y móvil pequeño.

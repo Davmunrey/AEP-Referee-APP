@@ -48,9 +48,6 @@ Copiar y adaptar:
 | `NOMINATIM_URL` | Opcional | Geocoding OSM |
 | `OSRM_URL` | Opcional | Rutas OSM |
 | `SUPABASE_ACCESS_TOKEN` | Opcional | Script `npm run supabase:email-branding` |
-| `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Opcional | Errores a Sentry (cliente / servidor). Sin DSN, el SDK del navegador ni siquiera se descarga |
-| `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE` / `SENTRY_TRACES_SAMPLE_RATE` | Opcional | Muestreo de trazas |
-| `SENTRY_ORG` / `SENTRY_PROJECT` | Opcional | Subida de source maps en el build |
 
 Variables solo CI (GitHub Secrets, no Vercel):
 

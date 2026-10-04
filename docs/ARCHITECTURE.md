@@ -219,7 +219,7 @@ Tailwind breakpoints utilizados:
 
 ## Rendimiento (v2.4)
 
-- **Sentry bajo demanda**: `src/instrumentation-client.ts` solo importa el SDK si hay DSN; los `error.tsx` reportan con `reportClientError`. El JS compartido de cada página bajó de 185 kB a 105 kB.
+- **Sin SDK de terceros**: Sentry se retiró en v2.13 (antes se cargaba bajo demanda solo con DSN). Los errores de servidor quedan en los registros de Vercel con la referencia (`digest`) que enseñan `error.tsx` y `global-error.tsx`.
 - **Recalcular compensación** en paralelo acotado (`mapWithConcurrency`, `src/lib/async-pool.ts`, 6 a la vez), saltando las liquidaciones pagadas y borrando huérfanas en una sola consulta.
 - **Contadores de navegación** (`getNavCountsFast`): `count` con `head: true` y lectura acotada de campeonatos vigentes, sin descargar el calendario entero.
 - Alta de campeonato y desplegables de campeonatos paginados con `fetchAllPagesOf`.

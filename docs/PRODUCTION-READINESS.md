@@ -58,7 +58,7 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 - Caché TTL zonas/normativa (1 h).
 - Índices en `roster_assignments` y `referees` (`030`) y en claves ajenas sin índice (`039`).
 - Sincronización en vivo sin tormenta de APIs redundantes.
-- JS compartido por página: 105 kB (Sentry se carga solo si hay DSN).
+- JS compartido por página: ~105 kB, sin SDK de terceros (Sentry retirado en v2.13).
 
 ## Seguridad — único item pendiente
 
