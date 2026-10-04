@@ -144,7 +144,7 @@ export function AddressAutocompleteField({
             type="button"
             onClick={onClear}
             disabled={disabled || clearing}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-destructive transition-colors hover:bg-destructive-muted disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-2xs font-medium text-destructive transition-colors hover:bg-destructive-muted disabled:opacity-50"
           >
             <X className="h-3 w-3" aria-hidden="true" />
             {clearing ? "Eliminando…" : "Eliminar ubicación"}
@@ -170,7 +170,7 @@ export function AddressAutocompleteField({
           <ul
             id={listId}
             role="listbox"
-            className="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-auto rounded-xl border border-border-muted bg-card py-1 shadow-md"
+            className="absolute left-0 right-0 top-full z-(--z-sidebar) mt-1 max-h-52 overflow-auto rounded-xl border border-border-muted bg-card py-1 shadow-md"
           >
             {suggestions.map((suggestion) => (
               <li key={`${suggestion.address}-${suggestion.lat}`} role="option" aria-selected={false}>
@@ -187,16 +187,16 @@ export function AddressAutocompleteField({
           </ul>
         )}
       </div>
-      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
-      <p className="text-[11px] text-muted-foreground">
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      <p className="text-xs text-muted-foreground">
         Autocomplete OpenStreetMap (gratuito) — elige una sugerencia de la lista.
       </p>
-      {loading && <p className="text-[11px] text-muted-foreground">Buscando…</p>}
+      {loading && <p className="text-xs text-muted-foreground">Buscando…</p>}
       {!loading && searchError && (
-        <p className="text-[11px] text-warning">{searchError}</p>
+        <p className="text-xs text-warning">{searchError}</p>
       )}
       {coordsHint && (
-        <p className={cn("text-[11px]", coordsOk ? "text-success" : "text-warning")}>{coordsHint}</p>
+        <p className={cn("text-2xs", coordsOk ? "text-success" : "text-warning")}>{coordsHint}</p>
       )}
     </div>
   );

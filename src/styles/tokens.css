@@ -5,17 +5,21 @@
  */
 :root {
   /* ── Primitivos de marca ───────────────────────────────────────────── */
-  --aep-red-600: #c8362a;
+  /* Los -600 son los tonos de TEXTO: los cuatro pasan 4,5:1 sobre blanco y
+   * sobre su propio fondo suave (insignias «Completo», «Crítico», «IPF»…).
+   * Antes el verde, el ámbar y el azul se quedaban en 3,1–4,3:1. Las barras y
+   * los puntos usan los -500, más vivos (tokens --chart-*). */
+  --aep-red-600: #c23429;
   --aep-red-500: #dc3f31;
   --aep-red-400: #e85d50;
   --aep-red-100: #fbe6e3;
-  --aep-amber-600: #c2790c;
+  --aep-amber-600: #996009;
   --aep-amber-500: #e8920f;
   --aep-amber-100: #fcefd6;
-  --aep-blue-600: #2563eb;
+  --aep-blue-600: #2460e4;
   --aep-blue-500: #3b82f6;
   --aep-blue-100: #e0ecfd;
-  --aep-emerald-600: #15924f;
+  --aep-emerald-600: #117942;
   --aep-emerald-500: #1faf63;
   --aep-emerald-100: #d8f0e2;
 
@@ -27,7 +31,8 @@
   --neutral-200: #e4e4e7;
   --neutral-300: #d4d4d8;
   --neutral-400: #a1a1aa;
-  --neutral-500: #71717a;
+  /* Texto secundario: 4,5:1 también sobre el gris del marco (#f4f4f5). */
+  --neutral-500: #6f6f78;
   --neutral-600: #52525b;
   --neutral-700: #3f3f46;
   --neutral-800: #27272a;
@@ -42,9 +47,13 @@
   --foreground: var(--neutral-900);
   --foreground-secondary: var(--neutral-700);
   --subtle: var(--neutral-500);
-  --subtle-muted: #8b8b94;
+  /* Igual que --subtle: un gris más claro no llega a 4,5:1 sobre el marco;
+   * la jerarquía terciaria la da el tamaño, no un gris ilegible. */
+  --subtle-muted: var(--neutral-500);
 
   --card: var(--neutral-0);
+  /* Velo bajo los modales: tinta de la app, no negro puro. */
+  --overlay: color-mix(in srgb, var(--neutral-950) 38%, transparent);
   --card-foreground: var(--neutral-900);
   --popover: var(--neutral-0);
   --popover-foreground: var(--neutral-900);
@@ -115,18 +124,56 @@
   --radius-full: 9999px;
 
   /* ── Tipografía ────────────────────────────────────────────────────── */
-  --text-xs: 0.75rem;
+  /* Escala de la interfaz. Los pasos propios van en px a propósito: entre
+   * 1280 y 1512 px de ancho el `html` baja a 15 px y una escala en rem
+   * dejaría el rótulo más pequeño por debajo de 11 px, el suelo de lectura.
+   * Antes eran 200 tamaños sueltos (`text-[11px]`, `[10.5px]`, `[13px]`…). */
+  --text-2xs: 11px; /* rótulos densos: tarima, chips, metadatos */
+  --text-xs: 12px; /* en px: con el html a 15 px, 0.75rem eran 11,25 px */
+  --text-ui: 13px; /* texto secundario de la interfaz, descripciones */
   --text-sm: 0.875rem;
+  --text-title: 15px; /* títulos de tarjeta y de diálogo */
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
+  --text-heading: 22px; /* títulos de página en móvil y del portal */
   --text-2xl: 1.5rem;
+  --text-display: 26px; /* título de página en escritorio y cifras */
   --text-3xl: 1.875rem;
 
+  --tracking-tighter: -0.03em; /* cifras grandes */
   --tracking-tight: -0.02em;
+  --tracking-snug: -0.01em; /* títulos */
   --tracking-wide: 0.06em;
   --tracking-wider: 0.075em;
   --tracking-widest: 0.095em;
+
+  /* ── Medidas de composición ────────────────────────────────────────── */
+  /* Las que se repiten entre pantallas, con nombre. Se usan como
+   * `max-w-(--size-page)`. */
+  --size-page: 1360px; /* ancho máximo del contenido de una página */
+  --size-dialog-h: 90dvh; /* alto máximo de un diálogo */
+  --size-popover: min(22rem, calc(100vw - 2rem)); /* avisos, menús anchos */
+  --size-empty-state: 60vh; /* alto de una página vacía o de error */
+  --grid-dashboard: minmax(0, 1.6fr) minmax(320px, 1fr); /* columna principal + lateral */
+  --size-topbar: 3rem; /* alto de la barra superior */
+  --size-sidebar: 220px; /* menú lateral desplegado (232 px desde xl) */
+  --size-drawer: min(280px, 85vw); /* menú lateral en móvil */
+  --size-tarima-panel: 220px; /* columna de jueces de la tarima (crece por punto de corte) */
+  --grid-tarima: minmax(0, var(--size-tarima-panel)) 1fr;
+
+  /* ── Capas (z-index) ───────────────────────────────────────────────── */
+  /* Un orden con nombre en vez de números sueltos (10, 50, 60, 9999…): qué
+   * tapa a qué se decide aquí una vez. Se usa como `z-(--z-modal)`. */
+  --z-raised: 1; /* un elemento sobre sus hermanos */
+  --z-sticky: 10; /* cabeceras y filas fijas dentro de una página */
+  --z-header: 20; /* barra superior y navegación del portal */
+  --z-sidebar: 30;
+  --z-drawer: 40; /* menú lateral en móvil */
+  --z-modal: 50;
+  --z-float: 60; /* ayuda flotante, menús por encima de un modal */
+  --z-confirm: 70; /* confirmación sobre cualquier otro diálogo */
+  --z-skip: 100; /* enlace «saltar al contenido» */
 
   /* ── Movimiento ────────────────────────────────────────────────────── */
   /* Curva única de salida. La `ease-out` de serie (0,0,.2,1) es demasiado
@@ -140,8 +187,22 @@
   /* Ritmo por defecto de cualquier `transition-*` que no declare duración ni
    * curva: unifica de una vez las decenas de `transition-colors` sueltos que
    * heredaban 150ms + ease-in-out (arranque lento = sensación de lag). */
-  --default-transition-duration: 150ms;
+  /* Duraciones con nombre: la respuesta a un toque, el cambio de estado, la
+   * entrada de un panel y los dos lentos (desplegables y barras). */
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+  --duration-enter: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+  --duration-shimmer: 1.6s; /* barrido de los esqueletos de carga */
+  --default-transition-duration: var(--duration-base);
   --default-transition-timing-function: var(--ease-out);
+
+  /* Escalas de gesto: lo que encoge un botón al pulsarlo y desde dónde entra
+   * un panel. Nunca desde 0: nada aparece de la nada. */
+  --scale-press: 0.98;
+  --scale-enter: 0.97;
+  --scale-lift: 1.01; /* zona de soltar con un archivo encima */
 
   /* ── Sombras (suaves, para fondo claro) ────────────────────────────── */
   /* Sombras casi imperceptibles: la jerarquía la marcan el plano y el borde
@@ -221,9 +282,10 @@
   --foreground: #ededf0;
   --foreground-secondary: #c6c6ce;
   --subtle: #92929c;
-  --subtle-muted: #74747e;
+  --subtle-muted: #878790;
 
   --card: #18181c;
+  --overlay: rgb(0 0 0 / 0.6);
   --card-foreground: #ededf0;
   --popover: #1c1c21;
   --popover-foreground: #ededf0;
@@ -250,7 +312,7 @@
   --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));
   --primary-border: color-mix(in srgb, var(--primary) 38%, transparent);
 
-  --destructive: #e5533f;
+  --destructive: #e65a47;
   --destructive-muted: color-mix(in srgb, var(--destructive) 16%, transparent);
   --destructive-border: color-mix(in srgb, var(--destructive) 38%, transparent);
 
@@ -319,9 +381,10 @@
     --foreground: #ededf0;
     --foreground-secondary: #c6c6ce;
     --subtle: #92929c;
-    --subtle-muted: #74747e;
+    --subtle-muted: #878790;
 
     --card: #18181c;
+    --overlay: rgb(0 0 0 / 0.6);
     --card-foreground: #ededf0;
     --popover: #1c1c21;
     --popover-foreground: #ededf0;
@@ -348,7 +411,7 @@
     --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));
     --primary-border: color-mix(in srgb, var(--primary) 38%, transparent);
 
-    --destructive: #e5533f;
+    --destructive: #e65a47;
     --destructive-muted: color-mix(in srgb, var(--destructive) 16%, transparent);
     --destructive-border: color-mix(in srgb, var(--destructive) 38%, transparent);
 
@@ -406,5 +469,24 @@
     --role-jueces-bg-to: var(--card);
     --role-financiero-bg-from: color-mix(in srgb, var(--success) 14%, var(--card));
     --role-financiero-bg-to: var(--card);
+  }
+}
+
+/* Medidas que crecen con la pantalla: la columna de jueces de la tarima y el
+ * menú lateral. Fuera de los bloques de tema porque no dependen de él. */
+@media (min-width: 1024px) {
+  :root {
+    --size-tarima-panel: 252px;
+  }
+}
+@media (min-width: 1280px) {
+  :root {
+    --size-tarima-panel: 272px;
+    --size-sidebar: 232px;
+  }
+}
+@media (min-width: 1536px) {
+  :root {
+    --size-tarima-panel: 292px;
   }
 }

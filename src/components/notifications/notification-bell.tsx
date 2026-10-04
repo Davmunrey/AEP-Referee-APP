@@ -49,14 +49,14 @@ export function NotificationBell({ initial, className }: { initial: BandejaNotif
         )}
         aria-label={bandeja.sinLeer > 0 ? `Avisos: ${bandeja.sinLeer} sin leer` : "Avisos"}
       >
-        <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
+        <Bell className="h-4.5 w-4.5" aria-hidden="true" />
         {bandeja.sinLeer > 0 && (
-          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground tabular-nums">
+          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold leading-none text-primary-foreground tabular-nums">
             {bandeja.sinLeer > 9 ? "9+" : bandeja.sinLeer}
           </span>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[min(22rem,calc(100vw-2rem))] p-0">
+      <DropdownMenuContent align="end" className="w-(--size-popover) p-0">
         <p className="border-b border-border-muted px-3 py-2 text-xs font-medium text-muted-foreground">Avisos</p>
         {bandeja.items.length === 0 ? (
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">No tienes avisos.</p>
@@ -72,7 +72,7 @@ export function NotificationBell({ initial, className }: { initial: BandejaNotif
                     </p>
                   </div>
                   {n.cuerpo && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.cuerpo}</p>}
-                  <p className="mt-1 text-[11px] text-subtle">{hace(n.createdAt)}</p>
+                  <p className="mt-1 text-2xs text-subtle">{hace(n.createdAt)}</p>
                 </>
               );
               return (

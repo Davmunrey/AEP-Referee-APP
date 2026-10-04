@@ -1,11 +1,9 @@
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { ExamsManager } from "@/components/judge/exams-manager";
-import { MetricTile, type MetricTone } from "@/components/ui/metric-tile";
+import { MetricStrip, MetricTile, type MetricTone } from "@/components/ui/metric-tile";
 import { canAdminJudges, canManageJudges, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 import { AEP_JUDGE_LICENSE_NOTE } from "@/lib/aep-guide-2026";
-import { BarChart2, BookOpen, CheckCircle2, Clock } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 export default async function ExamsPage() {
   const user = await getSession();
@@ -24,30 +22,32 @@ export default async function ExamsPage() {
   // mundo», que es justo lo contrario de «aún no hay datos».
   const tasa = resueltos > 0 ? Math.round((aprobados / resueltos) * 100) : null;
 
-  const stats: { label: string; value: string | number; tone: MetricTone; icon: LucideIcon }[] = [
-    { label: "Exámenes totales", value: exams.length, tone: "neutral", icon: BookOpen },
-    { label: "Aprobados", value: aprobados, tone: "success", icon: CheckCircle2 },
-    { label: "Pendientes", value: pendientes, tone: "warning", icon: Clock },
-    { label: "Tasa de aprobación", value: tasa === null ? "—" : `${tasa}%`, tone: "primary", icon: BarChart2 },
+  // El color solo marca lo que pide hacer algo: los exámenes pendientes.
+  const stats: { label: string; value: string | number; tone: MetricTone }[] = [
+    { label: "Exámenes totales", value: exams.length, tone: "neutral" },
+    { label: "Aprobados", value: aprobados, tone: "neutral" },
+    { label: "Pendientes", value: pendientes, tone: pendientes > 0 ? "warning" : "neutral" },
+    { label: "Tasa de aprobación", value: tasa === null ? "—" : `${tasa}%`, tone: "neutral" },
   ];
 
   return (
     <PageShell>
       <div>
         <PageHeader
-          eyebrow="Jueces"
           title="Exámenes de jueces"
           description="Altas de nuevos jueces, ascensos a categoría IPF y recertificaciones"
         />
-        <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+        {/* 75 caracteres por línea como mucho: a lo ancho de la cabecera la
+            nota pasaba de 90 y costaba seguirla de una línea a la siguiente. */}
+        <p className="mt-1.5 max-w-prose text-pretty text-ui leading-relaxed text-muted-foreground">
           {AEP_JUDGE_LICENSE_NOTE}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <MetricStrip columns={4}>
         {stats.map((st) => (
-          <MetricTile key={st.label} label={st.label} value={st.value} tone={st.tone} icon={st.icon} />
+          <MetricTile key={st.label} label={st.label} value={st.value} tone={st.tone} />
         ))}
-      </div>
+      </MetricStrip>
       <ExamsManager
         exams={exams}
         referees={referees.map((r) => ({ id: r.id, nombre: r.nombre, nivel: r.nivel }))}

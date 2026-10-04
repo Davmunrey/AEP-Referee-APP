@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { formatBusinessDate } from "@/lib/business-date";
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
@@ -51,8 +51,26 @@ function actionTextClass(action: string): string {
   return "text-foreground";
 }
 
-export function RosterHistoryPanel({ competitionId }: { competitionId: string }) {
-  const [open, setOpen] = useState(false);
+export function RosterHistoryPanel({
+  competitionId,
+  open: openProp,
+  onOpenChange,
+  className,
+  triggerClassName,
+}: {
+  competitionId: string;
+  /** Controlado desde fuera: en móvil se abre desde el menú «Más». */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  className?: string;
+  triggerClassName?: string;
+}) {
+  const [innerOpen, setInnerOpen] = useState(false);
+  const open = openProp ?? innerOpen;
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setInnerOpen(next);
+    onOpenChange?.(next);
+  };
   const [entries, setEntries] = useState<RosterHistoryEntry[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +79,7 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
   // mientras se trabaja en la tarima, y la copia cacheada se quedaba en el
   // estado de la primera apertura. Las entradas ya cargadas se mantienen a la
   // vista mientras llega la respuesta, para no parpadear.
-  const cargar = async () => {
+  const cargar = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -75,35 +93,37 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
     } finally {
       setLoading(false);
     }
-  };
+  }, [competitionId]);
 
-  const toggle = async () => {
-    if (open) {
-      setOpen(false);
-      return;
-    }
-    setOpen(true);
-    await cargar();
-  };
+  // Carga al abrir, venga la apertura del botón propio o del menú «Más».
+  useEffect(() => {
+    if (open) void cargar();
+  }, [open, cargar]);
 
   const vista = rosterHistoryView({ loading, error: error !== null, entries });
 
   return (
-    <div className="relative">
+    <div className={cn("relative", className)}>
       <Button
         variant="outline"
         size="sm"
-        className="gap-1.5"
+        className={cn("h-8 gap-1.5 px-2.5 text-xs", triggerClassName)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        onClick={() => void toggle()}
+        onClick={() => setOpen(!open)}
       >
         <History className="h-3.5 w-3.5" aria-hidden="true" />
         Historial
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border border-border bg-background shadow-md">
+        // En móvil el disparador es el menú «Más»: el panel se fija bajo la
+        // barra superior a lo ancho, en vez de colgar de un botón oculto.
+        <div
+          role="dialog"
+          aria-label="Historial de cambios"
+          className="z-(--z-modal) rounded-xl border border-border bg-background shadow-md max-md:fixed max-md:inset-x-4 max-md:top-16 md:absolute md:right-0 md:top-full md:mt-2 md:w-80"
+        >
           <div className="flex items-center justify-between border-b border-border-muted px-4 py-3">
             <p className="text-xs font-semibold text-foreground">Historial de cambios</p>
             <Button
@@ -148,7 +168,7 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
                     {/* Timeline dot */}
                     <div
                       className={cn(
-                        "relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-background ring-2",
+                        "relative z-(--z-sticky) mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-background ring-2",
                         actionDotClass(e.action),
                       )}
                       aria-hidden="true"
@@ -156,18 +176,18 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
                     <div className="min-w-0 flex-1 pb-0.5">
                       <p
                         className={cn(
-                          "text-[11.5px] font-medium leading-snug",
+                          "text-xs font-medium leading-snug",
                           actionTextClass(e.action),
                         )}
                       >
                         {e.action}
                       </p>
                       {e.detail && (
-                        <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
+                        <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
                           {e.detail}
                         </p>
                       )}
-                      <p className="mt-1 text-[10px] text-subtle-muted">
+                      <p className="mt-1 text-2xs text-subtle-muted">
                         {e.actor}
                         {" · "}
                         <time

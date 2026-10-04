@@ -59,7 +59,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
     >
       <div
@@ -73,14 +73,9 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-              <TrendingUp className="h-4 w-4 text-primary" />
-            </div>
-            <h2 id="promotion-dialog-title" className="text-base font-semibold">
-              Solicitar ascenso
-            </h2>
-          </div>
+          <h2 id="promotion-dialog-title" className="text-base font-semibold">
+            Solicitar ascenso
+          </h2>
           <Button
             variant="ghost"
             size="icon"
@@ -130,7 +125,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
                 maxLength={MOTIVO_MAX}
               />
               <span
-                className={`absolute bottom-2 right-3 text-[10px] tabular-nums ${
+                className={`absolute bottom-2 right-3 text-2xs tabular-nums ${
                   motivo.length >= MOTIVO_MAX * 0.9
                     ? "text-warning"
                     : "text-subtle-muted"

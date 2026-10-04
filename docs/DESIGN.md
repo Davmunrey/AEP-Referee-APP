@@ -8,9 +8,9 @@
 - Tokens de diseño, no colores hardcodeados.
 - Preview antes de aplicar cualquier import/export.
 
-## Lenguaje visual (v2.5)
+## Lenguaje visual (v2.12)
 
-- **Tipografía**: Geist (texto) y Geist Mono solo para código y bloques preformateados. Cifras tabulares en toda la app (`font-variant-numeric: tabular-nums` en `body`).
+- **Tipografía**: Archivo (grotesca de deporte y datos, con eje de anchura) para toda la interfaz; los `h1` van algo ensanchados (`font-stretch: 112%`), sin cursivas. Geist Mono solo para código y bloques preformateados. Cifras tabulares en toda la app (`font-variant-numeric: tabular-nums` en `body`). Sustituye a Geist (v2.12), la grotesca de cualquier panel generado.
 - **Tres planos**: el marco (sidebar + fondo, gris `neutral-100`), el lienzo de cada página (panel `canvas` con borde fino y esquinas de 12 px en escritorio) y las tarjetas blancas encima. Neutros fríos tipo zinc; nada de beige.
 - **Rótulos en minúscula de frase**: sin versales ni tracking ancho (cabeceras de tabla, grupos del menú, rótulos de formulario). Las píldoras de estado van capitalizadas.
 - **Un solo acento**: el rojo AEP, reservado a la acción principal y al estado activo. Las cifras de los KPI van en el color del texto; el tono del indicador es un punto junto al rótulo.
@@ -20,16 +20,32 @@
 
 ## Tokens
 
+Todo valor de diseño sale de un token; un test (`regression-batch-ei-diseno`) falla si vuelve un valor suelto.
+
+| Qué | Tokens | Uso |
+|---|---|---|
+| Color | `--background`, `--card`, `--foreground`, `--muted-foreground`, `--primary`, `--success`… | clases semánticas (`bg-card`, `text-success`); nunca hex en componentes |
+| Tamaño de letra | `--text-2xs` (11 px), `xs` (12), `ui` (13), `sm`, `title` (15), `base`, `heading` (22), `2xl`, `display` (26) | `text-ui`, `text-title`… (en px los propios: no bajan de 11 px cuando el `html` baja a 15 px) |
+| Espaciado de letra | `--tracking-tighter`, `tight`, `snug` | `tracking-snug` |
+| Capas | `--z-raised`, `sticky`, `header`, `sidebar`, `drawer`, `modal`, `float`, `confirm`, `skip` | `z-(--z-modal)` |
+| Movimiento | `--ease-out`, `--duration-fast/base/enter/slow/slower/shimmer`, `--scale-press/enter/lift` | `duration-(--duration-base)`, `active:scale-(--scale-press)` |
+| Composición | `--size-page`, `--size-dialog-h`, `--size-popover`, `--size-topbar`, `--size-sidebar`, `--size-drawer`, `--grid-dashboard`, `--grid-tarima` | `max-w-(--size-page)`, `md:grid-cols-(--grid-tarima)` |
+| Documentos | `BRAND`, `PRINT`, `QUADRANT_ROLE_FILL` en `lib/document-tokens.ts` | correos, recibo PDF y cuadrante imprimible (no cargan CSS); la marca se comprueba contra `tokens.css` |
+
+`cn()` (`lib/utils.ts`) conoce la escala propia: sin eso, `text-ui` se tomaba por un color y borraba el color real del texto.
+
 Fuente de verdad:
 
 - `src/styles/tokens.css`
 - `src/app/globals.css`
 - `src/lib/design-tokens.ts`
+- `src/lib/document-tokens.ts`
+- `src/lib/status-tone.ts` (color de cobertura)
 
 ## Layout
 
 - Sidebar expandido en escritorio y agrupado en General · Competiciones · Jueces · Referencia · Administración; usuario en **topbar** (no en pie del sidebar).
-- El *eyebrow* de cada página repite el grupo del menú en el que vive; la barra superior no repite el título (la última miga y el `h1` ya lo dicen).
+- Sin rótulo (*eyebrow*) encima del título: la miga de pan y el menú ya dicen dónde estás. La barra superior no repite el título (la última miga y el `h1` ya lo dicen). Las acciones de la página van a la derecha del título y, en móvil, debajo.
 - En móvil, cajón de navegación desde el botón ☰ y nombre de la página en la barra superior.
 - Tarima: panel jueces izquierda, sesiones/slots derecha.
 - Sin footer legal en dashboard (`/docs` + widget Ayuda).
@@ -39,6 +55,7 @@ Fuente de verdad:
 
 - Cards de juez compactas (`RefereeCard`).
 - **Badges de nivel abreviados** en tarima: Regional **R**, Nacional **N**, IPF Cat. 1 **I**, IPF Cat. 2 **II**. El directorio mantiene el nombre completo.
+- Los niveles son una escala neutra, no colores de estado: Regional con borde, Nacional relleno claro, IPF Cat. 2 relleno oscuro, IPF Cat. 1 invertido. Igual los tipos de campeonato (AEP-3 → AEP-1).
 - Slots de cuadrante con altura reducida; rejilla hasta 3 columnas.
 - Tooltip `title` en badge compacto muestra el nivel completo.
 
@@ -60,10 +77,20 @@ Fuente de verdad:
 
 ## Cifras y textos
 
-- Las tiras de cifras usan `MetricTile`; nada de tarjetas de KPI hechas a mano por pantalla.
+- Las cifras de una pantalla van en una sola franja (`MetricStrip` + `MetricTile`): celdas separadas por un filete, sin iconos en cuadrados de color. El tono es un punto junto al rótulo y solo se usa cuando la cifra pide hacer algo (pendientes, incidencias, km sin rellenar).
 - Una cifra que no se puede calcular se muestra como «—», no como 0 (p. ej. tasa de aprobación sin exámenes).
 - Nada de gráficos decorativos que parezcan datos (se retiraron las «mini-gráficas» de los KPIs del dashboard).
 - Plurales con `contar()`/`palabra()`; vocabulario de la casa: tarima, hueco, plantilla (no roster, slot, diff).
+
+## Contraste
+
+- Todo texto pasa 4,5:1 (WCAG AA) sobre las superficies en las que aparece, incluido el gris del marco. Los tonos de estado tienen dos usos: el semántico (`text-success`, `text-warning`…, más oscuro) para texto e insignias, y el de gráfico (`bg-chart-success`, `bg-chart-warning`, `bg-chart-danger`, más vivo) para barras y puntos. La cobertura se pinta con `lib/status-tone.ts`.
+- `--subtle-muted` ya no es un gris más claro que `--subtle`: un gris más claro no llegaba a 4,5:1. La jerarquía terciaria la da el tamaño.
+
+## Confirmaciones
+
+- Nunca `window.confirm` ni `alert`: `confirmar()` (`components/ui/confirm-dialog.tsx`) abre un diálogo de la app. El botón nombra la acción («Eliminar juez», «Vaciar asignaciones»); con `peligro` se pinta en rojo y el foco empieza en «Cancelar».
+- Lo destructivo nunca es el botón más visible de la pantalla: va como acción discreta o dentro del menú «…».
 
 ## Estados
 
@@ -91,4 +118,4 @@ Fuente de verdad:
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.6
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.12

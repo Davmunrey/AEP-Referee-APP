@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowRight, CalendarDays, Check, FileText, Loader2, Trash2, X } from "lucide-react";
+import { ArrowRight, CalendarDays, FileText, Loader2, Trash2, X } from "lucide-react";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -17,7 +17,7 @@ import {
   DataTableHeadCell,
   DataTableRow,
 } from "@/components/ui/data-table";
-import { Progress } from "@/components/ui/progress";
+import { CoverageBar } from "@/components/competitions/coverage-bar";
 import { api } from "@/lib/api/client";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { isCompetitionPast } from "@/lib/competition-status";
@@ -28,6 +28,8 @@ import { zoneFilterOptions } from "@/lib/competitions/list-filters";
 import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
 import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
+import { confirmar } from "@/components/ui/confirm-dialog";
+import { contar } from "@/lib/plural";
 
 interface CompetitionsTableProps {
   initialCompetitions: Competition[];
@@ -44,7 +46,6 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   const router = useRouter();
   const [competitions, setCompetitions] = useState(initialCompetitions);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState("TODOS");
@@ -62,6 +63,10 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   useEffect(() => {
     setCompetitions(initialCompetitions);
   }, [initialCompetitions]);
+
+  // Resultado de borrar o limpiar duplicados, en la propia tabla (antes,
+  // `alert()` del navegador).
+  const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
 
   const refreshEvents = useCallback(() => {
     router.refresh();
@@ -111,38 +116,52 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     return false;
   };
 
-  const deleteEvent = async (id: string) => {
+  // Confirmación en el diálogo común, como «Limpiar duplicados»: antes era una
+  // fila «¿Eliminar? Sí / Cancelar» propia de esta tabla, con un botón rojo
+  // macizo que pasaba a ser lo más visible de la fila.
+  const deleteEvent = async (competition: Competition) => {
+    const ok = await confirmar({
+      titulo: `¿Eliminar «${competition.nombre}»?`,
+      detalle: "Se borran el campeonato y su tarima. No se puede deshacer.",
+      accion: "Eliminar campeonato",
+      peligro: true,
+    });
+    if (!ok) return;
+    const id = competition.id;
     setDeletingId(id);
-    setConfirmDeleteId(null);
+    setNotice(null);
     try {
       await api.deleteCompetition(id);
       await refreshEvents();
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? `No se pudo eliminar: ${err.message}`
-          : "No se pudo eliminar el campeonato.",
-      );
+      setNotice({
+        text: err instanceof Error ? `No se pudo eliminar: ${err.message}` : "No se pudo eliminar el campeonato.",
+        error: true,
+      });
     } finally {
       setDeletingId(null);
     }
   };
 
   const cleanDuplicates = async () => {
-    if (
-      !window.confirm(
-        `¿Eliminar ${duplicateCount} campeonato(s) duplicado(s)? Se conserva el que tenga más tarima asignada.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirmar({
+      titulo: `¿Eliminar ${contar(duplicateCount, "campeonato duplicado", "campeonatos duplicados")}?`,
+      detalle: "De cada grupo se conserva el que tenga más tarima asignada.",
+      accion: "Eliminar duplicados",
+      peligro: true,
+    });
+    if (!ok) return;
     setDeduping(true);
+    setNotice(null);
     try {
       const result = await api.removeCompetitionDuplicates();
       await refreshEvents();
-      alert(`Listo: ${result.removed.length} eliminado(s), ${result.kept.length} conservado(s).`);
+      setNotice({
+        text: `${contar(result.removed.length, "eliminado", "eliminados")} · ${contar(result.kept.length, "conservado", "conservados")}.`,
+        error: false,
+      });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "No se pudieron limpiar duplicados");
+      setNotice({ text: err instanceof Error ? err.message : "No se pudieron limpiar duplicados", error: true });
     } finally {
       setDeduping(false);
     }
@@ -172,7 +191,15 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   return (
     <div className="space-y-0">
       {/* Sticky filter row */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border-muted bg-card px-4 py-3 backdrop-blur-sm">
+      {notice && (
+        <p
+          role={notice.error ? "alert" : "status"}
+          className={`border-b border-border-muted px-4 py-2 text-sm ${notice.error ? "text-destructive" : "text-success"}`}
+        >
+          {notice.text}
+        </p>
+      )}
+      <div className="sticky top-0 z-(--z-sticky) flex flex-wrap items-center gap-2 border-b border-border-muted bg-card px-4 py-3">
         <Input
           type="search"
           placeholder="Buscar campeonato o sede…"
@@ -184,7 +211,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
         <select
           value={filterTipo}
           onChange={(e) => setFilterTipo(e.target.value)}
-          className={selectFieldClassSm}
+          className={cn(selectFieldClassSm, "h-9 sm:h-8")}
           aria-label="Filtrar por tipo"
         >
           <option value="TODOS">Todos los tipos</option>
@@ -198,7 +225,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           <select
             value={filterZona}
             onChange={(e) => setFilterZona(e.target.value)}
-            className={selectFieldClassSm}
+            className={cn(selectFieldClassSm, "h-9 sm:h-8")}
             aria-label="Filtrar por zona"
           >
             <option value="TODOS">Todas las zonas</option>
@@ -212,7 +239,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
         <select
           value={filterEstado}
           onChange={(e) => setFilterEstado(e.target.value)}
-          className={selectFieldClassSm}
+          className={cn(selectFieldClassSm, "h-9 sm:h-8")}
           aria-label="Filtrar por estado"
         >
           <option value="TODOS">Todos los estados</option>
@@ -230,7 +257,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 px-2 text-xs"
+              className="h-9 gap-1 px-2 text-xs sm:h-7"
               onClick={clearFilters}
             >
               <X className="h-3 w-3" />
@@ -243,7 +270,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 text-xs"
+            className="h-9 text-xs sm:h-7"
             disabled={deduping}
             onClick={() => void cleanDuplicates()}
           >
@@ -278,7 +305,6 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           {pageRows.map((competition) => {
             const pct = coveragePct(competition.confirmados, competition.requeridos);
             const isPast = isCompetitionPast(competition);
-            const isConfirmingDelete = confirmDeleteId === competition.id;
             return (
               <div key={competition.id} className="space-y-2 px-4 py-3">
                 <div className="flex items-start justify-between gap-2">
@@ -288,72 +314,53 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   </div>
                   <EventStatusBadge status={competition.estado} />
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
                   <EventTypeBadge tipo={competition.tipo} />
                   <span>{formatDateRange(competition.fecha, competition.fechaFin)}</span>
                   {competition.zona && <span>· {zoneUiName(competition.zona)}</span>}
                   {isPast && (
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-2xs font-semibold text-muted-foreground">
                       Histórico
                     </span>
                   )}
                 </div>
                 <div>
-                  <Progress value={pct} />
-                  <p className="mt-1 text-[11px] text-subtle-muted">
+                  <CoverageBar pct={pct} estado={competition.estado} label={`Cobertura de ${competition.nombre}: ${pct} %`} />
+                  <p className="mt-1 text-2xs tabular-nums text-subtle-muted">
                     {competition.confirmados}/{competition.requeridos} · {pct}%
                   </p>
                 </div>
-                {isConfirmingDelete ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-destructive">¿Eliminar?</span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="h-7 gap-1 px-2 text-xs"
-                      disabled={deletingId === competition.id}
-                      onClick={() => void deleteEvent(competition.id)}
-                    >
-                      {deletingId === competition.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                      Sí
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setConfirmDeleteId(null)}>
-                      Cancelar
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <Button variant="outline" size="sm" className="h-8 flex-1 text-xs" asChild>
-                      <Link href={`/competitions/${competition.id}`}>
-                        Montar tarima
-                        <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button variant="outline" size="sm" className="h-9 flex-1 text-xs" asChild>
+                    <Link href={`/competitions/${competition.id}`}>
+                      Montar tarima
+                      <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground"
+                    onClick={() =>
+                      window.open(`${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`, "_blank")
+                    }
+                    aria-label={`Cuadrante PDF de ${competition.nombre}`}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                  </Button>
+                  {canDelete(competition) && (
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground"
-                      onClick={() =>
-                        window.open(`${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`, "_blank")
-                      }
-                      aria-label={`Cuadrante PDF de ${competition.nombre}`}
+                      className="h-9 w-9 text-destructive"
+                      disabled={deletingId === competition.id}
+                      onClick={() => void deleteEvent(competition)}
+                      aria-label={`Eliminar ${competition.nombre}`}
                     >
-                      <FileText className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
-                    {canDelete(competition) && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        disabled={deletingId === competition.id}
-                        onClick={() => setConfirmDeleteId(competition.id)}
-                        aria-label={`Eliminar ${competition.nombre}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}
@@ -376,14 +383,13 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           <DataTableBody>
             {pageRows.map((competition) => {
               const pct = coveragePct(competition.confirmados, competition.requeridos);
-              const isConfirmingDelete = confirmDeleteId === competition.id;
               const isPast = isCompetitionPast(competition);
               return (
                 <DataTableRow
                   key={competition.id}
                   className={cn(
-                    "group transition-colors duration-150",
-                    isConfirmingDelete && "bg-destructive/5",
+                    "group transition-colors duration-(--duration-base)",
+                    deletingId === competition.id && "opacity-60",
                   )}
                 >
                   <DataTableCell>
@@ -397,12 +403,12 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                           "Histórico" es un hecho (baja a etiqueta plana),
                           "Duplicado" pide una acción (conserva el chip). */}
                       {isPast && (
-                        <span className="ml-2 text-[11px] font-medium text-subtle-muted">
+                        <span className="ml-2 text-2xs font-medium text-subtle-muted">
                           Histórico
                         </span>
                       )}
                       {duplicateIds.has(competition.id) && (
-                        <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-[11px] font-semibold text-warning">
+                        <span className="ml-2 rounded bg-warning-subtle px-1.5 py-0.5 text-2xs font-semibold text-warning">
                           Duplicado
                         </span>
                       )}
@@ -415,12 +421,12 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                   <DataTableCell>
                     <EventTypeBadge tipo={competition.tipo} />
                   </DataTableCell>
-                  <DataTableCell className="text-[13px] text-muted-foreground">
+                  <DataTableCell className="text-ui text-muted-foreground">
                     {competition.zona ? zoneUiName(competition.zona) : "—"}
                   </DataTableCell>
                   <DataTableCell className="min-w-[140px]">
-                    <Progress value={pct} />
-                    <p className="mt-1 text-[11px] tabular-nums text-subtle-muted">
+                    <CoverageBar pct={pct} estado={competition.estado} label={`Cobertura de ${competition.nombre}: ${pct} %`} />
+                    <p className="mt-1 text-2xs tabular-nums text-subtle-muted">
                       {competition.confirmados}/{competition.requeridos} · {pct}%
                     </p>
                   </DataTableCell>
@@ -428,69 +434,41 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
                     <EventStatusBadge status={competition.estado} />
                   </DataTableCell>
                   <DataTableCell className="text-right">
-                    {isConfirmingDelete ? (
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-xs text-destructive">¿Eliminar?</span>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="h-7 gap-1 px-2 text-xs"
-                          disabled={deletingId === competition.id}
-                          onClick={() => void deleteEvent(competition.id)}
-                        >
-                          {deletingId === competition.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Check className="h-3 w-3" />
-                          )}
-                          Sí, eliminar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => setConfirmDeleteId(null)}
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity duration-(--duration-fast) hover:text-foreground group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
+                        onClick={() =>
+                          window.open(
+                            `${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`,
+                            "_blank",
+                          )
+                        }
+                        aria-label={`Cuadrante PDF de ${competition.nombre}`}
+                        title="Cuadrante PDF"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/competitions/${competition.id}`}>
+                          Montar tarima
+                          <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                      {canDelete(competition) && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity duration-100 hover:text-foreground group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
-                          onClick={() =>
-                            window.open(
-                              `${getApiBaseUrl()}/competitions/${competition.id}/roster/quadrant`,
-                              "_blank",
-                            )
-                          }
-                          aria-label={`Cuadrante PDF de ${competition.nombre}`}
-                          title="Cuadrante PDF"
+                          className="h-8 w-8 text-destructive opacity-0 transition-opacity duration-(--duration-fast) hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
+                          disabled={deletingId === competition.id}
+                          onClick={() => void deleteEvent(competition)}
+                          aria-label={`Eliminar ${competition.nombre}`}
                         >
-                          <FileText className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/competitions/${competition.id}`}>
-                            Montar tarima
-                            <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                        {canDelete(competition) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive opacity-0 transition-opacity duration-100 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 pointer-coarse:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
-                            disabled={deletingId === competition.id}
-                            onClick={() => setConfirmDeleteId(competition.id)}
-                            aria-label={`Eliminar ${competition.nombre}`}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </DataTableCell>
                 </DataTableRow>
               );
@@ -506,7 +484,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-9 px-2 text-xs sm:h-7"
             disabled={safeCurrentPage <= 1}
             onClick={() => setPage(1)}
             aria-label="Primera página"
@@ -516,7 +494,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-9 px-2 text-xs sm:h-7"
             disabled={safeCurrentPage <= 1}
             onClick={() => setPage((p) => p - 1)}
           >
@@ -527,7 +505,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
               key={p}
               variant={p === safeCurrentPage ? "default" : "outline"}
               size="sm"
-              className="h-7 w-7 p-0 text-xs"
+              className="h-9 w-9 p-0 text-xs sm:h-7 sm:w-7"
               onClick={() => setPage(p)}
               aria-current={p === safeCurrentPage ? "page" : undefined}
             >
@@ -537,7 +515,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-9 px-2 text-xs sm:h-7"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
@@ -546,7 +524,7 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-9 px-2 text-xs sm:h-7"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => setPage(totalPages)}
             aria-label="Última página"

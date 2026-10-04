@@ -3,23 +3,11 @@ import { ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { daysUntil } from "@/lib/dashboard-intelligence";
 import { coveragePct } from "@/lib/roster-coverage";
-import type { Competition, EventStatus } from "@/lib/types";
+import type { Competition } from "@/lib/types";
+import { STATUS_BAR as barColor, STATUS_TEXT as statusText } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-
-const barColor: Record<EventStatus, string> = {
-  Completo: "bg-success",
-  Incompleto: "bg-warning",
-  Crítico: "bg-destructive",
-  Borrador: "bg-subtle",
-};
-const statusText: Record<EventStatus, string> = {
-  Completo: "text-success",
-  Incompleto: "text-warning",
-  Crítico: "text-destructive",
-  Borrador: "text-muted-foreground",
-};
 
 function whenLabel(c: Competition): string {
   const start = daysUntil(c.fecha);
@@ -65,7 +53,7 @@ export function UpcomingCompetitions({ competitions }: { competitions: Competiti
                   className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   <div className="w-10 shrink-0 text-center leading-none" aria-hidden="true">
-                    <p className="text-[11px] text-muted-foreground">{MONTHS[(m ?? 1) - 1]}</p>
+                    <p className="text-2xs text-muted-foreground">{MONTHS[(m ?? 1) - 1]}</p>
                     <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">{d}</p>
                   </div>
                   <div className="min-w-0 flex-1">

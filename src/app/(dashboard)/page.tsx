@@ -31,14 +31,14 @@ export default async function DashboardPage() {
 
       <KpiCards kpis={dashboard.kpis} />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+      <div className="grid gap-4 xl:grid-cols-(--grid-dashboard)">
         <div className="min-w-0 [&>*]:h-full">
           <UpcomingCompetitions competitions={dashboard.upcomingCompetitions} />
         </div>
         <PendingPanel insights={dashboard.insights} sanctions={dashboard.sanctionAlerts} solicitudes={solicitudes} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+      <div className="grid gap-4 xl:grid-cols-(--grid-dashboard)">
         <div className="min-w-0 [&>*]:h-full">
           <OperationalCalendar calendar={dashboard.calendar} />
         </div>

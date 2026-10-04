@@ -108,7 +108,7 @@ function SlotCell({
 
   return (
     <div className="min-w-0">
-      <p className="mb-1 truncate text-[11px] font-medium text-subtle">
+      <p className="mb-1 truncate text-2xs font-medium text-subtle">
         {slotLabel}
       </p>
       <div
@@ -148,12 +148,12 @@ function SlotCell({
           // El hueco es la contraparte física de la ficha: misma duración y misma
           // curva que ella, y solo propiedades que no repintan layout (la parrilla
           // entera está viva mientras se arrastra).
-          "relative rounded-lg border px-2 py-1.5 transition-[color,background-color,border-color,box-shadow,scale] duration-100 ease-(--ease-out) focus-ring",
+          "relative rounded-lg border px-2 py-1.5 transition-[color,background-color,border-color,box-shadow,scale] duration-(--duration-fast) ease-(--ease-out) focus-ring",
           !readOnly && "cursor-pointer",
           isDropTarget
             // Crece un 1.5% bajo el puntero: el hueco "acepta" antes de soltar.
-            // `z-10` para que crezca por encima de sus vecinos, no por debajo.
-            ? "z-10 scale-[1.015] border-primary bg-primary/10 shadow-md"
+            // `z-(--z-sticky)` para que crezca por encima de sus vecinos, no por debajo.
+            ? "z-(--z-sticky) scale-(--scale-lift) border-primary bg-primary/10 shadow-md"
             : isSelected
               ? "border-primary bg-primary/5 shadow-sm"
               : violation
@@ -170,13 +170,13 @@ function SlotCell({
           // (nombre, insignias y botones diminutos de 20 px).
           <div className="flex min-h-7 items-center gap-1.5">
             <LevelBadge level={referee.nivel} compact />
-            <p className="min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-foreground">
+            <p className="min-w-0 flex-1 truncate text-ui font-medium leading-tight text-foreground">
               {referee.nombre}
             </p>
             {isCrossZone && (
               <span
                 title={`Fuera de zona (${referee.zona})`}
-                className="shrink-0 rounded-md bg-warning-muted px-1 py-px text-[11px] font-semibold text-warning"
+                className="shrink-0 rounded-md bg-warning-muted px-1 py-px text-2xs font-semibold text-warning"
               >
                 ⟳
               </span>
@@ -184,7 +184,7 @@ function SlotCell({
             {isPaid && (
               <span
                 title="Liquidación pagada: no se puede sustituir ni liberar este puesto"
-                className="flex shrink-0 items-center gap-0.5 rounded-md bg-muted px-1 py-px text-[11px] font-medium text-muted-foreground"
+                className="flex shrink-0 items-center gap-0.5 rounded-md bg-muted px-1 py-px text-2xs font-medium text-muted-foreground"
               >
                 <Lock className="h-3 w-3" aria-hidden="true" />
                 Pagada
@@ -193,7 +193,7 @@ function SlotCell({
             {respuesta?.estado === "rechazada" && (
               <span
                 title={`No puede ir${respuesta.motivo ? `: ${respuesta.motivo}` : ""}`}
-                className="shrink-0 rounded-md bg-destructive-muted px-1 py-px text-[11px] font-semibold text-destructive"
+                className="shrink-0 rounded-md bg-destructive-muted px-1 py-px text-2xs font-semibold text-destructive"
               >
                 No va
               </span>
@@ -206,7 +206,7 @@ function SlotCell({
             {violation && (
               <span
                 title={`Mínimo ${violation.minLevel}`}
-                className="flex shrink-0 items-center gap-0.5 rounded-md bg-warning-muted px-1 py-px text-[11px] font-semibold text-warning"
+                className="flex shrink-0 items-center gap-0.5 rounded-md bg-warning-muted px-1 py-px text-2xs font-semibold text-warning"
               >
                 <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                 {abbreviateRefereeLevel(violation.minLevel)}
@@ -215,10 +215,10 @@ function SlotCell({
             {readOnly ? (
               <>
                 {slotFlags?.compartido && (
-                  <span className="shrink-0 text-[11px] font-semibold text-primary" title="Compartido">*</span>
+                  <span className="shrink-0 text-2xs font-semibold text-primary" title="Compartido">*</span>
                 )}
                 {slotFlags?.intercambio && (
-                  <span className="shrink-0 text-[11px] font-semibold text-info" title="Intercambio">↑↓</span>
+                  <span className="shrink-0 text-2xs font-semibold text-info" title="Intercambio">↑↓</span>
                 )}
               </>
             ) : (
@@ -233,7 +233,7 @@ function SlotCell({
                   aria-label="Compartido"
                   aria-pressed={slotFlags?.compartido ? "true" : "false"}
                   className={cn(
-                    "flex h-6 min-w-6 items-center justify-center rounded-md text-[11px] font-semibold transition-[color,background-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
+                    "flex h-6 min-w-6 items-center justify-center rounded-md text-2xs font-semibold transition-[color,background-color,scale] duration-(--duration-fast) ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.compartido
                       ? "bg-primary text-primary-foreground"
                       : "text-subtle-muted hover:bg-surface-hover hover:text-foreground",
@@ -251,7 +251,7 @@ function SlotCell({
                   aria-label="Intercambio"
                   aria-pressed={slotFlags?.intercambio ? "true" : "false"}
                   className={cn(
-                    "flex h-6 min-w-6 items-center justify-center rounded-md text-[11px] font-semibold transition-[color,background-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
+                    "flex h-6 min-w-6 items-center justify-center rounded-md text-2xs font-semibold transition-[color,background-color,scale] duration-(--duration-fast) ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.intercambio
                       ? "bg-info text-primary-foreground"
                       : "text-subtle-muted hover:bg-surface-hover hover:text-foreground",
@@ -349,7 +349,7 @@ export function SlotGrid({
       {layout.map((row, rowIndex) => (
         <div key={row.label ?? `row-${rowIndex}`}>
           {row.label ? (
-            <p className="mb-1 text-[11px] font-semibold text-foreground-secondary">
+            <p className="mb-1 text-2xs font-semibold text-foreground-secondary">
               {row.label}
             </p>
           ) : null}

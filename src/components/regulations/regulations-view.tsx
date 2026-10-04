@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AepGuidePanel } from "@/components/regulations/aep-guide-panel";
 import { CompensationNormativaPanel } from "@/components/regulations/compensation-normativa-panel";
 import { AEP_GUIDE_META } from "@/lib/aep-guide-2026";
@@ -84,11 +83,11 @@ function IpfArticleList({
               <button
                 type="button"
                 onClick={() => toggle(art.num)}
-                className="flex flex-1 items-start gap-3 px-4 py-3 text-left transition-colors focus-ring hover:bg-surface-hover"
+                className="flex min-h-11 flex-1 items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors focus-ring hover:bg-surface-hover"
                 aria-expanded={isOpen}
                 aria-controls={`${anchorId}-content`}
               >
-                <span className="mt-0.5 shrink-0 text-primary" aria-hidden="true">
+                <span className="mt-1 shrink-0 text-muted-foreground" aria-hidden="true">
                   {isOpen ? (
                     <ChevronDown className="h-3.5 w-3.5" />
                   ) : (
@@ -104,7 +103,7 @@ function IpfArticleList({
                 onClick={() => copyLink(anchorId)}
                 title={copiedId === anchorId ? "¡Enlace copiado!" : "Copiar enlace al artículo"}
                 aria-label="Copiar enlace al artículo"
-                className="flex shrink-0 items-center px-3 opacity-0 transition-opacity group-hover:opacity-100 focus-ring"
+                className="flex min-w-9 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-ring"
               >
                 {copiedId === anchorId ? (
                   <Check className="h-3.5 w-3.5 text-success" />
@@ -114,8 +113,8 @@ function IpfArticleList({
               </button>
             </div>
             {isOpen && (
-              <div id={`${anchorId}-content`} className="px-4 pb-4 pl-10">
-                <p className="whitespace-pre-line text-sm leading-relaxed text-foreground-secondary">
+              <div id={`${anchorId}-content`} className="pb-4 pl-8 pr-2">
+                <p className="max-w-prose whitespace-pre-line text-title leading-relaxed text-foreground-secondary">
                   {query ? <HighlightText text={art.text} query={query} /> : art.text}
                 </p>
               </div>
@@ -176,13 +175,12 @@ export function RegulationsView() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Referencia"
         title="Normativa"
         description="Guía AEP, compensación de jueces y reglamento técnico IPF."
       />
 
       <div
-        className="flex w-fit flex-wrap gap-0.5 rounded-lg bg-surface p-0.5"
+        className="flex max-w-full gap-0.5 overflow-x-auto rounded-lg bg-surface p-0.5 sm:w-fit"
         role="tablist"
         aria-label="Secciones de normativa"
       >
@@ -194,8 +192,9 @@ export function RegulationsView() {
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
             className={cn(
+              "shrink-0 whitespace-nowrap",
               // Pestañas segmentadas, como los pasos de la tarima.
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-ring",
+              "min-h-9 rounded-md px-3 text-sm font-medium transition-colors focus-ring",
               tab === t.id
                 ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                 : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
@@ -213,13 +212,14 @@ export function RegulationsView() {
       {tab === "ipf" && (
         <>
           <div className="space-y-4">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-muted" />
+            <div className="relative max-w-xl">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle-muted" aria-hidden="true" />
               <input
                 type="search"
                 value={ipfQuery}
                 onChange={(e) => setIpfQuery(e.target.value)}
                 placeholder="Buscar en el Reglamento IPF…"
+                aria-label="Buscar en el Reglamento IPF"
                 autoComplete="off"
                 className="h-11 w-full rounded-xl border border-border-strong bg-surface pl-10 pr-10 text-sm text-foreground placeholder:text-subtle-muted focus-ring"
               />
@@ -235,7 +235,7 @@ export function RegulationsView() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-subtle-muted">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
               {q ? (
                 <p>
                   <span className="font-medium text-foreground-secondary">{ipfArticleCount}</span>{" "}
@@ -245,68 +245,64 @@ export function RegulationsView() {
                 </p>
               ) : (
                 <p>
-                  <strong className="text-foreground-secondary">IPF Technical Rulebook</strong> —{" "}
+                  <strong className="text-foreground-secondary">IPF Technical Rulebook</strong>:{" "}
                   {IPF_CHAPTERS.length} capítulos. Haz clic en un artículo para expandirlo.
                 </p>
               )}
             </div>
 
             {ipfChapters.length === 0 && (
-              <Card>
-                <CardContent className="py-10 text-center text-sm text-subtle-muted">
-                  Sin resultados para «{ipfQuery}».
-                </CardContent>
-              </Card>
+              <p className="py-6 text-sm text-muted-foreground">Sin resultados para «{ipfQuery}».</p>
             )}
 
+            {/* Un capítulo es una sección con su h2, no una tarjeta: el
+                reglamento se lee de corrido y las cajas apiladas solo
+                añadían bordes. */}
             {ipfChapters.map((chapter) => {
               const isOpen = q ? true : openChapters.has(chapter.num);
               return (
-                <Card key={chapter.num}>
-                  <CardHeader className="p-0">
+                <section key={chapter.num} className="max-w-3xl border-t border-border-muted pt-3">
+                  <h2>
                     <button
                       type="button"
                       onClick={() => toggleChapter(chapter.num)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left focus-ring"
+                      className="flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-hover focus-ring"
                       aria-expanded={isOpen}
                       aria-controls={`ipf-chapter-${chapter.num}`}
                     >
-                      <span className="text-primary" aria-hidden="true">
+                      <span className="text-muted-foreground" aria-hidden="true">
                         {isOpen ? (
                           <ChevronDown className="h-4 w-4" />
                         ) : (
                           <ChevronRight className="h-4 w-4" />
                         )}
                       </span>
-                      <CardTitle className="text-sm">
+                      <span className="text-base font-semibold text-foreground">
                         {q ? (
                           <HighlightText
-                            text={`Capítulo ${chapter.num} — ${chapter.title}`}
+                            text={`Capítulo ${chapter.num}: ${chapter.title}`}
                             query={ipfQuery.trim()}
                           />
                         ) : (
-                          `Capítulo ${chapter.num} — ${chapter.title}`
+                          `Capítulo ${chapter.num}: ${chapter.title}`
                         )}
-                      </CardTitle>
-                      <span className="ml-auto text-xs text-subtle-muted">
+                      </span>
+                      <span className="ml-auto shrink-0 text-sm text-muted-foreground">
                         {chapter.articles.length} art.
                       </span>
                     </button>
-                  </CardHeader>
+                  </h2>
                   {isOpen && (
-                    <CardContent
-                      id={`ipf-chapter-${chapter.num}`}
-                      className="border-t border-border-muted p-0"
-                    >
+                    <div id={`ipf-chapter-${chapter.num}`} className="mt-1 pb-2">
                       <IpfArticleList chapter={chapter} expandAll={!!q} query={q} />
-                    </CardContent>
+                    </div>
                   )}
-                </Card>
+                </section>
               );
             })}
           </div>
 
-          <div className="space-y-1 rounded-xl border border-border-muted bg-surface/50 px-4 py-3 text-xs leading-relaxed text-subtle-muted">
+          <footer className="max-w-prose space-y-1.5 border-t border-border-muted pt-4 text-sm leading-relaxed text-muted-foreground">
             <p>
               Fuente:{" "}
               <strong className="text-foreground-secondary">IPF Technical Rules (01/03/2026)</strong>
@@ -319,7 +315,7 @@ export function RegulationsView() {
                 href="https://www.powerlifting.sport/rules/codes/info/technical-rules"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-ring"
               >
                 powerlifting.sport → Rules → Technical Rules
               </a>
@@ -328,17 +324,17 @@ export function RegulationsView() {
                 href="https://www.powerlifting.sport/federation/referees"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-ring"
               >
                 Referees IPF
               </a>
             </p>
-            <p className="italic">
+            <p>
               Los niveles AEP (Regional, Nacional, IPF Cat. 2, IPF Cat. 1) corresponden a Nacional,
               Cat. II y Cat. I del sistema internacional IPF. Consulta la Guía AEP para estructura de
               campeonatos y marcas mínimas.
             </p>
-          </div>
+          </footer>
         </>
       )}
     </PageShell>

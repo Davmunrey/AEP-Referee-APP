@@ -63,8 +63,8 @@ export function CompensationExportDialog({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="export-receipt-title" className={`max-h-[90vh] w-full outline-none max-w-md overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-md ${dialogPanelEnter}`}>
+    <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="export-receipt-title" className={`max-h-(--size-dialog-h) w-full outline-none max-w-md overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-md ${dialogPanelEnter}`}>
         <div className="mb-4 flex items-start justify-between gap-2">
           <div>
             <h3 id="export-receipt-title" className="text-sm font-semibold">Exportar recibo</h3>

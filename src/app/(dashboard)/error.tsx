@@ -15,7 +15,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-6 text-center">
+    <div className="flex min-h-(--size-empty-state) flex-col items-center justify-center gap-6 px-6 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-destructive-muted">
         <AlertTriangle className="h-8 w-8 text-destructive" aria-hidden="true" />
       </div>
@@ -25,7 +25,7 @@ export default function DashboardError({
           Ha ocurrido un error al cargar el panel. Por favor, inténtalo de nuevo.
         </p>
         {error.digest && (
-          <p className="text-[10px] text-muted-foreground/40">
+          <p className="text-2xs text-muted-foreground/40">
             ref: {error.digest}
           </p>
         )}

@@ -40,7 +40,7 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
             >
               {/* Actor avatar */}
               <div
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-active text-[10px] font-semibold text-foreground-secondary"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-active text-2xs font-semibold text-foreground-secondary"
                 aria-hidden="true"
               >
                 {initials(item.actor)}
@@ -50,11 +50,11 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
               <div className="min-w-0 flex-1 pt-0.5">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <ActivityTypeBadge tipo={item.tipo} />
-                  <time className="text-[10px] text-muted-foreground">
+                  <time className="text-2xs text-muted-foreground">
                     {item.hace}
                   </time>
                 </div>
-                <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
+                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
                   <span className="font-semibold text-foreground/90">{item.actor}</span>{" "}
                   {item.accion}{" "}
                   <span className="text-foreground/70">{item.evento}</span>

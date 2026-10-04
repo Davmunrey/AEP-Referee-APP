@@ -12,7 +12,7 @@ import type {
   RefereeExam,
   RefereeLevel,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import {
   Check,
   GraduationCap,
@@ -23,6 +23,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { REFEREE_LEVEL_ORDER } from "@/lib/referee-levels";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 const EXAM_TYPES: ExamType[] = [
   "Nuevo juez",
@@ -155,7 +156,8 @@ export function ExamsManager({
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm("¿Eliminar este examen? Esta acción no se puede deshacer.")) return;
+    const ok = await confirmar({ titulo: "¿Eliminar este examen?", detalle: "No se puede deshacer.", accion: "Eliminar examen", peligro: true });
+    if (!ok) return;
     setBusy(true);
     setError(null);
     try {
@@ -178,18 +180,21 @@ export function ExamsManager({
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <GraduationCap className="h-4 w-4 text-primary" />
+        {/* Sin icono de color delante del título: el rojo es para la acción
+            principal, y el título ya dice qué hay. */}
+        <CardTitle className="flex items-baseline gap-1.5 text-sm font-semibold">
           Exámenes de jueces
-          <span className="text-xs font-normal text-subtle-muted">
+          <span className="text-xs font-normal tabular-nums text-muted-foreground">
             ({exams.length})
           </span>
         </CardTitle>
         {canEdit && (
           <Button
             size="sm"
-            variant={showForm ? "outline" : "default"}
-            className="gap-1.5"
+            // En la ficha del juez convive con «Editar», «Subir informe»…: una
+            // sola acción principal por pantalla, así que allí va en contorno.
+            variant={showForm || lockedRefereeId ? "outline" : "default"}
+            className="gap-1.5 max-sm:h-9"
             onClick={() => setShowForm((v) => !v)}
           >
             {showForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -345,7 +350,7 @@ export function ExamsManager({
           {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
             <button
               type="button"
-              className="flex items-center gap-1 rounded text-[11px] text-subtle-muted hover:text-foreground focus-ring"
+              className="flex items-center gap-1 rounded text-2xs text-subtle-muted hover:text-foreground focus-ring"
               onClick={() => { setFilterTipo("TODOS"); setFilterResultado("TODOS"); }}
             >
               <X className="h-3 w-3" />
@@ -353,7 +358,7 @@ export function ExamsManager({
             </button>
           )}
           {(filterTipo !== "TODOS" || filterResultado !== "TODOS") && (
-            <span className="ml-auto text-[11px] text-subtle-muted">
+            <span className="ml-auto text-2xs text-subtle-muted">
               {filteredExams.length} de {exams.length}
             </span>
           )}
@@ -363,7 +368,7 @@ export function ExamsManager({
       <CardContent className="divide-y divide-border-muted p-0">
         {exams.length === 0 && (
           <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-            <GraduationCap className="h-10 w-10 text-border-strong" />
+            <GraduationCap className="h-8 w-8 text-subtle-muted" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium text-foreground-secondary">
                 Sin exámenes registrados
@@ -389,21 +394,21 @@ export function ExamsManager({
           return (
             <div key={exam.id} className="px-4 py-3.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[13px] font-semibold text-foreground">
+                <span className="text-ui font-semibold text-foreground">
                   {exam.tipo}
                 </span>
                 <Badge variant="muted">→ {exam.nivelObjetivo}</Badge>
                 {resultBadge(exam.resultado)}
-                <span className="ml-auto text-[11px] text-subtle-muted">
-                  {exam.fecha}
+                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                  {formatDate(exam.fecha)}
                 </span>
               </div>
               {!lockedRefereeId && (
-                <p className="mt-1 text-[12px] font-medium text-foreground-secondary">
+                <p className="mt-1 text-xs font-medium text-foreground-secondary">
                   {exam.refereeName}
                 </p>
               )}
-              <p className="mt-0.5 text-[11.5px] text-subtle-muted">
+              <p className="mt-0.5 text-xs text-subtle-muted">
                 Examinador: {exam.examinador}
               </p>
               {pct != null && (
@@ -420,19 +425,19 @@ export function ExamsManager({
                       className={cn(
                         // Solo el ancho, y con la misma curva/duración que el
                         // resto de barras de progreso de la app.
-                        "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
+                        "h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
                         pct >= 60 ? "bg-success" : "bg-destructive",
                       )}
-                      style={{ width: `${Math.max(pct, 3)}%` }}
+                      style={{ transform: `scaleX(${Math.max(pct, 3) / 100})` }}
                     />
                   </div>
-                  <span className="text-[11px] tabular-nums text-subtle-muted">
+                  <span className="text-2xs tabular-nums text-subtle-muted">
                     {exam.puntuacion}/{exam.puntuacionMaxima}
                   </span>
                 </div>
               )}
               {exam.notas && (
-                <p className="mt-1.5 text-[12px] leading-snug text-muted-foreground">
+                <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
                   {exam.notas}
                 </p>
               )}
@@ -443,7 +448,7 @@ export function ExamsManager({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1.5 rounded-lg border-success-border text-[11.5px] text-success hover:bg-success-muted hover:text-success"
+                        className="h-7 gap-1.5 rounded-lg border-success-border text-xs text-success hover:bg-success-muted hover:text-success"
                         disabled={busy}
                         onClick={() => mark(exam.id, "Aprobado")}
                       >
@@ -453,7 +458,7 @@ export function ExamsManager({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1.5 rounded-lg border-destructive-border text-[11.5px] text-destructive hover:bg-destructive-muted hover:text-destructive"
+                        className="h-7 gap-1.5 rounded-lg border-destructive-border text-xs text-destructive hover:bg-destructive-muted hover:text-destructive"
                         disabled={busy}
                         onClick={() => mark(exam.id, "Suspenso")}
                       >
@@ -466,7 +471,7 @@ export function ExamsManager({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 gap-1 rounded-lg text-[11.5px] text-subtle-muted hover:text-destructive"
+                      className="h-7 gap-1 rounded-lg text-xs text-subtle-muted hover:text-destructive"
                       disabled={busy}
                       onClick={() => remove(exam.id)}
                     >

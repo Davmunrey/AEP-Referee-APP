@@ -53,13 +53,16 @@ function isRestrictedAccount(role: UserRole): boolean {
   return SUPER_ADMIN_ONLY_ROLES.includes(role);
 }
 
-const ROLE_BADGE_VARIANT: Record<UserRole, "nacional" | "regional" | "ipf2" | "muted"> = {
-  super_admin: "nacional",
-  delegado_jueces: "regional",
-  delegado_zona: "ipf2",
-  responsable_financiero_jueces: "muted",
-  solo_ver: "muted",
-  juez: "muted",
+// El rol es una categoría, no un estado: antes se pintaba con los colores de
+// nivel (rojo, azul, ámbar), que en esta app significan acento, info y aviso.
+// Neutro, con relleno para los roles que gestionan y contorno para el resto.
+const ROLE_BADGE_VARIANT: Record<UserRole, "secondary" | "outline"> = {
+  super_admin: "secondary",
+  delegado_jueces: "secondary",
+  delegado_zona: "secondary",
+  responsable_financiero_jueces: "outline",
+  solo_ver: "outline",
+  juez: "outline",
 };
 
 function getInitials(nombre: string): string {
@@ -102,6 +105,10 @@ export function UsersAdmin({
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // El error del alta va aparte: antes compartía estado con el de la carga y
+  // «Supabase no configurado» salía dos veces, junto al botón y en la caja de
+  // abajo. Ahora cada error sale una vez, junto a lo que lo provoca.
+  const [createError, setCreateError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; nombre: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filterRole, setFilterRole] = useState<UserRole | "TODOS">("TODOS");
@@ -264,11 +271,11 @@ export function UsersAdmin({
     e.preventDefault();
     // Misma validación que la edición: un Delegado de Zona necesita zona.
     if (form.role === "delegado_zona" && !form.zona) {
-      setError("La zona es obligatoria para Delegado de Zona.");
+      setCreateError("La zona es obligatoria para Delegado de Zona.");
       return;
     }
     setSaving(true);
-    setError(null);
+    setCreateError(null);
     const capturedEmail = form.email;
     const capturedPassword = form.password;
     try {
@@ -284,7 +291,7 @@ export function UsersAdmin({
       await load();
       setCredentialsBanner({ email: capturedEmail, password: capturedPassword });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
+      setCreateError(err instanceof Error ? err.message : "Error al guardar");
     } finally {
       setSaving(false);
     }
@@ -319,46 +326,76 @@ export function UsersAdmin({
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Administración"
         title="Usuarios federativos"
         description="Alta de representantes regionales y cuentas de consulta. Solo accesible para AEP Nacional."
       />
 
-      {/* Create user form */}
+      {/* Alta de usuario. Cada campo con su etiqueta visible (antes solo
+          había texto de ejemplo dentro del campo, que desaparece al escribir y
+          los lectores de pantalla no siempre anuncian), agrupados en cuenta
+          de acceso y perfil. */}
       <form
         onSubmit={(e) => void onSubmit(e)}
-        className="glass-panel mb-8 grid gap-4 rounded-xl border border-border-muted p-6 md:grid-cols-2"
+        className="surface-card mb-8 space-y-5 rounded-xl p-5 sm:p-6"
+        aria-labelledby="nuevo-usuario-titulo"
       >
-        <h2 className="friendly-label md:col-span-2">Nuevo usuario</h2>
-        <Input placeholder="Email" aria-label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
-        <Input placeholder="Contraseña (mín. 8)" aria-label="Contraseña" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required minLength={8} />
-        <Input placeholder="Nombre completo" aria-label="Nombre completo" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
-        <Input placeholder="Etiqueta de rol (ej. Resp. Cataluña)" aria-label="Etiqueta de rol" value={form.rolLabel} onChange={(e) => setForm((f) => ({ ...f, rolLabel: e.target.value }))} required />
-        <select className={selectFieldClass} value={form.role} aria-label="Rol del usuario" onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
-          {canManageRestrictedRoles && <option value="super_admin">Super Admin</option>}
-          <option value="delegado_jueces">Delegado de Jueces</option>
-          <option value="delegado_zona">Delegado de Zona</option>
-          {canManageRestrictedRoles && (
-            <option value="responsable_financiero_jueces">Responsable Financiero Jueces</option>
+        <h2 id="nuevo-usuario-titulo" className="text-title font-semibold text-foreground">
+          Nuevo usuario
+        </h2>
+        <fieldset className="grid gap-4 md:grid-cols-2">
+          <legend className="mb-3 text-ui font-medium text-muted-foreground">Acceso</legend>
+          <div>
+            <label htmlFor="nu-email" className="friendly-label mb-1 block">Email</label>
+            <Input id="nu-email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
+          </div>
+          <div>
+            <label htmlFor="nu-password" className="friendly-label mb-1 block">Contraseña</label>
+            <Input id="nu-password" type="password" autoComplete="new-password" aria-describedby="nu-password-ayuda" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required minLength={8} />
+            <p id="nu-password-ayuda" className="mt-1 text-xs text-muted-foreground">Mínimo 8 caracteres.</p>
+          </div>
+        </fieldset>
+        <fieldset className="grid gap-4 md:grid-cols-2">
+          <legend className="mb-3 text-ui font-medium text-muted-foreground">Perfil</legend>
+          <div>
+            <label htmlFor="nu-nombre" className="friendly-label mb-1 block">Nombre completo</label>
+            <Input id="nu-nombre" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} required />
+          </div>
+          <div>
+            <label htmlFor="nu-rol-label" className="friendly-label mb-1 block">Etiqueta de rol</label>
+            <Input id="nu-rol-label" placeholder="Ej. Resp. Cataluña" value={form.rolLabel} onChange={(e) => setForm((f) => ({ ...f, rolLabel: e.target.value }))} required />
+          </div>
+          <div>
+            <label htmlFor="nu-rol" className="friendly-label mb-1 block">Rol</label>
+            <select id="nu-rol" className={selectFieldClass} value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
+              {canManageRestrictedRoles && <option value="super_admin">Super Admin</option>}
+              <option value="delegado_jueces">Delegado de Jueces</option>
+              <option value="delegado_zona">Delegado de Zona</option>
+              {canManageRestrictedRoles && (
+                <option value="responsable_financiero_jueces">Responsable Financiero Jueces</option>
+              )}
+              <option value="solo_ver">Solo Ver</option>
+            </select>
+          </div>
+          {form.role === "delegado_zona" && (
+            <div>
+              <label htmlFor="nu-zona" className="friendly-label mb-1 block">Zona del delegado</label>
+              <select id="nu-zona" className={selectFieldClass} value={form.zona} onChange={(e) => setForm((f) => ({ ...f, zona: e.target.value }))}>
+                {zones.map((z) => <option key={z.code} value={z.code}>{z.name}</option>)}
+              </select>
+            </div>
           )}
-          <option value="solo_ver">Solo Ver</option>
-        </select>
-        {form.role === "delegado_zona" && (
-          <select className={selectFieldClass} value={form.zona} aria-label="Zona del delegado" onChange={(e) => setForm((f) => ({ ...f, zona: e.target.value }))}>
-            {zones.map((z) => <option key={z.code} value={z.code}>{z.name}</option>)}
-          </select>
-        )}
-        <div className="md:col-span-2 flex items-center gap-3">
+        </fieldset>
+        <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear usuario"}
           </Button>
-          {error && !deleteConfirm && <p role="alert" className="text-sm text-destructive">{error}</p>}
+          {createError && <p role="alert" className="text-sm text-destructive">{createError}</p>}
         </div>
       </form>
 
       {/* Filter row */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Input placeholder="Buscar por nombre o email…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 w-44 text-xs" aria-label="Buscar usuarios" />
+        <Input placeholder="Buscar por nombre o email…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 w-44 text-xs max-sm:h-9 max-sm:w-full" aria-label="Buscar usuarios" />
         <select className={selectFieldClassSm} value={filterRole} onChange={(e) => setFilterRole(e.target.value as UserRole | "TODOS")} aria-label="Filtrar por rol">
           <option value="TODOS">Todos los roles</option>
           <option value="super_admin">{ROLE_LABELS.super_admin}</option>
@@ -399,6 +436,14 @@ export function UsersAdmin({
             <Button size="sm" variant="outline" onClick={() => void bulkSetActive(false)} disabled={actionId !== null}>Desactivar</Button>
             <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Cancelar</Button>
           </div>
+        </div>
+      )}
+
+      {/* Error de una acción sobre la lista (activar, borrar…), una sola vez.
+          Si la lista no llegó a cargar, el error ocupa su lugar más abajo. */}
+      {error && users.length > 0 && !deleteConfirm && (
+        <div role="alert" className="mb-3 rounded-lg border border-destructive-border bg-destructive-muted px-4 py-2.5 text-sm text-destructive">
+          {error}
         </div>
       )}
 
@@ -453,13 +498,13 @@ export function UsersAdmin({
                   </DataTableCell>
                   <DataTableCell>
                     <div className="flex items-center gap-2.5">
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary" aria-hidden="true">{initials}</span>
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-strong bg-muted text-xs font-semibold text-foreground-secondary" aria-hidden="true">{initials}</span>
                       <span className="font-medium text-foreground">{u.nombre}</span>
                     </div>
                   </DataTableCell>
                   <DataTableCell className="text-xs">{u.email}</DataTableCell>
                   <DataTableCell>
-                    <Badge variant={ROLE_BADGE_VARIANT[u.role]}>{ROLE_LABELS[u.role] ?? u.rol_label}</Badge>
+                    <Badge variant={ROLE_BADGE_VARIANT[u.role]} className={ROLE_BADGE_VARIANT[u.role] === "secondary" ? "bg-surface-active text-foreground" : undefined}>{ROLE_LABELS[u.role] ?? u.rol_label}</Badge>
                   </DataTableCell>
                   <DataTableCell>{u.zona ?? "—"}</DataTableCell>
                   <DataTableCell>
@@ -486,7 +531,7 @@ export function UsersAdmin({
                   <DataTableCell>
                     {isRestrictedAccount(u.role) && !canManageRestrictedRoles ? (
                       <span
-                        className="text-[11px] text-subtle-muted"
+                        className="text-2xs text-subtle-muted"
                         title="Solo un Super Admin puede gestionar esta cuenta"
                       >
                         Solo Super Admin

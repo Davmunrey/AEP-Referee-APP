@@ -57,7 +57,7 @@ El personal de gestión que abre `/portal` vuelve a `/`; un juez que abre una ru
 | **Referencia** | Normativa, Documentación (`/docs`), Soporte (`/tickets`) |
 | **Administración** | Usuarios (super_admin / delegado de jueces) |
 
-Los rótulos (*eyebrow*) de cada página coinciden con el grupo del menú en el que vive.
+La miga de pan de la barra superior dice el grupo del menú en el que vive cada página; el título no lleva rótulo encima.
 
 - **Tarima activa** lleva al campeonato vigente más próximo (por fecha de fin); si no hay ninguno vigente, al último pasado.
 - **Móvil (< 768 px):** el menú lateral se sustituye por un cajón que se abre desde el botón ☰ de la barra superior; incluye el buscador y se cierra al navegar o con Escape. La barra superior muestra el nombre de la página (o del campeonato) en lugar de las migas.

@@ -72,7 +72,7 @@ export function TransferDialogShell({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]",
+        "fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4",
         dialogOverlayEnter,
       )}
       role="presentation"
@@ -88,7 +88,7 @@ export function TransferDialogShell({
           // keyframe `transfer-enter`, que además duplicaba la entrada: el marco
           // y su contenido subían a la vez y el gesto se leía borroso. Ese
           // keyframe sigue siendo el de los pasos interiores, no el del marco.
-          "flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-xl border border-border-muted bg-card shadow-card",
+          "flex max-h-(--size-dialog-h) w-full flex-col overflow-hidden rounded-xl border border-border-muted bg-card shadow-card",
           dialogPanelEnter,
           maxWidthClass,
         )}

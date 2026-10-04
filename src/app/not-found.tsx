@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// Un solo enlace a «/»: desde ahí cada cual acaba en su sitio (la gestión en
+// el panel, el juez en su portal, quien no ha entrado en el acceso), así que
+// no hace falta leer la sesión para elegir destino.
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-      <p className="text-5xl font-semibold text-muted-foreground/40">404</p>
-      <h1 className="text-xl font-semibold text-foreground">Página no encontrada</h1>
-      <p className="max-w-sm text-sm text-muted-foreground">
-        El recurso solicitado no existe o no tienes acceso a él.
-      </p>
-      <Button asChild>
-        <Link href="/">Volver al dashboard</Link>
-      </Button>
-    </div>
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
+      <div className="w-full max-w-sm">
+        <h1 className="text-xl font-semibold text-foreground">No encontramos esta página</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          La dirección no existe, la página se ha movido o no tienes acceso a ella.
+        </p>
+        <Button asChild className="mt-6">
+          <Link href="/">Ir al inicio</Link>
+        </Button>
+      </div>
+    </main>
   );
 }

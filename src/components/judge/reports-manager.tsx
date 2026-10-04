@@ -10,6 +10,7 @@ import { FileText, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReportCard } from "./report-card";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 const REPORT_TYPES: ReportType[] = ["General", "Incidencia", "Evaluación"];
 
@@ -92,7 +93,8 @@ export function ReportsManager({
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm("¿Eliminar este informe? Esta acción no se puede deshacer.")) return;
+    const ok = await confirmar({ titulo: "¿Eliminar este informe?", detalle: "No se puede deshacer.", accion: "Eliminar informe", peligro: true });
+    if (!ok) return;
     setBusy(true);
     setError(null);
     try { await api.deleteReport(id); setReports((prev) => prev.filter((r) => r.id !== id)); router.refresh(); }
@@ -133,13 +135,15 @@ export function ReportsManager({
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b border-border-muted py-4">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <FileText className="h-4 w-4 text-primary" />
+        {/* Sin icono de color delante del título (el rojo es para la acción
+            principal); en la ficha del juez el botón va en contorno para no
+            sumar otra acción principal a la pantalla. */}
+        <CardTitle className="flex items-baseline gap-1.5 text-sm font-semibold">
           Informes
-          <span className="text-xs font-normal text-subtle-muted">({reports.length})</span>
+          <span className="text-xs font-normal tabular-nums text-muted-foreground">({reports.length})</span>
         </CardTitle>
         {canEdit && (
-          <Button size="sm" variant={showForm ? "outline" : "default"} className="gap-1.5" onClick={() => setShowForm((v) => !v)}>
+          <Button size="sm" variant={showForm || lockedRefereeId ? "outline" : "default"} className="gap-1.5 max-sm:h-9" onClick={() => setShowForm((v) => !v)}>
             {showForm ? <X className="h-3.5 w-3.5" /> : <Upload className="h-3.5 w-3.5" />}
             {showForm ? "Cancelar" : "Subir informe"}
           </Button>
@@ -216,7 +220,7 @@ export function ReportsManager({
       <CardContent className="p-0">
         {reports.length === 0 && (
           <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-            <FileText className="h-10 w-10 text-border-strong" />
+            <FileText className="h-8 w-8 text-subtle-muted" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium text-foreground-secondary">Sin informes registrados</p>
               <p className="mt-0.5 text-xs text-subtle-muted">{canEdit ? "Usa «Subir informe» para registrar el primero." : "Aún no hay informes en el historial."}</p>

@@ -1,3 +1,4 @@
+import { PRINT, QUADRANT_ROLE_FILL } from "@/lib/document-tokens";
 import { sessionOrder } from "@/lib/session-order";
 import type { AssignmentsMap, Competition, FlagsMap, RoleKey, RosterSession } from "@/lib/types";
 
@@ -11,17 +12,17 @@ interface RefInfo {
  * El rol NO se rotula por columna: se identifica por el COLOR de la fila + leyenda.
  */
 const ROLE_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
-  central: { bg: "#FF0000", fg: "#000000", label: "CENTRAL" },
-  lateral: { bg: "#FFFF00", fg: "#000000", label: "LATERAL" },
-  ordenador: { bg: "#FFC000", fg: "#000000", label: "ORDENADOR" }, // naranja claro
-  liftingcast: { bg: "#92D050", fg: "#000000", label: "LIFTINGCAST/OPENLIFTER" },
-  speaker: { bg: "#ED7D31", fg: "#000000", label: "MESA/SPEAKER" }, // naranja oscuro
-  mesa: { bg: "#ED7D31", fg: "#000000", label: "MESA/SPEAKER" },
-  control: { bg: "#00B050", fg: "#000000", label: "CONTROL" },
-  pesaje: { bg: "#A6611A", fg: "#000000", label: "PESAJE" }, // marrón
-  equipamiento: { bg: "#8EAADB", fg: "#000000", label: "EQUIPAMIENTO" },
-  jurado: { bg: "#BFBFBF", fg: "#000000", label: "JURADO" },
-  material: { bg: "#D9D9D9", fg: "#000000", label: "MATERIAL" },
+  central: { bg: QUADRANT_ROLE_FILL.central, fg: PRINT.ink, label: "CENTRAL" },
+  lateral: { bg: QUADRANT_ROLE_FILL.lateral, fg: PRINT.ink, label: "LATERAL" },
+  ordenador: { bg: QUADRANT_ROLE_FILL.ordenador, fg: PRINT.ink, label: "ORDENADOR" },
+  liftingcast: { bg: QUADRANT_ROLE_FILL.liftingcast, fg: PRINT.ink, label: "LIFTINGCAST/OPENLIFTER" },
+  speaker: { bg: QUADRANT_ROLE_FILL.speaker, fg: PRINT.ink, label: "MESA/SPEAKER" },
+  mesa: { bg: QUADRANT_ROLE_FILL.mesa, fg: PRINT.ink, label: "MESA/SPEAKER" },
+  control: { bg: QUADRANT_ROLE_FILL.control, fg: PRINT.ink, label: "CONTROL" },
+  pesaje: { bg: QUADRANT_ROLE_FILL.pesaje, fg: PRINT.ink, label: "PESAJE" },
+  equipamiento: { bg: QUADRANT_ROLE_FILL.equipamiento, fg: PRINT.ink, label: "EQUIPAMIENTO" },
+  jurado: { bg: QUADRANT_ROLE_FILL.jurado, fg: PRINT.ink, label: "JURADO" },
+  material: { bg: QUADRANT_ROLE_FILL.material, fg: PRINT.ink, label: "MATERIAL" },
 };
 
 // Orden de la leyenda (como aparece en el cuadrante oficial)
@@ -36,7 +37,7 @@ const LEGEND_ORDER: RoleKey[] = [
 ];
 
 function styleFor(key: string): { bg: string; fg: string; label: string } {
-  return ROLE_STYLE[key] ?? { bg: "#FFFFFF", fg: "#000000", label: key.toUpperCase() };
+  return ROLE_STYLE[key] ?? { bg: PRINT.paper, fg: PRINT.ink, label: key.toUpperCase() };
 }
 
 function esc(s: string): string {
@@ -225,42 +226,42 @@ export function generateQuadrantHtml(
   @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; background: #fff; padding: 12mm 14mm; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: ${PRINT.ink}; background: ${PRINT.paper}; padding: 12mm 14mm; }
 
   /* ── Cabecera ─────────────────────────────── */
   .doc-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 4px; }
   .doc-header img { height: 56px; width: auto; }
   .doc-header-text { flex: 1; line-height: 1.25; }
-  .doc-org { font-size: 11pt; font-weight: 700; color: #000; }
-  .doc-title { font-size: 12pt; font-weight: 700; color: #000; }
-  .doc-sub { font-size: 9.5pt; color: #000; }
-  .doc-loc { font-size: 9.5pt; font-weight: 700; color: #1F4E79; }
-  .doc-date { text-align: right; color: #C00000; font-weight: 700; font-size: 9.5pt; margin: 2px 0 14px; }
+  .doc-org { font-size: 11pt; font-weight: 700; color: ${PRINT.ink}; }
+  .doc-title { font-size: 12pt; font-weight: 700; color: ${PRINT.ink}; }
+  .doc-sub { font-size: 9.5pt; color: ${PRINT.ink}; }
+  .doc-loc { font-size: 9.5pt; font-weight: 700; color: ${PRINT.navy}; }
+  .doc-date { text-align: right; color: ${PRINT.red}; font-weight: 700; font-size: 9.5pt; margin: 2px 0 14px; }
 
   /* ── Tabla cuadrante ──────────────────────── */
-  .cuadrante { width: 100%; border-collapse: collapse; margin: 0 auto 18px; table-layout: fixed; border: 1.5px solid #000; }
-  .cuadrante td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; overflow-wrap: break-word; word-break: break-word; }
-  .cell-day { font-weight: 700; font-size: 9.5pt; padding: 4px; background: #fff; }
+  .cuadrante { width: 100%; border-collapse: collapse; margin: 0 auto 18px; table-layout: fixed; border: 1.5px solid ${PRINT.ink}; }
+  .cuadrante td { border: 1px solid ${PRINT.ink}; padding: 3px 4px; text-align: center; vertical-align: middle; overflow-wrap: break-word; word-break: break-word; }
+  .cell-day { font-weight: 700; font-size: 9.5pt; padding: 4px; background: ${PRINT.paper}; }
   .cell-sess { font-weight: 700; font-size: 8pt; padding: 4px 3px; }
   .cell-sess .sess-n { display: block; }
   .cell-sess .sess-cat { display: block; font-weight: 700; }
-  .cell-time { color: #C00000; font-weight: 700; font-size: 8.5pt; }
+  .cell-time { color: ${PRINT.red}; font-weight: 700; font-size: 8.5pt; }
   .cell-name { font-weight: 700; font-size: 8.5pt; height: 19px; }
-  .cell-gap { height: 14px; background: #fff; border-left: 1px solid #000; border-right: 1px solid #000; }
+  .cell-gap { height: 14px; background: ${PRINT.paper}; border-left: 1px solid ${PRINT.ink}; border-right: 1px solid ${PRINT.ink}; }
 
   /* ── Leyenda ──────────────────────────────── */
   .legend { display: flex; flex-wrap: wrap; gap: 0; justify-content: center; margin: 14px auto 10px; max-width: 80%; }
-  .leg-chip { display: inline-block; min-width: 150px; text-align: center; font-weight: 700; font-size: 8.5pt; padding: 4px 8px; border: 1px solid #000; }
+  .leg-chip { display: inline-block; min-width: 150px; text-align: center; font-weight: 700; font-size: 8.5pt; padding: 4px 8px; border: 1px solid ${PRINT.ink}; }
 
   /* ── Notas ────────────────────────────────── */
   .notes { margin: 10px auto; font-size: 8.5pt; font-weight: 700; text-align: center; line-height: 1.8; }
-  .empty-note { padding: 24px; text-align: center; color: #777; font-size: 10pt; border: 1px dashed #ccc; border-radius: 8px; margin: 16px 0; }
+  .empty-note { padding: 24px; text-align: center; color: ${PRINT.faint}; font-size: 10pt; border: 1px dashed ${PRINT.hairline}; border-radius: 8px; margin: 16px 0; }
 
   /* ── Footer + botón ───────────────────────── */
-  .doc-footer { margin-top: 8px; text-align: center; font-size: 8pt; color: #555; }
+  .doc-footer { margin-top: 8px; text-align: center; font-size: 8pt; color: ${PRINT.muted}; }
   @media print { .no-print { display: none; } }
-  .print-btn { position: fixed; top: 12px; right: 12px; padding: 8px 18px; background: #C00000; color: #fff; border: none; border-radius: 6px; font-size: 11pt; cursor: pointer; z-index: 999; }
-  .print-btn:hover { background: #9c0000; }
+  .print-btn { position: fixed; top: 12px; right: 12px; padding: 8px 18px; background: ${PRINT.red}; color: ${PRINT.paper}; border: none; border-radius: 6px; font-size: 11pt; cursor: pointer; z-index: 999; }
+  .print-btn:hover { background: ${PRINT.redHover}; }
 </style>
 </head>
 <body>

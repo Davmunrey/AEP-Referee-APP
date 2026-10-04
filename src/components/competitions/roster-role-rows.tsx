@@ -37,7 +37,7 @@ export function RoleRows({ title, accentClass, roles, allowedKeys, onChange, onA
   return (
     <div className="space-y-2">
       <div className={cn("flex items-center justify-between rounded-lg px-2 py-1", accentClass)}>
-        <p className="text-[11px] font-semibold text-subtle-muted">{title}</p>
+        <p className="text-2xs font-semibold text-subtle-muted">{title}</p>
         <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs" onClick={onAdd}>
           <Plus className="h-3 w-3" />
           Rol
@@ -67,14 +67,14 @@ export function RoleRows({ title, accentClass, roles, allowedKeys, onChange, onA
               <Plus className="h-3 w-3" />
             </Button>
           </div>
-          <span className="text-[11px] text-subtle-muted">plaza{role.slots !== 1 ? "s" : ""}</span>
+          <span className="text-2xs text-subtle-muted">plaza{role.slots !== 1 ? "s" : ""}</span>
           <Button type="button" variant="ghost" size="icon" className="ml-auto h-7 w-7" onClick={() => onRemove(idx)} aria-label={`Eliminar rol ${ROLE_LABELS[role.key]}`}>
             <Trash2 className="h-3.5 w-3.5 text-destructive" />
           </Button>
         </div>
       ))}
       {roles.length === 0 && (
-        <p className="rounded-lg border border-dashed border-border py-2 text-center text-[11px] text-subtle-muted">
+        <p className="rounded-lg border border-dashed border-border py-2 text-center text-2xs text-subtle-muted">
           Sin roles — añade uno
         </p>
       )}

@@ -123,7 +123,7 @@ export function EditCompetitionDialog({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
+    <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -181,7 +181,7 @@ export function EditCompetitionDialog({
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
-              <p className="mt-1 text-[11px] text-subtle-muted">{AEP_COMPETITION_TYPE_DESC[tipo]}</p>
+              <p className="mt-1 text-xs text-subtle-muted">{AEP_COMPETITION_TYPE_DESC[tipo]}</p>
             </div>
             <div>
               <label htmlFor="ec-zona" className="mb-1 block text-xs font-medium text-foreground-secondary">
