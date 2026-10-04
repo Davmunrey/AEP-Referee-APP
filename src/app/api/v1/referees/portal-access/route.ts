@@ -4,14 +4,14 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { canManageJudges } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { AEP_TARIMA_SITE_URL } from "@/lib/auth/supabase-email-branding";
-import { getJudgeAccessStatuses, inviteJudges } from "@/server/services/judge-accounts";
+import { getJudgeAccessStatuses, issueAccessCodes } from "@/server/services/judge-accounts";
 
 const bodySchema = z.object({ refereeIds: z.array(z.string().min(1)).min(1).max(200) });
 
 /**
- * Invita al portal a una o varias fichas del censo (o les reenvía el enlace).
- * El delegado de zona solo a los jueces de su zona.
+ * Da acceso al portal a una o varias fichas del censo: crea la cuenta si no
+ * la tienen y genera un código para cada una (que solo vuelve en esta
+ * respuesta). El delegado de zona, solo a los jueces de su zona.
  */
 export async function POST(request: Request) {
   const user = await requireApiUser();
@@ -28,15 +28,15 @@ export async function POST(request: Request) {
   const referees = [...byId.values()];
   if (user.role === "delegado_zona") {
     // Fail-closed: sin zona propia, o con un juez de otra zona en la lista, no
-    // se invita a nadie (y no solo a los de fuera).
+    // se da acceso a nadie (y no solo a los de fuera).
     if (!user.zona) return jsonError("Tu cuenta no tiene zona asignada", 403);
     if (referees.some((r) => !zonesMatch(r.zona, user.zona))) {
-      return jsonError("Solo puedes invitar a jueces de tu zona", 403);
+      return jsonError("Solo puedes dar acceso a jueces de tu zona", 403);
     }
   }
 
   try {
-    const results = await inviteJudges(referees, `${AEP_TARIMA_SITE_URL}/`);
+    const results = await issueAccessCodes(referees, user.id);
     const missing = body.data.refereeIds.filter((id) => !byId.has(id));
     return jsonOk({
       results: [
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       ],
     });
   } catch (err) {
-    return jsonServerError("portal-access.POST", err, "No se pudieron enviar las invitaciones");
+    return jsonServerError("portal-access.POST", err, "No se pudieron generar los códigos");
   }
 }
 
@@ -55,13 +55,13 @@ export async function GET(request: Request) {
   if (!isSessionUser(user)) return user;
   if (!canManageJudges(user)) return jsonError("Sin permiso", 403);
   const ids = (new URL(request.url).searchParams.get("ids") ?? "").split(",").filter(Boolean).slice(0, 2000);
-  if (ids.length === 0) return jsonOk({ statuses: {} });
+  if (ids.length === 0) return jsonOk({ statuses: {}, codeExpiry: {} });
   try {
     const byId = await dataService.getRefereesByIds(ids);
     const visible = [...byId.values()].filter(
       (r) => user.role !== "delegado_zona" || (user.zona && zonesMatch(r.zona, user.zona)),
     );
-    return jsonOk({ statuses: await getJudgeAccessStatuses(visible) });
+    return jsonOk(await getJudgeAccessStatuses(visible));
   } catch (err) {
     return jsonServerError("portal-access.GET", err, "No se pudo cargar el acceso al portal");
   }

@@ -6,7 +6,9 @@ export type NotificacionTipo =
   | "zona-solicitada"
   | "zona-resuelta"
   | "designacion"
-  | "designacion-rechazada";
+  | "designacion-rechazada"
+  /** Un juez pide acceso al portal desde la pantalla de acceso. */
+  | "acceso-solicitado";
 
 export interface Notificacion {
   id: string;

@@ -62,10 +62,9 @@ No se requiere ninguna API key de mapas de pago.
 ## Supabase
 
 - Proyecto vinculado a producción: `foaemadggmpbcrhtpems` (eu-west-2).
-- **Auth**: email/contraseña; signup público desactivado; reset de contraseña activo.
+- **Auth**: email/contraseña; signup público desactivado. La aplicación **no envía correos** (sin SMTP propio): los jueces entran con un código que les da su delegado y las contraseñas olvidadas las repone un administrador o el delegado.
 - **Redirect URLs** en Supabase Auth: incluir `https://aep-tarima.vercel.app/**` y el dominio Vercel si se usa en preview.
 - **Site URL** en Auth: `https://aep-tarima.vercel.app`
-- **Correo de los jueces**: las invitaciones al portal y los enlaces de acceso los envía Supabase Auth. El servicio de correo de serie de Supabase solo admite unos pocos envíos por hora: para invitar a un censo entero hace falta **SMTP propio** configurado en Auth (los envíos de invitación van de uno en uno). La vuelta del enlace es la raíz del sitio, que ya está en las Redirect URLs.
 - **Plantillas de correo**: branding AEP en `src/lib/auth/supabase-email-branding.ts`. Aplicar en remoto:
   ```bash
   SUPABASE_ACCESS_TOKEN=sbp_... npm run supabase:email-branding

@@ -53,7 +53,7 @@ const features: { title: string; desc: string }[] = [
 const steps: { title: string; body: string }[] = [
   {
     title: "Inicia sesión",
-    body: "Accede con tu correo y contraseña autorizados. ¿Olvidaste la contraseña? Usa el enlace de recuperación.",
+    body: "Accede con tu correo y contraseña autorizados. ¿Olvidaste la contraseña? Pide una nueva a un administrador; los jueces, un código nuevo a su delegado.",
   },
   {
     title: "Revisa el panel de inicio",
@@ -88,7 +88,7 @@ const roles: { rol: string; puede: string }[] = [
 const faqs: { q: string; a: string }[] = [
   {
     q: "¿Cómo recupero mi contraseña?",
-    a: "Desde la pantalla de acceso, pulsa «¿Olvidaste tu contraseña?» e introduce tu correo; recibirás un enlace para restablecerla.",
+    a: "La aplicación no envía correos. En la gestión, un administrador te pone una nueva desde Usuarios. Si eres juez, tu delegado te da un código nuevo y con él creas otra en «Soy juez › Tengo un código».",
   },
   {
     q: "¿Por qué no puedo editar un campeonato de otra zona?",

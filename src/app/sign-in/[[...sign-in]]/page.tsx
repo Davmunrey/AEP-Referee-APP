@@ -19,6 +19,9 @@ const labelClass = "mb-1.5 block text-sm font-medium text-foreground";
 
 // Botones de la pantalla de acceso: no usan <Button> (esta ruta va sin el
 // bundle de la app), así que replican su gesto de pulsación.
+const linkClass =
+  "inline-flex min-h-9 items-center rounded text-sm text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline focus-ring";
+
 const submitClass =
   "transition-[background-color,box-shadow,transform] duration-(--duration-base) hover:bg-primary/90 active:scale-(--scale-press) focus-ring disabled:opacity-60 disabled:active:scale-100";
 
@@ -41,101 +44,116 @@ export default function SignInPage() {
   // excepción del middleware cada intento acaba en esta pantalla, no en un
   // bucle— y la cookie caduca sola.
   const sinAcceso = searchParams.get(SIN_ACCESO_PARAM) === SIN_ACCESO_VALUE;
-  const [forgotEmail, setForgotEmail] = useState("");
-  // Los jueces entran con un enlace al e-mail del censo, sin contraseña.
-  // `?juez=1` abre directamente esa pestaña (es el enlace que se les comparte).
-  const [modo, setModo] = useState<"gestion" | "juez">(searchParams.get("juez") === "1" ? "juez" : "gestion");
-  const [judgeEmail, setJudgeEmail] = useState("");
-  const [judgeLoading, setJudgeLoading] = useState(false);
+  // La aplicación no envía correos. Los jueces entran con e-mail y contraseña
+  // como la gestión; la primera vez (o tras olvidarla) crean la contraseña con
+  // el código que les da su delegado. `?juez=1` abre la pestaña de jueces y
+  // `?codigo=1` directamente el formulario del código (es el enlace del
+  // mensaje que copia el delegado).
+  const conCodigo = searchParams.get("codigo") === "1";
+  const [modo, setModo] = useState<"gestion" | "juez">(
+    conCodigo || searchParams.get("juez") === "1" ? "juez" : "gestion",
+  );
+  const [vistaJuez, setVistaJuez] = useState<"entrar" | "codigo" | "pedir">(conCodigo ? "codigo" : "entrar");
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPassword2, setNewPassword2] = useState("");
 
-  const requestJudgeLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setJudgeLoading(true);
+  const resetAvisos = () => {
     setError(null);
     setInfo(null);
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/auth/judge-access`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: judgeEmail.trim() }),
-      });
-      const body = (await res.json().catch(() => null)) as { data?: { message?: string }; error?: string } | null;
-      if (!res.ok) {
-        setError(body?.error ?? "No se pudo enviar el enlace. Inténtalo de nuevo.");
-        return;
-      }
-      setInfo(body?.data?.message ?? "Si ese e-mail figura en el censo, te llegará un enlace para entrar.");
-    } catch {
-      setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
-    } finally {
-      setJudgeLoading(false);
-    }
   };
-  const [forgotLoading, setForgotLoading] = useState(false);
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!forgotEmail.trim()) return;
-    setForgotLoading(true);
-    setError(null);
-    try {
-      // Carga el cliente Supabase solo al usarlo, fuera del bundle inicial del login.
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      const origin = window.location.origin;
-      const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-        redirectTo: `${origin}/auth/callback`,
-      });
-      if (err) {
-        setError(err.message);
-        return;
-      }
-      setInfo("Si la cuenta existe, te enviaremos un email con instrucciones.");
-      setShowForgotPassword(false);
-    } catch {
-      setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
-    } finally {
-      setForgotLoading(false);
+  /** Entra con e-mail y contraseña (gestión y jueces, la misma cuenta de auth). */
+  const login = async (emailValue: string, passwordValue: string): Promise<boolean> => {
+    const emailNormalized = emailValue.trim().toLowerCase();
+    const limitRes = await fetch(`${getApiBaseUrl()}/auth/password`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "check", email: emailNormalized }),
+    });
+    if (!limitRes.ok) {
+      setError("Demasiados intentos. Espera unos minutos antes de reintentar.");
+      return false;
     }
+    const loginRes = await fetch(`${getApiBaseUrl()}/auth/login`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailNormalized, password: passwordValue }),
+    });
+    if (!loginRes.ok) {
+      setError("Email o contraseña incorrectos.");
+      return false;
+    }
+    // Refresca el cliente de Supabase con las cookies que fijó el servidor.
+    const { createClient } = await import("@/lib/supabase/client");
+    await createClient().auth.getSession();
+    router.push("/");
+    router.refresh();
+    return true;
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setInfo(null);
-    const emailNormalized = email.trim().toLowerCase();
-
+    resetAvisos();
     try {
-      const limitRes = await fetch(`${getApiBaseUrl()}/auth/password`, {
+      await login(email, password);
+    } catch {
+      setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** El juez canjea su código, crea la contraseña y entra con ella. */
+  const redeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    resetAvisos();
+    if (newPassword !== newPassword2) {
+      setError("Las dos contraseñas no coinciden.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/auth/judge-code`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "check", email: emailNormalized }),
+        body: JSON.stringify({ email: email.trim(), code, password: newPassword }),
       });
-      if (!limitRes.ok) {
-        setError("Demasiados intentos. Espera unos minutos antes de reintentar.");
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) {
+        setError(body?.error ?? "No se pudo completar el acceso. Inténtalo de nuevo.");
         return;
       }
+      await login(email, newPassword);
+    } catch {
+      setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const loginRes = await fetch(`${getApiBaseUrl()}/auth/login`, {
+  /** Sin código: avisa al delegado de su zona (dentro de la app). */
+  const requestCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    resetAvisos();
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/auth/judge-access`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailNormalized, password }),
+        body: JSON.stringify({ email: email.trim() }),
       });
-      if (!loginRes.ok) {
-        setError("Email o contraseña incorrectos.");
+      const body = (await res.json().catch(() => null)) as { data?: { message?: string }; error?: string } | null;
+      if (!res.ok) {
+        setError(body?.error ?? "No se pudo enviar la petición. Inténtalo de nuevo.");
         return;
       }
-
-      // Refresca el cliente de Supabase con las cookies que fijó el servidor.
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      await supabase.auth.getSession();
-      router.push("/");
-      router.refresh();
+      setInfo(body?.data?.message ?? "Petición enviada a tu delegado de zona.");
     } catch {
       setError("No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.");
     } finally {
@@ -186,8 +204,8 @@ export default function SignInPage() {
                   aria-selected={modo === value}
                   onClick={() => {
                     setModo(value);
-                    setError(null);
-                    setInfo(null);
+                    setShowForgotPassword(false);
+                    resetAvisos();
                   }}
                   className={`min-h-9 rounded-md px-3 text-sm font-medium transition-colors focus-ring ${
                     modo === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
@@ -198,143 +216,199 @@ export default function SignInPage() {
               ))}
             </div>
 
-            {modo === "juez" ? (
+            {/* Formulario de entrada: el mismo para gestión y jueces. */}
+            {(modo === "gestion" || vistaJuez === "entrar") && (
               <>
-                <h1 className="text-base font-semibold text-foreground">Acceso de jueces</h1>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Escribe el e-mail que figura en tu ficha del censo y te enviaremos un enlace para entrar. No
-                  necesitas contraseña: sirve igual la primera vez que las siguientes.
+                <h1 className="text-base font-semibold text-foreground">
+                  {modo === "juez" ? "Acceso de jueces" : "Iniciar sesión"}
+                </h1>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {modo === "juez"
+                    ? "Entra con el e-mail de tu ficha del censo y tu contraseña."
+                    : "Acceso restringido a cuentas autorizadas por el Comité de Jueces."}
                 </p>
-                <form onSubmit={(e) => void requestJudgeLink(e)} className="mt-5 space-y-3">
+
+                {sinAcceso && modo === "gestion" && (
+                  <div
+                    role="status"
+                    className="rise-in mt-4 flex items-start gap-2.5 rounded-xl border border-warning/20 bg-warning-muted px-3.5 py-2.5"
+                  >
+                    <AlertCircle className="mt-px h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                    <p className="text-xs leading-snug text-warning">
+                      Tu cuenta existe pero todavía no tiene acceso al panel. Pide al Comité de Jueces que la active.
+                    </p>
+                  </div>
+                )}
+
+                <form onSubmit={(e) => void submit(e)} className="mt-5 space-y-3">
                   <div>
-                    <label htmlFor="judge-email" className={labelClass}>
-                      Tu e-mail
+                    <label htmlFor="email" className={labelClass}>
+                      Email
                     </label>
                     <input
-                      id="judge-email"
+                      id="email"
                       type="email"
                       placeholder="nombre@ejemplo.com"
-                      value={judgeEmail}
-                      onChange={(e) => setJudgeEmail(e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="password" className={labelClass}>
+                      Contraseña
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      autoComplete="current-password"
                       className={inputClass}
                     />
                   </div>
                   <button
                     type="submit"
-                    disabled={judgeLoading}
+                    disabled={loading}
                     className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground ${submitClass}`}
                   >
-                    {judgeLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-                    Enviarme el enlace
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                    Entrar
                   </button>
                 </form>
-              </>
-            ) : (
-            <>
-            <h1 className="text-base font-semibold text-foreground">Iniciar sesión</h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Acceso restringido a cuentas autorizadas por el Comité de Jueces.
-            </p>
 
-            {sinAcceso && (
-              <div
-                role="status"
-                className="rise-in mt-4 flex items-start gap-2.5 rounded-xl border border-warning/20 bg-warning-muted px-3.5 py-2.5"
-              >
-                <AlertCircle className="mt-px h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
-                <p className="text-xs leading-snug text-warning">
-                  Tu cuenta existe pero todavía no tiene acceso al panel. Pide al Comité de Jueces
-                  que la active.
-                </p>
-              </div>
+                <div className="mt-3 flex flex-wrap gap-x-4">
+                  {modo === "juez" && (
+                    <button type="button" onClick={() => { setVistaJuez("codigo"); resetAvisos(); }} className={linkClass}>
+                      Tengo un código
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setShowForgotPassword((v) => !v)} className={linkClass} aria-expanded={showForgotPassword}>
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+                {/* La aplicación no envía correos, así que no hay enlace para
+                    restablecerla: la pone de nuevo quien da los accesos. */}
+                {showForgotPassword && (
+                  <p className="rise-in mt-1 text-pretty text-xs leading-relaxed text-muted-foreground">
+                    {modo === "juez" ? (
+                      <>
+                        Pide a tu delegado de zona un código nuevo y úsalo en «Tengo un código» para crear otra.{" "}
+                        <button type="button" onClick={() => { setVistaJuez("pedir"); resetAvisos(); }} className="text-brand underline underline-offset-2 focus-ring">
+                          Pedírselo desde aquí
+                        </button>
+                        .
+                      </>
+                    ) : (
+                      "Pide al Comité de Jueces que te ponga una nueva desde «Usuarios»."
+                    )}
+                  </p>
+                )}
+              </>
             )}
 
-            <form onSubmit={(e) => void submit(e)} className="mt-5 space-y-3">
-              <div>
-                <label htmlFor="email" className={labelClass}>
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="nombre@ejemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className={labelClass}>
-                  Contraseña
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  autoComplete="current-password"
-                  className={inputClass}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground ${submitClass}`}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : null}
-                Entrar
-              </button>
-            </form>
-
-            <div className="mt-3">
-              {!showForgotPassword ? (
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="inline-flex min-h-9 items-center rounded text-sm text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline focus-ring"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              ) : (
-                <form onSubmit={(e) => void handleForgotPassword(e)} className="mt-1">
-                  <label htmlFor="forgot-email" className={labelClass}>
-                    E-mail de tu cuenta
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      id="forgot-email"
-                      type="email"
-                      placeholder="nombre@ejemplo.com"
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      required
-                      autoComplete="email"
-                      className={inputClass}
-                    />
-                    <button
-                      type="submit"
-                      disabled={forgotLoading}
-                      className={`shrink-0 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground ${submitClass}`}
-                    >
-                      {forgotLoading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                      ) : (
-                        "Enviar enlace"
-                      )}
-                    </button>
+            {modo === "juez" && vistaJuez === "codigo" && (
+              <>
+                <h1 className="text-base font-semibold text-foreground">Entrar con un código</h1>
+                <p className="mt-1 text-pretty text-xs leading-relaxed text-muted-foreground">
+                  Escribe el e-mail de tu ficha y el código que te ha dado tu delegado, y crea tu contraseña. Con ella
+                  entrarás a partir de ahora.
+                </p>
+                <form onSubmit={(e) => void redeem(e)} className="mt-5 space-y-3">
+                  <div>
+                    <label htmlFor="code-email" className={labelClass}>
+                      Tu e-mail
+                    </label>
+                    <input id="code-email" type="email" placeholder="nombre@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className={inputClass} />
                   </div>
+                  <div>
+                    <label htmlFor="code" className={labelClass}>
+                      Código
+                    </label>
+                    <input
+                      id="code"
+                      type="text"
+                      placeholder="K7QM-4TZP"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      required
+                      autoComplete="one-time-code"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                      className={`${inputClass} font-mono uppercase tracking-wide`}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="new-password" className={labelClass}>
+                      Contraseña nueva
+                    </label>
+                    <input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} autoComplete="new-password" aria-describedby="new-password-hint" className={inputClass} />
+                    <p id="new-password-hint" className="mt-1 text-xs text-muted-foreground">
+                      Al menos 8 caracteres.
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor="new-password-2" className={labelClass}>
+                      Repite la contraseña
+                    </label>
+                    <input id="new-password-2" type="password" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} required minLength={8} autoComplete="new-password" className={inputClass} />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground ${submitClass}`}
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                    Crear contraseña y entrar
+                  </button>
                 </form>
-              )}
-            </div>
-            </>
+                <div className="mt-3 flex flex-wrap gap-x-4">
+                  <button type="button" onClick={() => { setVistaJuez("entrar"); resetAvisos(); }} className={linkClass}>
+                    Ya tengo contraseña
+                  </button>
+                  <button type="button" onClick={() => { setVistaJuez("pedir"); resetAvisos(); }} className={linkClass}>
+                    No tengo código
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modo === "juez" && vistaJuez === "pedir" && (
+              <>
+                <h1 className="text-base font-semibold text-foreground">Pedir acceso</h1>
+                <p className="mt-1 text-pretty text-xs leading-relaxed text-muted-foreground">
+                  Escribe el e-mail de tu ficha del censo. Tu delegado de zona verá la petición en la aplicación y te
+                  dará un código para entrar.
+                </p>
+                <form onSubmit={(e) => void requestCode(e)} className="mt-5 space-y-3">
+                  <div>
+                    <label htmlFor="request-email" className={labelClass}>
+                      Tu e-mail
+                    </label>
+                    <input id="request-email" type="email" placeholder="nombre@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className={inputClass} />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground ${submitClass}`}
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                    Pedir un código
+                  </button>
+                </form>
+                <div className="mt-3 flex flex-wrap gap-x-4">
+                  <button type="button" onClick={() => { setVistaJuez("codigo"); resetAvisos(); }} className={linkClass}>
+                    Ya tengo un código
+                  </button>
+                  <button type="button" onClick={() => { setVistaJuez("entrar"); resetAvisos(); }} className={linkClass}>
+                    Ya tengo contraseña
+                  </button>
+                </div>
+              </>
             )}
 
             {error && (

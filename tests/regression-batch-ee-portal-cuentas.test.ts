@@ -7,7 +7,7 @@ delete process.env.NEXT_PUBLIC_SUPABASE_URL;
 delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const { getStore } = await import("@/server/store");
-const { inviteJudges, revokeJudgeAccess, getJudgeAccessStatuses, requestJudgeAccess } = await import(
+const { issueAccessCodes, redeemAccessCode, revokeJudgeAccess, getJudgeAccessStatuses } = await import(
   "@/server/services/judge-accounts"
 );
 const { canAdministerUserWithRole, restrictedRoleMessage } = await import("@/lib/auth/session");
@@ -27,7 +27,7 @@ function juez(patch: Partial<Referee>): Referee {
   };
 }
 
-describe("cuentas de juez (memoria)", () => {
+describe("cuentas de juez con código (memoria)", () => {
   beforeEach(() => {
     const store = getStore();
     store.referees = store.referees.filter((r) => !r.id.startsWith("pt-"));
@@ -40,37 +40,31 @@ describe("cuentas de juez (memoria)", () => {
   });
 
   const ficha = (id: string) => getStore().referees.find((r) => r.id === id)!;
+  const estado = async (id: string) => (await getJudgeAccessStatuses([ficha(id)])).statuses[id];
 
-  it("invitar enlaza la ficha; volver a invitar reenvía el enlace; sin e-mail no se puede", async () => {
-    const [a, b] = await inviteJudges([ficha("pt-1"), ficha("pt-2")], "http://x/");
-    expect(a!.outcome).toBe("invitado");
+  it("dar acceso enlaza la ficha y deja un código pendiente; sin e-mail no se puede", async () => {
+    const [a, b] = await issueAccessCodes([ficha("pt-1"), ficha("pt-2")]);
+    expect(a!.outcome).toBe("codigo");
+    expect(a!.code).toBeTruthy();
     expect(b!.outcome).toBe("sin-email");
     expect(ficha("pt-1").userId).toBeTruthy();
-    expect((await inviteJudges([ficha("pt-1")], "http://x/"))[0]!.outcome).toBe("enlace-reenviado");
+    expect(await estado("pt-1")).toBe("codigo-pendiente");
+    expect(await redeemAccessCode("uno@aep.test", a!.code!, "clave-larga-1")).toBe("ok");
+    expect(await estado("pt-1")).toBe("con-acceso");
   });
 
-  it("retirar el acceso se refleja en el estado y se puede devolver", async () => {
-    await inviteJudges([ficha("pt-1")], "http://x/");
+  it("retirar el acceso se refleja en el estado y se puede devolver con otro código", async () => {
+    await issueAccessCodes([ficha("pt-1")]);
     expect(await revokeJudgeAccess(ficha("pt-1"))).toBe(true);
-    expect((await getJudgeAccessStatuses([ficha("pt-1")]))["pt-1"]).toBe("revocado");
-    expect((await inviteJudges([ficha("pt-1")], "http://x/"))[0]!.outcome).toBe("reactivado");
-    expect((await getJudgeAccessStatuses([ficha("pt-1")]))["pt-1"]).toBe("con-acceso");
+    expect(await estado("pt-1")).toBe("revocado");
+    const [r] = await issueAccessCodes([ficha("pt-1")]);
+    expect(r!.outcome).toBe("codigo");
+    expect(await estado("pt-1")).toBe("codigo-pendiente");
   });
 
-  it("la petición del propio juez solo actúa con el e-mail exacto de UNA ficha", async () => {
-    await requestJudgeAccess("nadie@aep.test", "http://x/");
-    await requestJudgeAccess("DOBLE@aep.test", "http://x/");
-    expect(ficha("pt-3").userId).toBeUndefined();
-    expect(ficha("pt-4").userId).toBeUndefined();
-    await requestJudgeAccess("  UNO@aep.test ", "http://x/");
-    expect(ficha("pt-1").userId).toBeTruthy();
-  });
-
-  it("con el acceso retirado, pedirlo uno mismo no lo reactiva", async () => {
-    await inviteJudges([ficha("pt-1")], "http://x/");
-    await revokeJudgeAccess(ficha("pt-1"));
-    await requestJudgeAccess("uno@aep.test", "http://x/");
-    expect((await getJudgeAccessStatuses([ficha("pt-1")]))["pt-1"]).toBe("revocado");
+  it("dos fichas con el mismo e-mail: el código no entra en ninguna", async () => {
+    const [r] = await issueAccessCodes([ficha("pt-3")]);
+    expect(await redeemAccessCode("doble@aep.test", r!.code!, "clave-larga-1")).toBe("invalido");
   });
 });
 
@@ -118,7 +112,7 @@ describe("designaciones del portal", () => {
   });
 });
 
-// ── Ruta de invitación: el delegado de zona solo invita a los de su zona ──
+// ── Ruta de acceso: el delegado de zona solo da acceso a los de su zona ──
 const requireApiUser = vi.fn();
 const getRefereesByIds = vi.fn();
 vi.mock("@/lib/api/auth", () => ({
@@ -128,7 +122,7 @@ vi.mock("@/lib/api/auth", () => ({
 vi.mock("@/server/services", () => ({ dataService: { getRefereesByIds: (...a: unknown[]) => getRefereesByIds(...a) } }));
 
 describe("POST /referees/portal-access", () => {
-  it("un delegado de zona no invita a nadie si la lista lleva jueces de otra zona", async () => {
+  it("un delegado de zona no da acceso a nadie si la lista lleva jueces de otra zona", async () => {
     const { POST } = await import("@/app/api/v1/referees/portal-access/route");
     requireApiUser.mockResolvedValue({ id: "d", nombre: "D", email: "d@b", rol: "", iniciales: "D", role: "delegado_zona", zona: "CENTRO" });
     getRefereesByIds.mockResolvedValue(
@@ -141,7 +135,7 @@ describe("POST /referees/portal-access", () => {
     expect(res.status).toBe(403);
   });
 
-  it("solo_ver no invita", async () => {
+  it("solo_ver no da acceso", async () => {
     const { POST } = await import("@/app/api/v1/referees/portal-access/route");
     requireApiUser.mockResolvedValue({ id: "s", nombre: "S", email: "s@b", rol: "", iniciales: "S", role: "solo_ver" });
     const res = await POST(new Request("http://x/", { method: "POST", body: JSON.stringify({ refereeIds: ["a"] }) }));

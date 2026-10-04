@@ -11,7 +11,8 @@ Producción: [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app)
 | `/login` | Legacy redirect |
 | `/auth/callback` | Supabase callback |
 | `/docs` | Documentación web (parte pública + guía interna si hay sesión) |
-| `/sign-in?juez=1` | Acceso de jueces: piden su enlace con el e-mail del censo |
+| `/sign-in?juez=1` | Acceso de jueces (e-mail y contraseña) |
+| `/sign-in?codigo=1` | El juez canjea su código de acceso y crea su contraseña (enlace del mensaje que copia el delegado) |
 
 ## Portal del juez (rol `juez`)
 

@@ -8,6 +8,8 @@ const signOut = vi.fn();
 
 vi.mock("@/lib/api/auth", () => ({
   requireApiUser: () => requireApiUser(),
+  // Cambiar la propia contraseña vale también para jueces (requireAnyUser).
+  requireAnyUser: () => requireApiUser(),
   isSessionUser: (v: unknown) => !(v instanceof Response),
 }));
 vi.mock("@/lib/supabase/env", () => ({

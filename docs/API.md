@@ -29,7 +29,8 @@ Todas las rutas privadas exigen sesión Supabase por **cookie** (web). Respuesta
 | `POST` | `/auth/login` | Login email+password (server-side, fija cookies, rate-limit interno) |
 | `POST` | `/auth/password` | Rate-limit pre-login: solo `action: check` (público) |
 | `POST` | `/auth/change-password` | Cambiar la propia contraseña (sesión; verifica la actual) |
-| `POST` | `/auth/judge-access` | Pública. Un juez pide su enlace de acceso con el e-mail del censo. Responde siempre lo mismo (no revela si el e-mail es de un juez) y cuenta cada petición en el límite de intentos |
+| `POST` | `/auth/judge-code` | Pública. `{ email, code, password }`: el juez canjea su código de acceso y crea su contraseña (después entra por `/auth/login`). Error genérico si no cuadra; límite por e-mail y por IP; el código se anula tras 5 fallos |
+| `POST` | `/auth/judge-access` | Pública. Un juez sin código pide acceso: aviso en la campana de su delegado de zona (sin correo). Responde siempre lo mismo (no revela si el e-mail es de un juez) y cuenta cada petición en el límite de intentos |
 
 Un juez (`role: juez`) **no** tiene sesión de gestión: `requireApiUser` le responde **403** (no 401, para que su navegador no lo lea como sesión caducada). Las rutas del portal usan `requireJudgeUser` y actúan siempre en nombre de la ficha enlazada (`refereeId`).
 
@@ -104,9 +105,10 @@ Lógica de formato pura en `src/lib/quadrant-html.ts` y `src/lib/quadrant-excel.
 | `DELETE` | `/referees/:id` | nacional |
 | `POST` | `/referees/import` | nacional |
 | `GET/POST` | `/referees/:id/sanctions` | sesión / gestor |
-| `POST` | `/referees/portal-access` | gestor de jueces; `{ refereeIds }` (1–200). Invita al portal o reenvía el enlace; el delegado de zona solo a jueces de su zona (si la lista lleva uno de fuera, no invita a nadie). Devuelve el resultado por juez (`invitado`, `enlace-reenviado`, `reactivado`, `sin-email`, `email-en-uso`, `error`) |
-| `GET` | `/referees/portal-access?ids=` | gestor de jueces; estado de acceso (`sin-acceso`, `con-acceso`, `revocado`) |
-| `DELETE` | `/referees/:id/portal-access` | gestor de jueces (zona); retira el acceso al portal al momento |
+| `POST` | `/referees/portal-access` | gestor de jueces; `{ refereeIds }` (1–200). Da acceso al portal: crea la cuenta (sin correo) y devuelve un código por juez, que no se vuelve a poder leer; el delegado de zona solo a jueces de su zona (si la lista lleva uno de fuera, no invita a nadie). Devuelve el resultado por juez (`invitado`, `enlace-reenviado`, `reactivado`, `sin-email`, `email-en-uso`, `error`) |
+| `GET` | `/referees/portal-access?ids=` | gestor de jueces; `{ statuses, codeExpiry }`: estado de acceso (`sin-acceso`, `codigo-pendiente`, `con-acceso`, `revocado`) y caducidad de los códigos sin usar |
+| `POST` | `/referees/:id/portal-access` | gestor de jueces (zona); da acceso o un código nuevo (anula el anterior; sirve para contraseñas olvidadas) |
+| `DELETE` | `/referees/:id/portal-access` | gestor de jueces (zona); retira el acceso al portal al momento y anula el código pendiente |
 
 `/referees/import` importa el Excel maestro de censo. Con `?replace=true` (modo "reemplazar censo") el borrado es **seguro**: solo elimina jueces ausentes del Excel y **no** asignados a ninguna tarima (respeta la FK de `roster_assignments`); los asignados se conservan y se actualizan con el Excel. No toca campeonatos ni cuadrantes. El modo replace exige además la cabecera `x-confirm-registry-replace: true`.
 
