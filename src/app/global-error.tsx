@@ -2,9 +2,8 @@
 
 // Captura de errores a nivel del layout raíz (los que `error.tsx` de segmento no
 // puede atrapar). Reemplaza al layout, así que renderiza su propio html/body e
-// importa los estilos globales. Reporta a Sentry (no-op sin DSN).
+// importa los estilos globales. Los errores del servidor quedan en los registros de Vercel con su referencia.
 import { useEffect } from "react";
-import { reportClientError } from "@/lib/observability/report-client-error";
 import "./globals.css";
 
 export default function GlobalError({
@@ -15,7 +14,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    reportClientError(error);
+    console.error(error);
   }, [error]);
 
   return (
@@ -24,8 +23,9 @@ export default function GlobalError({
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
           <h1 className="text-xl font-semibold text-foreground">Algo salió mal</h1>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Se ha producido un error inesperado. Hemos registrado el incidente para revisarlo.
+            Se ha producido un error inesperado. Prueba de nuevo; si se repite, avisa al Comité de Jueces con la referencia.
           </p>
+          {error.digest && <p className="text-xs text-subtle-muted">Referencia: {error.digest}</p>}
           <button
             onClick={reset}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
