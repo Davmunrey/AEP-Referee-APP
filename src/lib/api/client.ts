@@ -4,6 +4,7 @@ import { competitionApi } from "./client-competitions";
 import { compensationApi } from "./client-compensation";
 import { rosterApi } from "./client-roster";
 import { adminApi } from "./client-admin";
+import { convocatoriaApi } from "./client-convocatorias";
 
 // Nota: el login/logout se gestiona directamente con el cliente Supabase
 // en /sign-in y el sidebar — no hay método de API REST para auth.
@@ -14,4 +15,5 @@ export const api = {
   ...compensationApi,
   ...rosterApi,
   ...adminApi,
+  ...convocatoriaApi,
 };

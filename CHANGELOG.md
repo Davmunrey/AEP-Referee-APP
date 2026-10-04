@@ -4,6 +4,17 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 📣 **AEP Tarima v2.10** — _«Me apunto»_ (2026-10-04)
+
+Segunda parte del portal del juez: las convocatorias.
+
+- **Convocar desde la tarima**: el delegado elige sesiones, fecha límite y un mensaje, y lanza la convocatoria a su zona.
+- **El juez se apunta sesión a sesión** desde el móvil, con los horarios de pesaje y competición a la vista. Cada toque se guarda al momento y puede retirarse mientras siga abierta.
+- **Los inscritos, en la tarima**: arriba del panel de jueces con la etiqueta *Inscrito* para la sesión que se está montando, y un filtro para ver solo a ellos. La cuenta de inscritos se actualiza sola cuando alguien se apunta.
+- **Reglas claras**: no se apunta quien tiene una sanción activa o la ficha inactiva; quien ya está designado esas fechas en otro campeonato recibe un aviso. Cerrada la convocatoria, retirarse es avisar al delegado.
+
+---
+
 ## 🎫 **AEP Tarima v2.9** — _«Cada juez, su cuenta»_ (2026-10-04)
 
 Primera parte del portal del juez: cada juez del censo puede entrar con su propia cuenta.

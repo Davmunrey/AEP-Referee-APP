@@ -178,6 +178,20 @@ Los totales de viaje y alojamiento no se confirman hasta que todos los km estén
 
 ---
 
+## 5b. Convocatorias
+
+En vez de llamar uno a uno, lanza una **convocatoria** y deja que los jueces se apunten desde su portal.
+
+1. En la tarima del campeonato (con la plantilla hecha), pulsa **Convocar**.
+2. Marca las sesiones, la fecha límite para apuntarse (por defecto, una semana antes) y, si quieres, un mensaje (horario de llegada, uniforme…). **Lanzar convocatoria**.
+3. Los jueces de la zona con cuenta en el portal la ven y se apuntan a cada sesión a la que pueden ir.
+4. En la tarima, el botón **Convocatoria** lleva la cuenta de inscritos. En el panel de jueces, los que se apuntaron a la sesión que estás montando salen **arriba** con la etiqueta *Inscrito*, y el filtro **Inscritos** deja solo a ellos.
+5. Desde el mismo botón puedes **cerrar** la convocatoria antes de tiempo, **reabrirla** o cambiar la fecha límite, y **cancelarla**.
+
+Apuntarse no es estar designado: tú montas la tarima y, cuando se aprueba, el juez la ve en «Mis sesiones». Un juez con sanción activa o con la ficha inactiva no puede apuntarse.
+
+---
+
 ## 7b. Portal del juez
 
 Cada juez del censo puede tener su propia cuenta para ver sus designaciones y apuntarse a convocatorias. Solo entra a su portal: no ve el directorio, ni otras fichas, ni las tarimas.
@@ -195,7 +209,7 @@ Un delegado de zona solo invita a jueces de su zona. Si el e-mail de la ficha ya
 - **Inicio**: sus próximas designaciones y, si la tiene, el aviso de sanción activa.
 - **Mis sesiones**: cada campeonato en el que está designado, sesión a sesión, con el día, los horarios de pesaje y competición y su función; y su historial. Solo aparecen tarimas **aprobadas**: un borrador todavía puede cambiar.
 - **Mi ficha**: sus datos del censo. Si algo no es correcto, te lo pedirá a ti.
-- **Convocatorias**: los campeonatos a los que se puede apuntar.
+- **Convocatorias**: los campeonatos a los que se puede apuntar. Entra en uno y pulsa **Apuntarme** en cada sesión a la que pueda ir; se guarda al momento y puede retirarse mientras la convocatoria siga abierta. Si ese fin de semana ya está designado en otro campeonato, se le avisa.
 
 ---
 

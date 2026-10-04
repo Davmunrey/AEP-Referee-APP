@@ -129,6 +129,20 @@ Las revisiones (`/approvals/:id/review`, `/promotions/:id/review`) exigen `appro
 | `PATCH` | `/sanctions/:id` | no `solo_ver`; `canManageSanctions` (zona) — body `{ action }` |
 | `POST` | `/sanctions/:id/notify` | no `solo_ver`; `canManageSanctions` (zona) — marca como notificada |
 
+## Convocatorias
+
+| Método | Ruta | Permiso |
+|---|---|---|
+| `GET` | `/competitions/:id/convocatoria` | sesión (zona) · convocatoria viva e inscripciones |
+| `POST` | `/competitions/:id/convocatoria` | gestor de la tarima (`canEditRoster`) · `{ sesiones, cierraEl, mensaje? }` |
+| `PATCH` | `/competitions/:id/convocatoria` | gestor de la tarima · `{ estado?: abierta\|cerrada\|cancelada, cierraEl?, mensaje?, sesiones? }` |
+| `GET` | `/portal/convocatorias` | juez · abiertas para su zona |
+| `GET` | `/portal/convocatorias/:id` | juez · 404 si no llega a su zona |
+| `POST` | `/portal/convocatorias/:id/inscripciones` | juez · `{ sesion, nota? }` (idempotente) |
+| `DELETE` | `/portal/convocatorias/:id/inscripciones?sesion=` | juez · solo con la convocatoria abierta |
+
+Una convocatoria viva por campeonato (índice único parcial). La fecha límite es un día natural español, inclusive, y no puede pasar del primer día del campeonato. Un juez no se apunta si tiene sanción activa o su ficha está inactiva o no disponible (las mismas condiciones que impiden asignarle en la tarima); estar designado en otro campeonato esas fechas es un **aviso**, no un bloqueo. Cerrada la convocatoria, retirarse es avisar al delegado. Las reglas viven en `src/server/convocatorias.ts`, comunes a los dos backends.
+
 ## Disponibilidad por campeonato
 
 | Método | Ruta | Permiso |
