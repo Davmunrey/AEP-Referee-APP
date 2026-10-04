@@ -1,12 +1,10 @@
 import { ApprovalsBoard } from "@/components/approvals/approvals-board";
-import { canApprove, getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { canApprove, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { redirect } from "next/navigation";
 
 export default async function ApprovalsPage() {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const [approvals, referees, competitions] = await Promise.all([
     dataService.getApprovals(user),

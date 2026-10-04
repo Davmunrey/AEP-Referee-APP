@@ -59,6 +59,7 @@ const ROLE_BADGE_VARIANT: Record<UserRole, "nacional" | "regional" | "ipf2" | "m
   delegado_zona: "ipf2",
   responsable_financiero_jueces: "muted",
   solo_ver: "muted",
+  juez: "muted",
 };
 
 function getInitials(nombre: string): string {

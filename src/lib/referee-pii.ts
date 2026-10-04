@@ -20,6 +20,8 @@ export function stripRefereePII<T extends Partial<Referee>>(referee: T, user: Se
     domicilioLat: _lat,
     domicilioLng: _lng,
     notas: _notas,
+    // La cuenta del juez en el portal: tampoco le hace falta a quien solo consulta.
+    userId: _userId,
     ...rest
   } = referee;
   return rest as T;

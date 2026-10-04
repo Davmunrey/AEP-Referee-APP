@@ -1,8 +1,6 @@
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
-import { getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { redirect } from "next/navigation";
 
 export default async function AnalyticsPage({
   searchParams,
@@ -10,7 +8,7 @@ export default async function AnalyticsPage({
   searchParams: Promise<{ year?: string }>;
 }) {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const { year } = await searchParams;
   const parsed = year ? Number(year) : NaN;

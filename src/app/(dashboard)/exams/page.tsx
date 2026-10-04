@@ -1,17 +1,15 @@
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { ExamsManager } from "@/components/judge/exams-manager";
 import { MetricTile, type MetricTone } from "@/components/ui/metric-tile";
-import { canAdminJudges, canManageJudges, getSession } from "@/lib/auth/session";
-import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { canAdminJudges, canManageJudges, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
-import { redirect } from "next/navigation";
 import { AEP_JUDGE_LICENSE_NOTE } from "@/lib/aep-guide-2026";
 import { BarChart2, BookOpen, CheckCircle2, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export default async function ExamsPage() {
   const user = await getSession();
-  if (!user) redirect(SIGN_IN_SIN_ACCESO);
+  if (!user) return redirectSinAcceso();
 
   const [exams, referees] = await Promise.all([
     dataService.getExams(undefined, user),
