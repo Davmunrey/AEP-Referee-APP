@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { themeBootScript } from "@/lib/theme";
 
 // Geist: grotesca neutra y actual, con cifras tabulares de serie; sustituye a
 // DM Sans + IBM Plex Mono, cuya mono de aire «terminal» envejecía la interfaz.
@@ -26,7 +27,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" data-scroll-behavior="smooth">
+    // suppressHydrationWarning: el script de arranque pone `data-theme` en
+    // <html> antes de hidratar, a propósito.
+    <html lang="es" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
