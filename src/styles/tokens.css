@@ -45,6 +45,8 @@
   --subtle-muted: #8b8b94;
 
   --card: var(--neutral-0);
+  /* Velo bajo los modales: tinta de la app, no negro puro. */
+  --overlay: color-mix(in srgb, var(--neutral-950) 38%, transparent);
   --card-foreground: var(--neutral-900);
   --popover: var(--neutral-0);
   --popover-foreground: var(--neutral-900);
@@ -224,6 +226,7 @@
   --subtle-muted: #74747e;
 
   --card: #18181c;
+  --overlay: rgb(0 0 0 / 0.6);
   --card-foreground: #ededf0;
   --popover: #1c1c21;
   --popover-foreground: #ededf0;
@@ -322,6 +325,7 @@
     --subtle-muted: #74747e;
 
     --card: #18181c;
+    --overlay: rgb(0 0 0 / 0.6);
     --card-foreground: #ededf0;
     --popover: #1c1c21;
     --popover-foreground: #ededf0;

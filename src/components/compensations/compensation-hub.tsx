@@ -11,12 +11,11 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
-  Trophy,
 } from "lucide-react";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
-import { MetricTile } from "@/components/ui/metric-tile";
+import { MetricStrip, MetricTile } from "@/components/ui/metric-tile";
 import {
   DataTable,
   DataTableBody,
@@ -63,7 +62,6 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Competiciones"
         title="Compensación de jueces"
         description="Acceso directo a facturación y recibos por campeonato, sin ir tarima a tarima."
       />
@@ -87,23 +85,21 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricTile label="Campeonatos con jueces" value={items.length} icon={Trophy} />
+      <MetricStrip columns={4}>
+        <MetricTile label="Campeonatos con jueces" value={items.length} />
         <MetricTile
           label="Total confirmado"
           value={formatReceiptAmountEur(confirmedTotal)}
-          icon={Banknote}
-          tone="primary"
+          tone={pendingAmount > 0 ? "warning" : "neutral"}
           hint={pendingAmount > 0 ? `+ ${formatReceiptAmountEur(pendingAmount)} pendiente de km` : undefined}
         />
-        <MetricTile label="Listos para exportar" value={readyCount} icon={CheckCircle2} tone="success" />
+        <MetricTile label="Listos para exportar" value={readyCount} />
         <MetricTile
           label="Jueces con km pendientes"
           value={totalPendingKm}
-          icon={MapPin}
           tone={totalPendingKm > 0 ? "warning" : "neutral"}
         />
-      </div>
+      </MetricStrip>
 
       {items.length === 0 ? (
         <EmptyState

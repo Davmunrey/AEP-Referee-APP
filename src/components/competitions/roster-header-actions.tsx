@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { TransitionStartFunction } from "react";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 interface RosterHeaderActionsProps {
   competitionId: string;
@@ -190,16 +191,18 @@ export function RosterHeaderActions({
           )}
           disabled={pending || rosterLocked || Boolean(submitBlockedReason)}
           title={submitBlockedReason ?? undefined}
-          onClick={() => {
+          onClick={async () => {
             const lines = [
-              `Cobertura: ${fillPct}% (${filledSlots}/${totalSlots} plazas).`,
+              `Cobertura: ${fillPct} % (${filledSlots}/${totalSlots} plazas).`,
               openSlots > 0 ? `Huecos sin asignar: ${openSlots}.` : null,
-              violationCount > 0
-                ? `Violaciones de normativa: ${violationCount}.`
-                : null,
-              "¿Enviar la propuesta a aprobación?",
+              violationCount > 0 ? `Avisos de normativa: ${violationCount}.` : null,
             ].filter(Boolean);
-            if (!confirm(lines.join("\n"))) return;
+            const ok = await confirmar({
+              titulo: "¿Enviar la propuesta a aprobación?",
+              detalle: lines.join("\n"),
+              accion: "Enviar a aprobación",
+            });
+            if (!ok) return;
             startTransition(async () => {
               try {
                 const res = await api.submitRoster(competitionId);

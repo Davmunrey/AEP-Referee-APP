@@ -95,7 +95,7 @@ export function AppShell({
           <button
             type="button"
             aria-label="Cerrar menú"
-            className="absolute inset-0 bg-foreground/30 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-overlay"
             onClick={() => setMobileOpen(false)}
           />
           <div className="drawer-in relative h-full">

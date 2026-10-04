@@ -10,6 +10,7 @@ import { FileText, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReportCard } from "./report-card";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 const REPORT_TYPES: ReportType[] = ["General", "Incidencia", "Evaluación"];
 
@@ -92,7 +93,8 @@ export function ReportsManager({
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm("¿Eliminar este informe? Esta acción no se puede deshacer.")) return;
+    const ok = await confirmar({ titulo: "¿Eliminar este informe?", detalle: "No se puede deshacer.", accion: "Eliminar informe", peligro: true });
+    if (!ok) return;
     setBusy(true);
     setError(null);
     try { await api.deleteReport(id); setReports((prev) => prev.filter((r) => r.id !== id)); router.refresh(); }

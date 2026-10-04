@@ -178,7 +178,6 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
       )}
 
       <PageHeader
-        eyebrow="General"
         title="Estadísticas"
         description={`Resumen ${data.selectedYear} · campeonatos, plazas de plantilla y asignaciones en tarima.`}
       >

@@ -1,20 +1,24 @@
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
-  eyebrow?: string;
   title: string;
   description?: string;
   children?: React.ReactNode;
   className?: string;
 }
 
-export function PageHeader({ eyebrow, title, description, children, className }: PageHeaderProps) {
+/**
+ * Cabecera de página: título, una línea que dice qué hay y las acciones.
+ *
+ * Sin rótulo encima del título (antes repetía el grupo del menú —«Jueces»,
+ * «Competiciones»—, que ya dicen la miga de pan y el menú lateral). Las
+ * acciones van a la derecha del título en escritorio y debajo, a lo ancho,
+ * en móvil, donde pueden pasar a varias líneas sin salirse de la pantalla.
+ */
+export function PageHeader({ title, description, children, className }: PageHeaderProps) {
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="max-w-2xl">
-        {eyebrow && (
-          <p className="mb-1.5 text-[13px] font-medium text-subtle">{eyebrow}</p>
-        )}
         {/* text-balance / text-pretty: reparte el título en líneas de largo
             parecido y evita que la descripción deje una palabra huérfana al
             final —los títulos de esta app rompen a dos líneas en portátil. */}
@@ -27,7 +31,7 @@ export function PageHeader({ eyebrow, title, description, children, className }:
           </p>
         )}
       </div>
-      {children ? <div className="flex flex-wrap items-center gap-2">{children}</div> : null}
+      {children ? <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{children}</div> : null}
     </div>
   );
 }

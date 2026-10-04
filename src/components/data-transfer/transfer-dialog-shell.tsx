@@ -72,7 +72,7 @@ export function TransferDialogShell({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]",
+        "fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4",
         dialogOverlayEnter,
       )}
       role="presentation"

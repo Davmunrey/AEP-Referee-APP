@@ -176,7 +176,6 @@ export function RegulationsView() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Referencia"
         title="Normativa"
         description="Guía AEP, compensación de jueces y reglamento técnico IPF."
       />

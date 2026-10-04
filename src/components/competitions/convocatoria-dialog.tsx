@@ -13,6 +13,7 @@ import { AEP_MACRO_ZONES, resolveZoneCode, zoneUiName } from "@/lib/aep-zones";
 import { contar } from "@/lib/plural";
 import type { Competition, Referee, RosterSession } from "@/lib/types";
 import { cn, formatDateRange } from "@/lib/utils";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 const fecha = (iso: string) => formatDateRange(iso, iso);
 
@@ -85,7 +86,7 @@ export function ConvocatoriaDialog({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`} onClick={busy ? undefined : onClose}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`} onClick={busy ? undefined : onClose}>
       <div
         ref={dialogRef}
         tabIndex={-1}
@@ -327,8 +328,15 @@ export function ConvocatoriaDialog({
                 size="sm"
                 className="mr-auto text-destructive hover:text-destructive"
                 disabled={busy}
-                onClick={() => {
-                  if (!window.confirm("¿Cancelar la convocatoria? Los jueces dejarán de verla y se perderán las inscripciones.")) return;
+                onClick={async () => {
+                  const ok = await confirmar({
+                    titulo: "¿Cancelar la convocatoria?",
+                    detalle: "Los jueces dejarán de verla y se perderán las inscripciones.",
+                    accion: "Cancelar convocatoria",
+                    cancelar: "Mantenerla",
+                    peligro: true,
+                  });
+                  if (!ok) return;
                   void run(async () => {
                     await api.updateConvocatoria(competition.id, { estado: "cancelada" });
                     return null;

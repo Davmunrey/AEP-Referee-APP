@@ -18,16 +18,12 @@ import type { ApprovalProposal, Competition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
-  Clock,
-  LayoutList,
-  XCircle,
 } from "lucide-react";
 import { contar } from "@/lib/plural";
-import { MetricTile } from "@/components/ui/metric-tile";
+import { MetricStrip, MetricTile } from "@/components/ui/metric-tile";
 
 const PAGE_SIZE = 10;
 
@@ -131,18 +127,17 @@ export function ApprovalsBoard({
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Competiciones"
         title="Aprobaciones"
         description={`${contar(pendingCount, "propuesta pendiente", "propuestas pendientes")} de revisión nacional`}
       />
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricTile label="Pendientes" value={pendingCount} tone="warning" icon={Clock} />
-        <MetricTile label="Esta semana" value={thisWeekCount} tone="neutral" icon={LayoutList} />
-        <MetricTile label="Aprobadas" value={approvedCount} tone="success" icon={CheckCircle2} />
-        <MetricTile label="Rechazadas" value={rejectedCount} tone="danger" icon={XCircle} />
-      </div>
+      <MetricStrip columns={4}>
+        <MetricTile label="Pendientes" value={pendingCount} tone={pendingCount > 0 ? "warning" : "neutral"} />
+        <MetricTile label="Esta semana" value={thisWeekCount} />
+        <MetricTile label="Aprobadas" value={approvedCount} />
+        <MetricTile label="Rechazadas" value={rejectedCount} />
+      </MetricStrip>
 
       {/* Dual-column layout */}
       <div className="grid gap-4 lg:grid-cols-5 lg:items-start">

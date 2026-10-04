@@ -123,7 +123,7 @@ export function EditCompetitionDialog({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
       <div
         ref={panelRef}
         tabIndex={-1}

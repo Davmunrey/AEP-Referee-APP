@@ -23,7 +23,6 @@ export default async function RefereesPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Jueces"
         title="Directorio de jueces"
         description={`${contar(referees.length, "juez", "jueces")} · ${zones.length} zonas federativas`}
       />

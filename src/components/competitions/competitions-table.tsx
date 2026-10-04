@@ -28,6 +28,8 @@ import { zoneFilterOptions } from "@/lib/competitions/list-filters";
 import { cn, formatDateRange } from "@/lib/utils";
 import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types";
 import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
+import { confirmar } from "@/components/ui/confirm-dialog";
+import { contar } from "@/lib/plural";
 
 interface CompetitionsTableProps {
   initialCompetitions: Competition[];
@@ -62,6 +64,10 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   useEffect(() => {
     setCompetitions(initialCompetitions);
   }, [initialCompetitions]);
+
+  // Resultado de borrar o limpiar duplicados, en la propia tabla (antes,
+  // `alert()` del navegador).
+  const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
 
   const refreshEvents = useCallback(() => {
     router.refresh();
@@ -114,35 +120,39 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   const deleteEvent = async (id: string) => {
     setDeletingId(id);
     setConfirmDeleteId(null);
+    setNotice(null);
     try {
       await api.deleteCompetition(id);
       await refreshEvents();
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? `No se pudo eliminar: ${err.message}`
-          : "No se pudo eliminar el campeonato.",
-      );
+      setNotice({
+        text: err instanceof Error ? `No se pudo eliminar: ${err.message}` : "No se pudo eliminar el campeonato.",
+        error: true,
+      });
     } finally {
       setDeletingId(null);
     }
   };
 
   const cleanDuplicates = async () => {
-    if (
-      !window.confirm(
-        `¿Eliminar ${duplicateCount} campeonato(s) duplicado(s)? Se conserva el que tenga más tarima asignada.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirmar({
+      titulo: `¿Eliminar ${contar(duplicateCount, "campeonato duplicado", "campeonatos duplicados")}?`,
+      detalle: "De cada grupo se conserva el que tenga más tarima asignada.",
+      accion: "Eliminar duplicados",
+      peligro: true,
+    });
+    if (!ok) return;
     setDeduping(true);
+    setNotice(null);
     try {
       const result = await api.removeCompetitionDuplicates();
       await refreshEvents();
-      alert(`Listo: ${result.removed.length} eliminado(s), ${result.kept.length} conservado(s).`);
+      setNotice({
+        text: `${contar(result.removed.length, "eliminado", "eliminados")} · ${contar(result.kept.length, "conservado", "conservados")}.`,
+        error: false,
+      });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "No se pudieron limpiar duplicados");
+      setNotice({ text: err instanceof Error ? err.message : "No se pudieron limpiar duplicados", error: true });
     } finally {
       setDeduping(false);
     }
@@ -172,7 +182,15 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
   return (
     <div className="space-y-0">
       {/* Sticky filter row */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border-muted bg-card px-4 py-3 backdrop-blur-sm">
+      {notice && (
+        <p
+          role={notice.error ? "alert" : "status"}
+          className={`border-b border-border-muted px-4 py-2 text-sm ${notice.error ? "text-destructive" : "text-success"}`}
+        >
+          {notice.text}
+        </p>
+      )}
+      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border-muted bg-card px-4 py-3">
         <Input
           type="search"
           placeholder="Buscar campeonato o sede…"

@@ -88,6 +88,7 @@ import {
   groupSessionsByDay,
 } from "./roster-session-helpers";
 import { zonesMatch } from "@/lib/aep-zones";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 // Defaults estables a nivel de módulo: un literal `{}` inline crearía un objeto
 // nuevo por render y, al ser dependencia del efecto de re-sincronización, podría
@@ -273,14 +274,22 @@ export function RosterBuilder({
     refreshCompetitionList();
   }, [isEditing, pending, refreshCompetitionList]);
 
-  const handleUnlockImprevisto = () => {
+  const handleUnlockImprevisto = async () => {
     const pendingApproval = isRosterPendingApproval(aprobacion);
-    const question = pendingApproval
-      ? "¿Retirar la propuesta y volver a editar la tarima?\n\nSaldrá de la bandeja de aprobación y tendrás que enviarla de nuevo cuando termines."
-      : "¿Registrar un imprevisto y desbloquear la tarima para cambios?\n\nDeberás volver a enviar la propuesta a aprobación cuando termines.";
-    if (typeof window !== "undefined" && !window.confirm(question)) {
-      return;
-    }
+    const ok = await confirmar(
+      pendingApproval
+        ? {
+            titulo: "¿Retirar la propuesta y volver a editar la tarima?",
+            detalle: "Saldrá de la bandeja de aprobación y tendrás que enviarla de nuevo cuando termines.",
+            accion: "Retirar y editar",
+          }
+        : {
+            titulo: "¿Registrar un imprevisto y desbloquear la tarima?",
+            detalle: "Deberás volver a enviar la propuesta a aprobación cuando termines.",
+            accion: "Registrar imprevisto",
+          },
+    );
+    if (!ok) return;
     startTransition(async () => {
       try {
         const res = await api.unlockRosterImprevisto(competition.id);
@@ -390,16 +399,18 @@ export function RosterBuilder({
   // useCallback en persistAssign/persistClear/onDrop/onQuickAssign/toggleFlag:
   // son props de SessionBlock/RefereeCard (memoizados); si se recrearan en cada
   // render el memo no serviría de nada.
-  const persistAssign = useCallback((slotKey: string, refereeId: string) => {
+  const persistAssign = useCallback(async (slotKey: string, refereeId: string) => {
     const block = getOperationalBlock({ template, assignments, slotKey, refereeId, flags });
     let forceShared = false;
     if (block) {
       if (!block.overridable) { setStatusMsg(block.reason); setStatusIsError(true); return; }
       // Conflicto forzable: avisamos y, si se confirma, marcamos el puesto como
       // compartido (*) para dejar constancia en el acta y permitir el solape.
-      const proceed =
-        typeof window !== "undefined" &&
-        window.confirm(`${block.reason}\n\n¿Asignar de todas formas y marcar el puesto como compartido (*)?`);
+      const proceed = await confirmar({
+        titulo: "¿Asignar de todas formas?",
+        detalle: `${block.reason}\n\nEl puesto quedará marcado como compartido (*) en el cuadrante.`,
+        accion: "Asignar como compartido",
+      });
       if (!proceed) return;
       forceShared = true;
     }
@@ -458,13 +469,13 @@ export function RosterBuilder({
 
   const onDrop = useCallback((slotKey: string, refereeId: string) => {
     if (rosterReadOnly) return;
-    persistAssign(slotKey, refereeId);
+    void persistAssign(slotKey, refereeId);
     setDraggedId(null); setSelectedSlot(null);
   }, [rosterReadOnly, persistAssign]);
 
   const onQuickAssign = useCallback((refereeId: string) => {
     if (!selectedSlot || rosterReadOnly) return;
-    persistAssign(selectedSlot, refereeId);
+    void persistAssign(selectedSlot, refereeId);
   }, [selectedSlot, rosterReadOnly, persistAssign]);
 
   const onDragEnd = useCallback(() => setDraggedId(null), []);
@@ -502,11 +513,12 @@ export function RosterBuilder({
         aplicar(await api.saveTemplate(competition.id, next, baseHash));
       } catch (err) {
         if (err instanceof ApiRequestError && err.status === 409) {
-          const sobrescribir = window.confirm(
-            "Otra persona ha cambiado la plantilla mientras la editabas.\n\n" +
-              "Aceptar: guardar tu versión y sustituir la suya.\n" +
-              "Cancelar: descartar tus cambios y cargar la versión actual.",
-          );
+          const sobrescribir = await confirmar({
+            titulo: "Otra persona ha cambiado la plantilla mientras la editabas",
+            detalle: "Puedes guardar tu versión, que sustituye a la suya, o descartar tus cambios y cargar la versión actual.",
+            accion: "Guardar la mía",
+            cancelar: "Cargar la actual",
+          });
           if (sobrescribir) {
             try {
               aplicar(await api.saveTemplate(competition.id, next));
@@ -526,9 +538,15 @@ export function RosterBuilder({
     });
   };
 
-  const clearAllAssignments = () => {
+  const clearAllAssignments = async () => {
     if (rosterReadOnly || filledSlots === 0 || pending) return;
-    if (!confirm(`¿Vaciar todas las asignaciones de jueces de ${competition.nombre}?\n\nLa plantilla se mantiene, solo se liberan los huecos.`)) return;
+    const ok = await confirmar({
+      titulo: `¿Vaciar todas las asignaciones de ${competition.nombre}?`,
+      detalle: "La plantilla se mantiene; solo se liberan los huecos.",
+      accion: "Vaciar asignaciones",
+      peligro: true,
+    });
+    if (!ok) return;
     const sa = assignments; const sf = flags;
     setAssignments({}); setFlags({}); setSelectedSlot(null);
     startTransition(async () => {
@@ -537,9 +555,15 @@ export function RosterBuilder({
     });
   };
 
-  const clearTemplateAndAssignments = () => {
+  const clearTemplateAndAssignments = async () => {
     if (rosterReadOnly || template.length === 0 || pending || savingTemplate) return;
-    if (!confirm(`¿Borrar la plantilla de tarima de ${competition.nombre}?\n\nEsto elimina sesiones, huecos y asignaciones. Podrás importar el horario de nuevo.`)) return;
+    const ok = await confirmar({
+      titulo: `¿Borrar la plantilla de tarima de ${competition.nombre}?`,
+      detalle: "Se eliminan sesiones, huecos y asignaciones. Podrás importar el horario de nuevo.",
+      accion: "Borrar plantilla",
+      peligro: true,
+    });
+    if (!ok) return;
     const st = template; const sa = assignments; const sf = flags;
     setTemplate([]); setAssignments({}); setFlags({}); setSelectedSlot(null); setActiveSessionKey(null); setWorkflowStep("plantilla");
     startTransition(async () => {

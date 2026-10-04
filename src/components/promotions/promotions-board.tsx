@@ -19,15 +19,12 @@ const NewPromotionDialog = dynamic(
 );
 import {
   ArrowRight,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Clock,
   TrendingUp,
-  XCircle,
 } from "lucide-react";
 import { contar } from "@/lib/plural";
-import { MetricTile } from "@/components/ui/metric-tile";
+import { MetricStrip, MetricTile } from "@/components/ui/metric-tile";
 
 
 const GROUP_LABELS: Record<string, string> = {
@@ -155,7 +152,6 @@ export function PromotionsBoard({
     <PageShell>
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          eyebrow="Jueces"
           title="Ascensos de nivel"
           description={`${contar(pendingCount, "solicitud pendiente", "solicitudes pendientes")} · Regional → Nacional → IPF · revisión centralizada`}
         />
@@ -165,12 +161,12 @@ export function PromotionsBoard({
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricTile label="Pendientes" value={pendingCount} tone="warning" icon={Clock} />
-        <MetricTile label="Esta semana" value={thisWeekCount} tone="neutral" icon={TrendingUp} />
-        <MetricTile label="Aprobadas" value={approvedCount} tone="success" icon={CheckCircle2} />
-        <MetricTile label="Rechazadas" value={rejectedCount} tone="danger" icon={XCircle} />
-      </div>
+      <MetricStrip columns={4}>
+        <MetricTile label="Pendientes" value={pendingCount} tone={pendingCount > 0 ? "warning" : "neutral"} />
+        <MetricTile label="Esta semana" value={thisWeekCount} />
+        <MetricTile label="Aprobadas" value={approvedCount} />
+        <MetricTile label="Rechazadas" value={rejectedCount} />
+      </MetricStrip>
 
       {/* Grouped sections */}
       <div className="space-y-4">

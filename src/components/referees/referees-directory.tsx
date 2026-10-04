@@ -36,6 +36,7 @@ import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
 import { arbitrajeYears } from "@/lib/judges-registry/arbitraje-stats";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { contar } from "@/lib/plural";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 const CENSO_ALL = "TODOS";
 
@@ -146,7 +147,13 @@ export function RefereesDirectory({
   };
 
   const deleteReferee = async (id: string, nombre: string) => {
-    if (!confirm(`¿Eliminar al juez "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await confirmar({
+      titulo: `¿Eliminar a ${nombre} del censo?`,
+      detalle: "Se borra su ficha. No se puede deshacer; si solo deja de arbitrar, márcalo como inactivo.",
+      accion: "Eliminar juez",
+      peligro: true,
+    });
+    if (!ok) return;
     setDeletingId(id);
     try {
       await api.deleteReferee(id);

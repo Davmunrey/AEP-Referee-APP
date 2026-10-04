@@ -319,7 +319,6 @@ export function UsersAdmin({
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Administración"
         title="Usuarios federativos"
         description="Alta de representantes regionales y cuentas de consulta. Solo accesible para AEP Nacional."
       />

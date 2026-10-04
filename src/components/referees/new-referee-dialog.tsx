@@ -61,7 +61,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay ${dialogOverlayEnter}`}
       onClick={onClose}
     >
       <div

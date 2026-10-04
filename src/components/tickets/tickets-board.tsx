@@ -98,7 +98,6 @@ export function TicketsBoard({
     <PageShell>
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          eyebrow="Referencia"
           title="Tickets de soporte"
           description={`${scopeNote} · ${tickets.length} en total · ${openCount} en curso`}
         />

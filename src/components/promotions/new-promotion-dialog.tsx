@@ -109,7 +109,7 @@ export function NewPromotionDialog({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
     >
       <div

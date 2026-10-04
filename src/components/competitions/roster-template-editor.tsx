@@ -20,6 +20,7 @@ import { RoleRows, COMPETITION_ROLE_KEYS, PESAJE_ROLE_KEYS } from "@/components/
 import { RequiredSlotsChips } from "@/components/competitions/roster-session-block";
 import { SessionCategoriesEditor } from "@/components/competitions/session-categories-editor";
 import { SessionGroupsEditor } from "@/components/competitions/session-groups-editor";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 export interface RosterTemplateEditorProps {
   competitionId: string;
@@ -99,9 +100,15 @@ export function RosterTemplateEditor({ competitionId, initialTemplate, onSave, o
     [sessions],
   );
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (isDirty) {
-      const ok = typeof window !== "undefined" && window.confirm("Tienes cambios sin guardar en la plantilla. ¿Descartar y volver a la tarima?");
+      const ok = await confirmar({
+        titulo: "¿Descartar los cambios de la plantilla?",
+        detalle: "Tienes cambios sin guardar. Si vuelves a la tarima, se pierden.",
+        accion: "Descartar cambios",
+        cancelar: "Seguir editando",
+        peligro: true,
+      });
       if (!ok) return;
     }
     onCancel();

@@ -23,6 +23,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { REFEREE_LEVEL_ORDER } from "@/lib/referee-levels";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 const EXAM_TYPES: ExamType[] = [
   "Nuevo juez",
@@ -155,7 +156,8 @@ export function ExamsManager({
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm("¿Eliminar este examen? Esta acción no se puede deshacer.")) return;
+    const ok = await confirmar({ titulo: "¿Eliminar este examen?", detalle: "No se puede deshacer.", accion: "Eliminar examen", peligro: true });
+    if (!ok) return;
     setBusy(true);
     setError(null);
     try {
