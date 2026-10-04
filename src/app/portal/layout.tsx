@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { getJudgeSession, getSession } from "@/lib/auth/session";
 import { SIGN_IN_SIN_ACCESO } from "@/lib/auth/sign-in-redirect";
+import { afterResponse } from "@/lib/after-response";
+import { revisarConvocatorias } from "@/server/convocatorias";
+import { dataService } from "@/server/services";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +18,13 @@ export default async function PortalLayout({ children }: { children: React.React
     if (await getSession()) redirect("/");
     redirect(SIGN_IN_SIN_ACCESO);
   }
+  const notificaciones = await dataService.getBandejaNotificaciones(judge.id).catch((err) => {
+    console.error("[portal.notificaciones]", err);
+    return { items: [], sinLeer: 0 };
+  });
+  afterResponse(() => revisarConvocatorias());
   return (
-    <PortalShell nombre={judge.nombre} iniciales={judge.iniciales}>
+    <PortalShell nombre={judge.nombre} iniciales={judge.iniciales} notificaciones={notificaciones}>
       {children}
     </PortalShell>
   );

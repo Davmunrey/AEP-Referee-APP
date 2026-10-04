@@ -2,7 +2,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { LEVELS, PRESET_AEP1, ZONES } from "@/lib/mock-data";
 import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
 import { normalizeCompetitionTemplate } from "@/lib/roster-template";
-import type { Convocatoria, Inscripcion } from "@/lib/convocatorias";
+import type { Convocatoria, DesignacionRespuesta, Inscripcion } from "@/lib/convocatorias";
+import type { Notificacion } from "@/lib/notificaciones";
 import type {
   ActivityItem,
   ApprovalProposal,
@@ -34,6 +35,9 @@ interface AppStore {
   sanctions: RefereeSanction[];
   convocatorias: Convocatoria[];
   inscripciones: Inscripcion[];
+  /** `${competitionId}::${refereeId}` → respuesta del juez a su designación. */
+  respuestas: Map<string, DesignacionRespuesta>;
+  notificaciones: Notificacion[];
 }
 
 const globalStore = globalThis as unknown as { __aepStore?: AppStore };
@@ -54,6 +58,8 @@ function createStore(): AppStore {
     sanctions: [],
     convocatorias: [],
     inscripciones: [],
+    respuestas: new Map(),
+    notificaciones: [],
   };
 }
 

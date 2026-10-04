@@ -77,10 +77,10 @@ describe("dos usuarios sobre el mismo hueco", () => {
   it("el segundo no pisa al primero cuando declara lo que vio", async () => {
     // Los dos abren la tarima con el hueco vacío. El primero asigna; el
     // segundo, que sigue viendo el hueco libre, es rechazado.
-    const primero = await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, null);
+    const primero = await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, undefined, null);
     expect(primero.error).toBeUndefined();
 
-    const segundo = await assignReferee(ctx.comp.id, SLOT, ctx.juezB.id, "Carlos", undefined, null);
+    const segundo = await assignReferee(ctx.comp.id, SLOT, ctx.juezB.id, "Carlos", undefined, undefined, null);
     expect(segundo.conflict).toBe(true);
     expect(segundo.error).toContain("Ana Pérez");
 
@@ -91,9 +91,9 @@ describe("dos usuarios sobre el mismo hueco", () => {
   it("sustituir a un juez sigue funcionando si se declara al ocupante", async () => {
     // El control es optimista, no un bloqueo: reemplazar es una operación
     // legítima mientras la pantalla esté al día.
-    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, null);
+    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, undefined, null);
     const cambio = await assignReferee(
-      ctx.comp.id, SLOT, ctx.juezB.id, "Carlos", undefined, ctx.juezA.id,
+      ctx.comp.id, SLOT, ctx.juezB.id, "Carlos", undefined, undefined, ctx.juezA.id,
     );
     expect(cambio.error).toBeUndefined();
     expect(getStore().assignments.get(ctx.comp.id)?.[SLOT]).toBe(ctx.juezB.id);
@@ -111,8 +111,8 @@ describe("dos usuarios sobre el mismo hueco", () => {
   it("la sustitución deja constancia del juez desplazado", async () => {
     // Antes el historial solo decía a quién se asignaba: el desplazado
     // desaparecía sin rastro.
-    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, null);
-    await assignReferee(ctx.comp.id, SLOT, ctx.juezB.id, "Carlos", undefined, ctx.juezA.id);
+    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, undefined, null);
+    await assignReferee(ctx.comp.id, SLOT, ctx.juezB.id, "Carlos", undefined, undefined, ctx.juezA.id);
 
     const historial = await getRosterHistory(ctx.comp.id);
     const sustitucion = historial.find((h) => h.detail?.includes("sustituye a"));
@@ -122,7 +122,7 @@ describe("dos usuarios sobre el mismo hueco", () => {
 
 describe("liberar un hueco que otro acaba de cambiar", () => {
   it("rechaza el borrado cuando el ocupante ya no es el que se vio", async () => {
-    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, null);
+    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, undefined, null);
     // El segundo usuario vio el hueco vacío y pulsa «liberar».
     await expect(clearSlot(ctx.comp.id, SLOT, "Carlos", null)).rejects.toBeInstanceOf(
       RosterSlotConflictError,
@@ -131,7 +131,7 @@ describe("liberar un hueco que otro acaba de cambiar", () => {
   });
 
   it("libera cuando el ocupante coincide", async () => {
-    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, null);
+    await assignReferee(ctx.comp.id, SLOT, ctx.juezA.id, "Ana", undefined, undefined, null);
     await clearSlot(ctx.comp.id, SLOT, "Ana", ctx.juezA.id);
     expect(getStore().assignments.get(ctx.comp.id)?.[SLOT]).toBeUndefined();
   });

@@ -30,6 +30,8 @@ export interface PortalDesignation {
   fecha: string;
   fechaFin: string;
   sessions: PortalSession[];
+  /** Si el juez ya confirmó que va o dijo que no puede. */
+  respuesta?: import("@/lib/convocatorias").DesignacionRespuesta;
 }
 
 export interface JudgePortalProfile {

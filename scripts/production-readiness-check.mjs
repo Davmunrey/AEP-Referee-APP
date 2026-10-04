@@ -71,12 +71,14 @@ const selfServiceApi = new Set([
   "src/app/api/v1/auth/change-password/route.ts",
   "src/app/api/v1/tickets/route.ts",
   "src/app/api/v1/tickets/[id]/comments/route.ts",
+  // La campana: cada uno lee y marca como leídos SUS avisos (por `user.id`).
+  "src/app/api/v1/notificaciones/route.ts",
 ]);
 
 for (const file of apiRoutes) {
   const rel = toPosix(relative(root, file));
   const src = readFileSync(file, "utf8");
-  if (!publicApi.has(rel) && !/requireApiUser|requireJudgeUser|getSession/.test(src)) {
+  if (!publicApi.has(rel) && !/requireApiUser|requireJudgeUser|requireAnyUser|getSession/.test(src)) {
     fail("API-01", `${rel} no exige sesión`);
   }
 

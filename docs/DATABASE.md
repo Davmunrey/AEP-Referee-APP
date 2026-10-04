@@ -5,7 +5,7 @@ decisiones abiertas: [AUDIT-DATABASE.md](./AUDIT-DATABASE.md).
 
 **Producción:** proyecto `foaemadggmpbcrhtpems` (eu-west-2).
 
-**Cómo se aplican.** Las `001`–`033` se ejecutaron a mano en el editor SQL (y las `023`–`025`, con el MCP de Supabase). A partir de la `034` las aplica sola la acción «Migraciones Supabase» en cada push a `main` que toque `supabase/migrations/`; ver [DEPLOY.md](./DEPLOY.md) para el secret que necesita y las salvaguardas que trae. **Estado en producción:** aplicadas hasta la `041` (2026-10-04).
+**Cómo se aplican.** Las `001`–`033` se ejecutaron a mano en el editor SQL (y las `023`–`025`, con el MCP de Supabase). A partir de la `034` las aplica sola la acción «Migraciones Supabase» en cada push a `main` que toque `supabase/migrations/`; ver [DEPLOY.md](./DEPLOY.md) para el secret que necesita y las salvaguardas que trae. **Estado en producción:** aplicadas hasta la `042` (2026-10-04).
 
 **Reproducción en CI.** El job «Reproducir migraciones» levanta un Postgres 16 limpio y aplica la cadena completa `001`→última en cada PR (también sobre la forma que tiene producción), así que una migración que dependa de un esquema que no existe falla antes de llegar a `main`. En local: `bash scripts/replay-migrations.sh "postgresql://…"`.
 
@@ -72,7 +72,7 @@ Reemplaza `referee_availability` (eliminada en 019). Registra qué jueces confir
 
 `referees.arbitraje_stats_by_year` (JSONB) desglosa los arbitrajes por año natural: `{ "2024": {…}, "2025": {…}, … }`. Permite separar censo vigente vs histórico y analítica por año. El agregado histórico (suma de todos los años) sigue en `referees.arbitraje_stats`.
 
-### Migraciones 034–042 (aplicadas por el workflow)
+### Migraciones 034–044 (aplicadas por el workflow)
 
 | Migración | Contenido |
 |---|---|
@@ -85,6 +85,8 @@ Reemplaza `referee_availability` (eliminada en 019). Registra qué jueces confir
 | `040` | Valor `juez` en el tipo `user_role` (solo esto en el fichero: `ADD VALUE` no puede convivir en la misma transacción con su uso). |
 | `041` | Cuentas de juez: `referees.user_id` pasa a índice **único** (una cuenta por juez) e índice por `lower(email)` para la petición de acceso. |
 | `042` | Convocatorias: `convocatorias` (una viva por campeonato, `sesiones TEXT[]`, `cierra_el`), `convocatoria_zonas` (zona × estado aceptada/pendiente/rechazada × origen) y `convocatoria_inscripciones` (juez × sesión, PK compuesta). RLS sin políticas y disparadores de tiempo real.
+| `043` | `designacion_respuestas` (juez × campeonato: confirmada/rechazada + motivo) y `notificaciones` (por usuario; índice único **completo** `(user_id, clave)` para no repetir avisos —uno parcial no lo puede usar el `ON CONFLICT` de PostgREST—; índice de no leídas). RLS sin políticas y tiempo real.
+| `044` | Tiempo real solo con cambios reales: `notificaciones` deja de avisar (son de cada usuario) y `convocatoria_inscripciones` / `designacion_respuestas` pasan a disparadores `FOR EACH ROW` (una sentencia sin filas no refresca a nadie).
 
 ### Índices de rendimiento (migration 030)
 

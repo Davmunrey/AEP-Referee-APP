@@ -17,7 +17,7 @@ const template: RosterSession[] = [
 ];
 const fecha = addDaysIso(todayIso(), 30);
 const cierre = addDaysIso(todayIso(), 10);
-const actor = { id: "u", nombre: "Delegada" };
+const actor = { id: "u", nombre: "Delegada", role: "delegado_zona" as const, zona: "MEDITERRANEO" };
 
 function juez(id: string, zona: string, patch: Partial<Referee> = {}): Referee {
   return { id, nombre: id, zona, nivel: "Regional", estado: "Activo", eventos: 0, ultimo: "", disp: true, iniciales: "J", ...patch };

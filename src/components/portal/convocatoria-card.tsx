@@ -23,7 +23,7 @@ export function ConvocatoriaCard({ item }: { item: PortalConvocatoria }) {
       className="surface-card flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-surface-hover focus-ring"
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-semibold text-foreground">{item.competitionName}</p>
+        <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">{item.competitionName}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {formatDateRange(item.fecha, item.fechaFin)} · {item.sede}
           {item.otraZona && item.zona ? ` · ${zoneUiName(item.zona)}` : ""}

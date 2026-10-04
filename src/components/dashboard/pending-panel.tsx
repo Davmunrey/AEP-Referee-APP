@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { ZoneRequestActions } from "@/components/dashboard/zone-request-actions";
+import { zoneUiName } from "@/lib/aep-zones";
+import type { SolicitudDeZona } from "@/lib/convocatorias";
 import type { Insight, InsightSeverity, SanctionAlert } from "@/lib/types";
 import { contar } from "@/lib/plural";
 import { cn, formatDateRange } from "@/lib/utils";
@@ -20,9 +23,18 @@ const rowClass =
  * destellos, insignias de métrica y bordes de color por severidad) y a la
  * tarjeta suelta de «Sanciones activas»: el color queda en un punto.
  */
-export function PendingPanel({ insights, sanctions }: { insights: Insight[]; sanctions: SanctionAlert[] }) {
+export function PendingPanel({
+  insights,
+  sanctions,
+  solicitudes = [],
+}: {
+  insights: Insight[];
+  sanctions: SanctionAlert[];
+  /** Convocatorias de otras zonas que piden jueces de la tuya. */
+  solicitudes?: SolicitudDeZona[];
+}) {
   const todo = insights.filter((i) => i.severity !== "ok");
-  const total = todo.length + sanctions.length;
+  const total = todo.length + sanctions.length + solicitudes.length;
 
   return (
     <Card className="overflow-hidden p-0">
@@ -34,6 +46,23 @@ export function PendingPanel({ insights, sanctions }: { insights: Insight[]; san
         <p className="px-4 py-10 text-center text-sm text-muted-foreground">Nada pendiente. Todo al día.</p>
       ) : (
         <ul className="divide-y divide-border-muted">
+          {solicitudes.map((s) => (
+            <li key={`${s.convocatoriaId}:${s.zona}`} className="flex items-start gap-3 px-4 py-3">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-info" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {s.competitionName} pide jueces de {zoneUiName(s.zona)}
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  {s.competitionZona ? `${zoneUiName(s.competitionZona)} · ` : ""}
+                  {formatDateRange(s.fecha, s.fecha)}
+                  {s.origen === "automatica" ? " · faltan inscritos" : ""}. Si aceptas, tus jueces podrán apuntarse hasta el{" "}
+                  {formatDateRange(s.cierraEl, s.cierraEl)}.
+                </p>
+                <ZoneRequestActions convocatoriaId={s.convocatoriaId} zona={s.zona} />
+              </div>
+            </li>
+          ))}
           {todo.map((i) => {
             const body = (
               <>

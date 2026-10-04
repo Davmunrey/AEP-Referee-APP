@@ -40,9 +40,9 @@ import {
   type RosterWorkflowStep,
 } from "@/lib/roster-ui";
 import { cn } from "@/lib/utils";
-import { ChevronRight, FileUp } from "lucide-react";
+import { AlertTriangle, ChevronRight, FileUp } from "lucide-react";
 import { parseSlotKey } from "@/lib/roster-template";
-import { isConvocatoriaAbierta, type ConvocatoriaStaffView } from "@/lib/convocatorias";
+import { isConvocatoriaAbierta, type ConvocatoriaStaffView, type DesignacionRespuesta } from "@/lib/convocatorias";
 // Diálogos/editores pesados: se cargan bajo demanda (al abrirlos), no en el
 // bundle inicial de la ruta de tarima (la más pesada de la app).
 // Solo se ve en el paso «Revisión»: no tiene por qué ir en la carga inicial.
@@ -58,6 +58,8 @@ const ScheduleImportDialog = dynamic(
   () => import("@/components/competitions/schedule-import-dialog").then((m) => m.ScheduleImportDialog),
   { ssr: false },
 );
+const EMPTY_RESPUESTAS: Readonly<Record<string, DesignacionRespuesta>> = {};
+
 const QuadrantImportDialog = dynamic(
   () => import("@/components/competitions/quadrant-import-dialog").then((m) => m.QuadrantImportDialog),
   { ssr: false },
@@ -121,6 +123,10 @@ interface RosterBuilderProps {
   defaultZonaFilter?: string;
   /** Convocatoria viva del campeonato y sus inscripciones. */
   initialConvocatoria?: ConvocatoriaStaffView | null;
+  /** Respuesta de cada juez designado (confirma / no puede ir). */
+  respuestas?: Readonly<Record<string, DesignacionRespuesta>>;
+  /** Gestión nacional (abre convocatorias a otras zonas sin esperar a su delegado). */
+  isNationalUser?: boolean;
 }
 
 export function RosterBuilder({
@@ -142,6 +148,8 @@ export function RosterBuilder({
   paidRefereeIds = EMPTY_PAID_REFEREE_IDS,
   defaultZonaFilter = "TODAS",
   initialConvocatoria = null,
+  respuestas = EMPTY_RESPUESTAS,
+  isNationalUser = false,
 }: RosterBuilderProps) {
   const router = useRouter();
   const readOnly = !canEdit;
@@ -324,6 +332,12 @@ export function RosterBuilder({
     [assignments, template, regulations, competition.tipo, refereeById],
   );
   const selectedRoleKey = selectedSlot ? parseSlotKey(selectedSlot)?.roleKey : undefined;
+
+  // Designados que avisaron de que no pueden ir (y siguen en la tarima).
+  const rechazos = useMemo(() => {
+    const enTarima = new Set(Object.values(assignments).filter(Boolean));
+    return Object.entries(respuestas).filter(([id, r]) => r.estado === "rechazada" && enTarima.has(id));
+  }, [assignments, respuestas]);
 
   // Inscritos en la convocatoria para la sesión que se está montando: la del
   // hueco elegido o, sin hueco, la sesión activa.
@@ -613,6 +627,25 @@ export function RosterBuilder({
           lastReview={lastReview}
           onUnlock={handleUnlockImprevisto}
         />
+        {rechazos.length > 0 && (
+          // Un juez designado avisó desde su portal de que no puede ir. La
+          // tarima aprobada se abre en «Revisión», donde la marca del hueco no
+          // se ve: sin esto, el delegado se enteraba por la campana o no se
+          // enteraba.
+          <div role="status" className="flex flex-wrap items-start gap-2 border-b border-destructive/20 bg-destructive-muted px-4 py-2.5 text-xs sm:px-5 lg:px-6">
+            <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden="true" />
+            <p className="min-w-0 flex-1 text-foreground">
+              {rechazos.map(([id, r], i) => (
+                <span key={id}>
+                  {i > 0 && " · "}
+                  <strong className="font-semibold">{refereeById.get(id)?.nombre ?? id}</strong> no puede ir
+                  {r.motivo ? ` («${r.motivo}»)` : ""}
+                </span>
+              ))}
+              . {approvalLocked ? "Registra un imprevisto para sustituirle." : "Cambia su puesto antes de enviar la tarima."}
+            </p>
+          </div>
+        )}
         {!readOnly && (
           <>
             <RosterHelpPanel>
@@ -747,6 +780,7 @@ export function RosterBuilder({
                             key={activeSession.sesion} session={activeSession}
                             assignments={assignments} flags={flags} crossZoneMap={crossZoneMap}
                             paidRefereeIds={paidRefereeIdSet}
+                            respuestas={respuestas}
                             getReferee={getReferee} selectedSlot={selectedSlot}
                             onSelectSlot={setSelectedSlot} onDrop={onDrop} onClear={persistClear}
                             onToggleFlag={toggleFlag} checkViolation={checkViolation}
@@ -781,6 +815,7 @@ export function RosterBuilder({
           referees={referees}
           view={convocatoria}
           onChange={setConvocatoria}
+          isNational={isNationalUser}
         />
       )}
       {availabilityOpen && (

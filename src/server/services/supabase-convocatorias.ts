@@ -4,14 +4,15 @@
  * para los dos backends.
  */
 import { resolveZoneCode } from "@/lib/aep-zones";
-import type { Convocatoria, ConvocatoriaZona, Inscripcion } from "@/lib/convocatorias";
+import type { Convocatoria, ConvocatoriaZona, DesignacionRespuesta, Inscripcion, ZonaPendiente } from "@/lib/convocatorias";
 import { UserFacingServiceError } from "@/lib/competitions/service-types";
+import { todayIso } from "@/lib/business-date";
 import { db } from "./supabase-helpers";
 
 type Row = Record<string, unknown>;
 
 const CONV_COLS =
-  "id, competition_id, estado, sesiones, cierra_el, mensaje, ampliar_dias_antes, ampliada_at, creada_por, created_at";
+  "id, competition_id, estado, sesiones, cierra_el, mensaje, ampliar_dias_antes, ampliada_at, creada_por, creada_por_id, created_at";
 
 function mapZona(r: Row): ConvocatoriaZona {
   return {
@@ -35,6 +36,7 @@ function mapConvocatoria(r: Row, zonas: ConvocatoriaZona[]): Convocatoria {
     ampliarDiasAntes: r.ampliar_dias_antes == null ? undefined : Number(r.ampliar_dias_antes),
     ampliadaAt: r.ampliada_at ? String(r.ampliada_at) : undefined,
     creadaPor: r.creada_por ? String(r.creada_por) : undefined,
+    creadaPorId: r.creada_por_id ? String(r.creada_por_id) : undefined,
     createdAt: r.created_at ? String(r.created_at) : undefined,
     zonas,
   };
@@ -105,7 +107,7 @@ async function listConvocatoriasAbiertasParaZona(zona: string, desde: string): P
   return withZonas((data ?? []) as Row[]);
 }
 
-async function insertConvocatoria(input: Omit<Convocatoria, "id" | "createdAt"> & { creadaPorId?: string }): Promise<Convocatoria> {
+async function insertConvocatoria(input: Omit<Convocatoria, "id" | "createdAt">): Promise<Convocatoria> {
   const supabase = db();
   const { data, error } = await supabase
     .from("convocatorias")
@@ -209,6 +211,159 @@ async function deleteInscripcion(convocatoriaId: string, refereeId: string, sesi
   return (data ?? []).length > 0;
 }
 
+
+// ── Zonas convocadas ───────────────────────────────────────────────────────
+
+/** Añade zonas; una que ya estaba no cambia (no se rebaja una aceptada). */
+async function addConvocatoriaZonas(convocatoriaId: string, zonas: ConvocatoriaZona[]): Promise<void> {
+  if (zonas.length === 0) return;
+  const now = new Date().toISOString();
+  const { error } = await db()
+    .from("convocatoria_zonas")
+    .upsert(
+      zonas.map((z) => ({
+        convocatoria_id: convocatoriaId,
+        zona: z.zona,
+        estado: z.estado,
+        origen: z.origen,
+        resuelta_por: z.resueltaPor ?? null,
+        resuelta_at: z.estado === "pendiente" ? null : now,
+      })),
+      { onConflict: "convocatoria_id,zona", ignoreDuplicates: true },
+    );
+  if (error) throw new Error(`convocatoria_zonas: ${error.message}`);
+}
+
+/**
+ * Acepta o rechaza una zona pendiente. Condicional: si otro ya la resolvió,
+ * no se pisa (devuelve `false`).
+ */
+async function resolverConvocatoriaZona(
+  convocatoriaId: string,
+  zona: string,
+  estado: "aceptada" | "rechazada",
+  resueltaPor: string,
+): Promise<boolean> {
+  const { data, error } = await db()
+    .from("convocatoria_zonas")
+    .update({ estado, resuelta_por: resueltaPor, resuelta_at: new Date().toISOString() })
+    .eq("convocatoria_id", convocatoriaId)
+    .eq("zona", zona)
+    .eq("estado", "pendiente")
+    .select("zona");
+  if (error) throw new Error(`convocatoria_zonas: ${error.message}`);
+  return (data ?? []).length > 0;
+}
+
+/** Peticiones pendientes de sumarse a convocatorias (de una zona, o todas). */
+async function listZonasPendientes(zona?: string): Promise<ZonaPendiente[]> {
+  let q = db().from("convocatoria_zonas").select("*").eq("estado", "pendiente");
+  if (zona) q = q.eq("zona", zona);
+  // Las más recientes primero: las pendientes de convocatorias ya cerradas no
+  // se pueden responder y, en orden ascendente, tapaban a las nuevas.
+  const { data, error } = await q.order("solicitada_at", { ascending: false }).limit(200);
+  if (error) throw new Error(`convocatoria_zonas: ${error.message}`);
+  return (data ?? []).map((r) => {
+    const z = mapZona(r as Row);
+    return { convocatoriaId: String((r as Row).convocatoria_id), zona: z.zona, origen: z.origen, solicitadaAt: z.solicitadaAt };
+  });
+}
+
+/** Todas las abiertas que aún no han cerrado (para los recordatorios de cierre). */
+async function listConvocatoriasAbiertas(desde: string): Promise<Convocatoria[]> {
+  const { data, error } = await db()
+    .from("convocatorias")
+    .select(CONV_COLS)
+    .eq("estado", "abierta")
+    .gte("cierra_el", desde)
+    .limit(500);
+  if (error) throw new Error(`convocatorias: ${error.message}`);
+  return withZonas((data ?? []) as Row[]);
+}
+
+/** Abiertas con ampliación automática configurada y aún sin ampliar. */
+async function listConvocatoriasParaAmpliar(): Promise<Convocatoria[]> {
+  const { data, error } = await db()
+    .from("convocatorias")
+    .select(CONV_COLS)
+    .eq("estado", "abierta")
+    .not("ampliar_dias_antes", "is", null)
+    .is("ampliada_at", null)
+    // Las de plazo vencido nunca se amplían: sin este filtro se acumulaban y,
+    // con el `limit`, acababan dejando fuera a las vivas.
+    .gte("cierra_el", todayIso())
+    .order("cierra_el", { ascending: true })
+    .limit(200);
+  if (error) throw new Error(`convocatorias: ${error.message}`);
+  return withZonas((data ?? []) as Row[]);
+}
+
+/** Marca la ampliación. Condicional: dos revisiones a la vez no amplían dos veces. */
+async function marcarConvocatoriaAmpliada(id: string): Promise<boolean> {
+  const { data, error } = await db()
+    .from("convocatorias")
+    .update({ ampliada_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("ampliada_at", null)
+    .select("id");
+  if (error) throw new Error(`convocatorias: ${error.message}`);
+  return (data ?? []).length > 0;
+}
+
+// ── Respuesta del juez a su designación ────────────────────────────────────
+
+async function getDesignacionRespuestas(competitionId: string): Promise<Record<string, DesignacionRespuesta>> {
+  const { data, error } = await db().from("designacion_respuestas").select("*").eq("competition_id", competitionId);
+  if (error) throw new Error(`designacion_respuestas: ${error.message}`);
+  const out: Record<string, DesignacionRespuesta> = {};
+  for (const r of (data ?? []) as Row[]) {
+    out[String(r.referee_id)] = {
+      estado: r.estado as DesignacionRespuesta["estado"],
+      motivo: r.motivo ? String(r.motivo) : undefined,
+      updatedAt: r.updated_at ? String(r.updated_at) : undefined,
+    };
+  }
+  return out;
+}
+
+async function getRespuestasDeJuez(refereeId: string): Promise<Record<string, DesignacionRespuesta>> {
+  const { data, error } = await db().from("designacion_respuestas").select("*").eq("referee_id", refereeId);
+  if (error) throw new Error(`designacion_respuestas: ${error.message}`);
+  const out: Record<string, DesignacionRespuesta> = {};
+  for (const r of (data ?? []) as Row[]) {
+    out[String(r.competition_id)] = {
+      estado: r.estado as DesignacionRespuesta["estado"],
+      motivo: r.motivo ? String(r.motivo) : undefined,
+      updatedAt: r.updated_at ? String(r.updated_at) : undefined,
+    };
+  }
+  return out;
+}
+
+/** Al aprobarse de nuevo la tarima, las respuestas anteriores ya no valen. */
+async function clearDesignacionRespuestas(competitionId: string): Promise<void> {
+  const { error } = await db().from("designacion_respuestas").delete().eq("competition_id", competitionId);
+  if (error) throw new Error(`designacion_respuestas: ${error.message}`);
+}
+
+async function setDesignacionRespuesta(
+  competitionId: string,
+  refereeId: string,
+  respuesta: Omit<DesignacionRespuesta, "updatedAt">,
+): Promise<void> {
+  const { error } = await db().from("designacion_respuestas").upsert(
+    {
+      competition_id: competitionId,
+      referee_id: refereeId,
+      estado: respuesta.estado,
+      motivo: respuesta.motivo ?? null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "competition_id,referee_id" },
+  );
+  if (error) throw new Error(`designacion_respuestas: ${error.message}`);
+}
+
 export const convocatoriaService = {
   getConvocatoria,
   getLiveConvocatoria,
@@ -219,4 +374,14 @@ export const convocatoriaService = {
   listInscripcionesDeJuez,
   insertInscripcion,
   deleteInscripcion,
+  addConvocatoriaZonas,
+  resolverConvocatoriaZona,
+  listZonasPendientes,
+  listConvocatoriasParaAmpliar,
+  listConvocatoriasAbiertas,
+  marcarConvocatoriaAmpliada,
+  getDesignacionRespuestas,
+  getRespuestasDeJuez,
+  setDesignacionRespuesta,
+  clearDesignacionRespuestas,
 };

@@ -10,7 +10,13 @@ import { dataService } from "@/server/services";
 export async function loadPortal() {
   const judge = await getJudgeSession();
   if (!judge?.refereeId) notFound();
-  const data = await dataService.getJudgePortal(judge.refereeId);
+  const [data, respuestas] = await Promise.all([
+    dataService.getJudgePortal(judge.refereeId),
+    dataService.getRespuestasDeJuez(judge.refereeId),
+  ]);
   if (!data) notFound();
-  return { judge, data };
+  return {
+    judge,
+    data: { ...data, upcoming: data.upcoming.map((d) => ({ ...d, respuesta: respuestas[d.competitionId] })) },
+  };
 }

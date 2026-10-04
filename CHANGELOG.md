@@ -4,6 +4,31 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🔔 **AEP Tarima v2.11** — _«Todas las zonas»_ (2026-10-04)
+
+Tercera parte del portal del juez: otras zonas, designación con respuesta y avisos.
+
+- **Convocatorias a otras zonas**: al lanzarla o después. Si la abre la gestión nacional, sus jueces la ven al momento; si la abre un delegado de zona, el delegado de la otra zona tiene que aceptarlo desde **Pendiente** en su panel.
+- **Ampliación automática**: si a X días del cierre faltan inscritos, la convocatoria pide ayuda a las demás zonas (cada delegado decide).
+- **Designación con respuesta**: al aprobarse la tarima, cada juez recibe un aviso y confirma que va o dice que no puede, con el motivo. La tarima lo muestra arriba y en el hueco.
+- **La campana**: avisos dentro de la aplicación, en el panel y en el portal, sin correo. Convocatoria nueva, peticiones de otras zonas y su respuesta, recordatorio el día antes del cierre, designaciones y jueces que no pueden ir.
+- **Auditoría del portal antes de publicarlo** (seguridad y corrección):
+  - Los avisos con clave (convocatoria nueva, petición de zona, recordatorio, designación) no se habrían guardado en producción: el índice único era parcial y PostgREST no lo puede usar. Ahora es completo.
+  - Un juez podía hacer refrescar todas las pantallas abiertas repitiendo acciones sin efecto. Ahora el tiempo real solo salta con cambios reales, el portal no se refresca con cada edición de la gestión y las acciones del portal tienen límite de frecuencia.
+  - Si cambia el e-mail de la ficha, la cuenta del juez pasa a entrar con el nuevo; antes el buzón viejo seguía teniendo acceso.
+  - Un enlace con las credenciales de otra cuenta ya no puede sustituir la sesión de quien lo abre.
+  - La petición pública de acceso ya no delata por su tiempo de respuesta si un e-mail es de un juez.
+  - El aviso de choque de fechas ya no revela tarimas en borrador.
+  - Repetir «no puedo ir» no vuelve a llenar la campana de la gestión.
+  - Una tarima aprobada de nuevo pide confirmar otra vez.
+  - Reabrir una convocatoria ya no se bloquea si se quitó una sesión de la plantilla.
+  - Sin aceptar ni sumar zonas a una convocatoria cerrada.
+  - La campana marca como leídos solo los avisos que ha enseñado.
+  - Un juez sancionado después de apuntarse puede retirarse.
+- **Corregido en el modo local**: asignar un juez de otra zona con motivo daba un conflicto falso («otro usuario liberó ese hueco»), porque el gemelo en memoria tenía los parámetros en otro orden que el de Supabase.
+
+---
+
 ## 📣 **AEP Tarima v2.10** — _«Me apunto»_ (2026-10-04)
 
 Segunda parte del portal del juez: las convocatorias.

@@ -16,6 +16,7 @@ import {
 } from "@/app/api/_lib/validation";
 import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import { dataService } from "@/server/services";
+import { syncJudgeLoginEmail } from "@/server/services/judge-accounts";
 import type { Referee } from "@/lib/types";
 
 interface RouteContext {
@@ -166,6 +167,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   );
   if (updated instanceof Response) return updated;
   if (!updated) return jsonError("Juez no encontrado", 404);
+  // Con cuenta en el portal, su acceso sigue al e-mail de la ficha. Si no se
+  // puede igualar se registra: la ficha ya quedó guardada.
+  if (patch.email !== undefined && updated.userId && patch.email !== existing.email) {
+    await syncJudgeLoginEmail(updated).catch((err) => console.error("[referees.PATCH.email-portal]", err));
+  }
   return jsonOk(updated);
 }
 
