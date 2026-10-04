@@ -111,7 +111,7 @@ export function EditCompetitionDialog({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm ${dialogOverlayEnter}`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
       <div className={`w-full max-w-md rounded-2xl border border-border bg-card shadow-xl ${dialogPanelEnter}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">

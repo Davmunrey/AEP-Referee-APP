@@ -299,10 +299,10 @@ function StatusControls({
                       }
                     }}
                     className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors focus-ring disabled:opacity-50",
+                      "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors focus-ring disabled:opacity-50",
                       active
-                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                        : "border-border bg-surface text-foreground hover:border-border-strong hover:bg-surface-hover",
+                        ? "border-primary-border bg-primary-muted text-primary"
+                        : "border-border bg-card text-foreground hover:border-border-strong hover:bg-surface",
                     )}
                   >
                     {STATUS_LABELS[s]}

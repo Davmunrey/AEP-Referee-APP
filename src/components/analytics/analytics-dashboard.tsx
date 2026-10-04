@@ -1,5 +1,6 @@
 "use client";
 
+import { zoneUiName } from "@/lib/aep-zones";
 import { useMemo, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -46,34 +47,34 @@ function coverageTone(pct: number | null, noTemplate: boolean) {
     return {
       bar: "bg-muted",
       value: tokens.text.muted,
-      pill: "border-border-muted bg-surface text-muted-foreground",
+      pill: "bg-surface text-muted-foreground",
     };
   }
   if (pct == null) {
     return {
       bar: "bg-muted",
       value: tokens.text.muted,
-      pill: "border-border-muted bg-surface text-muted-foreground",
+      pill: "bg-surface text-muted-foreground",
     };
   }
   if (pct >= 80) {
     return {
       bar: "bg-success",
       value: tokens.text.success,
-      pill: "border-success-border bg-success-muted text-success",
+      pill: "bg-success-muted text-success",
     };
   }
   if (pct >= 40) {
     return {
       bar: "bg-warning",
       value: tokens.text.warning,
-      pill: "border-warning-border bg-warning-muted text-warning",
+      pill: "bg-warning-muted text-warning",
     };
   }
   return {
     bar: "bg-destructive",
     value: tokens.text.destructive,
-    pill: "border-destructive-border bg-destructive-muted text-destructive",
+    pill: "bg-destructive-muted text-destructive",
   };
 }
 
@@ -98,7 +99,7 @@ function CoverageMeter({
           {noTemplate ? "Sin plantilla" : `${filled}/${required}`}
         </span>
         {!noTemplate && pct != null && (
-          <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold", tone.pill)}>
+          <span className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums", tone.pill)}>
             {pct}%
           </span>
         )}
@@ -214,13 +215,12 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
       </PageHeader>
 
       {/* Resumen anual */}
-      <section className="glass-panel-soft overflow-hidden rounded-2xl">
+      <section className="glass-panel-soft overflow-hidden rounded-xl">
         <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,200px)_1fr] lg:items-center lg:gap-6 lg:p-5">
           <div className="flex items-center gap-4">
             <div
               className={cn(
-                "relative flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-2xl border",
-                yearTone.pill,
+                "relative flex h-[72px] w-[84px] shrink-0 items-center justify-center rounded-xl bg-surface",
               )}
               role="img"
               aria-label={`Cobertura anual ${yearCoveragePct ?? 0} por ciento`}
@@ -361,12 +361,11 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                   {zonesWithActivity.map((row) => (
                     <DataTableRow key={row.zona}>
                       <DataTableCell>
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span className="shrink-0 rounded-md border border-border-muted bg-surface px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                            {row.zona}
-                          </span>
-                          <span className="truncate text-sm font-medium text-foreground">{row.name}</span>
-                        </div>
+                        {/* Antes: el código («NOROESTE») y el nombre («1- NOROESTE»),
+                            que dicen lo mismo dos veces. */}
+                        <span className="truncate text-sm font-medium text-foreground" title={row.name}>
+                          {zoneUiName(row.zona)}
+                        </span>
                       </DataTableCell>
                       <DataTableCell className="text-right tabular-nums">{row.competitions}</DataTableCell>
                       <DataTableCell className="min-w-[132px]">
