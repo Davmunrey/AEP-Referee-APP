@@ -103,8 +103,13 @@ function scenario(paid: boolean) {
       return { data: paid ? [{ referee_id: "j1", status: "pagado" }] : [], error: null };
     }
     if (table === "roster_assignments") {
-      return op === "select"
-        ? { data: [{ slot_key: "S1_central_0", referee_id: "j1", flags: {}, cross_zone: false }], error: null }
+      if (op === "select") {
+        return { data: [{ slot_key: "S1_central_0", referee_id: "j1", flags: {}, cross_zone: false }], error: null };
+      }
+      // La sustitución es un UPDATE condicional (solo si sigue j1): devuelve la
+      // fila afectada, como hace PostgREST con `.select()`.
+      return op === "update"
+        ? { data: [{ slot_key: "S1_central_0" }], error: null }
         : { data: [], error: null };
     }
     if (table === "competitions") {
@@ -149,7 +154,7 @@ describe("sustituir a un juez con la liquidación pagada", () => {
       getRef,
     );
     expect(res.error).toBeUndefined();
-    expect(writes).toContain("roster_assignments.upsert");
+    expect(writes).toContain("roster_assignments.update");
   });
 
   it("liberar su hueco tampoco se permite", async () => {

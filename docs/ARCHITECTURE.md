@@ -148,6 +148,22 @@ Fuera de los barrels: `referee-sanctions.ts` (sanciones, solo Supabase), `admin-
 - **Zonas**: `resolveZoneCode` / `zonesMatch` / `zoneScopeOf` (`src/lib/aep-zones.ts`) canonicalizan alias y tildes. Los permisos zonales son *fail-closed*: un delegado sin zona o con una zona ilegible no ve nada, en lugar de verlo todo.
 - **Dinero congelado**: una liquidación `pagado` no se recalcula, no se borra y no admite cambios de importe (`423 Locked`, `CompensationClaimPaidError`); el juez pagado tampoco puede salir del hueco de la tarima.
 
+## Trabajo simultáneo (varios delegados a la vez)
+
+Ninguna escritura concurrente se pierde en silencio: o se aplica, o la segunda persona recibe un `409` que le pide actualizar.
+
+| Operación | Cómo se protege |
+|---|---|
+| Asignar un juez a un hueco vacío | `INSERT` (no upsert): la clave primaria `(competition_id, slot_key)` rechaza al segundo (`23505` → conflicto). |
+| Sustituir / liberar / marcar `*` o `↑↓` | `UPDATE`/`DELETE … WHERE referee_id = <el que se leyó>` con `.select()`: cero filas afectadas = otro lo cambió. Atómico en Postgres, sin ventana entre leer y escribir. |
+| Importar cuadrante | Huecos vacíos con `INSERT … ON CONFLICT DO NOTHING`; ocupados, `UPDATE` condicional. Los que perdieron la carrera vuelven como fallidos con su motivo. |
+| Guardar la plantilla | Concurrencia optimista: el cliente envía `baseHash` (`rosterTemplateHash`, FNV-1a sobre JSON con claves ordenadas) de la versión sobre la que editó; si la guardada ya es otra, `409` y el usuario elige sobrescribir o cargar la actual. |
+| Liquidaciones | Compare-and-set sobre `updated_at` (`409`). |
+| Revisar propuestas y ascensos | Solo pasan si siguen pendientes. |
+| Editar campeonato | El diálogo envía solo los campos cambiados: no revierte lo que otro corrigió en otro campo. |
+
+**Sincronización en vivo:** cada escritura sube `app_sync_state.version`; los clientes refrescan agrupando ráfagas (600 ms, máximo 2 s). Una pestaña oculta no refresca: apunta el cambio y se pone al día al volver. Mientras alguien edita la plantilla o tiene una operación en curso, el constructor de la tarima aparta los datos que llegan y, al terminar, pide los actuales (nunca aplica una instantánea vieja).
+
 ## Responsive / breakpoints
 
 Tailwind breakpoints utilizados:
@@ -199,6 +215,7 @@ Tailwind breakpoints utilizados:
 - **Recalcular compensación** en paralelo acotado (`mapWithConcurrency`, `src/lib/async-pool.ts`, 6 a la vez), saltando las liquidaciones pagadas y borrando huérfanas en una sola consulta.
 - **Contadores de navegación** (`getNavCountsFast`): `count` con `head: true` y lectura acotada de campeonatos vigentes, sin descargar el calendario entero.
 - Alta de campeonato y desplegables de campeonatos paginados con `fetchAllPagesOf`.
+- **Tarima**: la página carga campeonato y tarima con `getCompetitionWithRoster` (2 consultas; antes 6). Las escrituras validan con `getCompetitionRow` (sin recalcular la cobertura) y, al asignar, la cobertura se calcula con los datos releídos tras escribir y se guarda en paralelo con el historial.
 
 ---
 

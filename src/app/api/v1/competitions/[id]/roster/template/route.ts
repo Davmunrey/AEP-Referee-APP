@@ -56,12 +56,19 @@ export async function PUT(request: Request, context: RouteContext) {
     return jsonError(duplicate?.message ?? "Plantilla inválida", 400);
   }
   const template = parsed.data as RosterSession[];
+  // Huella de la versión sobre la que se editó. Sin ella (clientes antiguos o
+  // «sobrescribir de todas formas») se guarda como antes.
+  const rawBase = (body as { baseHash?: unknown } | null)?.baseHash;
+  if (rawBase !== undefined && (typeof rawBase !== "string" || !/^[0-9a-f]{8}$/.test(rawBase))) {
+    return jsonError("Versión de plantilla no válida", 400);
+  }
 
   try {
     const result = await dataService.saveCompetitionTemplate(
       competitionId,
       template,
       user.nombre,
+      rawBase as string | undefined,
     );
     if (!result) return jsonError("No se pudo guardar la plantilla", 500);
     return jsonOk(result);

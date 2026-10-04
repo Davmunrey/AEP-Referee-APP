@@ -1,4 +1,5 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
+import { rosterTemplateHash } from "@/lib/roster-template-hash";
 import {
   isRosterLockedByApproval,
   isRosterPendingApproval,
@@ -26,6 +27,7 @@ import {
   ApprovalReviewError,
   RosterPaidClaimError,
   RosterSlotConflictError,
+  RosterTemplateConflictError,
   UserFacingServiceError,
 } from "@/lib/competitions/service-types";
 import {
@@ -128,12 +130,19 @@ export const rosterService = {
     template: RosterSession[],
     actor: string,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
+    baseHash?: string,
   ): Promise<
     | { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }
     | undefined
   > => {
     const comp = await getCompetitionFn(competitionId);
     if (!comp) return undefined;
+    // Concurrencia optimista: si la plantilla guardada ya no es la que el
+    // usuario abrió, otra persona la ha cambiado entretanto.
+    if (baseHash !== undefined) {
+      const current = (await getCompetitionTemplate(competitionId)) ?? [];
+      if (rosterTemplateHash(current) !== baseHash) throw new RosterTemplateConflictError();
+    }
     const supabase = db();
     const validKeys = new Set(enumerateSlotKeys(template));
     const { data: existingRows, error: existingError } = await supabase
@@ -238,12 +247,19 @@ export const rosterService = {
       };
     }
 
-    const { error: writeError } = await supabase
+    const { data: flagged, error: writeError } = await supabase
       .from("roster_assignments")
       .update({ flags: payload })
       .eq("competition_id", competitionId)
-      .eq("slot_key", slotKey);
+      .eq("slot_key", slotKey)
+      // El marcador es de ESE juez en ese hueco: si otro usuario lo acaba de
+      // sustituir, no se le aplica al nuevo.
+      .eq("referee_id", refereeId)
+      .select("slot_key");
     if (writeError) return { error: "No se pudieron guardar los marcadores del slot" };
+    if ((flagged ?? []).length === 0) {
+      return { error: "Otro usuario cambió ese hueco mientras lo editabas. Actualiza la tarima." };
+    }
     const allFlags = (await loadRosterAssignmentData(competitionId)).flags;
     await pushHistory({
       competitionId,
@@ -365,17 +381,48 @@ export const rosterService = {
       !!referee?.zona &&
       (resolveZoneCode(comp.zona) ?? comp.zona) !== (resolveZoneCode(referee.zona) ?? referee.zona);
 
-    const { error: writeError } = await supabase.from("roster_assignments").upsert({
-      competition_id: competitionId,
-      slot_key: slotKey,
+    // Escritura condicional y atómica. La comprobación de arriba lee y compara,
+    // pero entre esa lectura y esta escritura otra persona puede ocupar el
+    // hueco: con un upsert, el segundo pisaba al primero sin aviso. Ahora:
+    //  · hueco vacío al leer → INSERT; si ya existe la fila (clave primaria
+    //    competición+hueco) es que alguien llegó antes;
+    //  · hueco ocupado → UPDATE solo si sigue el mismo juez que se leyó.
+    const fields = {
       referee_id: refereeId,
       flags: flagPayload,
       cross_zone: isCrossZone,
       cross_zone_reason: isCrossZone ? (crossZoneReason ?? null) : null,
-    });
+    };
+    let lostRace = false;
+    let writeFailed = false;
+    if (replacedRefereeId) {
+      const { data: updated, error } = await supabase
+        .from("roster_assignments")
+        .update(fields)
+        .eq("competition_id", competitionId)
+        .eq("slot_key", slotKey)
+        .eq("referee_id", replacedRefereeId)
+        .select("slot_key");
+      if (error) writeFailed = true;
+      else lostRace = (updated ?? []).length === 0;
+    } else {
+      const { error } = await supabase
+        .from("roster_assignments")
+        .insert({ competition_id: competitionId, slot_key: slotKey, ...fields });
+      if (error) {
+        if ((error as { code?: string }).code === "23505") lostRace = true;
+        else writeFailed = true;
+      }
+    }
+    if (lostRace) {
+      return {
+        conflict: true,
+        error: "Otro usuario acaba de cambiar ese hueco. Actualiza la tarima antes de reasignar.",
+      };
+    }
     // supabase-js no lanza: devuelve { error }. Sin esto, un fallo de escritura
     // (constraint, RLS, caída) respondería "OK" con el juez sin asignar.
-    if (writeError) return { error: "No se pudo guardar la asignación" };
+    if (writeFailed) return { error: "No se pudo guardar la asignación" };
 
     // Relee una sola vez tras la escritura (antes: loadAssignments + loadFlags +
     // loadCrossZoneMap = 3 escaneos idénticos de la misma tabla).
@@ -410,7 +457,10 @@ export const rosterService = {
             .from("roster_assignments")
             .delete()
             .eq("competition_id", competitionId)
-            .eq("slot_key", slotKey);
+            .eq("slot_key", slotKey)
+            // Solo la fila que acabamos de poner: si entretanto otro usuario la
+            // ha cambiado, no se le borra la suya.
+            .eq("referee_id", refereeId);
       // Si deshacer falla, la asignación se ha quedado puesta: decir solo
       // «no se pudo, hay un conflicto» dejaba al usuario creyendo que la
       // tarima seguía como antes cuando el juez sí había entrado.
@@ -422,18 +472,27 @@ export const rosterService = {
       return { error: recheck.error };
     }
 
-    await syncCompetitionCoverage(competitionId);
-    await pushHistory({
-      competitionId,
-      at: new Date().toISOString(),
-      actor,
-      action: isCrossZone ? "Asignación cross-zona" : "Asignación",
-      // La sustitución queda registrada: antes el juez desplazado desaparecía
-      // del historial y no había forma de saber quién estaba antes.
-      detail: `${slotKey} → ${refereeId}${
-        replacedRefereeId && replacedRefereeId !== refereeId ? ` (sustituye a ${replacedRefereeId})` : ""
-      }${isCrossZone ? ` (${referee?.zona})` : ""}`,
-    });
+    // Cobertura e historial en paralelo, y la cobertura con la plantilla y las
+    // asignaciones que se acaban de releer tras escribir (antes las volvía a
+    // pedir: tres consultas más en la operación más frecuente de la app).
+    await Promise.all([
+      syncCompetitionCoverage(competitionId, {
+        template,
+        assignments: freshAssignments,
+        requeridos: comp.requeridos,
+      }),
+      pushHistory({
+        competitionId,
+        at: new Date().toISOString(),
+        actor,
+        action: isCrossZone ? "Asignación cross-zona" : "Asignación",
+        // La sustitución queda registrada: antes el juez desplazado desaparecía
+        // del historial y no había forma de saber quién estaba antes.
+        detail: `${slotKey} → ${refereeId}${
+          replacedRefereeId && replacedRefereeId !== refereeId ? ` (sustituye a ${replacedRefereeId})` : ""
+        }${isCrossZone ? ` (${referee?.zona})` : ""}`,
+      }),
+    ]);
     return {
       assignments: { ...freshAssignments },
       flags: freshFlags,
@@ -492,8 +551,12 @@ export const rosterService = {
       }
     >();
     const results: { ok: boolean; error?: string }[] = [];
+    // Hueco de cada resultado (mismo índice), para marcar después los que
+    // perdieron la carrera contra otro usuario al escribir.
+    const resultSlots: string[] = [];
 
     for (const entry of entries) {
+      resultSlots.push(entry.slotKey);
       const referee = refMap.get(entry.refereeId);
       const validation = validateAssignWithData(comp, referee, entry.slotKey, template);
       if (!validation.ok) {
@@ -561,14 +624,58 @@ export const rosterService = {
     const rows = [...rowsBySlot.values()];
     if (rows.length > 0) {
       const supabase = db();
-      const { error: writeError } = await supabase.from("roster_assignments").upsert(rows);
-      if (writeError) {
-        // El upsert masivo falló: las entradas que se habían aceptado no se
-        // persistieron, así que se marcan como fallidas (mismo criterio que el
-        // flujo individual ante un error de escritura).
-        for (let i = 0; i < results.length; i++) {
-          if (results[i]!.ok) results[i] = { ok: false, error: "No se pudo guardar la asignación" };
+      // Escrituras condicionales, como en la asignación individual: entre la
+      // vista previa y «Aplicar» otro delegado puede haber tocado la tarima, y
+      // un upsert masivo le pisaba sin aviso.
+      //  · huecos vacíos al leer → INSERT … ON CONFLICT DO NOTHING; los que no
+      //    vuelvan en la respuesta los ocupó alguien entretanto;
+      //  · huecos ocupados → UPDATE solo si sigue el juez que se leyó.
+      const original = current.assignments;
+      const inserts = rows.filter((r) => !original[r.slot_key]);
+      const updates = rows.filter((r) => original[r.slot_key]);
+      const conflictSlots = new Set<string>();
+      const failedSlots = new Set<string>();
+      if (inserts.length > 0) {
+        const { data: inserted, error } = await supabase
+          .from("roster_assignments")
+          .upsert(inserts, { onConflict: "competition_id,slot_key", ignoreDuplicates: true })
+          .select("slot_key");
+        if (error) {
+          for (const r of inserts) failedSlots.add(r.slot_key);
+        } else {
+          const ok = new Set((inserted ?? []).map((row) => String((row as { slot_key: unknown }).slot_key)));
+          for (const r of inserts) if (!ok.has(r.slot_key)) conflictSlots.add(r.slot_key);
         }
+      }
+      await Promise.all(
+        updates.map(async (r) => {
+          const { slot_key, competition_id: _c, ...fields } = r;
+          void _c;
+          const { data: updated, error } = await supabase
+            .from("roster_assignments")
+            .update(fields)
+            .eq("competition_id", competitionId)
+            .eq("slot_key", slot_key)
+            .eq("referee_id", original[slot_key]!)
+            .select("slot_key");
+          if (error) failedSlots.add(slot_key);
+          else if ((updated ?? []).length === 0) conflictSlots.add(slot_key);
+        }),
+      );
+      for (let i = 0; i < results.length; i++) {
+        const slot = resultSlots[i];
+        if (!results[i]!.ok || !slot) continue;
+        if (failedSlots.has(slot)) results[i] = { ok: false, error: "No se pudo guardar la asignación" };
+        else if (conflictSlots.has(slot)) {
+          results[i] = {
+            ok: false,
+            error: "Otro usuario cambió ese hueco durante la importación; revisa la tarima.",
+          };
+        }
+      }
+      const writeError = failedSlots.size + conflictSlots.size === rows.length;
+      if (writeError) {
+        // Nada se aplicó: no hay cobertura que recalcular ni historial que dejar.
       } else {
         await syncCompetitionCoverage(competitionId);
         const appliedCount = results.filter((r) => r.ok).length;
@@ -616,15 +723,26 @@ export const rosterService = {
       throw new RosterPaidClaimError(paidClaimRemovalMessage());
     }
     const supabase = db();
-    const { error } = await supabase
-      .from("roster_assignments")
-      .delete()
-      .eq("competition_id", competitionId)
-      .eq("slot_key", slotKey);
-    // Sin esto, un borrado rechazado seguía adelante y la ruta respondía 200:
-    // el juez seguía en la tarima y nadie se enteraba de que no se había
-    // liberado el hueco.
-    if (error) throw new Error(`roster_assignments: ${error.message}`);
+    if (occupant) {
+      // Borrado condicional: solo si el hueco sigue con el juez leído. Si otro
+      // usuario lo acaba de cambiar, no se le borra su asignación.
+      const { data: deleted, error } = await supabase
+        .from("roster_assignments")
+        .delete()
+        .eq("competition_id", competitionId)
+        .eq("slot_key", slotKey)
+        .eq("referee_id", occupant)
+        .select("slot_key");
+      // Sin esto, un borrado rechazado seguía adelante y la ruta respondía 200:
+      // el juez seguía en la tarima y nadie se enteraba de que no se había
+      // liberado el hueco.
+      if (error) throw new Error(`roster_assignments: ${error.message}`);
+      if ((deleted ?? []).length === 0) {
+        throw new RosterSlotConflictError(
+          "Otro usuario cambió ese hueco mientras lo editabas. Actualiza la tarima antes de liberarlo.",
+        );
+      }
+    }
     const assignments = await loadAssignments(competitionId);
     await syncCompetitionCoverage(competitionId);
     await pushHistory({
