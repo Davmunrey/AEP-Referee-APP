@@ -148,7 +148,14 @@ export default async function DocsPage() {
               alt="Asociación Española de Powerlifting"
               width={140}
               height={38}
-              className="h-8 w-auto"
+              className="h-8 w-auto dark:hidden"
+            />
+            <Image
+              src="/assets/aep-master-logo-light.png"
+              alt="Asociación Española de Powerlifting"
+              width={140}
+              height={38}
+              className="h-8 w-auto hidden dark:block"
             />
             <span className="hidden text-sm font-semibold text-foreground sm:inline">
               Documentación
@@ -172,7 +179,14 @@ export default async function DocsPage() {
             alt=""
             width={64}
             height={64}
-            className="mx-auto h-14 w-auto"
+            className="mx-auto h-14 w-auto dark:hidden"
+          />
+          <Image
+            src="/assets/aep-mark-dark.png"
+            alt=""
+            width={64}
+            height={64}
+            className="mx-auto h-14 w-auto hidden dark:block"
           />
           <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground">
             AEP Tarima — Documentación

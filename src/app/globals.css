@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
 
+/* `dark:` sigue al tema resuelto (data-theme), no solo al del sistema. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme inline {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -230,7 +233,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      color-mix(in srgb, var(--neutral-0) 55%, transparent),
+      var(--shimmer),
       transparent
     );
     animation: skeleton-sweep 1.6s ease-in-out infinite;

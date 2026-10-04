@@ -121,8 +121,15 @@ export default function SignInPage() {
             alt="Asociación Española de Powerlifting"
             width={280}
             height={76}
-            className="h-auto w-60"
+            className="h-auto w-60 dark:hidden"
             priority
+          />
+          <Image
+            src="/assets/aep-master-logo-light.png"
+            alt="Asociación Española de Powerlifting"
+            width={280}
+            height={76}
+            className="h-auto w-60 hidden dark:block"
           />
           <p className="mt-4 text-center text-xs font-medium text-muted-foreground/70">
             Plataforma de gestión de jueces

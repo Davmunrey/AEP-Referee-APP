@@ -200,6 +200,8 @@ Por cada usuario, la columna **Acciones** ofrece: activar/desactivar, editar (ro
 
 Cualquier usuario puede cambiarla desde el **menú de usuario en la esquina superior** → **Cambiar contraseña**. Pide la contraseña actual y la nueva (mín. 8 caracteres).
 
+En ese mismo menú, **Tema** permite elegir entre **Sistema** (sigue al ordenador o al móvil), **Claro** y **Oscuro**. La elección se recuerda en ese navegador.
+
 ![Cambiar contraseña](images/06-cambiar-password.png)
 
 ### Resetear la de otro usuario (admin)

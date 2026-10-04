@@ -54,8 +54,15 @@ export function DashboardHero({
             alt="AEP"
             width={48}
             height={48}
-            className="hidden shrink-0 rounded-2xl sm:block"
+            className="hidden shrink-0 rounded-2xl sm:block dark:hidden!"
             priority
+          />
+          <Image
+            src="/assets/aep-mark-dark.png"
+            alt="AEP"
+            width={48}
+            height={48}
+            className="hidden shrink-0 rounded-2xl dark:sm:block"
           />
           <div className="min-w-0">
             <p className="friendly-label mb-1 text-[11px] text-muted-foreground/70">

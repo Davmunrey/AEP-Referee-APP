@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { ChevronRight, KeyRound, LogOut, Menu, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, ChevronRight, KeyRound, LogOut, Menu, Monitor, Moon, Search, Sun } from "lucide-react";
+import {
+  THEME_OPTIONS,
+  readThemePreference,
+  setThemePreference,
+  type ThemePreference,
+} from "@/lib/theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import {
@@ -39,6 +45,10 @@ export function TopBar({
   const competitionIdCrumb = pathname.match(/^\/competitions\/([^/]+)(?:\/compensation)?$/)?.[1];
   const competitionCrumbLabel = useCompetitionCrumbLabel(competitionIdCrumb ?? "Campeonato");
   const hideSearch = pathname.startsWith("/competitions/");
+  const [theme, setTheme] = useState<ThemePreference>("system");
+  useEffect(() => {
+    setTheme(readThemePreference());
+  }, []);
   const [query, setQuery] = useState("");
   const [pwdOpen, setPwdOpen] = useState(false);
 
@@ -152,6 +162,31 @@ export function TopBar({
               <KeyRound className="h-3.5 w-3.5" />
               Cambiar contraseña
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="py-1 text-[11px] font-medium text-subtle">Tema</DropdownMenuLabel>
+            {THEME_OPTIONS.map((opt) => {
+              const Icon = opt.value === "light" ? Sun : opt.value === "dark" ? Moon : Monitor;
+              const selected = theme === opt.value;
+              return (
+                <DropdownMenuItem
+                  key={opt.value}
+                  className="gap-2"
+                  aria-checked={selected}
+                  role="menuitemradio"
+                  onSelect={(e) => {
+                    // El menú se queda abierto: se ve el cambio al momento.
+                    e.preventDefault();
+                    setThemePreference(opt.value);
+                    setTheme(opt.value);
+                  }}
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="flex-1">{opt.label}</span>
+                  {selected && <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               className="gap-2 text-destructive focus:text-destructive"
               onSelect={() => void handleSignOut()}

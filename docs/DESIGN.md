@@ -16,6 +16,7 @@
 - **Un solo acento**: el rojo AEP, reservado a la acción principal y al estado activo. Las cifras de los KPI van en el color del texto; el tono del indicador es un punto junto al rótulo.
 - **Sin halos**: sombras de 1–2 px como mucho; la jerarquía la marcan el plano y el borde. Insignias sin borde, con fondo suave y radio de 6 px.
 - **Menú lateral compacto**: ítems de 32 px; el activo es una tarjeta blanca sobre el marco con el icono en rojo.
+- **Modo oscuro**: menú de usuario → Tema (Sistema / Claro / Oscuro). La preferencia se guarda en el navegador (`aep-tarima:theme`) y un script de arranque en `layout.tsx` pone `data-theme` en `<html>` antes del primer pintado. Los tokens oscuros viven en `tokens.css` (`:root[data-theme="dark"]`, con la misma lista repetida para `prefers-color-scheme` sin JavaScript; un test comprueba que coinciden). La variante `dark:` de Tailwind sigue a `data-theme`. Los logos tienen variante clara (`aep-mark-dark.png`, `aep-master-logo-light.png`); la vista previa del cuadrante se queda en blanco porque es el documento imprimible.
 
 ## Tokens
 

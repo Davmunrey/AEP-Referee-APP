@@ -199,3 +199,212 @@
   --role-financiero-bg-from: color-mix(in srgb, var(--success) 14%, var(--neutral-0));
   --role-financiero-bg-to: color-mix(in srgb, var(--success) 5%, var(--neutral-0));
 }
+
+/* Carga con barrido: el brillo del barrido, en claro, es blanco. */
+:root {
+  color-scheme: light;
+  --shimmer: color-mix(in srgb, var(--neutral-0) 55%, transparent);
+}
+
+/*
+ * Modo oscuro. Mismo esquema de planos (marco, lienzo, tarjeta) invertido; los
+ * colores de estado se aclaran y sus fondos pasan a mezclas transparentes para
+ * no quedar como manchas. Lo activa `data-theme="dark"` (lo pone el script de
+ * arranque de layout.tsx según la preferencia guardada o la del sistema); sin
+ * JavaScript, decide la preferencia del sistema.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #0b0b0d;
+  --canvas: #111114;
+  --foreground: #ededf0;
+  --foreground-secondary: #c6c6ce;
+  --subtle: #92929c;
+  --subtle-muted: #74747e;
+
+  --card: #18181c;
+  --card-foreground: #ededf0;
+  --popover: #1c1c21;
+  --popover-foreground: #ededf0;
+
+  --sidebar: #0b0b0d;
+  --sidebar-foreground: #ededf0;
+
+  --surface: #1f1f24;
+  --surface-hover: #26262c;
+  --surface-active: #2f2f36;
+  --surface-raised: #1f1f24;
+
+  --secondary: #1f1f24;
+  --secondary-foreground: #e4e4e8;
+  --muted: #1f1f24;
+  --muted-foreground: #a3a3ad;
+  --accent: #26262c;
+  --accent-foreground: #e4e4e8;
+
+  --primary: #e5533f;
+  --primary-hover: #f0654f;
+  --primary-soft: #f17b67;
+  --primary-muted: color-mix(in srgb, var(--primary) 16%, transparent);
+  --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));
+  --primary-border: color-mix(in srgb, var(--primary) 38%, transparent);
+
+  --destructive: #e5533f;
+  --destructive-muted: color-mix(in srgb, var(--destructive) 16%, transparent);
+  --destructive-border: color-mix(in srgb, var(--destructive) 38%, transparent);
+
+  --success: #3fcf82;
+  --success-muted: color-mix(in srgb, var(--success) 14%, transparent);
+  --success-border: color-mix(in srgb, var(--success) 34%, transparent);
+
+  --warning: #f2a93b;
+  --warning-muted: color-mix(in srgb, var(--warning) 14%, transparent);
+  --warning-border: color-mix(in srgb, var(--warning) 34%, transparent);
+  --warning-subtle: color-mix(in srgb, var(--warning) 9%, var(--card));
+
+  --info: #6aa5ff;
+  --info-muted: color-mix(in srgb, var(--info) 15%, transparent);
+  --info-border: color-mix(in srgb, var(--info) 34%, transparent);
+  --info-soft: #6aa5ff;
+
+  --chart-track: #2a2a31;
+  --chart-success: #3fcf82;
+  --chart-warning: #f2a93b;
+
+  --border: #2a2a31;
+  --border-muted: #222228;
+  --border-strong: #3a3a43;
+  --input: #34343c;
+  --ring: color-mix(in srgb, var(--primary) 65%, transparent);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-primary: 0 1px 2px rgb(0 0 0 / 0.4), inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+  --shadow-glow-warning: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-glow-info: 0 1px 2px rgb(0 0 0 / 0.4);
+
+  --glass-from: var(--card);
+  --glass-to: var(--card);
+  --glass-border: var(--border);
+  --glass-shadow-outer: rgb(0 0 0 / 0.5);
+
+  --selection-bg: color-mix(in srgb, var(--primary) 35%, transparent);
+  --selection-fg: #ffffff;
+
+  --scrollbar-thumb: #3a3a43;
+  --scrollbar-thumb-hover: #55555f;
+
+  --shimmer: color-mix(in srgb, white 7%, transparent);
+
+  --role-nacional-bg-from: color-mix(in srgb, var(--primary) 18%, var(--card));
+  --role-nacional-bg-to: var(--card);
+  --role-regional-bg-from: color-mix(in srgb, var(--warning) 16%, var(--card));
+  --role-regional-bg-to: var(--card);
+  --role-read-bg-from: var(--surface-hover);
+  --role-read-bg-to: var(--card);
+  --role-jueces-bg-from: color-mix(in srgb, var(--info) 16%, var(--card));
+  --role-jueces-bg-to: var(--card);
+  --role-financiero-bg-from: color-mix(in srgb, var(--success) 14%, var(--card));
+  --role-financiero-bg-to: var(--card);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --background: #0b0b0d;
+    --canvas: #111114;
+    --foreground: #ededf0;
+    --foreground-secondary: #c6c6ce;
+    --subtle: #92929c;
+    --subtle-muted: #74747e;
+
+    --card: #18181c;
+    --card-foreground: #ededf0;
+    --popover: #1c1c21;
+    --popover-foreground: #ededf0;
+
+    --sidebar: #0b0b0d;
+    --sidebar-foreground: #ededf0;
+
+    --surface: #1f1f24;
+    --surface-hover: #26262c;
+    --surface-active: #2f2f36;
+    --surface-raised: #1f1f24;
+
+    --secondary: #1f1f24;
+    --secondary-foreground: #e4e4e8;
+    --muted: #1f1f24;
+    --muted-foreground: #a3a3ad;
+    --accent: #26262c;
+    --accent-foreground: #e4e4e8;
+
+    --primary: #e5533f;
+    --primary-hover: #f0654f;
+    --primary-soft: #f17b67;
+    --primary-muted: color-mix(in srgb, var(--primary) 16%, transparent);
+    --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));
+    --primary-border: color-mix(in srgb, var(--primary) 38%, transparent);
+
+    --destructive: #e5533f;
+    --destructive-muted: color-mix(in srgb, var(--destructive) 16%, transparent);
+    --destructive-border: color-mix(in srgb, var(--destructive) 38%, transparent);
+
+    --success: #3fcf82;
+    --success-muted: color-mix(in srgb, var(--success) 14%, transparent);
+    --success-border: color-mix(in srgb, var(--success) 34%, transparent);
+
+    --warning: #f2a93b;
+    --warning-muted: color-mix(in srgb, var(--warning) 14%, transparent);
+    --warning-border: color-mix(in srgb, var(--warning) 34%, transparent);
+    --warning-subtle: color-mix(in srgb, var(--warning) 9%, var(--card));
+
+    --info: #6aa5ff;
+    --info-muted: color-mix(in srgb, var(--info) 15%, transparent);
+    --info-border: color-mix(in srgb, var(--info) 34%, transparent);
+    --info-soft: #6aa5ff;
+
+    --chart-track: #2a2a31;
+    --chart-success: #3fcf82;
+    --chart-warning: #f2a93b;
+
+    --border: #2a2a31;
+    --border-muted: #222228;
+    --border-strong: #3a3a43;
+    --input: #34343c;
+    --ring: color-mix(in srgb, var(--primary) 65%, transparent);
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-primary: 0 1px 2px rgb(0 0 0 / 0.4), inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+    --shadow-glow-warning: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-glow-info: 0 1px 2px rgb(0 0 0 / 0.4);
+
+    --glass-from: var(--card);
+    --glass-to: var(--card);
+    --glass-border: var(--border);
+    --glass-shadow-outer: rgb(0 0 0 / 0.5);
+
+    --selection-bg: color-mix(in srgb, var(--primary) 35%, transparent);
+    --selection-fg: #ffffff;
+
+    --scrollbar-thumb: #3a3a43;
+    --scrollbar-thumb-hover: #55555f;
+
+    --shimmer: color-mix(in srgb, white 7%, transparent);
+
+    --role-nacional-bg-from: color-mix(in srgb, var(--primary) 18%, var(--card));
+    --role-nacional-bg-to: var(--card);
+    --role-regional-bg-from: color-mix(in srgb, var(--warning) 16%, var(--card));
+    --role-regional-bg-to: var(--card);
+    --role-read-bg-from: var(--surface-hover);
+    --role-read-bg-to: var(--card);
+    --role-jueces-bg-from: color-mix(in srgb, var(--info) 16%, var(--card));
+    --role-jueces-bg-to: var(--card);
+    --role-financiero-bg-from: color-mix(in srgb, var(--success) 14%, var(--card));
+    --role-financiero-bg-to: var(--card);
+  }
+}
