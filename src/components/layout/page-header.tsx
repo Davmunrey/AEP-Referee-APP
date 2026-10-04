@@ -22,7 +22,7 @@ export function PageHeader({ title, description, children, className }: PageHead
         {/* text-balance / text-pretty: reparte el título en líneas de largo
             parecido y evita que la descripción deje una palabra huérfana al
             final —los títulos de esta app rompen a dos líneas en portátil. */}
-        <h1 className="text-balance text-[24px] font-semibold leading-tight tracking-[-0.025em] text-foreground sm:text-[26px]">
+        <h1 className="text-balance text-[24px] font-semibold leading-tight text-foreground sm:text-[26px]">
           {title}
         </h1>
         {description && (

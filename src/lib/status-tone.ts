@@ -8,10 +8,12 @@ import type { EventStatus } from "@/lib/types";
  * la llevaba siempre en el rojo de marca, también al 100 %: una tarima
  * completa se leía como un problema.
  */
+// Las barras van en los tonos vivos de gráfico; el texto, en los semánticos
+// (más oscuros, para que se lean sobre blanco y sobre su fondo suave).
 export const STATUS_BAR: Record<EventStatus, string> = {
-  Completo: "bg-success",
-  Incompleto: "bg-warning",
-  Crítico: "bg-destructive",
+  Completo: "bg-chart-success",
+  Incompleto: "bg-chart-warning",
+  Crítico: "bg-chart-danger",
   Borrador: "bg-subtle",
 };
 

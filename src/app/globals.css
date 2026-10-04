@@ -5,7 +5,7 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --color-background: var(--background);
@@ -117,11 +117,22 @@
     @apply bg-background text-foreground font-sans;
     /* Las cifras alineadas en columna en toda la app (tablas, contadores). */
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.006em;
+    /* Archivo ya viene ajustada: el tracking negativo que pedía Geist le
+     * comía los espacios entre palabras. */
+    letter-spacing: 0;
     /* Casillas, radios y barras nativas en el color de la app, no en el azul
      * del sistema; el cursor de escritura, igual. */
     accent-color: var(--primary);
     caret-color: var(--primary);
+  }
+
+  /* Títulos de página algo ensanchados: el eje `wdth` de Archivo. Solo el h1;
+   * los títulos de tarjeta y el texto se quedan a anchura normal, que en
+   * tablas densas cabe más. */
+  h1,
+  .font-display {
+    font-stretch: 112%;
+    letter-spacing: -0.01em;
   }
 
   /* Los enlaces subrayados no pisan los descendentes. */

@@ -5,17 +5,21 @@
  */
 :root {
   /* ── Primitivos de marca ───────────────────────────────────────────── */
-  --aep-red-600: #c8362a;
+  /* Los -600 son los tonos de TEXTO: los cuatro pasan 4,5:1 sobre blanco y
+   * sobre su propio fondo suave (insignias «Completo», «Crítico», «IPF»…).
+   * Antes el verde, el ámbar y el azul se quedaban en 3,1–4,3:1. Las barras y
+   * los puntos usan los -500, más vivos (tokens --chart-*). */
+  --aep-red-600: #c23429;
   --aep-red-500: #dc3f31;
   --aep-red-400: #e85d50;
   --aep-red-100: #fbe6e3;
-  --aep-amber-600: #c2790c;
+  --aep-amber-600: #996009;
   --aep-amber-500: #e8920f;
   --aep-amber-100: #fcefd6;
-  --aep-blue-600: #2563eb;
+  --aep-blue-600: #2460e4;
   --aep-blue-500: #3b82f6;
   --aep-blue-100: #e0ecfd;
-  --aep-emerald-600: #15924f;
+  --aep-emerald-600: #117942;
   --aep-emerald-500: #1faf63;
   --aep-emerald-100: #d8f0e2;
 
@@ -27,7 +31,8 @@
   --neutral-200: #e4e4e7;
   --neutral-300: #d4d4d8;
   --neutral-400: #a1a1aa;
-  --neutral-500: #71717a;
+  /* Texto secundario: 4,5:1 también sobre el gris del marco (#f4f4f5). */
+  --neutral-500: #6f6f78;
   --neutral-600: #52525b;
   --neutral-700: #3f3f46;
   --neutral-800: #27272a;
@@ -42,7 +47,9 @@
   --foreground: var(--neutral-900);
   --foreground-secondary: var(--neutral-700);
   --subtle: var(--neutral-500);
-  --subtle-muted: #8b8b94;
+  /* Igual que --subtle: un gris más claro no llega a 4,5:1 sobre el marco;
+   * la jerarquía terciaria la da el tamaño, no un gris ilegible. */
+  --subtle-muted: var(--neutral-500);
 
   --card: var(--neutral-0);
   /* Velo bajo los modales: tinta de la app, no negro puro. */
@@ -223,7 +230,7 @@
   --foreground: #ededf0;
   --foreground-secondary: #c6c6ce;
   --subtle: #92929c;
-  --subtle-muted: #74747e;
+  --subtle-muted: #878790;
 
   --card: #18181c;
   --overlay: rgb(0 0 0 / 0.6);
@@ -253,7 +260,7 @@
   --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));
   --primary-border: color-mix(in srgb, var(--primary) 38%, transparent);
 
-  --destructive: #e5533f;
+  --destructive: #e65a47;
   --destructive-muted: color-mix(in srgb, var(--destructive) 16%, transparent);
   --destructive-border: color-mix(in srgb, var(--destructive) 38%, transparent);
 
@@ -322,7 +329,7 @@
     --foreground: #ededf0;
     --foreground-secondary: #c6c6ce;
     --subtle: #92929c;
-    --subtle-muted: #74747e;
+    --subtle-muted: #878790;
 
     --card: #18181c;
     --overlay: rgb(0 0 0 / 0.6);
@@ -352,7 +359,7 @@
     --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--card));
     --primary-border: color-mix(in srgb, var(--primary) 38%, transparent);
 
-    --destructive: #e5533f;
+    --destructive: #e65a47;
     --destructive-muted: color-mix(in srgb, var(--destructive) 16%, transparent);
     --destructive-border: color-mix(in srgb, var(--destructive) 38%, transparent);
 

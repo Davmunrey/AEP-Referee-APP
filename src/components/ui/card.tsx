@@ -23,15 +23,22 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardHeader.displayName = "CardHeader";
 
-const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn("text-[15px] font-semibold leading-snug tracking-[-0.01em]", tokens.text.primary, className)}
-      {...props}
-    />
-  ),
-);
+/**
+ * Título de una tarjeta. Es `h2` por defecto: las tarjetas son las secciones
+ * de cada página, justo debajo del `h1`. Antes era `h3` y todas las pantallas
+ * saltaban de h1 a h3, que es como un lector de pantalla recorre la página.
+ * Una tarjeta dentro de una sección que ya tiene su `h2` pasa `as="h3"`.
+ */
+const CardTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement> & { as?: "h2" | "h3" }
+>(({ className, as: Heading = "h2", ...props }, ref) => (
+  <Heading
+    ref={ref}
+    className={cn("text-[15px] font-semibold leading-snug tracking-[-0.01em]", tokens.text.primary, className)}
+    {...props}
+  />
+));
 CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef<

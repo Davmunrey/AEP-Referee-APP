@@ -88,11 +88,11 @@ describe("confirmar()", () => {
 
 describe("tono de cobertura", () => {
   it("una tarima completa es verde, no rojo de marca", () => {
-    expect(STATUS_BAR.Completo).toBe("bg-success");
-    expect(coverageBarClass(100)).toBe("bg-success");
+    expect(STATUS_BAR.Completo).toBe("bg-chart-success");
+    expect(coverageBarClass(100)).toBe("bg-chart-success");
     expect(coverageBarClass(0)).toBe("bg-subtle");
-    expect(coverageBarClass(33)).toBe("bg-destructive");
-    expect(coverageBarClass(75)).toBe("bg-warning");
+    expect(coverageBarClass(33)).toBe("bg-chart-danger");
+    expect(coverageBarClass(75)).toBe("bg-chart-warning");
   });
 });
 
