@@ -336,7 +336,7 @@ export function UsersAdmin({
           de acceso y perfil. */}
       <form
         onSubmit={(e) => void onSubmit(e)}
-        className="glass-panel mb-8 space-y-5 rounded-xl border border-border-muted p-5 sm:p-6"
+        className="surface-card mb-8 space-y-5 rounded-xl p-5 sm:p-6"
         aria-labelledby="nuevo-usuario-titulo"
       >
         <h2 id="nuevo-usuario-titulo" className="text-title font-semibold text-foreground">

@@ -43,7 +43,7 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 |---|---|
 | `ConvocatoriaDialog` | Lanzar y llevar la convocatoria del campeonato (sesiones, fecha límite, inscritos por sesión, cerrar/reabrir/cancelar) |
 | `CompetitionsTable` | Listado con filtros |
-| `OpenRostersPanel` | Tarimas abiertas priorizadas |
+| `OpenRostersPanel` | «Tarimas por completar»: las próximas con huecos o sin plantilla, de menor a mayor cobertura |
 | `CalendarImportDialog` | Import calendario anual |
 | `EditCompetitionDialog` | Edición inline de campeonato |
 | `RosterBuilder` | Asignación (orquestador) |

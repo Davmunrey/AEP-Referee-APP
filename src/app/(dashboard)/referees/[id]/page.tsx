@@ -215,7 +215,7 @@ export default async function RefereeDetailPage({ params }: RefereePageProps) {
                       {item.positions.map((position) => (
                         <li
                           key={position.slotKey}
-                          className="rounded-md bg-surface px-2 py-0.5 text-xs text-muted-foreground ring-1 ring-inset ring-border-muted"
+                          className="rounded-md bg-surface px-2 py-1 text-xs text-muted-foreground ring-1 ring-inset ring-border-muted"
                         >
                           <span className="font-medium text-foreground-secondary">{position.roleLabel}</span>
                           {" · "}

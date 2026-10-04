@@ -8,7 +8,7 @@
 - Tokens de diseño, no colores hardcodeados.
 - Preview antes de aplicar cualquier import/export.
 
-## Lenguaje visual (v2.5)
+## Lenguaje visual (v2.12)
 
 - **Tipografía**: Archivo (grotesca de deporte y datos, con eje de anchura) para toda la interfaz; los `h1` van algo ensanchados (`font-stretch: 112%`), sin cursivas. Geist Mono solo para código y bloques preformateados. Cifras tabulares en toda la app (`font-variant-numeric: tabular-nums` en `body`). Sustituye a Geist (v2.12), la grotesca de cualquier panel generado.
 - **Tres planos**: el marco (sidebar + fondo, gris `neutral-100`), el lienzo de cada página (panel `canvas` con borde fino y esquinas de 12 px en escritorio) y las tarjetas blancas encima. Neutros fríos tipo zinc; nada de beige.
@@ -20,11 +20,27 @@
 
 ## Tokens
 
+Todo valor de diseño sale de un token; un test (`regression-batch-ei-diseno`) falla si vuelve un valor suelto.
+
+| Qué | Tokens | Uso |
+|---|---|---|
+| Color | `--background`, `--card`, `--foreground`, `--muted-foreground`, `--primary`, `--success`… | clases semánticas (`bg-card`, `text-success`); nunca hex en componentes |
+| Tamaño de letra | `--text-2xs` (11 px), `xs` (12), `ui` (13), `sm`, `title` (15), `base`, `heading` (22), `2xl`, `display` (26) | `text-ui`, `text-title`… (en px los propios: no bajan de 11 px cuando el `html` baja a 15 px) |
+| Espaciado de letra | `--tracking-tighter`, `tight`, `snug` | `tracking-snug` |
+| Capas | `--z-raised`, `sticky`, `header`, `sidebar`, `drawer`, `modal`, `float`, `confirm`, `skip` | `z-(--z-modal)` |
+| Movimiento | `--ease-out`, `--duration-fast/base/enter/slow/slower/shimmer`, `--scale-press/enter/lift` | `duration-(--duration-base)`, `active:scale-(--scale-press)` |
+| Composición | `--size-page`, `--size-dialog-h`, `--size-popover`, `--size-topbar`, `--size-sidebar`, `--size-drawer`, `--grid-dashboard`, `--grid-tarima` | `max-w-(--size-page)`, `md:grid-cols-(--grid-tarima)` |
+| Documentos | `BRAND`, `PRINT`, `QUADRANT_ROLE_FILL` en `lib/document-tokens.ts` | correos, recibo PDF y cuadrante imprimible (no cargan CSS); la marca se comprueba contra `tokens.css` |
+
+`cn()` (`lib/utils.ts`) conoce la escala propia: sin eso, `text-ui` se tomaba por un color y borraba el color real del texto.
+
 Fuente de verdad:
 
 - `src/styles/tokens.css`
 - `src/app/globals.css`
 - `src/lib/design-tokens.ts`
+- `src/lib/document-tokens.ts`
+- `src/lib/status-tone.ts` (color de cobertura)
 
 ## Layout
 
@@ -39,6 +55,7 @@ Fuente de verdad:
 
 - Cards de juez compactas (`RefereeCard`).
 - **Badges de nivel abreviados** en tarima: Regional **R**, Nacional **N**, IPF Cat. 1 **I**, IPF Cat. 2 **II**. El directorio mantiene el nombre completo.
+- Los niveles son una escala neutra, no colores de estado: Regional con borde, Nacional relleno claro, IPF Cat. 2 relleno oscuro, IPF Cat. 1 invertido. Igual los tipos de campeonato (AEP-3 → AEP-1).
 - Slots de cuadrante con altura reducida; rejilla hasta 3 columnas.
 - Tooltip `title` en badge compacto muestra el nivel completo.
 
@@ -101,4 +118,4 @@ Fuente de verdad:
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.6
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.12
