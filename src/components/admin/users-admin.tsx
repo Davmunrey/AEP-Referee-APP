@@ -1,5 +1,6 @@
 "use client";
 
+import { changedFields } from "@/lib/changed-fields";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -210,12 +211,23 @@ export function UsersAdmin({
     setEditSaving(true);
     setEditError(null);
     try {
-      await api.updateUser(editUser.id, {
-        nombre: editForm.nombre,
-        rolLabel: editForm.rolLabel,
-        role: editForm.role,
-        zona: editForm.role === "delegado_zona" ? editForm.zona : null,
-      });
+      // Solo lo cambiado: dos administradores sobre la misma cuenta ya no se
+      // devuelven el uno al otro los campos que no han tocado.
+      const patch = changedFields(
+        { nombre: editUser.nombre, rolLabel: editUser.rol_label, role: editUser.role, zona: editUser.zona },
+        {
+          nombre: editForm.nombre,
+          rolLabel: editForm.rolLabel,
+          role: editForm.role,
+          zona: editForm.role === "delegado_zona" ? editForm.zona : null,
+        },
+      );
+      // El rol y la zona se validan juntos en el servidor: viajan juntos.
+      if ("role" in patch || "zona" in patch) {
+        patch.role = editForm.role;
+        patch.zona = editForm.role === "delegado_zona" ? editForm.zona : null;
+      }
+      if (Object.keys(patch).length > 0) await api.updateUser(editUser.id, patch);
       setUsers((prev) =>
         prev.map((u) =>
           u.id === editUser.id

@@ -15,7 +15,6 @@ import {
   isRosterPendingApproval,
 } from "@/lib/roster-coverage";
 import { RosterHelpPanel } from "@/components/competitions/roster-help-panel";
-import { RosterRevisionPanel } from "@/components/competitions/roster-revision-panel";
 import { RosterStepper } from "@/components/competitions/roster-stepper";
 import type { RefereeBusyMap } from "@/lib/roster-conflicts";
 import { Button } from "@/components/ui/button";
@@ -45,6 +44,11 @@ import { ChevronRight, FileUp } from "lucide-react";
 import { parseSlotKey } from "@/lib/roster-template";
 // Diálogos/editores pesados: se cargan bajo demanda (al abrirlos), no en el
 // bundle inicial de la ruta de tarima (la más pesada de la app).
+// Solo se ve en el paso «Revisión»: no tiene por qué ir en la carga inicial.
+const RosterRevisionPanel = dynamic(
+  () => import("@/components/competitions/roster-revision-panel").then((m) => m.RosterRevisionPanel),
+  { ssr: false },
+);
 const RosterTemplateEditor = dynamic(
   () => import("@/components/competitions/roster-template-editor").then((m) => m.RosterTemplateEditor),
   { ssr: false },

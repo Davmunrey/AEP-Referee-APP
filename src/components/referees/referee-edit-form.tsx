@@ -1,5 +1,6 @@
 "use client";
 
+import { changedFields } from "@/lib/changed-fields";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api/client";
@@ -107,7 +108,7 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
     setSaved(false);
     try {
       const trimmedDomicilio = domicilio.trim();
-      const updated = await api.updateReferee(referee.id, {
+      const form = {
         nombre,
         zona,
         nivel,
@@ -124,7 +125,20 @@ export function RefereeEditForm({ referee, zones, levels }: RefereeEditFormProps
         antiguedad: antiguedad || undefined,
         notas: notas || undefined,
         disp,
-      });
+      };
+      // Solo lo que se ha tocado (ver changedFields): guardar la ficha ya no
+      // revierte lo que otro delegado cambió entretanto en otros campos.
+      const patch = changedFields(referee as unknown as Record<string, unknown>, form);
+      // Las coordenadas acompañan siempre al domicilio que se envía.
+      if ("domicilio" in patch || "domicilioLat" in patch || "domicilioLng" in patch) {
+        patch.domicilio = form.domicilio;
+        if ("domicilioLat" in form) {
+          patch.domicilioLat = form.domicilioLat;
+          patch.domicilioLng = form.domicilioLng;
+        }
+      }
+      const updated =
+        Object.keys(patch).length > 0 ? await api.updateReferee(referee.id, patch) : referee;
       // Cuando el domicilio se escribe sin elegir sugerencia, el servidor lo
       // geocodifica al guardar y devuelve las coordenadas. Sin recogerlas de la
       // respuesta el formulario seguía marcándose como «sin ubicación» y con
