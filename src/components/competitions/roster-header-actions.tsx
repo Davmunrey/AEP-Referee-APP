@@ -93,15 +93,16 @@ export function RosterHeaderActions({
     <div className="flex flex-col items-start gap-1.5 sm:items-end">
       <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
         {/* Coverage card: plazas + barra de progreso */}
+        {/* Cobertura como lectura, no como un campo: sin caja de input. */}
         <div
-          className="flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-2.5"
+          className="flex h-8 items-center gap-2 px-1"
           title={`Cobertura: ${filledSlots}/${totalSlots} plazas`}
         >
-          <span className="text-xs font-medium tabular-nums text-foreground">
+          <span className="text-[13px] font-medium tabular-nums text-foreground">
             {filledSlots}
             <span className="text-subtle-muted">/{totalSlots}</span>
           </span>
-          <div className="h-1 w-16 overflow-hidden rounded-full bg-muted">
+          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-chart-track">
             <div
               className={cn(
                 // Misma ley que las barras de cobertura de las sesiones.

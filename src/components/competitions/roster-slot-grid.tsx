@@ -11,7 +11,6 @@ import type {
   RegulationRule,
   RosterRole,
 } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 import { AlertTriangle, Lock, X } from "lucide-react";
 import { LevelBadge } from "@/components/aep/badges";
 import { abbreviateRefereeLevel } from "@/lib/referee-level-label";
@@ -102,7 +101,7 @@ function SlotCell({
 
   return (
     <div className="min-w-0">
-      <p className="mb-0.5 truncate text-[11px] font-semibold text-subtle-muted">
+      <p className="mb-1 truncate text-[11px] font-medium text-subtle">
         {slotLabel}
       </p>
       <div
@@ -142,7 +141,7 @@ function SlotCell({
           // El hueco es la contraparte física de la ficha: misma duración y misma
           // curva que ella, y solo propiedades que no repintan layout (la parrilla
           // entera está viva mientras se arrastra).
-          "relative min-h-[52px] rounded border p-1.5 transition-[color,background-color,border-color,box-shadow,scale] duration-100 ease-(--ease-out) focus-ring",
+          "relative rounded-lg border px-2 py-1.5 transition-[color,background-color,border-color,box-shadow,scale] duration-100 ease-(--ease-out) focus-ring",
           !readOnly && "cursor-pointer",
           isDropTarget
             // Crece un 1.5% bajo el puntero: el hueco "acepta" antes de soltar.
@@ -153,78 +152,57 @@ function SlotCell({
               : violation
                 ? "border-warning-border bg-warning-subtle"
                 : referee
-                  ? "border-border-strong bg-muted/40"
+                  ? "border-border bg-card shadow-sm hover:border-border-strong"
                   : isDragging
                     ? "border-dashed border-success/50 bg-success/5 hover:border-success hover:bg-success/10"
                     : "border-dashed border-border-strong bg-background/50 hover:border-primary/50 hover:bg-primary/5",
         )}
       >
         {referee ? (
-          <>
-            <div className="flex items-start justify-between gap-0.5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[11.5px] font-semibold leading-tight text-foreground">
-                  {referee.nombre}
-                  {slotFlags?.compartido && (
-                    <span className="ml-0.5 text-[10px] text-primary"title="Compartido">
-                      *
-                    </span>
-                  )}
-                  {slotFlags?.intercambio && (
-                    <span className="ml-0.5 text-[10px] text-info"title="Intercambio">
-                      ↑↓
-                    </span>
-                  )}
-                </p>
-                <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                  <LevelBadge level={referee.nivel} compact />
-                  {isCrossZone && (
-                    <span
-                      title={`Fuera de zona (${referee.zona})`}
-                      className="rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
-                    >
-                      ⟳
-                    </span>
-                  )}
-                  {isPaid && (
-                    <span
-                      title="Liquidación pagada: no se puede sustituir ni liberar este puesto"
-                      className="flex items-center gap-0.5 rounded border border-border-strong bg-muted px-1 py-px text-[9px] font-semibold text-muted-foreground"
-                    >
-                      <Lock className="h-2.5 w-2.5" />
-                      Pagada
-                    </span>
-                  )}
-                  {violation && (
-                    <span
-                      title={`Mínimo ${violation.minLevel}`}
-                      className="flex items-center gap-0.5 rounded border border-warning-border bg-warning-muted px-1 py-px text-[9px] font-semibold text-warning"
-                    >
-                      <AlertTriangle className="h-2.5 w-2.5" />
-                      {abbreviateRefereeLevel(violation.minLevel)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {!readOnly && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 shrink-0 text-subtle-muted hover:text-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onClear(slotKey);
-                  }}
-                  aria-label="Quitar asignación"
-                >
-                  <X className="h-2.5 w-2.5" />
-                </Button>
-              )}
-            </div>
-
-            {!readOnly && (
-              <div className="mt-1 flex gap-0.5">
+          // Una sola fila: nivel, nombre, avisos y acciones. Antes eran tres
+          // (nombre, insignias y botones diminutos de 20 px).
+          <div className="flex min-h-7 items-center gap-1.5">
+            <LevelBadge level={referee.nivel} compact />
+            <p className="min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-foreground">
+              {referee.nombre}
+            </p>
+            {isCrossZone && (
+              <span
+                title={`Fuera de zona (${referee.zona})`}
+                className="shrink-0 rounded-md bg-warning-muted px-1 py-px text-[11px] font-semibold text-warning"
+              >
+                ⟳
+              </span>
+            )}
+            {isPaid && (
+              <span
+                title="Liquidación pagada: no se puede sustituir ni liberar este puesto"
+                className="flex shrink-0 items-center gap-0.5 rounded-md bg-muted px-1 py-px text-[11px] font-medium text-muted-foreground"
+              >
+                <Lock className="h-3 w-3" aria-hidden="true" />
+                Pagada
+              </span>
+            )}
+            {violation && (
+              <span
+                title={`Mínimo ${violation.minLevel}`}
+                className="flex shrink-0 items-center gap-0.5 rounded-md bg-warning-muted px-1 py-px text-[11px] font-semibold text-warning"
+              >
+                <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                {abbreviateRefereeLevel(violation.minLevel)}
+              </span>
+            )}
+            {readOnly ? (
+              <>
+                {slotFlags?.compartido && (
+                  <span className="shrink-0 text-[11px] font-semibold text-primary" title="Compartido">*</span>
+                )}
+                {slotFlags?.intercambio && (
+                  <span className="shrink-0 text-[11px] font-semibold text-info" title="Intercambio">↑↓</span>
+                )}
+              </>
+            ) : (
+              <div className="flex shrink-0 items-center">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -232,12 +210,13 @@ function SlotCell({
                     onToggleFlag(slotKey, "compartido");
                   }}
                   title="Compartido (*) — permite solape tarima/pesaje"
+                  aria-label="Compartido"
                   aria-pressed={slotFlags?.compartido ? "true" : "false"}
                   className={cn(
-"flex h-5 min-w-[1.25rem] items-center justify-center rounded border text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
+                    "flex h-6 min-w-6 items-center justify-center rounded-md text-[11px] font-semibold transition-[color,background-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.compartido
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-subtle-muted hover:border-primary/50",
+                      ? "bg-primary text-primary-foreground"
+                      : "text-subtle-muted hover:bg-surface-hover hover:text-foreground",
                   )}
                 >
                   *
@@ -249,33 +228,45 @@ function SlotCell({
                     onToggleFlag(slotKey, "intercambio");
                   }}
                   title="Intercambio (↑↓)"
+                  aria-label="Intercambio"
                   aria-pressed={slotFlags?.intercambio ? "true" : "false"}
                   className={cn(
-"flex h-5 min-w-[1.25rem] items-center justify-center rounded border text-[9px] transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
+                    "flex h-6 min-w-6 items-center justify-center rounded-md text-[11px] font-semibold transition-[color,background-color,scale] duration-100 ease-(--ease-out) active:scale-90 focus-ring",
                     slotFlags?.intercambio
-                      ? "border-info bg-info text-primary-foreground"
-                      : "border-border bg-background text-subtle-muted hover:border-info/50",
+                      ? "bg-info text-primary-foreground"
+                      : "text-subtle-muted hover:bg-surface-hover hover:text-foreground",
                   )}
                 >
                   ↑↓
                 </button>
+                <button
+                  type="button"
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-subtle-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-ring"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClear(slotKey);
+                  }}
+                  aria-label="Quitar asignación"
+                  title="Quitar asignación"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             )}
-          </>
+          </div>
         ) : (
-          <div className="flex min-h-[36px] flex-col items-center justify-center gap-0.5 text-center">
+          <div className="flex min-h-7 items-center justify-center gap-1.5 text-center">
             {isDropTarget ? (
               <p className="text-xs font-medium text-primary">Soltar aquí</p>
             ) : isSelected ? (
-              <>
-                <p className="text-xs font-medium text-primary">Hueco {cell.slotIndex + 1}</p>
-                <p className="text-[10px] text-primary/80">Elige un juez a la izquierda</p>
-              </>
+              <p className="text-xs font-medium text-primary">
+                Hueco {cell.slotIndex + 1} · elige un juez a la izquierda
+              </p>
             ) : (
-              <>
-                <p className="text-[11px] text-subtle-muted">Hueco {cell.slotIndex + 1}</p>
-                {!readOnly && <p className="text-[10px] text-subtle-muted/70">clic o arrastra</p>}
-              </>
+              <p className="text-xs text-subtle-muted">
+                Hueco {cell.slotIndex + 1}
+                {!readOnly && <span className="text-subtle-muted/70"> · clic o arrastra</span>}
+              </p>
             )}
           </div>
         )}

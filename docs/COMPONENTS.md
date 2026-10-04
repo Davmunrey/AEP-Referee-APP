@@ -59,10 +59,11 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 |---|---|
 | `RosterCompetitionHeader` | Cabecera, acciones plantilla/export, enlace compensación |
 | `RosterHeaderActions` | Cobertura, guardar borrador, exportar y «Enviar a aprobación» (desactivado con el motivo si no hay plantilla o ningún juez) |
-| `RosterStepper` | Pasos Plantilla → Asignación → Revisión; un paso solo sale como hecho si lo está de verdad |
+| `RosterStepper` | Pasos Plantilla → Asignación → Revisión como pestañas segmentadas; un paso solo sale como hecho si lo está de verdad |
+| `RosterHelpPanel` | Fila de pasos + «Cómo montar una tarima» (envuelve a `RosterStepper`; la ayuda se despliega debajo) |
 | `RosterRefereePanel` | Panel jueces; selección rápida (ranking por idoneidad, `rankRefereesForSlot`); confirm-to-force en conflictos forzables; aviso de cuántos jueces no disponibles se ocultan y «Quitar filtros» |
 | `RefereeCard` | Tarjeta juez compacta; `LevelBadge compact` (R/N/I/II) |
-| `SlotGrid` | Grid de plazas (hasta 3 columnas por sesión/pesaje) |
+| `SlotGrid` | Grid de plazas (hasta 3 columnas por sesión/pesaje); cada hueco ocupa una fila: nivel, nombre, avisos, compartido/intercambio y quitar |
 | `SessionBlock` | Bloque sesión expandible |
 | `SessionOverviewCard` | Resumen sesión con barra de progreso |
 

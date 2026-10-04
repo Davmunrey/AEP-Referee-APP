@@ -91,4 +91,4 @@ Fuente de verdad:
 
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.5
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.6
