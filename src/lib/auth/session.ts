@@ -142,11 +142,39 @@ const getAuthenticatedUser = cache(async (): Promise<SessionUser | null> => {
   if (!isSupabaseConfigured()) return null;
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
+  const user = await verifiedAuthUser(supabase);
+  if (!user) return null;
 
-  return resolveSessionUser(createAdminClient(), data.user);
+  return resolveSessionUser(createAdminClient(), user);
 });
+
+/**
+ * Usuario de auth a partir del token de la cookie, verificado.
+ *
+ * Antes era `getUser()`, que pregunta al servidor de Auth en cada petición; y
+ * el middleware ya ha hecho esa misma pregunta para la página que se está
+ * pintando, así que cada pantalla pagaba dos viajes a Supabase antes de su
+ * primera consulta. `getClaims()` comprueba la firma del token: con claves
+ * asimétricas lo hace aquí mismo (la clave pública se guarda entre
+ * peticiones) y con el secreto compartido de siempre vuelve a preguntar al
+ * servidor, igual que antes. En ningún caso se fía de un token sin verificar.
+ *
+ * El perfil (`activo`, rol, zona) se sigue leyendo de la base en cada
+ * petición: desactivar una cuenta corta el acceso al momento.
+ */
+async function verifiedAuthUser(supabase: Awaited<ReturnType<typeof createClient>>): Promise<User | null> {
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub) return null;
+  return {
+    id: claims.sub,
+    email: claims.email,
+    app_metadata: claims.app_metadata ?? {},
+    user_metadata: claims.user_metadata ?? {},
+    aud: String(claims.aud ?? "authenticated"),
+    created_at: "",
+  } as User;
+}
 
 /**
  * Sesión de la GESTIÓN (panel, API de `/api/v1/*`). Un juez no la tiene.

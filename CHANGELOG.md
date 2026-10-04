@@ -4,6 +4,14 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## ⚡ **AEP Tarima v2.14.2** — _«Un viaje menos»_ (2026-10-04)
+
+Cada pantalla preguntaba dos veces a Supabase Auth quién era el usuario antes de leer nada.
+
+- **La sesión del servidor verifica el token con `getClaims()`** en vez de `getUser()`. El middleware ya ha preguntado al servidor de Auth para esa misma página. Con claves asimétricas la firma se comprueba en local; con el secreto compartido se pregunta al servidor como antes. El perfil (`activo`, rol, zona) se sigue leyendo en cada petición, así que desactivar una cuenta corta el acceso al momento.
+
+---
+
 ## ⚡ **AEP Tarima v2.14.1** — _«Al lado de la base de datos»_ (2026-10-04)
 
 Las pantallas tardaban porque el servidor estaba en Washington y la base de datos en Londres.
