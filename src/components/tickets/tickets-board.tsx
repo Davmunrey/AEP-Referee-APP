@@ -171,7 +171,7 @@ export function TicketsBoard({
               <Link
                 key={t.id}
                 href={`/tickets/${t.id}`}
-                className="block rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-border-strong hover:bg-surface-hover focus-ring"
+                className="block rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-border-strong hover:bg-surface-hover focus-ring"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

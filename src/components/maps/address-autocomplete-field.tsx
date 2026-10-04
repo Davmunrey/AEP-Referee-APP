@@ -170,7 +170,7 @@ export function AddressAutocompleteField({
           <ul
             id={listId}
             role="listbox"
-            className="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-auto rounded-xl border border-border-muted bg-card py-1 shadow-lg"
+            className="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-auto rounded-xl border border-border-muted bg-card py-1 shadow-md"
           >
             {suggestions.map((suggestion) => (
               <li key={`${suggestion.address}-${suggestion.lat}`} role="option" aria-selected={false}>

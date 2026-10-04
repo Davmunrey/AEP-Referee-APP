@@ -186,7 +186,7 @@ export function RosterHeaderActions({
             // Tarima completa: se marca con un halo fijo, no con un latido. Este
             // botón está en pantalla toda la sesión de montaje; un bucle infinito
             // ahí deja de informar y pasa a molestar.
-            fillPct >= 100 && "shadow-glow-primary-lg",
+            fillPct >= 100 && "ring-2 ring-success/40",
           )}
           disabled={pending || rosterLocked || Boolean(submitBlockedReason)}
           title={submitBlockedReason ?? undefined}

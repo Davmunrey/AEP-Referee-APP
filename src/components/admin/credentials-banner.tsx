@@ -28,7 +28,7 @@ export function CredentialsBanner({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div ref={panelRef} tabIndex={-1} className="outline-none w-full max-w-sm rounded-2xl border border-border-strong bg-card p-6 shadow-xl">
+      <div ref={panelRef} tabIndex={-1} className="outline-none w-full max-w-sm rounded-xl border border-border-strong bg-card p-6 shadow-md">
         <h3 id="credentials-title" className="text-base font-semibold text-foreground">
           Usuario creado
         </h3>

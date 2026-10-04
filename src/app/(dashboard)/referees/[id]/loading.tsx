@@ -16,7 +16,7 @@ export default function RefereeDetailLoading() {
       {/* Hero card */}
       <div className="rounded-xl border border-border p-5">
         <div className="flex flex-wrap items-start gap-4">
-          <Skeleton className="h-14 w-14 shrink-0 rounded-2xl" />
+          <Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
           <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-6 w-52" />

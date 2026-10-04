@@ -106,7 +106,7 @@ export function TicketDetail({
             <CategoryBadge categoria={ticket.categoria} />
             <TicketStatusPill status={ticket.status} />
           </div>
-          <h1 className="mt-2 text-xl font-bold tracking-tight text-foreground">
+          <h1 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
             {ticket.titulo}
           </h1>
           <p className="mt-1 text-[11px] text-muted-foreground">
@@ -120,7 +120,7 @@ export function TicketDetail({
 
       {/* Banner de resolución */}
       {ticket.status === "resuelto" && ticket.resolutionNote && (
-        <div className="flex items-start gap-2.5 rounded-2xl border border-success-border bg-success-muted px-4 py-3">
+        <div className="flex items-start gap-2.5 rounded-xl border border-success-border bg-success-muted px-4 py-3">
           <CheckCircle2
             className="mt-px h-4 w-4 shrink-0 text-success"
             aria-hidden="true"

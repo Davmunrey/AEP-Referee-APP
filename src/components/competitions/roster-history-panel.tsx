@@ -103,7 +103,7 @@ export function RosterHistoryPanel({ competitionId }: { competitionId: string })
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border border-border bg-background shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border border-border bg-background shadow-md">
           <div className="flex items-center justify-between border-b border-border-muted px-4 py-3">
             <p className="text-xs font-semibold text-foreground">Historial de cambios</p>
             <Button

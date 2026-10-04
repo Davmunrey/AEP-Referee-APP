@@ -45,7 +45,7 @@ export function DashboardHero({
   const canCreate = canCreateCompetition(user.role);
 
   return (
-    <div className="glass-panel-soft rounded-2xl p-4 sm:p-5 xl:p-5 2xl:p-6">
+    <div className="glass-panel-soft rounded-xl p-4 sm:p-5 xl:p-5 2xl:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         {/* Left: greeting + context */}
         <div className="flex min-w-0 max-w-[44rem] items-start gap-3.5">
@@ -54,7 +54,7 @@ export function DashboardHero({
             alt="AEP"
             width={48}
             height={48}
-            className="hidden shrink-0 rounded-2xl sm:block dark:hidden!"
+            className="hidden shrink-0 rounded-xl sm:block dark:hidden!"
             priority
           />
           <Image
@@ -62,7 +62,7 @@ export function DashboardHero({
             alt="AEP"
             width={48}
             height={48}
-            className="hidden shrink-0 rounded-2xl dark:sm:block"
+            className="hidden shrink-0 rounded-xl dark:sm:block"
           />
           <div className="min-w-0">
             <p className="friendly-label mb-1 text-[11px] text-muted-foreground/70">

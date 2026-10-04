@@ -246,7 +246,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
 
       {canManage && (
         <details
-          className="glass-panel-soft group rounded-2xl p-4"
+          className="glass-panel-soft group rounded-xl p-4"
           open={organizerOpen}
           onToggle={(e) => setOrganizerOpen(e.currentTarget.open)}
         >
@@ -413,7 +413,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
           Escribe los km ida+vuelta (solo números) y pulsa Enter o sal del campo para guardar.
         </p>
       )}
-      <div className="overflow-x-auto rounded-2xl border border-border-muted">
+      <div className="overflow-x-auto rounded-xl border border-border-muted">
         <table className="w-full min-w-[880px] text-left text-sm">
           {/* Cabecera: peso semibold como en el resto de tablas de la app, y las
               columnas de dinero alineadas a la derecha junto a sus cifras — un
@@ -474,7 +474,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                           del total sin dejar rastro. */}
                       {isPaid && (
                         <span
-                          className="ml-2 rounded-full border border-success-border bg-success-muted px-2 py-0.5 text-[10px] font-semibold text-success"
+                          className="ml-2 rounded-md bg-success-muted px-1.5 py-0.5 text-[11px] font-semibold text-success"
                           title="Liquidación pagada: su importe ya no se puede cambiar."
                         >
                           pagada
@@ -482,7 +482,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
                       )}
                       {claim.offRoster && (
                         <span
-                          className="ml-2 rounded-full border border-warning-border bg-warning-muted px-2 py-0.5 text-[10px] font-semibold text-warning"
+                          className="ml-2 rounded-md bg-warning-muted px-1.5 py-0.5 text-[11px] font-semibold text-warning"
                           title="Este juez ya no ocupa ningún puesto en la tarima; su liquidación sigue registrada."
                         >
                           fuera de tarima

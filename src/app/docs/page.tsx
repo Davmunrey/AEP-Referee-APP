@@ -104,7 +104,7 @@ function FeatureCard({ icon: IconCmp, title, desc }: { icon: Icon; title: string
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="relative pl-10">
-      <span className="absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+      <span className="absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
         {n}
       </span>
       <p className="text-sm font-semibold text-foreground">{title}</p>
@@ -188,7 +188,7 @@ export default async function DocsPage() {
             height={64}
             className="mx-auto h-14 w-auto hidden dark:block"
           />
-          <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-foreground">
             AEP Tarima — Documentación
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">

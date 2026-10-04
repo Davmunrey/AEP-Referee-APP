@@ -67,7 +67,7 @@ export function ActivityFeed({ activity }: { activity: ActivityItem[] }) {
               {/* Actor avatar */}
               <div
                 className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
                   avatarColor(item.actor),
                 )}
                 aria-hidden="true"

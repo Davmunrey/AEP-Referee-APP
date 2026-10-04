@@ -72,7 +72,7 @@ export function CompetitionAvailabilityDialog({
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
-      <div className={`flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl border border-border bg-card shadow-xl ${dialogPanelEnter}`}>
+      <div className={`flex max-h-[85vh] w-full max-w-md flex-col rounded-xl border border-border bg-card shadow-md ${dialogPanelEnter}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
           <div className="flex items-center gap-2">
