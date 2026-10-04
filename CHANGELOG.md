@@ -4,6 +4,18 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🧭 **AEP Tarima v2.8** — _«Una sola cuenta»_ (2026-10-04)
+
+El panel de inicio, rehecho para leerse de un vistazo y sin cifras que se contradigan.
+
+- **Cada dato, una vez**: el mismo campeonato salía en el saludo, en «Recomendaciones», en «Radar operativo», en «Previsión de cobertura» y en la tabla del pie. Ahora hay una lista de **Próximos campeonatos** con fecha, sede, cuánto falta y su cobertura, y una lista de **Pendiente** con lo que pide hacer algo (incluidas las sanciones activas).
+- **Las cifras cuadran**: la tabla leía la cobertura guardada en la ficha del campeonato («5/9») mientras la previsión la calculaba de la tarima («15/45»), y el total de plazas sin cubrir no contaba los campeonatos sin plantilla («30» cuando eran 36). Todo sale ahora de la tarima real, igual que en la pantalla del campeonato y en Estadísticas.
+- **Menos adorno**: fuera el índice de salud 0–100, el «riesgo» inventado, el icono de destellos y las flechas «↗ temporada 2026» que no medían nada. Las cuatro cifras van en una franja, cada una enlaza a su pantalla y solo llevan color cuando piden hacer algo.
+- **Encabezado útil**: una frase con lo esencial («Quedan 36 plazas por cubrir en 2 campeonatos. El próximo, …, es en 21 días.»), el indicador de actualización en pequeño y las dos acciones que no están ya en la barra lateral.
+- **Detalles**: «Ver todo» en Actividad reciente llevaba a Aprobaciones y se ha quitado; el contador de «actualizado hace…» ya no se anuncia cada segundo en los lectores de pantalla; y la guía decía que «Pausar» solo cambiaba el indicador, cuando en realidad detiene la actualización.
+
+---
+
 ## 🤝 **AEP Tarima v2.7** — _«Todos a la vez»_ (2026-10-04)
 
 Varios delegados en la misma tarima, o cada uno en la suya, sin que nadie pierda nada.

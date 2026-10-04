@@ -1,9 +1,8 @@
 import { isCompetitionPast } from "@/lib/competition-status";
 import { buildIntelligence } from "@/lib/dashboard-intelligence";
-import { currentSeasonYear } from "@/lib/season";
 import { LEVELS } from "@/lib/mock-data";
-import { countOpenSlots } from "@/lib/roster-rules";
-import { rosterAnalyticsStats } from "@/lib/roster-coverage";
+import { applyCoverageToCompetition, rosterAnalyticsStats } from "@/lib/roster-coverage";
+import { buildDashboardKpis } from "@/lib/dashboard-kpis";
 import { enumerateSlotKeys, normalizeCompetitionTemplate } from "@/lib/roster-template";
 import { resolveZoneCode } from "@/lib/aep-zones";
 import { calendarEventsFromCompetitions } from "@/lib/calendar-from-competitions";
@@ -11,7 +10,6 @@ import type {
   AnalyticsPayload,
   AppMeta,
   Competition,
-  DashboardKpi,
   DashboardPayload,
   RegulationRule,
   RosterSession,
@@ -32,97 +30,6 @@ import {
 } from "./supabase-helpers";
 import { competitionService } from "./supabase-competitions";
 import { zoneScopeOf, zoneVisibilityFilter } from "@/lib/zone-scope";
-import { contar } from "@/lib/plural";
-
-type KpiInput = {
-  referees: { estado: string }[];
-  competitions: { id: string; estado: string; template?: unknown; tipo?: string }[];
-  approvals: { status: string }[];
-  openSlotsByCompetition: Map<string, number>;
-};
-
-async function buildKpis(input?: KpiInput): Promise<DashboardKpi[]> {
-  let referees: { estado: string }[];
-  let competitions: { id: string; estado: string; template?: unknown; tipo?: string }[];
-  let approvals: { status: string }[];
-  let openSlotsByCompetition: Map<string, number>;
-
-  if (input) {
-    ({ referees, competitions, approvals, openSlotsByCompetition } = input);
-  } else {
-    const supabase = db();
-    // Paginado y con el error a la vista: unos KPI a cero son una afirmación
-    // («no hay jueces, no hay campeonatos, nada pendiente»), no una pantalla
-    // vacía, y con más de 1000 filas se calculaban sobre un trozo del censo.
-    const [refRes, compRes, apprRes, assignmentsByComp] = await Promise.all([
-      fetchAllPagesOf<{ estado: string }>("referees", (from, to) =>
-        supabase.from("referees").select("estado").order("id", { ascending: true }).range(from, to),
-      ),
-      fetchAllPagesOf<{ id: string; estado: string; template?: unknown; tipo?: string }>(
-        "competitions",
-        (from, to) =>
-          supabase
-            .from("competitions")
-            .select("id, estado, template, tipo")
-            .order("id", { ascending: true })
-            .range(from, to),
-      ),
-      fetchAllPagesOf<{ status: string }>("approval_proposals", (from, to) =>
-        supabase
-          .from("approval_proposals")
-          .select("status")
-          .order("id", { ascending: true })
-          .range(from, to),
-      ),
-      cachedLoadAllAssignments(),
-    ]);
-    referees = refRes;
-    competitions = compRes;
-    approvals = apprRes;
-    openSlotsByCompetition = new Map(
-      competitions.map((c) => {
-        const tpl = normalizeCompetitionTemplate(
-          c.template as RosterSession[] | null,
-          c.tipo as Competition["tipo"],
-        );
-        return [c.id, countOpenSlots(tpl, assignmentsByComp.get(c.id) ?? {})];
-      }),
-    );
-  }
-
-  const active = referees.filter((r) => r.estado === "Activo").length;
-  const pending = approvals.filter((a) => a.status === "pendiente").length;
-  let openSlots = 0;
-  let requiredSlots = 0;
-  for (const c of competitions) {
-    const tpl = normalizeCompetitionTemplate(
-      c.template as RosterSession[] | null,
-      c.tipo as Competition["tipo"],
-    );
-    openSlots += openSlotsByCompetition.get(c.id) ?? 0;
-    requiredSlots += enumerateSlotKeys(tpl).length;
-  }
-  const filledSlots = requiredSlots - openSlots;
-  const coveragePct = requiredSlots > 0 ? Math.round((filledSlots / requiredSlots) * 100) : 0;
-  const critical = competitions.filter((c) => c.estado === "Crítico").length;
-  const refereesLength = referees.length;
-  const competitionsLength = competitions.length;
-
-  return [
-    { label: "Jueces activos", value: String(active), sub: `/ ${refereesLength} federados`, trend: `cuota operativa ${currentSeasonYear()}`, trendDir: "up", accent: "neutral" },
-    { label: "Próximas competiciones", value: String(competitionsLength), sub: "campeonatos en calendario", trend: "AEP-1 · AEP-2 · AEP-3", trendDir: "up", accent: "red" },
-    { label: "Plazas sin cubrir", value: String(openSlots), sub: `en ${contar(competitionsLength, "campeonato", "campeonatos")}`, trend: `${contar(critical, "campeonato", "campeonatos")} en estado crítico`, trendDir: critical > 0 ? "warn" : "flat", accent: "yellow" },
-    { label: "Aprobaciones pendientes", value: String(pending), sub: "propuestas regionales", trend: "esperan revisión nacional", trendDir: "flat", accent: "blue" },
-    {
-      label: "Cobertura Nacional",
-      value: `${coveragePct}%`,
-      sub: `${filledSlots} / ${requiredSlots} plazas`,
-      trend: coveragePct >= 80 ? "cobertura óptima" : coveragePct >= 50 ? "cobertura parcial" : "cobertura baja",
-      trendDir: coveragePct >= 80 ? "up" : coveragePct >= 50 ? "warn" : "down",
-      accent: coveragePct >= 80 ? "blue" : coveragePct >= 50 ? "yellow" : "red",
-    },
-  ];
-}
 
 export const analyticsService = {
   getMeta: async (user: SessionUser): Promise<AppMeta> => ({
@@ -252,13 +159,20 @@ export const analyticsService = {
         normalizeCompetitionTemplate(row.template, row.tipo as Competition["tipo"]),
       ] as const),
     );
-    // Misma fórmula que analítica y que el `estado` derivado (helper compartido):
-    // la versión ad hoc contaba claves huérfanas como cubiertas e ignoraba el
-    // fallback de `requeridos` cuando aún no hay plantilla.
-    const coverage = dashboardCompetitions.map((c) => {
-      const assignments = assignmentsByComp.get(c.id) ?? {};
-      const tpl = templateByComp.get(c.id) ?? [];
-      const s = rosterAnalyticsStats(tpl, assignments, c.requeridos);
+    // Cobertura VIVA de cada campeonato vigente: plantilla + asignaciones, con
+    // la misma fórmula que la tarima y la analítica. `confirmados`, `requeridos`
+    // y `estado` guardados en la fila son una copia que puede ir atrasada (un
+    // campeonato importado y nunca tocado), y antes la tabla del panel la
+    // enseñaba («5/9») al lado de la previsión calculada («15/45»).
+    const liveById = new Map(
+      dashboardCompetitions.map((c) => [
+        c.id,
+        applyCoverageToCompetition(c, templateByComp.get(c.id) ?? [], assignmentsByComp.get(c.id) ?? {}),
+      ] as const),
+    );
+    const liveCompetitions = dashboardCompetitions.map((c) => liveById.get(c.id) ?? c);
+    const coverage = liveCompetitions.map((c) => {
+      const s = rosterAnalyticsStats(templateByComp.get(c.id) ?? [], assignmentsByComp.get(c.id) ?? {}, c.requeridos);
       return { id: c.id, nombre: c.nombre, fecha: c.fecha, estado: c.estado, filled: s.filledSlots, open: s.openSlots, required: s.requiredSlots };
     });
     const activityItems = (activity ?? [])
@@ -276,45 +190,26 @@ export const analyticsService = {
     );
     const { health, insights } = buildIntelligence({
       referees: scopedReferees,
-      competitions: dashboardCompetitions,
+      competitions: liveCompetitions,
       approvals: scopedApprovals,
       promotions: scopedPromotions,
       coverage,
       activity: activityItems,
     });
 
-    const kpiCompetitions = dashboardCompetitions.map((c) => ({
-      id: c.id,
-      estado: c.estado,
-      template: templateByComp.get(c.id) ?? null,
-      tipo: c.tipo,
-    }));
-    const kpiOpenSlots = new Map<string, number>(
-      kpiCompetitions.map((c) => [c.id, countOpenSlots(c.template ?? [], assignmentsByComp.get(c.id) ?? {})]),
-    );
-
-    const coverageLabel = isZoneScoped ? "Cobertura Zonal" : "Cobertura Nacional";
-
-    // Independientes entre sí: el histórico de salud (muta `health`), los KPIs y
-    // las alertas de sanción se resuelven en paralelo en vez de en serie.
-    const [, kpis, sanctionAlerts] = await Promise.all([
+    // Independientes entre sí: el histórico de salud (muta `health`) y las
+    // alertas de sanción se resuelven en paralelo en vez de en serie.
+    const [, sanctionAlerts] = await Promise.all([
       applyHealthHistory(health),
-      buildKpis({
-        referees: scopedReferees,
-        competitions: kpiCompetitions,
-        approvals: scopedApprovals,
-        openSlotsByCompetition: kpiOpenSlots,
-      }),
       getSanctionAlerts(user, { skipExpire: true }),
     ]);
+    const kpis = buildDashboardKpis({ coverage, referees: scopedReferees, approvals: scopedApprovals });
 
     return {
-      kpis: kpis.map((kpi) =>
-        kpi.label === "Cobertura Nacional" ? { ...kpi, label: coverageLabel } : kpi,
-      ),
+      kpis,
       activity: activityItems,
-      calendar: calendarEventsFromCompetitions(competitions),
-      upcomingCompetitions: dashboardCompetitions.slice(0, 6),
+      calendar: calendarEventsFromCompetitions(competitions.map((c) => liveById.get(c.id) ?? c)),
+      upcomingCompetitions: liveCompetitions.slice(0, 6),
       currentUser: user,
       health,
       insights,

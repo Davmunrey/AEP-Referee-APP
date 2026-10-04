@@ -1,7 +1,4 @@
 import { zoneVisibilityFilter } from "@/lib/zone-scope";
-import { resolveZoneCode } from "@/lib/aep-zones";
-import { seasonLabel } from "@/lib/season";
-import { countOpenSlots } from "@/lib/roster-rules";
 import {
   computeRosterCoverage,
   deriveCompetitionEstado,
@@ -22,8 +19,8 @@ import {
   getZones,
 } from "@/server/store";
 import { isCompetitionPast } from "@/lib/competition-status";
-import { contar } from "@/lib/plural";
-import { applyCoverageToCompetition } from "@/lib/roster-coverage";
+import { applyCoverageToCompetition, rosterAnalyticsStats } from "@/lib/roster-coverage";
+import { buildDashboardKpis } from "@/lib/dashboard-kpis";
 
 /** Bitácora de salud en memoria (modo dev sin Supabase). */
 export const healthHistory: { score: number; at: number }[] = [];
@@ -58,80 +55,39 @@ export function buildMemoryCompetitionHistory(refereeId: string): RefereeCompeti
   return buildRefereeCompetitionHistory(store.competitions, rows);
 }
 
-export function buildKpis(user?: SessionUser): DashboardKpi[] {
+/**
+ * Campeonatos del panel con su cobertura VIVA (plantilla + asignaciones), igual
+ * que el gemelo de Supabase. El `estado`/`confirmados` guardado en el store
+ * puede ir atrasado y el panel no debe enseñar dos cifras del mismo campeonato.
+ */
+export function liveDashboardData(user?: SessionUser) {
   const store = getStore();
-  const userZone =
-    user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
-  const isZoneScoped = Boolean(userZone);
   // Ver `zone-scope`: una zona ilegible no es «sin restricción».
   const visibleEnZona = zoneVisibilityFilter(user);
-  const referees = store.referees.filter((r) => visibleEnZona(r.zona));
-  // Solo los no celebrados, igual que el gemelo de Supabase: el panel es
-  // operativo. Contando los pasados, «Próximas competiciones» y «Plazas sin
-  // cubrir» sumaban campeonatos de abril mientras la salud, que sí filtraba,
-  // decía «0/0 plazas»: dos cifras contradictorias en la misma portada.
-  const competitions = store.competitions.filter(
-    (c) => visibleEnZona(c.zona) && !isCompetitionPast(c),
-  );
-  const approvals = store.approvals.filter((a) => visibleEnZona(a.zona));
+  const competitions = store.competitions
+    .filter((c) => visibleEnZona(c.zona))
+    .map((c) => applyCoverageToCompetition(c, getCompetitionTemplate(c.id), store.assignments.get(c.id) ?? {}))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  // Solo campeonatos no celebrados: los pasados inflaban KPIs, salud e
+  // "insights" indefinidamente.
+  const dashboardCompetitions = competitions.filter((c) => !isCompetitionPast(c));
+  const coverage = dashboardCompetitions.map((c) => {
+    const s = rosterAnalyticsStats(getCompetitionTemplate(c.id), store.assignments.get(c.id) ?? {}, c.requeridos);
+    return { id: c.id, nombre: c.nombre, fecha: c.fecha, estado: c.estado, filled: s.filledSlots, open: s.openSlots, required: s.requiredSlots };
+  });
+  return {
+    competitions,
+    dashboardCompetitions,
+    coverage,
+    referees: store.referees.filter((r) => visibleEnZona(r.zona)),
+    approvals: store.approvals.filter((a) => visibleEnZona(a.zona)),
+    promotions: store.promotions.filter((p) => visibleEnZona(p.zona)),
+  };
+}
 
-  const active = referees.filter((r) => r.estado === "Activo").length;
-  const pending = approvals.filter((a) => a.status === "pendiente").length;
-  let openSlots = 0;
-  for (const c of competitions) {
-    openSlots += countOpenSlots(
-      getCompetitionTemplate(c.id),
-      store.assignments.get(c.id) ?? {},
-    );
-  }
-  // El estado se deriva de la cobertura al leer (`applyCoverageToCompetition`);
-  // el guardado en el store puede ir atrasado. Con el crudo, la portada decía
-  // «0 campeonatos en estado crítico» mientras la lista marcaba uno Crítico.
-  const critical = competitions.filter(
-    (c) =>
-      applyCoverageToCompetition(
-        c,
-        getCompetitionTemplate(c.id),
-        store.assignments.get(c.id) ?? {},
-      ).estado === "Crítico",
-  ).length;
-
-  const subAlcance = isZoneScoped ? `zona ${userZone}` : seasonLabel();
-
-  return [
-    {
-      label: "Jueces activos",
-      value: String(active),
-      sub: `/ ${referees.length} federados`,
-      trend: subAlcance,
-      trendDir: "up",
-      accent: "neutral",
-    },
-    {
-      label: "Próximas competiciones",
-      value: String(competitions.length),
-      sub: "campeonatos en calendario",
-      trend: subAlcance,
-      trendDir: "up",
-      accent: "red",
-    },
-    {
-      label: "Plazas sin cubrir",
-      value: String(openSlots),
-      sub: `en ${contar(competitions.length, "campeonato", "campeonatos")}`,
-      trend: `${contar(critical, "campeonato", "campeonatos")} en estado crítico`,
-      trendDir: critical > 0 ? "warn" : "flat",
-      accent: "yellow",
-    },
-    {
-      label: "Aprobaciones pendientes",
-      value: String(pending),
-      sub: "propuestas regionales",
-      trend: subAlcance,
-      trendDir: "flat",
-      accent: "blue",
-    },
-  ];
+export function buildKpis(user?: SessionUser): DashboardKpi[] {
+  const { coverage, referees, approvals } = liveDashboardData(user);
+  return buildDashboardKpis({ coverage, referees, approvals });
 }
 
 export { buildIntelligence, getCalendarEvents, getLevels, getStore, getZones };

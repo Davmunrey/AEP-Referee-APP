@@ -119,7 +119,7 @@ async function main() {
 
     await shot(page, "01-dashboard.png", async () => {
       await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
-      await page.getByText("Radar operativo").first().waitFor({ timeout: 15_000 });
+      await page.getByRole("heading", { name: "Próximos campeonatos" }).first().waitFor({ timeout: 15_000 });
     });
 
     await shot(page, "02-campeonatos.png", async () => {

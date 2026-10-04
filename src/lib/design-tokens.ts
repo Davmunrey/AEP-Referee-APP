@@ -1,4 +1,4 @@
-import type { DashboardKpi, UserRole } from "@/lib/types";
+import type { UserRole } from "@/lib/types";
 
 /** Clases Tailwind semánticas — referencian tokens del tema (globals.css / tokens.css). */
 export const tokens = {
@@ -61,40 +61,6 @@ export const tokens = {
     full: "rounded-full",
   },
 } as const;
-
-export const kpiAccentTokens: Record<
-  DashboardKpi["accent"],
-  { border: string; glow: string; dot: string; value: string; stripe: string }
-> = {
-  red: {
-    border: tokens.border.primary,
-    glow: tokens.shadow.glowPrimaryLg,
-    dot: "bg-primary",
-    value: tokens.text.brandSoft,
-    stripe: "bg-primary",
-  },
-  yellow: {
-    border: tokens.border.warning,
-    glow: tokens.shadow.glowWarning,
-    dot: "bg-warning",
-    value: tokens.text.warning,
-    stripe: "bg-warning",
-  },
-  blue: {
-    border: tokens.border.info,
-    glow: tokens.shadow.glowInfo,
-    dot: "bg-info",
-    value: tokens.text.infoSoft,
-    stripe: "bg-info",
-  },
-  neutral: {
-    border: tokens.border.strong,
-    glow: "",
-    dot: "bg-subtle",
-    value: tokens.text.primary,
-    stripe: "bg-border-strong",
-  },
-};
 
 export const roleTokens: Record<
   UserRole,

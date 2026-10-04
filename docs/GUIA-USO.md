@@ -24,12 +24,14 @@ Pantalla de inicio. Resume el estado operativo de la temporada en curso.
 
 ![Dashboard](images/01-dashboard.png)
 
-- **KPIs** (arriba): jueces activos, próximas competiciones, plazas sin cubrir y aprobaciones pendientes. Las competiciones ya celebradas no cuentan como «próximas».
-- **Salud operativa**: índice 0–100 ponderado (cobertura de plantillas, estabilidad, urgencia, aprobaciones, disponibilidad).
-- **Recomendaciones**: avisos priorizados por severidad (crítico/alerta/sugerencia).
-- **En vivo**: el panel refleja la sincronización global de la app (cambios de otros usuarios en segundos). El botón "Pausar" solo afecta al indicador visual.
+- **Encabezado**: una frase con lo esencial (plazas por cubrir, el próximo campeonato y las aprobaciones en espera), el indicador de actualización y los botones **Exportar** y **+ Nuevo campeonato**.
+- **Cifras**: plazas sin cubrir, próximos campeonatos, aprobaciones pendientes y jueces activos. Cada una lleva a su pantalla. Los campeonatos ya celebrados no cuentan.
+- **Próximos campeonatos**: fecha, sede, cuánto falta y la cobertura real de cada tarima (plazas asignadas sobre plazas de la plantilla).
+- **Pendiente**: lo que pide hacer algo (tarimas críticas o cercanas con huecos, aprobaciones, ascensos, sanciones activas).
+- **Calendario** y **Actividad reciente**.
+- **Actualización**: el panel se refresca solo cuando otro usuario cambia algo. El botón de pausa la detiene de verdad hasta que lo reanudas; el de flecha circular actualiza en el acto.
 
-Atajos arriba a la derecha: **Jueces**, **Aprobaciones**, **Exportar**, **+ Nuevo campeonato**.
+Todas las cifras salen de la misma cuenta, así que el mismo campeonato dice lo mismo en todos los bloques.
 
 ---
 

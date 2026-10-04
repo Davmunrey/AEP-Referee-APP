@@ -8,7 +8,7 @@ import { APP_DATA_SYNC_EVENT, setAutoSyncPaused } from "@/lib/realtime/sync-even
 
 function relativeLabel(seconds: number): string {
   if (seconds < 5) return "ahora mismo";
-  if (seconds < 60) return `hace ${seconds}s`;
+  if (seconds < 60) return `hace ${seconds} s`;
   const min = Math.floor(seconds / 60);
   return `hace ${min} min`;
 }
@@ -69,64 +69,41 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
     return () => window.removeEventListener(APP_DATA_SYNC_EVENT, onSync);
   }, [auto, markSynced]);
 
+  // Compacto, junto a las acciones del encabezado: antes ocupaba una franja
+  // propia a todo el ancho encima del saludo. Sin `aria-live`: el contador
+  // cambia cada segundo y un lector de pantalla lo anunciaría sin parar.
+  const iconButton =
+    "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring disabled:opacity-40";
   return (
-    <div
-      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border-muted bg-surface px-3.5 py-2"
-      aria-live="polite"
-    >
-      {/* Status indicator */}
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
-          {auto && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
-          )}
-          <span
-            className={cn(
-              "relative inline-flex h-1.5 w-1.5 rounded-full",
-              auto ? "bg-success" : "bg-muted-foreground/40",
-            )}
-          />
-        </span>
-        <span className="text-xs font-medium text-foreground/70">
-          {isPending ? "Actualizando…" : auto ? "En vivo" : "Pausado"}
-        </span>
-        {/* tabular-nums: el contador se reescribe cada segundo; con cifras de
-            ancho variable la línea entera daría un salto por tick. */}
-        <span className="text-[11px] tabular-nums text-muted-foreground">
-          · {relativeLabel(elapsed)}
-        </span>
-      </div>
-
-      {/* Controls — minimal, icon-first */}
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={toggleAuto}
-          aria-pressed={auto}
-          aria-label={auto ? "Pausar actualización automática" : "Reanudar actualización automática"}
-          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring"
-        >
-          {auto ? (
-            <Pause className="h-3 w-3" aria-hidden="true" />
-          ) : (
-            <Play className="h-3 w-3" aria-hidden="true" />
-          )}
-          <span className="hidden sm:inline">{auto ? "Pausar" : "Reanudar"}</span>
-        </button>
-        <button
-          type="button"
-          onClick={refresh}
-          disabled={isPending}
-          aria-label="Actualizar panel ahora"
-          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-ring disabled:opacity-40"
-        >
-          <RefreshCw
-            className={cn("h-3 w-3", isPending && "animate-spin")}
-            aria-hidden="true"
-          />
-          <span className="hidden sm:inline">Actualizar</span>
-        </button>
-      </div>
+    <div className="flex h-8 items-center gap-1 rounded-lg border border-border-muted bg-card pl-2.5 pr-0.5">
+      <span
+        className={cn("h-1.5 w-1.5 shrink-0 rounded-full", auto ? "bg-success" : "bg-muted-foreground/40")}
+        aria-hidden="true"
+      />
+      {/* tabular-nums: el contador se reescribe cada segundo; con cifras de
+          ancho variable la línea entera daría un salto por tick. */}
+      <span className="mr-1 text-xs tabular-nums text-muted-foreground">
+        {isPending ? "Actualizando…" : auto ? `Actualizado ${relativeLabel(elapsed)}` : "En pausa"}
+      </span>
+      <button
+        type="button"
+        onClick={toggleAuto}
+        aria-label={auto ? "Pausar actualización automática" : "Reanudar actualización automática"}
+        title={auto ? "Pausar actualización automática" : "Reanudar actualización automática"}
+        className={iconButton}
+      >
+        {auto ? <Pause className="h-3.5 w-3.5" aria-hidden="true" /> : <Play className="h-3.5 w-3.5" aria-hidden="true" />}
+      </button>
+      <button
+        type="button"
+        onClick={refresh}
+        disabled={isPending}
+        aria-label="Actualizar panel ahora"
+        title="Actualizar ahora"
+        className={iconButton}
+      >
+        <RefreshCw className={cn("h-3.5 w-3.5", isPending && "animate-spin")} aria-hidden="true" />
+      </button>
     </div>
   );
 }
