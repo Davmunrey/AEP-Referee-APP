@@ -135,7 +135,9 @@ export async function abrirAOtrasZonas(
   competition: Competition,
   zonas: string[],
 ): Promise<Convocatoria> {
-  if (convocatoria.estado === "cancelada") throw new UserFacingServiceError("La convocatoria está cancelada.", 409);
+  if (!isConvocatoriaAbierta(convocatoria) || isCompetitionPast(competition)) {
+    throw new UserFacingServiceError("La convocatoria ya está cerrada: reábrela antes de sumar zonas.", 409);
+  }
   const propia = resolveZoneCode(competition.zona) ?? "";
   const yaEstan = new Set(convocatoria.zonas.map((z) => z.zona));
   const nuevas = zonasNuevas(actor, propia, zonas, "delegado").filter((z) => !yaEstan.has(z.zona));
@@ -158,6 +160,11 @@ export async function resolverZona(actor: Actor, convocatoriaId: string, zona: s
   const convocatoria = await dataService.getConvocatoria(convocatoriaId);
   if (!convocatoria || convocatoria.estado === "cancelada") {
     throw new UserFacingServiceError("La convocatoria ya no existe.", 404);
+  }
+  // Aceptar una convocatoria cerrada mandaría a sus jueces un «puedes
+  // apuntarte» que ya no es verdad. Rechazarla sí se puede siempre.
+  if (aceptar && !isConvocatoriaAbierta(convocatoria)) {
+    throw new UserFacingServiceError("La convocatoria ya está cerrada.", 409);
   }
   const ok = await dataService.resolverConvocatoriaZona(convocatoriaId, code, aceptar ? "aceptada" : "rechazada", actor.nombre);
   if (!ok) throw new UserFacingServiceError("Esa petición ya estaba respondida.", 409);
@@ -224,8 +231,12 @@ export async function actualizarConvocatoria(
   if (convocatoria.estado === "cancelada" && patch.estado !== "abierta") {
     throw new UserFacingServiceError("La convocatoria está cancelada.", 409);
   }
+  // Sin `sesiones` en el cambio, las guardadas que sigan en la plantilla: si
+  // después se quitó una sesión de la plantilla, reabrir o cambiar la fecha no
+  // puede quedar bloqueado por ella (el diálogo no reenvía las sesiones).
+  const enPlantilla = new Set(template.map((x) => x.sesion));
   const merged = {
-    sesiones: patch.sesiones ?? convocatoria.sesiones,
+    sesiones: patch.sesiones ?? convocatoria.sesiones.filter((x) => enPlantilla.has(x)),
     cierraEl: patch.cierraEl ?? convocatoria.cierraEl,
     mensaje: patch.mensaje ?? convocatoria.mensaje,
   };
@@ -236,7 +247,10 @@ export async function actualizarConvocatoria(
   const updated = await dataService.updateConvocatoria(convocatoria.id, {
     estado: patch.estado,
     cierraEl: patch.cierraEl !== undefined ? valid.cierraEl : undefined,
-    sesiones: patch.sesiones !== undefined ? valid.sesiones : undefined,
+    sesiones:
+      patch.sesiones !== undefined || (reabre && valid.sesiones.length !== convocatoria.sesiones.length)
+        ? valid.sesiones
+        : undefined,
     mensaje: patch.mensaje !== undefined ? (patch.mensaje.trim() || "") : undefined,
   });
   if (!updated) throw new UserFacingServiceError("La convocatoria ya no existe. Recarga la página.", 404);
@@ -257,8 +271,17 @@ async function vistaParaJuez(
   const data = await dataService.getCompetitionWithRoster(convocatoria.competitionId);
   if (!data || isCompetitionPast(data.competition)) return null;
   const { competition, roster } = data;
+  // Solo designaciones de tarimas APROBADAS: un borrador de otro delegado no
+  // se enseña al juez (el mismo criterio que «Mis sesiones»).
   const busy = await dataService.getRefereeBusyMap(competition.id);
-  const designadoEn = busy[refereeId]?.[0]?.competitionName;
+  let designadoEn: string | undefined;
+  for (const b of busy[refereeId] ?? []) {
+    const other = await dataService.getCompetition(b.competitionId);
+    if (other && isRosterLockedByApproval(other.aprobacion)) {
+      designadoEn = b.competitionName;
+      break;
+    }
+  }
   const general = bloqueoGeneral({ referee: ctx.referee, tieneSancionActiva: ctx.tieneSancionActiva });
   const byKey = new Map(roster.template.map((s) => [s.sesion, s]));
   return {
@@ -479,7 +502,8 @@ export async function revisarConvocatorias(now = Date.now()): Promise<void> {
         titulo: `Mañana cierra: ${data.competition.nombre}`,
         cuerpo: "Si vas a poder ir a alguna sesión, apúntate hoy.",
         href: `/portal/convocatorias/${c.id}`,
-        clave: `conv:${c.id}:cierra`,
+        // Con la fecha en la clave: si se alarga el plazo, hay recordatorio nuevo.
+        clave: `conv:${c.id}:cierra:${c.cierraEl}`,
       });
     }
   } catch (err) {
@@ -494,6 +518,9 @@ export async function notificarDesignacion(competitionId: string, aprobacionId: 
   try {
     const data = await dataService.getCompetitionWithRoster(competitionId);
     if (!data) return;
+    // Una tarima aprobada otra vez (tras un imprevisto) pide confirmar de
+    // nuevo: el «no puedo» o el «confirmo» de antes eran sobre otra tarima.
+    await dataService.clearDesignacionRespuestas(competitionId);
     const ids = [...new Set(Object.values(data.roster.assignments).filter(Boolean))];
     await avisar(await cuentasDeJueces(ids), {
       tipo: "designacion",
@@ -528,8 +555,11 @@ export async function responderDesignacion(
     throw new UserFacingServiceError("Cuéntale a tu delegado por qué no puedes ir.", 400);
   }
   if (limpio && limpio.length > MAX_NOTA) throw new UserFacingServiceError(`Máximo ${MAX_NOTA} caracteres.`, 400);
+  const anterior = (await dataService.getRespuestasDeJuez(refereeId))[competitionId];
   await dataService.setDesignacionRespuesta(competitionId, refereeId, { estado, motivo: limpio });
-  if (estado === "rechazada") {
+  // Solo al pasar a «no puedo»: repetir la misma respuesta no vuelve a llenar
+  // la campana de la gestión.
+  if (estado === "rechazada" && anterior?.estado !== "rechazada") {
     const referee = await dataService.getReferee(refereeId);
     const delegados = data.competition.zona ? await delegadosDeZona(data.competition.zona) : [];
     await avisar([...delegados, ...(await gestionNacional())], {

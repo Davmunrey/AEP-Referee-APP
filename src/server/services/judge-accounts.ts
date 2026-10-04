@@ -77,6 +77,26 @@ function memoryInvite(referee: Referee): JudgeInviteOutcome {
 
 // ── Supabase ───────────────────────────────────────────────────────────────
 
+/**
+ * La cuenta de acceso entra con el e-mail del CENSO. Si el delegado lo cambia
+ * en la ficha, la cuenta se queda con el viejo: quien tuviera ese buzón (una
+ * dirección de club que pasó a otra persona) seguiría pudiendo entrar como el
+ * juez, y el juez, con su e-mail nuevo, no recibiría nada. Aquí se iguala.
+ */
+export async function syncJudgeLoginEmail(referee: Pick<Referee, "userId" | "email">): Promise<void> {
+  if (!isSupabaseConfigured() || !referee.userId) return;
+  const email = referee.email?.trim().toLowerCase();
+  if (!email || !EMAIL_RE.test(email)) return;
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(referee.userId);
+  if (error || !data.user) throw new Error(`auth.getUserById: ${error?.message ?? "sin usuario"}`);
+  if ((data.user.email ?? "").toLowerCase() === email) return;
+  const { error: upErr } = await admin.auth.admin.updateUserById(referee.userId, { email, email_confirm: true });
+  if (upErr) throw new Error(`auth.updateUserById: ${upErr.message}`);
+  const { error: pErr } = await admin.from("profiles").update({ email }).eq("id", referee.userId).eq("role", "juez");
+  if (pErr) throw new Error(`profiles: ${pErr.message}`);
+}
+
 async function supabaseInvite(referee: Referee, redirectTo: string): Promise<JudgeInviteOutcome> {
   const email = referee.email?.trim().toLowerCase();
   if (!email || !EMAIL_RE.test(email)) return "sin-email";
@@ -90,6 +110,7 @@ async function supabaseInvite(referee: Referee, redirectTo: string): Promise<Jud
       .maybeSingle();
     if (error) throw new Error(`profiles: ${error.message}`);
     if (profile && profile.role === "juez") {
+      await syncJudgeLoginEmail({ userId: referee.userId, email });
       if (!profile.activo) {
         const { error: upErr } = await admin.from("profiles").update({ activo: true }).eq("id", profile.id);
         if (upErr) throw new Error(`profiles: ${upErr.message}`);

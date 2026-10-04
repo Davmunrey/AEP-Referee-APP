@@ -42,9 +42,14 @@ CREATE INDEX IF NOT EXISTS notificaciones_sin_leer_idx
   ON notificaciones (user_id)
   WHERE leida_at IS NULL;
 -- El mismo aviso (misma clave) no se manda dos veces a la misma persona.
+-- Índice ÚNICO COMPLETO, no parcial: PostgREST hace `ON CONFLICT (user_id,
+-- clave)` sin poder repetir un `WHERE`, y Postgres solo empareja un índice
+-- parcial si la sentencia repite su predicado; con `WHERE clave IS NOT NULL`
+-- cada aviso con clave fallaba («no unique or exclusion constraint matching
+-- the ON CONFLICT specification»). Los avisos sin clave no chocan entre sí:
+-- en un índice único, NULL es distinto de NULL.
 CREATE UNIQUE INDEX IF NOT EXISTS notificaciones_clave_unica
-  ON notificaciones (user_id, clave)
-  WHERE clave IS NOT NULL;
+  ON notificaciones (user_id, clave);
 
 ALTER TABLE designacion_respuestas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notificaciones ENABLE ROW LEVEL SECURITY;

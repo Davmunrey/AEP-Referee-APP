@@ -2,6 +2,7 @@
 import { resolveZoneCode, zonesMatch } from "@/lib/aep-zones";
 import type { Convocatoria, ConvocatoriaZona, DesignacionRespuesta, Inscripcion, ZonaPendiente } from "@/lib/convocatorias";
 import { UserFacingServiceError } from "@/lib/competitions/service-types";
+import { todayIso } from "@/lib/business-date";
 import { getStore, nextSeqId } from "@/server/store";
 
 function store() {
@@ -122,11 +123,14 @@ async function resolverConvocatoriaZona(
 }
 
 async function listZonasPendientes(zona?: string): Promise<ZonaPendiente[]> {
-  return store().convocatorias.flatMap((c) =>
-    c.zonas
-      .filter((z) => z.estado === "pendiente" && (!zona || z.zona === zona))
-      .map((z) => ({ convocatoriaId: c.id, zona: z.zona, origen: z.origen, solicitadaAt: z.solicitadaAt })),
-  );
+  return store()
+    .convocatorias.flatMap((c) =>
+      c.zonas
+        .filter((z) => z.estado === "pendiente" && (!zona || z.zona === zona))
+        .map((z) => ({ convocatoriaId: c.id, zona: z.zona, origen: z.origen, solicitadaAt: z.solicitadaAt })),
+    )
+    .sort((a, b) => (b.solicitadaAt ?? "").localeCompare(a.solicitadaAt ?? ""))
+    .slice(0, 200);
 }
 
 async function listConvocatoriasAbiertas(desde: string): Promise<Convocatoria[]> {
@@ -135,7 +139,7 @@ async function listConvocatoriasAbiertas(desde: string): Promise<Convocatoria[]>
 
 async function listConvocatoriasParaAmpliar(): Promise<Convocatoria[]> {
   return store()
-    .convocatorias.filter((c) => c.estado === "abierta" && c.ampliarDiasAntes != null && !c.ampliadaAt)
+    .convocatorias.filter((c) => c.estado === "abierta" && c.ampliarDiasAntes != null && !c.ampliadaAt && c.cierraEl >= todayIso())
     .map(copy);
 }
 
@@ -166,6 +170,11 @@ async function getRespuestasDeJuez(refereeId: string): Promise<Record<string, De
   return out;
 }
 
+async function clearDesignacionRespuestas(competitionId: string): Promise<void> {
+  const r = store().respuestas;
+  for (const k of [...r.keys()]) if (k.startsWith(`${competitionId}::`)) r.delete(k);
+}
+
 async function setDesignacionRespuesta(
   competitionId: string,
   refereeId: string,
@@ -193,4 +202,5 @@ export const memoryConvocatoriaService = {
   getDesignacionRespuestas,
   getRespuestasDeJuez,
   setDesignacionRespuesta,
+  clearDesignacionRespuestas,
 };

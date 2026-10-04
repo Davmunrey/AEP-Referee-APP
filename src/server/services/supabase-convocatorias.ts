@@ -6,6 +6,7 @@
 import { resolveZoneCode } from "@/lib/aep-zones";
 import type { Convocatoria, ConvocatoriaZona, DesignacionRespuesta, Inscripcion, ZonaPendiente } from "@/lib/convocatorias";
 import { UserFacingServiceError } from "@/lib/competitions/service-types";
+import { todayIso } from "@/lib/business-date";
 import { db } from "./supabase-helpers";
 
 type Row = Record<string, unknown>;
@@ -258,7 +259,9 @@ async function resolverConvocatoriaZona(
 async function listZonasPendientes(zona?: string): Promise<ZonaPendiente[]> {
   let q = db().from("convocatoria_zonas").select("*").eq("estado", "pendiente");
   if (zona) q = q.eq("zona", zona);
-  const { data, error } = await q.order("solicitada_at", { ascending: true }).limit(200);
+  // Las más recientes primero: las pendientes de convocatorias ya cerradas no
+  // se pueden responder y, en orden ascendente, tapaban a las nuevas.
+  const { data, error } = await q.order("solicitada_at", { ascending: false }).limit(200);
   if (error) throw new Error(`convocatoria_zonas: ${error.message}`);
   return (data ?? []).map((r) => {
     const z = mapZona(r as Row);
@@ -286,6 +289,10 @@ async function listConvocatoriasParaAmpliar(): Promise<Convocatoria[]> {
     .eq("estado", "abierta")
     .not("ampliar_dias_antes", "is", null)
     .is("ampliada_at", null)
+    // Las de plazo vencido nunca se amplían: sin este filtro se acumulaban y,
+    // con el `limit`, acababan dejando fuera a las vivas.
+    .gte("cierra_el", todayIso())
+    .order("cierra_el", { ascending: true })
     .limit(200);
   if (error) throw new Error(`convocatorias: ${error.message}`);
   return withZonas((data ?? []) as Row[]);
@@ -333,6 +340,12 @@ async function getRespuestasDeJuez(refereeId: string): Promise<Record<string, De
   return out;
 }
 
+/** Al aprobarse de nuevo la tarima, las respuestas anteriores ya no valen. */
+async function clearDesignacionRespuestas(competitionId: string): Promise<void> {
+  const { error } = await db().from("designacion_respuestas").delete().eq("competition_id", competitionId);
+  if (error) throw new Error(`designacion_respuestas: ${error.message}`);
+}
+
 async function setDesignacionRespuesta(
   competitionId: string,
   refereeId: string,
@@ -370,4 +383,5 @@ export const convocatoriaService = {
   getDesignacionRespuestas,
   getRespuestasDeJuez,
   setDesignacionRespuesta,
+  clearDesignacionRespuestas,
 };

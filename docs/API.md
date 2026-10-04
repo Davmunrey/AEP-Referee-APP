@@ -155,6 +155,8 @@ Una convocatoria viva por campeonato (índice único parcial). La fecha límite 
 | `GET` | `/notificaciones` | cualquier cuenta (gestión o juez) · sus 20 últimos avisos y cuántos sin leer |
 | `PATCH` | `/notificaciones` | ídem · `{ ids? }` marca como leídos (todos si no se indica) |
 
+Límites por cuenta (en memoria, por instancia): apuntarse/retirarse 60 cada 10 min, responder a la designación 20, marcar avisos 60; la petición pública de acceso, además del límite por e-mail, 20 por IP cada 15 min y su trabajo se hace después de responder (el tiempo de respuesta no delata si el e-mail es de un juez).
+
 Los avisos los genera el servidor: convocatoria nueva para tu zona, una zona que pide sumarse, la respuesta a esa petición, el recordatorio de cierre (el día antes, a quien no se ha apuntado), la designación al aprobarse la tarima y un juez que avisa de que no puede ir. Un aviso con `clave` no se repite a la misma persona. Un fallo al escribir avisos se registra y **no** rompe la acción que lo provocó.
 
 ## Disponibilidad por campeonato

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isSessionUser, requireJudgeUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
+import { allowAction } from "@/lib/api/action-rate-limit";
 import { responderDesignacion } from "@/server/convocatorias";
 
 const bodySchema = z.object({
@@ -12,6 +13,9 @@ const bodySchema = z.object({
 export async function POST(req: Request, { params }: { params: Promise<{ competitionId: string }> }) {
   const judge = await requireJudgeUser();
   if (!isSessionUser(judge)) return judge;
+  if (!allowAction(`portal:designacion:${judge.id}`, 20, 10 * 60_000)) {
+    return jsonError("Demasiadas peticiones seguidas. Espera un momento.", 429);
+  }
   const { competitionId } = await params;
   const body = bodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return jsonError("Respuesta no válida", 400);

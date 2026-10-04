@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CalendarCheck, Home, LogOut, Megaphone, UserRound } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { AppRealtimeSync } from "@/components/realtime/app-realtime-sync";
 import type { BandejaNotificaciones } from "@/lib/notificaciones";
 import { cn } from "@/lib/utils";
 
@@ -92,10 +91,11 @@ export function PortalShell({
         </nav>
       </header>
 
+      {/* Sin sincronización en tiempo real a propósito: cada edición de la
+          gestión haría refrescar cientos de portales abiertos. El juez ve lo
+          nuevo al navegar o volver a la pestaña, y lo urgente le llega a la
+          campana. */}
       <main className="mx-auto max-w-3xl px-4 pb-28 pt-5 sm:pb-12">{children}</main>
-      {/* Lo que cambie otro (una convocatoria nueva, la tarima aprobada) llega
-          sin recargar, igual que en la gestión. */}
-      <AppRealtimeSync />
 
       {/* Móvil: pestañas abajo, al alcance del pulgar. */}
       <nav

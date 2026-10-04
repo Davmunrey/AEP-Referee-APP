@@ -30,9 +30,12 @@ export function NotificationBell({ initial, className }: { initial: BandejaNotif
   useEffect(() => setBandeja(initial), [initial]);
 
   const onOpenChange = (open: boolean) => {
-    if (!open || bandeja.sinLeer === 0) return;
+    const vistos = bandeja.items.filter((n) => !n.leidaAt).map((n) => n.id);
+    if (!open || vistos.length === 0) return;
     // Al abrir: se ven como nuevos esta vez y quedan leídos para la siguiente.
-    void request("/notificaciones", { method: "PATCH", body: JSON.stringify({}) })
+    // Solo los que se están enseñando: uno que haya llegado después, o que no
+    // quepa en la lista, sigue sin leer.
+    void request("/notificaciones", { method: "PATCH", body: JSON.stringify({ ids: vistos }) })
       .then(() => router.refresh())
       .catch(() => undefined);
   };
