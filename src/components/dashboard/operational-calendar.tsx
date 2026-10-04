@@ -28,16 +28,11 @@ const MONTHS_ES = [
 const MAX_PER_CELL = 2;
 
 /**
- * Un único código de color por estado, en el borde izquierdo de cada barra.
- * Antes el estado se repetía cuatro veces por día (franja superior, punto,
- * fondo teñido e insignia) y la cabecera era una fila de insignias de leyenda.
+ * Un único código de color por estado: un punto delante del nombre, el mismo
+ * de la leyenda. Antes el estado se repetía cuatro veces por día (franja
+ * superior, punto, fondo teñido e insignia); después pasó a una franja gruesa
+ * en el borde izquierdo, que es un adorno de tarjeta más que una señal.
  */
-const statusBar: Record<EventStatus, string> = {
-  Completo: "border-l-success",
-  Incompleto: "border-l-warning",
-  Crítico: "border-l-destructive",
-  Borrador: "border-l-subtle",
-};
 const statusDot: Record<EventStatus, string> = {
   Completo: "bg-success",
   Incompleto: "bg-warning",
@@ -116,16 +111,22 @@ function EventBar({
       href={`/competitions/${event.id}`}
       title={eventTitle(event)}
       className={cn(
-        "flex h-6 min-w-0 items-center rounded-md border-l-[3px] bg-surface px-1.5 text-[11px] font-medium leading-none text-foreground transition-colors hover:bg-surface-active focus-ring",
-        past ? "border-l-border-strong text-muted-foreground" : statusBar[event.estado],
+        "flex h-6 min-w-0 items-center gap-1.5 rounded-md bg-surface px-1.5 text-[11px] font-medium leading-none text-foreground transition-colors hover:bg-surface-active focus-ring",
+        past && "text-muted-foreground",
         // La barra cruza el borde de la celda para unirse con la del día vecino.
-        joinsLeft && "-ml-[7px] rounded-l-none border-l-0 pl-2",
+        joinsLeft && "-ml-[7px] rounded-l-none pl-2",
         joinsRight && "-mr-[7px] rounded-r-none",
       )}
     >
+      {showLabel && (
+        <span
+          className={cn("h-1.5 w-1.5 shrink-0 rounded-full", past ? "bg-border-strong" : statusDot[event.estado])}
+          aria-hidden="true"
+        />
+      )}
       {showLabel ? (
         <span
-          className="relative z-[1] shrink-0 truncate"
+          className="relative z-[1] min-w-0 shrink-0 truncate"
           // El nombre continúa sobre la barra de los días siguientes en vez de
           // cortarse en la primera celda («Campeonato de…»).
           style={{ maxWidth: `calc(${labelSpan * 100}% + ${(labelSpan - 1) * 12}px)` }}
@@ -328,12 +329,15 @@ export function OperationalCalendar({
                         key={e.id}
                         href={`/competitions/${e.id}`}
                         className={cn(
-                          "block rounded-md border-l-[3px] bg-surface px-2.5 py-1.5 focus-ring",
-                          isPast(e) ? "border-l-border-strong" : statusBar[e.estado],
+                          "block rounded-md bg-surface px-2.5 py-1.5 focus-ring",
                         )}
                       >
-                        <p className={cn("truncate text-sm font-medium", isPast(e) ? "text-muted-foreground" : "text-foreground")}>
-                          {e.label}
+                        <p className={cn("flex items-center gap-2 text-sm font-medium", isPast(e) ? "text-muted-foreground" : "text-foreground")}>
+                          <span
+                            className={cn("h-2 w-2 shrink-0 rounded-full", isPast(e) ? "bg-border-strong" : statusDot[e.estado])}
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">{e.label}</span>
                         </p>
                         <p className="truncate text-xs text-muted-foreground">
                           {[e.tipo, rangeText(e), e.sede].filter(Boolean).join(" · ")}

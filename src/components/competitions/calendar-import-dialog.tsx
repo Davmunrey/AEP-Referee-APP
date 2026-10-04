@@ -13,6 +13,7 @@ import { formatApiError } from "@/lib/api/error-message";
 import { api } from "@/lib/api/client";
 import { TRANSFER_KIND_COPY, type TransferStep } from "@/lib/import-export-ui";
 import { Loader2 } from "lucide-react";
+import { formatDateRange } from "@/lib/utils";
 
 interface CalendarPreview {
   filename: string;
@@ -269,8 +270,9 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
                       />
                     </td>
                     <td className="px-2 py-1.5 text-[11px] text-muted-foreground">
-                      {e.fechaInicio ?? "pendiente"}
-                      {e.fechaFin && e.fechaFin !== e.fechaInicio && ` → ${e.fechaFin}`}
+                      {e.fechaInicio
+                        ? formatDateRange(e.fechaInicio, e.fechaFin ?? e.fechaInicio)
+                        : "pendiente"}
                     </td>
                     <td className="px-2 py-1.5 text-foreground">{e.tipo ?? "—"}</td>
                     <td className="px-2 py-1.5 text-foreground">{e.nombre}</td>

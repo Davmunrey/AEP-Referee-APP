@@ -34,7 +34,7 @@ import type { CompensationClaimPatch } from "@/lib/api/client-compensation";
 import { KNOWN_ORGANIZER_CLUBS, normalizeClubEmails, suggestedEmailsForClubName } from "@/lib/organizer-clubs";
 import type { Competition } from "@/lib/types";
 import { selectFieldClass } from "@/lib/design-tokens";
-import { cn } from "@/lib/utils";
+import { cn, formatDateRange } from "@/lib/utils";
 import { disclosureEnter } from "@/components/aep/motion";
 import { CompensationEuroInput, CompensationKmInput } from "./compensation-numeric-inputs";
 
@@ -240,7 +240,7 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
 
       <PageHeader
         title={competition.nombre}
-        description={`${competition.fecha} → ${competition.fechaFin} · ${competition.sede}`}
+        description={`${formatDateRange(competition.fecha, competition.fechaFin ?? competition.fecha)} · ${competition.sede}`}
       />
 
       {canManage && (

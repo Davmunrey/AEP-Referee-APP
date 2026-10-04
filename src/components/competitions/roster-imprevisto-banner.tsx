@@ -44,7 +44,7 @@ export function RosterImprevistoBanner({
   if (isRosterRejected(aprobacion) && lastReview?.status === "rechazado") {
     return (
       <div className="border-b border-destructive-border bg-destructive-muted px-4 py-2.5">
-        <p className="flex items-start gap-2 text-xs text-destructive">
+        <p className="flex max-w-[75ch] items-start gap-2 text-xs text-destructive">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Propuesta <strong>rechazada</strong>
@@ -68,7 +68,7 @@ export function RosterImprevistoBanner({
   if (isRosterLockedByApproval(aprobacion) && canEdit) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-warning-border bg-warning-subtle px-4 py-2.5">
-        <p className="flex items-start gap-2 text-xs text-warning">
+        <p className="flex max-w-[75ch] items-start gap-2 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Esta tarima está <strong>aprobada</strong>. Si surge un imprevisto (baja de última hora,
@@ -96,7 +96,7 @@ export function RosterImprevistoBanner({
   if (isRosterPendingApproval(aprobacion) && canEdit) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-warning-border bg-warning-subtle px-4 py-2.5">
-        <p className="flex items-start gap-2 text-xs text-warning">
+        <p className="flex max-w-[75ch] items-start gap-2 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Esta tarima está <strong>pendiente de aprobación</strong> y no se puede modificar: lo que
@@ -121,7 +121,7 @@ export function RosterImprevistoBanner({
   if (isRosterImprevistoMode(aprobacion)) {
     return (
       <div className="border-b border-warning-border bg-warning-subtle/60 px-4 py-2">
-        <p className="flex items-center gap-2 text-xs text-warning">
+        <p className="flex max-w-[75ch] items-center gap-2 text-xs text-warning">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           Modo <strong>imprevisto</strong> activo: puedes modificar la tarima. Cuando termines, envía de
           nuevo a aprobación.

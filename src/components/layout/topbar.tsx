@@ -72,7 +72,7 @@ export function TopBar({
 
   return (
     <>
-    <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-canvas/85 px-4 sm:px-5 lg:px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-canvas px-4 sm:px-5 lg:px-6">
       <div className="flex min-w-0 items-center gap-3">
         {onOpenMenu && (
           <button
@@ -139,7 +139,7 @@ export function TopBar({
               }}
               // Propiedades explícitas en vez de `all`: lo único que cambia
               // aquí es el color, el borde, el foco y el ancho al enfocar.
-              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-[color,background-color,border-color,box-shadow,width] duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60 xl:focus-visible:w-[17rem]"
+              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-[color,background-color,border-color,box-shadow] duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60"
               aria-label="Buscar jueces — pulsa Enter"
             />
           </div>

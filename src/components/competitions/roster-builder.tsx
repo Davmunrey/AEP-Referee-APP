@@ -658,7 +658,7 @@ export function RosterBuilder({
           // enteraba.
           <div role="status" className="flex flex-wrap items-start gap-2 border-b border-destructive/20 bg-destructive-muted px-4 py-2.5 text-xs sm:px-5 lg:px-6">
             <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden="true" />
-            <p className="min-w-0 flex-1 text-foreground">
+            <p className="min-w-0 max-w-[75ch] flex-1 text-foreground">
               {rechazos.map(([id, r], i) => (
                 <span key={id}>
                   {i > 0 && " · "}
@@ -752,7 +752,9 @@ export function RosterBuilder({
                     <div className="flex items-center gap-4 overflow-x-auto px-3 py-2">
                       {groupedSessions.map(([dia, sesiones]) => (
                         <div key={dia} className="flex shrink-0 items-center gap-2">
-                          <span className="shrink-0 text-[11px] font-semibold text-primary">
+                          {/* Rótulo de día en tono neutro: el rojo queda para la
+                              sesión activa y la acción principal. */}
+                          <span className="shrink-0 text-[11px] font-semibold text-foreground-secondary">
                             {dia}
                           </span>
                           {sesiones.map((session) => (

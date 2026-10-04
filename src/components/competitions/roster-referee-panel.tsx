@@ -199,7 +199,7 @@ export function RosterRefereePanelLeft({
         )}
         {suggestionsActive && (
           <p className="mt-0.5 flex items-center gap-1 text-[11px] text-subtle-muted">
-            <Sparkles className="h-2.5 w-2.5 text-primary" />
+            <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
             {confirmedIds.size > 0
               ? "Solo disponibles · ordenados por idoneidad"
               : "Ordenados por idoneidad para el hueco"}
@@ -249,7 +249,7 @@ export function RosterRefereePanelLeft({
             <button
               type="button"
               onClick={() => onSelectSlot(null)}
-              className="rounded-md border border-primary/25 px-2 py-1.5 text-[11px] text-primary transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) hover:bg-primary/5 active:scale-95 focus-ring"
+              className="rounded-md border border-border px-2 py-1.5 text-[11px] font-medium text-foreground-secondary transition-[color,background-color,border-color,scale] duration-100 ease-(--ease-out) hover:bg-surface-hover active:scale-95 focus-ring"
             >
               Cancelar hueco
             </button>

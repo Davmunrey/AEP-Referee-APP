@@ -230,7 +230,9 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col bg-sidebar transition-[width] duration-200 ease-out",
+        // Plegar es instantáneo: animar `width` recalculaba el layout de toda la
+        // página en cada fotograma, y la tarima (la pantalla más pesada) lo notaba.
+        "flex h-full flex-col bg-sidebar",
         drawer ? "w-[280px] max-w-[85vw] border-r border-border" : collapsed ? "w-16" : "w-[220px] xl:w-[232px]",
       )}
       aria-label="Navegación principal"

@@ -3,23 +3,25 @@
 import Link from "next/link";
 import type { Competition } from "@/lib/types";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
-import { RosterHeaderActions } from "@/components/competitions/roster-header-actions";
+import { RosterHeaderActions, RosterMoreMenu } from "@/components/competitions/roster-header-actions";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 // El historial es un desplegable que se abre a demanda.
 const RosterHistoryPanel = dynamic(
   () => import("@/components/competitions/roster-history-panel").then((m) => m.RosterHistoryPanel),
-  { ssr: false, loading: () => <span className="inline-block h-8 w-[92px]" aria-hidden="true" /> },
+  { ssr: false, loading: () => <span className="hidden h-8 w-[92px] md:inline-block" aria-hidden="true" /> },
 );
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, ArrowLeft, Banknote, ChevronDown, FileUp, Layers, Megaphone, Pencil, Trash2, UsersRound } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { AlertTriangle, ArrowLeft, Banknote, ChevronDown, FileUp, History, Layers, Megaphone, Pencil, Trash2, UsersRound } from "lucide-react";
+import { cn, formatDate, formatDateRange } from "@/lib/utils";
 import type { TransitionStartFunction } from "react";
 
 interface RosterCompetitionHeaderProps {
@@ -84,6 +86,75 @@ export function RosterCompetitionHeader({
   onToggleEditing,
 }: RosterCompetitionHeaderProps) {
   const readOnly = !canEdit;
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const showTemplateMenu = canEdit && !isEditing && !rosterLocked;
+  const showConvocatoria = Boolean(onOpenConvocatoria) && !isEditing;
+  const showActions = !readOnly && !isEditing;
+  const fechaFin = competition.fechaFin ?? competition.fecha;
+  const convocatoriaTitle = convocatoria
+    ? `${convocatoria.abierta ? "Convocatoria abierta" : "Convocatoria cerrada"} · ${convocatoria.inscritos} inscritos`
+    : "Lanzar la convocatoria para que los jueces se apunten";
+
+  // Lo mismo que la barra de escritorio, en el menú «Más» de móvil. Los
+  // elementos de la plantilla van planos bajo un rótulo: un submenú dentro de
+  // un menú se maneja mal con el dedo.
+  const moreItems = (
+    <>
+      {showTemplateMenu && (
+        <>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Plantilla</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={onOpenImport} disabled={pending || savingTemplate}>
+            <FileUp className="mr-2 h-3.5 w-3.5" />
+            Importar horario
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onOpenQuadrant} disabled={templateLength === 0 || pending || savingTemplate}>
+            <UsersRound className="mr-2 h-3.5 w-3.5" />
+            Importar cuadrante
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onToggleEditing} disabled={pending || savingTemplate}>
+            <Pencil className="mr-2 h-3.5 w-3.5" />
+            Editar plantilla
+          </DropdownMenuItem>
+          {filledSlots > 0 && (
+            <DropdownMenuItem onSelect={clearAllAssignments} className="text-warning focus:text-warning">
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Vaciar jueces
+            </DropdownMenuItem>
+          )}
+          {templateLength > 0 && (
+            <DropdownMenuItem onSelect={clearTemplateAndAssignments} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Borrar plantilla
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+        </>
+      )}
+      {showConvocatoria && (
+        <DropdownMenuItem onSelect={onOpenConvocatoria} title={convocatoriaTitle}>
+          <Megaphone className="mr-2 h-3.5 w-3.5" />
+          {convocatoria ? "Convocatoria" : "Convocar"}
+          {convocatoria && (
+            <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+              {convocatoria.inscritos} inscritos
+            </span>
+          )}
+        </DropdownMenuItem>
+      )}
+      {canManageCompensation && (
+        <DropdownMenuItem asChild>
+          <Link href={`/competitions/${competition.id}/compensation`}>
+            <Banknote className="mr-2 h-3.5 w-3.5" />
+            Compensación
+          </Link>
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem onSelect={() => setHistoryOpen(true)}>
+        <History className="mr-2 h-3.5 w-3.5" />
+        Historial
+      </DropdownMenuItem>
+    </>
+  );
 
   return (
     <div className="border-b border-border-muted px-4 py-3 sm:px-5">
@@ -126,15 +197,18 @@ export function RosterCompetitionHeader({
               )}
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {competition.fecha} → {competition.fechaFin} · {competition.sede}
+              {fechaFin === competition.fecha
+                ? formatDate(competition.fecha)
+                : formatDateRange(competition.fecha, fechaFin)}{" "}
+              · {competition.sede}
             </p>
           </div>
         </div>
 
-        {/* Móvil: a lo ancho y de izquierda a derecha. Alineadas a la derecha,
-            siete acciones caían en filas irregulares pegadas al borde. */}
-        <div className="flex w-full min-w-0 flex-col items-start gap-1.5 sm:w-auto sm:items-end">
-          <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
+        {/* Móvil: a lo ancho, con el estado (avisos, cobertura) y el envío a la
+            vista y lo demás en «Más». Desde `md`, la barra completa. */}
+        <div className="flex w-full min-w-0 flex-col items-start gap-1.5 md:w-auto md:items-end">
+          <div className="flex w-full flex-wrap items-center justify-start gap-2 md:w-auto md:justify-end">
             {/* El aviso va en la misma fila que las acciones: antes flotaba
                 encima, en una línea propia. */}
             {violationCount > 0 && (
@@ -158,7 +232,9 @@ export function RosterCompetitionHeader({
                 Volver a tarima
               </Button>
             )}
-            {canEdit && !isEditing && !rosterLocked && (
+            {/* Acciones secundarias: solo en escritorio (en móvil, en «Más»). */}
+            <span className="hidden md:contents">
+            {showTemplateMenu && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -208,18 +284,14 @@ export function RosterCompetitionHeader({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            {onOpenConvocatoria && !isEditing && (
+            {showConvocatoria && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1.5 px-2.5 text-xs"
                 onClick={onOpenConvocatoria}
-                title={
-                  convocatoria
-                    ? `${convocatoria.abierta ? "Convocatoria abierta" : "Convocatoria cerrada"} · ${convocatoria.inscritos} inscritos`
-                    : "Lanzar la convocatoria para que los jueces se apunten"
-                }
+                title={convocatoriaTitle}
               >
                 <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
                 {convocatoria ? "Convocatoria" : "Convocar"}
@@ -243,9 +315,19 @@ export function RosterCompetitionHeader({
                 </Link>
               </Button>
             )}
-            <RosterHistoryPanel competitionId={competition.id} />
-            {!readOnly && !isEditing && (
+            </span>
+            {/* Fuera del bloque de escritorio: en móvil se abre desde «Más». */}
+            <RosterHistoryPanel
+              competitionId={competition.id}
+              open={historyOpen}
+              onOpenChange={setHistoryOpen}
+              className="max-md:contents"
+              triggerClassName="max-md:hidden"
+            />
+            {!showActions && !isEditing && <RosterMoreMenu>{moreItems}</RosterMoreMenu>}
+            {showActions && (
               <RosterHeaderActions
+                moreItems={moreItems}
                 competitionId={competition.id}
                 filledSlots={filledSlots}
                 totalSlots={totalSlots}
