@@ -1,7 +1,8 @@
 "use client";
 
+import { useEscapeClose } from "@/hooks/use-escape-close";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { UserPlus, X } from "lucide-react";
 import { api } from "@/lib/api/client";
 import type { RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
@@ -29,17 +30,9 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
   const [licencia, setLicencia] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  // Escape, foco atrapado dentro, foco devuelto al cerrar y sin scroll detrás.
+  const dialogRef = useEscapeClose<HTMLDivElement>(onClose, open);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
-    dialogRef.current?.focus();
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, onClose]);
 
   if (!open) return null;
 

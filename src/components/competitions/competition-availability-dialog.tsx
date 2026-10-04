@@ -1,5 +1,6 @@
 "use client";
 
+import { useEscapeClose } from "@/hooks/use-escape-close";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Circle, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ export function CompetitionAvailabilityDialog({
   onClose,
   onToggle,
 }: CompetitionAvailabilityDialogProps) {
+  // Escape, foco atrapado dentro, foco devuelto al cerrar y sin scroll detrás.
+  const panelRef = useEscapeClose<HTMLDivElement>(onClose);
   const [search, setSearch] = useState("");
   // Guarda por-juez en curso: solo se bloquea la fila que se está guardando,
   // no toda la lista, así se pueden marcar varios jueces seguidos sin esperar.
@@ -72,12 +75,19 @@ export function CompetitionAvailabilityDialog({
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}>
-      <div className={`flex max-h-[85vh] w-full max-w-md flex-col rounded-xl border border-border bg-card shadow-md ${dialogPanelEnter}`}>
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="availability-title"
+        className={`flex max-h-[85vh] w-full max-w-md flex-col rounded-xl border border-border bg-card shadow-md outline-none ${dialogPanelEnter}`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-muted px-5 py-4">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">Disponibilidad confirmada</h2>
+            <h2 id="availability-title" className="text-sm font-semibold text-foreground">Disponibilidad confirmada</h2>
           </div>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
             {confirmedIds.size} confirmados
