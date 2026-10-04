@@ -62,6 +62,8 @@ No se requiere ninguna API key de mapas de pago.
 ## Supabase
 
 - Proyecto vinculado a producción: `foaemadggmpbcrhtpems` (eu-west-2).
+- **Región de las funciones de Vercel: `lhr1` (Londres)**, fijada en `vercel.json`, la misma que Supabase (eu-west-2). Con la región por defecto (`iad1`, Washington) cada consulta cruzaba el Atlántico (~80 ms) y una pantalla hace varias seguidas (sesión, perfil, contadores, datos): segundos de espera por página.
+- **Conexión con GitHub**: Vercel despliega `main` en cada push solo si el proyecto tiene el repositorio enlazado (Settings → Git). Si se desenlaza no falla nada visible: simplemente deja de desplegar. Comprobar que el último despliegue de producción es el último commit de `main`.
 - **Auth**: email/contraseña; signup público desactivado. La aplicación **no envía correos** (sin SMTP propio): los jueces entran con un código que les da su delegado y las contraseñas olvidadas las repone un administrador o el delegado.
 - **Redirect URLs** en Supabase Auth: incluir `https://aep-tarima.vercel.app/**` y el dominio Vercel si se usa en preview.
 - **Site URL** en Auth: `https://aep-tarima.vercel.app`
