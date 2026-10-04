@@ -21,8 +21,9 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-[13px]",
-        lg: "h-10 rounded-lg px-6 text-[15px]",
+        // En móvil, 36 px de alto como mínimo: 32 px es poco para el dedo.
+        sm: "h-8 max-sm:h-9 rounded-lg px-3 text-ui",
+        lg: "h-10 rounded-lg px-6 text-title",
         icon: "h-9 w-9",
       },
     },
