@@ -71,7 +71,7 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
       role="dialog"
       aria-modal="true"
       aria-labelledby="password-title"
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

@@ -42,7 +42,7 @@ export function SessionCategoriesEditor({ categorias, onAdd, onRemove, onPatch }
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-subtle-muted">Categorías</p>
+        <p className="text-2xs font-semibold text-subtle-muted">Categorías</p>
         <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs" onClick={onAdd}>
           <Plus className="h-3 w-3" />
           Categoría
@@ -73,7 +73,7 @@ export function SessionCategoriesEditor({ categorias, onAdd, onRemove, onPatch }
                     onClick={() => toggleWeight(ci, cat, w)}
                     aria-pressed={active}
                     className={cn(
-"rounded-md border px-2.5 py-1 text-[11px] tabular-nums transition-colors focus-ring",
+"rounded-md border px-2.5 py-1 text-2xs tabular-nums transition-colors focus-ring",
                       active
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-surface text-muted-foreground hover:border-border-strong hover:text-foreground",
@@ -86,7 +86,7 @@ export function SessionCategoriesEditor({ categorias, onAdd, onRemove, onPatch }
               {customs.map((t) => (
                 <span
                   key={t}
-                  className="inline-flex items-center gap-1 rounded-md bg-warning-muted px-1.5 py-0.5 text-[11px] text-warning"
+                  className="inline-flex items-center gap-1 rounded-md bg-warning-muted px-1.5 py-0.5 text-2xs text-warning"
                   title="Valor libre (no es una categoría estándar)"
                 >
                   {t}

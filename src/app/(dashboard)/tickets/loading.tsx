@@ -10,21 +10,13 @@ export default function TicketsLoading() {
           <Skeleton className="h-6 w-56" />
           <Skeleton className="h-4 w-72" />
         </div>
-        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-9 w-32" />
       </div>
 
-      {/* Filtros */}
+      {/* Filtros: dos controles segmentados */}
       <div className="space-y-2.5">
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-7 w-20 rounded-full" />
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-7 w-20 rounded-full" />
-          ))}
-        </div>
+        <Skeleton className="h-10 w-full max-w-md rounded-lg" />
+        <Skeleton className="h-10 w-full max-w-sm rounded-lg" />
       </div>
 
       {/* Filas */}

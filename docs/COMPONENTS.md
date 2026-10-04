@@ -7,7 +7,9 @@
 | `AppShell` | Shell dashboard + `AppRealtimeSync`; en móvil, cajón de navegación con buscador (se cierra al navegar o con Escape) |
 | `Sidebar` | Navegación colapsable en 5 grupos (General, Competiciones, Jueces, Referencia, Administración); plegada, los contadores son un punto |
 | `Topbar` | Migas (en móvil, nombre de la página o del campeonato y botón ☰), buscador, menú usuario (cambiar contraseña, cerrar sesión) |
-| `PageShell` / `PageHeader` | Contenedor de página y cabecera canónica (eyebrow = grupo del menú, `h1`, descripción, acciones) |
+| `PageShell` / `PageHeader` | Contenedor de página y cabecera canónica (`h1`, descripción, acciones; sin rótulo encima) |
+| `MetricStrip` / `MetricTile` | Franja de cifras de una pantalla (`ui/metric-tile.tsx`) |
+| `confirmar()` / `ConfirmHost` | Confirmación dentro de la app en lugar de `window.confirm` (`ui/confirm-dialog.tsx`) |
 | `HelpWidget` | Ayuda flotante: primeros pasos por rol + buscador local de temas (sin IA) |
 | `AppRealtimeSync` | Sincronización en vivo con Supabase (invisible; shell) |
 
@@ -41,7 +43,7 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 |---|---|
 | `ConvocatoriaDialog` | Lanzar y llevar la convocatoria del campeonato (sesiones, fecha límite, inscritos por sesión, cerrar/reabrir/cancelar) |
 | `CompetitionsTable` | Listado con filtros |
-| `OpenRostersPanel` | Tarimas abiertas priorizadas |
+| `OpenRostersPanel` | «Tarimas por completar»: las próximas con huecos o sin plantilla, de menor a mayor cobertura |
 | `CalendarImportDialog` | Import calendario anual |
 | `EditCompetitionDialog` | Edición inline de campeonato |
 | `RosterBuilder` | Asignación (orquestador) |

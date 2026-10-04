@@ -62,7 +62,7 @@ El menú se organiza en cinco grupos, y el rótulo pequeño encima del título d
 
 ![Campeonatos](images/02-campeonatos.png)
 
-- **Tarimas abiertas** (arriba): tarjetas de los campeonatos en curso, priorizados por cobertura pendiente. Botón "Montar tarima".
+- **Tarimas por completar** (arriba): los próximos campeonatos que aún tienen huecos o no tienen plantilla, de menor a mayor cobertura. Cada fila lleva a su tarima. Si todo está cubierto, no aparece.
 - **Todos los campeonatos** (abajo): tabla con búsqueda y filtros por tipo (AEP-1/2/3), zona y estado. En móvil se muestra como tarjetas.
 - **Importar calendario AEP**: sube el calendario anual (PDF/CSV) → preview → selecciona qué campeonatos crear.
 - **+ Nuevo campeonato**: alta manual.

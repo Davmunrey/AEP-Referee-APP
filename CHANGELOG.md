@@ -4,6 +4,23 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🎚️ **AEP Tarima v2.12** — _«Sin plantilla»_ (2026-10-04)
+
+Auditoría de diseño de toda la app con [impeccable](https://github.com/pbakaus/impeccable) (detector sobre las pantallas renderizadas, escritorio y móvil), [hallmark](https://github.com/Nutlope/hallmark), [taste-skill](https://github.com/Leonxlnx/taste-skill) y [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill). El detector pasó de 761 avisos a ~100, casi todos del marco de tres planos (decisión de diseño, no fallo).
+
+- **Tipografía**: Archivo en lugar de Geist; los títulos de página algo ensanchados. Cifras tabulares en toda la app.
+- **Contraste AA** en todos los grises y en las insignias de estado (el verde, el ámbar y el azul se quedaban en 3,1–4,3:1). Barras y puntos en los tonos vivos; texto en los oscuros.
+- **Todo tokenizado**: escala tipográfica (`text-2xs`, `text-ui`, `text-title`, `text-heading`, `text-display`), capas (`z-(--z-modal)`…), duraciones, escalas de gesto, medidas de composición y la paleta de los documentos (correo, recibo, cuadrante). Un test impide que vuelvan los valores sueltos.
+- **Fuera los patrones de plantilla**: cifras en una sola franja (sin iconos en cuadrados de color), sin rótulo encima de los títulos, sin tarjetas dentro de tarjetas, sin bandas laterales de color, sin emojis en la documentación.
+- **Confirmaciones de la app** en lugar del `window.confirm` del navegador, con el botón nombrando la acción; lo destructivo ya no es el botón más visible.
+- **Colores con significado**: una tarima completa es verde (antes, roja de marca); los niveles de juez son una escala neutra (antes, «Nacional» en rojo de error).
+- **Fechas** siempre como «25 oct 2026», nunca «2026-10-25».
+- **Pantallas rehechas**: estadísticas, campeonatos («Tarimas por completar»), aprobaciones, compensación, directorio y ficha, usuarios, documentación (página de lectura con índice), normativa, soporte, acceso, 404 y la tarima en móvil (acciones secundarias en «Más»).
+- **Accesibilidad**: títulos de tarjeta `h2` (antes, de `h1` a `h3`), etiquetas visibles en los formularios de acceso y de usuarios, controles de 36 px en móvil, texto mínimo de 11 px (12 en ayudas de formulario), contenido plegado fuera del DOM.
+- **Corregido**: los botones pequeños rojos salían con texto negro (tailwind-merge no conocía la escala propia).
+
+---
+
 ## 🔔 **AEP Tarima v2.11** — _«Todas las zonas»_ (2026-10-04)
 
 Tercera parte del portal del juez: otras zonas, designación con respuesta y avisos.

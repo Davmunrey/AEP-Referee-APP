@@ -4,6 +4,7 @@ import {
   type CompensationReceiptInput,
 } from "./receipt-document";
 import { AEP_LOGO_PNG_BASE64 } from "./receipt-logo";
+import { PRINT } from "@/lib/document-tokens";
 
 const AEP_LOGO = Buffer.from(AEP_LOGO_PNG_BASE64, "base64");
 
@@ -61,11 +62,11 @@ export function renderCompensationReceiptPdf(input: CompensationReceiptInput): P
     // Baja por debajo del más alto entre el logo y el texto de cabecera.
     doc.x = left;
     doc.y = Math.max(doc.y, headerTop + (isAep ? 64 : 0)) + 8;
-    doc.strokeColor("#333333").lineWidth(1).moveTo(left, doc.y).lineTo(right, doc.y).stroke();
+    doc.strokeColor(PRINT.rule).lineWidth(1).moveTo(left, doc.y).lineTo(right, doc.y).stroke();
     doc.moveDown(1.4);
 
     // ── Título destacado.
-    doc.fillColor("#000000").font("Helvetica-Bold").fontSize(19);
+    doc.fillColor(PRINT.ink).font("Helvetica-Bold").fontSize(19);
     layout.titleLines.forEach((line) =>
       doc.text(line, left, doc.y, { width: contentWidth, align: "center", lineGap: 2 }),
     );
@@ -87,10 +88,10 @@ export function renderCompensationReceiptPdf(input: CompensationReceiptInput): P
 
     // ── Pie fijado al fondo de la página.
     const footerLines = layout.returnEmailLines;
-    doc.font("Helvetica").fontSize(10).fillColor("#000000");
+    doc.font("Helvetica").fontSize(10).fillColor(PRINT.ink);
     const footerBlockHeight = footerLines.length * 14 + 16;
     const footerY = doc.page.height - doc.page.margins.bottom - footerBlockHeight;
-    doc.strokeColor("#333333").lineWidth(1).moveTo(left, footerY).lineTo(right, footerY).stroke();
+    doc.strokeColor(PRINT.rule).lineWidth(1).moveTo(left, footerY).lineTo(right, footerY).stroke();
     doc.y = footerY + 8;
     for (const line of footerLines) {
       doc.text(line, left, doc.y, { width: contentWidth, align: "center" });

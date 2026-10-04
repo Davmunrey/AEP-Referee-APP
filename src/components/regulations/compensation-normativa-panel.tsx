@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReadingSection, ReferenceTable } from "@/components/regulations/reading-section";
 import {
   COMPENSATION_NORMATIVA_FOOTNOTES,
   COMPENSATION_NORMATIVA_META,
@@ -9,76 +9,51 @@ import {
   COMPENSATION_RATE_TABLE,
 } from "@/lib/judge-compensation/normativa-content";
 
+const linkClass = "rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-ring";
+
 export function CompensationNormativaPanel() {
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-primary-border bg-primary-muted px-4 py-3 text-sm leading-relaxed text-foreground-secondary">
+    <article className="max-w-3xl space-y-6">
+      <div className="max-w-prose space-y-2 text-title leading-relaxed text-foreground-secondary">
         <p>
-          <strong className="text-foreground">{COMPENSATION_NORMATIVA_META.title}</strong> — baremo
-          vigente desde {COMPENSATION_NORMATIVA_META.revisionLabel}. La aplicación calcula
+          <strong className="font-semibold text-foreground">{COMPENSATION_NORMATIVA_META.title}</strong>:
+          baremo vigente desde {COMPENSATION_NORMATIVA_META.revisionLabel}. La aplicación calcula
           automáticamente según la tarima y los datos introducidos en{" "}
-          <Link href="/compensation" className="text-primary hover:underline">
+          <Link href="/compensation" className={linkClass}>
             Compensación
           </Link>
           .
         </p>
-        <p className="mt-2">
+        <p>
           <a
             href={COMPENSATION_NORMATIVA_META.sourcePdf}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline"
+            className={linkClass}
           >
             Descargar criterios oficiales AEP (PDF)
           </a>
         </p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Baremo por tipo de campeonato</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="border-b border-border-muted bg-surface/40 text-xs font-medium text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2">Concepto</th>
-                <th className="px-4 py-2">AEP-3</th>
-                <th className="px-4 py-2">AEP-2</th>
-                <th className="px-4 py-2">AEP-1</th>
-                <th className="px-4 py-2">EPF/IPF</th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPENSATION_RATE_TABLE.map((row) => (
-                <tr key={row.concept} className="border-b border-border-muted/60 last:border-0">
-                  <td className="px-4 py-2.5 font-medium text-foreground">{row.concept}</td>
-                  <td className="px-4 py-2.5 text-xs">{row.aep3}</td>
-                  <td className="px-4 py-2.5 text-xs">{row.aep2}</td>
-                  <td className="px-4 py-2.5 text-xs">{row.aep1}</td>
-                  <td className="px-4 py-2.5 text-xs">{row.intl}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <ul className="space-y-1 border-t border-border-muted px-4 py-3 text-xs text-muted-foreground">
-            {COMPENSATION_NORMATIVA_FOOTNOTES.map((note) => (
-              <li key={note}>· {note}</li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <ReadingSection title="Baremo por tipo de campeonato" wide>
+        <ReferenceTable
+          head={["Concepto", "AEP-3", "AEP-2", "AEP-1", "EPF/IPF"]}
+          minWidth="min-w-[560px]"
+          rows={COMPENSATION_RATE_TABLE.map((row) => [row.concept, row.aep3, row.aep2, row.aep1, row.intl])}
+        />
+        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground marker:text-muted-foreground">
+          {COMPENSATION_NORMATIVA_FOOTNOTES.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+      </ReadingSection>
 
       {COMPENSATION_NORMATIVA_SECTIONS.map((section) => (
-        <Card key={section.id}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{section.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed text-foreground-secondary">
-            {section.body}
-          </CardContent>
-        </Card>
+        <ReadingSection key={section.id} id={`compensacion-${section.id}`} title={section.title}>
+          <p>{section.body}</p>
+        </ReadingSection>
       ))}
-    </div>
+    </article>
   );
 }

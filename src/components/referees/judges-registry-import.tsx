@@ -28,8 +28,8 @@ export function JudgesRegistryImportButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setOpen(true)}>
-        <FileSpreadsheet className="h-3.5 w-3.5" />
+      <Button size="sm" variant="outline" className="gap-1.5 max-sm:h-9" onClick={() => setOpen(true)}>
+        <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
         Importar Excel maestro
       </Button>
       <JudgesRegistryImportDialog open={open} onClose={() => setOpen(false)} />

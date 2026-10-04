@@ -18,15 +18,15 @@
 
 /** Velo del modal: solo opacidad; entra a la vez que el panel. */
 export const dialogOverlayEnter =
-  "transition-opacity duration-200 ease-(--ease-out) starting:opacity-0";
+  "transition-opacity duration-(--duration-enter) ease-(--ease-out) starting:opacity-0";
 
 /**
  * Panel del modal: escala desde 0.97 + opacidad. Origen centrado a propósito:
  * un modal no cuelga de un disparador concreto, aparece en el centro.
  */
 export const dialogPanelEnter =
-  "scale-100 opacity-100 transition-[opacity,scale] duration-200 ease-(--ease-out) starting:scale-[0.97] starting:opacity-0";
+  "scale-100 opacity-100 transition-[opacity,scale] duration-(--duration-enter) ease-(--ease-out) starting:scale-(--scale-enter) starting:opacity-0";
 
 /** Contenido que se despliega dentro de una fila o tarjeta ya visible. */
 export const disclosureEnter =
-  "transition-opacity duration-150 ease-(--ease-out) starting:opacity-0";
+  "transition-opacity duration-(--duration-base) ease-(--ease-out) starting:opacity-0";

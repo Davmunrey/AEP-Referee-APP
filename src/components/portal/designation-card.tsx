@@ -7,7 +7,7 @@ export function DesignationCard({ item, respond = false }: { item: PortalDesigna
   return (
     <article className="surface-card overflow-hidden rounded-xl">
       <header className="border-b border-border-muted px-4 py-3">
-        <h3 className="text-[15px] font-semibold text-foreground">{item.competitionName}</h3>
+        <h3 className="text-title font-semibold text-foreground">{item.competitionName}</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">
           {formatDateRange(item.fecha, item.fechaFin)} · {item.tipo} · {item.sede}
         </p>

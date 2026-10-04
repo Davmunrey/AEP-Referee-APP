@@ -138,7 +138,7 @@ export function ExportPreviewDialog({
 
       {truncatedPreview && !loading ? (
         <div className="space-y-2">
-          <pre className="max-h-72 overflow-auto rounded-lg border border-border-muted bg-surface/80 p-3 font-mono text-[11px] leading-relaxed text-foreground-secondary whitespace-pre-wrap">
+          <pre className="max-h-72 overflow-auto rounded-lg border border-border-muted bg-surface/80 p-3 font-mono text-2xs leading-relaxed text-foreground-secondary whitespace-pre-wrap">
             {truncatedPreview.preview}
           </pre>
           {truncatedPreview.truncated ? (

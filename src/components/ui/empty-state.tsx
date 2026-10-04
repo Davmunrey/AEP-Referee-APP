@@ -28,7 +28,7 @@ export function EmptyState({
           <Icon className="h-6 w-6 text-subtle-muted" />
         </span>
       ) : null}
-      <p className="text-[15px] font-semibold text-foreground">{title}</p>
+      <p className="text-title font-semibold text-foreground">{title}</p>
       {description ? (
         <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">{description}</p>
       ) : null}

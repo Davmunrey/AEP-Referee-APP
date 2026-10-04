@@ -61,7 +61,7 @@ function AttachmentGallery({
           >
             <AttachmentImage
               attachment={a}
-              className="aspect-square w-full object-cover transition-transform duration-150 group-hover:scale-[1.03]"
+              className="aspect-square w-full object-cover transition-opacity duration-(--duration-base) group-hover:opacity-90"
             />
           </a>
         ) : (
@@ -109,7 +109,7 @@ export function TicketDetail({
           <h1 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
             {ticket.titulo}
           </h1>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-2xs text-muted-foreground">
             Abierto por {ticket.createdByName} · {shortDate(ticket.createdAt)}
             {ticket.updatedAt !== ticket.createdAt && (
               <> · actualizado {relativeDate(ticket.updatedAt)}</>
@@ -190,7 +190,7 @@ export function TicketDetail({
                       <p className="text-sm font-semibold text-foreground">
                         {c.authorName}
                       </p>
-                      <p className="text-[11px] text-subtle-muted">
+                      <p className="text-2xs text-subtle-muted">
                         {shortDateTime(c.createdAt)}
                       </p>
                     </div>
@@ -498,7 +498,7 @@ function CommentForm({
             onChange={(e) => onPickFiles(e.target.files)}
           />
         </label>
-        <p className="mt-1 text-[11px] text-muted-foreground">
+        <p className="mt-1 text-2xs text-muted-foreground">
           Opcional · máximo {TICKET_MAX_FILES} fotos · JPG, PNG, WEBP o GIF · hasta 5 MB.
         </p>
 

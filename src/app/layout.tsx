@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { themeBootScript } from "@/lib/theme";
 import { AuthFragmentHandler } from "@/components/auth/auth-fragment-handler";
+import { ConfirmHost } from "@/components/ui/confirm-dialog";
 
-// Geist: grotesca neutra y actual, con cifras tabulares de serie; sustituye a
-// DM Sans + IBM Plex Mono, cuya mono de aire «terminal» envejecía la interfaz.
-const geist = Geist({
-  variable: "--font-geist",
+// Archivo: grotesca pensada para deporte y datos (Omnibus-Type), con cifras
+// tabulares y eje de anchura. El texto va a anchura normal; los títulos, algo
+// ensanchados (`font-display` en globals.css), que es lo que les da el aire
+// del logotipo de la AEP sin recurrir a cursivas. Sustituye a Geist, la
+// grotesca que hoy lleva cualquier panel generado.
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
+  axes: ["wdth"],
 });
 
 const geistMono = Geist_Mono({
@@ -34,9 +39,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
-      <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${archivo.variable} ${geistMono.variable} antialiased`}>
         <AuthFragmentHandler />
         {children}
+        <ConfirmHost />
       </body>
     </html>
   );

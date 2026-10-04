@@ -3,7 +3,7 @@
 import { useEscapeClose } from "@/hooks/use-escape-close";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { UserPlus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { api } from "@/lib/api/client";
 import type { RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] ${dialogOverlayEnter}`}
+      className={`fixed inset-0 z-(--z-modal) flex items-center justify-center p-4 bg-overlay ${dialogOverlayEnter}`}
       onClick={onClose}
     >
       <div
@@ -75,14 +75,9 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
       >
         {/* Dialog header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-              <UserPlus className="h-4 w-4 text-primary" />
-            </div>
-            <h3 id="new-referee-title" className="text-base font-semibold text-foreground">
-              Nuevo juez
-            </h3>
-          </div>
+          <h3 id="new-referee-title" className="text-base font-semibold text-foreground">
+            Nuevo juez
+          </h3>
           <Button
             variant="ghost"
             size="icon"
@@ -97,7 +92,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
         <form onSubmit={onSubmit} className="space-y-5 p-6">
           {/* Section: Datos principales */}
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold text-subtle-muted">
+            <p className="text-2xs font-semibold text-subtle-muted">
               Datos principales
             </p>
             <div>
@@ -163,7 +158,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
 
           {/* Section: Datos opcionales */}
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold text-subtle-muted">
+            <p className="text-2xs font-semibold text-subtle-muted">
               Datos opcionales
             </p>
             <div>

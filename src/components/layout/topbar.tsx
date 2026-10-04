@@ -72,7 +72,7 @@ export function TopBar({
 
   return (
     <>
-    <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-canvas/85 px-4 sm:px-5 lg:px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-(--z-header) flex h-(--size-topbar) shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-canvas px-4 sm:px-5 lg:px-6">
       <div className="flex min-w-0 items-center gap-3">
         {onOpenMenu && (
           <button
@@ -89,7 +89,7 @@ export function TopBar({
         <p className="truncate text-sm font-semibold text-foreground md:hidden">
           {competitionIdCrumb && competitionIdCrumb !== "new" ? competitionCrumbLabel : meta.title}
         </p>
-        <nav className="hidden items-center gap-1.5 text-[12px] text-subtle-muted md:flex">
+        <nav className="hidden items-center gap-1.5 text-xs text-subtle-muted md:flex">
           {meta.crumbs.map((crumb, i) => {
             const isLast = i === meta.crumbs.length - 1;
             const label =
@@ -139,7 +139,7 @@ export function TopBar({
               }}
               // Propiedades explícitas en vez de `all`: lo único que cambia
               // aquí es el color, el borde, el foco y el ancho al enfocar.
-              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-[color,background-color,border-color,box-shadow,width] duration-150 hover:border-border-strong focus-visible:border-primary-border xl:w-60 xl:focus-visible:w-[17rem]"
+              className="h-8 w-56 rounded-full border-border bg-surface pl-9 text-xs transition-[color,background-color,border-color,box-shadow] duration-(--duration-base) hover:border-border-strong focus-visible:border-primary-border xl:w-60"
               aria-label="Buscar jueces — pulsa Enter"
             />
           </div>
@@ -149,10 +149,10 @@ export function TopBar({
           <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-full focus-ring">
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-foreground">{currentUser.nombre}</p>
-              <p className="max-w-[140px] truncate text-[11px] text-muted-foreground">{currentUser.rol}</p>
+              <p className="max-w-[140px] truncate text-2xs text-muted-foreground">{currentUser.rol}</p>
             </div>
-            <Avatar className="h-8 w-8 ring-2 ring-border transition-shadow hover:ring-primary/30">
-              <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
+            <Avatar className="h-8 w-8 ring-2 ring-border transition-shadow hover:ring-border-strong">
+              <AvatarFallback className="bg-surface text-xs font-semibold text-foreground-secondary">
                 {currentUser.iniciales}
               </AvatarFallback>
             </Avatar>
@@ -160,7 +160,7 @@ export function TopBar({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel className="font-normal">
               <span className="block text-sm font-medium text-foreground">{currentUser.nombre}</span>
-              <span className="block text-[11px] text-subtle-muted">{currentUser.rol}</span>
+              <span className="block text-2xs text-subtle-muted">{currentUser.rol}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2" onSelect={() => setPwdOpen(true)}>
@@ -168,7 +168,7 @@ export function TopBar({
               Cambiar contraseña
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="py-1 text-[11px] font-medium text-subtle">Tema</DropdownMenuLabel>
+            <DropdownMenuLabel className="py-1 text-2xs font-medium text-subtle">Tema</DropdownMenuLabel>
             {THEME_OPTIONS.map((opt) => {
               const Icon = opt.value === "light" ? Sun : opt.value === "dark" ? Moon : Monitor;
               const selected = theme === opt.value;

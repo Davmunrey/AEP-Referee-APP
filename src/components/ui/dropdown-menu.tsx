@@ -39,7 +39,7 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "dropdown-pop z-50 min-w-[8rem] overflow-hidden rounded-xl border border-border bg-card p-1 text-foreground shadow-md",
+      "dropdown-pop z-(--z-modal) min-w-[8rem] overflow-hidden rounded-xl border border-border bg-card p-1 text-foreground shadow-md",
       className,
     )}
     {...props}
@@ -58,7 +58,7 @@ const DropdownMenuContent = React.forwardRef<
       className={cn(
         // dropdown-pop: escala desde el disparador (transform-origin que expone
         // Radix), no desde el centro, y sale más rápido de lo que entra.
-        "dropdown-pop z-50 min-w-[12rem] overflow-hidden rounded-xl border border-border bg-card p-1.5 text-foreground shadow-md",
+        "dropdown-pop z-(--z-modal) min-w-[12rem] overflow-hidden rounded-xl border border-border bg-card p-1.5 text-foreground shadow-md",
         className,
       )}
       {...props}
@@ -76,7 +76,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-lg px-2.5 py-2 text-sm outline-none transition-colors duration-100 focus:bg-surface-hover focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-lg px-2.5 py-2 text-sm outline-none transition-colors duration-(--duration-fast) focus:bg-surface-hover focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className,
     )}

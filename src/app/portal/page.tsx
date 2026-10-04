@@ -14,7 +14,7 @@ export default async function PortalHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+        <h1 className="text-heading font-semibold text-foreground">
           Hola, {judge.nombre.split(" ")[0]}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -36,7 +36,7 @@ export default async function PortalHomePage() {
 
       <section aria-labelledby="proximas" className="space-y-3">
         <div className="flex items-baseline justify-between">
-          <h2 id="proximas" className="text-[15px] font-semibold text-foreground">
+          <h2 id="proximas" className="text-title font-semibold text-foreground">
             Próximas designaciones
           </h2>
           {data.upcoming.length > next.length && (
@@ -56,7 +56,7 @@ export default async function PortalHomePage() {
 
       <section aria-labelledby="convocatorias" className="space-y-3">
         <div className="flex items-baseline justify-between">
-          <h2 id="convocatorias" className="text-[15px] font-semibold text-foreground">
+          <h2 id="convocatorias" className="text-title font-semibold text-foreground">
             Convocatorias abiertas
           </h2>
           {convocatorias.length > 2 && (

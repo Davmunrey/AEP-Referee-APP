@@ -104,7 +104,7 @@ function YearChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-md border px-2.5 py-0.5 text-[11px] font-medium transition-colors focus-ring ${
+      className={`rounded-md border px-2.5 py-0.5 text-2xs font-medium transition-colors focus-ring ${
         active
           ? "border-primary/40 bg-primary/10 text-primary"
           : "border-border text-subtle-muted hover:bg-surface-hover"
@@ -124,7 +124,7 @@ function TierBlock({
 }) {
   return (
     <div className="rounded-lg border border-border-muted bg-surface/50 p-3">
-      <p className="mb-2 text-[11px] font-semibold text-primary">
+      <p className="mb-2 text-xs font-semibold text-foreground">
         {label}
       </p>
       {entries.length === 0 ? (

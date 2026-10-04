@@ -21,7 +21,8 @@ const badgeVariants = cva(
       },
       size: {
         default: "px-1.5 py-0.5 text-xs",
-        sm: "px-1.5 py-px text-[10px] leading-tight",
+        // 11 px es el suelo de lectura; antes 10 px.
+        sm: "px-1.5 py-px text-2xs leading-tight",
       },
     },
     defaultVariants: {

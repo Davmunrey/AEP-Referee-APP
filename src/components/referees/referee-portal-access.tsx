@@ -13,6 +13,7 @@ import {
   type JudgeAccessStatus,
 } from "@/lib/judge-access";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 /** Acceso de este juez al portal: estado, invitar o reenviar el enlace, retirar. */
 export function RefereePortalAccess({
@@ -52,7 +53,13 @@ export function RefereePortalAccess({
   };
 
   const revoke = async () => {
-    if (!window.confirm("¿Retirar el acceso al portal? El juez dejará de poder entrar al momento.")) return;
+    const ok = await confirmar({
+      titulo: "¿Retirar el acceso al portal?",
+      detalle: "El juez dejará de poder entrar al momento. Podrás volver a invitarle desde aquí.",
+      accion: "Retirar acceso",
+      peligro: true,
+    });
+    if (!ok) return;
     setBusy("revoke");
     setMessage(null);
     try {

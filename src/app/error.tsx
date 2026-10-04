@@ -18,7 +18,7 @@ export default function GlobalError({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-      <h2 className="text-xl font-semibold text-foreground">Algo salió mal</h2>
+      <h1 className="text-xl font-semibold text-foreground">Algo salió mal</h1>
       {/* No el texto crudo del error: en producción Next lo sustituye por un
           aviso genérico en inglés, y en el navegador puede ser un mensaje
           técnico. El mismo texto que `global-error.tsx`, y la referencia para

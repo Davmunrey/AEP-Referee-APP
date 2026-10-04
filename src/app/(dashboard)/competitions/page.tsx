@@ -22,7 +22,6 @@ export default async function CompetitionsPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Competiciones"
         title="Campeonatos"
         description={`${contar(competitions.length, "campeonato", "campeonatos")} en calendario · gestión de plantillas de jueces`}
       >

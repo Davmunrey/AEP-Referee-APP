@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { coverageBarClass } from "@/lib/status-tone";
 import { disclosureEnter } from "@/components/aep/motion";
 import { summarizeRequiredSlots } from "@/lib/roster-template";
 import { sessionProgress, summarizeSessionCategories, summarizeSessionGroups } from "./roster-session-helpers";
@@ -32,13 +33,13 @@ export function RequiredSlotsChips({
   const total = groups.reduce((acc, group) => acc + group.count, 0);
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
-      <span className="text-[11px] font-semibold text-subtle-muted">
+      <span className="text-2xs font-semibold text-subtle-muted">
         Plazas {total}
       </span>
       {groups.map((group) => (
         <span
           key={group.key}
-          className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[11px] text-foreground-secondary"
+          className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-2xs text-foreground-secondary"
         >
           {group.label}
           <span className="font-semibold text-foreground">{group.count}</span>
@@ -66,7 +67,7 @@ export function SessionOverviewCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full rounded-lg border px-2.5 py-2 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.995] focus-ring",
+        "w-full rounded-lg border px-2.5 py-2 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-(--duration-base) ease-(--ease-out) active:scale-(--scale-press) focus-ring",
         active ? "border-primary bg-primary/8 shadow-sm" : "border-border bg-background/75 hover:border-border-strong hover:bg-surface",
       )}
       aria-pressed={active}
@@ -74,18 +75,20 @@ export function SessionOverviewCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-primary">{session.sesion}</span>
-            <span className="text-[13px] font-semibold text-foreground">{session.nombre}</span>
+            <span className={cn("text-xs font-semibold", active ? "text-primary" : "text-muted-foreground")}>
+              {session.sesion}
+            </span>
+            <span className="text-ui font-semibold text-foreground">{session.nombre}</span>
           </div>
-          <p className="mt-0.5 line-clamp-1 text-[10.5px] leading-snug text-muted-foreground">
+          <p className="mt-0.5 line-clamp-1 text-2xs leading-snug text-muted-foreground">
             {summarizeSessionCategories(session)}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-surface-hover px-2 py-1 text-[11px] text-foreground-secondary">
+        <span className="shrink-0 rounded-full bg-surface-hover px-2 py-1 text-2xs text-foreground-secondary">
           {filled}/{slots}
         </span>
       </div>
-      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-[10.5px] text-subtle-muted">
+      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-2xs text-subtle-muted">
         <span>Comp. {session.horarioCompeticion}</span>
         <span>Pesaje {session.horarioPesaje}</span>
         {groupsCount > 0 && <span>{groupsCount} grupo{groupsCount > 1 ? "s" : ""}</span>}
@@ -94,11 +97,14 @@ export function SessionOverviewCard({
         <div
           className={cn(
             // Una sola ley para todas las barras de cobertura de la tarima:
-            // 300 ms, misma curva, y solo el ancho (lo demás no cambia).
-            "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
-            pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
+            // 300 ms, misma curva, y solo la escala horizontal: animar el ancho
+            // recalculaba la maquetación en cada fotograma.
+            "h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
+            // Mismo tono de cobertura que el resto de la app; el rojo de marca
+            // en una sesión a medias se leía como «acción», no como estado.
+            coverageBarClass(pct),
           )}
-          style={{ width: `${pct}%` }}
+          style={{ transform: `scaleX(${pct / 100})` }}
         />
       </div>
     </button>
@@ -131,7 +137,7 @@ export const SessionTab = memo(function SessionTab({
       aria-pressed={active}
       title={`${session.sesion} · ${session.nombre}`}
       className={cn(
-        "flex w-[160px] shrink-0 flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-(--ease-out) active:scale-[0.985] focus-ring",
+        "flex w-[160px] shrink-0 flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-left transition-[color,background-color,border-color,box-shadow,scale] duration-(--duration-base) ease-(--ease-out) active:scale-(--scale-press) focus-ring",
         active
           ? "border-primary bg-primary/8 shadow-sm"
           : "border-border bg-background/75 hover:border-border-strong hover:bg-surface",
@@ -139,12 +145,16 @@ export const SessionTab = memo(function SessionTab({
     >
       <span className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-baseline gap-1.5">
-          <span className="text-[11px] font-semibold text-primary">{session.sesion}</span>
-          <span className="truncate text-[12px] font-medium text-foreground">{session.nombre}</span>
+          {/* El código va en rojo solo en la pestaña activa: es el estado
+              «seleccionada», no un adorno de todas. */}
+          <span className={cn("text-2xs font-semibold", active ? "text-primary" : "text-muted-foreground")}>
+            {session.sesion}
+          </span>
+          <span className="truncate text-xs font-medium text-foreground">{session.nombre}</span>
         </span>
         <span
           className={cn(
-"shrink-0 text-[10px] tabular-nums",
+            "shrink-0 text-2xs tabular-nums",
             done ? "text-success" : "text-subtle-muted",
           )}
         >
@@ -154,10 +164,10 @@ export const SessionTab = memo(function SessionTab({
       <span className="block h-1 overflow-hidden rounded-full bg-muted">
         <span
           className={cn(
-            "block h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
-            pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary",
+            "block h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
+            coverageBarClass(pct),
           )}
-          style={{ width: `${pct}%` }}
+          style={{ transform: `scaleX(${pct / 100})` }}
         />
       </span>
     </button>
@@ -204,7 +214,7 @@ export const SessionBlock = memo(function SessionBlock({
 }) {
   const [collapsed, setCollapsed] = useState(!defaultExpanded);
   const { filled, slots, pct } = sessionProgress(session, assignments);
-  const barColor = pct >= 100 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-primary";
+  const barColor = coverageBarClass(pct);
   const pesajeRoles = session.pesajeRoles ?? [];
   const groupsSummary = summarizeSessionGroups(session);
 
@@ -231,7 +241,7 @@ export const SessionBlock = memo(function SessionBlock({
       <header className="grid gap-1.5 border-b border-border-muted p-2 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.5fr)_auto] lg:items-center">
         <button
           type="button"
-          className="rounded text-subtle-muted transition-colors duration-100 hover:text-foreground focus-ring"
+          className="rounded text-subtle-muted transition-colors duration-(--duration-fast) hover:text-foreground focus-ring"
           aria-label={collapsed ? "Expandir sesión" : "Colapsar sesión"}
           aria-expanded={!collapsed}
           onClick={() => setCollapsed((v) => !v)}
@@ -240,7 +250,7 @@ export const SessionBlock = memo(function SessionBlock({
               explica el cambio de estado; el intercambio solo lo sustituye. */}
           <ChevronDown
             className={cn(
-              "h-4 w-4 transition-transform duration-200 ease-(--ease-out)",
+              "h-4 w-4 transition-transform duration-(--duration-enter) ease-(--ease-out)",
               !collapsed && "rotate-180",
             )}
           />
@@ -248,21 +258,21 @@ export const SessionBlock = memo(function SessionBlock({
 
         <div className="min-w-0">
           <div className="flex min-w-0 items-baseline gap-2">
-            <span className="text-xs font-semibold text-primary">{session.sesion}</span>
+            <span className="text-xs font-semibold text-muted-foreground">{session.sesion}</span>
             <h3 className="truncate text-sm font-semibold text-foreground">{session.nombre}</h3>
           </div>
-          <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-subtle-muted">
+          <p className="mt-1 flex flex-wrap gap-x-3 text-2xs text-subtle-muted">
             <span>Comp. {session.horarioCompeticion}</span>
             <span>Pesaje {session.horarioPesaje}</span>
           </p>
         </div>
 
         <div className="min-w-0">
-          <p className="truncate text-[11px] text-foreground-secondary">
+          <p className="truncate text-2xs text-foreground-secondary">
             {summarizeSessionCategories(session)}
           </p>
           {groupsSummary ? (
-            <p className="mt-1 truncate text-[10.5px] text-subtle-muted" title={groupsSummary}>
+            <p className="mt-1 truncate text-2xs text-subtle-muted" title={groupsSummary}>
               {groupsSummary}
             </p>
           ) : null}
@@ -273,13 +283,13 @@ export const SessionBlock = memo(function SessionBlock({
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className={cn(
-                "h-full rounded-full transition-[width] duration-300 ease-(--ease-out)",
+                "h-full w-full origin-left rounded-full transition-transform duration-(--duration-slow) ease-(--ease-out)",
                 barColor,
               )}
-              style={{ width: `${pct}%` }}
+              style={{ transform: `scaleX(${pct / 100})` }}
             />
           </div>
-          <p className="mt-1 text-right text-[11px] tabular-nums text-subtle-muted">
+          <p className="mt-1 text-right text-2xs tabular-nums text-subtle-muted">
             {filled}/{slots}
           </p>
         </div>
@@ -287,7 +297,7 @@ export const SessionBlock = memo(function SessionBlock({
 
       {!collapsed && (
         <div className={cn("px-2.5 pb-2.5 pt-2", disclosureEnter)}>
-          <p className="mb-1.5 text-[11px] font-semibold text-foreground-secondary">
+          <p className="mb-1.5 text-2xs font-semibold text-foreground-secondary">
             Competición
           </p>
           <SlotGrid roles={session.roles} {...grid} />
@@ -296,7 +306,7 @@ export const SessionBlock = memo(function SessionBlock({
             <>
               <div className="my-2.5 flex items-center gap-2">
                 <div className="flex-1 border-t border-border-muted" />
-                <p className="text-[11px] font-semibold text-primary">
+                <p className="text-2xs font-semibold text-foreground-secondary">
                   Pesaje · {session.horarioPesaje}
                 </p>
                 <div className="flex-1 border-t border-border-muted" />

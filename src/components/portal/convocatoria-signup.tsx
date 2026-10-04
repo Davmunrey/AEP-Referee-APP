@@ -36,7 +36,7 @@ export function ConvocatoriaSignup({ initial }: { initial: PortalConvocatoria })
   return (
     <section aria-labelledby="sesiones" className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="sesiones" className="text-[15px] font-semibold text-foreground">
+        <h2 id="sesiones" className="text-title font-semibold text-foreground">
           Sesiones
         </h2>
         <p className="text-xs text-muted-foreground">

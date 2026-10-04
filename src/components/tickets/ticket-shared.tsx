@@ -91,7 +91,7 @@ export function CategoryBadge({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ring-1 ring-inset",
+        "inline-flex rounded-full px-2 py-0.5 text-2xs font-semibold capitalize ring-1 ring-inset",
         CATEGORY_TONE[categoria],
         className,
       )}
@@ -119,7 +119,7 @@ export function TicketStatusPill({
   return (
     <span
       className={cn(
-"inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ring-1 ring-inset",
+"inline-flex rounded-full px-2 py-0.5 text-2xs font-semibold capitalize ring-1 ring-inset",
         STATUS_TONE[status],
         className,
       )}
@@ -180,7 +180,7 @@ export function AttachmentUnavailable({
       role="note"
       title={`${attachment.fileName}: no disponible ahora mismo`}
       className={cn(
-        "flex flex-col justify-center gap-0.5 rounded-xl border border-dashed border-border-muted bg-surface/40 p-2 text-[11px] text-muted-foreground",
+        "flex flex-col justify-center gap-0.5 rounded-xl border border-dashed border-border-muted bg-surface/40 p-2 text-2xs text-muted-foreground",
         className,
       )}
     >

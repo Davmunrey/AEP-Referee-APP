@@ -23,7 +23,7 @@ export function ConvocatoriaCard({ item }: { item: PortalConvocatoria }) {
       className="surface-card flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-surface-hover focus-ring"
     >
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">{item.competitionName}</p>
+        <p className="line-clamp-2 text-title font-semibold leading-snug text-foreground">{item.competitionName}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {formatDateRange(item.fecha, item.fechaFin)} · {item.sede}
           {item.otraZona && item.zona ? ` · ${zoneUiName(item.zona)}` : ""}
@@ -36,7 +36,7 @@ export function ConvocatoriaCard({ item }: { item: PortalConvocatoria }) {
               ? `Apuntado a ${apuntadas} de ${item.sesiones.length} ${item.sesiones.length === 1 ? "sesión" : "sesiones"}`
               : `${item.sesiones.length} ${item.sesiones.length === 1 ? "sesión" : "sesiones"}`}
           </span>
-          {item.otraZona && <span className="rounded bg-info-muted px-1.5 text-[11px] font-medium leading-5 text-info">Otra zona</span>}
+          {item.otraZona && <span className="rounded bg-info-muted px-1.5 text-2xs font-medium leading-5 text-info">Otra zona</span>}
         </p>
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-subtle" aria-hidden="true" />

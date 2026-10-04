@@ -22,7 +22,7 @@ export default function GlobalError({
     <html lang="es">
       <body className="antialiased">
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-          <h2 className="text-xl font-semibold text-foreground">Algo salió mal</h2>
+          <h1 className="text-xl font-semibold text-foreground">Algo salió mal</h1>
           <p className="max-w-sm text-sm text-muted-foreground">
             Se ha producido un error inesperado. Hemos registrado el incidente para revisarlo.
           </p>

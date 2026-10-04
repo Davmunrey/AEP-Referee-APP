@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   Loader2,
   MoreHorizontal,
   SlidersHorizontal,
@@ -16,6 +17,14 @@ import {
   UserX,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PageHeader } from "@/components/layout/page-header";
 import dynamic from "next/dynamic";
 import { JudgesRegistryImportButton } from "@/components/referees/judges-registry-import";
 import { PortalInviteDialog } from "@/components/referees/portal-invite-dialog";
@@ -36,6 +45,7 @@ import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
 import { arbitrajeYears } from "@/lib/judges-registry/arbitraje-stats";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { contar } from "@/lib/plural";
+import { confirmar } from "@/components/ui/confirm-dialog";
 
 const CENSO_ALL = "TODOS";
 
@@ -59,7 +69,76 @@ function zoneName(zones: Zone[], code: string) {
   return zoneUiName(zones.find((z) => z.code === code)?.code ?? code);
 }
 
+/**
+ * Acciones de una fila, en un único menú «…». Antes eran tres iconos sueltos
+ * por fila —dos de ellos en color (ámbar y rojo)— y una papelera a un toque
+ * en cada juez: ruido en la lista y lo destructivo a mano de un despiste.
+ * Ahora «Eliminar» va al final del menú, separado y pintado como tal, y
+ * sigue pidiendo confirmación.
+ */
+function RowActions({
+  referee,
+  busy,
+  onToggle,
+  onDelete,
+  compact = false,
+}: {
+  referee: Referee;
+  busy: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+  /** Tabla de escritorio: disparador más bajo para no engordar la fila. */
+  compact?: boolean;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={compact ? "h-8 w-8" : "h-9 w-9 shrink-0"}
+          disabled={busy}
+          aria-label={`Acciones para ${referee.nombre}`}
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem asChild>
+          <Link href={`/referees/${referee.id}`}>
+            <ExternalLink className="mr-2 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+            Ver ficha
+          </Link>
+        </DropdownMenuItem>
+        {/* «Sancionado» lo gobierna el flujo de sanciones (y la API lo
+            bloquea): desde aquí solo se alterna Activo ↔ Inactivo. */}
+        {referee.estado !== "Sancionado" && (
+          <DropdownMenuItem onSelect={onToggle}>
+            {referee.estado === "Activo" ? (
+              <UserX className="mr-2 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+            ) : (
+              <UserCheck className="mr-2 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+            )}
+            {referee.estado === "Activo" ? "Marcar inactivo" : "Marcar activo"}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={onDelete}
+          className="text-destructive focus:bg-destructive-muted focus:text-destructive"
+        >
+          <Trash2 className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+          Eliminar juez
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 interface RefereesDirectoryProps {
+  /** La cabecera vive aquí para que sus acciones abran los diálogos de la lista. */
+  title: string;
+  description?: string;
   initialReferees: Referee[];
   zones: Zone[];
   levels: RefereeLevel[];
@@ -70,6 +149,8 @@ interface RefereesDirectoryProps {
 }
 
 export function RefereesDirectory({
+  title,
+  description,
   initialReferees,
   zones,
   levels,
@@ -146,7 +227,13 @@ export function RefereesDirectory({
   };
 
   const deleteReferee = async (id: string, nombre: string) => {
-    if (!confirm(`¿Eliminar al juez "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await confirmar({
+      titulo: `¿Eliminar a ${nombre} del censo?`,
+      detalle: "Se borra su ficha. No se puede deshacer; si solo deja de arbitrar, márcalo como inactivo.",
+      accion: "Eliminar juez",
+      peligro: true,
+    });
+    if (!ok) return;
     setDeletingId(id);
     try {
       await api.deleteReferee(id);
@@ -200,49 +287,32 @@ export function RefereesDirectory({
 
   return (
     <div className="space-y-4">
-      {/* Top bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* El total ya lo da la cabecera de la página; aquí solo aporta algo
-            cuando los filtros recortan la lista. */}
-        {filtered.length < referees.length && (
-          <p className="text-xs text-subtle-muted" aria-live="polite">
-            {filtered.length} de {contar(referees.length, "juez", "jueces")}
-          </p>
+      {/* Acciones en la cabecera de la página, a la altura del título: antes
+          iban en una fila propia, despegadas del título y de la tabla. En
+          móvil la cabecera las pasa a otra línea; «Nuevo juez» va primero
+          para que la acción principal no quede cortada por el borde. */}
+      <PageHeader title={title} description={description}>
+        {canEdit && (
+          <Button size="sm" className="gap-1.5 max-sm:h-9 sm:order-last" onClick={() => setShowNew(true)}>
+            <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
+            Nuevo juez
+          </Button>
         )}
-        <div className="flex items-center gap-2 sm:ml-auto">
-          {hasActiveFilters && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="gap-1.5 text-xs text-subtle-muted"
-              onClick={clearFilters}
-            >
-              <X className="h-3.5 w-3.5" />
-              Limpiar filtros
-            </Button>
-          )}
-          {canImport && <JudgesRegistryImportButton />}
-          {canEdit && portalStatuses && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowInvite(true)}>
-              <Send className="h-3.5 w-3.5" aria-hidden="true" />
-              Invitar al portal
-            </Button>
-          )}
-          {canEdit && (
-            <Button size="sm" className="gap-1.5" onClick={() => setShowNew(true)}>
-              <UserPlus className="h-3.5 w-3.5" />
-              Nuevo juez
-            </Button>
-          )}
-        </div>
-      </div>
+        {canImport && <JudgesRegistryImportButton />}
+        {canEdit && portalStatuses && (
+          <Button size="sm" variant="outline" className="gap-1.5 max-sm:h-9" onClick={() => setShowInvite(true)}>
+            <Send className="h-3.5 w-3.5" aria-hidden="true" />
+            Invitar al portal
+          </Button>
+        )}
+      </PageHeader>
 
       <Card className="overflow-hidden p-0">
         {/* Filter row */}
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
           <div className="flex items-center gap-1.5 text-subtle-muted">
             <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-[11px] font-semibold">Filtros</span>
+            <span className="text-2xs font-semibold">Filtros</span>
           </div>
           <div className="h-4 w-px bg-border" />
           <Input
@@ -251,12 +321,12 @@ export function RefereesDirectory({
             aria-label="Buscar juez por nombre"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 w-44 text-xs"
+            className="h-8 w-44 text-xs max-sm:h-9 max-sm:w-full"
           />
           <select
             value={filterZona}
             onChange={(e) => setFilterZona(e.target.value)}
-            className={selectFieldClassSm}
+            className={`${selectFieldClassSm} max-sm:h-9`}
             aria-label="Filtrar por zona"
           >
             <option value="TODAS">Zona — Todas</option>
@@ -269,7 +339,7 @@ export function RefereesDirectory({
           <select
             value={filterNivel}
             onChange={(e) => setFilterNivel(e.target.value)}
-            className={selectFieldClassSm}
+            className={`${selectFieldClassSm} max-sm:h-9`}
             aria-label="Filtrar por nivel"
           >
             <option value="TODOS">Nivel — Todos</option>
@@ -282,7 +352,7 @@ export function RefereesDirectory({
           <select
             value={filterEstado}
             onChange={(e) => setFilterEstado(e.target.value)}
-            className={selectFieldClassSm}
+            className={`${selectFieldClassSm} max-sm:h-9`}
             aria-label="Filtrar por estado"
           >
             <option value="TODOS">Estado — Todos</option>
@@ -296,7 +366,7 @@ export function RefereesDirectory({
             <select
               value={filterCenso}
               onChange={(e) => setFilterCenso(e.target.value)}
-              className={selectFieldClassSm}
+              className={`${selectFieldClassSm} max-sm:h-9`}
               aria-label="Filtrar por censo por año natural"
             >
               <option value={CENSO_ALL}>Censo — Histórico</option>
@@ -306,6 +376,28 @@ export function RefereesDirectory({
                 </option>
               ))}
             </select>
+          )}
+          {/* El total ya lo da la cabecera; aquí solo aporta algo cuando los
+              filtros recortan la lista, y va junto a los filtros que lo causan. */}
+          {(hasActiveFilters || filtered.length < referees.length) && (
+            <div className="flex items-center gap-2 sm:ml-auto">
+              {filtered.length < referees.length && (
+                <p className="text-xs tabular-nums text-subtle-muted" aria-live="polite">
+                  {filtered.length} de {contar(referees.length, "juez", "jueces")}
+                </p>
+              )}
+              {hasActiveFilters && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1.5 text-xs max-sm:h-9"
+                  onClick={clearFilters}
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  Limpiar filtros
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
@@ -333,55 +425,17 @@ export function RefereesDirectory({
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <LevelBadge level={referee.nivel} />
                   <StatusBadge status={referee.estado} />
-                  <span className="text-[10px] text-subtle-muted">{referee.zona}</span>
+                  <span className="text-xs text-muted-foreground">{zoneName(zones, referee.zona)}</span>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                  <Link href={`/referees/${referee.id}`} aria-label={`Ver ficha de ${referee.nombre}`}>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Link>
-                </Button>
-                {canEdit && referee.estado !== "Sancionado" && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={togglingId === referee.id}
-                    onClick={() => void toggleEstado(referee)}
-                    title={referee.estado === "Activo" ? "Marcar inactivo" : "Marcar activo"}
-                    aria-label={
-                      referee.estado === "Activo"
-                        ? `Marcar inactivo a ${referee.nombre}`
-                        : `Marcar activo a ${referee.nombre}`
-                    }
-                  >
-                    {togglingId === referee.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : referee.estado === "Activo" ? (
-                      <UserX className="h-3.5 w-3.5 text-warning" />
-                    ) : (
-                      <UserCheck className="h-3.5 w-3.5 text-success" />
-                    )}
-                  </Button>
-                )}
-                {canEdit && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    disabled={deletingId === referee.id}
-                    onClick={() => void deleteReferee(referee.id, referee.nombre)}
-                    aria-label={`Eliminar ${referee.nombre}`}
-                  >
-                    {deletingId === referee.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                )}
-              </div>
+              {canEdit && (
+                <RowActions
+                  referee={referee}
+                  busy={togglingId === referee.id || deletingId === referee.id}
+                  onToggle={() => void toggleEstado(referee)}
+                  onDelete={() => void deleteReferee(referee.id, referee.nombre)}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -410,7 +464,7 @@ export function RefereesDirectory({
                 {rows.map((referee) => (
                   <tr
                     key={referee.id}
-                    className="group border-b border-border/50 transition-colors duration-100 hover:bg-muted/30"
+                    className="group border-b border-border/50 transition-colors duration-(--duration-fast) hover:bg-muted/30"
                   >
                     <td className="px-4 py-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border-strong bg-muted text-xs font-semibold text-foreground-secondary">
@@ -443,61 +497,23 @@ export function RefereesDirectory({
                     {/* Las fechas son cifras: sin `tabular-nums` los dígitos
                         bailan de fila en fila y la columna deja de ser una
                         columna. */}
-                    <td className="px-4 py-2.5 text-[11px] tabular-nums text-subtle-muted">
+                    <td className="px-4 py-2.5 text-2xs tabular-nums text-subtle-muted">
                       {displayUltimo(referee.ultimo)}
                     </td>
                     {/* En puntero grueso (tablet) no hay hover: las acciones se
-                        quedarían invisibles para siempre. */}
-                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity duration-100 group-hover:opacity-100 pointer-coarse:opacity-100 focus-within:opacity-100">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                          <Link
-                            href={`/referees/${referee.id}`}
-                            aria-label={`Ver ficha de ${referee.nombre}`}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        {canEdit && referee.estado !== "Sancionado" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            disabled={togglingId === referee.id}
-                            onClick={() => void toggleEstado(referee)}
-                            title={referee.estado === "Activo" ? "Marcar inactivo" : "Marcar activo"}
-                            aria-label={
-                              referee.estado === "Activo"
-                                ? `Marcar inactivo a ${referee.nombre}`
-                                : `Marcar activo a ${referee.nombre}`
-                            }
-                          >
-                            {togglingId === referee.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : referee.estado === "Activo" ? (
-                              <UserX className="h-3.5 w-3.5 text-warning" />
-                            ) : (
-                              <UserCheck className="h-3.5 w-3.5 text-success" />
-                            )}
-                          </Button>
-                        )}
-                        {canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            disabled={deletingId === referee.id}
-                            onClick={() => void deleteReferee(referee.id, referee.nombre)}
-                            aria-label={`Eliminar ${referee.nombre}`}
-                          >
-                            {deletingId === referee.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        )}
-                      </div>
+                        quedarían invisibles para siempre. Con el menú abierto
+                        el puntero ya no está en la fila y el disparador tiene
+                        que seguir a la vista. */}
+                    <td className="px-4 py-2.5 text-right opacity-0 transition-opacity duration-(--duration-fast) group-hover:opacity-100 pointer-coarse:opacity-100 focus-within:opacity-100 has-[[data-state=open]]:opacity-100">
+                      {canEdit && (
+                        <RowActions
+                          referee={referee}
+                          busy={togglingId === referee.id || deletingId === referee.id}
+                          onToggle={() => void toggleEstado(referee)}
+                          onDelete={() => void deleteReferee(referee.id, referee.nombre)}
+                          compact
+                        />
+                      )}
                     </td>
                   </tr>
                 ))}

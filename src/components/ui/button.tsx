@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-out focus-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-(--duration-base) ease-out focus-ring disabled:pointer-events-none disabled:opacity-50 active:scale-(--scale-press) [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -21,8 +21,9 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-[13px]",
-        lg: "h-10 rounded-lg px-6 text-[15px]",
+        // En móvil, 36 px de alto como mínimo: 32 px es poco para el dedo.
+        sm: "h-8 max-sm:h-9 rounded-lg px-3 text-ui",
+        lg: "h-10 rounded-lg px-6 text-title",
         icon: "h-9 w-9",
       },
     },

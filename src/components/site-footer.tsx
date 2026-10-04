@@ -8,7 +8,7 @@ export function SiteFooter({ className = "" }: { className?: string }) {
   const year = new Date().getFullYear();
   return (
     <footer
-      className={`flex flex-col items-center gap-1.5 text-center text-[11px] text-muted-foreground ${className}`}
+      className={`flex flex-col items-center gap-1.5 text-center text-2xs text-muted-foreground ${className}`}
     >
       <nav className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
         <Link
