@@ -111,7 +111,7 @@ export function PortalShell({
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex flex-col items-center gap-1 py-2.5 text-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                active ? "font-medium text-primary" : "text-muted-foreground",
+                active ? "font-medium text-brand" : "text-muted-foreground",
               )}
             >
               <Icon className="h-5 w-5" aria-hidden="true" />

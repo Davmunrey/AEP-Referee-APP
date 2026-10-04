@@ -24,7 +24,7 @@ const DOT: Record<MetricTone, string | null> = {
 
 const HINT: Record<MetricTone, string> = {
   neutral: "text-muted-foreground",
-  primary: "text-primary",
+  primary: "text-brand",
   warning: "text-warning",
   success: "text-success",
   danger: "text-destructive",

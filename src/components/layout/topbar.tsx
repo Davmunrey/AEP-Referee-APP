@@ -187,7 +187,7 @@ export function TopBar({
                 >
                   <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span className="flex-1">{opt.label}</span>
-                  {selected && <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
+                  {selected && <Check className="h-3.5 w-3.5 text-brand" aria-hidden="true" />}
                 </DropdownMenuItem>
               );
             })}

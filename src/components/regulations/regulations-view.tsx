@@ -315,7 +315,7 @@ export function RegulationsView() {
                 href="https://www.powerlifting.sport/rules/codes/info/technical-rules"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-ring"
+                className="rounded-sm text-brand underline underline-offset-2 hover:text-primary-hover focus-ring"
               >
                 powerlifting.sport → Rules → Technical Rules
               </a>
@@ -324,7 +324,7 @@ export function RegulationsView() {
                 href="https://www.powerlifting.sport/federation/referees"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-sm text-primary underline underline-offset-2 hover:text-primary-hover focus-ring"
+                className="rounded-sm text-brand underline underline-offset-2 hover:text-primary-hover focus-ring"
               >
                 Referees IPF
               </a>

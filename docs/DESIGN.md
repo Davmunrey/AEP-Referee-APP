@@ -85,6 +85,7 @@ Fuente de verdad:
 ## Contraste
 
 - Todo texto pasa 4,5:1 (WCAG AA) sobre las superficies en las que aparece, incluido el gris del marco. Los tonos de estado tienen dos usos: el semántico (`text-success`, `text-warning`…, más oscuro) para texto e insignias, y el de gráfico (`bg-chart-success`, `bg-chart-warning`, `bg-chart-danger`, más vivo) para barras y puntos. La cobertura se pinta con `lib/status-tone.ts`.
+- El rojo de marca tiene dos tokens: `--primary` para rellenar (botones, contadores; lleva texto blanco) y `--brand-text` (`text-brand`) para texto, enlaces e iconos en rojo. En oscuro ningún rojo vale para las dos cosas.
 - `--subtle-muted` ya no es un gris más claro que `--subtle`: un gris más claro no llegaba a 4,5:1. La jerarquía terciaria la da el tamaño.
 
 ## Confirmaciones

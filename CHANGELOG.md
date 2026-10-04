@@ -4,6 +4,19 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## 🌗 **AEP Tarima v2.12.1** — _«También de noche»_ (2026-10-04)
+
+Segunda pasada de la auditoría de diseño: modo oscuro, portal del juez y tamaños de tableta y móvil pequeño.
+
+- **Contraste AA también en oscuro**: el rojo de los botones llevaba texto blanco a 3,7:1. El rojo de marca se separa en dos tokens: relleno (`bg-primary`, más oscuro en el tema oscuro) y texto (`text-brand`, más claro). Los enlaces rojos sobre el gris del marco pasan de 4,2 a 4,8:1. Comprobado texto a texto en las 24 pantallas (gestión y portal), claro y oscuro, a 1280 y 390 px: 0 fallos.
+- **Tarima en móvil**: la lista de jueces ya no desaparece en pantallas pequeñas (a 320 px se quedaba en cero); en móvil la tarima sigue el flujo de la página y la lista tiene su propio scroll.
+- **Compensación del campeonato**: una sola vuelta («Volver a la tarima») y el aviso de km dice cuántos faltan («Faltan los km de 5 jueces: A, B, C y 2 más.»).
+- **Estadísticas en móvil**: las tablas caben sin desplazarse de lado (se ocultan las columnas que la cobertura ya dice).
+- Sin desbordes horizontales a 320, 390, 768 y 1024 px en ninguna pantalla.
+- Tokens nuevos: `--brand-text`, `--paper` (la vista previa imprimible) y `--size-tarima-list`. El test de tokens también prohíbe `bg-white`/`text-black` y el rojo de relleno usado como texto.
+
+---
+
 ## 🎚️ **AEP Tarima v2.12** — _«Sin plantilla»_ (2026-10-04)
 
 Auditoría de diseño de toda la app con [impeccable](https://github.com/pbakaus/impeccable) (detector sobre las pantallas renderizadas, escritorio y móvil), [hallmark](https://github.com/Nutlope/hallmark), [taste-skill](https://github.com/Leonxlnx/taste-skill) y [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill). El detector pasó de 761 avisos a ~100, casi todos del marco de tres planos (decisión de diseño, no fallo).

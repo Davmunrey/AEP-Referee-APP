@@ -136,7 +136,7 @@ export function AddressAutocompleteField({
     <div className={cn("space-y-1.5", className)}>
       <div className="flex items-center justify-between gap-2">
         <label htmlFor={inputId} className="flex items-center gap-1.5 text-xs font-medium text-foreground-secondary">
-          <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+          <MapPin className="h-3.5 w-3.5 text-brand" aria-hidden="true" />
           {label}
         </label>
         {showClear && (

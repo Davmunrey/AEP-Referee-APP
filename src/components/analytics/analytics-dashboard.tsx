@@ -157,7 +157,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                   className={cn(
                     "h-9 rounded-md border px-3 text-xs font-medium tabular-nums transition-colors focus-ring sm:h-8",
                     y === data.selectedYear
-                      ? "border-primary/40 bg-primary/10 text-primary"
+                      ? "border-primary/40 bg-primary/10 text-brand"
                       : "border-border text-subtle-muted hover:bg-surface-hover",
                   )}
                 >
@@ -229,8 +229,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
               <DataTableHead>
                 <DataTableHeaderRow>
                   <DataTableHeadCell>Año</DataTableHeadCell>
-                  <DataTableHeadCell className="text-right">Camp.</DataTableHeadCell>
-                  <DataTableHeadCell className="text-right">Plazas</DataTableHeadCell>
+                  {/* En móvil sobran: la cobertura ya dice «18/54» y la tabla
+                      cabe sin desplazarse de lado. */}
+                  <DataTableHeadCell className="text-right max-sm:hidden">Camp.</DataTableHeadCell>
+                  <DataTableHeadCell className="text-right max-sm:hidden">Plazas</DataTableHeadCell>
                   <DataTableHeadCell>Cobertura</DataTableHeadCell>
                   <DataTableHeadCell className="text-right">Jueces</DataTableHeadCell>
                 </DataTableHeaderRow>
@@ -239,11 +241,11 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                 {data.yearlyHistory.map((row) => (
                   <DataTableRow key={row.year}>
                     <DataTableCell className="font-medium text-foreground">{row.year}</DataTableCell>
-                    <DataTableCell className="text-right tabular-nums">{row.competitions}</DataTableCell>
-                    <DataTableCell className="text-right tabular-nums text-muted-foreground">
+                    <DataTableCell className="text-right tabular-nums max-sm:hidden">{row.competitions}</DataTableCell>
+                    <DataTableCell className="text-right tabular-nums text-muted-foreground max-sm:hidden">
                       {row.requiredSlots}
                     </DataTableCell>
-                    <DataTableCell className="min-w-[140px]">
+                    <DataTableCell className="min-w-32">
                       <CoverageMeter filled={row.filledSlots} required={row.requiredSlots} />
                     </DataTableCell>
                     <DataTableCell className="text-right tabular-nums">{row.uniqueAssignedReferees}</DataTableCell>
@@ -271,7 +273,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                 <DataTableHead>
                   <DataTableHeaderRow>
                     <DataTableHeadCell>Zona</DataTableHeadCell>
-                    <DataTableHeadCell className="text-right">Camp.</DataTableHeadCell>
+                    <DataTableHeadCell className="text-right max-sm:hidden">Camp.</DataTableHeadCell>
                     <DataTableHeadCell>Cobertura</DataTableHeadCell>
                     <DataTableHeadCell
                       className="text-right"
@@ -280,7 +282,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                       Jueces
                     </DataTableHeadCell>
                     <DataTableHeadCell
-                      className="text-right"
+                      className="text-right max-sm:hidden"
                       title="Plazas cubiertas por jueces de otra zona"
                     >
                       Ext.
@@ -297,17 +299,17 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                           {zoneUiName(row.zona)}
                         </span>
                       </DataTableCell>
-                      <DataTableCell className="text-right tabular-nums">{row.competitions}</DataTableCell>
-                      <DataTableCell className="min-w-[132px]">
+                      <DataTableCell className="text-right tabular-nums max-sm:hidden">{row.competitions}</DataTableCell>
+                      <DataTableCell className="min-w-32">
                         <CoverageMeter filled={row.filledSlots} required={row.requiredSlots} />
                       </DataTableCell>
                       <DataTableCell className="text-right text-xs tabular-nums text-muted-foreground">
                         <span className="font-semibold text-foreground">{row.uniqueAssignedReferees}</span>
                         <span className="text-subtle-muted"> / {row.activeReferees}</span>
                       </DataTableCell>
-                      <DataTableCell className="text-right">
+                      <DataTableCell className="text-right max-sm:hidden">
                         {(row.crossZoneSlots ?? 0) > 0 ? (
-                          <span className="inline-flex min-w-[2rem] justify-end rounded-md bg-warning-muted px-1.5 py-0.5 text-xs font-semibold text-warning">
+                          <span className="inline-flex min-w-8 justify-end rounded-md bg-warning-muted px-1.5 py-0.5 text-xs font-semibold text-warning">
                             {row.crossZoneSlots}
                           </span>
                         ) : (
@@ -411,7 +413,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsPayload }) {
                     <DataTableCell>
                       <Link
                         href={`/competitions/${e.id}`}
-                        className="rounded-sm font-medium text-foreground transition-colors hover:text-primary focus-ring"
+                        className="rounded-sm font-medium text-foreground transition-colors hover:text-brand focus-ring"
                       >
                         {e.nombre}
                       </Link>

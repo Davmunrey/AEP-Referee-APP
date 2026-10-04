@@ -9,7 +9,7 @@ export const tokens = {
     subtle: "text-subtle",
     subtleMuted: "text-subtle-muted",
     onPrimary: "text-primary-foreground",
-    brand: "text-primary",
+    brand: "text-brand",
     brandSoft: "text-primary-soft",
     success: "text-success",
     warning: "text-warning",
