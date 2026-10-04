@@ -38,7 +38,26 @@ describe("calendarEventsFromCompetitions", () => {
       comp({ id: "c2", nombre: "Copa Canarias", fecha: "2026-06-06", fechaFin: "2026-06-06" }),
     ]);
 
-    expect(calendar["2026-06-06"]?.map((e) => e.id)).toEqual(["c1", "c2"]);
+    // Los dos, en orden alfabético a igualdad de fechas.
+    expect(calendar["2026-06-06"]?.map((e) => e.id)).toEqual(["c2", "c1"]);
+  });
+
+  it("un campeonato de varios días ocupa la misma fila todos sus días", () => {
+    // Insertado después, pero empieza antes: debe ir primero cada día.
+    const calendar = calendarEventsFromCompetitions([
+      comp({ id: "corto", nombre: "A Corto", fecha: "2026-05-16", fechaFin: "2026-05-16" }),
+      comp({ id: "largo", nombre: "Z Largo", fecha: "2026-05-15", fechaFin: "2026-05-17" }),
+    ]);
+    expect(calendar["2026-05-15"]?.map((e) => e.id)).toEqual(["largo"]);
+    expect(calendar["2026-05-16"]?.map((e) => e.id)).toEqual(["largo", "corto"]);
+  });
+
+  it("lleva el nombre completo, sede y zona", () => {
+    const largo = "Campeonato de España Absoluto de Powerlifting Clásico 2026";
+    const calendar = calendarEventsFromCompetitions([
+      comp({ nombre: largo, sede: "Murcia", zona: "MEDITERRANEO", fecha: "2026-05-23", fechaFin: "2026-05-23" }),
+    ]);
+    expect(calendar["2026-05-23"]?.[0]).toMatchObject({ label: largo, sede: "Murcia", zona: "MEDITERRANEO" });
   });
 
   it("solapa rangos largos con eventos de un solo día", () => {

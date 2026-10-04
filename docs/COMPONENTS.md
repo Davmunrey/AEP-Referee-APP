@@ -32,7 +32,7 @@ Textos con número: `contar(n, "juez", "jueces")` y `palabra(n, …)` de `src/li
 | `HealthGauge` | Índice de salud operativa (0–100) |
 | `InsightsPanel` | Recomendaciones auto-generadas |
 | `CoverageForecast` | Cobertura próxima |
-| `OperationalCalendar` | Calendario de campeonatos |
+| `OperationalCalendar` | Calendario de campeonatos: rejilla mensual (escritorio) con barras continuas para varios días, color de estado en el borde, celebrados en gris y «+N más» como menú con enlaces; agenda del mes en móvil |
 
 ## Campeonatos / tarima
 
