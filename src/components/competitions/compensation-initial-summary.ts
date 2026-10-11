@@ -20,3 +20,12 @@ export function debePedirResumen(initialSummary: CompetitionCompensationSummary 
   pintados.add(initialSummary);
   return false;
 }
+
+/**
+ * Un resumen que llega con un refresco mientras el tablero ya está montado no
+ * se pinta (se conserva lo que se está editando), pero también cuenta como
+ * visto: si «atrás» devuelve ESE objeto, hay que pedir el actual.
+ */
+export function marcarResumenVisto(initialSummary: CompetitionCompensationSummary | undefined): void {
+  if (initialSummary) pintados.add(initialSummary);
+}

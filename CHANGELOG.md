@@ -16,7 +16,7 @@ Cada pantalla esperaba a la base de datos varias veces seguidas: una consulta, y
 - **Analítica**: lee campeonatos y asignaciones una vez (antes dos o tres), con las páginas en paralelo.
 - **Portal del juez**: pantalla de carga al cambiar de pestaña, la ficha del juez llega con el perfil, y las convocatorias y la ficha ya no esperan al historial completo. El historial ya no se cortaba en silencio a las 1000 asignaciones.
 - **Sesión**: `getClaims()` también en el middleware. Ahorra el viaje a Supabase Auth cuando el proyecto firma con claves asimétricas (ver `docs/DEPLOY.md`).
-- **Menos repintados**: la campana marca leídos sin recargar la página, los refrescos propios y los de tiempo real comparten un solo temporizador, y supabase-js se carga después de que la página sea usable.
+- **Menos repintados**: los refrescos propios y los de tiempo real comparten un solo temporizador, y supabase-js se carga después de que la página sea usable. La campana baja el globo en cuanto se abre.
 
 ---
 

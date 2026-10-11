@@ -223,7 +223,7 @@ describe("clearSlot: una sola foto del hueco", () => {
 });
 
 describe("saveCompetitionTemplate: lecturas en paralelo y un único UPDATE", () => {
-  it("guarda plantilla y sesiones juntas, y la cobertura sin volver a leer", async () => {
+  it("guarda plantilla y sesiones juntas, y la cobertura con la plantilla guardada", async () => {
     const plantilla = [sesion("S1"), sesion("S2", 1)];
     const result = await rosterService.saveCompetitionTemplate(
       "c1",
@@ -240,13 +240,14 @@ describe("saveCompetitionTemplate: lecturas en paralelo y un único UPDATE", () 
     expect(updates).toHaveLength(2);
     expect(tables.competitions![0]!.sesiones).toBe(2);
     expect(history()).toEqual(["Plantilla actualizada"]);
-    // La cobertura ya no relee la fila (antes: plantilla + requeridos otra vez).
+    // La cobertura relee la plantilla DESPUÉS de escribirla: con dos guardados
+    // a la vez cuenta la que queda en la base, no la de esta petición.
     const writeIndex = log.findIndex((l) => l.table === "competitions" && l.op === "update");
     expect(
-      log.slice(writeIndex + 1).filter((l) => l.table === "competitions" && l.op === "select"),
-    ).toEqual([]);
-    // Lecturas | plantilla | relectura | cobertura + acta. Antes, nueve.
-    expect(depth()).toBeLessThanOrEqual(4);
+      log.slice(writeIndex + 1).some((l) => l.table === "competitions" && l.op === "select"),
+    ).toBe(true);
+    // Lecturas | plantilla | relectura | cobertura (relee) + acta | escribe. Antes, nueve.
+    expect(depth()).toBeLessThanOrEqual(5);
   });
 
   it("quitar una sesión borra sus huecos y la cobertura cuenta solo lo que queda", async () => {

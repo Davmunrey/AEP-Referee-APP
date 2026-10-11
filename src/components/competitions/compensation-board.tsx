@@ -22,7 +22,7 @@ import {
 } from "@/lib/judge-compensation/breakdown";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim, CompensationClubContact, CompetitionCompensationSummary } from "@/lib/judge-compensation/types";
-import { debePedirResumen } from "@/components/competitions/compensation-initial-summary";
+import { debePedirResumen, marcarResumenVisto } from "@/components/competitions/compensation-initial-summary";
 import {
   allClubEmailsFromCompetition,
   assessCompensationReadiness,
@@ -164,7 +164,10 @@ export function CompensationBoard({
   const serverSummaryChecked = useRef(false);
   useEffect(() => {
     if (serverSummaryFor.current === competition.id) {
-      if (serverSummaryChecked.current) return;
+      if (serverSummaryChecked.current) {
+        marcarResumenVisto(initialSummary);
+        return;
+      }
       serverSummaryChecked.current = true;
       if (!debePedirResumen(initialSummary)) return;
     }

@@ -238,11 +238,13 @@ describe("campana: marcar leídos sin repintar la página", () => {
     expect(marcarLeidas(b, ["a"], "2026-10-11T00:00:01.000Z")).toBe(b);
   });
 
-  it("el componente ya no llama a router.refresh()", () => {
+  it("baja el globo al momento y refresca después del PATCH (trae avisos nuevos)", () => {
     const src = leer("src/components/notifications/notification-bell.tsx");
-    expect(src).not.toMatch(/router\.refresh\(\)\s*\)/);
-    expect(src).not.toContain("useRouter");
+    // El refresco va DESPUÉS de marcar en local, dentro del then del PATCH.
+    expect(src).toMatch(/setBandeja\(\(b\) => marcarLeidas\(b, vistos, ahora\)\);\s*router\.refresh\(\);/);
     expect(src).toContain("setBandeja(initial)");
+    // Los que eran nuevos al abrir siguen marcados mientras el menú esté abierto.
+    expect(src).toContain("nuevosAlAbrir.has(n.id)");
   });
 });
 

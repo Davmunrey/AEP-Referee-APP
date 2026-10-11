@@ -234,7 +234,7 @@ Tailwind breakpoints utilizados:
 - **Sin N+1 en el panel**: las solicitudes de zona pendientes se leen en una tanda (`listConvocatoriasPorIds`).
 - **Lecturas independientes en paralelo** (`Promise.all`) en ficha del juez, compensación, mutaciones de la tarima, analítica, soporte y portal. Cuando el orden de los errores importa se usa `Promise.allSettled` y se comprueban en el orden de antes.
 - **Menos datos al navegador**: desplegables con `getRefereeOptions` (4 columnas) en vez del censo con estadísticas; la tarima recibe los jueces sin datos personales; aprobaciones recibe solo el estado de los campeonatos citados (`getCompetitionEstados`).
-- **Menos repintados**: un solo temporizador (`refresh-coalescer.ts`) para los refrescos propios y los de Realtime; la campana marca leídos sin `router.refresh()`; supabase-js se carga después de hidratar (`AppRealtimeSync` con `ssr: false`).
+- **Menos repintados**: un solo temporizador (`refresh-coalescer.ts`) para los refrescos propios y los de Realtime; supabase-js se carga después de hidratar (`AppRealtimeSync` con `ssr: false`). La campana sí refresca tras marcar leídos: marcar avisos no genera evento en tiempo real (044) y el portal no escucha cambios.
 - **Portal** con `loading.tsx`: cada pestaña responde al momento mientras llegan los datos.
 
 ---

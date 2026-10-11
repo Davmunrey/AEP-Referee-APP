@@ -10,7 +10,6 @@ import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from
 import { formatRosterExport } from "@/lib/roster-export";
 import {
   enumerateSlotKeys,
-  normalizeCompetitionTemplate,
   pruneAssignments,
 } from "@/lib/roster-template";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
@@ -229,16 +228,12 @@ export const rosterService = {
     }
     const { assignments, flags } = await loadRosterAssignmentData(competitionId);
     const pruned = pruneAssignments(template, assignments, flags);
-    // Cobertura e historial en paralelo, y la cobertura con lo que se acaba de
-    // escribir y releer (antes volvía a pedir plantilla, asignaciones y
-    // requeridos). La plantilla pasa por la misma normalización que aplicaría
-    // al leerla de la BD, para que el recuento sea idéntico.
+    // Cobertura e historial en paralelo. La cobertura relee la plantilla
+    // guardada, no la de esta petición: si otro delegado guarda la suya a la
+    // vez y su UPDATE llega después, la cobertura tiene que contar con la que
+    // queda en la base, no con esta (igual que en clearSlot).
     await Promise.all([
-      syncCompetitionCoverage(competitionId, {
-        template: normalizeCompetitionTemplate(template, comp.tipo),
-        assignments,
-        requeridos: comp.requeridos,
-      }),
+      syncCompetitionCoverage(competitionId),
       pushHistory({
         competitionId,
         at: new Date().toISOString(),

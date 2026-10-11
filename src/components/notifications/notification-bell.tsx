@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -26,6 +27,7 @@ function hace(iso: string): string {
  * carga completa). Abrirla marca como leídos los que había.
  */
 export function NotificationBell({ initial, className }: { initial: BandejaNotificaciones; className?: string }) {
+  const router = useRouter();
   const [bandeja, setBandeja] = useState(initial);
   useEffect(() => setBandeja(initial), [initial]);
   // Los que eran nuevos al abrir: conservan el punto y la negrita mientras el
@@ -44,15 +46,17 @@ export function NotificationBell({ initial, className }: { initial: BandejaNotif
     // Solo los que se están enseñando: uno que haya llegado después, o que no
     // quepa en la lista, sigue sin leer.
     //
-    // Hecho el PATCH, la bandeja se actualiza aquí mismo. Antes se pedía un
-    // `router.refresh()`, que repintaba en el servidor la página entera (layout,
-    // contadores y todas las consultas de la pantalla, la más pesada en
-    // /competitions/[id]) solo para borrar el globo. El servidor marca justo
-    // estos ids, así que el recuento local es el mismo que él daría.
+    // Hecho el PATCH, el globo baja aquí mismo (el servidor marca justo estos
+    // ids) y además se refresca la página. El refresco sigue haciendo falta:
+    // marcar avisos no avisa a nadie en tiempo real (044) y el portal no
+    // escucha cambios, así que es lo que trae los avisos llegados mientras
+    // tanto y lo que se impone a un refresco que leyó la bandeja antes del
+    // PATCH.
     void request("/notificaciones", { method: "PATCH", body: JSON.stringify({ ids: vistos }) })
       .then(() => {
         const ahora = new Date().toISOString();
         setBandeja((b) => marcarLeidas(b, vistos, ahora));
+        router.refresh();
       })
       .catch(() => undefined);
   };

@@ -459,4 +459,17 @@ describe("página y tablero de compensación", () => {
     // Sin resumen del servidor, siempre.
     expect(debePedirResumen(undefined)).toBe(true);
   });
+
+  it("un resumen que llegó con un refresco y no se pintó también cuenta como visto", async () => {
+    const { debePedirResumen, marcarResumenVisto } = await import("@/components/competitions/compensation-initial-summary");
+    const primero = { claims: [] } as unknown as Parameters<typeof debePedirResumen>[0];
+    const delRefresco = { claims: [] } as unknown as Parameters<typeof debePedirResumen>[0];
+    expect(debePedirResumen(primero)).toBe(false);
+    // El tablero montado lo ignora (conserva lo editado) pero lo apunta.
+    marcarResumenVisto(delRefresco);
+    // «Atrás» devuelve la página de la caché con ese objeto: se pide el actual.
+    expect(debePedirResumen(delRefresco)).toBe(true);
+    const src = await leer("src/components/competitions/compensation-board.tsx");
+    expect(src).toMatch(/if \(serverSummaryChecked\.current\) \{\s*marcarResumenVisto\(initialSummary\);\s*return;/);
+  });
 });
