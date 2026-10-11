@@ -15,6 +15,7 @@ export const supabaseDataService = {
   getMeta: analyticsService.getMeta,
   getDashboard: analyticsService.getDashboard,
   getAnalytics: analyticsService.getAnalytics,
+  getAnalyticsWithCompetitions: analyticsService.getAnalyticsWithCompetitions,
   getRegulations: analyticsService.getRegulations,
 
   // ── Referees ──────────────────────────────────────────────────────────────

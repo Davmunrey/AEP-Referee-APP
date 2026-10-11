@@ -123,3 +123,16 @@ export async function getAnalytics(
     },
   };
 }
+
+/** Twin de `analyticsService.getAnalyticsWithCompetitions`. En memoria no hay
+ * nada que ahorrar: es lo mismo que pedir las dos cosas por separado. */
+export async function getAnalyticsWithCompetitions(
+  user?: SessionUser,
+  requestedYear?: number,
+): Promise<{ analytics: AnalyticsPayload; competitions: import("@/lib/types").Competition[] }> {
+  const [analytics, competitions] = await Promise.all([
+    getAnalytics(user, requestedYear),
+    getCompetitions(user),
+  ]);
+  return { analytics, competitions };
+}

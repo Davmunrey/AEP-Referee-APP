@@ -19,17 +19,54 @@ import { mapActivity, mapCompetition } from "@/server/db/mappers";
 import { getRegulationsCached } from "@/server/cache/static-data";
 import { expireStaleSanctions, getSanctionAlerts } from "@/server/services/referee-sanctions";
 import {
-  applyHealthHistory,
+  applyLastHealthSnapshot,
   cachedLoadAllAssignments,
   loadAssignmentsFor,
   db,
   fetchAllPagesOf,
-  fetchAllRowsIn,
   getZones,
+  readLastHealthSnapshot,
+  recordHealthSnapshot,
   yearFromIso,
 } from "./supabase-helpers";
-import { competitionService } from "./supabase-competitions";
 import { zoneScopeOf, zoneVisibilityFilter } from "@/lib/zone-scope";
+import { afterResponse } from "@/lib/after-response";
+
+/**
+ * Campeonatos visibles para `user` con la cobertura viva aplicada, y la
+ * plantilla normalizada de cada uno, de UNA sola lectura `select("*")`.
+ *
+ * Replica `competitionService.getCompetitions` (mismo orden fecha+id, mismo
+ * paginado, mismo filtro fail-closed del delegado de zona) pero conserva la
+ * plantilla, que getCompetitions calcula y descarta. Antes la analítica la
+ * volvía a pedir con otra lectura entera de `competitions` solo para eso. Y
+ * recibe las asignaciones ya cargadas, en vez de volver a pedirlas por su
+ * cuenta: fuera de un render RSC `cache()` no deduplica nada.
+ */
+function loadVisibleCompetitionsWithTemplates(
+  user: SessionUser | undefined,
+  rows: Record<string, unknown>[],
+  assignmentsByComp: Map<string, Record<string, string>>,
+): { competitions: Competition[]; templateById: Map<string, RosterSession[]> } {
+  const templateById = new Map<string, RosterSession[]>();
+  const list = rows.map((row) => {
+    const comp = mapCompetition(row);
+    const template = normalizeCompetitionTemplate(
+      (row.template as RosterSession[] | null) ?? null,
+      comp.tipo,
+    );
+    templateById.set(comp.id, template);
+    return applyCoverageToCompetition(comp, template, assignmentsByComp.get(comp.id) ?? {});
+  });
+  // Fail-closed, igual que getCompetitions: sin zona reconocible el delegado
+  // no ve ningún campeonato.
+  if (user?.role === "delegado_zona") {
+    const userZone = resolveZoneCode(user.zona);
+    if (!userZone) return { competitions: [], templateById };
+    return { competitions: list.filter((c) => resolveZoneCode(c.zona) === userZone), templateById };
+  }
+  return { competitions: list, templateById };
+}
 
 export const analyticsService = {
   getMeta: async (user: SessionUser): Promise<AppMeta> => ({
@@ -78,13 +115,18 @@ export const analyticsService = {
       .from("referees")
       .select("estado, disp, zona")
       .order("id", { ascending: true });
+    // Solo las pendientes: el panel no usa de estas dos tablas más que el
+    // recuento de `status === "pendiente"` (inteligencia y KPIs), y leer el
+    // histórico entero era transferir filas para tirarlas.
     const approvalQuery = supabase
       .from("approval_proposals")
       .select("status, zona")
+      .eq("status", "pendiente")
       .order("id", { ascending: true });
     const promotionQuery = supabase
       .from("promotion_requests")
       .select("status, zona")
+      .eq("status", "pendiente")
       .order("id", { ascending: true });
 
     if (userZone) {
@@ -100,12 +142,18 @@ export const analyticsService = {
     // pantalla de ceros —«sin campeonatos», «cobertura 0 %», «nada pendiente»—
     // es una afirmación sobre la temporada, no un hueco. El registro de
     // actividad sí lleva su propio `limit(20)` y no necesita paginarse.
+    // La última captura de salud y las alertas de sanción no dependen de nada
+    // de lo demás: van en esta misma tanda en vez de en una etapa final aparte.
+    // Las alertas siguen dentro del `await`, así que su error sigue tumbando
+    // el panel igual que antes.
     const [
       competitionRows,
       { data: activity, error: activityError },
       referees,
       approvals,
       promotions,
+      lastHealth,
+      sanctionAlerts,
     ] = await Promise.all([
       fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
         competitionQuery.range(from, to),
@@ -120,6 +168,8 @@ export const analyticsService = {
       fetchAllPagesOf<{ status: string; zona?: unknown }>("promotion_requests", (from, to) =>
         promotionQuery.range(from, to),
       ),
+      readLastHealthSnapshot(),
+      getSanctionAlerts(user, { skipExpire: true }),
     ]);
     if (activityError) throw new Error(`activity_log: ${activityError.message}`);
 
@@ -197,12 +247,14 @@ export const analyticsService = {
       activity: activityItems,
     });
 
-    // Independientes entre sí: el histórico de salud (muta `health`) y las
-    // alertas de sanción se resuelven en paralelo en vez de en serie.
-    const [, sanctionAlerts] = await Promise.all([
-      applyHealthHistory(health),
-      getSanctionAlerts(user, { skipExpire: true }),
-    ]);
+    // Histórico de salud: el delta se calcula ya con la captura leída arriba;
+    // registrar la nueva (cada seis horas) no cambia nada de esta respuesta,
+    // así que se hace al terminarla en vez de hacer esperar a la portada. Si
+    // la lectura falló (tabla ausente), se degrada como antes: sin delta y
+    // sin registrar.
+    if (lastHealth && applyLastHealthSnapshot(health, lastHealth.last)) {
+      afterResponse(() => recordHealthSnapshot(health));
+    }
     const kpis = buildDashboardKpis({ coverage, referees: scopedReferees, approvals: scopedApprovals });
 
     return {
@@ -219,31 +271,54 @@ export const analyticsService = {
     };
   },
 
-  getAnalytics: async (user?: SessionUser, requestedYear?: number): Promise<AnalyticsPayload> => {
+  getAnalytics: async (user?: SessionUser, requestedYear?: number): Promise<AnalyticsPayload> =>
+    (await analyticsService.getAnalyticsWithCompetitions(user, requestedYear)).analytics,
+
+  /** La analítica y la lista de campeonatos visibles de una sola carga. La
+   * exportación CSV necesita las dos y, en un route handler, `cache()` no
+   * deduplica: pedirlas por separado recorría roster_assignments entero tres
+   * veces y `competitions` dos. */
+  getAnalyticsWithCompetitions: async (
+    user?: SessionUser,
+    requestedYear?: number,
+  ): Promise<{ analytics: AnalyticsPayload; competitions: Competition[] }> => {
     const userZone =
       user?.role === "delegado_zona" && user.zona ? resolveZoneCode(user.zona) : undefined;
     // Ver `zone-scope`: una zona ilegible no es «sin restricción».
     const visibleEnZonaExport = zoneVisibilityFilter(user);
     const supabase = db();
     // Lecturas independientes en paralelo (antes eran ~6 awaits en serie en la
-    // página más pesada). El cruce cross-zona depende del año y va después.
+    // página más pesada), incluido el cruce cross-zona, que antes esperaba al
+    // año seleccionado en una etapa aparte.
     // Paginadas y sin tragarse el error, igual que el panel: la analítica se usa
     // para decidir, y una serie histórica incompleta miente igual que una vacía.
     const [
-      competitions,
+      competitionRows,
       assignmentsByComp,
-      compTemplates,
+      crossZoneRows,
       referees,
       zones,
       approvals,
     ] = await Promise.all([
-      competitionService.getCompetitions(user),
-      cachedLoadAllAssignments(),
+      // Mismo orden que getCompetitions (fecha y, de desempate, id).
       fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
+        supabase.from("competitions").select("*").order("fecha").order("id").range(from, to),
+      ),
+      cachedLoadAllAssignments(),
+      // Solo las plazas cubiertas desde otra zona, de todas las temporadas: son
+      // pocas, y los recuentos de abajo ya se limitan a los campeonatos del año
+      // seleccionado y visibles para el usuario, así que las demás no cuentan.
+      // Antes se releían TODAS las filas del año (en serie, en trozos) para
+      // quedarse con estas en memoria. `cross_zone` es BOOLEAN NOT NULL
+      // (migración 017): `.eq(true)` equivale al `=== true` de antes. El orden
+      // es la clave primaria: total, para que el paginado no repita ni salte.
+      fetchAllPagesOf<{ competition_id: unknown }>("roster_assignments", (from, to) =>
         supabase
-          .from("competitions")
-          .select("id, template, tipo")
-          .order("id", { ascending: true })
+          .from("roster_assignments")
+          .select("competition_id")
+          .eq("cross_zone", true)
+          .order("competition_id", { ascending: true })
+          .order("slot_key", { ascending: true })
           .range(from, to),
       ),
       fetchAllPagesOf<Record<string, unknown>>("referees", (from, to) =>
@@ -264,11 +339,10 @@ export const analyticsService = {
           .range(from, to),
       ),
     ]);
-    const templateById = new Map(
-      (compTemplates ?? []).map((row) => {
-        const r = row as { id: string; template: RosterSession[] | null; tipo: string };
-        return [r.id, normalizeCompetitionTemplate(r.template, r.tipo as Competition["tipo"])] as const;
-      }),
+    const { competitions, templateById } = loadVisibleCompetitionsWithTemplates(
+      user,
+      competitionRows,
+      assignmentsByComp,
     );
     const years = Array.from(
       new Set(competitions.map((c) => yearFromIso(c.fecha)).filter((y): y is number => y != null)),
@@ -351,19 +425,11 @@ export const analyticsService = {
     const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : null;
     const yearlyHistory = [...yearAgg.entries()].sort((a, b) => a[0] - b[0]).map(([year, agg]) => ({ year, competitions: agg.competitions, criticalCompetitions: agg.criticalCompetitions, requiredSlots: agg.requiredSlots, filledSlots: agg.filledSlots, uniqueAssignedReferees: agg.refereeIds.size }));
     const selectedYearAgg = yearAgg.get(selectedYear);
-    const selectedYearCompetitionIds = competitions.filter((c) => yearFromIso(c.fecha) === selectedYear).map((c) => c.id);
-    // Troceado y paginado: el cruce cross-zona se leía con un `.in()` suelto, así
-    // que un año con muchos campeonatos perdía asignaciones y el mapa de cruces
-    // salía corto.
-    const crossZoneRows = await fetchAllRowsIn(
-      "roster_assignments",
-      "competition_id",
-      selectedYearCompetitionIds,
-      "slot_key",
-      "competition_id, cross_zone",
-    );
+    // Paginado (ver arriba): el cruce cross-zona se leía con un `.in()` suelto,
+    // así que un año con muchos campeonatos perdía asignaciones y el mapa de
+    // cruces salía corto.
     const crossZoneByComp = new Map<string, number>();
-    for (const row of crossZoneRows.filter((r) => r.cross_zone === true)) {
+    for (const row of crossZoneRows) {
       const id = String(row.competition_id);
       crossZoneByComp.set(id, (crossZoneByComp.get(id) ?? 0) + 1);
     }
@@ -383,7 +449,7 @@ export const analyticsService = {
       totalCrossZoneSlots += crossZoneByComp.get(c.id) ?? 0;
     }
     const filledForYear = selectedYearAgg?.filledSlots ?? 0;
-    return {
+    const analytics: AnalyticsPayload = {
       availableYears: years,
       selectedYear,
       yearlyHistory,
@@ -403,6 +469,7 @@ export const analyticsService = {
         openSlots: selectedYearAgg ? Math.max(0, selectedYearAgg.requiredSlots - selectedYearAgg.filledSlots) : 0,
       },
     };
+    return { analytics, competitions };
   },
 
   getRegulations: async (): Promise<RegulationRule[]> => getRegulationsCached(),
