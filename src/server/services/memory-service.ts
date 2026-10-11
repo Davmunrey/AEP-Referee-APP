@@ -12,6 +12,7 @@ export const memoryDataService = {
   getMeta: referees.getMeta,
   getDashboard: competitions.getDashboard,
   getReferees: referees.getReferees,
+  getRefereeOptions: referees.getRefereeOptions,
   getReferee: referees.getReferee,
   getRefereesByIds: referees.getRefereesByIds,
   createReferee: referees.createReferee,
@@ -34,6 +35,7 @@ export const memoryDataService = {
 
   getCompetitions: competitions.getCompetitions,
   getCompetitionOptions: competitions.getCompetitionOptions,
+  getCompetitionEstados: competitions.getCompetitionEstados,
   getCompetition: competitions.getCompetition,
   createCompetition: competitions.createCompetition,
   updateCompetition: competitions.updateCompetition,
@@ -73,6 +75,7 @@ export const memoryDataService = {
 
   getRegulations: admin.getRegulations,
   getAnalytics: analytics.getAnalytics,
+  getAnalyticsWithCompetitions: analytics.getAnalyticsWithCompetitions,
   getPromotions: admin.getPromotions,
   reviewPromotion: admin.reviewPromotion,
   createPromotion: admin.createPromotion,
@@ -122,6 +125,7 @@ export const memoryDataService = {
   getRespuestasDeJuez: memoryConvocatoriaService.getRespuestasDeJuez,
   setDesignacionRespuesta: memoryConvocatoriaService.setDesignacionRespuesta,
   clearDesignacionRespuestas: memoryConvocatoriaService.clearDesignacionRespuestas,
+  listConvocatoriasPorIds: memoryConvocatoriaService.listConvocatoriasPorIds,
 
   insertNotificaciones: memoryNotificacionService.insertNotificaciones,
   getBandejaNotificaciones: memoryNotificacionService.getBandeja,

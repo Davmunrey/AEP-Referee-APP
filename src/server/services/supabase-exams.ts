@@ -239,28 +239,26 @@ export const examsService = {
 
   getExams: async (refereeId?: string, user?: SessionUser): Promise<RefereeExam[]> => {
     const supabase = db();
-    let query = supabase
-      .from("referee_exams")
-      .select("*")
-      .order("fecha", { ascending: false })
-      .order("id");
-    if (refereeId) query = query.eq("referee_id", refereeId);
+    let zoneCode: string | null = null;
     if (user && user.role === "delegado_zona") {
       if (!user.zona) return [];
       // La zona del perfil se canonicaliza: `referees.zona` guarda el código
       // canónico desde la 013, así que un perfil con un alias no casaba con
       // ningún juez y el delegado veía «no hay exámenes».
-      const { data: zoneRefs, error: zoneError } = await supabase
-        .from("referees")
-        .select("id")
-        .eq("zona", resolveZoneCode(user.zona) ?? user.zona);
-      // Sin esto, un fallo de lectura dejaba la zona sin jueces y el delegado
-      // veía «no hay exámenes» en vez de un error.
-      if (zoneError) throw new Error(`referees: ${zoneError.message}`);
-      const ids = (zoneRefs ?? []).map((r) => (r as { id: string }).id);
-      if (ids.length === 0) return [];
-      query = query.in("referee_id", ids);
+      zoneCode = resolveZoneCode(user.zona) ?? user.zona;
     }
+    // El delegado filtra por la zona del juez dentro de la misma petición
+    // (`referees!inner`, por la única FK referee_exams.referee_id): antes se
+    // leían primero los ids de su zona y luego los exámenes con un `.in()`,
+    // dos viajes seguidos en cada lectura y en cada comprobación de alcance
+    // de editar o borrar. Es many-to-one, así que no duplica filas, y un
+    // fallo de lectura sigue lanzando, ahora como «referee_exams: …».
+    const table = supabase.from("referee_exams");
+    let query = (zoneCode ? table.select("*, referees!inner(zona)") : table.select("*"))
+      .order("fecha", { ascending: false })
+      .order("id");
+    if (refereeId) query = query.eq("referee_id", refereeId);
+    if (zoneCode) query = query.eq("referees.zona", zoneCode);
     // El historial de exámenes solo crece: sin paginar, PostgREST lo cortaba
     // en 1000 filas y los más antiguos desaparecían del expediente sin aviso.
     const data = await fetchAllPagesOf<Record<string, unknown>>("referee_exams", (from, to) =>

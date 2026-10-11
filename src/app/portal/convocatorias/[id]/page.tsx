@@ -3,16 +3,15 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ConvocatoriaSignup } from "@/components/portal/convocatoria-signup";
 import { zoneUiName } from "@/lib/aep-zones";
-import { loadPortal } from "@/lib/portal-page";
+import { loadPortalJudge } from "@/lib/portal-page";
 import { formatDateRange } from "@/lib/utils";
 import { convocatoriaParaJuez } from "@/server/convocatorias";
 
 export const metadata = { title: "Convocatoria · Portal del juez" };
 
 export default async function PortalCallPage({ params }: { params: Promise<{ id: string }> }) {
-  const { judge } = await loadPortal();
-  const { id } = await params;
-  const item = await convocatoriaParaJuez(judge.refereeId!, id);
+  const [judge, { id }] = await Promise.all([loadPortalJudge(), params]);
+  const item = await convocatoriaParaJuez(judge.refereeId, id);
   if (!item) notFound();
 
   return (

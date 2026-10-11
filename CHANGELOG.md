@@ -4,6 +4,22 @@ Historial de versiones desplegadas en producción (`main` → [aep-tarima.vercel
 
 ---
 
+## ⚡ **AEP Tarima v2.15** — _«Sin esperas en fila»_ (2026-10-11)
+
+Cada pantalla esperaba a la base de datos varias veces seguidas: una consulta, y cuando volvía, la siguiente. Auditoría de rendimiento de todas las pantallas (72 hallazgos, 55 confirmados por una segunda revisión) y arreglo de los confirmados, con las mismas respuestas que antes.
+
+- **Panel de inicio**: las solicitudes de zona pendientes se leían una a una, 2-3 viajes por cada una. Ahora es una tanda.
+- **Campeonatos y aprobaciones**: ya no leen todas las asignaciones de todas las temporadas para calcular la cobertura. Vienen con cada campeonato, y el delegado de zona solo descarga su zona.
+- **Compensación**: el tablero llega pintado desde el servidor (antes lo pedía tras cargar), el resumen pasa de 4 viajes en fila a 2 y cada cambio de km o casilla de unos 7 a 1. El hub deja de descargar líneas de todo el histórico que no usaba.
+- **Tarima**: menos viajes en fila al asignar, liberar, guardar la plantilla y enviar; la revisión genera el cuadrante en el navegador; el mapa de ocupación es una consulta menos. Quien guarda ya no provoca dos repintados de la página.
+- **Ficha del juez, exámenes, informes, ascensos, soporte y usuarios**: lecturas independientes en paralelo, y los desplegables ya no se descargan el censo entero con datos personales.
+- **Analítica**: lee campeonatos y asignaciones una vez (antes dos o tres), con las páginas en paralelo.
+- **Portal del juez**: pantalla de carga al cambiar de pestaña, la ficha del juez llega con el perfil, y las convocatorias y la ficha ya no esperan al historial completo. El historial ya no se cortaba en silencio a las 1000 asignaciones.
+- **Sesión**: `getClaims()` también en el middleware. Ahorra el viaje a Supabase Auth cuando el proyecto firma con claves asimétricas (ver `docs/DEPLOY.md`).
+- **Menos repintados**: los refrescos propios y los de tiempo real comparten un solo temporizador, y supabase-js se carga después de que la página sea usable. La campana baja el globo en cuanto se abre.
+
+---
+
 ## ⚡ **AEP Tarima v2.14.2** — _«Un viaje menos»_ (2026-10-04)
 
 Cada pantalla preguntaba dos veces a Supabase Auth quién era el usuario antes de leer nada.

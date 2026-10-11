@@ -8,7 +8,10 @@ import {
 } from "@/lib/roster-coverage";
 import { isSlotKeyInTemplate, validateAssignment, validateRosterOperation } from "@/lib/roster-rules";
 import { formatRosterExport } from "@/lib/roster-export";
-import { enumerateSlotKeys, pruneAssignments } from "@/lib/roster-template";
+import {
+  enumerateSlotKeys,
+  pruneAssignments,
+} from "@/lib/roster-template";
 import { pickActiveRosterHref } from "@/lib/nav-utils";
 import type {
   ApprovalProposal,
@@ -46,7 +49,6 @@ import {
   loadAssignments,
   loadRosterAssignmentData,
   parseSlotKey,
-  persistCompetitionTemplate,
   pushActivity,
   pushHistory,
   syncCompetitionCoverage,
@@ -58,6 +60,25 @@ export interface RosterBatchAssignment {
   refereeId: string;
   flags?: SlotFlags;
   crossZoneReason?: string;
+}
+
+/**
+ * Arranca una lectura YA, en paralelo con las demás, pero aparca su error hasta
+ * que el código llega al punto donde antes la hacía en serie. Así se ahorra el
+ * round-trip sin cambiar qué error gana: un 409 o un «no existe» que antes
+ * salían antes de esta lectura siguen saliendo aunque ella haya fallado (y su
+ * rechazo nunca queda sin manejar).
+ */
+function startRead<T>(promise: Promise<T>): () => Promise<T> {
+  const settled = promise.then(
+    (value) => ({ ok: true as const, value }),
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+  return async () => {
+    const result = await settled;
+    if (!result.ok) throw result.error;
+    return result.value;
+  };
 }
 
 /**
@@ -135,20 +156,31 @@ export const rosterService = {
     | { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap }
     | undefined
   > => {
+    const supabase = db();
+    // Las tres lecturas de partida (campeonato, plantilla guardada para la
+    // huella y asignaciones actuales) son independientes: van en paralelo, no
+    // en serie. Los errores se miran en el mismo orden que antes: si el
+    // campeonato no existe se devuelve `undefined` aunque las otras fallen.
+    const readCurrentTemplate =
+      baseHash !== undefined ? startRead(getCompetitionTemplate(competitionId)) : undefined;
+    const readExisting = startRead(
+      Promise.resolve(
+        supabase
+          .from("roster_assignments")
+          .select("slot_key, referee_id")
+          .eq("competition_id", competitionId),
+      ),
+    );
     const comp = await getCompetitionFn(competitionId);
     if (!comp) return undefined;
     // Concurrencia optimista: si la plantilla guardada ya no es la que el
     // usuario abrió, otra persona la ha cambiado entretanto.
-    if (baseHash !== undefined) {
-      const current = (await getCompetitionTemplate(competitionId)) ?? [];
+    if (readCurrentTemplate) {
+      const current = (await readCurrentTemplate()) ?? [];
       if (rosterTemplateHash(current) !== baseHash) throw new RosterTemplateConflictError();
     }
-    const supabase = db();
     const validKeys = new Set(enumerateSlotKeys(template));
-    const { data: existingRows, error: existingError } = await supabase
-      .from("roster_assignments")
-      .select("slot_key, referee_id")
-      .eq("competition_id", competitionId);
+    const { data: existingRows, error: existingError } = await readExisting();
     // Tragarse este error dejaba las filas huérfanas en la base de datos: al
     // volver a crear más adelante una sesión con el mismo código, el juez que
     // ocupaba aquel hueco reaparecía asignado sin que nadie lo pusiera.
@@ -172,7 +204,16 @@ export const rosterService = {
         }
       }
     }
-    await persistCompetitionTemplate(competitionId, template);
+    // Plantilla y número de sesiones en un único UPDATE (antes eran dos sobre
+    // la misma fila, el segundo al final): un round-trip menos y nunca queda
+    // una plantilla nueva con el recuento de sesiones viejo. Si falla hay que
+    // PARAR, igual que en persistCompetitionTemplate: seguir podaría
+    // asignaciones vivas contra una plantilla que la BD no llegó a guardar.
+    const { error: templateError } = await supabase
+      .from("competitions")
+      .update({ template, sesiones: template.length })
+      .eq("id", competitionId);
+    if (templateError) throw new Error(`competitions.template: ${templateError.message}`);
     // Un único DELETE ... IN para las filas huérfanas (antes: un round-trip por
     // slot). Las filas restantes ya tienen sus flags correctos, así que no hace
     // falta reescribirlos uno a uno.
@@ -187,19 +228,20 @@ export const rosterService = {
     }
     const { assignments, flags } = await loadRosterAssignmentData(competitionId);
     const pruned = pruneAssignments(template, assignments, flags);
-    const { error: sessionsError } = await supabase
-      .from("competitions")
-      .update({ sesiones: template.length })
-      .eq("id", competitionId);
-    if (sessionsError) throw new Error(`competitions.sesiones: ${sessionsError.message}`);
-    await syncCompetitionCoverage(competitionId);
-    await pushHistory({
-      competitionId,
-      at: new Date().toISOString(),
-      actor,
-      action: "Plantilla actualizada",
-      detail: `${template.length} sesiones`,
-    });
+    // Cobertura e historial en paralelo. La cobertura relee la plantilla
+    // guardada, no la de esta petición: si otro delegado guarda la suya a la
+    // vez y su UPDATE llega después, la cobertura tiene que contar con la que
+    // queda en la base, no con esta (igual que en clearSlot).
+    await Promise.all([
+      syncCompetitionCoverage(competitionId),
+      pushHistory({
+        competitionId,
+        at: new Date().toISOString(),
+        actor,
+        action: "Plantilla actualizada",
+        detail: `${template.length} sesiones`,
+      }),
+    ]);
     return { template, assignments: pruned.assignments, flags: pruned.flags };
   },
 
@@ -260,14 +302,18 @@ export const rosterService = {
     if ((flagged ?? []).length === 0) {
       return { error: "Otro usuario cambió ese hueco mientras lo editabas. Actualiza la tarima." };
     }
-    const allFlags = (await loadRosterAssignmentData(competitionId)).flags;
-    await pushHistory({
-      competitionId,
-      at: new Date().toISOString(),
-      actor,
-      action: "Flags slot",
-      detail: slotKey,
-    });
+    // Relectura e historial son independientes (y pushHistory nunca lanza): en
+    // paralelo, un round-trip menos en cada clic sobre el * o el intercambio.
+    const [{ flags: allFlags }] = await Promise.all([
+      loadRosterAssignmentData(competitionId),
+      pushHistory({
+        competitionId,
+        at: new Date().toISOString(),
+        actor,
+        action: "Flags slot",
+        detail: slotKey,
+      }),
+    ]);
     return { flags: allFlags };
   },
 
@@ -704,11 +750,17 @@ export const rosterService = {
     actor: string,
     expectedRefereeId?: string | null,
   ) => {
+    // Una sola foto del hueco sirve para el control optimista y para saber a
+    // quién se borra (antes eran dos lecturas idénticas, una tras otra); el
+    // borrado sigue condicionado a ese juez, así que la carrera queda cubierta
+    // igual. Las liquidaciones pagadas se piden a la vez, pero su error solo se
+    // mira donde antes se leían: un 409 sigue ganando a un fallo de esa tabla.
+    const readPaid = startRead(loadPaidClaimRefereeIds(competitionId));
+    const { assignments: before } = await loadRosterAssignmentData(competitionId);
     // Mismo control optimista que en la asignación: liberar un hueco que otro
     // usuario acaba de rellenar borraba su trabajo sin decir nada.
     if (expectedRefereeId !== undefined) {
-      const { assignments } = await loadRosterAssignmentData(competitionId);
-      const current = assignments[slotKey] ?? null;
+      const current = before[slotKey] ?? null;
       if (current !== expectedRefereeId) {
         throw new RosterSlotConflictError(
           current
@@ -718,8 +770,8 @@ export const rosterService = {
       }
     }
     // Liberar el hueco de un juez pagado es la misma pérdida que sustituirlo.
-    const occupant = (await loadRosterAssignmentData(competitionId)).assignments[slotKey];
-    if (occupant && (await loadPaidClaimRefereeIds(competitionId)).has(occupant)) {
+    const occupant = before[slotKey];
+    if (occupant && (await readPaid()).has(occupant)) {
       throw new RosterPaidClaimError(paidClaimRemovalMessage());
     }
     const supabase = db();
@@ -743,15 +795,21 @@ export const rosterService = {
         );
       }
     }
-    const assignments = await loadAssignments(competitionId);
-    await syncCompetitionCoverage(competitionId);
-    await pushHistory({
-      competitionId,
-      at: new Date().toISOString(),
-      actor,
-      action: "Liberó slot",
-      detail: slotKey,
-    });
+    // Relectura, cobertura e historial en paralelo (antes, tres esperas en
+    // serie). La cobertura va SIN datos precargados a propósito: lee después
+    // del borrado y escribe antes de responder, así dos clics seguidos no
+    // pueden dejar una cobertura vieja encima de la nueva.
+    const [assignments] = await Promise.all([
+      loadAssignments(competitionId),
+      syncCompetitionCoverage(competitionId),
+      pushHistory({
+        competitionId,
+        at: new Date().toISOString(),
+        actor,
+        action: "Liberó slot",
+        detail: slotKey,
+      }),
+    ]);
     return { ...assignments };
   },
 
@@ -796,12 +854,18 @@ export const rosterService = {
     userId: string | undefined,
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
   ) => {
-    const comp = await getCompetitionFn(competitionId);
+    // Campeonato, tarima y las dos sondas de columnas son independientes: en
+    // paralelo en vez de cuatro esperas en serie. La tarima solo se «mira»
+    // después de saber que el campeonato existe, como antes.
+    const readAssignments = startRead(loadAssignments(competitionId));
+    const [comp, hasCompetitionColumns, hasSubmitterColumns] = await Promise.all([
+      getCompetitionFn(competitionId),
+      hasApprovalCompetitionColumns(),
+      hasApprovalSubmitterColumns(),
+    ]);
     if (!comp) return undefined;
-    const assignments = await loadAssignments(competitionId);
+    const assignments = await readAssignments();
     const supabase = db();
-    const hasCompetitionColumns = await hasApprovalCompetitionColumns();
-    const hasSubmitterColumns = await hasApprovalSubmitterColumns();
     const competitionIdColumn = hasCompetitionColumns ? "competition_id" : "event_id";
     const competitionNameColumn = hasCompetitionColumns ? "competition_name" : "event_name";
     const submitterId = hasSubmitterColumns ? { submitted_by_id: userId ?? null } : {};
@@ -880,29 +944,37 @@ export const rosterService = {
     // tarima seguiría editable con una propuesta pendiente encima. Reintentar
     // es seguro (el submit reutiliza la propuesta pendiente que ya existe).
     if (stateError) throw new Error(`competitions.aprobacion: ${stateError.message}`);
-    await pushActivity({
-      tipo: "propuesta",
-      actor,
-      accion: "envió propuesta de roster para",
-      evento: comp.nombre,
-      hace: "ahora",
-    });
-    // El historial de la tarima registraba cada asignación suelta pero ninguno
-    // de los tres hitos del ciclo de aprobación: quien lo abría veía el trabajo
-    // y no la decisión.
-    await pushHistory({
-      competitionId,
-      at: now,
-      actor,
-      action: "Propuesta enviada a aprobación",
-      detail: `${Object.values(assignments).filter(Boolean).length} asignaciones`,
-    });
-    const { data, error: readError } = await supabase
-      .from("approval_proposals")
-      .select("*")
-      .eq(competitionIdColumn, competitionId)
-      .eq("status", "pendiente")
-      .single();
+    // Actividad, acta y relectura de la propuesta van juntas: las dos primeras
+    // nunca lanzan y la tercera ya va después de escribir. Siguen terminando
+    // antes de responder (no en after()): quien recarga el historial justo
+    // después tiene que ver el envío.
+    const [, , { data, error: readError }] = await Promise.all([
+      pushActivity({
+        tipo: "propuesta",
+        actor,
+        accion: "envió propuesta de roster para",
+        evento: comp.nombre,
+        hace: "ahora",
+      }),
+      // El historial de la tarima registraba cada asignación suelta pero ninguno
+      // de los tres hitos del ciclo de aprobación: quien lo abría veía el trabajo
+      // y no la decisión.
+      pushHistory({
+        competitionId,
+        at: now,
+        actor,
+        action: "Propuesta enviada a aprobación",
+        detail: `${Object.values(assignments).filter(Boolean).length} asignaciones`,
+      }),
+      Promise.resolve(
+        supabase
+          .from("approval_proposals")
+          .select("*")
+          .eq(competitionIdColumn, competitionId)
+          .eq("status", "pendiente")
+          .single(),
+      ),
+    ]);
     // La propuesta YA está creada y la competición marcada. Devolver `undefined`
     // hacía que la ruta contestara «No se pudo enviar la propuesta»: quien
     // enviaba la tarima creía que no había pasado nada.
@@ -925,7 +997,10 @@ export const rosterService = {
     getCompetitionFn: (id: string) => Promise<Competition | undefined>,
   ) => {
     const comp = await getCompetitionFn(competitionId);
-    if (comp?.estado === "Borrador") {
+    // El cambio de estado y el acta no dependen uno de otro y ninguno lanza:
+    // en paralelo, un round-trip menos.
+    const markIncomplete = async () => {
+      if (comp?.estado !== "Borrador") return;
       const supabase = db();
       const { error } = await supabase
         .from("competitions")
@@ -936,13 +1011,16 @@ export const rosterService = {
       // seguiría diciendo «Borrador» de una tarima con gente dentro y no había
       // forma de saber por qué. Mismo criterio que syncCompetitionCoverage.
       if (error) console.error("[roster.saveDraft.estado]", competitionId, error.message);
-    }
-    await pushHistory({
-      competitionId,
-      at: new Date().toISOString(),
-      actor,
-      action: "Guardó borrador",
-    });
+    };
+    await Promise.all([
+      markIncomplete(),
+      pushHistory({
+        competitionId,
+        at: new Date().toISOString(),
+        actor,
+        action: "Guardó borrador",
+      }),
+    ]);
   },
 
   /**
