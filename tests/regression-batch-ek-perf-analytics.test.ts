@@ -60,9 +60,18 @@ function query(table: string) {
       }
       return 0;
     });
+  // Incrustación de PostgREST (`*, roster_assignments(slot_key, referee_id)`):
+  // `getCompetitions` trae así las asignaciones de cada campeonato.
+  const embed = (rows: Row[]) =>
+    table === "competitions" && call.select?.includes("roster_assignments(")
+      ? rows.map((r) => ({
+          ...r,
+          roster_assignments: (tables.roster_assignments ?? []).filter((a) => a.competition_id === r.id),
+        }))
+      : rows;
   const result = () => {
     if (failTable === table) return { data: null, error: { message: "connection reset" } };
-    return { data: sorted(), error: null };
+    return { data: embed(sorted()), error: null };
   };
   const q: Record<string, unknown> = {};
   q.select = (cols?: string, opts?: { count?: string }) => {

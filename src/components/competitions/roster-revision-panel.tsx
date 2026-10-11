@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { generateQuadrantHtml } from "@/lib/quadrant-html";
 import { useRosterQuadrantSource } from "@/components/competitions/roster-quadrant-source";
+import type { AssignmentsMap, FlagsMap, RosterSession } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface RosterRevisionPanelProps {
@@ -16,6 +17,13 @@ interface RosterRevisionPanelProps {
   violationCount: number;
   openSlots: number;
   onGoAssign: () => void;
+  /**
+   * El estado de la tarima tal y como lo tiene RosterBuilder (las respuestas de
+   * cada guardado). Las props del servidor solo se ponen al día con el
+   * `router.refresh()` que llega poco después de asignar; sin esto, abrir
+   * «Revisión» justo tras un cambio enseñaba el cuadrante de antes.
+   */
+  live?: { template: RosterSession[]; assignments: AssignmentsMap; flags: FlagsMap };
 }
 
 export function RosterRevisionPanel({
@@ -26,6 +34,7 @@ export function RosterRevisionPanel({
   violationCount,
   openSlots,
   onGoAssign,
+  live,
 }: RosterRevisionPanelProps) {
   const ready = fillPct >= 100 && violationCount === 0;
   // Mismo HTML que genera el export/PDF (ruta del cuadrante): así se revisa
@@ -41,17 +50,17 @@ export function RosterRevisionPanel({
     try {
       return generateQuadrantHtml(
         source.competition,
-        source.template,
-        source.assignments,
+        live?.template ?? source.template,
+        live?.assignments ?? source.assignments,
         source.refLookup,
-        source.flags,
+        live?.flags ?? source.flags,
         false,
         true,
       );
     } catch {
       return null;
     }
-  }, [source]);
+  }, [source, live]);
   const hasSource = source !== null;
 
   // Sin esos datos, se descarga el HTML y se inyecta con srcDoc (no por src):

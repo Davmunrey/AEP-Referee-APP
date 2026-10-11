@@ -13,9 +13,10 @@ import type { AssignmentsMap, Competition, FlagsMap, Referee, RosterSession } fr
  * misma página acababa de leer y mandar al navegador. Con estos datos el panel
  * genera el mismo HTML (`generateQuadrantHtml` es puro) sin salir del cliente.
  *
- * Son las props del servidor, no el estado local de RosterBuilder: igual que
- * la ruta, el cuadrante refleja lo guardado, y se pone al día con cada
- * `router.refresh()`. Imprimir y «Abrir» siguen yendo a la ruta.
+ * Son las props del servidor. La plantilla, las asignaciones y los avisos los
+ * sustituye el panel por el estado de RosterBuilder (`live`), que ya trae la
+ * respuesta de cada guardado antes de que llegue el `router.refresh()`.
+ * Imprimir y «Abrir» siguen yendo a la ruta.
  */
 export interface RosterQuadrantSource {
   competition: Competition;

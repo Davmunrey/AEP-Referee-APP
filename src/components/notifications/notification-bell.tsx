@@ -28,10 +28,18 @@ function hace(iso: string): string {
 export function NotificationBell({ initial, className }: { initial: BandejaNotificaciones; className?: string }) {
   const [bandeja, setBandeja] = useState(initial);
   useEffect(() => setBandeja(initial), [initial]);
+  // Los que eran nuevos al abrir: conservan el punto y la negrita mientras el
+  // menú siga abierto, aunque el PATCH ya los haya marcado leídos.
+  const [nuevosAlAbrir, setNuevosAlAbrir] = useState<ReadonlySet<string>>(() => new Set());
 
   const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setNuevosAlAbrir(new Set());
+      return;
+    }
     const vistos = bandeja.items.filter((n) => !n.leidaAt).map((n) => n.id);
-    if (!open || vistos.length === 0) return;
+    if (vistos.length === 0) return;
+    setNuevosAlAbrir(new Set(vistos));
     // Al abrir: se ven como nuevos esta vez y quedan leídos para la siguiente.
     // Solo los que se están enseñando: uno que haya llegado después, o que no
     // quepa en la lista, sigue sin leer.
@@ -72,11 +80,12 @@ export function NotificationBell({ initial, className }: { initial: BandejaNotif
         ) : (
           <ul className="max-h-[60vh] divide-y divide-border-muted overflow-y-auto">
             {bandeja.items.map((n) => {
+              const nuevo = !n.leidaAt || nuevosAlAbrir.has(n.id);
               const body = (
                 <>
                   <div className="flex items-start gap-2">
-                    {!n.leidaAt && <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Nuevo" />}
-                    <p className={cn("min-w-0 flex-1 text-sm", n.leidaAt ? "text-foreground-secondary" : "font-medium text-foreground")}>
+                    {nuevo && <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Nuevo" />}
+                    <p className={cn("min-w-0 flex-1 text-sm", nuevo ? "font-medium text-foreground" : "text-foreground-secondary")}>
                       {n.titulo}
                     </p>
                   </div>

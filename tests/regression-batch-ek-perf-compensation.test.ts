@@ -444,6 +444,19 @@ describe("página y tablero de compensación", () => {
     const src = await leer("src/components/competitions/compensation-board.tsx");
     expect(src).toMatch(/useState<CompetitionCompensationSummary \| null>\(initialSummary \?\? null\)/);
     expect(src).toMatch(/useRef\(initialSummary \? initialCompetition\.id : null\)/);
-    expect(src).toMatch(/if \(serverSummaryFor\.current === competition\.id\) return;\s*load\(\);/);
+    expect(src).toMatch(/if \(!debePedirResumen\(initialSummary\)\) return;\s*\}\s*load\(\);/);
+  });
+
+  it("al volver atrás con la página de la caché, el tablero pide el resumen al día", async () => {
+    const { debePedirResumen } = await import("@/components/competitions/compensation-initial-summary");
+    const delServidor = { claims: [] } as unknown as Parameters<typeof debePedirResumen>[0];
+    // Primera vez que se pinta: no se pide.
+    expect(debePedirResumen(delServidor)).toBe(false);
+    // El mismo objeto otra vez = la página reutilizada al volver: se pide.
+    expect(debePedirResumen(delServidor)).toBe(true);
+    // Una navegación nueva trae otro objeto: no se pide.
+    expect(debePedirResumen({ ...delServidor! })).toBe(false);
+    // Sin resumen del servidor, siempre.
+    expect(debePedirResumen(undefined)).toBe(true);
   });
 });

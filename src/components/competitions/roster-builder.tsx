@@ -211,6 +211,7 @@ export function RosterBuilder({
   const { requeridos: totalSlots, confirmados: filledSlots, openSlots, pct: fillPct } = coverage;
   // Huecos definidos por la plantilla (sin el fallback de `requeridos`).
   const templateSlots = useMemo(() => countRequiredSlots(template), [template]);
+  const revisionLive = useMemo(() => ({ template, assignments, flags }), [template, assignments, flags]);
   const plantillaDone = templateSlots > 0;
   const asignacionDone = filledSlots > 0;
 
@@ -706,7 +707,7 @@ export function RosterBuilder({
         )}
         {workflowStep === "revision" && !isEditing && !readOnly ? (
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <RosterRevisionPanel competitionId={competition.id} filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} />
+            <RosterRevisionPanel competitionId={competition.id} filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} live={revisionLive} />
           </div>
         ) : workflowStep === "plantilla" && !isEditing && templateSlots === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">

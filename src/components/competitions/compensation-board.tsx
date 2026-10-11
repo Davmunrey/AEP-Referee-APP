@@ -22,6 +22,7 @@ import {
 } from "@/lib/judge-compensation/breakdown";
 import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-document";
 import type { CompensationClaim, CompensationClubContact, CompetitionCompensationSummary } from "@/lib/judge-compensation/types";
+import { debePedirResumen } from "@/components/competitions/compensation-initial-summary";
 import {
   allClubEmailsFromCompetition,
   assessCompensationReadiness,
@@ -155,11 +156,20 @@ export function CompensationBoard({
   // Con el resumen del servidor no se vuelve a pedir al montar (ni en el
   // doble montaje de StrictMode), y así no pisa lo que ya se esté editando.
   // Si cambiara el campeonato, se pide el suyo.
+  //
+  // Excepción: al volver con «atrás» Next reutiliza la página de su caché, con
+  // un resumen que puede no tener lo editado después (`debePedirResumen`); se
+  // pide el actual y mientras llega se sigue viendo el anterior.
   const serverSummaryFor = useRef(initialSummary ? initialCompetition.id : null);
+  const serverSummaryChecked = useRef(false);
   useEffect(() => {
-    if (serverSummaryFor.current === competition.id) return;
+    if (serverSummaryFor.current === competition.id) {
+      if (serverSummaryChecked.current) return;
+      serverSummaryChecked.current = true;
+      if (!debePedirResumen(initialSummary)) return;
+    }
     load();
-  }, [load, competition.id]);
+  }, [load, competition.id, initialSummary]);
 
   const saveOrganizer = () => {
     startTransition(async () => {

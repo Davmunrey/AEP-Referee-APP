@@ -375,8 +375,11 @@ describe("vista previa del cuadrante sin petición tras hidratar", () => {
 
   it("con los datos de la página genera el HTML con la misma llamada que la ruta", () => {
     expect(panel).toMatch(
-      /generateQuadrantHtml\(\s*source\.competition,\s*source\.template,\s*source\.assignments,\s*source\.refLookup,\s*source\.flags,\s*false,\s*true,?\s*\)/,
+      /generateQuadrantHtml\(\s*source\.competition,\s*live\?\.template \?\? source\.template,\s*live\?\.assignments \?\? source\.assignments,\s*source\.refLookup,\s*live\?\.flags \?\? source\.flags,\s*false,\s*true,?\s*\)/,
     );
+    // Con lo que RosterBuilder acaba de guardar, no con las props que llegan
+    // con el refresco posterior.
+    expect(fuente("src/components/competitions/roster-builder.tsx")).toContain("live={revisionLive}");
     const route = fuente("src/app/api/v1/competitions/[id]/roster/quadrant/route.ts");
     // `embed` = true en la vista previa, igual que `?embed=1`.
     expect(route).toContain('const embed = search.get("embed") === "1";');
