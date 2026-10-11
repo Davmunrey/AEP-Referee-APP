@@ -41,10 +41,8 @@ import {
   cachedLoadAllAssignments,
   db,
   fetchAllRowsIn,
-  getCompetitionTemplate,
   hasCompensationOverrideColumn,
   hasRefereeDomicilioGeoColumns,
-  loadRosterAssignmentData,
 } from "./supabase-helpers";
 
 const CLAIM_CONFLICT =
@@ -240,38 +238,44 @@ async function persistClaim(
 async function loadMergedClaimForReferee(
   competitionId: string,
   refereeId: string,
-): Promise<CompensationClaim | undefined> {
-  const competition = await competitionService.getCompetition(competitionId);
-  if (!competition) return undefined;
-
-  const roster = await rosterService.getRoster(competitionId, competitionService.getCompetition);
-  if (!roster || !assignedRefereeIds(roster.assignments).includes(refereeId)) return undefined;
-
+): Promise<{ claim: CompensationClaim; storedUpdatedAt: string | null } | undefined> {
+  // Todo en un solo viaje. Antes eran cuatro en fila: el campeonato, luego la
+  // tarima (que volvía a leer el campeonato, su plantilla y las asignaciones),
+  // luego juez y fila guardada, y por último sus conceptos. Cada km o casilla
+  // de la pantalla pagaba esa cadena antes de escribir. El id de la
+  // liquidación es determinista, así que la fila se pide sin esperar a nada.
   const id = claimId(competitionId, refereeId);
-  const supabase = db();
-  const [referee, claimRow] = await Promise.all([
+  const [withRoster, referee, claimRow] = await Promise.all([
+    competitionService.getCompetitionWithRoster(competitionId),
     refereeService.getReferee(refereeId),
-    supabase.from("judge_compensation_claims").select("*").eq("id", id).maybeSingle(),
+    db().from("judge_compensation_claims").select("*").eq("id", id).maybeSingle(),
   ]);
+  // Antes el error de esta lectura se ignoraba: la fusión partía de «no hay
+  // nada guardado» y el compare-and-set, con un testigo leído aparte, podía
+  // pisar la liquidación real —pagada incluida— con un borrador nuevo.
+  if (claimRow.error) throw new Error(`judge_compensation_claims: ${claimRow.error.message}`);
+  if (!withRoster) return undefined;
+  const { competition, roster } = withRoster;
+  if (!assignedRefereeIds(roster.assignments).includes(refereeId)) return undefined;
   if (!referee) return undefined;
 
-  let existing: CompensationClaim | undefined;
-  if (claimRow.data) {
-    const dutyMap = await loadDutyLinesByClaim([id]);
-    existing = mapCompensationClaimRow(
-      claimRow.data as Record<string, unknown>,
-      dutyMap.get(id) ?? [],
-      competition,
-    );
-  }
+  const row = claimRow.data as Record<string, unknown> | null;
+  // Sin conceptos guardados: `mergeClaimFromRoster` los rehace siempre desde la
+  // tarima y nunca mira los de `existing`, así que leerlos era tirarlos.
+  const existing = row ? mapCompensationClaimRow(row, [], competition) : undefined;
 
-  return mergeClaimFromRoster({
-    competition,
-    referee,
-    template: roster.template,
-    assignments: roster.assignments,
-    existing,
-  });
+  return {
+    claim: mergeClaimFromRoster({
+      competition,
+      referee,
+      template: roster.template,
+      assignments: roster.assignments,
+      existing,
+    }),
+    // La marca de la MISMA lectura sobre la que se construye el cambio: es el
+    // testigo del compare-and-set. `null` = todavía no existe fila guardada.
+    storedUpdatedAt: row ? String(row.updated_at) : null,
+  };
 }
 
 async function loadStoredClaimsBatch(
@@ -284,16 +288,17 @@ async function loadStoredClaimsBatch(
   const compById = new Map(competitions.map((c) => [c.id, c]));
   const claimRows = await fetchAllRowsIn("judge_compensation_claims", "competition_id", compIds);
 
-  const claimIds = claimRows.map((r) => String(r.id));
-  const dutyMap = await loadDutyLinesByClaim(claimIds);
-
+  // Sin conceptos: el hub solo usa totales, km y estado. Los de los jueces en
+  // tarima los rehace `mergeClaimFromRoster` desde la plantilla, y los de las
+  // liquidaciones fuera de tarima no entran en ningún total (salen de la
+  // fila). Leerlos era descargar todo el histórico de líneas, troceado en
+  // serie detrás de las cabeceras, en cada visita al hub.
   for (const row of claimRows) {
     const rec = row;
     const compId = String(rec.competition_id);
     const comp = compById.get(compId);
     if (!comp) continue;
-    const id = String(rec.id);
-    const claim = mapCompensationClaimRow(rec, dutyMap.get(id) ?? [], comp);
+    const claim = mapCompensationClaimRow(rec, [], comp);
     const bucket = byComp.get(compId) ?? new Map<string, CompensationClaim>();
     bucket.set(String(rec.referee_id), claim);
     byComp.set(compId, bucket);
@@ -358,21 +363,44 @@ function buildSummaryInMemory(
 }
 
 async function buildSummary(competitionId: string): Promise<CompetitionCompensationSummary> {
-  const competition = await competitionService.getCompetition(competitionId);
-  if (!competition) return emptySummary(competitionId);
-
-  const [template, { assignments }] = await Promise.all([
-    getCompetitionTemplate(competitionId),
-    loadRosterAssignmentData(competitionId),
+  // Campeonato, plantilla y asignaciones salen de una sola pareja de
+  // consultas, en paralelo con las liquidaciones guardadas (su id no depende
+  // de nada). Antes eran cuatro pasos en fila que leían la fila del
+  // campeonato dos veces y las asignaciones otras dos.
+  const [withRoster, claimsRes] = await Promise.all([
+    competitionService.getCompetitionWithRoster(competitionId),
+    db().from("judge_compensation_claims").select("*").eq("competition_id", competitionId),
   ]);
-  const tpl = template ?? [];
+  // El «no existe» manda sobre un fallo de las liquidaciones, como cuando
+  // estas solo se leían después de encontrar el campeonato.
+  if (!withRoster) return emptySummary(competitionId);
+  // Tragarse el error era pérdida de dinero, no una pantalla vacía: ver
+  // `loadStoredClaims`.
+  if (claimsRes.error) throw new Error(`judge_compensation_claims: ${claimsRes.error.message}`);
+  const {
+    competition,
+    roster: { template: tpl, assignments },
+  } = withRoster;
   const refereeIds = assignedRefereeIds(assignments);
+  const enRoster = new Set(refereeIds);
+  const rows = (claimsRes.data ?? []) as Record<string, unknown>[];
+  // Solo las liquidaciones fuera de tarima conservan sus conceptos guardados;
+  // las demás los rehace `mergeClaimFromRoster` desde la plantilla. Lo normal
+  // es que no haya ninguna y `fetchAllRowsIn` no consulte nada.
+  const offRosterClaimIds = rows
+    .filter((r) => !enRoster.has(String(r.referee_id)))
+    .map((r) => String(r.id));
   // Sin el corte previo por tarima vacía: si se vació la tarima después de
   // guardar liquidaciones, seguían existiendo y había que enseñarlas.
-  const [stored, refereesById] = await Promise.all([
-    loadStoredClaims(competitionId, competition),
+  const [refereesById, dutyMap] = await Promise.all([
     refereeService.getRefereesByIds(refereeIds),
+    loadDutyLinesByClaim(offRosterClaimIds),
   ]);
+  const stored = new Map<string, CompensationClaim>();
+  for (const rec of rows) {
+    const id = String(rec.id);
+    stored.set(String(rec.referee_id), mapCompensationClaimRow(rec, dutyMap.get(id) ?? [], competition));
+  }
   return buildSummaryInMemory(competition, tpl, assignments, stored, refereesById);
 }
 
@@ -478,24 +506,18 @@ export const compensationService = {
     // aprobar, rechazar o pagar. Sin él la columna se quedaba vacía.
     actor?: string,
   ): Promise<CompensationClaim | undefined> => {
-    // La marca de la fila ANTES de recalcular: es el testigo del
-    // compare-and-set. `null` = todavía no existe fila guardada.
-    const supabase = db();
-    const { data: stored, error: storedError } = await supabase
-      .from("judge_compensation_claims")
-      .select("updated_at")
-      .eq("id", claimId(competitionId, refereeId))
-      .maybeSingle();
-    if (storedError) throw new Error(`judge_compensation_claims: ${storedError.message}`);
-
-    const existing = await loadMergedClaimForReferee(competitionId, refereeId);
-    if (!existing) return undefined;
+    // El testigo del compare-and-set (`updated_at` de la fila) llega en la
+    // misma lectura que la liquidación sobre la que se aplica el cambio; antes
+    // era una consulta previa aparte, un viaje más en cada edición.
+    const loaded = await loadMergedClaimForReferee(competitionId, refereeId);
+    if (!loaded) return undefined;
+    const existing = loaded.claim;
 
     if (touchesPaidAmount(existing, patch)) throw new CompensationClaimPaidError();
     const claim = applyCompensationClaimPatch(existing, patch, { actor });
     await persistClaim(claim, {
       syncDutyLines: false,
-      expectedUpdatedAt: stored ? String(stored.updated_at) : null,
+      expectedUpdatedAt: loaded.storedUpdatedAt,
     });
     return claim;
   },
@@ -591,19 +613,26 @@ export const compensationService = {
       competitionService.getCompetitions(user),
       cachedLoadAllAssignments(),
     ]);
-    const compIds = competitions.map((c) => c.id);
-    const [templatesById, storedByComp] = await Promise.all([
-      loadTemplatesBatch(compIds),
-      loadStoredClaimsBatch(competitions),
-    ]);
-
+    // Los jueces y las plantillas dependen solo de este primer paso. Antes los
+    // jueces esperaban también a plantillas y liquidaciones, y se releía la
+    // plantilla de TODO el histórico aunque solo se usa con jueces en tarima.
     const allRefereeIds = new Set<string>();
+    const compIdsWithRoster: string[] = [];
     for (const comp of competitions) {
+      let conJueces = false;
       for (const rid of Object.values(assignmentsByComp.get(comp.id) ?? {})) {
-        if (rid) allRefereeIds.add(rid);
+        if (rid) {
+          allRefereeIds.add(rid);
+          conJueces = true;
+        }
       }
+      if (conJueces) compIdsWithRoster.push(comp.id);
     }
-    const refereesById = await refereeService.getRefereesByIds([...allRefereeIds]);
+    const [templatesById, storedByComp, refereesById] = await Promise.all([
+      loadTemplatesBatch(compIdsWithRoster),
+      loadStoredClaimsBatch(competitions),
+      refereeService.getRefereesByIds([...allRefereeIds]),
+    ]);
 
     const summaries = new Map<string, CompetitionCompensationSummary>();
     for (const comp of competitions) {
@@ -624,5 +653,6 @@ export const compensationService = {
   getClaimForExport: async (
     competitionId: string,
     refereeId: string,
-  ): Promise<CompensationClaim | undefined> => loadMergedClaimForReferee(competitionId, refereeId),
+  ): Promise<CompensationClaim | undefined> =>
+    (await loadMergedClaimForReferee(competitionId, refereeId))?.claim,
 };

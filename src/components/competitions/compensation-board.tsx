@@ -46,6 +46,8 @@ const CompensationExportDialog = dynamic(
 interface CompensationBoardProps {
   competition: Competition;
   canManage: boolean;
+  /** Resumen leído en el servidor; sin él, el tablero lo pide al montar. */
+  initialSummary?: CompetitionCompensationSummary;
 }
 
 /**
@@ -102,9 +104,13 @@ function applyClaimUpdate(
   };
 }
 
-export function CompensationBoard({ competition: initialCompetition, canManage }: CompensationBoardProps) {
+export function CompensationBoard({
+  competition: initialCompetition,
+  canManage,
+  initialSummary,
+}: CompensationBoardProps) {
   const [competition, setCompetition] = useState(initialCompetition);
-  const [summary, setSummary] = useState<CompetitionCompensationSummary | null>(null);
+  const [summary, setSummary] = useState<CompetitionCompensationSummary | null>(initialSummary ?? null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [exportTarget, setExportTarget] = useState<CompensationClaim | null>(null);
@@ -146,9 +152,14 @@ export function CompensationBoard({ competition: initialCompetition, canManage }
     });
   }, [competition.id]);
 
+  // Con el resumen del servidor no se vuelve a pedir al montar (ni en el
+  // doble montaje de StrictMode), y así no pisa lo que ya se esté editando.
+  // Si cambiara el campeonato, se pide el suyo.
+  const serverSummaryFor = useRef(initialSummary ? initialCompetition.id : null);
   useEffect(() => {
+    if (serverSummaryFor.current === competition.id) return;
     load();
-  }, [load]);
+  }, [load, competition.id]);
 
   const saveOrganizer = () => {
     startTransition(async () => {
