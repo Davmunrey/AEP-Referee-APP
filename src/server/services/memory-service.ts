@@ -73,6 +73,7 @@ export const memoryDataService = {
 
   getRegulations: admin.getRegulations,
   getAnalytics: analytics.getAnalytics,
+  getAnalyticsWithCompetitions: analytics.getAnalyticsWithCompetitions,
   getPromotions: admin.getPromotions,
   reviewPromotion: admin.reviewPromotion,
   createPromotion: admin.createPromotion,
