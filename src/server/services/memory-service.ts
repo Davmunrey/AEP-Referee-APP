@@ -122,6 +122,7 @@ export const memoryDataService = {
   getRespuestasDeJuez: memoryConvocatoriaService.getRespuestasDeJuez,
   setDesignacionRespuesta: memoryConvocatoriaService.setDesignacionRespuesta,
   clearDesignacionRespuestas: memoryConvocatoriaService.clearDesignacionRespuestas,
+  listConvocatoriasPorIds: memoryConvocatoriaService.listConvocatoriasPorIds,
 
   insertNotificaciones: memoryNotificacionService.insertNotificaciones,
   getBandejaNotificaciones: memoryNotificacionService.getBandeja,

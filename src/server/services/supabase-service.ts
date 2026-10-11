@@ -195,6 +195,7 @@ export const supabaseDataService = {
   getRespuestasDeJuez: convocatoriaService.getRespuestasDeJuez,
   setDesignacionRespuesta: convocatoriaService.setDesignacionRespuesta,
   clearDesignacionRespuestas: convocatoriaService.clearDesignacionRespuestas,
+  listConvocatoriasPorIds: convocatoriaService.listConvocatoriasPorIds,
 
   // ── Avisos (campana) ──────────────────────────────────────────────────────
   insertNotificaciones: notificacionService.insertNotificaciones,
