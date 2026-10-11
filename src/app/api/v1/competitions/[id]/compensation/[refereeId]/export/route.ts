@@ -32,20 +32,27 @@ export async function POST(request: Request, context: RouteContext) {
   if (!iban) return jsonError("Indica el IBAN para generar el recibo", 400);
   if (!isValidSpanishIban(iban)) return jsonError("IBAN español no válido", 400);
 
+  // La liquidación se pide ya, en paralelo con el resto, pero se mira en el
+  // mismo punto que antes: `readOrError` nunca rechaza, así que salir antes
+  // por un 404 o un 422 no deja una promesa rechazada suelta, y los mensajes
+  // y su orden no cambian.
+  const claimP = readOrError(
+    "compensation.export.claim",
+    "No se pudo cargar la liquidación del juez",
+    () => dataService.getCompensationClaimForExport(id, refereeId),
+  );
+  // Sin `getRoster`: solo servía para el «no encontrado», y la tarima solo
+  // falta cuando falta el campeonato. Releía campeonato, plantilla y
+  // asignaciones que la liquidación vuelve a leer de todos modos.
   const leido = await readOrError(
     "compensation.export.lectura",
     "No se pudieron cargar los datos del recibo",
-    () =>
-      Promise.all([
-        dataService.getCompetition(id),
-        dataService.getRoster(id),
-        dataService.getReferee(refereeId),
-      ]),
+    () => Promise.all([dataService.getCompetition(id), dataService.getReferee(refereeId)]),
   );
   if (leido instanceof Response) return leido;
-  const [competition, roster, referee] = leido;
+  const [competition, referee] = leido;
 
-  if (!competition || !roster || !referee) {
+  if (!competition || !referee) {
     return jsonError("Campeonato, tarima o juez no encontrado", 404);
   }
 
@@ -63,11 +70,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const claim = await readOrError(
-    "compensation.export.claim",
-    "No se pudo cargar la liquidación del juez",
-    () => dataService.getCompensationClaimForExport(id, refereeId),
-  );
+  const claim = await claimP;
   if (claim instanceof Response) return claim;
   if (!claim) return jsonError("Claim no encontrado", 404);
 
