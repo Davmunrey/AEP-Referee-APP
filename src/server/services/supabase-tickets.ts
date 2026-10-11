@@ -218,43 +218,60 @@ export const ticketService = {
     // commentCount agregado, sin una consulta por ticket. Troceado y paginado:
     // el filtro `in` viaja en la URL, y mil identificadores de golpe la pasan
     // de largo — la página entera se caía con la bandeja llena.
-    const counts = new Map<string, number>();
-    for (const trozo of chunkList(ids, IN_FILTER_CHUNK)) {
+    // El contador y los adjuntos no dependen uno del otro: antes se leían uno
+    // detrás de otro (y cada trozo también), y la firma esperaba a ambos.
+    // Ahora van a la vez y la firma se solapa con el recuento.
+    const trozos = chunkList(ids, IN_FILTER_CHUNK);
+    const countsP = (async () => {
+      const counts = new Map<string, number>();
       // El contador se pinta siempre, así que un fallo de lectura ponía un «0»
       // en cada ticket: «nadie te ha contestado» dicho por un corte de red.
-      const commentRows = await fetchAllPagesOf<{ ticket_id: string }>(
-        "support_ticket_comments",
-        (from, to) =>
-          supabase
-            .from("support_ticket_comments")
-            .select("ticket_id")
-            .in("ticket_id", trozo)
-            .order("id", { ascending: true })
-            .range(from, to),
+      const porTrozo = await Promise.all(
+        trozos.map((trozo) =>
+          fetchAllPagesOf<{ ticket_id: string }>("support_ticket_comments", (from, to) =>
+            supabase
+              .from("support_ticket_comments")
+              .select("ticket_id")
+              .in("ticket_id", trozo)
+              .order("id", { ascending: true })
+              .range(from, to),
+          ),
+        ),
       );
-      for (const row of commentRows) {
-        const key = String(row.ticket_id);
-        counts.set(key, (counts.get(key) ?? 0) + 1);
+      for (const commentRows of porTrozo) {
+        for (const row of commentRows) {
+          const key = String(row.ticket_id);
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+        }
       }
-    }
+      return counts;
+    })();
 
     // Adjuntos a nivel de ticket (comment_id NULL), igual de troceados.
-    const attachmentRows: Record<string, unknown>[] = [];
-    for (const trozo of chunkList(ids, IN_FILTER_CHUNK)) {
-      const page = await fetchAllPagesOf<Record<string, unknown>>(
-        "support_ticket_attachments",
-        (from, to) =>
-          supabase
-            .from("support_ticket_attachments")
-            .select("*")
-            .in("ticket_id", trozo)
-            .is("comment_id", null)
-            .order("id", { ascending: true })
-            .range(from, to),
+    const signedP = (async () => {
+      const porTrozo = await Promise.all(
+        trozos.map((trozo) =>
+          fetchAllPagesOf<Record<string, unknown>>("support_ticket_attachments", (from, to) =>
+            supabase
+              .from("support_ticket_attachments")
+              .select("*")
+              .in("ticket_id", trozo)
+              .is("comment_id", null)
+              .order("id", { ascending: true })
+              .range(from, to),
+          ),
+        ),
       );
-      attachmentRows.push(...page);
-    }
-    const signed = await signAttachments(attachmentRows);
+      return signAttachments(porTrozo.flat());
+    })();
+
+    // allSettled y el recuento primero: si fallan los dos, el error que sale
+    // es el mismo que cuando iban en serie.
+    const [countsRes, signedRes] = await Promise.allSettled([countsP, signedP]);
+    if (countsRes.status === "rejected") throw countsRes.reason;
+    if (signedRes.status === "rejected") throw signedRes.reason;
+    const counts = countsRes.value;
+    const signed = signedRes.value;
     const byTicket = new Map<string, SupportTicketAttachment[]>();
     for (const att of signed) {
       const bucket = byTicket.get(att.ticketId);
@@ -277,22 +294,14 @@ export const ticketService = {
     user: GetTicketsInput["user"],
   ): Promise<SupportTicket | undefined> => {
     const supabase = db();
-    const { data: row, error } = await supabase
-      .from("support_tickets")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-    if (error) {
-      if (isMissingTable(error)) return undefined;
-      throw error;
-    }
-    if (!row) return undefined;
-    if (!canView(user, (row.created_by_id as string | null) ?? null)) return undefined;
-
-    const [
-      { data: commentRows, error: commentsError },
-      { data: attachmentRows, error: attachmentsError },
-    ] = await Promise.all([
+    // El hilo y los adjuntos solo necesitan el id, que ya se tiene: se piden a
+    // la vez que el ticket en vez de esperarlo (un viaje menos al abrirlo y en
+    // cada comentario o cambio de estado, que acaban releyéndolo). Lo leído de
+    // un ticket que el usuario no puede ver se descarta sin salir de aquí.
+    // allSettled y el ticket primero: «no existe», «no es tuyo» y «la tabla no
+    // está migrada» siguen respondiendo undefined aunque el hilo fallara.
+    const [ticketRes, commentsRes, attachmentsRes] = await Promise.allSettled([
+      supabase.from("support_tickets").select("*").eq("id", id).maybeSingle(),
       supabase
         .from("support_ticket_comments")
         .select("*")
@@ -300,6 +309,19 @@ export const ticketService = {
         .order("created_at", { ascending: true }),
       supabase.from("support_ticket_attachments").select("*").eq("ticket_id", id),
     ]);
+    if (ticketRes.status === "rejected") throw ticketRes.reason;
+    const { data: row, error } = ticketRes.value;
+    if (error) {
+      if (isMissingTable(error)) return undefined;
+      throw error;
+    }
+    if (!row) return undefined;
+    if (!canView(user, (row.created_by_id as string | null) ?? null)) return undefined;
+
+    if (commentsRes.status === "rejected") throw commentsRes.reason;
+    if (attachmentsRes.status === "rejected") throw attachmentsRes.reason;
+    const { data: commentRows, error: commentsError } = commentsRes.value;
+    const { data: attachmentRows, error: attachmentsError } = attachmentsRes.value;
     // El hilo entero es lo que se viene a leer: presentarlo vacío porque la
     // lectura falló hace que el usuario crea que su comentario se perdió y que
     // quien atiende conteste sin haber visto lo que ya se había dicho.

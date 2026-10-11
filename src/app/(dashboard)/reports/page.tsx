@@ -10,7 +10,8 @@ export default async function ReportsPage() {
 
   const [reports, referees, competitions] = await Promise.all([
     dataService.getReports(undefined, user),
-    dataService.getReferees({ user }),
+    // Solo para el selector de juez: id y nombre, sin la ficha entera.
+    dataService.getRefereeOptions({ user }),
     dataService.getCompetitionOptions(user),
   ]);
 
