@@ -3,13 +3,15 @@ import { ArrowRight, ShieldAlert } from "lucide-react";
 import { ConvocatoriaCard } from "@/components/portal/convocatoria-card";
 import { DesignationCard } from "@/components/portal/designation-card";
 import { convocatoriasParaJuez } from "@/server/convocatorias";
-import { loadPortal } from "@/lib/portal-page";
+import { loadPortal, loadPortalJudge } from "@/lib/portal-page";
 import { formatDateRange } from "@/lib/utils";
 
 export default async function PortalHomePage() {
-  const { judge, data } = await loadPortal();
+  // Las convocatorias solo necesitan el id del juez (la sesión está en caché
+  // por petición): se piden a la vez que sus designaciones, no después.
+  const { refereeId } = await loadPortalJudge();
+  const [{ judge, data }, convocatorias] = await Promise.all([loadPortal(), convocatoriasParaJuez(refereeId)]);
   const next = data.upcoming.slice(0, 2);
-  const convocatorias = await convocatoriasParaJuez(judge.refereeId!);
 
   return (
     <div className="space-y-6">
