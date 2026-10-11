@@ -14,7 +14,7 @@ import { api } from "@/lib/api/client";
 import { textareaFieldClass } from "@/lib/design-tokens";
 import { parseSlotKey, ROLE_LABELS } from "@/lib/roster-template";
 import { selectedApproval } from "@/lib/approvals/select";
-import type { ApprovalProposal, Competition } from "@/lib/types";
+import type { ApprovalProposal, EventStatus } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 import {
   ArrowRight,
@@ -31,7 +31,9 @@ interface ApprovalsBoardProps {
   initial: ApprovalProposal[];
   canReview: boolean;
   refNames?: Record<string, string>;
-  competitions?: Competition[];
+  /** Estado de cobertura por id de campeonato, solo de los que citan las
+   * propuestas (antes llegaba la lista entera de campeonatos para leer esto). */
+  estadoById?: Record<string, EventStatus>;
 }
 
 
@@ -58,7 +60,7 @@ export function ApprovalsBoard({
   initial,
   canReview,
   refNames = {},
-  competitions = [],
+  estadoById = {},
 }: ApprovalsBoardProps) {
   const [items, setItems] = useState(initial);
   // Se guarda el id, no la propuesta: al refrescar desde el servidor el objeto
@@ -118,11 +120,8 @@ export function ApprovalsBoard({
   const allSlotKeys = selected ? Object.keys(selected.assignments) : [];
   const assignments = selected ? Object.entries(selected.assignments) : [];
 
-  // Resolve real competition status from competitions list
-  const eventStatus =
-    selected && competitions.length > 0
-      ? (competitions.find((c) => c.id === selected.competitionId)?.estado ?? "Incompleto")
-      : "Incompleto";
+  // Estado real del campeonato (cobertura), calculado en el servidor.
+  const eventStatus = selected ? (estadoById[selected.competitionId] ?? "Incompleto") : "Incompleto";
 
   return (
     <PageShell>

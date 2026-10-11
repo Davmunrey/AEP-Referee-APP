@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getApiBaseUrl } from "@/lib/api/config";
+import { generateQuadrantHtml } from "@/lib/quadrant-html";
+import { useRosterQuadrantSource } from "@/components/competitions/roster-quadrant-source";
 import { cn } from "@/lib/utils";
 
 interface RosterRevisionPanelProps {
@@ -30,13 +32,39 @@ export function RosterRevisionPanel({
   // exactamente lo que se va a sacar, no una aproximación.
   const quadrantUrl = `${getApiBaseUrl()}/competitions/${competitionId}/roster/quadrant`;
 
-  // Se descarga el HTML y se inyecta con srcDoc (no por src): así el preview no
-  // depende de las cabeceras de framing (X-Frame-Options / frame-ancestors), que
-  // bloqueaban el iframe. `embed=1` oculta el botón flotante de imprimir.
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [previewError, setPreviewError] = useState(false);
+  // En la página de la tarima el HTML se genera aquí, con lo que la página ya
+  // leyó (ver `roster-quadrant-source`): misma función y mismos datos que la
+  // ruta, sin otra petición tras hidratar. `null` = no se pudo generar.
+  const source = useRosterQuadrantSource();
+  const localHtml = useMemo(() => {
+    if (!source) return undefined;
+    try {
+      return generateQuadrantHtml(
+        source.competition,
+        source.template,
+        source.assignments,
+        source.refLookup,
+        source.flags,
+        false,
+        true,
+      );
+    } catch {
+      return null;
+    }
+  }, [source]);
+  const hasSource = source !== null;
+
+  // Sin esos datos, se descarga el HTML y se inyecta con srcDoc (no por src):
+  // así el preview no depende de las cabeceras de framing (X-Frame-Options /
+  // frame-ancestors), que bloqueaban el iframe. `embed=1` oculta el botón
+  // flotante de imprimir.
+  const [fetchedHtml, setPreviewHtml] = useState<string | null>(null);
+  const [fetchError, setPreviewError] = useState(false);
+  const previewHtml = hasSource ? (localHtml ?? null) : fetchedHtml;
+  const previewError = hasSource ? localHtml === null : fetchError;
 
   useEffect(() => {
+    if (hasSource) return;
     let cancelled = false;
     setPreviewHtml(null);
     setPreviewError(false);
@@ -54,7 +82,7 @@ export function RosterRevisionPanel({
     return () => {
       cancelled = true;
     };
-  }, [quadrantUrl]);
+  }, [quadrantUrl, hasSource]);
 
   return (
     <div className="space-y-4 p-4 sm:p-5">

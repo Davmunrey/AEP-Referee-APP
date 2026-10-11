@@ -34,6 +34,7 @@ export const memoryDataService = {
 
   getCompetitions: competitions.getCompetitions,
   getCompetitionOptions: competitions.getCompetitionOptions,
+  getCompetitionEstados: competitions.getCompetitionEstados,
   getCompetition: competitions.getCompetition,
   createCompetition: competitions.createCompetition,
   updateCompetition: competitions.updateCompetition,
