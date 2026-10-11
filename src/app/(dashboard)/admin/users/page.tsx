@@ -9,18 +9,16 @@ export default async function AdminUsersPage() {
   if (!user) return redirectSinAcceso();
   if (!canManageUsers(user)) redirect("/");
 
-  const meta = await dataService.getMeta(user);
-
   // Carga inicial desde el servidor: la página llega con los usuarios ya
   // renderizados. Si falla (p. ej. Supabase no configurado en dev), se deja
   // `initialUsers` sin definir y el componente cae al fetch cliente, que
   // mostrará el error/estado apropiado.
-  let initialUsers: AdminUserRow[] | undefined;
-  try {
-    initialUsers = await listAdminUsers();
-  } catch {
-    initialUsers = undefined;
-  }
+  // Las zonas y los usuarios no dependen entre sí: van a la vez. Un fallo de
+  // las zonas sigue tumbando la página, como antes; uno de los usuarios no.
+  const [meta, initialUsers] = await Promise.all([
+    dataService.getMeta(user),
+    listAdminUsers().catch((): AdminUserRow[] | undefined => undefined),
+  ]);
 
   return (
     <UsersAdmin

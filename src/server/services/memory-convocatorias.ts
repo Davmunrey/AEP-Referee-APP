@@ -183,6 +183,12 @@ async function setDesignacionRespuesta(
   store().respuestas.set(respKey(competitionId, refereeId), { ...respuesta, updatedAt: new Date().toISOString() });
 }
 
+/** Twin de `listConvocatoriasPorIds` (Supabase): las que existan, sin orden. */
+async function listConvocatoriasPorIds(ids: string[]): Promise<Convocatoria[]> {
+  const wanted = new Set(ids);
+  return store().convocatorias.filter((c) => wanted.has(c.id)).map(copy);
+}
+
 export const memoryConvocatoriaService = {
   getConvocatoria,
   getLiveConvocatoria,
@@ -203,4 +209,5 @@ export const memoryConvocatoriaService = {
   getRespuestasDeJuez,
   setDesignacionRespuesta,
   clearDesignacionRespuestas,
+  listConvocatoriasPorIds,
 };

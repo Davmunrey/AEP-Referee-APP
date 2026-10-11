@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getJudgeSession } from "@/lib/auth/session";
+import { portalProfileOf } from "@/lib/judge-portal";
 import { dataService } from "@/server/services";
 
 /**
@@ -19,4 +20,23 @@ export async function loadPortal() {
     judge,
     data: { ...data, upcoming: data.upcoming.map((d) => ({ ...d, respuesta: respuestas[d.competitionId] })) },
   };
+}
+
+/**
+ * Solo el juez de la sesión, para las páginas que no enseñan designaciones
+ * (las convocatorias): `loadPortal` lee además todo su historial de
+ * campeonatos, y la página esperaba a esa lectura para luego tirarla.
+ */
+export async function loadPortalJudge() {
+  const judge = await getJudgeSession();
+  if (!judge?.refereeId) notFound();
+  return { ...judge, refereeId: judge.refereeId };
+}
+
+/** Solo la ficha del juez (`/portal/ficha`): su fila del censo, nada más. */
+export async function loadPortalProfile() {
+  const { refereeId } = await loadPortalJudge();
+  const referee = await dataService.getReferee(refereeId);
+  if (!referee) notFound();
+  return portalProfileOf(referee);
 }

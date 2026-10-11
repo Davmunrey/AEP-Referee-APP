@@ -57,6 +57,17 @@ export async function getReferees(params?: {
   });
 }
 
+/**
+ * Twin de `getRefereeOptions`: los mismos jueces que `getReferees({ user })`,
+ * en el mismo orden del almacén, recortados a lo que usa un desplegable.
+ */
+export async function getRefereeOptions(params?: {
+  user?: SessionUser;
+}): Promise<import("@/lib/types").RefereeOption[]> {
+  const rows = await getReferees({ user: params?.user });
+  return rows.map((r) => ({ id: r.id, nombre: r.nombre, nivel: r.nivel, estado: r.estado }));
+}
+
 export async function getReferee(id: string) {
   return getStore().referees.find((r) => r.id === id);
 }

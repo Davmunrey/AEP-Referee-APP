@@ -11,18 +11,19 @@ export async function GET(request: Request) {
   const parsedYear = yearParam ? Number(yearParam) : NaN;
   const requestedYear = Number.isInteger(parsedYear) ? parsedYear : undefined;
 
-  // Limitación conocida: getAnalytics ya carga las competiciones internamente,
-  // pero su payload solo expone agregados y criticalEvents (no la lista
-  // completa que necesita la sección CAMPEONATOS_AÑO_ACTIVO), así que hay que
-  // pedirlas otra vez. Evitarlo requeriría ampliar AnalyticsPayload en
-  // src/server/services.
+  // La sección CAMPEONATOS_AÑO_ACTIVO necesita la lista completa de
+  // campeonatos, que el payload de la analítica no expone. Se pide junto con
+  // la analítica en una sola carga: en un route handler `cache()` no
+  // deduplica, y pedirlas por separado recorría roster_assignments entero tres
+  // veces y `competitions` dos. Es la misma lista que getCompetitions(user):
+  // mismo orden y mismo filtro de zona.
   let analytics;
   let competitions;
   try {
-    [analytics, competitions] = await Promise.all([
-      dataService.getAnalytics(user, requestedYear),
-      dataService.getCompetitions(user),
-    ]);
+    ({ analytics, competitions } = await dataService.getAnalyticsWithCompetitions(
+      user,
+      requestedYear,
+    ));
   } catch (err) {
     // Un CSV a medias es peor que un error: la exportación es lo que alguien
     // se lleva a una reunión como si fuera la temporada entera.

@@ -7,7 +7,7 @@ import { LevelBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
 import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
-import type { Referee, RefereeLevel } from "@/lib/types";
+import type { RefereeLevel, RefereeOption } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ArrowRight, TrendingUp, X } from "lucide-react";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
@@ -21,7 +21,7 @@ interface FormState {
   motivo: string;
 }
 
-function buildInitialForm(eligible: Referee[]): FormState {
+function buildInitialForm(eligible: RefereeOption[]): FormState {
   const first = eligible[0];
   const levels = first ? higherLevels(first.nivel) : [];
   return {
@@ -34,7 +34,7 @@ function buildInitialForm(eligible: Referee[]): FormState {
 export function NewPromotionDialog({
   referees,
 }: {
-  referees: Referee[];
+  referees: RefereeOption[];
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();

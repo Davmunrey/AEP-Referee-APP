@@ -40,21 +40,30 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Refresh session — do not add logic between createServerClient and getUser.
-  // Si el token de refresco está caducado/ausente, getUser() lanza
+  // Refresh session — do not add logic between createServerClient and getClaims.
+  // Si el token de refresco está caducado/ausente, la lectura de la sesión lanza
   // AuthApiError (refresh_token_not_found): no es un fallo real, solo una sesión
   // expirada, así que lo tratamos como "no autenticado" y redirigimos a login
   // en vez de dejar que reviente el middleware (ruido en la monitorización).
-  let user = null;
+  //
+  // `getClaims()` y no `getUser()`: este middleware corre en CADA petición
+  // (cargas, `router.refresh()`, prefetch de cada enlace de la barra lateral) y
+  // `getUser()` es siempre un viaje al servidor de Auth antes de empezar nada.
+  // `getClaims()` pasa primero por `getSession()`, así que el refresco del token
+  // y la rotación de cookies (setAll) funcionan igual; con claves asimétricas
+  // verifica la firma aquí mismo y con el secreto compartido vuelve a preguntar
+  // a Auth, como antes. Mismo criterio que `verifiedAuthUser` en la sesión.
+  let user: unknown = null;
   try {
-    ({ data: { user } } = await supabase.auth.getUser());
+    const { data } = await supabase.auth.getClaims();
+    user = data?.claims?.sub ? data.claims : null;
   } catch {
     user = null;
   }
   const { pathname } = request.nextUrl;
 
   // Cualquier respuesta alternativa (redirect/401) debe llevar las cookies que
-  // setAll escribió en supabaseResponse: si getUser() acaba de rotar el token de
+  // setAll escribió en supabaseResponse: si getClaims() acaba de rotar el token de
   // refresco y las descartamos, el navegador conserva un token ya invalidado y
   // la sesión se cierra aleatoriamente.
   const withSessionCookies = (response: NextResponse) => {

@@ -1,13 +1,12 @@
 import { ChangePasswordButton } from "@/components/portal/change-password-button";
 import { zoneUiName } from "@/lib/aep-zones";
-import { loadPortal } from "@/lib/portal-page";
+import { loadPortalProfile } from "@/lib/portal-page";
 import { formatDateRange } from "@/lib/utils";
 
 export const metadata = { title: "Mi ficha · Portal del juez" };
 
 export default async function PortalProfilePage() {
-  const { data } = await loadPortal();
-  const p = data.profile;
+  const p = await loadPortalProfile();
   const rows: [string, string | undefined][] = [
     ["Nombre", p.nombre],
     ["Zona", zoneUiName(p.zona)],

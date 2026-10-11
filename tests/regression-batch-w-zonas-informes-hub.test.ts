@@ -116,13 +116,14 @@ describe("informes: la zona es texto libre, no se puede comparar en crudo", () =
 
 describe("exámenes: la zona del perfil se canonicaliza antes de buscar jueces", () => {
   it("un perfil con alias encuentra a los jueces de su zona", async () => {
-    respond = ({ table }) =>
-      table === "referees" ? { data: [{ id: "j1" }], error: null } : { data: [], error: null };
+    respond = () => ({ data: [], error: null });
     await examsService.getExams(undefined, { ...delegado, zona: "2- CENTRO" });
+    // La zona viaja ahora como filtro del juez incrustado en la misma lectura
+    // de exámenes (un viaje en vez de dos), pero sigue canonicalizada.
     const zonaFilter = calls
-      .filter((c) => c.table === "referees")
+      .filter((c) => c.table === "referee_exams")
       .flatMap((c) => c.filters)
-      .find(([col]) => col === "zona");
+      .find(([col]) => col === "referees.zona");
     // Antes viajaba «2- CENTRO» y no casaba con ningún juez → «no hay exámenes».
     expect(zonaFilter?.[1]).toBe("CENTRO");
   });

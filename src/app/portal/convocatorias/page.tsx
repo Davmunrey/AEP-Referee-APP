@@ -1,12 +1,12 @@
 import { ConvocatoriaCard } from "@/components/portal/convocatoria-card";
-import { loadPortal } from "@/lib/portal-page";
+import { loadPortalJudge } from "@/lib/portal-page";
 import { convocatoriasParaJuez } from "@/server/convocatorias";
 
 export const metadata = { title: "Convocatorias · Portal del juez" };
 
 export default async function PortalCallsPage() {
-  const { judge } = await loadPortal();
-  const list = await convocatoriasParaJuez(judge.refereeId!);
+  const judge = await loadPortalJudge();
+  const list = await convocatoriasParaJuez(judge.refereeId);
   return (
     <div className="space-y-5">
       <div>

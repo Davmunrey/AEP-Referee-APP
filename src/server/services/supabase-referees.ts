@@ -7,6 +7,7 @@ import type {
   JudgeProfile,
   Referee,
   RefereeCompetitionHistoryItem,
+  RefereeOption,
   SessionUser,
 } from "@/lib/types";
 import { mapReferee, refereeToDbRow } from "@/server/db/mappers";
@@ -38,33 +39,40 @@ async function loadRefereeCompetitionHistory(
   refereeId: string,
 ): Promise<RefereeCompetitionHistoryItem[]> {
   const supabase = db();
+  // Un solo viaje: el campeonato viene incrustado por la FK
+  // roster_assignments.competition_id → competitions(id) (NOT NULL, única
+  // entre las dos tablas, así que no hay ambigüedad). Antes eran dos viajes
+  // seguidos —designaciones y luego `.in()` de campeonatos— y esta rama era
+  // la más larga del perfil, la que marcaba lo que tardaba la ficha.
   const { data: assignmentRows, error: assignmentsError } = await supabase
     .from("roster_assignments")
-    .select("competition_id, slot_key, flags")
+    .select(
+      "competition_id, slot_key, flags, competitions(id, nombre, tipo, fecha, fecha_fin, sede, estado, aprobacion)",
+    )
     .eq("referee_id", refereeId);
   // Una lista vacía por fallo de lectura dice «este juez no ha arbitrado
   // nunca», y este historial es lo que se mira para decidir un ascenso. Las
   // sanciones del mismo perfil ya lanzaban por esta razón; esto se había
-  // quedado atrás.
+  // quedado atrás. Con el campeonato incrustado, perder los campeonatos (que
+  // dejaría un historial recortado, peor que uno vacío) también cae aquí.
   if (assignmentsError) throw new Error(`roster_assignments: ${assignmentsError.message}`);
 
-  const assignments = (assignmentRows ?? []).map((row) => ({
+  const rows = (assignmentRows ?? []) as Record<string, unknown>[];
+  const assignments = rows.map((row) => ({
     competitionId: String(row.competition_id),
     slotKey: String(row.slot_key),
     flags: row.flags as Record<string, unknown> | null,
   }));
-  const ids = [...new Set(assignments.map((row) => row.competitionId))];
-  if (ids.length === 0) return [];
+  if (assignments.length === 0) return [];
 
-  const { data: competitionRows, error: competitionsError } = await supabase
-    .from("competitions")
-    .select("id, nombre, tipo, fecha, fecha_fin, sede, estado, aprobacion")
-    .in("id", ids);
-  // Ídem: aquí las designaciones ya constan, así que perder los campeonatos
-  // deja un historial recortado, que engaña más que uno vacío.
-  if (competitionsError) throw new Error(`competitions: ${competitionsError.message}`);
+  // El mismo campeonato se repite una vez por plaza; se queda uno por id.
+  const competitionRows = new Map<string, Record<string, unknown>>();
+  for (const row of rows) {
+    const embedded = row.competitions as Record<string, unknown> | null | undefined;
+    if (embedded) competitionRows.set(String(embedded.id), embedded);
+  }
 
-  const competitions = (competitionRows ?? []).map((row) => ({
+  const competitions = [...competitionRows.values()].map((row) => ({
     id: String(row.id),
     nombre: String(row.nombre),
     tipo: row.tipo as Competition["tipo"],
@@ -136,6 +144,37 @@ export const refereeService = {
       query.range(from, to),
     );
     return data.map((r) => mapReferee(r));
+  },
+
+  /**
+   * El censo para un desplegable: los mismos jueces, en el mismo orden y con
+   * el mismo alcance por zona que `getReferees({ user })`, pero solo con las
+   * cuatro columnas que usa un selector. `select("*")` traía las estadísticas
+   * por año (JSONB), el domicilio y las notas de cada juez para pintar un
+   * nombre.
+   */
+  getRefereeOptions: async (params?: { user?: SessionUser }): Promise<RefereeOption[]> => {
+    // Se mantiene: el estado decide quién puede pedir un ascenso, y una
+    // sanción vencida tiene que haberse levantado antes de leerlo. Va
+    // limitado a una vez cada pocos minutos por instancia.
+    await expireStaleSanctions();
+    const scope = zoneScopeOf(params?.user);
+    if (scope.kind === "unresolved") return [];
+    // Mismo desempate por id que `getReferees`: sin él la paginación puede
+    // duplicar o saltarse jueces con el mismo nombre.
+    let query = db()
+      .from("referees")
+      .select("id, nombre, nivel, estado")
+      .order("nombre")
+      .order("id");
+    if (scope.kind === "zone") query = query.eq("zona", scope.code);
+    const data = await fetchAllPagesOf<Record<string, unknown>>("referees", (from, to) =>
+      query.range(from, to),
+    );
+    return data.map((row) => {
+      const r = mapReferee(row);
+      return { id: r.id, nombre: r.nombre, nivel: r.nivel, estado: r.estado };
+    });
   },
 
   getReferee: async (id: string): Promise<Referee | undefined> => {
@@ -325,20 +364,32 @@ export const refereeService = {
     getReportsFn: (id: string) => Promise<import("@/lib/types").RefereeReport[]>,
   ): Promise<JudgeProfile | undefined> => {
     const supabase = db();
-    const { data, error } = await supabase
-      .from("referees")
-      .select("*")
-      .eq("id", refereeId)
-      .single();
-    if (error && error.code !== "PGRST116") throw new Error(`referees: ${error.message}`);
-    const referee = data ? mapReferee(data as Record<string, unknown>) : undefined;
-    if (!referee) return undefined;
-    const [exams, reports, sanctions, competitionHistory] = await Promise.all([
+    // Las cuatro lecturas del perfil solo necesitan el id, que ya se tiene:
+    // se lanzan a la vez que la ficha en vez de esperarla. allSettled, y la
+    // ficha se mira primero, para que el error que se cuenta sea el mismo de
+    // antes («referees: …» si falla la ficha) y un juez inexistente siga
+    // devolviendo undefined aunque otra lectura haya fallado.
+    const [refRes, examsRes, reportsRes, sanctionsRes, historyRes] = await Promise.allSettled([
+      supabase.from("referees").select("*").eq("id", refereeId).single(),
       getExamsFn(refereeId),
       getReportsFn(refereeId),
       listRefereeSanctions(refereeId),
       loadRefereeCompetitionHistory(refereeId),
     ]);
+    if (refRes.status === "rejected") throw refRes.reason;
+    const { data, error } = refRes.value;
+    if (error && error.code !== "PGRST116") throw new Error(`referees: ${error.message}`);
+    const referee = data ? mapReferee(data as Record<string, unknown>) : undefined;
+    if (!referee) return undefined;
+    // Mismo orden que el Promise.all de antes: el primer fallo es el que sale.
+    if (examsRes.status === "rejected") throw examsRes.reason;
+    if (reportsRes.status === "rejected") throw reportsRes.reason;
+    if (sanctionsRes.status === "rejected") throw sanctionsRes.reason;
+    if (historyRes.status === "rejected") throw historyRes.reason;
+    const exams = examsRes.value;
+    const reports = reportsRes.value;
+    const sanctions = sanctionsRes.value;
+    const competitionHistory = historyRes.value;
     return computeJudgeProfile(referee, exams, reports, sanctions, competitionHistory);
   },
 

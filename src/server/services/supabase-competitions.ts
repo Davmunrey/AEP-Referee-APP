@@ -15,13 +15,13 @@ import {
 } from "@/lib/roster-conflicts";
 import type { Competition, RosterSession, SessionUser } from "@/lib/types";
 import { CompetitionHasClaimsError, UserFacingServiceError } from "@/lib/competitions/service-types";
-import { mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
+import { assignmentsFromRows, mapCompetition, competitionPatchToDb } from "@/server/db/mappers";
 import { zoneVisibilityFilter, zoneScopeOf } from "@/lib/zone-scope";
 import {
-  cachedLoadAllAssignments,
+  chunkList,
   db,
   fetchAllPagesOf,
-  fetchAllRowsIn,
+  IN_FILTER_CHUNK,
   isMissingTableError,
   hasApprovalCompetitionColumns,
   hasHistoryCompetitionColumn,
@@ -44,6 +44,29 @@ function enrichCompetitionRows(
   });
 }
 
+/**
+ * Las asignaciones viajan incrustadas en la fila del campeonato (PostgREST
+ * sigue la FK `roster_assignments.competition_id`). Antes la lista leía la
+ * tabla `roster_assignments` ENTERA, de todas las temporadas, en páginas de
+ * 1000 que se pedían una detrás de otra: cada temporada nueva añadía viajes
+ * secuenciales a /competitions y /approvals, y el delegado de zona pagaba el
+ * censo nacional para quedarse con una quinta parte.
+ *
+ * El tope de 1000 filas de PostgREST (`max-rows`) solo recorta el nivel
+ * superior, no los arrays incrustados, así que cada página de campeonatos trae
+ * sus asignaciones completas y la cobertura sale de las mismas filas que antes.
+ */
+const ASSIGNMENTS_EMBED = "roster_assignments(slot_key, referee_id)";
+
+function enrichEmbeddedCompetitionRows(rows: Record<string, unknown>[]): Competition[] {
+  const assignmentsByComp = new Map<string, Record<string, string>>();
+  for (const row of rows) {
+    const embedded = (row.roster_assignments ?? []) as { slot_key: string; referee_id: string }[];
+    assignmentsByComp.set(String(row.id), assignmentsFromRows(embedded));
+  }
+  return enrichCompetitionRows(rows, assignmentsByComp);
+}
+
 export const competitionService = {
   getCompetitions: async (user?: SessionUser): Promise<Competition[]> => {
     const supabase = db();
@@ -54,22 +77,65 @@ export const competitionService = {
     // calendario— haciendo desaparecer los campeonatos más recientes de las
     // mismas cuatro pantallas. El desempate por `id` mantiene el orden estable
     // entre páginas cuando varios comparten fecha.
-    const compQuery = supabase.from("competitions").select("*").order("fecha").order("id");
-    const [data, assignmentsByComp] = await Promise.all([
-      fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
-        compQuery.range(from, to),
-      ),
-      cachedLoadAllAssignments(),
-    ]);
-    const list = enrichCompetitionRows(data, assignmentsByComp);
+    //
     // Fail-closed: sin zona en el perfil, `&& user.zona` se saltaba el filtro
     // entero y el delegado veía los campeonatos de toda España.
-    if (user?.role === "delegado_zona") {
-      const userZone = resolveZoneCode(user.zona);
-      if (!userZone) return [];
-      return list.filter((c) => resolveZoneCode(c.zona) === userZone);
-    }
-    return list;
+    const scope = zoneScopeOf(user);
+    if (scope.kind === "unresolved") return [];
+    let compQuery = supabase
+      .from("competitions")
+      .select(`*, ${ASSIGNMENTS_EMBED}`)
+      .order("fecha")
+      .order("id");
+    // `competitions.zona` es FK a `zones(code)`, que desde la 013 solo guarda
+    // los cinco códigos macro: filtrar en la base equivale al antiguo
+    // `resolveZoneCode(c.zona) === zona` en memoria (igual que getNavCountsFast)
+    // y el delegado deja de descargarse el calendario de toda España.
+    if (scope.kind === "zone") compQuery = compQuery.eq("zona", scope.code);
+    const data = await fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
+      compQuery.range(from, to),
+    );
+    return enrichEmbeddedCompetitionRows(data);
+  },
+
+  /**
+   * Estado de cobertura de unos pocos campeonatos, por id. La bandeja de
+   * aprobaciones solo pinta el estado del campeonato de la propuesta elegida y
+   * para eso cargaba `getCompetitions` entero —todas las temporadas, con sus
+   * plantillas y asignaciones— y lo mandaba al navegador. El estado sale de la
+   * MISMA cuenta que en `getCompetitions` (plantilla + asignaciones), no de la
+   * columna `estado`, que puede ir atrasada si `syncCompetitionCoverage` falló.
+   */
+  getCompetitionEstados: async (
+    ids: string[],
+    user?: SessionUser,
+  ): Promise<Record<string, Competition["estado"]>> => {
+    // Mismo ámbito que `getCompetitions`: un campeonato de otra zona no sale y
+    // la bandeja cae en «Incompleto», como cuando no estaba en la lista.
+    const scope = zoneScopeOf(user);
+    if (scope.kind === "unresolved") return {};
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (unique.length === 0) return {};
+    const supabase = db();
+    // Troceado para que la URL del `.in()` no reviente, y las tandas en
+    // paralelo: el histórico de propuestas acaba citando casi todos los
+    // campeonatos y en serie volvería a crecer con cada temporada.
+    const tandas = await Promise.all(
+      chunkList(unique, IN_FILTER_CHUNK).map((chunk) => {
+        let query = supabase
+          .from("competitions")
+          .select(`id, tipo, requeridos, template, ${ASSIGNMENTS_EMBED}`)
+          .in("id", chunk)
+          .order("id");
+        if (scope.kind === "zone") query = query.eq("zona", scope.code);
+        return fetchAllPagesOf<Record<string, unknown>>("competitions", (from, to) =>
+          query.range(from, to),
+        );
+      }),
+    );
+    return Object.fromEntries(
+      enrichEmbeddedCompetitionRows(tandas.flat()).map((c) => [c.id, c.estado]),
+    );
   },
 
   /** Lista ligera {id, nombre} para desplegables: sin escanear asignaciones ni
@@ -477,9 +543,12 @@ export const competitionService = {
 
     // Solape de rangos en SQL: empieza antes de que acabemos y acaba después de
     // que empecemos. `fecha_fin` es NOT NULL en el esquema.
+    // Los jueces de cada campeonato solapado vienen incrustados en la misma
+    // respuesta: antes eran un tercer viaje (y con `select *`) encadenado
+    // detrás de este, en cada carga y cada refresco de la tarima.
     const { data: others, error: othersError } = await supabase
       .from("competitions")
-      .select("id, nombre, fecha, fecha_fin")
+      .select("id, nombre, fecha, fecha_fin, roster_assignments(referee_id)")
       .neq("id", competitionId)
       .lte("fecha", range.end)
       .gte("fecha_fin", range.start);
@@ -492,21 +561,15 @@ export const competitionService = {
     }));
     if (overlapping.length === 0) return {};
 
-    // `roster_assignments` no tiene columna `id`: se ordena por `slot_key`, que
-    // sí forma parte de su clave primaria.
-    const rows = await fetchAllRowsIn(
-      "roster_assignments",
-      "competition_id",
-      overlapping.map((c) => c.id),
-      "slot_key",
-    );
     return buildRefereeBusyMap({
       competition: { id: competitionId, fecha: range.start, fechaFin: range.end },
       others: overlapping,
-      assignments: rows.map((row) => ({
-        competitionId: String(row.competition_id),
-        refereeId: String(row.referee_id),
-      })),
+      assignments: (others ?? []).flatMap((row) =>
+        ((row.roster_assignments ?? []) as { referee_id: unknown }[]).map((a) => ({
+          competitionId: String(row.id),
+          refereeId: String(a.referee_id),
+        })),
+      ),
     });
   },
 

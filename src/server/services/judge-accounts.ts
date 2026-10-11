@@ -110,13 +110,21 @@ async function readCodes(refereeIds: string[]): Promise<Map<string, StoredCode>>
     }
     return out;
   }
-  for (let i = 0; i < refereeIds.length; i += 200) {
-    const { data, error } = await createAdminClient()
-      .from("judge_access_codes")
-      .select("referee_id, code_hash, expires_at, attempts")
-      .in("referee_id", refereeIds.slice(i, i + 200));
-    if (error) throw new Error(`judge_access_codes: ${error.message}`);
-    for (const r of data ?? []) {
+  // Los tramos de 200 no dependen unos de otros: se piden a la vez. Cada id
+  // tiene como mucho un código, así que ningún tramo llega al tope de 1000
+  // filas, y el Map se rellena por clave, sin depender del orden de llegada.
+  const tramos = await Promise.all(
+    idChunks(refereeIds).map(async (trozo) => {
+      const { data, error } = await createAdminClient()
+        .from("judge_access_codes")
+        .select("referee_id, code_hash, expires_at, attempts")
+        .in("referee_id", trozo);
+      if (error) throw new Error(`judge_access_codes: ${error.message}`);
+      return data ?? [];
+    }),
+  );
+  for (const rows of tramos) {
+    for (const r of rows) {
       out.set(String(r.referee_id), {
         refereeId: String(r.referee_id),
         codeHash: String(r.code_hash),
@@ -125,6 +133,13 @@ async function readCodes(refereeIds: string[]): Promise<Map<string, StoredCode>>
       });
     }
   }
+  return out;
+}
+
+/** Trozos de 200 ids: los `.in()` largos rompen el límite de URL de PostgREST. */
+function idChunks(ids: string[]): string[][] {
+  const out: string[][] = [];
+  for (let i = 0; i < ids.length; i += 200) out.push(ids.slice(i, i + 200));
   return out;
 }
 
@@ -333,20 +348,34 @@ export async function getJudgeAccessStatuses(
   if (linked.length === 0) return { statuses, codeExpiry };
 
   const active = new Map<string, boolean>();
+  let codes: Map<string, StoredCode>;
   if (!isSupabaseConfigured()) {
     for (const r of linked) active.set(r.userId!, memoryActive.get(r.userId!) !== false);
+    codes = await readCodes(linked.map((r) => r.id));
   } else {
+    // Perfiles (por cuenta) y códigos (por ficha) no dependen entre sí: antes
+    // iban uno detrás de otro, y cada tramo de 200 también, así que el
+    // directorio pagaba 2 viajes como mínimo después de haber cargado ya el
+    // censo. Ahora es uno. Cualquier error sigue lanzando, como antes.
     const ids = linked.map((r) => r.userId!);
-    for (let i = 0; i < ids.length; i += 200) {
-      const { data, error } = await createAdminClient()
-        .from("profiles")
-        .select("id, activo, role")
-        .in("id", ids.slice(i, i + 200));
-      if (error) throw new Error(`profiles: ${error.message}`);
-      for (const p of data ?? []) if (p.role === "juez") active.set(String(p.id), Boolean(p.activo));
+    const [profileChunks, storedCodes] = await Promise.all([
+      Promise.all(
+        idChunks(ids).map(async (trozo) => {
+          const { data, error } = await createAdminClient()
+            .from("profiles")
+            .select("id, activo, role")
+            .in("id", trozo);
+          if (error) throw new Error(`profiles: ${error.message}`);
+          return data ?? [];
+        }),
+      ),
+      readCodes(linked.map((r) => r.id)),
+    ]);
+    for (const rows of profileChunks) {
+      for (const p of rows) if (p.role === "juez") active.set(String(p.id), Boolean(p.activo));
     }
+    codes = storedCodes;
   }
-  const codes = await readCodes(linked.map((r) => r.id));
   for (const r of linked) {
     const a = active.get(r.userId!);
     if (a === undefined) continue;

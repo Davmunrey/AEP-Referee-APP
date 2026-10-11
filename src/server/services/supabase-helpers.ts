@@ -271,25 +271,65 @@ export async function loadCrossZoneMap(
  *
  * El orden es explícito porque sin ORDER BY las páginas pueden solaparse o
  * saltarse filas entre consultas.
+ *
+ * Las páginas ya no van una detrás de otra: la primera pide además el total
+ * (`count: "exact"`) y el resto se piden en paralelo, en tandas acotadas. Era
+ * el camino crítico de /analytics, del listado y del calendario —una ida y
+ * vuelta por cada mil filas, y la tabla crece con cada temporada—. El orden
+ * de llegada da igual: las filas se agrupan en un mapa por campeonato.
  */
 const ASSIGNMENTS_PAGE_SIZE = 1000;
+/** Peticiones simultáneas como máximo: un histórico grande no debe abrir una
+ * ráfaga de decenas de lecturas contra PostgREST en cada visita. */
+const ASSIGNMENTS_PAGE_CONCURRENCY = 6;
+
+type AssignmentRow = { competition_id: unknown; slot_key: string; referee_id: string };
 
 export async function loadAllAssignments(): Promise<Map<string, AssignmentsMap>> {
   const supabase = db();
-  const rows: { competition_id: unknown; slot_key: string; referee_id: string }[] = [];
-  for (let from = 0; ; from += ASSIGNMENTS_PAGE_SIZE) {
-    const { data, error } = await supabase
+  const page = (from: number, withCount = false) =>
+    supabase
       .from("roster_assignments")
-      .select("competition_id, slot_key, referee_id")
+      .select("competition_id, slot_key, referee_id", withCount ? { count: "exact" } : undefined)
       .order("competition_id", { ascending: true })
       .order("slot_key", { ascending: true })
       .range(from, from + ASSIGNMENTS_PAGE_SIZE - 1);
-    // Antes se descartaba el error: un fallo de red devolvía un mapa vacío que
-    // la app interpretaba como «ningún juez asignado en toda la temporada».
-    if (error) throw new Error(`roster_assignments: ${error.message}`);
-    const page = data ?? [];
-    rows.push(...page);
-    if (page.length < ASSIGNMENTS_PAGE_SIZE) break;
+  // Antes se descartaba el error: un fallo de red devolvía un mapa vacío que
+  // la app interpretaba como «ningún juez asignado en toda la temporada».
+  const pageRows = (res: { data: unknown; error: { message: string } | null }) => {
+    if (res.error) throw new Error(`roster_assignments: ${res.error.message}`);
+    return (res.data ?? []) as AssignmentRow[];
+  };
+
+  const first = await page(0, true);
+  let last = pageRows(first);
+  const rows: AssignmentRow[] = [...last];
+  let next = ASSIGNMENTS_PAGE_SIZE;
+
+  // En paralelo solo cuando se conoce el total. Sin él (un doble de pruebas,
+  // un PostgREST que no lo devuelva) se sigue en serie como siempre.
+  const total = (first as { count?: number | null }).count;
+  if (last.length === ASSIGNMENTS_PAGE_SIZE && typeof total === "number" && total > ASSIGNMENTS_PAGE_SIZE) {
+    const offsets: number[] = [];
+    for (let f = ASSIGNMENTS_PAGE_SIZE; f < total; f += ASSIGNMENTS_PAGE_SIZE) offsets.push(f);
+    for (let i = 0; i < offsets.length; i += ASSIGNMENTS_PAGE_CONCURRENCY) {
+      const pages = await Promise.all(
+        offsets.slice(i, i + ASSIGNMENTS_PAGE_CONCURRENCY).map((f) => page(f)),
+      );
+      for (const res of pages) {
+        last = pageRows(res);
+        rows.push(...last);
+      }
+    }
+    next = offsets[offsets.length - 1]! + ASSIGNMENTS_PAGE_SIZE;
+  }
+
+  // Cola en serie: sin total, total múltiplo exacto de mil, o filas insertadas
+  // después del recuento. Una página llena obliga a preguntar por la siguiente.
+  while (last.length === ASSIGNMENTS_PAGE_SIZE) {
+    last = pageRows(await page(next));
+    rows.push(...last);
+    next += ASSIGNMENTS_PAGE_SIZE;
   }
   const grouped = new Map<string, { slot_key: string; referee_id: string }[]>();
   for (const row of rows) {
@@ -485,27 +525,51 @@ export async function pushHistory(entry: Omit<RosterHistoryEntry, "id">) {
 export async function applyHealthHistory(
   health: import("@/lib/types").OperationalHealth,
 ): Promise<void> {
-  const supabase = db();
-  const { data: last, error } = await supabase
+  const read = await readLastHealthSnapshot();
+  if (!read) return;
+  if (applyLastHealthSnapshot(health, read.last)) await recordHealthSnapshot(health);
+}
+
+/** Última captura del índice de salud. Partido de `applyHealthHistory` para
+ * que el panel lo lea en paralelo con el resto de sus lecturas: no depende de
+ * nada calculado. `null` = no se pudo leer (tabla ausente, fallo): degrada
+ * igual que antes, sin delta y sin registrar. */
+export async function readLastHealthSnapshot(): Promise<
+  { last: { score?: unknown; captured_at?: unknown } | null } | null
+> {
+  const { data, error } = await db()
     .from("health_snapshots")
     .select("score, captured_at")
     .order("captured_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error) return;
+  if (error) return null;
+  return { last: (data as { score?: unknown; captured_at?: unknown } | null) ?? null };
+}
+
+/** Rellena `previousScore`/`delta` con la última captura y dice si toca
+ * registrar una nueva (más de seis horas desde la anterior). */
+export function applyLastHealthSnapshot(
+  health: import("@/lib/types").OperationalHealth,
+  last: { score?: unknown; captured_at?: unknown } | null,
+): boolean {
   if (last && typeof last.score === "number") {
     health.previousScore = last.score;
     health.delta = health.score - last.score;
   }
-  const lastMs = last?.captured_at ? new Date(last.captured_at).getTime() : 0;
+  const lastMs = last?.captured_at ? new Date(String(last.captured_at)).getTime() : 0;
   const SIX_HOURS = 6 * 60 * 60 * 1000;
-  if (Date.now() - lastMs > SIX_HOURS) {
-    await supabase.from("health_snapshots").insert({
-      score: health.score,
-      status: health.status,
-      factors: health.factors,
-    });
-  }
+  return Date.now() - lastMs > SIX_HOURS;
+}
+
+export async function recordHealthSnapshot(
+  health: import("@/lib/types").OperationalHealth,
+): Promise<void> {
+  await db().from("health_snapshots").insert({
+    score: health.score,
+    status: health.status,
+    factors: health.factors,
+  });
 }
 
 export { mapActivity };

@@ -127,6 +127,18 @@ export async function getCompetitions(user?: SessionUser): Promise<Competition[]
   return list;
 }
 
+/** Gemelo de `getCompetitionEstados` en Supabase: mismo ámbito y misma cuenta
+ * de cobertura que `getCompetitions`, recortado a los ids pedidos. */
+export async function getCompetitionEstados(
+  ids: string[],
+  user?: SessionUser,
+): Promise<Record<string, Competition["estado"]>> {
+  const wanted = new Set(ids);
+  return Object.fromEntries(
+    (await getCompetitions(user)).filter((c) => wanted.has(c.id)).map((c) => [c.id, c.estado]),
+  );
+}
+
 export async function getCompetitionOptions(
   user?: SessionUser,
 ): Promise<{ id: string; nombre: string }[]> {

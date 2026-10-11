@@ -197,11 +197,29 @@ export async function solicitudesParaUsuario(user: Actor): Promise<SolicitudDeZo
     const code = resolveZoneCode(user.zona);
     pendientes = code ? await dataService.listZonasPendientes(code) : [];
   } else return [];
+  if (pendientes.length === 0) return [];
+  // Cada convocatoria y cada campeonato se leen una sola vez, todos a la vez.
+  // Antes eran dos o tres viajes seguidos POR petición, y la portada esperaba
+  // a todos: las pendientes de convocatorias ya cerradas no las resuelve nadie
+  // y se acumulan (hasta 4 por ampliación automática, la misma convocatoria).
+  const convocatorias = new Map(
+    (await dataService.listConvocatoriasPorIds(pendientes.map((p) => p.convocatoriaId))).map((c) => [c.id, c]),
+  );
+  // Solo los campeonatos de las que siguen abiertas, como antes.
+  const competitionIds = [
+    ...new Set([...convocatorias.values()].filter((c) => isConvocatoriaAbierta(c)).map((c) => c.competitionId)),
+  ];
+  const competitions = new Map(
+    await Promise.all(
+      competitionIds.map(async (id) => [id, await dataService.getCompetitionWithRoster(id)] as const),
+    ),
+  );
   const out: SolicitudDeZona[] = [];
+  // En el orden de `pendientes` (las más recientes primero).
   for (const p of pendientes) {
-    const c = await dataService.getConvocatoria(p.convocatoriaId);
+    const c = convocatorias.get(p.convocatoriaId);
     if (!c || !isConvocatoriaAbierta(c)) continue;
-    const data = await dataService.getCompetitionWithRoster(c.competitionId);
+    const data = competitions.get(c.competitionId);
     if (!data || isCompetitionPast(data.competition)) continue;
     out.push({
       ...p,
@@ -259,31 +277,50 @@ export async function actualizarConvocatoria(
 
 // ── Portal ─────────────────────────────────────────────────────────────────
 
-async function vistaParaJuez(
-  convocatoria: Convocatoria,
-  refereeId: string,
-  ctx: {
-    referee: import("@/lib/types").Referee;
-    tieneSancionActiva: boolean;
-    inscritas: Set<string>;
-  },
-): Promise<PortalConvocatoria | null> {
+/**
+ * Lo que una convocatoria enseña al juez y no depende de su ficha: el
+ * campeonato, la plantilla y si esas fechas ya está designado en otro. Se
+ * separa para pedirlo a la vez que su sanción y sus inscripciones.
+ */
+async function vistaBase(convocatoria: Convocatoria, refereeId: string) {
+  // El mapa de ocupación solo necesita el id del campeonato: se pide junto a
+  // la tarima, no después. Su error se aplaza: como antes, un campeonato que
+  // no existe o ya pasó devuelve `null` sin depender de él.
+  const busyPromise = dataService.getRefereeBusyMap(convocatoria.competitionId);
+  busyPromise.catch(() => undefined);
   const data = await dataService.getCompetitionWithRoster(convocatoria.competitionId);
   if (!data || isCompetitionPast(data.competition)) return null;
   const { competition, roster } = data;
   // Solo designaciones de tarimas APROBADAS: un borrador de otro delegado no
   // se enseña al juez (el mismo criterio que «Mis sesiones»).
-  const busy = await dataService.getRefereeBusyMap(competition.id);
+  const busy = (await busyPromise)[refereeId] ?? [];
+  // Todas a la vez, pero se elige igual que el bucle de antes (que iba una a
+  // una): la primera aprobada en el orden del mapa, y un fallo de lectura solo
+  // cuenta si el bucle habría llegado a esa.
+  const others = await Promise.allSettled(busy.map((b) => dataService.getCompetition(b.competitionId)));
   let designadoEn: string | undefined;
-  for (const b of busy[refereeId] ?? []) {
-    const other = await dataService.getCompetition(b.competitionId);
-    if (other && isRosterLockedByApproval(other.aprobacion)) {
+  for (const [i, b] of busy.entries()) {
+    const other = others[i]!;
+    if (other.status === "rejected") throw other.reason;
+    if (other.value && isRosterLockedByApproval(other.value.aprobacion)) {
       designadoEn = b.competitionName;
       break;
     }
   }
+  return { convocatoria, competition, template: roster.template, designadoEn };
+}
+
+function vistaParaJuez(
+  base: NonNullable<Awaited<ReturnType<typeof vistaBase>>>,
+  ctx: {
+    referee: import("@/lib/types").Referee;
+    tieneSancionActiva: boolean;
+    inscritas: Set<string>;
+  },
+): PortalConvocatoria {
+  const { convocatoria, competition, template, designadoEn } = base;
   const general = bloqueoGeneral({ referee: ctx.referee, tieneSancionActiva: ctx.tieneSancionActiva });
-  const byKey = new Map(roster.template.map((s) => [s.sesion, s]));
+  const byKey = new Map(template.map((s) => [s.sesion, s]));
   return {
     id: convocatoria.id,
     competitionId: competition.id,
@@ -314,14 +351,18 @@ async function vistaParaJuez(
   };
 }
 
-async function contextoDeJuez(refereeId: string, convocatoriaIds: string[]) {
-  const [referee, sanction, mias] = await Promise.all([
-    dataService.getReferee(refereeId),
+/**
+ * La parte de la vista que depende del juez (sanción e inscripciones), a la
+ * vez que la de cada convocatoria. La ficha llega ya leída: antes se volvía a
+ * pedir aquí, y las vistas no empezaban hasta tenerlo todo.
+ */
+async function contextoYBases(refereeId: string, convocatorias: Convocatoria[]) {
+  const [sanction, mias, bases] = await Promise.all([
     dataService.getActiveSanction(refereeId),
-    dataService.listInscripcionesDeJuez(refereeId, convocatoriaIds),
+    dataService.listInscripcionesDeJuez(refereeId, convocatorias.map((c) => c.id)),
+    Promise.all(convocatorias.map((c) => vistaBase(c, refereeId))),
   ]);
-  if (!referee) throw new UserFacingServiceError("No encontramos tu ficha del censo.", 404);
-  return { referee, tieneSancionActiva: Boolean(sanction), mias };
+  return { tieneSancionActiva: Boolean(sanction), mias, bases };
 }
 
 /** Las convocatorias abiertas para el juez (su zona, aceptada). */
@@ -329,17 +370,19 @@ export async function convocatoriasParaJuez(refereeId: string): Promise<PortalCo
   const referee = await dataService.getReferee(refereeId);
   if (!referee) return [];
   const abiertas = await dataService.listConvocatoriasAbiertasParaZona(referee.zona, todayIso());
+  // Sin convocatorias no se lee ni la sanción: su fallo no tumba la lista vacía.
   if (abiertas.length === 0) return [];
-  const ctx = await contextoDeJuez(refereeId, abiertas.map((c) => c.id));
-  const views = await Promise.all(
-    abiertas.map((c) =>
-      vistaParaJuez(c, refereeId, {
-        ...ctx,
-        inscritas: new Set(ctx.mias.filter((i) => i.convocatoriaId === c.id).map((i) => i.sesion)),
+  const { tieneSancionActiva, mias, bases } = await contextoYBases(refereeId, abiertas);
+  const views = bases
+    .filter((b): b is NonNullable<typeof b> => b !== null)
+    .map((b) =>
+      vistaParaJuez(b, {
+        referee,
+        tieneSancionActiva,
+        inscritas: new Set(mias.filter((i) => i.convocatoriaId === b.convocatoria.id).map((i) => i.sesion)),
       }),
-    ),
-  );
-  return views.filter((v): v is PortalConvocatoria => v !== null).sort((a, b) => a.fecha.localeCompare(b.fecha));
+    );
+  return views.sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
 
 /** Una convocatoria concreta, si el juez la puede ver. */
@@ -349,11 +392,13 @@ export async function convocatoriaParaJuez(refereeId: string, convocatoriaId: st
     dataService.getReferee(refereeId),
   ]);
   // Una convocatoria que no llega a su zona no existe para él (404, no 403:
-  // no se confirma que exista).
+  // no se confirma que exista). Se comprueba antes de leer nada más.
   if (!convocatoria || !referee || !zonaConvocada(convocatoria, referee.zona)) return null;
   if (convocatoria.estado === "cancelada") return null;
-  const ctx = await contextoDeJuez(refereeId, [convocatoria.id]);
-  return vistaParaJuez(convocatoria, refereeId, { ...ctx, inscritas: new Set(ctx.mias.map((i) => i.sesion)) });
+  const { tieneSancionActiva, mias, bases } = await contextoYBases(refereeId, [convocatoria]);
+  const base = bases[0];
+  if (!base) return null;
+  return vistaParaJuez(base, { referee, tieneSancionActiva, inscritas: new Set(mias.map((i) => i.sesion)) });
 }
 
 /** El juez se apunta a una sesión. Devuelve la convocatoria actualizada. */

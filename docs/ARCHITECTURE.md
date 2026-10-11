@@ -226,6 +226,17 @@ Tailwind breakpoints utilizados:
 - **Panel de inicio**: lista ligera de campeonatos (sin plantilla) para calendario y actividad; plantilla y asignaciones solo de los vigentes (`loadAssignmentsFor`, en tandas de 100 ids). Antes descargaba en cada visita todas las plantillas y asignaciones del histórico.
 - **Tarima**: la página carga campeonato y tarima con `getCompetitionWithRoster` (2 consultas; antes 6). Las escrituras validan con `getCompetitionRow` (sin recalcular la cobertura) y, al asignar, la cobertura se calcula con los datos releídos tras escribir y se guarda en paralelo con el historial.
 
+## Rendimiento (v2.15)
+
+- **Región**: funciones en `lhr1` (`vercel.json`), junto a Supabase eu-west-2.
+- **Sesión**: `getClaims()` en el middleware y en `getSession`. Con claves JWT asimétricas la firma se verifica en local; con el secreto compartido sigue preguntando a Auth. El perfil se lee en cada petición y trae incrustada la ficha del juez (`referees(id, zona)`), así que el portal no hace una segunda lectura.
+- **Incrustación de PostgREST** en vez de lecturas encadenadas: campeonatos con sus asignaciones (`getCompetitions`, sin barrer `roster_assignments` entera), convocatorias con sus zonas, historial del juez, mapa de ocupación de la tarima. `max-rows` solo recorta el nivel superior, no los arrays incrustados.
+- **Sin N+1 en el panel**: las solicitudes de zona pendientes se leen en una tanda (`listConvocatoriasPorIds`).
+- **Lecturas independientes en paralelo** (`Promise.all`) en ficha del juez, compensación, mutaciones de la tarima, analítica, soporte y portal. Cuando el orden de los errores importa se usa `Promise.allSettled` y se comprueban en el orden de antes.
+- **Menos datos al navegador**: desplegables con `getRefereeOptions` (4 columnas) en vez del censo con estadísticas; la tarima recibe los jueces sin datos personales; aprobaciones recibe solo el estado de los campeonatos citados (`getCompetitionEstados`).
+- **Menos repintados**: un solo temporizador (`refresh-coalescer.ts`) para los refrescos propios y los de Realtime; supabase-js se carga después de hidratar (`AppRealtimeSync` con `ssr: false`). La campana sí refresca tras marcar leídos: marcar avisos no genera evento en tiempo real (044) y el portal no escucha cambios.
+- **Portal** con `loading.tsx`: cada pestaña responde al momento mientras llegan los datos.
+
 ---
 
-**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.4
+**Producción:** [https://aep-tarima.vercel.app](https://aep-tarima.vercel.app) · v2.15

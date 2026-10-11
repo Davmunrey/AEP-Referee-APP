@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { request } from "@/lib/api/request";
 import type { BandejaNotificaciones } from "@/lib/notificaciones";
+import { marcarLeidas } from "./bandeja";
 import { cn } from "@/lib/utils";
 
 function hace(iso: string): string {
@@ -21,22 +22,42 @@ function hace(iso: string): string {
 
 /**
  * La campana de avisos. Llega con la bandeja ya leída en el servidor (sin
- * petición extra al cargar) y se actualiza con el refresco en tiempo real.
- * Abrirla marca como leídos los que había.
+ * petición extra al cargar) y se actualiza cada vez que el layout se vuelve a
+ * pintar en el servidor (un refresco en tiempo real, el de otra pantalla, una
+ * carga completa). Abrirla marca como leídos los que había.
  */
 export function NotificationBell({ initial, className }: { initial: BandejaNotificaciones; className?: string }) {
   const router = useRouter();
   const [bandeja, setBandeja] = useState(initial);
   useEffect(() => setBandeja(initial), [initial]);
+  // Los que eran nuevos al abrir: conservan el punto y la negrita mientras el
+  // menú siga abierto, aunque el PATCH ya los haya marcado leídos.
+  const [nuevosAlAbrir, setNuevosAlAbrir] = useState<ReadonlySet<string>>(() => new Set());
 
   const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setNuevosAlAbrir(new Set());
+      return;
+    }
     const vistos = bandeja.items.filter((n) => !n.leidaAt).map((n) => n.id);
-    if (!open || vistos.length === 0) return;
+    if (vistos.length === 0) return;
+    setNuevosAlAbrir(new Set(vistos));
     // Al abrir: se ven como nuevos esta vez y quedan leídos para la siguiente.
     // Solo los que se están enseñando: uno que haya llegado después, o que no
     // quepa en la lista, sigue sin leer.
+    //
+    // Hecho el PATCH, el globo baja aquí mismo (el servidor marca justo estos
+    // ids) y además se refresca la página. El refresco sigue haciendo falta:
+    // marcar avisos no avisa a nadie en tiempo real (044) y el portal no
+    // escucha cambios, así que es lo que trae los avisos llegados mientras
+    // tanto y lo que se impone a un refresco que leyó la bandeja antes del
+    // PATCH.
     void request("/notificaciones", { method: "PATCH", body: JSON.stringify({ ids: vistos }) })
-      .then(() => router.refresh())
+      .then(() => {
+        const ahora = new Date().toISOString();
+        setBandeja((b) => marcarLeidas(b, vistos, ahora));
+        router.refresh();
+      })
       .catch(() => undefined);
   };
 
@@ -63,11 +84,12 @@ export function NotificationBell({ initial, className }: { initial: BandejaNotif
         ) : (
           <ul className="max-h-[60vh] divide-y divide-border-muted overflow-y-auto">
             {bandeja.items.map((n) => {
+              const nuevo = !n.leidaAt || nuevosAlAbrir.has(n.id);
               const body = (
                 <>
                   <div className="flex items-start gap-2">
-                    {!n.leidaAt && <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Nuevo" />}
-                    <p className={cn("min-w-0 flex-1 text-sm", n.leidaAt ? "text-foreground-secondary" : "font-medium text-foreground")}>
+                    {nuevo && <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Nuevo" />}
+                    <p className={cn("min-w-0 flex-1 text-sm", nuevo ? "font-medium text-foreground" : "text-foreground-secondary")}>
                       {n.titulo}
                     </p>
                   </div>

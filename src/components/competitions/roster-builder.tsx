@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, ChevronRight, FileUp } from "lucide-react";
 import { parseSlotKey } from "@/lib/roster-template";
 import { isConvocatoriaAbierta, type ConvocatoriaStaffView, type DesignacionRespuesta } from "@/lib/convocatorias";
+import { cancelServerRefreshRequest, requestServerRefresh } from "@/lib/realtime/sync-events";
 // Diálogos/editores pesados: se cargan bajo demanda (al abrirlos), no en el
 // bundle inicial de la ruta de tarima (la más pesada de la app).
 // Solo se ve en el paso «Revisión»: no tiene por qué ir en la carga inicial.
@@ -210,22 +211,33 @@ export function RosterBuilder({
   const { requeridos: totalSlots, confirmados: filledSlots, openSlots, pct: fillPct } = coverage;
   // Huecos definidos por la plantilla (sin el fallback de `requeridos`).
   const templateSlots = useMemo(() => countRequiredSlots(template), [template]);
+  const revisionLive = useMemo(() => ({ template, assignments, flags }), [template, assignments, flags]);
   const plantillaDone = templateSlots > 0;
   const asignacionDone = filledSlots > 0;
 
   // Reconcilia los datos del servidor (estado/cobertura de la competición) tras
   // guardar. Debounced: al rellenar una tarima se hacen muchas asignaciones
   // seguidas; en vez de recargar todo el árbol en cada una (lento), se coalescen
-  // en un único refresco ~800 ms después de la última. El estado local ya se
+  // en un único refresco poco después de la última. El estado local ya se
   // actualiza al instante desde la respuesta de la API.
+  //
+  // El refresco se pide a AppRealtimeSync y no aquí: cada guardado sube
+  // `app_sync_state` y su eco en tiempo real ya refrescaba esta misma pestaña
+  // ~600 ms después, con lo que había dos repintados completos por clic (y el
+  // debounce de aquí no servía de nada). Así los dos van al mismo temporizador.
+  // Sin AppRealtimeSync montado, el debounce local de siempre.
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshCompetitionList = useCallback(() => {
+    if (requestServerRefresh()) return;
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
     refreshTimer.current = setTimeout(() => router.refresh(), 800);
   }, [router]);
   useEffect(
     () => () => {
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
+      // Igual que el temporizador local: al salir de la tarima no se repinta
+      // la pantalla siguiente por un guardado de esta.
+      cancelServerRefreshRequest();
     },
     [],
   );
@@ -233,7 +245,7 @@ export function RosterBuilder({
   // Los guardas viven en refs a propósito: como dependencias, al terminar una
   // transición `pending` pasaba a false y el efecto se volvía a ejecutar
   // reescribiendo el estado recién guardado con las props del último render del
-  // servidor, que aún son las anteriores (el refresh va con 800 ms de retardo).
+  // servidor, que aún son las anteriores (el refresh va con retardo).
   // El resultado era ver reaparecer el juez que acababas de quitar. Ahora el
   // efecto solo corre cuando cambian de verdad los datos del servidor.
   const isEditingRef = useRef(isEditing);
@@ -695,7 +707,7 @@ export function RosterBuilder({
         )}
         {workflowStep === "revision" && !isEditing && !readOnly ? (
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <RosterRevisionPanel competitionId={competition.id} filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} />
+            <RosterRevisionPanel competitionId={competition.id} filledSlots={filledSlots} totalSlots={totalSlots} fillPct={fillPct} violationCount={violationCount} openSlots={openSlots} onGoAssign={() => setWorkflowStep("asignacion")} live={revisionLive} />
           </div>
         ) : workflowStep === "plantilla" && !isEditing && templateSlots === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
@@ -856,7 +868,9 @@ export function RosterBuilder({
             setAvailabilityOpen(false);
             // Un único refresco al cerrar reconcilia el servidor, en vez de
             // recargar todo el árbol en cada clic (lo que hacía lentísimo marcar).
-            router.refresh();
+            // Va por el temporizador compartido: se funde con el eco en tiempo
+            // real de los últimos clics en vez de sumar otro repintado.
+            if (!requestServerRefresh()) router.refresh();
           }}
           onToggle={(id, confirmed) =>
             setConfirmedIds((prev) => {

@@ -11,7 +11,8 @@ export default async function ExamsPage() {
 
   const [exams, referees] = await Promise.all([
     dataService.getExams(undefined, user),
-    dataService.getReferees({ user }),
+    // Solo para el selector: id, nombre y nivel, sin la ficha entera.
+    dataService.getRefereeOptions({ user }),
   ]);
 
   const aprobados = exams.filter((e) => e.resultado === "Aprobado").length;

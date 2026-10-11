@@ -599,3 +599,10 @@ export interface SupportTicket {
   comments: SupportTicketComment[];
   commentCount: number;
 }
+
+/**
+ * Lo mínimo de un juez para un desplegable (ascensos, exámenes, informes).
+ * Viaja al navegador: sin teléfono, domicilio, notas ni las estadísticas por
+ * año, que eran casi todo el peso del censo y no se usaban.
+ */
+export type RefereeOption = Pick<Referee, "id" | "nombre" | "nivel" | "estado">;

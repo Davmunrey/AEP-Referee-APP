@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { api } from "@/lib/api/client";
 import { textareaFieldClass } from "@/lib/design-tokens";
-import type { PromotionRequest, Referee } from "@/lib/types";
+import type { PromotionRequest, RefereeOption } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 const NewPromotionDialog = dynamic(
   () => import("@/components/promotions/new-promotion-dialog").then((m) => m.NewPromotionDialog),
@@ -43,7 +43,7 @@ export function PromotionsBoard({
   initial: PromotionRequest[];
   canReview: boolean;
   canCreate: boolean;
-  referees: Referee[];
+  referees: RefereeOption[];
 }) {
   const [items, setItems] = useState(initial);
   const [pending, startTransition] = useTransition();

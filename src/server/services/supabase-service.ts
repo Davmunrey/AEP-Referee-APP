@@ -15,10 +15,12 @@ export const supabaseDataService = {
   getMeta: analyticsService.getMeta,
   getDashboard: analyticsService.getDashboard,
   getAnalytics: analyticsService.getAnalytics,
+  getAnalyticsWithCompetitions: analyticsService.getAnalyticsWithCompetitions,
   getRegulations: analyticsService.getRegulations,
 
   // ── Referees ──────────────────────────────────────────────────────────────
   getReferees: refereeService.getReferees,
+  getRefereeOptions: refereeService.getRefereeOptions,
   getReferee: refereeService.getReferee,
   getRefereesByIds: refereeService.getRefereesByIds,
   createReferee: refereeService.createReferee,
@@ -39,6 +41,7 @@ export const supabaseDataService = {
   // ── Competitions ──────────────────────────────────────────────────────────
   getCompetitions: competitionService.getCompetitions,
   getCompetitionOptions: competitionService.getCompetitionOptions,
+  getCompetitionEstados: competitionService.getCompetitionEstados,
   getCompetition: competitionService.getCompetition,
   getCompetitionWithRoster: competitionService.getCompetitionWithRoster,
   createCompetition: competitionService.createCompetition,
@@ -195,6 +198,7 @@ export const supabaseDataService = {
   getRespuestasDeJuez: convocatoriaService.getRespuestasDeJuez,
   setDesignacionRespuesta: convocatoriaService.setDesignacionRespuesta,
   clearDesignacionRespuestas: convocatoriaService.clearDesignacionRespuestas,
+  listConvocatoriasPorIds: convocatoriaService.listConvocatoriasPorIds,
 
   // ── Avisos (campana) ──────────────────────────────────────────────────────
   insertNotificaciones: notificacionService.insertNotificaciones,

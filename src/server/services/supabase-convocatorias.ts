@@ -7,12 +7,15 @@ import { resolveZoneCode } from "@/lib/aep-zones";
 import type { Convocatoria, ConvocatoriaZona, DesignacionRespuesta, Inscripcion, ZonaPendiente } from "@/lib/convocatorias";
 import { UserFacingServiceError } from "@/lib/competitions/service-types";
 import { todayIso } from "@/lib/business-date";
-import { db } from "./supabase-helpers";
+import { db, fetchAllRowsIn } from "./supabase-helpers";
 
 type Row = Record<string, unknown>;
 
 const CONV_COLS =
   "id, competition_id, estado, sesiones, cierra_el, mensaje, ampliar_dias_antes, ampliada_at, creada_por, creada_por_id, created_at";
+// Con sus zonas embebidas (una sola FK, sin ambigüedad): una lectura en vez
+// de dos seguidas, la fila y después `convocatoria_zonas`.
+const CONV_CON_ZONAS = `${CONV_COLS}, convocatoria_zonas(*)`;
 
 function mapZona(r: Row): ConvocatoriaZona {
   return {
@@ -65,22 +68,42 @@ async function withZonas(rows: Row[]): Promise<Convocatoria[]> {
   return rows.map((r) => mapConvocatoria(r, byConv.get(String(r.id)) ?? []));
 }
 
+/** Una fila leída con `CONV_CON_ZONAS`. */
+function mapConZonas(r: Row): Convocatoria {
+  const zonas = Array.isArray(r.convocatoria_zonas) ? (r.convocatoria_zonas as Row[]) : [];
+  return mapConvocatoria(r, zonas.map(mapZona));
+}
+
 async function getConvocatoria(id: string): Promise<Convocatoria | null> {
-  const { data, error } = await db().from("convocatorias").select(CONV_COLS).eq("id", id).maybeSingle();
+  const { data, error } = await db().from("convocatorias").select(CONV_CON_ZONAS).eq("id", id).maybeSingle();
   if (error) throw new Error(`convocatorias: ${error.message}`);
-  return data ? (await withZonas([data as Row]))[0]! : null;
+  return data ? mapConZonas(data as Row) : null;
+}
+
+/**
+ * Varias por id, de una vez y sin orden. La portada pregunta por cada petición
+ * de zona pendiente: una a una eran dos viajes por petición, y las pendientes
+ * de convocatorias ya cerradas se acumulan.
+ */
+async function listConvocatoriasPorIds(ids: string[]): Promise<Convocatoria[]> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return [];
+  // Troceado y paginado: un `.in()` largo o el corte de 1000 filas dejarían
+  // fuera convocatorias sin avisar.
+  const rows = await fetchAllRowsIn("convocatorias", "id", unique, "id", CONV_CON_ZONAS);
+  return rows.map(mapConZonas);
 }
 
 /** La convocatoria viva (abierta o cerrada) de un campeonato. */
 async function getLiveConvocatoria(competitionId: string): Promise<Convocatoria | null> {
   const { data, error } = await db()
     .from("convocatorias")
-    .select(CONV_COLS)
+    .select(CONV_CON_ZONAS)
     .eq("competition_id", competitionId)
     .neq("estado", "cancelada")
     .maybeSingle();
   if (error) throw new Error(`convocatorias: ${error.message}`);
-  return data ? (await withZonas([data as Row]))[0]! : null;
+  return data ? mapConZonas(data as Row) : null;
 }
 
 /** Abiertas, sin cerrar todavía, y aceptadas para esta zona. */
@@ -98,13 +121,14 @@ async function listConvocatoriasAbiertasParaZona(zona: string, desde: string): P
   if (ids.length === 0) return [];
   const { data, error } = await supabase
     .from("convocatorias")
-    .select(CONV_COLS)
+    .select(CONV_CON_ZONAS)
     .in("id", ids)
     .eq("estado", "abierta")
     .gte("cierra_el", desde)
     .order("cierra_el", { ascending: true });
   if (error) throw new Error(`convocatorias: ${error.message}`);
-  return withZonas((data ?? []) as Row[]);
+  // Todas sus zonas, no solo la filtrada: el portal decide con ellas.
+  return ((data ?? []) as Row[]).map(mapConZonas);
 }
 
 async function insertConvocatoria(input: Omit<Convocatoria, "id" | "createdAt">): Promise<Convocatoria> {
@@ -366,6 +390,7 @@ async function setDesignacionRespuesta(
 
 export const convocatoriaService = {
   getConvocatoria,
+  listConvocatoriasPorIds,
   getLiveConvocatoria,
   listConvocatoriasAbiertasParaZona,
   insertConvocatoria,
