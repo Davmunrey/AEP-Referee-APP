@@ -1,15 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { SessionUser } from "@/lib/types";
 import { HelpWidget } from "@/components/help/help-widget";
-import { AppRealtimeSync } from "@/components/realtime/app-realtime-sync";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 import type { BandejaNotificaciones } from "@/lib/notificaciones";
+
+// Bajo demanda y solo en cliente: importa el cliente de navegador de Supabase
+// (supabase-js entero: Realtime, GoTrue…, ~63 KB gz) y, cargado de forma
+// estática, metía todo eso en el JS que bloquea la hidratación de cada
+// pantalla del panel, para vigilar una sola fila. No pinta nada visible (un
+// aviso sr-only) y todo su trabajo va en efectos; el primer sondeo solo anota
+// la versión, así que arrancar un instante después no pierde ningún cambio.
+// La barra superior ya cargaba ese mismo cliente así para cerrar sesión.
+const AppRealtimeSync = dynamic(
+  () => import("@/components/realtime/app-realtime-sync").then((m) => m.AppRealtimeSync),
+  { ssr: false },
+);
 
 const COLLAPSE_KEY = "aep-tarima:sidebar-collapsed";
 

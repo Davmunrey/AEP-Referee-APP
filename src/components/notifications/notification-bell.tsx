@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { request } from "@/lib/api/request";
 import type { BandejaNotificaciones } from "@/lib/notificaciones";
+import { marcarLeidas } from "./bandeja";
 import { cn } from "@/lib/utils";
 
 function hace(iso: string): string {
@@ -21,11 +21,11 @@ function hace(iso: string): string {
 
 /**
  * La campana de avisos. Llega con la bandeja ya leída en el servidor (sin
- * petición extra al cargar) y se actualiza con el refresco en tiempo real.
- * Abrirla marca como leídos los que había.
+ * petición extra al cargar) y se actualiza cada vez que el layout se vuelve a
+ * pintar en el servidor (un refresco en tiempo real, el de otra pantalla, una
+ * carga completa). Abrirla marca como leídos los que había.
  */
 export function NotificationBell({ initial, className }: { initial: BandejaNotificaciones; className?: string }) {
-  const router = useRouter();
   const [bandeja, setBandeja] = useState(initial);
   useEffect(() => setBandeja(initial), [initial]);
 
@@ -35,8 +35,17 @@ export function NotificationBell({ initial, className }: { initial: BandejaNotif
     // Al abrir: se ven como nuevos esta vez y quedan leídos para la siguiente.
     // Solo los que se están enseñando: uno que haya llegado después, o que no
     // quepa en la lista, sigue sin leer.
+    //
+    // Hecho el PATCH, la bandeja se actualiza aquí mismo. Antes se pedía un
+    // `router.refresh()`, que repintaba en el servidor la página entera (layout,
+    // contadores y todas las consultas de la pantalla, la más pesada en
+    // /competitions/[id]) solo para borrar el globo. El servidor marca justo
+    // estos ids, así que el recuento local es el mismo que él daría.
     void request("/notificaciones", { method: "PATCH", body: JSON.stringify({ ids: vistos }) })
-      .then(() => router.refresh())
+      .then(() => {
+        const ahora = new Date().toISOString();
+        setBandeja((b) => marcarLeidas(b, vistos, ahora));
+      })
       .catch(() => undefined);
   };
 

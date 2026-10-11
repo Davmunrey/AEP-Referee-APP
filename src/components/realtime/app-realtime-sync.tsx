@@ -1,10 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { dispatchAppDataSync, isAutoSyncPaused } from "@/lib/realtime/sync-events";
+import {
+  dispatchAppDataSync,
+  isAutoSyncPaused,
+  registerServerRefreshScheduler,
+  unregisterServerRefreshScheduler,
+  type AppDataSyncSource,
+  type ServerRefreshScheduler,
+} from "@/lib/realtime/sync-events";
+import { createRefreshCoalescer } from "@/components/realtime/refresh-coalescer";
 
 const POLL_MS = 30_000;
 // Agrupa ráfagas: importar un cuadrante o recalcular dispara un aviso por fila
@@ -23,15 +31,31 @@ export function AppRealtimeSync() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const versionRef = useRef<number | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const firstEventAtRef = useRef<number | null>(null);
   // Cambio llegado con la pestaña oculta: se aplica al volver a ella. Con
   // varios delegados trabajando a la vez, cada pestaña de fondo se recargaba en
   // cada cambio de cualquiera (trabajo de servidor que nadie estaba mirando).
   const staleWhileHiddenRef = useRef(false);
 
+  // Un único temporizador para los avisos remotos y para los refrescos que
+  // pide la propia pestaña al guardar (ver `refresh-coalescer`).
+  const coalescer = useMemo(
+    () =>
+      createRefreshCoalescer({
+        debounceMs: DEBOUNCE_MS,
+        maxWaitMs: MAX_WAIT_MS,
+        fire: (source) =>
+          startTransition(() => {
+            router.refresh();
+            if (source === "realtime") {
+              dispatchAppDataSync(source);
+            }
+          }),
+      }),
+    [router],
+  );
+
   const applySync = useCallback(
-    (source: "realtime" | "poll" | "manual") => {
+    (source: AppDataSyncSource) => {
       // Con la sincronización pausada solo pasa el refresco manual. El cambio
       // que se salta no se pierde para siempre: al reanudar, el control fuerza
       // un refresco (la versión ya está anotada y no volvería a dispararse).
@@ -40,26 +64,28 @@ export function AppRealtimeSync() {
         staleWhileHiddenRef.current = true;
         return;
       }
-      const now = Date.now();
-      if (firstEventAtRef.current === null) firstEventAtRef.current = now;
-      const waited = now - firstEventAtRef.current;
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(
-        () => {
-          firstEventAtRef.current = null;
-          debounceRef.current = null;
-          startTransition(() => {
-            router.refresh();
-            if (source === "realtime") {
-              dispatchAppDataSync(source);
-            }
-          });
-        },
-        Math.max(0, Math.min(DEBOUNCE_MS, MAX_WAIT_MS - waited)),
-      );
+      coalescer.remote(source);
     },
-    [router],
+    [coalescer],
   );
+
+  // Refrescos pedidos por la propia pestaña tras guardar (ver
+  // `requestServerRefresh`). Fuera de la guarda de Supabase a propósito: con
+  // el backend en memoria no hay tiempo real, pero el refresco propio tiene que
+  // seguir llegando (y agrupado en ráfagas, como hacía la tarima por su cuenta).
+  // No mira la pausa ni la pestaña oculta: lo que uno mismo guarda se reconcilia
+  // siempre, igual que cuando cada pantalla llamaba a `router.refresh()`.
+  useEffect(() => {
+    const scheduler: ServerRefreshScheduler = {
+      request: () => coalescer.local(),
+      cancel: () => coalescer.cancelLocal(),
+    };
+    registerServerRefreshScheduler(scheduler);
+    return () => {
+      unregisterServerRefreshScheduler(scheduler);
+      coalescer.dispose();
+    };
+  }, [coalescer]);
 
   const pollVersion = useCallback(async () => {
     if (!isSupabaseConfigured()) return;
@@ -142,7 +168,6 @@ export function AppRealtimeSync() {
       cancelled = true;
       clearInterval(pollId);
       document.removeEventListener("visibilitychange", onVisible);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
       void supabase.removeChannel(channel);
     };
   }, [applySync, pollVersion]);

@@ -111,22 +111,49 @@ export async function resolveSessionUser(admin: AdminClient, user: User): Promis
   // tiene perfil»: se intentaba crearle uno y, si eso también fallaba, la
   // aplicación le decía que su cuenta no tiene acceso. No es verdad, y manda a
   // alguien con acceso a pedirle permisos a quien ya se los dio.
-  let { data: profile } = await admin
+  //
+  // La ficha del censo enlazada (`referees.user_id`) viene embebida en la misma
+  // lectura: el portal la necesita en cada petición y, leída aparte en
+  // `getJudgeSession`, era un tercer viaje en serie (Auth, perfil, ficha).
+  const { data: leido } = await admin
     .from("profiles")
-    .select("id, email, nombre, rol_label, iniciales, role, zona, activo")
+    .select("id, email, nombre, rol_label, iniciales, role, zona, activo, referees(id, zona)")
     .eq("id", user.id)
     .maybeSingle()
     .then((res) => {
       if (res.error) throw new SessionProfileReadError(res.error.message);
       return res;
     });
+  let profile: (ProfileRow & { referees?: unknown }) | null = leido;
 
   if (!profile) {
     profile = await ensureProfile(admin, user);
   }
 
   if (!profile || !(profile as ProfileRow).activo) return null;
-  return profileToSessionUser(profile as ProfileRow);
+  const sessionUser = profileToSessionUser(profile as ProfileRow);
+  // Solo para el rol juez: la zona del personal de gestión sale de su perfil y
+  // así se queda. Sin ficha embebida (perfil recién creado por ensureProfile, o
+  // juez sin enlazar) `getJudgeSession` hace la lectura aparte como siempre.
+  if (sessionUser.role === "juez") {
+    const ficha = linkedReferee(profile);
+    if (ficha) {
+      return { ...sessionUser, refereeId: ficha.id, zona: resolveZoneCode(ficha.zona) ?? undefined };
+    }
+  }
+  return sessionUser;
+}
+
+/**
+ * Ficha embebida en la lectura del perfil. PostgREST la devuelve como lista (el
+ * índice único de `user_id` es parcial, así que no la trata como uno a uno);
+ * se acepta también un objeto para no depender de esa decisión.
+ */
+function linkedReferee(profile: { referees?: unknown }): { id: string; zona: string } | null {
+  const emb = profile.referees;
+  const row = (Array.isArray(emb) ? emb[0] : emb) as { id?: unknown; zona?: unknown } | null | undefined;
+  if (row?.id == null) return null;
+  return { id: String(row.id), zona: String(row.zona ?? "") };
 }
 
 /**
@@ -197,6 +224,9 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
  * ficha (zona, nivel, sanciones, designaciones), no por su cuenta. La zona
  * sale de la ficha y no del perfil, que podría quedarse atrás si el juez
  * cambia de zona en el censo.
+ *
+ * La ficha suele llegar ya embebida en la lectura del perfil
+ * (`resolveSessionUser`); la consulta de abajo queda como respaldo.
  */
 export const getJudgeSession = cache(async (): Promise<SessionUser | null> => {
   const user = await getAuthenticatedUser();
