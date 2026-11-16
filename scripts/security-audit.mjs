@@ -6,28 +6,12 @@ import { tablasVivas } from "./lib/migration-tables.mjs";
 // Avisos que NO bloquean la auditoría, cada uno con su motivo. Se revisan
 // cuando cambie alguna de las condiciones que los justifican.
 //
-//  - Los dos primeros son de `xlsx`, que solo se usa para leer el Excel del
-//    censo en el servidor, con autenticación, tope de tamaño, tope de entradas
-//    del ZIP y tope de filas.
-//  - El de vitest es de `@vitest/mocker` (path traversal al redirigir un
-//    mock): solo afectan a la ejecución de tests, no se despliega nada de eso,
-//    y explotarlo exige control sobre el propio fichero de test. La subida a
-//    4.1.11 está bloqueada por un fallo de npm 10.9.7 al resolver los peers de
-//    esa versión («Cannot read properties of null (reading 'edgesOut')»);
-//    forzarla con --legacy-peer-deps deja el árbol sin `webpack` y rompe el
-//    build. Se retiran en cuanto npm resuelva 4.1.11 o salga un parche en la
-//    línea 4.1.x que sí instale.
-//  - El de `braces` (GHSA-vfj7-8cjw-p6xm, DoS por patrones muy anidados)
-//    afecta a TODAS sus versiones: no hay ninguna corregida a la que subir.
-//    Llega solo por `eslint-config-next` → `fast-glob` → `micromatch`, es
-//    decir, por el linter: no entra en el bundle ni en el servidor, y los
-//    patrones que expande son los globs de configuración del propio
-//    repositorio. Se retira en cuanto salga una versión parcheada.
+//  - Los dos son de `xlsx`, que solo se usa para leer el Excel del censo en
+//    el servidor, con autenticación, tope de tamaño, tope de entradas del ZIP
+//    y tope de filas.
 const allowedAdvisories = new Set([
-  "GHSA-vfj7-8cjw-p6xm",
   "GHSA-4r6h-8v6p-xvw6",
   "GHSA-5pgg-2g8v-p4x9",
-  "GHSA-82fw-gwwq-j7x9",
 ]);
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
