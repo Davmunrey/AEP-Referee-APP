@@ -75,7 +75,7 @@ Cada una tiene su fichero en `tests/regression-batch-*`.
 ## Riesgos vivos (backlog)
 
 - `xlsx` mantiene advisories sin fix upstream público.
-- `braces` (dependencia de desarrollo de la cadena de build) tiene un advisory sin versión corregida compatible; está en la lista permitida de `scripts/security-audit.mjs` con su justificación (`GHSA-vfj7-8cjw-p6xm`). `brace-expansion` y `fast-uri` se fuerzan a versiones corregidas con `overrides`.
+- Varias dependencias transitivas se fuerzan a versiones corregidas con `overrides`: `postcss`, `sharp`, `brace-expansion`, `fast-uri` y `source-map-js`. `vite` se fija en la línea 8.1 (`~8.1.7`), porque con vite 8.3 npm 10.9 falla al resolver sus peers («Cannot read properties of null (reading 'edgesOut')»). `minimatch` sube a la 11 solo dentro de `@typescript-eslint/typescript-estree`. El aviso de `braces` (`GHSA-vfj7-8cjw-p6xm`) lo retiró GitHub el 2026-10-23 y ya no está en la lista permitida de `scripts/security-audit.mjs`.
 - OCR/PDF depende de herramientas del entorno serverless en algunos casos.
 - E2E profundo (import → cuadrante → export) pendiente.
 - E2E smoke compensación pendiente.
