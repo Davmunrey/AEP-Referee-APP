@@ -53,7 +53,10 @@ const rosterCategoriaSchema = z.object({
 
 const rosterGrupoSchema = z.object({
   nombre: z.string().min(1),
-  categorias: z.array(rosterCategoriaSchema).min(1),
+  categorias: z
+    .array(rosterCategoriaSchema)
+    .min(1)
+    .max(60, "Un grupo admite como máximo 60 categorías."),
   levantadores: z.number().int().min(0).optional(),
 });
 
@@ -72,17 +75,27 @@ export const rosterSessionSchema = z
     sesion: z.string().min(1),
     nombre: z.string().min(1),
     dia: z.string().min(1),
-    categorias: z.array(rosterCategoriaSchema),
+    categorias: z
+      .array(rosterCategoriaSchema)
+      .max(60, "Una sesión admite como máximo 60 categorías."),
     horarioCompeticion: z.string(),
     horarioPesaje: z.string(),
-    roles: z.array(rosterRoleSchema).min(1),
-    pesajeRoles: z.array(rosterRoleSchema),
-    grupos: z.array(rosterGrupoSchema).optional(),
+    roles: z
+      .array(rosterRoleSchema)
+      .min(1)
+      .max(11, "Una sesión admite como máximo 11 roles: uno por fila."),
+    pesajeRoles: z
+      .array(rosterRoleSchema)
+      .max(11, "El pesaje admite como máximo 11 roles: uno por fila."),
+    grupos: z
+      .array(rosterGrupoSchema)
+      .max(30, "Una sesión admite como máximo 30 grupos.")
+      .optional(),
   })
   .refine(
     (session) => duplicateRoleKeys(session).length === 0,
     {
-      message:
+      error:
         "Una sesión repite un rol; usa una sola fila por rol con el número de plazas.",
     },
   );
@@ -97,9 +110,10 @@ export const rosterSessionSchema = z
 export const rosterTemplateSchema = z
   .array(rosterSessionSchema)
   .min(1)
+  .max(50, "Una plantilla admite como máximo 50 sesiones.")
   .refine(
     (sessions) => duplicateSessionCodes(sessions).length === 0,
-    { message: "Hay dos sesiones con el mismo código; cada sesión necesita uno distinto." },
+    { error: "Hay dos sesiones con el mismo código; cada sesión necesita uno distinto." },
   );
 
 export type AssignRefereeInput = z.infer<typeof assignRefereeSchema>;
