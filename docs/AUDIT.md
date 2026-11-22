@@ -77,11 +77,20 @@ Cada una tiene su fichero en `tests/regression-batch-*`.
 
 ## Riesgos vivos (backlog)
 
-- `xlsx` mantiene advisories sin fix upstream público.
+- `xlsx` ya no tiene avisos: se instala la 0.20.3 desde el CDN oficial de SheetJS (npm no publica versiones nuevas).
 - Varias dependencias transitivas se fuerzan a versiones corregidas con `overrides`: `postcss`, `sharp`, `brace-expansion`, `fast-uri` y `source-map-js`. `vite` se fija en la línea 8.1 (`~8.1.7`), porque con vite 8.3 npm 10.9 falla al resolver sus peers («Cannot read properties of null (reading 'edgesOut')»). `minimatch` sube a la 11 solo dentro de `@typescript-eslint/typescript-estree`. El aviso de `braces` (`GHSA-vfj7-8cjw-p6xm`) lo retiró GitHub el 2026-10-23 y ya no está en la lista permitida de `scripts/security-audit.mjs`.
 - OCR/PDF depende de herramientas del entorno serverless en algunos casos.
 - E2E profundo (import → cuadrante → export) pendiente.
 - E2E smoke compensación pendiente.
+- Actualizaciones mayores aplazadas (2026-11-22), cada una con su propio PR y pruebas:
+  - **Next 16** (y `eslint-config-next` 16): cambia el middleware a `proxy`, el caché y las APIs asíncronas; afecta a la CSP con nonce y a la sesión de Supabase.
+  - **ESLint 10**: exige configuración plana sin `@eslint/eslintrc`; conviene hacerlo junto con Next 16.
+  - **TypeScript 7** (compilador nativo): pendiente de que Next y `typescript-eslint` lo soporten oficialmente.
+  - **Vitest 5**: revisar los `vi.mock` con proxies de los tests de rutas.
+  - **`@supabase/ssr` 0.12**: API de cookies distinta; tocar junto con el middleware.
+  - **`lucide-react` 1.x**: renombra iconos; cambio mecánico pero amplio.
+  - **`pdf-parse` 2**: API nueva (clase `PDFParse`); afecta a la importación de actas en PDF.
+  - **`pdfkit` 0.21** y **`@types/node` 26**: el proyecto fija Node 22 (`.nvmrc`), así que los tipos se quedan en la 22.
 
 ## Comandos verificación (mantenedores)
 
