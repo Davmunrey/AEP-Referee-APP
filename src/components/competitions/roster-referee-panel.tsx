@@ -295,7 +295,7 @@ export function RosterRefereePanelLeft({
       </div>
 
       <div className="max-h-(--size-tarima-list) min-h-0 flex-1 overflow-y-auto overscroll-contain md:max-h-none">
-        <ul className="space-y-0.5 p-1.5">
+        <ul className="space-y-0.5 p-1.5" aria-label="Jueces disponibles">
           {orderedReferees.map((referee) => {
             // Bloqueo duro (nivel/normativa o conflicto no forzable) → no asignable.
             // Conflicto forzable (solape) → aviso, sigue siendo asignable (confirma al asignar).
