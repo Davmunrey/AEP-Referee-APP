@@ -5,6 +5,7 @@ import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route
 import { dataService } from "@/server/services";
 import { REFEREE_LEVELS, isIsoDate } from "@/app/api/_lib/validation";
 import type { ExamResult, ExamType, RefereeLevel } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 const EXAM_TYPES: ReadonlyArray<ExamType> = ["Nuevo juez", "Ascenso IPF", "Recertificación"];
 const EXAM_RESULTS: ReadonlyArray<ExamResult> = ["Aprobado", "Suspenso", "Pendiente"];
@@ -42,6 +43,13 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    refereeId: { max: TEXT_MAX.id, label: "El juez" },
+    examinador: { max: TEXT_MAX.nombre, label: "El examinador" },
+    notas: { max: TEXT_MAX.notas, label: "Las notas" },
+    fecha: { max: TEXT_MAX.corto, label: "La fecha" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   // Valida tipos y enums ANTES de llegar al servicio: sin esto, un `tipo`
   // desconocido pasaba `validateExamLevel` sin caer en ninguna rama y se
   // persistía, y una fecha no ISO reventaba en Postgres como 500.

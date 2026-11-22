@@ -4,6 +4,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { ExamResult, RefereeExam } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -35,6 +36,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    refereeId: { max: TEXT_MAX.id, label: "El juez" },
+    examinador: { max: TEXT_MAX.nombre, label: "El examinador" },
+    notas: { max: TEXT_MAX.notas, label: "Las notas" },
+    fecha: { max: TEXT_MAX.corto, label: "La fecha" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   // Lista blanca validada: antes el body se reenviaba tal cual al servicio, así
   // que un `resultado` inventado se persistía y una `fecha` no ISO fallaba en
   // la BD y se reportaba como 404 de un examen que acabamos de encontrar.

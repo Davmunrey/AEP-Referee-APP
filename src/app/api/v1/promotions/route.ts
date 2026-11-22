@@ -5,6 +5,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, readOrError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { RefereeLevel } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 export async function GET() {
   const user = await requireApiUser();
@@ -27,6 +28,11 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    refereeId: { max: TEXT_MAX.id, label: "El juez" },
+    motivo: { max: TEXT_MAX.motivo, label: "El motivo" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   const refereeId = String(body.refereeId ?? "").trim();
   const toLevel = String(body.toLevel ?? "").trim() as RefereeLevel;
   const motivo = body.motivo ? String(body.motivo).trim() : undefined;

@@ -5,6 +5,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import type { RefereeReport, ReportType } from "@/lib/types";
 import { dataService } from "@/server/services";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -28,6 +29,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!raw || typeof raw !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(raw as Record<string, unknown>, {
+    titulo: { max: TEXT_MAX.nombre, label: "El título" },
+    evento: { max: TEXT_MAX.nombre, label: "El evento" },
+    contenido: { max: TEXT_MAX.contenido, label: "El contenido" },
+    adjuntoUrl: { max: TEXT_MAX.url, label: "El enlace adjunto" },
+    refereeId: { max: TEXT_MAX.id, label: "El juez" },
+    competitionId: { max: TEXT_MAX.id, label: "El campeonato" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   const patch: Partial<
     Pick<RefereeReport, "titulo" | "tipo" | "evento" | "contenido" | "adjuntoUrl">
   > = {};

@@ -3,6 +3,7 @@ import { jsonError, jsonOk, jsonRouteError } from "@/lib/api/route-utils";
 import { canManageSanctions } from "@/lib/permissions";
 import { getRefereeSanction } from "@/server/services/referee-sanctions";
 import { dataService } from "@/server/services";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -16,6 +17,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const body = await request.json().catch(() => null);
   const action = body && typeof body === "object" ? (body as { action?: string }).action : "";
+  const tooLong = textTooLong(body && typeof body === "object" ? (body as Record<string, unknown>) : null, {
+    motivo: { max: TEXT_MAX.motivo, label: "El motivo" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
 
   if (action === "revoke") {
     // Sin `try`, un fallo de lectura o de escritura salía como un 500 sin
