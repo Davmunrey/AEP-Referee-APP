@@ -32,6 +32,16 @@ jobs:
     env:
       BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
     steps:
+      # Sin frase de paso los pasos de cifrar y subir se saltaban y el job
+      # terminaba en verde: una copia nocturna que no guardaba nada y no
+      # avisaba a nadie. Ahora falla antes de empezar.
+      - name: Comprobar que hay frase de cifrado
+        run: |
+          if [ -z "${BACKUP_PASSPHRASE}" ]; then
+            echo "::error title=Falta BACKUP_PASSPHRASE::Sin ella la copia no se cifra ni se sube. Créala en Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -53,11 +63,36 @@ jobs:
       - name: Verify backup integrity
         run: node scripts/backup-supabase.mjs verify
 
+      # Volcado completo: esquema, datos y cuentas (auth.users con el resumen
+      # de las contraseñas), que la copia JSON por la API no puede traer. Es el
+      # que se restaura con pg_restore (ver docs/DEPLOY.md). El cliente 17
+      # vuelca servidores de su versión y anteriores.
+      - name: Volcado completo con pg_dump
+        env:
+          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PGURL}" ]; then
+            echo "::error title=Falta SUPABASE_DB_URL::Es la misma cadena del Session pooler que usa el workflow de migraciones."
+            exit 1
+          fi
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          /usr/lib/postgresql/17/bin/pg_dump "$PGURL" \
+            --format=custom --no-owner --no-privileges \
+            --schema=public --schema=auth \
+            --file "backups/aep-pgdump-$(date -u +%Y-%m-%dT%H-%M-%SZ).dump"
+          ls -l backups/*.dump
+
       - name: Encrypt backup (AES256)
-        if: ${{ env.BACKUP_PASSPHRASE != '' }}
         run: |
           shopt -s nullglob
-          for f in backups/*.json; do
+          for f in backups/*.json backups/*.dump; do
             gpg --batch --yes --pinentry-mode loopback \
               --passphrase "$BACKUP_PASSPHRASE" \
               --symmetric --cipher-algo AES256 "$f"
@@ -65,7 +100,6 @@ jobs:
           done
 
       - name: Upload encrypted backup
-        if: ${{ env.BACKUP_PASSPHRASE != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: aep-backup-${{ github.run_id }}
