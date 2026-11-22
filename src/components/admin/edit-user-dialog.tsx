@@ -8,6 +8,7 @@ import type { UserRole } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { useEscapeClose } from "@/hooks/use-escape-close";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 export interface EditFormState {
   nombre: string;
@@ -42,6 +43,7 @@ export function EditUserDialog({
 }: EditUserDialogProps) {
   const panelRef = useEscapeClose(onClose);
   return (
+    <Portal>
     <div
       role="dialog"
       aria-modal="true"
@@ -114,5 +116,6 @@ export function EditUserDialog({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

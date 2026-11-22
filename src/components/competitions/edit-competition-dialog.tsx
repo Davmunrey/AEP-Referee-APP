@@ -14,6 +14,7 @@ import { zoneUiName } from "@/lib/aep-zones";
 import { AEP_COMPETITION_TYPE_DESC } from "@/lib/aep-guide-2026";
 import { cn } from "@/lib/utils";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 const EVENT_TYPES = ["AEP-1", "AEP-2", "AEP-3"] as const;
 
@@ -123,6 +124,7 @@ export function EditCompetitionDialog({
   };
 
   return (
+    <Portal>
     <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
       <div
         ref={panelRef}
@@ -267,5 +269,6 @@ export function EditCompetitionDialog({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

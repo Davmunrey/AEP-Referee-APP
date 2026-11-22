@@ -102,3 +102,49 @@ test("la documentación pública carga sin sesión", async ({ browser }) => {
   await expect(page.getByRole("heading", { name: "Documentación de AEP Tarima" })).toBeVisible();
   await ctx.close();
 });
+
+// Los diálogos se renderizan en <body> (Portal): cubren toda la ventana aunque
+// se abran desde un contenedor con transform o backdrop-filter, que recortaba
+// el overlay. Y siguen atrapando el foco y cerrándose con Escape.
+const dialogos: [string, string, string][] = [
+  ["/competitions/evt-docs-001", "Editar campeonato", "Editar campeonato"],
+  ["/referees", "Nuevo juez", "Nuevo juez"],
+];
+
+for (const [ruta, abrir, titulo] of dialogos) {
+  test(`diálogo «${titulo}»: cubre la ventana, atrapa el foco y se cierra con Escape`, async ({ page }) => {
+    const errores = vigilarErrores(page);
+    await page.goto(ruta);
+    const boton = page.getByRole("button", { name: abrir, exact: true }).first();
+    await boton.click();
+
+    const dialogo = page.getByRole("dialog", { name: titulo });
+    await expect(dialogo).toBeVisible();
+
+    // El diálogo o su overlay es hijo DIRECTO de <body>, no un nodo de la página.
+    const enBody = await dialogo.evaluate(
+      (el) => el.parentElement === document.body || el.parentElement?.parentElement === document.body,
+    );
+    expect(enBody).toBe(true);
+
+    // El overlay ocupa toda la ventana.
+    const caja = await page.evaluate(() => {
+      const o = [...document.body.children].find((e) => getComputedStyle(e).position === "fixed" && e.querySelector('[role="dialog"]')) as HTMLElement | undefined
+        ?? (document.querySelector('[role="dialog"]')?.closest("div.fixed") as HTMLElement | null);
+      const r = (o ?? document.querySelector('[role="dialog"]')!).getBoundingClientRect();
+      return { w: r.width, h: r.height, vw: innerWidth, vh: innerHeight };
+    });
+    expect(caja.w).toBeGreaterThanOrEqual(caja.vw - 1);
+    expect(caja.h).toBeGreaterThanOrEqual(caja.vh - 1);
+
+    // El foco está dentro del diálogo y Tab no se escapa de él.
+    expect(await dialogo.evaluate((el) => el.contains(document.activeElement) || el.parentElement?.contains(document.activeElement))).toBe(true);
+    for (let i = 0; i < 25; i++) await page.keyboard.press("Tab");
+    expect(await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]') || !!document.activeElement?.closest(".fixed"))).toBe(true);
+
+    await page.keyboard.press("Escape");
+    await expect(dialogo).toBeHidden();
+    await expect(boton).toBeFocused();
+    expect(errores).toEqual([]);
+  });
+}

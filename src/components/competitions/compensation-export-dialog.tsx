@@ -16,6 +16,7 @@ import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-documen
 import type { CompensationClaim } from "@/lib/judge-compensation/types";
 import { downloadPdfBlob } from "@/lib/import-export-ui";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 interface CompensationExportDialogProps {
   competitionId: string;
@@ -63,6 +64,7 @@ export function CompensationExportDialog({
   };
 
   return (
+    <Portal>
     <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="export-receipt-title" className={`max-h-(--size-dialog-h) w-full outline-none max-w-md overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-md ${dialogPanelEnter}`}>
         <div className="mb-4 flex items-start justify-between gap-2">
@@ -149,5 +151,6 @@ export function CompensationExportDialog({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

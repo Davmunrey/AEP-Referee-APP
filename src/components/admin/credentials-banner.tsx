@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Copy } from "lucide-react";
 import { useEscapeClose } from "@/hooks/use-escape-close";
+import { Portal } from "@/components/ui/portal";
 
 interface CredentialsBannerProps {
   email: string;
@@ -21,6 +22,7 @@ export function CredentialsBanner({
 }: CredentialsBannerProps) {
   const panelRef = useEscapeClose(onClose);
   return (
+    <Portal>
     <div
       role="dialog"
       aria-modal="true"
@@ -59,5 +61,6 @@ export function CredentialsBanner({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

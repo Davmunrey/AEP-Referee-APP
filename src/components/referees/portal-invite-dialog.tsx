@@ -16,6 +16,7 @@ import {
 } from "@/lib/judge-access";
 import { contar } from "@/lib/plural";
 import { formatDate } from "@/lib/utils";
+import { Portal } from "@/components/ui/portal";
 
 type Candidate = { id: string; nombre: string; email?: string };
 
@@ -89,6 +90,7 @@ export function PortalInviteDialog({
   const allText = granted.map((r) => `${r.nombre} · ${r.email ?? ""} · ${formatAccessCode(r.code!)}`).join("\n");
 
   return (
+    <Portal>
     <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`} onClick={sending ? undefined : onClose}>
       <div
         ref={dialogRef}
@@ -223,5 +225,6 @@ export function PortalInviteDialog({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

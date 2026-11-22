@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import type { Referee } from "@/lib/types";
 import { zoneUiName } from "@/lib/aep-zones";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 interface CompetitionAvailabilityDialogProps {
   competitionId: string;
@@ -74,6 +75,7 @@ export function CompetitionAvailabilityDialog({
   };
 
   return (
+    <Portal>
     <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}>
       <div
         ref={panelRef}
@@ -149,5 +151,6 @@ export function CompetitionAvailabilityDialog({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

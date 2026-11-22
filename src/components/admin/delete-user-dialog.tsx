@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useEscapeClose } from "@/hooks/use-escape-close";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 interface DeleteUserDialogProps {
   nombre: string;
@@ -22,6 +23,7 @@ export function DeleteUserDialog({
 }: DeleteUserDialogProps) {
   const panelRef = useEscapeClose(onClose);
   return (
+    <Portal>
     <div
       role="dialog"
       aria-modal="true"
@@ -50,5 +52,6 @@ export function DeleteUserDialog({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -70,6 +71,7 @@ export function TransferDialogShell({
   if (!open) return null;
 
   return (
+    <Portal>
     <div
       className={cn(
         "fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4",
@@ -120,5 +122,6 @@ export function TransferDialogShell({
         ) : null}
       </div>
     </div>
+    </Portal>
   );
 }
