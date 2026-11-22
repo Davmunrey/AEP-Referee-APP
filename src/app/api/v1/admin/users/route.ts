@@ -8,6 +8,7 @@ import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { listAdminUsers } from "@/server/services/admin-users";
 import { recordAccessChange } from "@/server/services/admin-audit";
 import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 export async function GET() {
   const user = await requireApiUser();
@@ -33,6 +34,13 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    email: { max: TEXT_MAX.email, label: "El e-mail" },
+    nombre: { max: TEXT_MAX.nombre, label: "El nombre" },
+    rolLabel: { max: TEXT_MAX.nombre, label: "La etiqueta del rol" },
+    zona: { max: TEXT_MAX.corto, label: "La zona" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   const email = String(body.email ?? "").trim().toLowerCase();
   // Solo string: `String({})` daba la contraseña literal "[object Object]".
   const password = typeof body.password === "string" ? body.password : "";

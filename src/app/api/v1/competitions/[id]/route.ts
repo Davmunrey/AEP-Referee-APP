@@ -11,6 +11,7 @@ import { normalizeClubEmails } from "@/lib/organizer-clubs";
 import { CompetitionHasClaimsError } from "@/lib/competitions/service-types";
 import { dataService } from "@/server/services";
 import type { Competition, EventType } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 /**
  * `getCompetition` ya no se traga el error de lectura: es la lectura más usada
@@ -45,6 +46,21 @@ export async function PATCH(request: Request, context: RouteContext) {
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
+  }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    nombre: { max: TEXT_MAX.nombre, label: "El nombre" },
+    sede: { max: TEXT_MAX.nombre, label: "La sede" },
+    sedeDireccion: { max: TEXT_MAX.direccion, label: "La dirección de la sede" },
+    zona: { max: TEXT_MAX.corto, label: "La zona" },
+    tipo: { max: TEXT_MAX.corto, label: "El tipo" },
+    fecha: { max: TEXT_MAX.corto, label: "La fecha" },
+    fechaFin: { max: TEXT_MAX.corto, label: "La fecha de fin" },
+    compensationClubName: { max: TEXT_MAX.nombre, label: "El club organizador" },
+    compensationClubEmail: { max: TEXT_MAX.motivo, label: "Los e-mails del club" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
+  if (Array.isArray(body.compensationClubs) && body.compensationClubs.length > TEXT_MAX.lista) {
+    return jsonError(`Como máximo ${TEXT_MAX.lista} clubes organizadores`, 400);
   }
 
   const competition = await readOrError("competitions.PATCH", MSG_CARGA, () =>

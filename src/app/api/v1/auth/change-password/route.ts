@@ -2,10 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isSessionUser, requireAnyUser } from "@/lib/api/auth";
 import {
-  canAttemptLogin,
-  clearLoginAttempts,
+  canAttemptLoginShared,
+  clearLoginAttemptsShared,
   MAX_LOGIN_PASSWORD_LENGTH,
-  recordFailedLogin,
+  recordFailedLoginShared,
   requestIp,
 } from "@/lib/api/login-rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   // prácticos: pasa por el mismo rate-limit que /auth/login para impedir
   // fuerza bruta sobre la contraseña actual desde una sesión abierta.
   const ip = requestIp(request);
-  const limit = canAttemptLogin(ip, user.email);
+  const limit = await canAttemptLoginShared(ip, user.email);
   if (!limit.allowed) {
     return jsonError("Demasiados intentos. Espera unos minutos antes de reintentar.", 429);
   }
@@ -67,10 +67,10 @@ export async function POST(request: Request) {
     password: currentPassword,
   });
   if (verifyError) {
-    recordFailedLogin(ip, user.email);
+    await recordFailedLoginShared(ip, user.email);
     return jsonError("La contraseña actual no es correcta", 400);
   }
-  clearLoginAttempts(ip, user.email);
+  await clearLoginAttemptsShared(ip, user.email);
 
   // Actualiza por id con la service role.
   const admin = createAdminClient();

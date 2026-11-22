@@ -1,3 +1,5 @@
+import { sharedClear, sharedHit, sharedPeek } from "./shared-rate-limit";
+
 const WINDOW_MS = 15 * 60 * 1000;
 // Tope estricto por combinación IP+email.
 const MAX_ATTEMPTS_PER_IP_EMAIL = 5;
@@ -127,4 +129,62 @@ export function recordFailedLogin(ip: string, email: string): void {
 export function clearLoginAttempts(ip: string, email: string): void {
   ipEmailBuckets.delete(loginRateLimitKey(ip, email));
   emailBuckets.delete(normalizeEmail(email));
+}
+
+// ── Límite compartido entre instancias (migración 046) ──────────────────────
+//
+// Las funciones de arriba son la primera barrera, en memoria. Las de abajo
+// añaden los mismos topes compartidos en la base, más uno por IP sobre todos
+// los e-mails: frena a quien prueba una contraseña contra muchas cuentas desde
+// el mismo sitio, que los topes por e-mail no ven. En Vercel la cabecera
+// `x-forwarded-for` la fija la plataforma, así que la IP es fiable.
+//
+// Las rutas públicas usan estas, no las de arriba.
+
+const WINDOW_SECONDS = WINDOW_MS / 1000;
+const MAX_FAILURES_PER_IP = 50;
+
+const sharedKeys = (ip: string, email: string) => ({
+  ipEmail: `login:ip-email:${loginRateLimitKey(ip, email)}`,
+  email: `login:email:${normalizeEmail(email)}`,
+  ip: `login:ip:${ip.slice(0, MAX_IP_LENGTH)}`,
+});
+
+export async function canAttemptLoginShared(
+  ip: string,
+  email: string,
+): Promise<{ allowed: true } | { allowed: false; retryAfter: number }> {
+  const local = canAttemptLogin(ip, email);
+  if (!local.allowed) return local;
+  const keys = sharedKeys(ip, email);
+  const [porIpEmail, porEmail, porIp] = await Promise.all([
+    sharedPeek(keys.ipEmail),
+    sharedPeek(keys.email),
+    sharedPeek(keys.ip),
+  ]);
+  if (
+    porIpEmail >= MAX_ATTEMPTS_PER_IP_EMAIL ||
+    porEmail >= MAX_ATTEMPTS_PER_EMAIL ||
+    porIp >= MAX_FAILURES_PER_IP
+  ) {
+    return { allowed: false, retryAfter: WINDOW_SECONDS };
+  }
+  return { allowed: true };
+}
+
+export async function recordFailedLoginShared(ip: string, email: string): Promise<void> {
+  recordFailedLogin(ip, email);
+  const keys = sharedKeys(ip, email);
+  await Promise.all([
+    sharedHit(keys.ipEmail, WINDOW_SECONDS),
+    sharedHit(keys.email, WINDOW_SECONDS),
+    sharedHit(keys.ip, WINDOW_SECONDS),
+  ]);
+}
+
+/** Tras un acierto. El tope por IP no se borra: no es de esta cuenta. */
+export async function clearLoginAttemptsShared(ip: string, email: string): Promise<void> {
+  clearLoginAttempts(ip, email);
+  const keys = sharedKeys(ip, email);
+  await Promise.all([sharedClear(keys.ipEmail), sharedClear(keys.email)]);
 }

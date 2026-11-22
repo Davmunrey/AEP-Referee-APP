@@ -5,6 +5,7 @@ import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route
 import { validateCompetitionFields } from "@/app/api/_lib/validation";
 import { dataService } from "@/server/services";
 import type { Competition } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 export async function GET() {
   const user = await requireApiUser();
@@ -30,6 +31,16 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    nombre: { max: TEXT_MAX.nombre, label: "El nombre" },
+    sede: { max: TEXT_MAX.nombre, label: "La sede" },
+    sedeDireccion: { max: TEXT_MAX.direccion, label: "La dirección de la sede" },
+    zona: { max: TEXT_MAX.corto, label: "La zona" },
+    tipo: { max: TEXT_MAX.corto, label: "El tipo" },
+    fecha: { max: TEXT_MAX.corto, label: "La fecha" },
+    fechaFin: { max: TEXT_MAX.corto, label: "La fecha de fin" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   if (!body.nombre || !body.tipo || !body.fecha || !body.fechaFin || !body.sede) {
     return jsonError("Faltan campos obligatorios", 400);
   }

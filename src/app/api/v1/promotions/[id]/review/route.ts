@@ -3,6 +3,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { PromotionReviewError } from "@/lib/competitions/service-types";
 import { jsonError, jsonOk, jsonServerError, readOrError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
+import { TEXT_MAX } from "@/lib/api/text-limits";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -21,6 +22,9 @@ export async function POST(request: Request, context: RouteContext) {
   // campo se leía como rechazo.
   if (typeof body?.approve !== "boolean") {
     return jsonError("Falta la decisión: «approve» debe ser true o false", 400);
+  }
+  if (typeof body?.comment === "string" && body.comment.length > TEXT_MAX.motivo) {
+    return jsonError(`El comentario no puede superar ${TEXT_MAX.motivo} caracteres`, 400);
   }
   const approve: boolean = body.approve;
   const comment =

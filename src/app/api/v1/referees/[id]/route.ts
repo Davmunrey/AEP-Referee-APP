@@ -18,6 +18,7 @@ import { geocodeAddress } from "@/lib/judge-compensation/osm-distance";
 import { dataService } from "@/server/services";
 import { syncJudgeLoginEmail } from "@/server/services/judge-accounts";
 import type { Referee } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -66,6 +67,21 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!raw || typeof raw !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(raw as Record<string, unknown>, {
+    nombre: { max: TEXT_MAX.nombre, label: "El nombre" },
+    email: { max: TEXT_MAX.email, label: "El e-mail" },
+    licencia: { max: TEXT_MAX.corto, label: "La licencia" },
+    localidad: { max: TEXT_MAX.nombre, label: "La localidad" },
+    telefono: { max: TEXT_MAX.corto, label: "El teléfono" },
+    genero: { max: TEXT_MAX.corto, label: "El género" },
+    antiguedad: { max: TEXT_MAX.corto, label: "La antigüedad" },
+    notas: { max: TEXT_MAX.notas, label: "Las notas" },
+    domicilio: { max: TEXT_MAX.direccion, label: "El domicilio" },
+    ultimo: { max: TEXT_MAX.nombre, label: "El último campeonato" },
+    ultimoFecha: { max: TEXT_MAX.corto, label: "La fecha del último campeonato" },
+    zona: { max: TEXT_MAX.corto, label: "La zona" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   // Lista blanca de campos editables — nunca `id` ni `iniciales` (derivado).
   const patch: Partial<Referee> = {};
   if (typeof raw.nombre === "string") patch.nombre = raw.nombre;

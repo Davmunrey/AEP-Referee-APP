@@ -11,6 +11,7 @@ import {
 } from "@/app/api/_lib/validation";
 import { dataService } from "@/server/services";
 import type { Referee } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 export async function GET(request: Request) {
   const user = await requireApiUser();
@@ -40,6 +41,21 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    nombre: { max: TEXT_MAX.nombre, label: "El nombre" },
+    email: { max: TEXT_MAX.email, label: "El e-mail" },
+    licencia: { max: TEXT_MAX.corto, label: "La licencia" },
+    localidad: { max: TEXT_MAX.nombre, label: "La localidad" },
+    telefono: { max: TEXT_MAX.corto, label: "El teléfono" },
+    genero: { max: TEXT_MAX.corto, label: "El género" },
+    antiguedad: { max: TEXT_MAX.corto, label: "La antigüedad" },
+    notas: { max: TEXT_MAX.notas, label: "Las notas" },
+    domicilio: { max: TEXT_MAX.direccion, label: "El domicilio" },
+    ultimo: { max: TEXT_MAX.nombre, label: "El último campeonato" },
+    ultimoFecha: { max: TEXT_MAX.corto, label: "La fecha del último campeonato" },
+    zona: { max: TEXT_MAX.corto, label: "La zona" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   if (!body.nombre || !body.zona || !body.nivel || !body.estado) {
     return jsonError("Faltan campos obligatorios", 400);
   }

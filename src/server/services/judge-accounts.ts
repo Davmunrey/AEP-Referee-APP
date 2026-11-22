@@ -153,20 +153,70 @@ async function deleteCode(refereeId: string): Promise<void> {
 }
 
 async function countFailedAttempt(row: StoredCode): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    const attempts = (memoryCodes.get(row.refereeId)?.attempts ?? row.attempts) + 1;
+    if (attempts >= ACCESS_CODE_MAX_ATTEMPTS) memoryCodes.delete(row.refereeId);
+    else memoryCodes.set(row.refereeId, { ...row, attempts });
+    return;
+  }
+  // En una sola sentencia (migración 046). Leer, sumar en el servidor y
+  // escribir hacía que varias peticiones a la vez contaran como un solo fallo,
+  // y el tope de intentos se podía multiplicar mandándolas en paralelo.
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("judge_code_fail", {
+    p_referee_id: row.refereeId,
+    p_max: ACCESS_CODE_MAX_ATTEMPTS,
+  });
+  if (!error) return;
+  // Sin la 046 aplicada todavía: el camino anterior, para no dejar de contar.
+  console.error("[judge-accounts.countFailedAttempt] sin judge_code_fail:", error.message);
   const attempts = row.attempts + 1;
   if (attempts >= ACCESS_CODE_MAX_ATTEMPTS) {
     await deleteCode(row.refereeId);
     return;
   }
-  if (!isSupabaseConfigured()) {
-    memoryCodes.set(row.refereeId, { ...row, attempts });
-    return;
-  }
-  const { error } = await createAdminClient()
+  const { error: upErr } = await admin
     .from("judge_access_codes")
     .update({ attempts })
     .eq("referee_id", row.refereeId);
+  if (upErr) throw new Error(`judge_access_codes: ${upErr.message}`);
+}
+
+/**
+ * Gasta el código: lo borra solo si sigue siendo ESE código. Una sola
+ * sentencia, así que de dos canjes simultáneos con el mismo código solo uno
+ * se lo lleva; el otro ve cero filas y responde como código no válido.
+ */
+async function consumeCode(row: StoredCode): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    const actual = memoryCodes.get(row.refereeId);
+    if (!actual || actual.codeHash !== row.codeHash) return false;
+    memoryCodes.delete(row.refereeId);
+    return true;
+  }
+  const { data, error } = await createAdminClient()
+    .from("judge_access_codes")
+    .delete()
+    .eq("referee_id", row.refereeId)
+    .eq("code_hash", row.codeHash)
+    .select("referee_id");
   if (error) throw new Error(`judge_access_codes: ${error.message}`);
+  return (data ?? []).length > 0;
+}
+
+/**
+ * Cierra todas las sesiones abiertas de la cuenta (migración 046). Si falla no
+ * se deshace el canje: la contraseña ya es la nueva y las sesiones viejas
+ * caducan solas; se deja constancia en el registro.
+ */
+async function closeAllSessions(userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return true;
+  const { error } = await createAdminClient().rpc("cerrar_sesiones_de_usuario", { p_user_id: userId });
+  if (error) {
+    console.error("[judge-accounts.closeAllSessions]", userId, error.message);
+    return false;
+  }
+  return true;
 }
 
 // ── Cuenta ─────────────────────────────────────────────────────────────────
@@ -449,14 +499,30 @@ export async function redeemAccessCode(email: string, code: string, password: st
       await deleteCode(referee.id);
       return "invalido";
     }
-    await syncJudgeLoginEmail({ userId: referee.userId, email: clean });
-    const { error: pwErr } = await admin.auth.admin.updateUserById(referee.userId!, { password });
-    if (pwErr) throw new Error(`auth.updateUserById: ${pwErr.message}`);
-  } else if (memoryActive.get(referee.userId!) === false) {
+    // Se gasta ANTES de tocar la contraseña: si dos peticiones llegan a la vez
+    // con el mismo código, solo una lo consigue.
+    if (!(await consumeCode(stored))) return "invalido";
+    try {
+      await syncJudgeLoginEmail({ userId: referee.userId, email: clean });
+      const { error: pwErr } = await admin.auth.admin.updateUserById(referee.userId!, { password });
+      if (pwErr) throw new Error(`auth.updateUserById: ${pwErr.message}`);
+    } catch (err) {
+      // No se pudo poner la contraseña: el código vuelve, para que el juez
+      // pueda reintentar sin pedir otro a su delegado.
+      await saveCode(stored).catch((e) => console.error("[judge-accounts.redeem.restore]", e));
+      throw err;
+    }
+    // Un código nuevo suele darse porque el juez perdió la contraseña o su
+    // cuenta está en manos de otro: quien siguiera dentro con la anterior
+    // tiene que salir, igual que al cambiar la contraseña desde la ficha.
+    await closeAllSessions(referee.userId!);
+    return "ok";
+  }
+  if (memoryActive.get(referee.userId!) === false) {
     await deleteCode(referee.id);
     return "invalido";
   }
-  await deleteCode(referee.id);
+  if (!(await consumeCode(stored))) return "invalido";
   return "ok";
 }
 

@@ -1,3 +1,5 @@
+import { sharedHit } from "./shared-rate-limit";
+
 /**
  * Límite de frecuencia genérico por clave (usuario, IP…), en memoria y por
  * instancia, como el del login. No es una cuota exacta entre instancias: es
@@ -23,4 +25,15 @@ export function allowAction(key: string, max: number, windowMs: number, now = Da
 /** Para las pruebas. */
 export function resetActionLimits(): void {
   buckets.clear();
+}
+
+/**
+ * Como `allowAction`, y además contado en la base para que el tope valga entre
+ * instancias (migración 046). Para las rutas públicas, donde quien llama no
+ * tiene cuenta y puede repartir peticiones. Sin base, decide el de memoria.
+ */
+export async function allowActionShared(key: string, max: number, windowMs: number): Promise<boolean> {
+  if (!allowAction(key, max, windowMs)) return false;
+  const hits = await sharedHit(`action:${key}`, windowMs / 1000);
+  return hits === 0 || hits <= max;
 }

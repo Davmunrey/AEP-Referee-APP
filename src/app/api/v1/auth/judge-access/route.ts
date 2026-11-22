@@ -1,12 +1,12 @@
 import { z } from "zod";
 import {
-  canAttemptLogin,
+  canAttemptLoginShared,
   MAX_LOGIN_EMAIL_LENGTH,
-  recordFailedLogin,
+  recordFailedLoginShared,
   requestIp,
 } from "@/lib/api/login-rate-limit";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
-import { allowAction } from "@/lib/api/action-rate-limit";
+import { allowActionShared } from "@/lib/api/action-rate-limit";
 import { afterResponse } from "@/lib/after-response";
 import { requestJudgeAccess } from "@/server/services/judge-accounts";
 
@@ -27,11 +27,11 @@ export async function POST(request: Request) {
   // Límite por e-mail y por IP: sin ellos se podría llenar la campana de un
   // delegado o probar e-mails en serie.
   const ip = requestIp(request);
-  const limit = canAttemptLogin(ip, body.data.email);
-  if (!limit.allowed || !allowAction(`judge-access:ip:${ip}`, 20, 15 * 60_000)) {
+  const limit = await canAttemptLoginShared(ip, body.data.email);
+  if (!limit.allowed || !(await allowActionShared(`judge-access:ip:${ip}`, 20, 15 * 60_000))) {
     return jsonError("Demasiados intentos. Espera unos minutos antes de reintentar.", 429);
   }
-  recordFailedLogin(ip, body.data.email);
+  await recordFailedLoginShared(ip, body.data.email);
 
   // Después de responder: si se esperara, la respuesta tardaría más cuando el
   // e-mail SÍ es de un juez y el tiempo delataría lo que el texto calla.

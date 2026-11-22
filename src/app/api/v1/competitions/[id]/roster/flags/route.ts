@@ -3,6 +3,7 @@ import { loadCompetitionForRosterWrite } from "@/lib/api/roster-mutation-guard";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import type { SlotFlags } from "@/lib/types";
 import { dataService } from "@/server/services";
+import { TEXT_MAX } from "@/lib/api/text-limits";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -19,6 +20,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const body = await request.json().catch(() => null);
   const slotKey = body?.slotKey ? String(body.slotKey) : "";
   if (!slotKey) return jsonError("slotKey requerido", 400);
+  if (slotKey.length > TEXT_MAX.id) return jsonError("Hueco no válido", 400);
 
   const flags: SlotFlags = {
     compartido: Boolean(body?.flags?.compartido),

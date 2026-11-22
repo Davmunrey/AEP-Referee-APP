@@ -11,6 +11,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/types";
 import { recordAccessChange } from "@/server/services/admin-audit";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 /** Etiqueta legible del rol para el registro de actividad. */
 function roleLabel(role: string): string {
@@ -32,6 +33,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    email: { max: TEXT_MAX.email, label: "El e-mail" },
+    nombre: { max: TEXT_MAX.nombre, label: "El nombre" },
+    rolLabel: { max: TEXT_MAX.nombre, label: "La etiqueta del rol" },
+    zona: { max: TEXT_MAX.corto, label: "La zona" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   const admin = createAdminClient();
   const { data: target, error: targetError } = await admin
     .from("profiles")

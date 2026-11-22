@@ -7,6 +7,7 @@ import { isIsoDate } from "@/app/api/_lib/validation";
 import { todayIso } from "@/lib/business-date";
 import type { SanctionDurationPreset } from "@/lib/types";
 import { dataService } from "@/server/services";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -58,6 +59,13 @@ export async function POST(request: Request, context: RouteContext) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    motivo: { max: TEXT_MAX.motivo, label: "El motivo" },
+    notas: { max: TEXT_MAX.notas, label: "Las notas" },
+    fechaInicio: { max: TEXT_MAX.corto, label: "La fecha de inicio" },
+    fechaFin: { max: TEXT_MAX.corto, label: "La fecha de fin" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   const motivo = String((body as { motivo?: string }).motivo ?? "").trim();
   if (motivo.length < 10) {
     return jsonError("Describe el motivo (mínimo 10 caracteres)", 400);

@@ -6,6 +6,7 @@ import { isSessionUser, requireApiUser } from "@/lib/api/auth";
 import { jsonError, readOrError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
 import { dataService } from "@/server/services";
 import type { ReportSubjectType, ReportType } from "@/lib/types";
+import { TEXT_MAX, textTooLong } from "@/lib/api/text-limits";
 
 const REPORT_TIPOS: ReadonlyArray<ReportType> = [
   "General",
@@ -47,6 +48,15 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") {
     return jsonError("Cuerpo de solicitud inválido", 400);
   }
+  const tooLong = textTooLong(body as Record<string, unknown>, {
+    titulo: { max: TEXT_MAX.nombre, label: "El título" },
+    evento: { max: TEXT_MAX.nombre, label: "El evento" },
+    contenido: { max: TEXT_MAX.contenido, label: "El contenido" },
+    adjuntoUrl: { max: TEXT_MAX.url, label: "El enlace adjunto" },
+    refereeId: { max: TEXT_MAX.id, label: "El juez" },
+    competitionId: { max: TEXT_MAX.id, label: "El campeonato" },
+  });
+  if (tooLong) return jsonError(tooLong, 400);
   // Enums y tipos validados ANTES del servicio: cualquier `subjectType` ≠ "juez"
   // caía en la rama de competición y se persistía tal cual ("foo"), igual que
   // un `tipo` inventado; y `titulo: 1` pasaba el check de obligatorio.
