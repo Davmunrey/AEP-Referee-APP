@@ -14,7 +14,7 @@ interface RouteContext {
 /**
  * Genera y guarda la plantilla AEP estándar para el tipo de la competición
  * (preset de cuadrante real). Permite configurar la tarima desde clientes que no
- * incluyen el editor completo (p. ej. la app móvil). Idempotente: reaplica el
+ * incluyen el editor completo. Idempotente: reaplica el
  * preset del tipo.
  */
 export async function POST(_request: Request, context: RouteContext) {
