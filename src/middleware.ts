@@ -1,8 +1,20 @@
 import { type NextRequest } from "next/server";
+import { buildPageCsp, generateNonce, NONCE_HEADER } from "@/lib/security/csp";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  return updateSession(request);
+  // Nonce nuevo en cada petición. Viaja en la petición (Next lo lee de la
+  // cabecera CSP para marcar sus propios scripts, y `app/layout.tsx` de
+  // `x-nonce` para el de arranque del tema) y en la respuesta, que es la que
+  // hace cumplir el navegador.
+  const nonce = generateNonce();
+  const csp = buildPageCsp(nonce);
+  const response = await updateSession(request, {
+    [NONCE_HEADER]: nonce,
+    "content-security-policy": csp,
+  });
+  response.headers.set("Content-Security-Policy", csp);
+  return response;
 }
 
 export const config = {

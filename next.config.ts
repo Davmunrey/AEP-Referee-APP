@@ -35,17 +35,25 @@ const nextConfig: NextConfig = {
         key: "Strict-Transport-Security",
         value: "max-age=31536000; includeSubDomains; preload",
       },
-      {
-        key: "Content-Security-Policy",
-        value:
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
-      },
     ];
+
+    // Las páginas reciben su CSP con nonce del middleware (src/lib/security/csp).
+    // Las rutas de la API no pasan por él y conservan esta política fija: el
+    // cuadrante imprimible es HTML servido desde la API, con un botón y un
+    // script en línea, así que aquí sigue haciendo falta `'unsafe-inline'`.
+    // La evaluación de texto como código (unsafe-eval) ya no: nadie la usa
+    // fuera del servidor de desarrollo.
+    const apiCsp =
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'";
 
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/api/:path*",
+        headers: [{ key: "Content-Security-Policy", value: apiCsp }],
       },
     ];
   },

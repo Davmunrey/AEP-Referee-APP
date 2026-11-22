@@ -67,3 +67,7 @@ skills-lock.json
 /Cuadrantes Jueces/
 /uploads/
 *.tmp.mjs
+/playwright-report-local
+/test-results-local
+/playwright-report-prod
+/test-results-prod

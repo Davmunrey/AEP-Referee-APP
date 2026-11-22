@@ -41,13 +41,16 @@ App **operativa en producción** en Vercel. CI verde, **1233 tests** (1234 con 1
 | RBAC zona (`resolveZoneCode`) | OK — fail-closed |
 | RLS Supabase | OK, deny-by-default |
 | RLS endurecido (`033`) | OK — políticas permisivas eliminadas en `referee_sanctions` y `competition_availability`; solo servidor (`service_role`). Advisors sin los 2 WARN previos |
-| Login brute force | Mitigado |
-| CSP | OK — mapas solo vía API propia |
+| Login brute force | OK — límites en memoria y compartidos en la base (`046`), con tope por IP sobre todos los e-mails |
+| CSP | OK — páginas con nonce por petición y `strict-dynamic`, sin `unsafe-eval` ni `unsafe-inline` en `script-src`; la API conserva una política fija sin `unsafe-eval` (el cuadrante imprimible necesita script en línea). Comprobado sobre el build de producción por `tests/e2e/prod` y vigilado por la regla `CSP-01/02` de `audit:security` |
 | IBAN compensación | OK — efímero, no persiste |
-| Imports PDF/XLSX | OK — límites y preview |
+| Imports PDF/XLSX | OK — límites y preview; SheetJS 0.20.3 (sin los avisos de la 0.18.5) |
 | RLS restos (`037`) | OK — sin políticas `USING (true)` en `activity_log`, `roster_history`, `referee_availability` |
 | Tablas nuevas con RLS | OK — un test falla si una `CREATE TABLE` no activa RLS |
 | Alta de cuentas (`038`) | OK — la bandera `invited` de los metadatos (que escribe el propio usuario) ya no activa la cuenta |
+| Códigos de acceso (`046`) | OK — intentos fallidos y consumo del código en una sola sentencia; al canjear se cierran las sesiones abiertas |
+| Textos de la API | OK — topes de longitud en todas las rutas de edición (`lib/api/text-limits`) |
+| Datos personales en el repositorio | OK — recibos y cuadrantes reales retirados y purgados del historial (2026-11-22) |
 | Adjuntos | OK — tipo por firma binaria, 5 MB, 5 por envío |
 | Realtime `app_sync_state` | OK — solo SELECT authenticated |
 | Leaked Password Protection | Pendiente — único item de seguridad abierto; toggle manual en Supabase Auth (HaveIBeenPwned), no es código |

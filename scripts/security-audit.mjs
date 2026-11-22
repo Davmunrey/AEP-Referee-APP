@@ -183,6 +183,22 @@ for (const tabla of tablasVivas(sqlPorFichero)) {
   fail("RLS-02", `${tabla}: se crea sin ENABLE ROW LEVEL SECURITY en ninguna migración`);
 }
 
+// CSP-01: `'unsafe-eval'` solo puede aparecer en la política de desarrollo
+// (React Refresh). En producción permitiría ejecutar texto como código.
+{
+  const nextConfig = readFileSync("next.config.ts", "utf8");
+  if (nextConfig.includes("'unsafe-eval'")) {
+    fail("CSP-01", "next.config.ts vuelve a incluir 'unsafe-eval' en la CSP");
+  }
+  const csp = readFileSync("src/lib/security/csp.ts", "utf8");
+  if (!/if \(dev\) script\.push\("'unsafe-eval'"\)/.test(csp)) {
+    fail("CSP-01", "src/lib/security/csp.ts: 'unsafe-eval' debe quedar limitado al modo desarrollo");
+  }
+  if (!csp.includes("'nonce-${nonce}'")) {
+    fail("CSP-02", "src/lib/security/csp.ts: la política de las páginas debe llevar nonce");
+  }
+}
+
 if (failures.length) {
   console.error("Security audit: FAIL");
   for (const f of failures) console.error(`- ${f.id}: ${f.detail}`);
