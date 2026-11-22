@@ -97,7 +97,7 @@ Si en el futuro se añade un dominio personalizado en Vercel → Project → Set
 - [ ] `/docs` accesible
 - [ ] Secret `SUPABASE_DB_URL` creado (lo necesita el workflow de migraciones)
 - [ ] Workflow «Migraciones Supabase» en verde tras el push
-- [ ] Backup reciente (`npm run db:backup`)
+- [ ] Backup reciente (workflow «Backup» en verde, o `npm run db:backup` en local)
 - [ ] Plantillas de correo Auth con branding AEP (si hubo cambios)
 - [ ] Usuario admin / comité esperado activo
 
@@ -106,6 +106,33 @@ Si en el futuro se añade un dominio personalizado en Vercel → Project → Set
 Un único paso manual pendiente de seguridad, sin código:
 
 - **Leaked Password Protection**: en Supabase → Authentication → Policies (Password), activar el toggle que rechaza contraseñas expuestas en filtraciones conocidas (HaveIBeenPwned). Es un ajuste del panel, no forma parte del repo ni de las migraciones. El resto del endurecimiento RLS ya viene aplicado por la migración `033`.
+
+## Copias de seguridad y restauración
+
+El workflow **Backup** (cada noche a las 03:17 UTC, y a mano con *Run workflow*) genera dos copias, las cifra con AES-256 y las sube como artefacto (90 días):
+
+| Fichero | Qué contiene | Para qué |
+|---|---|---|
+| `aep-pgdump-*.dump.gpg` | Volcado `pg_dump` de los esquemas `public` y `auth`: estructura, datos y cuentas con el resumen de sus contraseñas | **Restauración completa** |
+| `aep-backup-*.json.gpg` | Todas las tablas de `public` leídas por la API, más las cuentas sin contraseña | Consulta rápida y recuperar filas sueltas |
+
+Necesita los secrets `BACKUP_PASSPHRASE`, `SUPABASE_DB_URL`, `NEXT_PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`. Si falta la frase de cifrado o la cadena de conexión, el job **falla**: antes terminaba en verde sin guardar nada.
+
+La lista de tablas se deriva de las migraciones (`scripts/lib/backup-tables.mjs`), y el test `tests/backup-tables.test.ts` falla si una tabla nueva se queda fuera. Los ficheros adjuntos de los tickets (bucket de Storage) **no** entran en la copia.
+
+### Restaurar
+
+1. Descarga el artefacto de la ejecución elegida (Actions → Backup → *Artifacts*).
+2. Descifra: `gpg --decrypt aep-pgdump-….dump.gpg > copia.dump` (pide la frase).
+3. Restaura **primero sobre un proyecto de Supabase vacío**, nunca directamente sobre producción:
+   ```sh
+   pg_restore --dbname "$URL_DEL_PROYECTO_NUEVO" --no-owner --no-privileges \
+     --clean --if-exists --schema=public --schema=auth copia.dump
+   ```
+4. Comprueba con `npm run audit:remote` apuntando al proyecto restaurado y entra con una cuenta conocida.
+5. Si todo cuadra, cambia `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` en Vercel al proyecto restaurado y redespliega.
+
+Ensaya este procedimiento al menos una vez por temporada: una copia que nunca se ha restaurado no está probada.
 
 ## Rollback
 
