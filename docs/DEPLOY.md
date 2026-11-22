@@ -107,6 +107,10 @@ Un único paso manual pendiente de seguridad, sin código:
 
 - **Leaked Password Protection**: en Supabase → Authentication → Policies (Password), activar el toggle que rechaza contraseñas expuestas en filtraciones conocidas (HaveIBeenPwned). Es un ajuste del panel, no forma parte del repo ni de las migraciones. El resto del endurecimiento RLS ya viene aplicado por la migración `033`.
 
+## Servicios de cartografía
+
+El autocompletado de direcciones usa **Photon** (`photon.komoot.io`), la geolocalización **Nominatim** (`nominatim.openstreetmap.org`) y las distancias **OSRM** (`router.project-osrm.org`). Son servidores públicos y gratuitos, sin garantía de servicio: Nominatim limita a 1 petición por segundo y exige identificarse (`OSM_USER_AGENT`), y el servidor de OSRM es de demostración. Si fallan, la compensación sigue funcionando con km introducidos a mano. Para no depender de ellos, apunta `NOMINATIM_URL` y `OSRM_URL` a una instancia propia o de pago. Solo reciben el texto de la dirección y coordenadas, nunca el nombre del juez (ver aviso de privacidad en `/docs`).
+
 ## Copias de seguridad y restauración
 
 El workflow **Backup** (cada noche a las 03:17 UTC, y a mano con *Run workflow*) genera dos copias, las cifra con AES-256 y las sube como artefacto (90 días):

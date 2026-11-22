@@ -1,13 +1,13 @@
 import { z } from "zod";
 import {
-  canAttemptLogin,
-  clearLoginAttempts,
+  canAttemptLoginShared,
+  clearLoginAttemptsShared,
   MAX_LOGIN_EMAIL_LENGTH,
-  recordFailedLogin,
+  recordFailedLoginShared,
   requestIp,
 } from "@/lib/api/login-rate-limit";
 import { jsonError, jsonOk, jsonServerError } from "@/lib/api/route-utils";
-import { allowAction } from "@/lib/api/action-rate-limit";
+import { allowActionShared } from "@/lib/api/action-rate-limit";
 import { JUDGE_PASSWORD_MIN } from "@/lib/judge-access";
 import { redeemAccessCode } from "@/server/services/judge-accounts";
 
@@ -30,8 +30,8 @@ export async function POST(request: Request) {
   if (!body.success) return jsonError("Escribe tu e-mail, el código y una contraseña", 400);
 
   const ip = requestIp(request);
-  const limit = canAttemptLogin(ip, body.data.email);
-  if (!limit.allowed || !allowAction(`judge-code:ip:${ip}`, 20, 15 * 60_000)) {
+  const limit = await canAttemptLoginShared(ip, body.data.email);
+  if (!limit.allowed || !(await allowActionShared(`judge-code:ip:${ip}`, 20, 15 * 60_000))) {
     return jsonError("Demasiados intentos. Espera unos minutos antes de reintentar.", 429);
   }
 
@@ -41,13 +41,13 @@ export async function POST(request: Request) {
       return jsonError(`La contraseña debe tener al menos ${JUDGE_PASSWORD_MIN} caracteres`, 400);
     }
     if (outcome !== "ok") {
-      recordFailedLogin(ip, body.data.email);
+      await recordFailedLoginShared(ip, body.data.email);
       return jsonError(
         "El e-mail o el código no son correctos, o el código ha caducado. Si no te funciona, pide uno nuevo a tu delegado.",
         400,
       );
     }
-    clearLoginAttempts(ip, body.data.email);
+    await clearLoginAttemptsShared(ip, body.data.email);
     return jsonOk({ ok: true });
   } catch (err) {
     return jsonServerError("auth.judge-code", err, "No se pudo completar el acceso");

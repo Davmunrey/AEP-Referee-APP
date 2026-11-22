@@ -386,7 +386,12 @@ export default async function DocsPage() {
                   <dt className="font-semibold text-foreground">Destinatarios</dt>
                   <dd>
                     Proveedores de infraestructura (Supabase y Vercel) como encargados del
-                    tratamiento. No se ceden a terceros salvo obligación legal.
+                    tratamiento. Para autocompletar direcciones y calcular la distancia de los
+                    desplazamientos, el servidor envía el texto de la dirección (domicilio del juez
+                    o sede del campeonato) y sus coordenadas a servicios de cartografía de
+                    OpenStreetMap: Photon (komoot), Nominatim y OSRM. No se les envía el nombre del
+                    juez ni otro dato que lo identifique. No se ceden datos a terceros salvo
+                    obligación legal.
                   </dd>
                 </div>
                 <div>

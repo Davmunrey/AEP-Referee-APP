@@ -1,5 +1,5 @@
 import {
-  canAttemptLogin,
+  canAttemptLoginShared,
   MAX_LOGIN_EMAIL_LENGTH,
   requestIp,
 } from "@/lib/api/login-rate-limit";
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     return jsonError("Acción no permitida. Usa POST /auth/login.", 403);
   }
 
-  const limit = canAttemptLogin(requestIp(request), email);
+  const limit = await canAttemptLoginShared(requestIp(request), email);
   if (!limit.allowed) {
     return jsonError("Demasiados intentos. Espera unos minutos antes de reintentar.", 429);
   }

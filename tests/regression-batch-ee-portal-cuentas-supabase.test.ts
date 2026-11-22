@@ -15,6 +15,8 @@ let deletedUsers: string[];
 let passwords: Record<string, string>;
 let authEmails: Record<string, string>;
 let avisos: Row[];
+let sesionesCerradas: string[];
+let fallaPassword = false;
 const KEY: Record<string, string> = { profiles: "id", judge_access_codes: "referee_id" };
 
 function query(table: string) {
@@ -48,9 +50,29 @@ function query(table: string) {
   return q;
 }
 
+// Las funciones de la migración 046, sobre las mismas tablas en memoria.
+async function rpc(fn: string, args: Record<string, unknown>) {
+  if (fn === "judge_code_fail") {
+    const rows = (tables.judge_access_codes ??= []);
+    const row = rows.find((r) => r.referee_id === args.p_referee_id);
+    if (!row) return { data: 0, error: null };
+    row.attempts = Number(row.attempts ?? 0) + 1;
+    if (Number(row.attempts) >= Number(args.p_max)) {
+      tables.judge_access_codes = rows.filter((r) => r !== row);
+    }
+    return { data: row.attempts, error: null };
+  }
+  if (fn === "cerrar_sesiones_de_usuario") {
+    sesionesCerradas.push(String(args.p_user_id));
+    return { data: null, error: null };
+  }
+  return { data: null, error: { message: `rpc desconocida ${fn}` } };
+}
+
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: query,
+    rpc,
     auth: {
       admin: {
         createUser: async ({ email, password }: { email: string; password: string }) => {
@@ -62,6 +84,9 @@ vi.mock("@/lib/supabase/admin", () => ({
         },
         getUserById: async (id: string) => ({ data: { user: { id, email: authEmails[id] } }, error: null }),
         updateUserById: async (id: string, attrs: { email?: string; password?: string }) => {
+          if (attrs.password && fallaPassword) {
+            return { data: { user: null }, error: { message: "proveedor caído" } };
+          }
           if (attrs.email) authEmails[id] = attrs.email;
           if (attrs.password) passwords[id] = attrs.password;
           return { data: { user: { id } }, error: null };
@@ -101,6 +126,8 @@ beforeEach(() => {
   passwords = {};
   authEmails = {};
   avisos = [];
+  sesionesCerradas = [];
+  fallaPassword = false;
 });
 
 /** Lee la ficha actualizada (con su `user_id`) como la daría el servicio. */
@@ -182,6 +209,40 @@ describe("canjear el código (Supabase)", () => {
     const [r] = await issueAccessCodes([ficha()]);
     expect(await revokeJudgeAccess(fichaActual())).toBe(true);
     expect(await redeemAccessCode("ana@aep.test", r!.code!, "mi-clave-segura")).toBe("invalido");
+  });
+
+  it("al canjear se cierran las sesiones que tuviera abiertas la cuenta", async () => {
+    const [r] = await issueAccessCodes([ficha()]);
+    expect(await redeemAccessCode("ana@aep.test", r!.code!, "mi-clave-segura")).toBe("ok");
+    expect(sesionesCerradas).toEqual(["u-1"]);
+  });
+
+  it("dos canjes a la vez con el mismo código: solo uno lo consigue", async () => {
+    const [r] = await issueAccessCodes([ficha()]);
+    const [a, b] = await Promise.all([
+      redeemAccessCode("ana@aep.test", r!.code!, "clave-de-a-123"),
+      redeemAccessCode("ana@aep.test", r!.code!, "clave-de-b-123"),
+    ]);
+    expect([a, b].filter((x) => x === "ok")).toHaveLength(1);
+    expect([a, b].filter((x) => x === "invalido")).toHaveLength(1);
+  });
+
+  it("los intentos fallidos simultáneos cuentan todos", async () => {
+    const [r] = await issueAccessCodes([ficha()]);
+    await Promise.all(
+      Array.from({ length: 5 }, () => redeemAccessCode("ana@aep.test", "CCCCCCCC", "mi-clave-segura")),
+    );
+    expect(tables.judge_access_codes).toEqual([]);
+    expect(await redeemAccessCode("ana@aep.test", r!.code!, "mi-clave-segura")).toBe("invalido");
+  });
+
+  it("si no se puede poner la contraseña, el código vuelve para reintentar", async () => {
+    const [r] = await issueAccessCodes([ficha()]);
+    fallaPassword = true;
+    await expect(redeemAccessCode("ana@aep.test", r!.code!, "mi-clave-segura")).rejects.toThrow();
+    expect(sesionesCerradas).toEqual([]);
+    fallaPassword = false;
+    expect(await redeemAccessCode("ana@aep.test", r!.code!, "mi-clave-segura")).toBe("ok");
   });
 
   it("una contraseña corta se rechaza sin gastar el código", async () => {

@@ -1,9 +1,9 @@
 import {
-  canAttemptLogin,
-  clearLoginAttempts,
+  canAttemptLoginShared,
+  clearLoginAttemptsShared,
   MAX_LOGIN_EMAIL_LENGTH,
   MAX_LOGIN_PASSWORD_LENGTH,
-  recordFailedLogin,
+  recordFailedLoginShared,
   requestIp,
 } from "@/lib/api/login-rate-limit";
 import { jsonError, jsonOk } from "@/lib/api/route-utils";
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (password.length > MAX_LOGIN_PASSWORD_LENGTH) return jsonError("Contraseña no válida", 400);
 
   const ip = requestIp(request);
-  const limit = canAttemptLogin(ip, email);
+  const limit = await canAttemptLoginShared(ip, email);
   if (!limit.allowed) {
     return jsonError("Demasiados intentos. Espera unos minutos antes de reintentar.", 429);
   }
@@ -36,10 +36,10 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    recordFailedLogin(ip, email);
+    await recordFailedLoginShared(ip, email);
     return jsonError("Email o contraseña incorrectos.", 401);
   }
 
-  clearLoginAttempts(ip, email);
+  await clearLoginAttemptsShared(ip, email);
   return jsonOk({ ok: true });
 }
