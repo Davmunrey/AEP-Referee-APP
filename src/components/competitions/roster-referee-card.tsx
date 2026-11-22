@@ -71,6 +71,9 @@ export const RefereeCard = memo(function RefereeCard({
       onDragEnd={onDragEnd}
       onClick={() => !locked && onClick(referee.id)}
       role="button"
+      // Bloqueada (nivel, normativa, solo lectura): se anuncia como botón
+      // desactivado, no como uno que se puede pulsar y no hace nada.
+      aria-disabled={locked || undefined}
       tabIndex={locked ? -1 : 0}
       onKeyDown={(e) => {
         if (locked) return;

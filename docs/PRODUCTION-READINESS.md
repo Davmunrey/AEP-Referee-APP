@@ -39,9 +39,9 @@ Valida tablas críticas, allowlist usuarios activos y bloqueo anon.
 
 ## Seguridad cubierta
 
-- Headers HTTP (CSP, HSTS, frame deny).
+- Headers HTTP (HSTS, frame deny) y CSP con nonce por petición en las páginas (sin `unsafe-eval` ni `unsafe-inline` en `script-src`).
 - API privada con sesión.
-- Login server-side con rate-limit.
+- Login server-side con rate-limit en memoria y compartido entre instancias (migración `046`).
 - Mutaciones con RBAC y scope zonal.
 - RLS deny-by-default; endurecimiento aplicado (migraciones `033` y `037`): sin políticas permisivas para `authenticated`. Toda tabla nueva debe nacer con RLS (lo comprueba un test).
 - Alta de cuentas sin la bandera `invited` controlada por el usuario (migración `038`).

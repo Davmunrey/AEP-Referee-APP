@@ -14,7 +14,7 @@
 # `supabase db push` no sirve en este proyecto. Compara las versiones locales
 # con las de supabase_migrations.schema_migrations posicionalmente, y esa tabla
 # ya está escrita por otra vía: las migraciones 023, 024 y 025 se aplicaron con
-# el MCP de Supabase (.planning/phases/08-backlog-detailed/PLAN.md), que graba
+# el MCP de Supabase, que graba
 # versiones con formato de timestamp. Esas versiones ordenan por encima de los
 # prefijos 001-035 de este repo, así que el CLI las clasifica como «remotas sin
 # fichero local» y aborta con ErrMissingLocal. «Arreglarlo» desde CI obligaría a
@@ -43,6 +43,9 @@ on:
 
 # Dos pushes seguidos no migran a la vez, y el segundo espera en vez de
 # cancelar al primero: cancelar a mitad de un DDL es justo lo que no queremos.
+permissions:
+  contents: read
+
 concurrency:
   group: supabase-migrations
   cancel-in-progress: false
@@ -61,7 +64,7 @@ jobs:
       # sin ejecutarse, en silencio y para siempre.
       BASELINE: "001 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 030 031 032 033"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - name: Comprobar que el secret existe
         run: |

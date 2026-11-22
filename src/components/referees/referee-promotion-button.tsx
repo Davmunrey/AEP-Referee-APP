@@ -11,6 +11,7 @@ import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 import { higherRefereeLevels } from "@/lib/referee-levels";
 import type { RefereeLevel } from "@/lib/types";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 const MOTIVO_MAX = 300;
 
@@ -58,6 +59,7 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
   }
 
   return (
+    <Portal>
     <div
       className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
@@ -153,5 +155,6 @@ export function RefereePromotionButton({ refereeId, currentLevel }: RefereePromo
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

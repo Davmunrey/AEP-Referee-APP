@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, TrendingUp, X } from "lucide-react";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 import { higherRefereeLevels } from "@/lib/referee-levels";
+import { Portal } from "@/components/ui/portal";
 
 const higherLevels = higherRefereeLevels;
 
@@ -108,6 +109,7 @@ export function NewPromotionDialog({
   }
 
   return (
+    <Portal>
     <div
       className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={() => setOpen(false)}
@@ -230,5 +232,6 @@ export function NewPromotionDialog({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

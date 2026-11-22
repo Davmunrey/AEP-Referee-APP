@@ -135,6 +135,8 @@ El XLSX del registro trae varias hojas de arbitrajes por año natural
 | `supabase-service.ts` | `supabase-referees`, `supabase-competitions`, `supabase-roster`, `supabase-analytics`, `supabase-exams`, `supabase-compensation`, `supabase-tickets`, `supabase-helpers` |
 | `memory-service.ts` | `memory-referees`, `memory-competitions`, `memory-analytics`, `memory-admin`, `memory-compensation`, `memory-tickets`, `memory-helpers` |
 
+`supabase-roster.ts` compone `rosterService` a partir de tres módulos por responsabilidad: `supabase-roster-plantilla` (lectura, plantilla, marcas, historial, acta y contadores), `supabase-roster-asignaciones` (validar, asignar y liberar) y `supabase-roster-aprobacion` (borrador, envío, revisión e imprevistos), con las piezas comunes en `supabase-roster-shared`. Los métodos no se llaman entre sí, así que se pueden mover sin cambiar la API.
+
 Fuera de los barrels: `referee-sanctions.ts` (sanciones, solo Supabase), `admin-users.ts` / `admin-audit.ts` (gestión de cuentas) e `import-judges-registry.ts` (censo XLSX). Los módulos reciben funciones como argumentos para evitar imports circulares.
 
 **Paridad memoria ↔ Supabase.** El backend en memoria (dev local y capturas de documentación con `AEP_DOCS_CAPTURE=1`) debe comportarse igual que el de Supabase: mismas validaciones, mismos errores y mismas reglas de negocio (p. ej. no tocar liquidaciones pagadas al recalcular). Lo que solo existe en Supabase (sanciones) responde un `503` explícito en memoria, nunca una lista vacía.

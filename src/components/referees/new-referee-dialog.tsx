@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { selectFieldClass } from "@/lib/design-tokens";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 const STATUSES: RefereeStatus[] = ["Activo", "Inactivo", "Sancionado"];
 
@@ -60,6 +61,7 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
   };
 
   return (
+    <Portal>
     <div
       className={`fixed inset-0 z-(--z-modal) flex items-center justify-center p-4 bg-overlay ${dialogOverlayEnter}`}
       onClick={onClose}
@@ -200,5 +202,6 @@ export function NewRefereeDialog({ zones, levels, open, onClose }: NewRefereeDia
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

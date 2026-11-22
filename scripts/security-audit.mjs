@@ -6,13 +6,9 @@ import { tablasVivas } from "./lib/migration-tables.mjs";
 // Avisos que NO bloquean la auditoría, cada uno con su motivo. Se revisan
 // cuando cambie alguna de las condiciones que los justifican.
 //
-//  - Los dos son de `xlsx`, que solo se usa para leer el Excel del censo en
-//    el servidor, con autenticación, tope de tamaño, tope de entradas del ZIP
-//    y tope de filas.
-const allowedAdvisories = new Set([
-  "GHSA-4r6h-8v6p-xvw6",
-  "GHSA-5pgg-2g8v-p4x9",
-]);
+// Vacía desde que `xlsx` se instala en su versión 0.20.3 desde el CDN oficial
+// de SheetJS (la de npm se quedó en la 0.18.5, con dos avisos sin parche).
+const allowedAdvisories = new Set([]);
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const failures = [];
@@ -183,6 +179,22 @@ for (const tabla of tablasVivas(sqlPorFichero)) {
   fail("RLS-02", `${tabla}: se crea sin ENABLE ROW LEVEL SECURITY en ninguna migración`);
 }
 
+// CSP-01: `'unsafe-eval'` solo puede aparecer en la política de desarrollo
+// (React Refresh). En producción permitiría ejecutar texto como código.
+{
+  const nextConfig = readFileSync("next.config.ts", "utf8");
+  if (nextConfig.includes("'unsafe-eval'")) {
+    fail("CSP-01", "next.config.ts vuelve a incluir 'unsafe-eval' en la CSP");
+  }
+  const csp = readFileSync("src/lib/security/csp.ts", "utf8");
+  if (!/if \(dev\) script\.push\("'unsafe-eval'"\)/.test(csp)) {
+    fail("CSP-01", "src/lib/security/csp.ts: 'unsafe-eval' debe quedar limitado al modo desarrollo");
+  }
+  if (!csp.includes("'nonce-${nonce}'")) {
+    fail("CSP-02", "src/lib/security/csp.ts: la política de las páginas debe llevar nonce");
+  }
+}
+
 if (failures.length) {
   console.error("Security audit: FAIL");
   for (const f of failures) console.error(`- ${f.id}: ${f.detail}`);
@@ -190,4 +202,4 @@ if (failures.length) {
 }
 
 console.log("Security audit: OK");
-console.log("Allowed advisories: xlsx server-side import only, mitigated by auth, size, ZIP and row limits");
+console.log(allowedAdvisories.size ? `Allowed advisories: ${[...allowedAdvisories].join(", ")}` : "Allowed advisories: none");

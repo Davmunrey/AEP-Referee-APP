@@ -17,8 +17,22 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+/**
+ * `extraRequestHeaders`: cabeceras que se añaden a la petición que llega a la
+ * página (el nonce de la CSP). Se reconstruyen cada vez que se renueva la
+ * sesión, porque `request.cookies.set` actualiza la cabecera `cookie` y la
+ * página tiene que ver las cookies nuevas.
+ */
+export async function updateSession(
+  request: NextRequest,
+  extraRequestHeaders: Record<string, string> = {},
+) {
+  const next = () => {
+    const headers = new Headers(request.headers);
+    for (const [k, v] of Object.entries(extraRequestHeaders)) headers.set(k, v);
+    return NextResponse.next({ request: { headers } });
+  };
+  let supabaseResponse = next();
 
   if (!isSupabaseConfigured()) {
     return supabaseResponse;
@@ -32,7 +46,7 @@ export async function updateSession(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next({ request });
+        supabaseResponse = next();
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         );

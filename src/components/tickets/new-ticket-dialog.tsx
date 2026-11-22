@@ -17,6 +17,7 @@ import {
 import { CATEGORY_LABELS, TICKET_CATEGORIES } from "@/components/tickets/ticket-shared";
 import type { TicketCategory } from "@/lib/types";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
+import { Portal } from "@/components/ui/portal";
 
 const inputClass =
   "h-9 w-full rounded-xl border border-border-strong bg-surface px-3 text-sm text-foreground placeholder:text-subtle-muted focus-ring";
@@ -103,6 +104,7 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
+    <Portal>
     <div
       className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`}
       onClick={onClose}
@@ -249,5 +251,6 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

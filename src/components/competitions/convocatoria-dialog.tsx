@@ -14,6 +14,7 @@ import { contar } from "@/lib/plural";
 import type { Competition, Referee, RosterSession } from "@/lib/types";
 import { cn, formatDateRange } from "@/lib/utils";
 import { confirmar } from "@/components/ui/confirm-dialog";
+import { Portal } from "@/components/ui/portal";
 
 const fecha = (iso: string) => formatDateRange(iso, iso);
 
@@ -86,6 +87,7 @@ export function ConvocatoriaDialog({
   };
 
   return (
+    <Portal>
     <div className={`fixed inset-0 z-(--z-modal) flex items-center justify-center bg-overlay p-4 ${dialogOverlayEnter}`} onClick={busy ? undefined : onClose}>
       <div
         ref={dialogRef}
@@ -363,6 +365,7 @@ export function ConvocatoriaDialog({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
