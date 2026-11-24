@@ -12,7 +12,7 @@
     "start": "next start -p 3000",
     "start:local": "next build && next start -p 3000",
     "lint": "eslint src tests scripts playwright.config.ts playwright.local.config.ts playwright.prod.config.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "node ./node_modules/typescript-7/bin/tsc --noEmit -p tsconfig.json",
     "audit:prod": "node scripts/production-readiness-check.mjs",
     "audit:security": "node scripts/security-audit.mjs",
     "audit:remote": "node --env-file=.env.local scripts/supabase-readiness-audit.mjs",
@@ -79,7 +79,8 @@
     "eslint": "^10.15.0",
     "eslint-config-next": "^16.4.6",
     "tailwindcss": "^4.1.7",
-    "typescript": "^5.8.3",
+    "typescript": "~6.0.3",
+    "typescript-7": "npm:typescript@^7.0.2",
     "vitest": "^5.1.1"
   }
 }
