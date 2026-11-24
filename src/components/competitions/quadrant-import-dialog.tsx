@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/data-transfer/file-drop-zone";
 import { TransferDialogShell } from "@/components/data-transfer/transfer-dialog-shell";
@@ -13,6 +13,7 @@ import { api } from "@/lib/api/client";
 import type { AssignmentsMap, FlagsMap } from "@/lib/types";
 import type { TransferStep } from "@/lib/import-export-ui";
 import { Loader2 } from "lucide-react";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 interface Candidate {
   key: string;
@@ -60,8 +61,9 @@ export function QuadrantImportDialog({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ applied: number; errors: string[] } | null>(null);
 
-  useEffect(() => {
-    if (!open) {
+  // Al cerrar, el diálogo vuelve a su estado inicial.
+  usePropChange(open, (isOpen) => {
+    if (!isOpen) {
       setFile(null);
       setPreview(null);
       setSelectedKeys(new Set());
@@ -69,7 +71,7 @@ export function QuadrantImportDialog({
       setError(null);
       setResult(null);
     }
-  }, [open]);
+  });
 
   const step: TransferStep = result ? "result" : preview ? "preview" : "upload";
   const selectedCount = selectedKeys.size;

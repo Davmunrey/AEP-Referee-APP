@@ -3,7 +3,7 @@
 import { zoneUiName } from "@/lib/aep-zones";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { EventStatusBadge } from "@/components/aep/badges";
 import { PageHeader, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { contar } from "@/lib/plural";
 import { MetricStrip, MetricTile } from "@/components/ui/metric-tile";
+import { useServerState } from "@/hooks/use-prop-change";
 
 const PAGE_SIZE = 10;
 
@@ -34,8 +35,10 @@ interface ApprovalsBoardProps {
   /** Estado de cobertura por id de campeonato, solo de los que citan las
    * propuestas (antes llegaba la lista entera de campeonatos para leer esto). */
   estadoById?: Record<string, EventStatus>;
+  /** Inicio de «esta semana» (ms), calculado en el servidor: con `Date.now()`
+   * en el render, servidor y navegador podían contar distinto al hidratar. */
+  semanaDesde: number;
 }
-
 
 /**
  * Decode a raw slotKey like "S1_central_0" into a human-readable label.
@@ -61,8 +64,9 @@ export function ApprovalsBoard({
   canReview,
   refNames = {},
   estadoById = {},
+  semanaDesde,
 }: ApprovalsBoardProps) {
-  const [items, setItems] = useState(initial);
+  const [items, setItems] = useServerState(initial);
   // Se guarda el id, no la propuesta: al refrescar desde el servidor el objeto
   // capturado quedaba obsoleto y el panel de detalle seguía mostrando el estado
   // y el comentario anteriores (o una propuesta que ya no está en la lista)
@@ -74,24 +78,13 @@ export function ApprovalsBoard({
   const [page, setPage] = useState(0);
   const router = useRouter();
 
-  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
-  // patrón que competitions-table / referees-directory).
-  useEffect(() => {
-    setItems(initial);
-  }, [initial]);
-
   const selected = selectedApproval(items, selectedId);
 
   const pendingCount = items.filter((a) => a.status === "pendiente").length;
   const approvedCount = items.filter((a) => a.status === "aprobado").length;
   const rejectedCount = items.filter((a) => a.status === "rechazado").length;
-  const thisWeekCount = items.filter((a) => {
-    try {
-      return new Date(a.submittedAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
-    } catch {
-      return false;
-    }
-  }).length;
+  // Una fecha inválida da NaN y no cuenta (antes, un try/catch que nunca saltaba).
+  const thisWeekCount = items.filter((a) => new Date(a.submittedAt).getTime() > semanaDesde).length;
 
   const totalPages = Math.ceil(items.length / PAGE_SIZE);
   const pagedItems = items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);

@@ -37,6 +37,12 @@ export function readThemePreference(): ThemePreference {
   }
 }
 
+/** Suscripción para `useSyncExternalStore`: otra pestaña cambió el tema. */
+export function subscribeThemePreference(onChange: () => void): () => void {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
 export function setThemePreference(pref: ThemePreference): void {
   try {
     if (pref === "system") window.localStorage.removeItem(THEME_STORAGE_KEY);

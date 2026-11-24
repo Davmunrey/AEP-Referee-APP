@@ -95,6 +95,20 @@ function formatAbsolute(dateStr: string): string {
   return formatBusinessDateTime(dateStr);
 }
 
+type UsersLoad = { ok: true; users: ProfileRow[] } | { ok: false; error: string };
+
+/** Pide la lista de usuarios. No toca estado: devuelve el resultado. */
+async function requestUsers(signal?: AbortSignal): Promise<UsersLoad> {
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/admin/users`, { credentials: "include", signal });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "Error al cargar usuarios");
+    return { ok: true, users: json.data ?? [] };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error desconocido" };
+  }
+}
+
 export function UsersAdmin({
   zones,
   initialUsers,
@@ -139,31 +153,33 @@ export function UsersAdmin({
     zona: zones[0]?.code ?? "",
   });
 
-  const load = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/admin/users`, { credentials: "include", signal });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error al cargar usuarios");
-      setUsers(json.data ?? []);
-    } catch (e) {
-      // Petición cancelada (desmontaje): no tocar estado.
-      if (signal?.aborted) return;
-      setError(e instanceof Error ? e.message : "Error desconocido");
-    } finally {
-      if (!signal?.aborted) setLoading(false);
-    }
+  // Resultado de una carga (ya sin la petición en vuelo). Se aplica desde el
+  // botón de refresco y desde la carga inicial; una petición cancelada
+  // (desmontaje) no toca el estado.
+  const applyLoad = useCallback((result: UsersLoad, signal?: AbortSignal) => {
+    if (signal?.aborted) return;
+    if (result.ok) setUsers(result.users);
+    else setError(result.error);
+    setLoading(false);
   }, []);
+
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      setError(null);
+      applyLoad(await requestUsers(signal), signal);
+    },
+    [applyLoad],
+  );
 
   useEffect(() => {
     // Con datos precargados desde el servidor no se fetchea en el mount; el
     // fetch queda para el refresco manual y tras mutaciones (botón/altas).
     if (initialUsers) return;
     const controller = new AbortController();
-    void load(controller.signal);
+    requestUsers(controller.signal).then((result) => applyLoad(result, controller.signal));
     return () => controller.abort();
-  }, [load, initialUsers]);
+  }, [applyLoad, initialUsers]);
 
   const q = search.trim().toLowerCase();
   const filteredUsers = users.filter((u) => {

@@ -2,6 +2,13 @@ import { ApprovalsBoard } from "@/components/approvals/approvals-board";
 import { canApprove, getSession, redirectSinAcceso } from "@/lib/auth/session";
 import { dataService } from "@/server/services";
 
+const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Inicio de «esta semana» para el contador de la bandeja, en el momento de la petición. */
+function inicioDeSemana(): number {
+  return Date.now() - SEMANA_MS;
+}
+
 export default async function ApprovalsPage() {
   const user = await getSession();
   if (!user) return redirectSinAcceso();
@@ -19,6 +26,7 @@ export default async function ApprovalsPage() {
       user,
     ),
   }));
+  const semanaDesde = inicioDeSemana();
   const [{ approvals, estadoById }, referees] = await Promise.all([
     conEstados,
     dataService.getReferees({ user }),
@@ -30,6 +38,7 @@ export default async function ApprovalsPage() {
       canReview={canApprove(user)}
       refNames={refNames}
       estadoById={estadoById}
+      semanaDesde={semanaDesde}
     />
   );
 }

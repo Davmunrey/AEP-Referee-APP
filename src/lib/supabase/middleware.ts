@@ -33,6 +33,7 @@ export async function updateSession(
     return NextResponse.next({ request: { headers } });
   };
   let supabaseResponse = next();
+  const cacheHeaders: Record<string, string> = {};
 
   if (!isSupabaseConfigured()) {
     return supabaseResponse;
@@ -44,12 +45,17 @@ export async function updateSession(
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        // Supabase manda cabeceras anticaché cuando escribe cookies de sesión
+        // (solo en la primera llamada): una respuesta que rota el token no la
+        // puede guardar ningún CDN ni compartirla con otra persona.
+        Object.assign(cacheHeaders, headers);
         supabaseResponse = next();
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         );
+        for (const [k, v] of Object.entries(cacheHeaders)) supabaseResponse.headers.set(k, v);
       },
     },
   });
@@ -82,6 +88,7 @@ export async function updateSession(
   // la sesión se cierra aleatoriamente.
   const withSessionCookies = (response: NextResponse) => {
     supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+    for (const [k, v] of Object.entries(cacheHeaders)) response.headers.set(k, v);
     return response;
   };
 

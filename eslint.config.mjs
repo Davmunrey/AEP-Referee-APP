@@ -1,30 +1,23 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  {
-    // ESLint flat config ya ignora node_modules y .git, pero NO los artefactos
-    // de build de Next, los tipos generados ni los informes de test. Sin esto,
-    // `eslint .` lintaría miles de ficheros generados (lo que `next lint` evitaba).
-    ignores: [
-      ".next/**",
-      "out/**",
-      "build/**",
-      "coverage/**",
-      "playwright-report/**",
-      "test-results/**",
-      "next-env.d.ts",
-    ],
-  },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+export default defineConfig([
+  // ESLint ya ignora node_modules y .git, pero NO los artefactos de build de
+  // Next, los tipos generados ni los informes de test.
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "coverage/**",
+    "playwright-report/**",
+    "playwright-report-*/**",
+    "test-results/**",
+    "test-results-*/**",
+    "next-env.d.ts",
+  ]),
+  ...nextVitals,
+  ...nextTs,
   {
     rules: {
       // Convención: prefijo `_` marca parámetros/variables intencionadamente sin usar
@@ -35,6 +28,4 @@ const eslintConfig = [
       ],
     },
   },
-];
-
-export default eslintConfig;
+]);

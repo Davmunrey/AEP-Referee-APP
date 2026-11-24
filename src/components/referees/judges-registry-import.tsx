@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/data-transfer/file-drop-zone";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/import-export-ui";
 import type { JudgesRegistryImportPreview, JudgesRegistryImportResult } from "@/lib/types";
 import { FileSpreadsheet, Loader2 } from "lucide-react";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 interface JudgesRegistryImportProps {
   open: boolean;
@@ -47,8 +48,9 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) {
+  // Al cerrar, el diálogo vuelve a su estado inicial.
+  usePropChange(open, (isOpen) => {
+    if (!isOpen) {
       setFile(null);
       setReplace(false);
       setPreview(null);
@@ -56,7 +58,7 @@ function JudgesRegistryImportDialog({ open, onClose }: JudgesRegistryImportProps
       setError(null);
       setLoading(false);
     }
-  }, [open]);
+  });
 
   const step: TransferStep = result ? "result" : preview ? "preview" : "upload";
 

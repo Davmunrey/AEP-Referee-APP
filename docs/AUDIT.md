@@ -82,15 +82,13 @@ Cada una tiene su fichero en `tests/regression-batch-*`.
 - OCR/PDF depende de herramientas del entorno serverless en algunos casos.
 - E2E profundo (import → cuadrante → export) pendiente.
 - E2E smoke compensación pendiente.
-- Actualizaciones mayores aplazadas (2026-11-22), cada una con su propio PR y pruebas:
-  - **Next 16** (y `eslint-config-next` 16): cambia el middleware a `proxy`, el caché y las APIs asíncronas; afecta a la CSP con nonce y a la sesión de Supabase.
-  - **ESLint 10**: exige configuración plana sin `@eslint/eslintrc`; conviene hacerlo junto con Next 16.
-  - **TypeScript 7** (compilador nativo): pendiente de que Next y `typescript-eslint` lo soporten oficialmente.
-  - **Vitest 5**: revisar los `vi.mock` con proxies de los tests de rutas.
-  - **`@supabase/ssr` 0.12**: API de cookies distinta; tocar junto con el middleware.
-  - **`lucide-react` 1.x**: renombra iconos; cambio mecánico pero amplio.
-  - **`pdf-parse` 2**: API nueva (clase `PDFParse`); afecta a la importación de actas en PDF.
-  - **`pdfkit` 0.21** y **`@types/node` 26**: el proyecto fija Node 22 (`.nvmrc`), así que los tipos se quedan en la 22.
+- Actualizaciones mayores hechas el 2026-11-24 (cada una en su commit, con tests, build y e2e):
+  - **Next 16**: `src/middleware.ts` pasa a `src/proxy.ts`; ESLint con configuración plana nativa. Las reglas nuevas de React (`react-hooks` 7) se corrigieron en lugar de desactivarlas (`src/hooks/use-prop-change.ts`, `use-is-client.ts`).
+  - **ESLint 10**: `eslint-plugin-react`, `-import` y `-jsx-a11y` aún no lo declaran en sus peers (npm avisa); se comprobó que sus reglas disparan.
+  - **TypeScript 7** para `npm run typecheck` (paquete `typescript-7`). El paquete `typescript` queda en 6.0 porque TS 7 no trae la API de JavaScript que usan `typescript-eslint` (admite < 6.1) y `next build`. Cuando la soporten, se quita el alias.
+  - **Vitest 5**, **`@supabase/ssr` 0.12** (con las cabeceras anticaché al rotar la sesión), **`lucide-react` 1.x**, **`pdfkit` 0.21**.
+  - **`pdf-parse`** sustituido por **`pdfjs-dist` 6** (su motor): la 2.x ya no da la posición de cada texto. Comparado con los 25 cuadrantes reales de 2026.
+  - Se queda **`@types/node` 22**: los tipos deben coincidir con el Node que corre (22, `.nvmrc`), no con la última versión.
 
 ## Comandos verificación (mantenedores)
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEscapeClose } from "@/hooks/use-escape-close";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LevelBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { ArrowRight, TrendingUp, X } from "lucide-react";
 import { dialogOverlayEnter, dialogPanelEnter } from "@/components/aep/motion";
 import { higherRefereeLevels } from "@/lib/referee-levels";
 import { Portal } from "@/components/ui/portal";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 const higherLevels = higherRefereeLevels;
 
@@ -53,22 +54,14 @@ export function NewPromotionDialog({
   const selectedRef = eligible.find((r) => r.id === form.refereeId);
   const availableLevels = selectedRef ? higherLevels(selectedRef.nivel) : [];
 
-  // Reset form and error each time the dialog opens
-  useEffect(() => {
-    if (!open) return;
-    const freshEligible = referees.filter(
-      (r) => r.estado === "Activo" && higherLevels(r.nivel).length > 0,
-    );
-    const first = freshEligible[0];
-    const levels = first ? higherLevels(first.nivel) : [];
-    setForm({
-      refereeId: first?.id ?? "",
-      toLevel: (levels[0] ?? "") as RefereeLevel | "",
-      motivo: "",
-    });
+  // Al abrir, formulario limpio con el primer juez elegible. Solo al abrir:
+  // antes también se reiniciaba si la lista de jueces cambiaba con el diálogo
+  // abierto, y se perdía lo que se estaba escribiendo.
+  usePropChange(open, (isOpen) => {
+    if (!isOpen) return;
+    setForm(buildInitialForm(eligible));
     setError(null);
-  }, [open, referees]);
-
+  });
 
   const onRefereeChange = (id: string) => {
     const ref = eligible.find((r) => r.id === id);

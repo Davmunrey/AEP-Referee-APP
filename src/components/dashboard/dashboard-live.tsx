@@ -5,6 +5,7 @@ import { Pause, Play, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { APP_DATA_SYNC_EVENT, setAutoSyncPaused } from "@/lib/realtime/sync-events";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 function relativeLabel(seconds: number): string {
   if (seconds < 5) return "ahora mismo";
@@ -21,16 +22,21 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
   const [isPending, startTransition] = useTransition();
   const [auto, setAuto] = useState(true);
   const [elapsed, setElapsed] = useState(0);
-  const baseRef = useRef(Date.now());
+  // Momento (reloj del navegador) de la última sincronización. Se anota en
+  // efectos, nunca durante el render.
+  const baseRef = useRef<number | null>(null);
 
   const markSynced = useCallback(() => {
     baseRef.current = Date.now();
     setElapsed(0);
   }, []);
 
+  // Datos nuevos del servidor: el contador vuelve a cero en el mismo render y
+  // el momento se anota al confirmarse.
+  usePropChange(generatedAt, () => setElapsed(0));
   useEffect(() => {
-    markSynced();
-  }, [generatedAt, markSynced]);
+    baseRef.current = Date.now();
+  }, [generatedAt]);
 
   const refresh = useCallback(() => {
     startTransition(() => router.refresh());
@@ -57,7 +63,8 @@ export function DashboardLive({ generatedAt }: { generatedAt: string }) {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - baseRef.current) / 1000));
+      const base = baseRef.current;
+      if (base !== null) setElapsed(Math.floor((Date.now() - base) / 1000));
     }, 1000);
     return () => clearInterval(id);
   }, []);

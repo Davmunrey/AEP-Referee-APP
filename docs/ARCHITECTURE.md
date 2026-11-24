@@ -102,7 +102,13 @@ con aviso accionable. `quadrant-parser.ts` (plano) queda como fallback heurísti
 
 **Extracción** (`extract-pdf-text.ts`, `extractPdfLayoutText`): prefiere `pdftotext -layout`
 (local/CI) → reconstrucción geométrica con **pdf.js** desde las posiciones x/y (JS puro,
-funciona en Vercel serverless) → pdf-parse plano + OCR como último recurso.
+funciona en Vercel serverless) → texto plano de pdf.js + OCR como último recurso.
+
+pdf.js se usa directamente (`pdfjs-dist`, `pdfjs-text.ts`), sin `pdf-parse`: la 1.x
+llevaba pdf.js 1.10 y la 2.x ya no da la posición de cada texto. `flatText` reproduce el
+formato de `pdf-parse` 1.x; el calendario lo pide con `pegarColumnas` (columnas pegadas,
+que es lo que reconoce su normalizador). Comparado con los 25 cuadrantes reales de 2026:
+horarios idénticos, e importación de asignaciones en Vercel igual o mejor en todos.
 
 ### Parser de horarios (`src/lib/schedule-parser/`)
 
@@ -231,7 +237,7 @@ Tailwind breakpoints utilizados:
 ## Rendimiento (v2.15)
 
 - **Región**: funciones en `lhr1` (`vercel.json`), junto a Supabase eu-west-2.
-- **Sesión**: `getClaims()` en el middleware y en `getSession`. Con claves JWT asimétricas la firma se verifica en local; con el secreto compartido sigue preguntando a Auth. El perfil se lee en cada petición y trae incrustada la ficha del juez (`referees(id, zona)`), así que el portal no hace una segunda lectura.
+- **Sesión**: `getClaims()` en el proxy (`src/proxy.ts`, antes `middleware.ts`) y en `getSession`. Con claves JWT asimétricas la firma se verifica en local; con el secreto compartido sigue preguntando a Auth. El perfil se lee en cada petición y trae incrustada la ficha del juez (`referees(id, zona)`), así que el portal no hace una segunda lectura.
 - **Incrustación de PostgREST** en vez de lecturas encadenadas: campeonatos con sus asignaciones (`getCompetitions`, sin barrer `roster_assignments` entera), convocatorias con sus zonas, historial del juez, mapa de ocupación de la tarima. `max-rows` solo recorta el nivel superior, no los arrays incrustados.
 - **Sin N+1 en el panel**: las solicitudes de zona pendientes se leen en una tanda (`listConvocatoriasPorIds`).
 - **Lecturas independientes en paralelo** (`Promise.all`) en ficha del juez, compensación, mutaciones de la tarima, analítica, soporte y portal. Cuando el orden de los errores importa se usa `Promise.allSettled` y se comprueban en el orden de antes.

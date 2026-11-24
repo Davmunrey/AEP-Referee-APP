@@ -8,6 +8,7 @@ import { generateQuadrantHtml } from "@/lib/quadrant-html";
 import { useRosterQuadrantSource } from "@/components/competitions/roster-quadrant-source";
 import type { AssignmentsMap, FlagsMap, RosterSession } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 interface RosterRevisionPanelProps {
   competitionId: string;
@@ -72,11 +73,14 @@ export function RosterRevisionPanel({
   const previewHtml = hasSource ? (localHtml ?? null) : fetchedHtml;
   const previewError = hasSource ? localHtml === null : fetchError;
 
+  // Otra URL (u otro origen de datos): se descarta la vista anterior.
+  usePropChange(`${quadrantUrl}|${hasSource}`, () => {
+    setPreviewHtml(null);
+    setPreviewError(false);
+  });
   useEffect(() => {
     if (hasSource) return;
     let cancelled = false;
-    setPreviewHtml(null);
-    setPreviewError(false);
     fetch(`${quadrantUrl}?embed=1`, { credentials: "include" })
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));

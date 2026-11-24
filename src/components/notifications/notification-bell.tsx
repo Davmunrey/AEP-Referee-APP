@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { request } from "@/lib/api/request";
 import type { BandejaNotificaciones } from "@/lib/notificaciones";
 import { marcarLeidas } from "./bandeja";
 import { cn } from "@/lib/utils";
+import { useServerState } from "@/hooks/use-prop-change";
 
 function hace(iso: string): string {
   const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -28,8 +29,7 @@ function hace(iso: string): string {
  */
 export function NotificationBell({ initial, className }: { initial: BandejaNotificaciones; className?: string }) {
   const router = useRouter();
-  const [bandeja, setBandeja] = useState(initial);
-  useEffect(() => setBandeja(initial), [initial]);
+  const [bandeja, setBandeja] = useServerState(initial);
   // Los que eran nuevos al abrir: conservan el punto y la negrita mientras el
   // menú siga abierto, aunque el PATCH ya los haya marcado leídos.
   const [nuevosAlAbrir, setNuevosAlAbrir] = useState<ReadonlySet<string>>(() => new Set());

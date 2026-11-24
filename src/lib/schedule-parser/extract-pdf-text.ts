@@ -4,6 +4,13 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { hasPdfSignature } from "@/lib/import-security";
+import {
+  flatText,
+  readPdfTextItems,
+  type FlatTextOptions,
+  type PdfPages,
+  type PdfTextItem,
+} from "./pdfjs-text";
 
 const execFileAsync = promisify(execFile);
 
@@ -72,11 +79,12 @@ async function extractWithMacVisionOcr(pdfPath: string, workDir: string): Promis
 }
 
 /**
- * Extrae el texto de un PDF en servidor. Importa `pdf-parse/lib/pdf-parse.js`
- * dinámicamente para evitar el modo debug de la raíz del paquete.
+ * Extrae el texto de un PDF en servidor con pdf.js; si no sale texto útil
+ * (PDF escaneado), prueba `pdftotext` y después OCR cuando están disponibles.
  */
 export async function extractPdfText(
   buffer: Buffer | Uint8Array,
+  options: FlatTextOptions = {},
 ): Promise<PdfExtractionResult> {
   if (buffer.byteLength > MAX_PDF_BYTES) {
     throw new Error(
@@ -87,10 +95,8 @@ export async function extractPdfText(
   if (!hasPdfSignature(buf)) {
     throw new Error("Formato PDF no válido");
   }
-  const mod = (await import("pdf-parse/lib/pdf-parse.js")) as {
-    default: (b: Buffer) => Promise<{ text: string; numpages: number }>;
-  };
-  const result = await mod.default(buf);
+  const parsed = await readPdfTextItems(buf);
+  const result = { text: flatText(parsed, options), numpages: parsed.pages.length };
   if (usableText(result.text)) return { text: result.text, pages: result.numpages };
 
   const dir = await mkdtemp(join(tmpdir(), "aep-pdf-"));
@@ -107,78 +113,74 @@ export async function extractPdfText(
   }
 }
 
-interface TextItem {
-  str: string;
-  width?: number;
-  transform: number[]; // [a, b, c, d, x, y]
-}
-
 /** Puntos PDF por columna de carácter (≈ ancho medio de carácter). */
 const CHAR_W = 4.6;
 /** Tolerancia vertical para agrupar ítems en la misma fila. */
 const ROW_TOL = 3;
+/** Hueco horizontal (en puntos) a partir del cual dos fragmentos no van pegados. */
+const GAP_PT = 1;
 
 /**
  * Reconstruye texto con geometría de columnas a partir de las posiciones x/y de
- * pdf.js (vía el callback `pagerender` de pdf-parse). Equivale a `pdftotext
- * -layout` pero en JS puro — funciona en serverless (Vercel) sin binarios.
+ * pdf.js. Equivale a `pdftotext -layout` pero en JS puro: funciona en
+ * serverless (Vercel) sin binarios.
  */
-function renderPageWithLayout(pageData: {
-  getTextContent: (opts: unknown) => Promise<{ items: TextItem[] }>;
-}): Promise<string> {
-  return pageData
-    .getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false })
-    .then((content) => {
-      const items = content.items.filter((it) => it.str && it.str.trim().length > 0);
-      if (items.length === 0) return "";
+function renderPageWithLayout(pageItems: PdfTextItem[]): string {
+  const items = pageItems.filter((it) => it.str && it.str.trim().length > 0);
+  if (items.length === 0) return "";
 
-      // Agrupa ítems en filas por coordenada y (de arriba a abajo).
-      const rows: Array<{ y: number; items: TextItem[] }> = [];
-      for (const it of items) {
-        const y = it.transform[5];
-        let row = rows.find((r) => Math.abs(r.y - y) <= ROW_TOL);
-        if (!row) {
-          row = { y, items: [] };
-          rows.push(row);
-        }
-        row.items.push(it);
+  // Agrupa ítems en filas por coordenada y (de arriba a abajo).
+  const rows: Array<{ y: number; items: PdfTextItem[] }> = [];
+  for (const it of items) {
+    const y = it.transform[5];
+    let row = rows.find((r) => Math.abs(r.y - y) <= ROW_TOL);
+    if (!row) {
+      row = { y, items: [] };
+      rows.push(row);
+    }
+    row.items.push(it);
+  }
+  rows.sort((a, b) => b.y - a.y); // y mayor = más arriba
+
+  // reduce, no spread: con decenas de miles de ítems de texto el spread
+  // puede reventar la pila de llamadas (RangeError).
+  const minX = items.reduce(
+    (min, it) => (it.transform[4] < min ? it.transform[4] : min),
+    Number.POSITIVE_INFINITY,
+  );
+
+  const lines = rows.map((row) => {
+    row.items.sort((a, b) => a.transform[4] - b.transform[4]);
+    let line = "";
+    let prevEnd: number | undefined;
+    for (const it of row.items) {
+      const x = it.transform[4];
+      const col = Math.max(0, Math.round((x - minX) / CHAR_W));
+      if (col > line.length) line += " ".repeat(col - line.length);
+      else if (prevEnd !== undefined && x - prevEnd > GAP_PT && !/\s$/.test(line)) {
+        // pdf.js moderno quita los espacios de los bordes de cada fragmento.
+        // Se reponen según el hueco: uno entre palabras y dos o más entre
+        // columnas, que es lo que separa una columna de la siguiente.
+        const gap = x - prevEnd;
+        line += " ".repeat(gap >= CHAR_W ? Math.max(2, Math.round(gap / CHAR_W)) : 1);
       }
-      rows.sort((a, b) => b.y - a.y); // y mayor = más arriba
+      line += it.str;
+      prevEnd = it.width === undefined ? undefined : x + it.width;
+    }
+    return line.replace(/\s+$/, "");
+  });
+  return lines.join("\n");
+}
 
-      // reduce, no spread: con decenas de miles de ítems de texto el spread
-      // puede reventar la pila de llamadas (RangeError).
-      const minX = items.reduce(
-        (min, it) => (it.transform[4] < min ? it.transform[4] : min),
-        Number.POSITIVE_INFINITY,
-      );
-
-      const lines = rows.map((row) => {
-        row.items.sort((a, b) => a.transform[4] - b.transform[4]);
-        let line = "";
-        for (const it of row.items) {
-          const col = Math.max(0, Math.round((it.transform[4] - minX) / CHAR_W));
-          if (col > line.length) line += " ".repeat(col - line.length);
-          line += it.str;
-        }
-        return line.replace(/\s+$/, "");
-      });
-      return lines.join("\n");
-    });
+/** Texto con geometría reconstruida para todo el documento (mismo formato que antes). */
+export function layoutText({ pages }: PdfPages): string {
+  return pages.map((items) => `\n\n${renderPageWithLayout(items)}`).join("");
 }
 
 /** Extrae texto con geometría reconstruida desde pdf.js (sirve en Vercel). */
 async function extractWithPdfjsLayout(buf: Buffer): Promise<string> {
   try {
-    const mod = (await import("pdf-parse/lib/pdf-parse.js")) as {
-      default: (
-        b: Buffer,
-        opts: { pagerender: (p: unknown) => Promise<string> },
-      ) => Promise<{ text: string }>;
-    };
-    const result = await mod.default(buf, {
-      pagerender: (p) => renderPageWithLayout(p as Parameters<typeof renderPageWithLayout>[0]),
-    });
-    return result.text ?? "";
+    return layoutText(await readPdfTextItems(buf));
   } catch {
     return "";
   }
@@ -192,7 +194,7 @@ export interface PdfLayoutResult extends PdfExtractionResult {
 /**
  * Extrae texto PREFIRIENDO `pdftotext -layout`, que conserva la geometría de
  * columnas — imprescindible para cuadrantes (rejilla roles×sesiones). Cae a
- * pdf-parse plano si pdftotext no está disponible (p. ej. en serverless).
+ * pdf.js plano si pdftotext no está disponible (p. ej. en serverless).
  */
 export async function extractPdfLayoutText(
   buffer: Buffer | Uint8Array,
@@ -228,7 +230,7 @@ export async function extractPdfLayoutText(
     return { text: jsLayout, pages, layout: true };
   }
 
-  // 3) Fallback: pdf-parse plano (sin geometría) + OCR si hace falta.
+  // 3) Fallback: texto plano de pdf.js (sin geometría) + OCR si hace falta.
   const flat = await extractPdfText(buf);
   return { ...flat, layout: false };
 }
