@@ -237,7 +237,7 @@ Tailwind breakpoints utilizados:
 ## Rendimiento (v2.15)
 
 - **Región**: funciones en `lhr1` (`vercel.json`), junto a Supabase eu-west-2.
-- **Sesión**: `getClaims()` en el middleware y en `getSession`. Con claves JWT asimétricas la firma se verifica en local; con el secreto compartido sigue preguntando a Auth. El perfil se lee en cada petición y trae incrustada la ficha del juez (`referees(id, zona)`), así que el portal no hace una segunda lectura.
+- **Sesión**: `getClaims()` en el proxy (`src/proxy.ts`, antes `middleware.ts`) y en `getSession`. Con claves JWT asimétricas la firma se verifica en local; con el secreto compartido sigue preguntando a Auth. El perfil se lee en cada petición y trae incrustada la ficha del juez (`referees(id, zona)`), así que el portal no hace una segunda lectura.
 - **Incrustación de PostgREST** en vez de lecturas encadenadas: campeonatos con sus asignaciones (`getCompetitions`, sin barrer `roster_assignments` entera), convocatorias con sus zonas, historial del juez, mapa de ocupación de la tarima. `max-rows` solo recorta el nivel superior, no los arrays incrustados.
 - **Sin N+1 en el panel**: las solicitudes de zona pendientes se leen en una tanda (`listConvocatoriasPorIds`).
 - **Lecturas independientes en paralelo** (`Promise.all`) en ficha del juez, compensación, mutaciones de la tarima, analítica, soporte y portal. Cuando el orden de los errores importa se usa `Promise.allSettled` y se comprueban en el orden de antes.

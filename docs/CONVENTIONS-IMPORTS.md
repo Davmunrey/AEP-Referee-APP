@@ -2,7 +2,7 @@
 
 Plantilla y reglas para que **imports y exports sean consistentes en todo el
 proyecto** y no se pierda nada por el camino. Derivada de los patrones reales del
-código (Next.js 15 App Router · React 19 · TypeScript estricto) y de lo que ya
+código (Next.js 16 App Router · React 19 · TypeScript estricto) y de lo que ya
 fuerza `tsc` + `eslint` (`next/core-web-vitals`, `next/typescript`).
 
 > Regla de oro: `tsc --noEmit` + `eslint src` en verde ya garantizan que **todo

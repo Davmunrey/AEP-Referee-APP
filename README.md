@@ -111,7 +111,7 @@ La plataforma **funciona íntegramente en Vercel + Supabase**. Cada push a `main
 
 ```
 Navegador
-  └── Vercel — Next.js 15 App Router (React 19)
+  └── Vercel — Next.js 16 App Router (React 19)
         └── /api/v1  →  Route Handlers
               └── dataService  →  Supabase Postgres (service role + RBAC)
                     └── Realtime: app_sync_state (migración 029)
