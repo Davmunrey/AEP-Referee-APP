@@ -4,7 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ["pdfkit"],
+  serverExternalPackages: ["pdfkit", "pdfjs-dist"],
   // /docs lee CHANGELOG.md con fs en runtime (sección «Novedades»); sin esto,
   // el file tracing de Vercel no incluiría el fichero en el bundle serverless.
   outputFileTracingIncludes: {

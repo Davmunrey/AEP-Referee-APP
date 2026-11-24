@@ -102,7 +102,13 @@ con aviso accionable. `quadrant-parser.ts` (plano) queda como fallback heurísti
 
 **Extracción** (`extract-pdf-text.ts`, `extractPdfLayoutText`): prefiere `pdftotext -layout`
 (local/CI) → reconstrucción geométrica con **pdf.js** desde las posiciones x/y (JS puro,
-funciona en Vercel serverless) → pdf-parse plano + OCR como último recurso.
+funciona en Vercel serverless) → texto plano de pdf.js + OCR como último recurso.
+
+pdf.js se usa directamente (`pdfjs-dist`, `pdfjs-text.ts`), sin `pdf-parse`: la 1.x
+llevaba pdf.js 1.10 y la 2.x ya no da la posición de cada texto. `flatText` reproduce el
+formato de `pdf-parse` 1.x; el calendario lo pide con `pegarColumnas` (columnas pegadas,
+que es lo que reconoce su normalizador). Comparado con los 25 cuadrantes reales de 2026:
+horarios idénticos, e importación de asignaciones en Vercel igual o mejor en todos.
 
 ### Parser de horarios (`src/lib/schedule-parser/`)
 

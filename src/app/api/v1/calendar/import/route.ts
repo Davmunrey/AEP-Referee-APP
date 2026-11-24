@@ -100,7 +100,9 @@ export async function POST(request: Request) {
     if (isCsv) {
       parsed = parseAepCalendarCsv(buffer.toString("utf8"));
     } else {
-      const extracted = await extractPdfText(buffer);
+      // El analizador del calendario lee las columnas pegadas (formato de
+      // pdf.js 1.x); ver `pegarColumnas`.
+      const extracted = await extractPdfText(buffer, { pegarColumnas: true });
       parsed = parseAepCalendarText(extracted.text);
     }
   } catch (e) {
