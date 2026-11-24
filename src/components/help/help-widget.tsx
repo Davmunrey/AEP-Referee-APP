@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsClient } from "@/hooks/use-is-client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -34,12 +35,10 @@ function featuredTopics(role: SessionUser["role"], limit = 6): HelpEntry[] {
  * contenido por ancestros con transform/backdrop-filter.
  */
 export function HelpWidget({ user }: { user: Pick<SessionUser, "role" | "nombre"> }) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => setMounted(true), []);
 
   const steps = useMemo(() => quickStartForRole(user.role), [user.role]);
   const topics = useMemo(() => featuredTopics(user.role), [user.role]);

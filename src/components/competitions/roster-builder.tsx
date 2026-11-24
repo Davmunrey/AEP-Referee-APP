@@ -90,6 +90,7 @@ import {
 } from "./roster-session-helpers";
 import { zonesMatch } from "@/lib/aep-zones";
 import { confirmar } from "@/components/ui/confirm-dialog";
+import { usePropChange, useServerState } from "@/hooks/use-prop-change";
 
 // Defaults estables a nivel de módulo: un literal `{}` inline crearía un objeto
 // nuevo por render y, al ser dependencia del efecto de re-sincronización, podría
@@ -155,7 +156,7 @@ export function RosterBuilder({
 }: RosterBuilderProps) {
   const router = useRouter();
   const readOnly = !canEdit;
-  const [aprobacion, setAprobacion] = useState(competition.aprobacion);
+  const [aprobacion, setAprobacion] = useServerState(competition.aprobacion);
   const approvalLocked = isRosterLockedByApproval(aprobacion);
   // Con propuesta pendiente la tarima también es de solo lectura: lo que se
   // apruebe tiene que ser exactamente lo que se envió.
@@ -176,14 +177,13 @@ export function RosterBuilder({
   const deferredSearch = useDeferredValue(search);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set(initialConfirmedIds));
   const [filterOnlyConfirmed, setFilterOnlyConfirmed] = useState(false);
-  const [convocatoria, setConvocatoria] = useState<ConvocatoriaStaffView | null>(initialConvocatoria);
   // Un juez que se apunta desde el portal llega con el refresco en tiempo real.
-  useEffect(() => setConvocatoria(initialConvocatoria), [initialConvocatoria]);
+  const [convocatoria, setConvocatoria] = useServerState<ConvocatoriaStaffView | null>(initialConvocatoria);
   const [convocatoriaOpen, setConvocatoriaOpen] = useState(false);
   const [filterOnlyInscritos, setFilterOnlyInscritos] = useState(false);
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [editCompetitionOpen, setEditCompetitionOpen] = useState(false);
-  const [activeSessionKey, setActiveSessionKey] = useState<string | null>(initialTemplate[0]?.sesion ?? null);
+  const [chosenSessionKey, setActiveSessionKey] = useState<string | null>(initialTemplate[0]?.sesion ?? null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
@@ -199,10 +199,6 @@ export function RosterBuilder({
     if (c.pct >= 100) return "revision";
     return "asignacion";
   });
-
-  useEffect(() => {
-    setAprobacion(competition.aprobacion);
-  }, [competition.aprobacion]);
 
   const coverage = useMemo(
     () => computeRosterCoverage(template, assignments, competition.requeridos),
@@ -242,49 +238,43 @@ export function RosterBuilder({
     [],
   );
 
-  // Los guardas viven en refs a propósito: como dependencias, al terminar una
-  // transición `pending` pasaba a false y el efecto se volvía a ejecutar
-  // reescribiendo el estado recién guardado con las props del último render del
-  // servidor, que aún son las anteriores (el refresh va con retardo).
-  // El resultado era ver reaparecer el juez que acababas de quitar. Ahora el
-  // efecto solo corre cuando cambian de verdad los datos del servidor.
-  const isEditingRef = useRef(isEditing);
-  isEditingRef.current = isEditing;
-  const pendingRef = useRef(pending);
-  pendingRef.current = pending;
-
-  // Si llega un cambio del servidor mientras se edita o hay una operación en
-  // curso, se aparta; al terminar se piden los datos actuales (ver abajo).
-  // Antes simplemente se perdía: al cancelar la edición, la tarima seguía sin
-  // las asignaciones que otro delegado había hecho entretanto.
-  const skippedServerUpdateRef = useRef(false);
-
-  useEffect(() => {
-    if (isEditingRef.current || pendingRef.current) {
-      skippedServerUpdateRef.current = true;
+  // Los datos del servidor se aplican al render en que cambian, salvo que se
+  // esté editando o haya una operación en curso: entonces se apartan, porque
+  // las props del último render del servidor aún pueden ser las anteriores a lo
+  // que se acaba de guardar (el refresh va con retardo) y reescribirlas hacía
+  // reaparecer el juez que acababas de quitar. Al terminar se piden los datos
+  // actuales; antes simplemente se perdían, y al cancelar la edición la tarima
+  // seguía sin las asignaciones que otro delegado había hecho entretanto.
+  const serverSnapshot = useMemo(
+    () => ({
+      template: initialTemplate,
+      assignments: initialAssignments,
+      flags: initialFlags,
+      crossZoneMap: initialCrossZoneMap,
+      aprobacion: competition.aprobacion,
+    }),
+    [initialTemplate, initialAssignments, initialFlags, initialCrossZoneMap, competition.aprobacion],
+  );
+  const [skippedServerUpdate, setSkippedServerUpdate] = useState(false);
+  usePropChange(serverSnapshot, (snap) => {
+    if (isEditing || pending) {
+      setSkippedServerUpdate(true);
       return;
     }
-    skippedServerUpdateRef.current = false;
-    setTemplate(initialTemplate);
-    setAssignments(initialAssignments);
-    setFlags(initialFlags);
-    setCrossZoneMap(initialCrossZoneMap);
-    setAprobacion(competition.aprobacion);
-  }, [
-    competition.aprobacion,
-    initialAssignments,
-    initialFlags,
-    initialCrossZoneMap,
-    initialTemplate,
-  ]);
+    setSkippedServerUpdate(false);
+    setTemplate(snap.template);
+    setAssignments(snap.assignments);
+    setFlags(snap.flags);
+    setCrossZoneMap(snap.crossZoneMap);
+    setAprobacion(snap.aprobacion);
+  });
 
   useEffect(() => {
-    if (isEditing || pending || !skippedServerUpdateRef.current) return;
-    skippedServerUpdateRef.current = false;
+    if (isEditing || pending || !skippedServerUpdate) return;
     // No se aplica la instantánea apartada (puede ser anterior a lo que este
-    // usuario acaba de guardar): se pide la actual.
+    // usuario acaba de guardar): se pide la actual, y al llegar se aplica.
     refreshCompetitionList();
-  }, [isEditing, pending, refreshCompetitionList]);
+  }, [isEditing, pending, skippedServerUpdate, refreshCompetitionList]);
 
   const handleUnlockImprevisto = async () => {
     const pendingApproval = isRosterPendingApproval(aprobacion);
@@ -321,14 +311,17 @@ export function RosterBuilder({
     });
   };
 
-  useEffect(() => { if (templateSlots === 0) setWorkflowStep("plantilla"); }, [templateSlots]);
+  // Si la plantilla se queda sin huecos, se vuelve al paso de plantilla.
+  usePropChange(templateSlots, (slots) => {
+    if (slots === 0) setWorkflowStep("plantilla");
+  });
 
-  useEffect(() => {
-    if (template.length === 0) { setActiveSessionKey(null); return; }
-    if (!activeSessionKey || !template.some((s) => s.sesion === activeSessionKey)) {
-      setActiveSessionKey(template[0]?.sesion ?? null);
-    }
-  }, [template, activeSessionKey]);
+  // La sesión activa es la elegida mientras exista en la plantilla; si no
+  // (plantilla nueva o vacía), la primera.
+  const activeSessionKey =
+    chosenSessionKey && template.some((s) => s.sesion === chosenSessionKey)
+      ? chosenSessionKey
+      : (template[0]?.sesion ?? null);
 
   const activeSessionAssignedIds = useMemo(
     () => assignedRefereeIdsInSession(assignments, activeSessionKey),

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useIsClient } from "@/hooks/use-is-client";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +33,7 @@ export function PasswordDialog({ mode, userId, subject, onClose, onDone }: Passw
   // Renderizamos en un portal a <body> para que el overlay `fixed` no quede
   // contenido (y recortado) por ancestros con transform/backdrop-filter, como
   // el sidebar. `mounted` evita desajustes de hidratación en SSR.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useIsClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ArrowRight, CalendarDays, FileText, Loader2, Trash2, X } from "lucide-react";
 import { EventStatusBadge, EventTypeBadge } from "@/components/aep/badges";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import type { Competition, EventStatus, EventType, UserRole } from "@/lib/types"
 import { zoneUiName, zonesMatch } from "@/lib/aep-zones";
 import { confirmar } from "@/components/ui/confirm-dialog";
 import { contar } from "@/lib/plural";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 interface CompetitionsTableProps {
   initialCompetitions: Competition[];
@@ -44,7 +45,8 @@ const MAX_VISIBLE_PAGES = 5;
 
 export function CompetitionsTable({ initialCompetitions, role, userZona }: CompetitionsTableProps) {
   const router = useRouter();
-  const [competitions, setCompetitions] = useState(initialCompetitions);
+  // Solo se lee: cada refresco del servidor trae la lista nueva.
+  const competitions = initialCompetitions;
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -59,10 +61,6 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     () => zoneFilterOptions(competitions, userZona),
     [competitions, userZona],
   );
-
-  useEffect(() => {
-    setCompetitions(initialCompetitions);
-  }, [initialCompetitions]);
 
   // Resultado de borrar o limpiar duplicados, en la propia tabla (antes,
   // `alert()` del navegador).
@@ -99,9 +97,8 @@ export function CompetitionsTable({ initialCompetitions, role, userZona }: Compe
     });
   }, [competitions, filterTipo, filterEstado, filterZona, search]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filterTipo, filterEstado, filterZona, search]);
+  // Cambiar un filtro vuelve a la primera página.
+  usePropChange(JSON.stringify([filterTipo, filterEstado, filterZona, search]), () => setPage(1));
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);

@@ -8,9 +8,10 @@ import { selectFieldClass, textareaFieldClass } from "@/lib/design-tokens";
 import type { RefereeReport, ReportSubjectType, ReportType } from "@/lib/types";
 import { FileText, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ReportCard } from "./report-card";
 import { confirmar } from "@/components/ui/confirm-dialog";
+import { useServerState } from "@/hooks/use-prop-change";
 
 const REPORT_TYPES: ReportType[] = ["General", "Incidencia", "Evaluación"];
 
@@ -32,14 +33,9 @@ export function ReportsManager({
   canDelete,
 }: ReportsManagerProps) {
   const router = useRouter();
-  const [reports, setReports] = useState(initialReports);
+  const [reports, setReports] = useServerState(initialReports);
   const [showForm, setShowForm] = useState(false);
 
-  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
-  // patrón que competitions-table). Solo toca la lista, no los formularios.
-  useEffect(() => {
-    setReports(initialReports);
-  }, [initialReports]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());

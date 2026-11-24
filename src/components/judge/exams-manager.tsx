@@ -21,9 +21,10 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { REFEREE_LEVEL_ORDER } from "@/lib/referee-levels";
 import { confirmar } from "@/components/ui/confirm-dialog";
+import { useServerState } from "@/hooks/use-prop-change";
 
 const EXAM_TYPES: ExamType[] = [
   "Nuevo juez",
@@ -68,14 +69,9 @@ export function ExamsManager({
   canDelete,
 }: ExamsManagerProps) {
   const router = useRouter();
-  const [exams, setExams] = useState(initialExams);
+  const [exams, setExams] = useServerState(initialExams);
   const [showForm, setShowForm] = useState(false);
 
-  // Re-sincroniza con los datos del servidor tras router.refresh() (mismo
-  // patrón que competitions-table). Solo toca la lista, no el formulario.
-  useEffect(() => {
-    setExams(initialExams);
-  }, [initialExams]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,7 +82,7 @@ export function ExamsManager({
   // Form fields
   const [refereeId, setRefereeId] = useState(lockedRefereeId ?? "");
   const [tipo, setTipo] = useState<ExamType>("Nuevo juez");
-  const [nivelObjetivo, setNivelObjetivo] = useState<RefereeLevel>("Nacional");
+  const [nivelElegido, setNivelObjetivo] = useState<RefereeLevel>("Nacional");
   // Día natural español: con toISOString() el campo salía con la fecha de
   // ayer entre la medianoche y las 01:00–02:00.
   const [fecha, setFecha] = useState(() => todayIso());
@@ -96,13 +92,13 @@ export function ExamsManager({
   const selectedReferee = referees.find((r) => r.id === refereeId);
   const availableLevels = allowedLevelsForExam(tipo, selectedReferee?.nivel);
 
-  // Mantiene el nivel objetivo dentro de las opciones válidas del tipo/juez actual.
-  // Sin esto, el estado podía quedar en "Nacional" mientras el <select> mostraba
-  // "Regional" (única opción de "Nuevo juez"), enviando un nivel distinto al visible.
-  useEffect(() => {
-    const levels = allowedLevelsForExam(tipo, selectedReferee?.nivel);
-    setNivelObjetivo((prev) => (levels.includes(prev) ? prev : levels[0]));
-  }, [tipo, selectedReferee?.nivel]);
+  // El nivel objetivo siempre es una de las opciones válidas del tipo/juez
+  // actual. Sin esto, el estado podía quedar en "Nacional" mientras el <select>
+  // mostraba "Regional" (única opción de "Nuevo juez"), enviando un nivel
+  // distinto al visible.
+  const nivelObjetivo = availableLevels.includes(nivelElegido)
+    ? nivelElegido
+    : (availableLevels[0] ?? nivelElegido);
 
   const resetForm = () => {
     setTipo("Nuevo juez");

@@ -46,6 +46,7 @@ import { arbitrajeYears } from "@/lib/judges-registry/arbitraje-stats";
 import type { Referee, RefereeLevel, RefereeStatus, Zone } from "@/lib/types";
 import { contar } from "@/lib/plural";
 import { confirmar } from "@/components/ui/confirm-dialog";
+import { useServerState, usePropChange } from "@/hooks/use-prop-change";
 
 const CENSO_ALL = "TODOS";
 
@@ -160,13 +161,7 @@ export function RefereesDirectory({
 }: RefereesDirectoryProps) {
   const [showInvite, setShowInvite] = useState(false);
   const searchParams = useSearchParams();
-  const [referees, setReferees] = useState(initialReferees);
-  // Re-sincroniza con los datos del servidor cuando cambian (p. ej. tras importar
-  // el Excel maestro, que hace router.refresh()); si no, la tabla mostraría la
-  // lista antigua hasta recargar la página. Igual que CompetitionsTable.
-  useEffect(() => {
-    setReferees(initialReferees);
-  }, [initialReferees]);
+  const [referees, setReferees] = useServerState(initialReferees);
   const [showNew, setShowNew] = useState(false);
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [filterZona, setFilterZona] = useState("TODAS");
@@ -257,9 +252,8 @@ export function RefereesDirectory({
     });
   }, [referees, filterZona, filterNivel, filterEstado, filterCenso, search]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filterZona, filterNivel, filterEstado, filterCenso, search]);
+  // Cambiar un filtro vuelve a la primera página.
+  usePropChange(JSON.stringify([filterZona, filterNivel, filterEstado, filterCenso, search]), () => setPage(1));
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);

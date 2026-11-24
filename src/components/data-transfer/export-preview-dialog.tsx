@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatApiError } from "@/lib/api/error-message";
 import {
@@ -13,6 +13,7 @@ import { Copy, Download, Loader2 } from "lucide-react";
 import { TransferDialogShell } from "./transfer-dialog-shell";
 import { TransferPreviewStats, type TransferStatItem } from "./transfer-preview-stats";
 import { TransferResultBanner } from "./transfer-result-banner";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 export interface ExportPreviewDialogProps {
   open: boolean;
@@ -34,33 +35,30 @@ export function ExportPreviewDialog({
   summaryStats,
 }: ExportPreviewDialogProps) {
   const copy = TRANSFER_KIND_COPY[kind];
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(open);
   const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Los padres suelen pasar `fetchText` como arrow inline (nueva en cada
-  // render); leerla desde un ref evita relanzar la exportación completa cada
-  // vez que el padre se re-renderiza con el diálogo abierto.
-  const fetchTextRef = useRef(fetchText);
-  useEffect(() => {
-    fetchTextRef.current = fetchText;
+  // render); como evento de efecto se lee la última sin relanzar la exportación
+  // completa cada vez que el padre se re-renderiza con el diálogo abierto.
+  const runFetchText = useEffectEvent(() => fetchText());
+
+  // Al abrir se marca «cargando»; al cerrar se limpia todo.
+  usePropChange(open, (isOpen) => {
+    setText(null);
+    setError(null);
+    setCopied(false);
+    setLoading(isOpen);
   });
 
   useEffect(() => {
-    if (!open) {
-      setText(null);
-      setError(null);
-      setCopied(false);
-      setLoading(false);
-      return;
-    }
+    if (!open) return;
     let cancelled = false;
     void (async () => {
-      setLoading(true);
-      setError(null);
       try {
-        const body = await fetchTextRef.current();
+        const body = await runFetchText();
         if (!cancelled) setText(body);
       } catch (e) {
         if (!cancelled) setError(formatApiError(e, "No se pudo generar la exportación"));

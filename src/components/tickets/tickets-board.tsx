@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { MessageSquare, Plus } from "lucide-react";
@@ -88,15 +88,11 @@ export function TicketsBoard({
   initialTickets: SupportTicket[];
   currentUser: SessionUser;
 }) {
-  const [tickets, setTickets] = useState(initialTickets);
+  // Solo se lee: cada refresco del servidor trae la lista nueva.
+  const tickets = initialTickets;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  // Re-sincroniza con el servidor tras router.refresh() (patrón competitions-table).
-  useEffect(() => {
-    setTickets(initialTickets);
-  }, [initialTickets]);
 
   const filtered = useMemo(
     () =>

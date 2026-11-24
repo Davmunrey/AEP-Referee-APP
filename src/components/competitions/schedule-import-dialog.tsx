@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/data-transfer/file-drop-zone";
 import { TransferDialogShell } from "@/components/data-transfer/transfer-dialog-shell";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/import-export-ui";
 import type { RosterSession } from "@/lib/types";
 import { Loader2 } from "lucide-react";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 interface ImportPreview {
   filename: string;
@@ -58,8 +59,9 @@ export function ScheduleImportDialog({
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!open) {
+  // Al cerrar, el diálogo vuelve a su estado inicial.
+  usePropChange(open, (isOpen) => {
+    if (!isOpen) {
       setFile(null);
       setPreview(null);
       setTemplate(null);
@@ -69,7 +71,7 @@ export function ScheduleImportDialog({
       setConfirmReplace(false);
       setSelectedKeys(new Set());
     }
-  }, [open]);
+  });
 
   const step: TransferStep = applied ? "result" : preview ? "preview" : "upload";
   const replaceWarning = scheduleReplaceWarning(hasExistingTemplate);

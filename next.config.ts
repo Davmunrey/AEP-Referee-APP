@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
       },
     ];
 
-    // Las páginas reciben su CSP con nonce del middleware (src/lib/security/csp).
+    // Las páginas reciben su CSP con nonce del proxy (src/proxy.ts, src/lib/security/csp).
     // Las rutas de la API no pasan por él y conservan esta política fija: el
     // cuadrante imprimible es HTML servido desde la API, con un botón y un
     // script en línea, así que aquí sigue haciendo falta `'unsafe-inline'`.

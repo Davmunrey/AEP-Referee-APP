@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/data-transfer/file-drop-zone";
@@ -14,6 +14,7 @@ import { api } from "@/lib/api/client";
 import { TRANSFER_KIND_COPY, type TransferStep } from "@/lib/import-export-ui";
 import { Loader2 } from "lucide-react";
 import { formatDateRange } from "@/lib/utils";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 interface CalendarPreview {
   filename: string;
@@ -60,8 +61,9 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
     dedupeRemoved: number;
   } | null>(null);
 
-  useEffect(() => {
-    if (!open) {
+  // Al cerrar, el diálogo vuelve a su estado inicial.
+  usePropChange(open, (isOpen) => {
+    if (!isOpen) {
       setFile(null);
       setPreview(null);
       setError(null);
@@ -69,7 +71,7 @@ export function CalendarImportDialog({ open, onClose }: CalendarImportDialogProp
       setLoading(false);
       setApplyResult(null);
     }
-  }, [open]);
+  });
 
   const step: TransferStep = applyResult ? "result" : preview ? "preview" : "upload";
 

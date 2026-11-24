@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -10,6 +10,7 @@ import { HelpWidget } from "@/components/help/help-widget";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 import type { BandejaNotificaciones } from "@/lib/notificaciones";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 // Bajo demanda y solo en cliente: importa el cliente de navegador de Supabase
 // (supabase-js entero: Realtime, GoTrue…, ~63 KB gz) y, cargado de forma
@@ -31,6 +32,22 @@ export interface NavCounts {
   activeRosterHref: string;
 }
 
+function readCollapsed(): boolean {
+  try {
+    const stored = window.localStorage.getItem(COLLAPSE_KEY);
+    if (stored !== null) return stored === "1";
+  } catch {
+    // ignore — Safari private mode, etc.
+  }
+  // Primera visita, sin preferencia guardada: plegada en tablet/iPad.
+  return window.innerWidth < 1024;
+}
+
+function subscribeStorage(onChange: () => void): () => void {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
 export function AppShell({
   children,
   currentUser,
@@ -42,7 +59,11 @@ export function AppShell({
   navCounts: NavCounts;
   notificaciones?: BandejaNotificaciones;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  // Preferencia guardada (o, en la primera visita, plegada en tablet). Se lee
+  // como almacén externo: en el servidor y al hidratar, desplegada.
+  const plegadaGuardada = useSyncExternalStore(subscribeStorage, readCollapsed, () => false);
+  const [plegadaElegida, setCollapsed] = useState<boolean | null>(null);
+  const collapsed = plegadaElegida ?? plegadaGuardada;
   // Móvil (< md): sin carril fijo de iconos —se comía 64 px de 390— y con la
   // navegación completa en un cajón que se abre desde la barra superior.
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -51,9 +72,7 @@ export function AppShell({
   const [query, setQuery] = useState("");
 
   // Cerrar al navegar (también con atrás/adelante) y con Escape.
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  usePropChange(pathname, () => setMobileOpen(false));
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -63,30 +82,14 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
 
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(COLLAPSE_KEY);
-      if (stored === "1") {
-        setCollapsed(true);
-      } else if (stored === null && window.innerWidth < 1024) {
-        // Auto-collapse on tablet/iPad (first visit, no saved preference)
-        setCollapsed(true);
-      }
-    } catch {
-      // ignore — Safari private mode, etc.
-    }
-  }, []);
-
   const toggleCollapsed = () => {
-    setCollapsed((c) => {
-      const next = !c;
-      try {
-        window.localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
-      } catch {
-        // ignore
-      }
-      return next;
-    });
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      window.localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
+    } catch {
+      // ignore
+    }
   };
 
   return (

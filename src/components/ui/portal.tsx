@@ -1,9 +1,8 @@
 "use client";
 
-import { useSyncExternalStore, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { createPortal } from "react-dom";
-
-const sinCambios = () => () => {};
+import { useIsClient } from "@/hooks/use-is-client";
 
 /**
  * Lleva los diálogos a `<body>`.
@@ -15,16 +14,12 @@ const sinCambios = () => () => {};
  * `translateY(0)`) produce lo mismo. Fuera del árbol, ningún antecesor lo
  * condiciona.
  *
- * Se monta en el MISMO render en el cliente (`useSyncExternalStore`), no un
+ * Se monta en el MISMO render en el cliente (`useIsClient`), no un
  * tick después con `useEffect`: `useEscapeClose` mueve el foco al panel en su
  * efecto, y el panel tiene que existir ya para entonces. En el servidor y
  * durante la hidratación no pinta nada.
  */
 export function Portal({ children }: { children: ReactNode }) {
-  const enCliente = useSyncExternalStore(
-    sinCambios,
-    () => true,
-    () => false,
-  );
+  const enCliente = useIsClient();
   return enCliente ? createPortal(children, document.body) : null;
 }

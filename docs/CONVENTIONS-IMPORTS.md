@@ -57,7 +57,7 @@ import type { Competition, EventType } from "@/lib/types";
 - **Named exports** para todo (funciones, constantes, tipos, objetos-servicio).
 - **`export default`** SOLO donde Next.js lo exige: `page.tsx`, `layout.tsx`,
   `loading.tsx`, `error.tsx`, `not-found.tsx`, `global-error.tsx`,
-  `middleware.ts`, `instrumentation*.ts`, y los `*.config.ts`.
+  `proxy.ts` (antes `middleware.ts`), `instrumentation*.ts`, y los `*.config.ts`.
 - **Route handlers** (`route.ts`): exports named por verbo HTTP —
   `GET`, `POST`, `PATCH`, `PUT`, `DELETE`.
 

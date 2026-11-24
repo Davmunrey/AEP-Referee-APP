@@ -269,7 +269,8 @@ describe("campana: marcar leídos sin repintar la página", () => {
     const src = leer("src/components/notifications/notification-bell.tsx");
     // El refresco va DESPUÉS de marcar en local, dentro del then del PATCH.
     expect(src).toMatch(/setBandeja\(\(b\) => marcarLeidas\(b, vistos, ahora\)\);\s*router\.refresh\(\);/);
-    expect(src).toContain("setBandeja(initial)");
+    // Cada render del servidor trae la bandeja nueva.
+    expect(src).toContain("useServerState(initial)");
     // Los que eran nuevos al abrir siguen marcados mientras el menú esté abierto.
     expect(src).toContain("nuevosAlAbrir.has(n.id)");
   });

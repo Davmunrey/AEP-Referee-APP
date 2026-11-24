@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2, Upload, X } from "lucide-react";
@@ -35,6 +35,7 @@ import type {
   SupportTicketAttachment,
   TicketStatus,
 } from "@/lib/types";
+import { useServerState } from "@/hooks/use-prop-change";
 
 const ADMIN_ROLES = ["super_admin", "delegado_jueces"];
 
@@ -80,12 +81,7 @@ export function TicketDetail({
   currentUser: SessionUser;
 }) {
   const router = useRouter();
-  const [ticket, setTicket] = useState(initialTicket);
-
-  // Re-sincroniza con el servidor tras router.refresh() (patrón competitions-table).
-  useEffect(() => {
-    setTicket(initialTicket);
-  }, [initialTicket]);
+  const [ticket, setTicket] = useServerState(initialTicket);
 
   const isAdmin = ADMIN_ROLES.includes(currentUser.role);
   const isCreator = ticket.createdById === currentUser.id;
@@ -405,12 +401,9 @@ function CommentForm({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [previews, setPreviews] = useState<string[]>([]);
-  useEffect(() => {
-    const urls = files.map((f) => URL.createObjectURL(f));
-    setPreviews(urls);
-    return () => urls.forEach((u) => URL.revokeObjectURL(u));
-  }, [files]);
+  // Previews con objectURL: se revocan al cambiar/desmontar para no filtrar memoria.
+  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
 
   const onPickFiles = (list: FileList | null) => {
     if (!list) return;

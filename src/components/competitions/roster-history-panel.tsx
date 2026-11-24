@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { formatBusinessDate } from "@/lib/business-date";
 import { api } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { History, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rosterHistoryView } from "@/lib/roster-history-view";
 import { formatApiError } from "@/lib/api/error-message";
+import { usePropChange } from "@/hooks/use-prop-change";
 
 function relativeTime(isoString: string): string {
   const then = new Date(isoString).getTime();
@@ -72,33 +73,48 @@ export function RosterHistoryPanel({
     onOpenChange?.(next);
   };
   const [entries, setEntries] = useState<RosterHistoryEntry[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(open);
   const [error, setError] = useState<string | null>(null);
 
   // Se recarga cada vez que se abre: el historial es justo lo que cambia
   // mientras se trabaja en la tarima, y la copia cacheada se quedaba en el
   // estado de la primera apertura. Las entradas ya cargadas se mantienen a la
   // vista mientras llega la respuesta, para no parpadear.
-  const cargar = useCallback(async () => {
+  // Al abrir se marca «cargando» en el mismo render; la petición va en el
+  // efecto y solo toca el estado cuando responde.
+  usePropChange(open, (isOpen) => {
+    if (!isOpen) return;
     setLoading(true);
     setError(null);
-    try {
-      setEntries(await api.getRosterHistory(competitionId));
-    } catch (err) {
-      // Un fallo de lectura NO es «sin cambios registrados»: eso es una
-      // afirmación sobre el acta. Y dejar `entries` a `[]` cacheaba la mentira,
-      // porque al reabrir ya no se volvía a pedir. Lo que dijo el servidor va
-      // con el aviso, que para eso lo dice.
-      setError(formatApiError(err, "No se pudo cargar el historial."));
-    } finally {
-      setLoading(false);
-    }
-  }, [competitionId]);
+  });
+  // «Reintentar» vuelve a lanzar la carga sin cerrar el panel.
+  const [intento, setIntento] = useState(0);
 
   // Carga al abrir, venga la apertura del botón propio o del menú «Más».
   useEffect(() => {
-    if (open) void cargar();
-  }, [open, cargar]);
+    if (!open) return;
+    let cancelled = false;
+    api
+      .getRosterHistory(competitionId)
+      .then(
+        (loaded) => {
+          if (!cancelled) setEntries(loaded);
+        },
+        (err: unknown) => {
+          // Un fallo de lectura NO es «sin cambios registrados»: eso es una
+          // afirmación sobre el acta. Y dejar `entries` a `[]` cacheaba la
+          // mentira, porque al reabrir ya no se volvía a pedir. Lo que dijo el
+          // servidor va con el aviso, que para eso lo dice.
+          if (!cancelled) setError(formatApiError(err, "No se pudo cargar el historial."));
+        },
+      )
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, competitionId, intento]);
 
   const vista = rosterHistoryView({ loading, error: error !== null, entries });
 
@@ -148,7 +164,11 @@ export function RosterHistoryPanel({
                   variant="outline"
                   size="sm"
                   className="mt-3"
-                  onClick={() => void cargar()}
+                  onClick={() => {
+                    setLoading(true);
+                    setError(null);
+                    setIntento((n) => n + 1);
+                  }}
                 >
                   Reintentar
                 </Button>

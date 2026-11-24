@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Check, ChevronRight, KeyRound, LogOut, Menu, Monitor, Moon, Search, Sun } from "lucide-react";
 import {
   THEME_OPTIONS,
   readThemePreference,
+  subscribeThemePreference,
   setThemePreference,
   type ThemePreference,
 } from "@/lib/theme";
@@ -49,10 +50,15 @@ export function TopBar({
   const competitionIdCrumb = pathname.match(/^\/competitions\/([^/]+)(?:\/compensation)?$/)?.[1];
   const competitionCrumbLabel = useCompetitionCrumbLabel(competitionIdCrumb ?? "Campeonato");
   const hideSearch = pathname.startsWith("/competitions/");
-  const [theme, setTheme] = useState<ThemePreference>("system");
-  useEffect(() => {
-    setTheme(readThemePreference());
-  }, []);
+  // Lo guardado se lee como almacén externo (en el servidor, «sistema»); lo
+  // elegido en esta visita manda, también si el navegador no deja guardarlo.
+  const guardado = useSyncExternalStore(
+    subscribeThemePreference,
+    readThemePreference,
+    () => "system" as const,
+  );
+  const [elegido, setTheme] = useState<ThemePreference | null>(null);
+  const theme = elegido ?? guardado;
   const [query, setQuery] = useState("");
   const [pwdOpen, setPwdOpen] = useState(false);
 

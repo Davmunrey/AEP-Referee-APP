@@ -18,8 +18,10 @@ describe("diálogos modales", () => {
     expect(src).toContain('e.key !== "Tab"');
     expect(src).toContain("previouslyFocused.focus()");
     expect(src).toContain('document.body.style.overflow = "hidden"');
-    // El que abrió se anota en el render, antes de que un autoFocus lo pise.
-    expect(src).toContain("openerRef.current =");
+    // El que abrió sale del registro de foco: si un autoFocus ya se llevó el
+    // foco dentro del panel, es el elemento enfocado justo antes.
+    expect(src).toContain('addEventListener(\n    "focusin"');
+    expect(src).toContain("? previousFocus()");
   });
 
   it("todo diálogo con velo usa el hook común (o el shell de importación, que trae el suyo)", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -31,6 +31,7 @@ import { formatReceiptAmountEur } from "@/lib/judge-compensation/receipt-documen
 import type { CompensationHubSummary } from "@/lib/judge-compensation/hub-types";
 import { formatDateRange } from "@/lib/utils";
 import { contar } from "@/lib/plural";
+import { useServerState } from "@/hooks/use-prop-change";
 
 type HubItem = CompensationHubSummary["items"][number];
 
@@ -85,7 +86,7 @@ interface CompensationHubProps {
 }
 
 export function CompensationHub({ initialHub }: CompensationHubProps) {
-  const [hub, setHub] = useState(initialHub);
+  const [hub, setHub] = useServerState(initialHub);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -98,11 +99,7 @@ export function CompensationHub({ initialHub }: CompensationHubProps) {
         setError(err instanceof Error ? err.message : "Error al cargar el panel");
       }
     });
-  }, []);
-
-  useEffect(() => {
-    setHub(initialHub);
-  }, [initialHub]);
+  }, [setHub]);
 
   const { items, totalPendingKm, readyCount, confirmedTotal, provisionalTotal } = hub;
   // Lo confirmado es lo exportable; el resto está devengado pero espera km.

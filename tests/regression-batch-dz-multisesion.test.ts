@@ -168,7 +168,9 @@ describe("dos personas editando la plantilla a la vez", () => {
 
   it("el constructor vuelve a pedir los datos que se apartaron mientras se editaba", () => {
     const src = readFileSync("src/components/competitions/roster-builder.tsx", "utf8");
-    expect(src).toContain("skippedServerUpdateRef.current = true");
+    // Lo que llega mientras se edita se aparta (y luego se vuelve a pedir).
+    expect(src).toContain("setSkippedServerUpdate(true)");
+    expect(src).toContain("refreshCompetitionList();");
     expect(src).toContain("api.saveTemplate(competition.id, next, baseHash)");
   });
 });
