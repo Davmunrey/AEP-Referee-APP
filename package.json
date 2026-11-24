@@ -51,7 +51,7 @@
     "lucide-react": "^0.511.0",
     "next": "^15.5.29",
     "pdf-parse": "^1.1.1",
-    "pdfkit": "^0.19.1",
+    "pdfkit": "^0.21.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tailwind-merge": "^3.3.0",
