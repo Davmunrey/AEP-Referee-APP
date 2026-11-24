@@ -30,14 +30,27 @@ vi.mock("@supabase/ssr", () => ({
   createServerClient: (
     _url: string,
     _key: string,
-    opts: { cookies: { setAll: (c: { name: string; value: string; options?: object }[]) => void } },
+    opts: {
+      cookies: {
+        setAll: (
+          c: { name: string; value: string; options?: object }[],
+          headers: Record<string, string>,
+        ) => void;
+      };
+    },
   ) => ({
     auth: {
       getClaims: async () => {
         mwGetClaimsCalls++;
         if (mwThrows) throw new Error("refresh_token_not_found");
         // Simula la rotación del token dentro de getSession().
-        if (mwRotate) opts.cookies.setAll([{ name: "sb-test-auth-token", value: "nuevo", options: { path: "/" } }]);
+        if (mwRotate) {
+          opts.cookies.setAll([{ name: "sb-test-auth-token", value: "nuevo", options: { path: "/" } }], {
+            "Cache-Control": "private, no-cache, no-store, must-revalidate, max-age=0",
+            Expires: "0",
+            Pragma: "no-cache",
+          });
+        }
         return { data: mwClaims ? { claims: mwClaims } : null, error: null };
       },
       getUser: async () => {
@@ -153,6 +166,20 @@ describe("middleware: un viaje menos a Auth", () => {
     const res = await updateSession(req("/sign-in"));
     expect(res.headers.get("location")).toBe("https://app.test/");
     expect(res.cookies.get("sb-test-auth-token")?.value).toBe("nuevo");
+    expect(res.headers.get("cache-control")).toContain("no-store");
+  });
+
+  it("una respuesta que rota el token lleva las cabeceras anticaché de Supabase", async () => {
+    mwRotate = true;
+    const res = await updateSession(req("/competitions"));
+    expect(res.cookies.get("sb-test-auth-token")?.value).toBe("nuevo");
+    expect(res.headers.get("cache-control")).toBe("private, no-cache, no-store, must-revalidate, max-age=0");
+    expect(res.headers.get("pragma")).toBe("no-cache");
+  });
+
+  it("sin rotación no se tocan las cabeceras de caché", async () => {
+    const res = await updateSession(req("/competitions"));
+    expect(res.headers.get("cache-control")).toBeNull();
   });
 });
 
