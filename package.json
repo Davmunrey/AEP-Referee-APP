@@ -48,7 +48,7 @@
     "@supabase/supabase-js": "^2.105.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.511.0",
+    "lucide-react": "^1.79.0",
     "next": "^15.5.29",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.21.0",
